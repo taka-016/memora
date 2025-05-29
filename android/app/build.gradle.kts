@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -19,6 +22,14 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    // local.properties から MAPS_API_KEY を取得して manifestPlaceholders に渡す
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        FileInputStream(localPropertiesFile).use { localProperties.load(it) }
+    }
+    val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.flutter_verification"
@@ -28,6 +39,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {

@@ -1,7 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class MapScreen extends StatelessWidget {
+  const MapScreen({super.key});
+
+  static const LatLng _pinPosition = LatLng(35.681236, 139.767125); // 東京駅
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Googleマップ')),
+      body: GoogleMap(
+        initialCameraPosition: const CameraPosition(
+          target: _pinPosition,
+          zoom: 15,
+        ),
+        markers: {
+          const Marker(
+            markerId: MarkerId('pin'),
+            position: _pinPosition,
+            infoWindow: InfoWindow(title: '任意のピン'),
+          ),
+        },
+      ),
+    );
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -57,6 +84,14 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final menuItems = [
+      {
+        'title': 'マップ表示',
+        'onTap': () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const MapScreen()));
+        },
+      },
       {'title': 'ダミー機能A', 'onTap': () {}},
       {'title': 'ダミー機能B', 'onTap': () {}},
     ];
