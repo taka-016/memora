@@ -4,7 +4,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 class MapScreen extends StatefulWidget {
-  const MapScreen({super.key});
+  final List<LatLng>? initialPins;
+  const MapScreen({super.key, this.initialPins});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -15,19 +16,39 @@ class _MapScreenState extends State<MapScreen> {
   final Set<Marker> _markers = {};
   GoogleMapController? _mapController;
 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPins != null) {
+      for (var i = 0; i < widget.initialPins!.length; i++) {
+        final position = widget.initialPins![i];
+        final markerId = MarkerId(position.toString());
+        _markers.add(
+          Marker(
+            markerId: markerId,
+            position: position,
+            infoWindow: const InfoWindow(title: 'ピン'),
+            onTap: () => _onPinTap(markerId, position, i),
+          ),
+        );
+      }
+    }
+  }
+
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
   }
 
   void _addPin(LatLng position) {
     final markerId = MarkerId(position.toString());
+    final markerIndex = _markers.length;
     setState(() {
       _markers.add(
         Marker(
           markerId: markerId,
           position: position,
           infoWindow: const InfoWindow(title: 'ピン'),
-          onTap: () => _removePin(markerId),
+          onTap: () => _onPinTap(markerId, position, markerIndex),
         ),
       );
     });
@@ -37,6 +58,26 @@ class _MapScreenState extends State<MapScreen> {
     setState(() {
       _markers.removeWhere((m) => m.markerId == markerId);
     });
+  }
+
+  void _onPinTap(MarkerId markerId, LatLng position, int markerIndex) async {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final Offset overlayOffset = overlay.localToGlobal(Offset.zero);
+
+    final selected = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        overlayOffset.dx + 100,
+        overlayOffset.dy + 200,
+        overlayOffset.dx + 100,
+        overlayOffset.dy + 200,
+      ),
+      items: [const PopupMenuItem<String>(value: 'delete', child: Text('削除'))],
+    );
+    if (selected == 'delete') {
+      _removePin(markerId);
+    }
   }
 
   Future<void> _moveToCurrentLocation() async {
@@ -77,6 +118,21 @@ class _MapScreenState extends State<MapScreen> {
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
           ),
+          // テスト用: ピンの位置に透明なGestureDetectorを重ねてKeyを付与
+          ..._markers.toList().asMap().entries.map((entry) {
+            final i = entry.key;
+            final marker = entry.value;
+            return Positioned(
+              left: 100.0 + i * 10, // 仮の座標（実際のマップ座標と同期しない）
+              top: 200.0 + i * 10,
+              child: GestureDetector(
+                key: Key('map_pin_$i'),
+                onTap: () => _onPinTap(marker.markerId, marker.position, i),
+                behavior: HitTestBehavior.translucent,
+                child: const SizedBox(width: 40, height: 40),
+              ),
+            );
+          }),
           Positioned(
             bottom: 100,
             right: 4,
