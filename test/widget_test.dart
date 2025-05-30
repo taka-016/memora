@@ -8,6 +8,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_verification/main.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   testWidgets('トップメニューが表示される', (WidgetTester tester) async {
@@ -32,4 +33,16 @@ void main() {
     // GoogleMapウィジェットが存在することを確認
     expect(find.byType(GoogleMap), findsOneWidget);
   });
+
+  testWidgets('マップ画面に現在地ボタンが表示される', (WidgetTester tester) async {
+    await tester.pumpWidget(const MyApp());
+    await tester.tap(find.text('マップ表示'));
+    await tester.pumpAndSettle();
+
+    // 現在地ボタン（FloatingActionButton）が存在すること
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    expect(find.byIcon(Icons.my_location), findsOneWidget);
+  });
+
+  // GoogleMapのピン追加・削除はWidgetテストで直接検証できないため、UIの存在確認のみ行う
 }

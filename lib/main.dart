@@ -1,31 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
 
-class MapScreen extends StatelessWidget {
+class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
-  static const LatLng _pinPosition = LatLng(35.681236, 139.767125); // 東京駅
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  static const LatLng _initialPosition = LatLng(35.681236, 139.767125); // 東京駅
+  final Set<Marker> _markers = {};
+  GoogleMapController? _mapController;
+
+  @override
+  void initState() {
+    super.initState();
+    // 初期ピンはなし
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+  }
+
+  void _addPin(LatLng position) {
+    final markerId = MarkerId(position.toString());
+    setState(() {
+      _markers.add(
+        Marker(
+          markerId: markerId,
+          position: position,
+          infoWindow: const InfoWindow(title: 'ピン'),
+          onTap: () => _removePin(markerId),
+        ),
+      );
+    });
+  }
+
+  void _removePin(MarkerId markerId) {
+    setState(() {
+      _markers.removeWhere((m) => m.markerId == markerId);
+    });
+  }
+
+  Future<void> _moveToCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return;
+    }
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return;
+    }
+    final position = await Geolocator.getCurrentPosition();
+    final latLng = LatLng(position.latitude, position.longitude);
+    _mapController?.animateCamera(CameraUpdate.newLatLng(latLng));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Googleマップ')),
-      body: GoogleMap(
-        initialCameraPosition: const CameraPosition(
-          target: _pinPosition,
-          zoom: 15,
-        ),
-        markers: {
-          const Marker(
-            markerId: MarkerId('pin'),
-            position: _pinPosition,
-            infoWindow: InfoWindow(title: '任意のピン'),
+      body: Stack(
+        children: [
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: const CameraPosition(
+              target: _initialPosition,
+              zoom: 15,
+            ),
+            markers: _markers,
+            onTap: _addPin,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
           ),
-        },
+          // 拡大縮小ボタンと重ならないように下部余白を広げる
+          Positioned(
+            bottom: 100,
+            right: 4,
+            child: FloatingActionButton(
+              onPressed: _moveToCurrentLocation,
+              child: const Icon(Icons.my_location),
+            ),
+          ),
+        ],
       ),
     );
   }
