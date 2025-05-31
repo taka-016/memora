@@ -1,4 +1,3 @@
-/// トップメニュー画面
 import 'package:flutter/material.dart';
 import 'map_screen.dart';
 

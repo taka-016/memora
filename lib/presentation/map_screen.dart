@@ -1,7 +1,7 @@
-/// Googleマップ画面
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_verification/infrastructure/pin_repository.dart';
 
 class MapScreen extends StatefulWidget {
   final List<LatLng>? initialPins;
@@ -39,7 +39,7 @@ class _MapScreenState extends State<MapScreen> {
     _mapController = controller;
   }
 
-  void _addPin(LatLng position) {
+  Future<void> _addPin(LatLng position) async {
     final markerId = MarkerId(position.toString());
     final markerIndex = _markers.length;
     setState(() {
@@ -52,6 +52,20 @@ class _MapScreenState extends State<MapScreen> {
         ),
       );
     });
+    try {
+      await PinRepository().savePin(position);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ピンを保存しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ピン保存に失敗: $e')));
+      }
+    }
   }
 
   void _removePin(MarkerId markerId) {
@@ -134,9 +148,10 @@ class _MapScreenState extends State<MapScreen> {
             );
           }),
           Positioned(
-            bottom: 100,
+            bottom: 180,
             right: 4,
             child: FloatingActionButton(
+              heroTag: 'my_location_fab',
               onPressed: _moveToCurrentLocation,
               child: const Icon(Icons.my_location),
             ),
