@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../domain/pin.dart';
 
 class PinRepository {
   final FirebaseFirestore _firestore;
@@ -14,5 +15,17 @@ class PinRepository {
       'longitude': position.longitude,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// ピン位置リストを取得
+  Future<List<Pin>> getPins() async {
+    try {
+      final snapshot = await _firestore.collection('pins').get();
+      return snapshot.docs
+          .map((doc) => Pin.fromFirestore(doc.id, doc.data()))
+          .toList();
+    } catch (e) {
+      return [];
+    }
   }
 }
