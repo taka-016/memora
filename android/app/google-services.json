@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "84109084305",
+    "project_id": "utopian-bonito-461312-r2",
+    "storage_bucket": "utopian-bonito-461312-r2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84109084305:android:cbd4e57369a602962ae130",
+        "android_client_info": {
+          "package_name": "com.example.flutter_verification"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvmo_4JQQXtIxWfTkQ9iYCVvps9hJ-LlU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
