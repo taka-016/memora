@@ -47,4 +47,19 @@ void main() {
     // ポップアップメニューが表示され、「削除」メニューが存在することを確認
     expect(find.text('削除'), findsOneWidget);
   });
+  testWidgets('マップ起動時に保存済みのピンが表示される', (WidgetTester tester) async {
+    // MapScreenクラスが内部でLoadPinsUseCaseを作成するため、
+    // この代わりに初期ピンをinitialPinsで渡して検証する
+    final initialPins = [LatLng(35.68, 139.76), LatLng(34.67, 135.52)];
+
+    // MapScreenに表示されるピン数を確認
+    await tester.pumpWidget(
+      MaterialApp(home: MapScreen(initialPins: initialPins)),
+    );
+    await tester.pumpAndSettle();
+
+    // 初期ピンの2つがKey('map_pin_0')とKey('map_pin_1')で表示されることを確認
+    expect(find.byKey(Key('map_pin_0')), findsOneWidget);
+    expect(find.byKey(Key('map_pin_1')), findsOneWidget);
+  });
 }

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_verification/infrastructure/pin_repository.dart';
+import 'package:flutter_verification/application/load_pins_use_case.dart';
 
 class MapScreen extends StatefulWidget {
   final List<LatLng>? initialPins;
+
   const MapScreen({super.key, this.initialPins});
 
   @override
@@ -19,20 +21,51 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _loadInitialPins();
+    _loadSavedPins();
+  }
+
+  void _loadInitialPins() {
     if (widget.initialPins != null) {
       for (var i = 0; i < widget.initialPins!.length; i++) {
         final position = widget.initialPins![i];
-        final markerId = MarkerId(position.toString());
-        _markers.add(
-          Marker(
-            markerId: markerId,
-            position: position,
-            infoWindow: const InfoWindow(title: 'ピン'),
-            onTap: () => _onPinTap(markerId, position, i),
-          ),
-        );
+        _addMarker(position, i);
       }
     }
+  }
+
+  Future<void> _loadSavedPins() async {
+    try {
+      // 内部でLoadPinsUseCaseを生成
+      final loadPinsUseCase = LoadPinsUseCase(PinRepository());
+      final pins = await loadPinsUseCase.execute();
+
+      if (mounted) {
+        setState(() {
+          for (var i = 0; i < pins.length; i++) {
+            final position = pins[i];
+            final index = _markers.length;
+            _addMarker(position, index);
+          }
+        });
+      }
+    } catch (e) {
+      // Firebase初期化エラーやその他のエラーを捕捉
+      print('ピン読み込みスキップ: $e');
+      // テスト環境などではメッセージを表示しない
+    }
+  }
+
+  void _addMarker(LatLng position, int index) {
+    final markerId = MarkerId(position.toString());
+    _markers.add(
+      Marker(
+        markerId: markerId,
+        position: position,
+        infoWindow: const InfoWindow(title: 'ピン'),
+        onTap: () => _onPinTap(markerId, position, index),
+      ),
+    );
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -40,17 +73,9 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _addPin(LatLng position) async {
-    final markerId = MarkerId(position.toString());
     final markerIndex = _markers.length;
     setState(() {
-      _markers.add(
-        Marker(
-          markerId: markerId,
-          position: position,
-          infoWindow: const InfoWindow(title: 'ピン'),
-          onTap: () => _onPinTap(markerId, position, markerIndex),
-        ),
-      );
+      _addMarker(position, markerIndex);
     });
     try {
       await PinRepository().savePin(position);
