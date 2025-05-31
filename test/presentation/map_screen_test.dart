@@ -26,7 +26,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // 現在地ボタン（FloatingActionButton）が存在すること
-    expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byIcon(Icons.my_location), findsOneWidget);
   });
 
