@@ -1,1 +1,21 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"utopian-bonito-461312-r2","appId":"1:84109084305:android:d2cebf195e87b1092ae130","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"utopian-bonito-461312-r2","configurations":{"android":"1:84109084305:android:d2cebf195e87b1092ae130"}}}}}}
+{
+    "flutter": {
+        "platforms": {
+            "android": {
+                "default": {
+                    "projectId": "utopian-bonito-461312-r2",
+                    "appId": "1:84109084305:android:d2cebf195e87b1092ae130",
+                    "fileOutput": "android/app/google-services.json"
+                }
+            },
+            "dart": {
+                "lib/firebase_options.dart": {
+                    "projectId": "utopian-bonito-461312-r2",
+                    "configurations": {
+                        "android": "1:84109084305:android:d2cebf195e87b1092ae130"
+                    }
+                }
+            }
+        }
+    }
+}
