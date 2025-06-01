@@ -7,7 +7,7 @@ import 'package:flutter_verification/infrastructure/repositories/pin_repository.
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
 
 @GenerateMocks([PinRepository])
-import 'load_pins_use_casetest.mocks.dart';
+import 'load_pins_usecase_test.mocks.dart';
 
 void main() {
   late MockPinRepository mockPinRepository;
