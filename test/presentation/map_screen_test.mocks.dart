@@ -5,7 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:flutter_verification/application/load_pins_use_case.dart'
+import 'package:flutter_verification/application/usecases/load_pins_usecase.dart'
     as _i2;
 import 'package:google_maps_flutter/google_maps_flutter.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;

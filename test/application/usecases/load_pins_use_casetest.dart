@@ -4,10 +4,10 @@ import 'package:mockito/annotations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/domain/pin.dart';
 import 'package:flutter_verification/infrastructure/pin_repository.dart';
-import 'package:flutter_verification/application/load_pins_use_case.dart';
+import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
 
 @GenerateMocks([PinRepository])
-import 'load_pins_use_case_test.mocks.dart';
+import 'load_pins_use_casetest.mocks.dart';
 
 void main() {
   late MockPinRepository mockPinRepository;
