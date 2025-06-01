@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
 import 'map_screen.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -17,9 +18,11 @@ class _MyHomePageState extends State<MyHomePage> {
       {
         'title': 'マップ表示',
         'onTap': () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const MapScreen()));
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MapScreen(pinRepository: PinRepositoryImpl()),
+            ),
+          );
         },
       },
       {'title': 'ダミー機能A', 'onTap': () {}},
