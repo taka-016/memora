@@ -14,13 +14,19 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  static const LatLng _initialPosition = LatLng(35.681236, 139.767125); // 東京駅
+  // Tokyo coordinates as default
+  static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   final Set<Marker> _markers = {};
   GoogleMapController? _mapController;
 
   @override
   void initState() {
     super.initState();
+    _initializeMap();
+  }
+
+  Future<void> _initializeMap() async {
+    // 先にピンを読み込む
     _loadInitialPins();
     _loadSavedPins();
   }
@@ -70,6 +76,8 @@ class _MapScreenState extends State<MapScreen> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+
+    _moveToCurrentLocation();
   }
 
   Future<void> _addPin(LatLng position) async {
@@ -119,25 +127,50 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _moveToCurrentLocation() async {
+  /// 共通の現在地取得メソッド
+  /// @param openSettingsIfDisabled 位置情報サービスが無効な時に設定画面を開くかどうか
+  /// @return 取得できた場合は現在地のLatLng、取得できなかった場合はnull
+  Future<LatLng?> _getCurrentLocation({
+    bool openSettingsIfDisabled = true,
+  }) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      await Geolocator.openLocationSettings();
-      return;
+      if (openSettingsIfDisabled) {
+        await Geolocator.openLocationSettings();
+      }
+      return null;
     }
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return;
+        return null;
       }
     }
+
     if (permission == LocationPermission.deniedForever) {
-      return;
+      return null;
     }
+
     final position = await Geolocator.getCurrentPosition();
-    final latLng = LatLng(position.latitude, position.longitude);
-    _mapController?.animateCamera(CameraUpdate.newLatLng(latLng));
+    return LatLng(position.latitude, position.longitude);
+  }
+
+  /// 現在地に移動するボタンのハンドラー
+  /// @param openSettingsIfDisabled 位置情報サービスが無効な時に設定画面を開くかどうか
+  Future<void> _moveToCurrentLocation({
+    bool openSettingsIfDisabled = true,
+  }) async {
+    _getCurrentLocation(openSettingsIfDisabled: false).then((location) {
+      if (location != null && mounted) {
+        _mapController?.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: location, zoom: 15),
+          ),
+        );
+      }
+    });
   }
 
   @override
@@ -148,8 +181,8 @@ class _MapScreenState extends State<MapScreen> {
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
-            initialCameraPosition: const CameraPosition(
-              target: _initialPosition,
+            initialCameraPosition: CameraPosition(
+              target: _defaultPosition,
               zoom: 15,
             ),
             markers: _markers,
