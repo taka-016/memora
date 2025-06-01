@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../domain/entities/pin.dart';
+import '../mappers/pin_mapper.dart';
 
 class PinRepository {
   final FirebaseFirestore _firestore;
@@ -21,9 +22,7 @@ class PinRepository {
   Future<List<Pin>> getPins() async {
     try {
       final snapshot = await _firestore.collection('pins').get();
-      return snapshot.docs
-          .map((doc) => Pin.fromFirestore(doc.id, doc.data()))
-          .toList();
+      return snapshot.docs.map((doc) => PinMapper.fromFirestore(doc)).toList();
     } catch (e) {
       return [];
     }
