@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/infrastructure/repositories/pin_repository.dart';
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
+import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
 import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/pin_manager.dart';
@@ -68,8 +69,9 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _addPin(LatLng position) async {
     await _pinManager.addPin(position, null);
     setState(() {});
+    final savePinUseCase = SavePinUseCase(PinRepository());
     try {
-      await PinRepository().savePin(position);
+      await savePinUseCase.execute(position);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
