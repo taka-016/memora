@@ -1,5 +1,5 @@
 abstract class LocationService {
-  Future<CurrentLocation> getCurrentLocation();
+  Future<CurrentLocation?> getCurrentLocation();
 }
 
 class CurrentLocation {
