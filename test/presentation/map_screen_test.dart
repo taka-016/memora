@@ -1,6 +1,5 @@
 // coverage:ignore-file
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_verification/main.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/presentation/map_screen.dart';
@@ -8,11 +7,73 @@ import 'package:mockito/annotations.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:mockito/mockito.dart';
 import 'map_screen_test.mocks.dart';
+import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:flutter_verification/domain/entities/pin.dart';
 
 @GenerateMocks([LocationService])
+class MockPinRepository implements PinRepository {
+  List<LatLng> pins = [const LatLng(10, 10), const LatLng(20, 20)];
+
+  @override
+  Future<List<Pin>> getPins() async {
+    return pins
+        .asMap()
+        .entries
+        .map(
+          (e) => Pin(
+            id: e.key.toString(),
+            latitude: e.value.latitude,
+            longitude: e.value.longitude,
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> savePin(LatLng position) async {
+    pins.add(position);
+  }
+}
+
+class TestMyHomePage extends StatelessWidget {
+  final String title;
+  const TestMyHomePage({super.key, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: ListView(
+        children: [
+          ListTile(
+            title: const Text('マップ表示'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => MapScreen(pinRepository: MockPinRepository()),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class TestMyApp extends StatelessWidget {
+  const TestMyApp({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: const TestMyHomePage(title: 'Flutter Demo Home Page'),
+    );
+  }
+}
+
 void main() {
   testWidgets('マップ表示メニューをタップするとGoogleMap画面が表示される', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TestMyApp());
 
     // 「マップ表示」メニューをタップ
     await tester.tap(find.text('マップ表示'));
@@ -26,7 +87,7 @@ void main() {
   });
 
   testWidgets('マップ画面に現在地ボタンが表示される', (WidgetTester tester) async {
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const TestMyApp());
     await tester.tap(find.text('マップ表示'));
     await tester.pumpAndSettle();
 
@@ -38,7 +99,12 @@ void main() {
 
   testWidgets('ピンをタップすると削除メニュー付きポップアップが表示される', (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(home: MapScreen(initialPins: [LatLng(0, 0)])),
+      MaterialApp(
+        home: MapScreen(
+          initialPins: [LatLng(0, 0)],
+          pinRepository: MockPinRepository(),
+        ),
+      ),
     );
 
     // ピンのFinder（仮: Key('map_pin_0')で1つ目のピンを識別）
@@ -59,7 +125,12 @@ void main() {
 
     // MapScreenに表示されるピン数を確認
     await tester.pumpWidget(
-      MaterialApp(home: MapScreen(initialPins: initialPins)),
+      MaterialApp(
+        home: MapScreen(
+          initialPins: initialPins,
+          pinRepository: MockPinRepository(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -75,7 +146,12 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(home: MapScreen(locationService: mockService)),
+      MaterialApp(
+        home: MapScreen(
+          locationService: mockService,
+          pinRepository: MockPinRepository(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 

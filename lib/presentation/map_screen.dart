@@ -3,12 +3,20 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/pin_manager.dart';
+import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
 
 class MapScreen extends StatefulWidget {
   final List<LatLng>? initialPins;
   final LocationService? locationService;
+  final PinRepository? pinRepository;
 
-  const MapScreen({super.key, this.initialPins, this.locationService});
+  const MapScreen({
+    super.key,
+    this.initialPins,
+    this.locationService,
+    this.pinRepository,
+  });
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -16,7 +24,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
-  final PinManager _pinManager = PinManager();
+  late final PinManager _pinManager;
   GoogleMapController? _mapController;
 
   LocationService get _locationService =>
@@ -25,6 +33,9 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _pinManager = PinManager(
+      pinRepository: widget.pinRepository ?? PinRepositoryImpl(),
+    );
     _pinManager.onPinTap = (LatLng position) {
       final marker = _pinManager.markers.firstWhere(
         (m) => m.position == position,

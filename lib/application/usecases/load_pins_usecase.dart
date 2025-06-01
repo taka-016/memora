@@ -1,8 +1,8 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../../infrastructure/repositories/pin_repository_impl.dart';
+import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 
 class LoadPinsUseCase {
-  final PinRepositoryImpl _pinRepository;
+  final PinRepository _pinRepository;
 
   LoadPinsUseCase(this._pinRepository);
 
