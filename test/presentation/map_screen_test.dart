@@ -4,7 +4,12 @@ import 'package:flutter_verification/main.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/presentation/map_screen.dart';
+import 'package:mockito/annotations.dart';
+import 'package:flutter_verification/domain/services/location_service.dart';
+import 'package:mockito/mockito.dart';
+import 'map_screen_test.mocks.dart';
 
+@GenerateMocks([LocationService])
 void main() {
   testWidgets('マップ表示メニューをタップするとGoogleMap画面が表示される', (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
@@ -61,5 +66,24 @@ void main() {
     // 初期ピンの2つがKey('map_pin_0')とKey('map_pin_1')で表示されることを確認
     expect(find.byKey(Key('map_pin_0')), findsOneWidget);
     expect(find.byKey(Key('map_pin_1')), findsOneWidget);
+  });
+
+  testWidgets('現在地ボタンを押すとLocationServiceが呼ばれる', (WidgetTester tester) async {
+    final mockService = MockLocationService();
+    when(mockService.getCurrentLocation()).thenAnswer(
+      (_) async => const CurrentLocation(latitude: 1.0, longitude: 2.0),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: MapScreen(locationService: mockService)),
+    );
+    await tester.pumpAndSettle();
+
+    // 現在地ボタンをタップ
+    await tester.tap(find.byIcon(Icons.my_location));
+    await tester.pumpAndSettle();
+
+    // LocationService.getCurrentLocationが呼ばれたことを検証
+    verify(mockService.getCurrentLocation()).called(1);
   });
 }

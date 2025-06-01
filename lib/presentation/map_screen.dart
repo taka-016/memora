@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_verification/infrastructure/repositories/pin_repository.dart';
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
+import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
+import 'package:flutter_verification/domain/services/location_service.dart';
 
 class MapScreen extends StatefulWidget {
   final List<LatLng>? initialPins;
+  final LocationService? locationService;
 
-  const MapScreen({super.key, this.initialPins});
+  const MapScreen({super.key, this.initialPins, this.locationService});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -18,6 +20,9 @@ class _MapScreenState extends State<MapScreen> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   final Set<Marker> _markers = {};
   GoogleMapController? _mapController;
+
+  LocationService get _locationService =>
+      widget.locationService ?? LocationServiceImpl();
 
   @override
   void initState() {
@@ -133,28 +138,12 @@ class _MapScreenState extends State<MapScreen> {
   Future<LatLng?> _getCurrentLocation({
     bool openSettingsIfDisabled = true,
   }) async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      if (openSettingsIfDisabled) {
-        await Geolocator.openLocationSettings();
-      }
+    try {
+      final loc = await _locationService.getCurrentLocation();
+      return LatLng(loc.latitude, loc.longitude);
+    } catch (e) {
       return null;
     }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      return null;
-    }
-
-    final position = await Geolocator.getCurrentPosition();
-    return LatLng(position.latitude, position.longitude);
   }
 
   /// 現在地に移動するボタンのハンドラー
@@ -162,15 +151,16 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _moveToCurrentLocation({
     bool openSettingsIfDisabled = true,
   }) async {
-    _getCurrentLocation(openSettingsIfDisabled: false).then((location) {
-      if (location != null && mounted) {
-        _mapController?.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(target: location, zoom: 15),
-          ),
-        );
-      }
-    });
+    final location = await _getCurrentLocation(
+      openSettingsIfDisabled: openSettingsIfDisabled,
+    );
+    if (location != null && mounted) {
+      _mapController?.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: 15),
+        ),
+      );
+    }
   }
 
   @override
