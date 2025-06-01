@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository.dart';
-import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
-import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
 import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/pin_manager.dart';
@@ -50,28 +47,11 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  Future<void> _loadSavedPins() async {
-    try {
-      final loadPinsUseCase = LoadPinsUseCase(PinRepository());
-      final pins = await loadPinsUseCase.execute();
-      await _pinManager.loadInitialPins(pins, null);
-    } catch (e) {
-      // Firebase初期化エラーやその他のエラーを捕捉
-      // テスト環境などではメッセージを表示しない
-    }
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-    _moveToCurrentLocation();
-  }
-
   Future<void> _addPin(LatLng position) async {
     await _pinManager.addPin(position, null);
     setState(() {});
-    final savePinUseCase = SavePinUseCase(PinRepository());
     try {
-      await savePinUseCase.execute(position);
+      await _pinManager.savePin(position);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -84,6 +64,20 @@ class _MapScreenState extends State<MapScreen> {
         ).showSnackBar(SnackBar(content: Text('ピン保存に失敗: $e')));
       }
     }
+  }
+
+  Future<void> _loadSavedPins() async {
+    try {
+      await _pinManager.loadSavedPins();
+    } catch (e) {
+      // Firebase初期化エラーやその他のエラーを捕捉
+      // テスト環境などではメッセージを表示しない
+    }
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _moveToCurrentLocation();
   }
 
   void _removePin(MarkerId markerId) {

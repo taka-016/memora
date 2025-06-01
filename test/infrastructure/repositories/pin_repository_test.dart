@@ -3,7 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository.dart';
+import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -15,10 +15,10 @@ import 'package:flutter_verification/infrastructure/repositories/pin_repository.
 import 'pin_repository_test.mocks.dart';
 
 void main() {
-  group('PinRepository', () {
+  group('PinRepositoryImpl', () {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late PinRepository repository;
+    late PinRepositoryImpl repository;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
     late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc1;
     late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc2;
@@ -30,7 +30,7 @@ void main() {
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockFirestore.collection('pins')).thenReturn(mockCollection);
-      repository = PinRepository(firestore: mockFirestore);
+      repository = PinRepositoryImpl(firestore: mockFirestore);
     });
 
     test('savePinがpins collectionにaddする', () async {
