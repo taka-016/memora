@@ -5,9 +5,8 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:flutter_verification/application/usecases/load_pins_usecase.dart'
+import 'package:flutter_verification/domain/services/location_service.dart'
     as _i2;
-import 'package:google_maps_flutter/google_maps_flutter.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -24,18 +23,30 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-/// A class which mocks [LoadPinsUseCase].
+class _FakeCurrentLocation_0 extends _i1.SmartFake
+    implements _i2.CurrentLocation {
+  _FakeCurrentLocation_0(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+/// A class which mocks [LocationService].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockLoadPinsUseCase extends _i1.Mock implements _i2.LoadPinsUseCase {
+class MockLocationService extends _i1.Mock implements _i2.LocationService {
+  MockLocationService() {
+    _i1.throwOnMissingStub(this);
+  }
+
   @override
-  _i3.Future<List<_i4.LatLng>> execute() =>
+  _i3.Future<_i2.CurrentLocation> getCurrentLocation() =>
       (super.noSuchMethod(
-            Invocation.method(#execute, []),
-            returnValue: _i3.Future<List<_i4.LatLng>>.value(<_i4.LatLng>[]),
-            returnValueForMissingStub: _i3.Future<List<_i4.LatLng>>.value(
-              <_i4.LatLng>[],
+            Invocation.method(#getCurrentLocation, []),
+            returnValue: _i3.Future<_i2.CurrentLocation>.value(
+              _FakeCurrentLocation_0(
+                this,
+                Invocation.method(#getCurrentLocation, []),
+              ),
             ),
           )
-          as _i3.Future<List<_i4.LatLng>>);
+          as _i3.Future<_i2.CurrentLocation>);
 }
