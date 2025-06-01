@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository.dart';
+import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
 import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
 
-@GenerateMocks([PinRepository])
+@GenerateMocks([PinRepositoryImpl])
 import 'save_pin_usecase_test.mocks.dart';
 
 void main() {

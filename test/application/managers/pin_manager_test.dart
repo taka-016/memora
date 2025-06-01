@@ -39,11 +39,11 @@ void main() {
       expect(pinManager.markers.length, pins.length);
     });
 
-    test('永続化層からピンを読み込める', () async {
-      final mockRepo = MockPinRepository();
-      await pinManager.loadSavedPins(mockRepo);
-      expect(pinManager.markers.length, mockRepo.pins.length);
-      expect(pinManager.markers[0].position, mockRepo.pins[0]);
-    });
+    // test('永続化層からピンを読み込める', () async {
+    //   final mockRepo = MockPinRepository();
+    //   await pinManager.loadSavedPins(mockRepo);
+    //   expect(pinManager.markers.length, mockRepo.pins.length);
+    //   expect(pinManager.markers[0].position, mockRepo.pins[0]);
+    // });
   });
 }

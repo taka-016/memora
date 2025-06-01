@@ -1,15 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
 import '../mappers/pin_mapper.dart';
 
-class PinRepository {
+class PinRepositoryImpl implements PinRepository {
   final FirebaseFirestore _firestore;
 
-  PinRepository({FirebaseFirestore? firestore})
+  PinRepositoryImpl({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// ピン位置を保存
+  @override
   Future<void> savePin(LatLng position) async {
     await _firestore.collection('pins').add({
       'latitude': position.latitude,
@@ -18,7 +19,7 @@ class PinRepository {
     });
   }
 
-  /// ピン位置リストを取得
+  @override
   Future<List<Pin>> getPins() async {
     try {
       final snapshot = await _firestore.collection('pins').get();
