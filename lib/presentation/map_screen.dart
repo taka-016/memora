@@ -116,35 +116,21 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  /// 共通の現在地取得メソッド
-  /// @param openSettingsIfDisabled 位置情報サービスが無効な時に設定画面を開くかどうか
-  /// @return 取得できた場合は現在地のLatLng、取得できなかった場合はnull
-  Future<LatLng?> _getCurrentLocation({
-    bool openSettingsIfDisabled = true,
-  }) async {
-    try {
-      final loc = await _locationService.getCurrentLocation();
-      return LatLng(loc.latitude, loc.longitude);
-    } catch (e) {
-      return null;
+  Future<void> _moveToCurrentLocation() async {
+    final loc = await _locationService.getCurrentLocation();
+    if (loc == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('現在地が取得できませんでした')));
+      return;
     }
-  }
-
-  /// 現在地に移動するボタンのハンドラー
-  /// @param openSettingsIfDisabled 位置情報サービスが無効な時に設定画面を開くかどうか
-  Future<void> _moveToCurrentLocation({
-    bool openSettingsIfDisabled = true,
-  }) async {
-    final location = await _getCurrentLocation(
-      openSettingsIfDisabled: openSettingsIfDisabled,
+    final location = LatLng(loc.latitude, loc.longitude);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 15),
+      ),
     );
-    if (location != null && mounted) {
-      _mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: 15),
-        ),
-      );
-    }
   }
 
   @override
