@@ -4,6 +4,7 @@ import 'package:flutter_verification/infrastructure/repositories/pin_repository.
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
 import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
+import 'package:flutter_verification/application/managers/pin_manager.dart';
 
 class MapScreen extends StatefulWidget {
   final List<LatLng>? initialPins;
@@ -16,9 +17,8 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  // Tokyo coordinates as default
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
-  final Set<Marker> _markers = {};
+  final PinManager _pinManager = PinManager();
   GoogleMapController? _mapController;
 
   LocationService get _locationService =>
@@ -27,69 +27,47 @@ class _MapScreenState extends State<MapScreen> {
   @override
   void initState() {
     super.initState();
+    _pinManager.onPinTap = (LatLng position) {
+      final marker = _pinManager.markers.firstWhere(
+        (m) => m.position == position,
+      );
+      final index = _pinManager.markers.indexOf(marker);
+      _onPinTap(marker.markerId, position, index);
+    };
     _initializeMap();
   }
 
   Future<void> _initializeMap() async {
-    // 先にピンを読み込む
-    _loadInitialPins();
-    _loadSavedPins();
+    await _loadInitialPins();
+    await _loadSavedPins();
+    setState(() {});
   }
 
-  void _loadInitialPins() {
+  Future<void> _loadInitialPins() async {
     if (widget.initialPins != null) {
-      for (var i = 0; i < widget.initialPins!.length; i++) {
-        final position = widget.initialPins![i];
-        _addMarker(position, i);
-      }
+      await _pinManager.loadInitialPins(widget.initialPins!, null);
     }
   }
 
   Future<void> _loadSavedPins() async {
     try {
-      // 内部でLoadPinsUseCaseを生成
       final loadPinsUseCase = LoadPinsUseCase(PinRepository());
       final pins = await loadPinsUseCase.execute();
-
-      if (mounted) {
-        setState(() {
-          for (var i = 0; i < pins.length; i++) {
-            final position = pins[i];
-            final index = _markers.length;
-            _addMarker(position, index);
-          }
-        });
-      }
+      await _pinManager.loadInitialPins(pins, null);
     } catch (e) {
       // Firebase初期化エラーやその他のエラーを捕捉
-      print('ピン読み込みスキップ: $e');
       // テスト環境などではメッセージを表示しない
     }
   }
 
-  void _addMarker(LatLng position, int index) {
-    final markerId = MarkerId(position.toString());
-    _markers.add(
-      Marker(
-        markerId: markerId,
-        position: position,
-        infoWindow: const InfoWindow(title: 'ピン'),
-        onTap: () => _onPinTap(markerId, position, index),
-      ),
-    );
-  }
-
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-
     _moveToCurrentLocation();
   }
 
   Future<void> _addPin(LatLng position) async {
-    final markerIndex = _markers.length;
-    setState(() {
-      _addMarker(position, markerIndex);
-    });
+    await _pinManager.addPin(position, null);
+    setState(() {});
     try {
       await PinRepository().savePin(position);
       if (mounted) {
@@ -107,9 +85,8 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   void _removePin(MarkerId markerId) {
-    setState(() {
-      _markers.removeWhere((m) => m.markerId == markerId);
-    });
+    _pinManager.removePin(markerId);
+    setState(() {});
   }
 
   void _onPinTap(MarkerId markerId, LatLng position, int markerIndex) async {
@@ -175,17 +152,16 @@ class _MapScreenState extends State<MapScreen> {
               target: _defaultPosition,
               zoom: 15,
             ),
-            markers: _markers,
+            markers: _pinManager.markers.toSet(),
             onTap: _addPin,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
           ),
-          // テスト用: ピンの位置に透明なGestureDetectorを重ねてKeyを付与
-          ..._markers.toList().asMap().entries.map((entry) {
+          ..._pinManager.markers.toList().asMap().entries.map((entry) {
             final i = entry.key;
             final marker = entry.value;
             return Positioned(
-              left: 100.0 + i * 10, // 仮の座標（実際のマップ座標と同期しない）
+              left: 100.0 + i * 10,
               top: 200.0 + i * 10,
               child: GestureDetector(
                 key: Key('map_pin_$i'),
