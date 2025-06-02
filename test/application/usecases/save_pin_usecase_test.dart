@@ -9,11 +9,11 @@ import 'package:flutter_verification/application/usecases/save_pin_usecase.dart'
 import 'save_pin_usecase_test.mocks.dart';
 
 void main() {
-  late MockPinRepository mockPinRepository;
+  late MockPinRepositoryImpl mockPinRepository;
   late SavePinUseCase savePinUseCase;
 
   setUp(() {
-    mockPinRepository = MockPinRepository();
+    mockPinRepository = MockPinRepositoryImpl();
     savePinUseCase = SavePinUseCase(mockPinRepository);
   });
 

@@ -28,8 +28,8 @@ import 'package:mockito/mockito.dart' as _i1;
 /// A class which mocks [PinRepositoryImpl].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockPinRepository extends _i1.Mock implements _i2.PinRepositoryImpl {
-  MockPinRepository() {
+class MockPinRepositoryImpl extends _i1.Mock implements _i2.PinRepositoryImpl {
+  MockPinRepositoryImpl() {
     _i1.throwOnMissingStub(this);
   }
 
@@ -49,4 +49,13 @@ class MockPinRepository extends _i1.Mock implements _i2.PinRepositoryImpl {
             returnValue: _i3.Future<List<_i5.Pin>>.value(<_i5.Pin>[]),
           )
           as _i3.Future<List<_i5.Pin>>);
+
+  @override
+  _i3.Future<void> deletePin(String? pinId) =>
+      (super.noSuchMethod(
+            Invocation.method(#deletePin, [pinId]),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
 }

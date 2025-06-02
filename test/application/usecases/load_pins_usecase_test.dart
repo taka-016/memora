@@ -10,11 +10,11 @@ import 'package:flutter_verification/application/usecases/load_pins_usecase.dart
 import 'load_pins_usecase_test.mocks.dart';
 
 void main() {
-  late MockPinRepository mockPinRepository;
+  late MockPinRepositoryImpl mockPinRepository;
   late LoadPinsUseCase loadPinsUseCase;
 
   setUp(() {
-    mockPinRepository = MockPinRepository();
+    mockPinRepository = MockPinRepositoryImpl();
     loadPinsUseCase = LoadPinsUseCase(mockPinRepository);
   });
 
