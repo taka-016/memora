@@ -57,8 +57,13 @@ void main() {
       final marker = pinManager.markers.firstWhere(
         (m) => m.position == position,
       );
-      pinManager.removePin(marker.markerId);
+      // まずリポジトリにも追加
+      await mockRepo.savePin(position);
+      // removePinをawaitで呼び出せるようにする前提
+      await pinManager.removePin(marker.markerId);
       expect(pinManager.markers.any((m) => m.position == position), isFalse);
+      // リポジトリからも削除されていることを確認
+      expect(mockRepo.pins.any((p) => p == position), isFalse);
     });
 
     test('初期ピンを読み込める', () async {
