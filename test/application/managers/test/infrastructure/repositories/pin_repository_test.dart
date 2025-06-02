@@ -26,6 +26,15 @@ class MockPinRepository implements PinRepository {
   Future<void> savePin(LatLng position) async {
     pins.add(position);
   }
+
+  @override
+  Future<void> deletePin(String pinId) async {
+    // テスト用: pinsリストから該当IDのピンを削除
+    final index = int.tryParse(pinId);
+    if (index != null && index >= 0 && index < pins.length) {
+      pins.removeAt(index);
+    }
+  }
 }
 
 typedef PinTapCallback = void Function(LatLng position);

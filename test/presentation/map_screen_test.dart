@@ -33,6 +33,14 @@ class MockPinRepository implements PinRepository {
   Future<void> savePin(LatLng position) async {
     pins.add(position);
   }
+
+  @override
+  Future<void> deletePin(String pinId) async {
+    final index = int.tryParse(pinId);
+    if (index != null && index >= 0 && index < pins.length) {
+      pins.removeAt(index);
+    }
+  }
 }
 
 class TestMyHomePage extends StatelessWidget {

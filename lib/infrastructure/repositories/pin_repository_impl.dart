@@ -28,4 +28,9 @@ class PinRepositoryImpl implements PinRepository {
       return [];
     }
   }
+
+  @override
+  Future<void> deletePin(String pinId) async {
+    await _firestore.collection('pins').doc(pinId).delete();
+  }
 }

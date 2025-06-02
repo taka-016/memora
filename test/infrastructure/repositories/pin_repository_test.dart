@@ -79,5 +79,17 @@ void main() {
 
       expect(result, isEmpty);
     });
+
+    test('deletePinがpins collectionの該当ドキュメントを削除する', () async {
+      const pinId = 'test_pin_id';
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      when(mockCollection.doc(pinId)).thenReturn(mockDocRef);
+      when(mockDocRef.delete()).thenAnswer((_) async {});
+
+      await repository.deletePin(pinId);
+
+      verify(mockCollection.doc(pinId)).called(1);
+      verify(mockDocRef.delete()).called(1);
+    });
   });
 }
