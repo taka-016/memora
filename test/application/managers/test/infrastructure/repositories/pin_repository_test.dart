@@ -29,7 +29,6 @@ class MockPinRepository implements PinRepository {
 
   @override
   Future<void> deletePin(String pinId) async {
-    // テスト用: pinsリストから該当IDのピンを削除
     final index = int.tryParse(pinId);
     if (index != null && index >= 0 && index < pins.length) {
       pins.removeAt(index);
