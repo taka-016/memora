@@ -30,7 +30,14 @@ class PinRepositoryImpl implements PinRepository {
   }
 
   @override
-  Future<void> deletePin(String pinId) async {
-    await _firestore.collection('pins').doc(pinId).delete();
+  Future<void> deletePin(double latitude, double longitude) async {
+    final query = await _firestore
+        .collection('pins')
+        .where('latitude', isEqualTo: latitude)
+        .where('longitude', isEqualTo: longitude)
+        .get();
+    for (final doc in query.docs) {
+      await _firestore.collection('pins').doc(doc.id).delete();
+    }
   }
 }

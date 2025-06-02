@@ -35,11 +35,8 @@ class MockPinRepository implements PinRepository {
   }
 
   @override
-  Future<void> deletePin(String pinId) async {
-    final index = int.tryParse(pinId);
-    if (index != null && index >= 0 && index < pins.length) {
-      pins.removeAt(index);
-    }
+  Future<void> deletePin(double latitude, double longitude) async {
+    pins.removeWhere((p) => p.latitude == latitude && p.longitude == longitude);
   }
 }
 

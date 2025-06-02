@@ -17,20 +17,29 @@ void main() {
   });
 
   group('DeletePinUseCase', () {
-    test('指定したIDのピンを削除する', () async {
-      const pinId = 'test_pin_id';
-      when(mockPinRepository.deletePin(pinId)).thenAnswer((_) async => Future.value());
+    test('指定した座標のピンを削除する', () async {
+      const latitude = 35.0;
+      const longitude = 139.0;
+      when(
+        mockPinRepository.deletePin(latitude, longitude),
+      ).thenAnswer((_) async => Future.value());
 
-      await deletePinUseCase.execute(pinId);
+      await deletePinUseCase.execute(latitude, longitude);
 
-      verify(mockPinRepository.deletePin(pinId)).called(1);
+      verify(mockPinRepository.deletePin(latitude, longitude)).called(1);
     });
 
     test('削除時に例外が発生した場合、例外が投げられる', () async {
-      const pinId = 'test_pin_id';
-      when(mockPinRepository.deletePin(pinId)).thenThrow(Exception('削除失敗'));
+      const latitude = 35.0;
+      const longitude = 139.0;
+      when(
+        mockPinRepository.deletePin(latitude, longitude),
+      ).thenThrow(Exception('削除失敗'));
 
-      expect(() => deletePinUseCase.execute(pinId), throwsException);
+      expect(
+        () => deletePinUseCase.execute(latitude, longitude),
+        throwsException,
+      );
     });
   });
 }
