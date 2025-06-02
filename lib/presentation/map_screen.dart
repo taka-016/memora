@@ -91,9 +91,22 @@ class _MapScreenState extends State<MapScreen> {
     _moveToCurrentLocation();
   }
 
-  void _removePin(MarkerId markerId) {
-    _pinManager.removePin(markerId);
-    setState(() {});
+  Future<void> _removePin(MarkerId markerId) async {
+    try {
+      await _pinManager.removePin(markerId);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('ピンを削除しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ピン削除に失敗: $e')));
+      }
+    }
   }
 
   void _onPinTap(MarkerId markerId, LatLng position, int markerIndex) async {
@@ -112,7 +125,7 @@ class _MapScreenState extends State<MapScreen> {
       items: [const PopupMenuItem<String>(value: 'delete', child: Text('削除'))],
     );
     if (selected == 'delete') {
-      _removePin(markerId);
+      await _removePin(markerId);
     }
   }
 

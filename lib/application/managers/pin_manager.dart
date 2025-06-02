@@ -2,6 +2,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
 import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
+import 'package:flutter_verification/application/usecases/delete_pin_usecase.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 
 class PinManager {
@@ -23,8 +24,18 @@ class PinManager {
     markers.add(marker);
   }
 
-  void removePin(MarkerId markerId) {
-    markers.removeWhere((m) => m.markerId == markerId);
+  Future<void> removePin(MarkerId markerId) async {
+    try {
+      final marker = markers.firstWhere((m) => m.markerId == markerId);
+      markers.removeWhere((m) => m.markerId == markerId);
+      final deletePinUseCase = DeletePinUseCase(pinRepository);
+      await deletePinUseCase.execute(
+        marker.position.latitude,
+        marker.position.longitude,
+      );
+    } catch (e) {
+      // markerが見つからない場合は何もしない
+    }
   }
 
   Future<void> loadInitialPins(List<LatLng> pins, VoidCallback? onTap) async {
