@@ -48,14 +48,12 @@ class PinManager {
     }
   }
 
-  /// Firestore等から保存済みピンをロードする
   Future<void> loadSavedPins() async {
     final loadPinsUseCase = LoadPinsUseCase(pinRepository);
     final pins = await loadPinsUseCase.execute();
     await loadInitialPins(pins, null);
   }
 
-  /// Firestore等にピンを保存する
   Future<void> savePin(Marker marker) async {
     final savePinUseCase = SavePinUseCase(pinRepository);
     await savePinUseCase.execute(
