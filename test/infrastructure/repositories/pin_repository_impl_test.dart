@@ -12,7 +12,7 @@ import 'package:flutter_verification/infrastructure/repositories/pin_repository_
   QuerySnapshot,
   QueryDocumentSnapshot,
 ])
-import 'pin_repository_test.mocks.dart';
+import 'pin_repository_impl_test.mocks.dart';
 
 void main() {
   group('PinRepositoryImpl', () {
