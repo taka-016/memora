@@ -6,6 +6,7 @@ class PinMapper {
     final data = doc.data();
     return Pin(
       id: doc.id,
+      markerId: data?['markerId'] as String? ?? '',
       latitude: (data?['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (data?['longitude'] as num?)?.toDouble() ?? 0.0,
     );
