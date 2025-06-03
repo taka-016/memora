@@ -8,7 +8,6 @@ import 'dart:async' as _i3;
 import 'package:flutter_verification/domain/entities/pin.dart' as _i4;
 import 'package:flutter_verification/domain/repositories/pin_repository.dart'
     as _i2;
-import 'package:google_maps_flutter/google_maps_flutter.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -42,9 +41,13 @@ class MockPinRepository extends _i1.Mock implements _i2.PinRepository {
           as _i3.Future<List<_i4.Pin>>);
 
   @override
-  _i3.Future<void> savePin(_i5.LatLng? position) =>
+  _i3.Future<void> savePin(
+    String? markerId,
+    double? latitude,
+    double? longitude,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#savePin, [position]),
+            Invocation.method(#savePin, [markerId, latitude, longitude]),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )

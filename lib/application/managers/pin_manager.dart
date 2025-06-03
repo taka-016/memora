@@ -4,6 +4,7 @@ import 'package:flutter_verification/application/usecases/load_pins_usecase.dart
 import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
 import 'package:flutter_verification/application/usecases/delete_pin_usecase.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:uuid/uuid.dart';
 
 class PinManager {
   final List<Marker> markers = [];
@@ -12,9 +13,10 @@ class PinManager {
 
   PinManager({required this.pinRepository});
 
-  Future<void> addPin(LatLng position, VoidCallback? onTap) async {
+  Future<Marker> addPin(LatLng position, VoidCallback? onTap) async {
+    final uuid = Uuid();
     final marker = Marker(
-      markerId: MarkerId(position.toString()),
+      markerId: MarkerId(uuid.v4()),
       position: position,
       onTap: () {
         if (onTap != null) onTap();
@@ -22,6 +24,7 @@ class PinManager {
       },
     );
     markers.add(marker);
+    return marker;
   }
 
   Future<void> removePin(MarkerId markerId) async {
@@ -53,8 +56,12 @@ class PinManager {
   }
 
   /// Firestore等にピンを保存する
-  Future<void> savePin(LatLng position) async {
+  Future<void> savePin(Marker marker) async {
     final savePinUseCase = SavePinUseCase(pinRepository);
-    await savePinUseCase.execute(position);
+    await savePinUseCase.execute(
+      marker.markerId.value,
+      marker.position.latitude,
+      marker.position.longitude,
+    );
   }
 }

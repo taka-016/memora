@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:flutter_verification/infrastructure/mappers/pin_mapper.dart';
-import '../repositories/pin_repository_test.mocks.dart';
+import '../repositories/pin_repository_impl_test.mocks.dart';
 
 void main() {
   group('PinMapper', () {

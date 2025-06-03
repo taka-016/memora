@@ -33,25 +33,32 @@ void main() {
       repository = PinRepositoryImpl(firestore: mockFirestore);
     });
 
-    test('savePinがpins collectionにaddする', () async {
-      final position = LatLng(35.0, 139.0);
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+    test(
+      'savePinがpins collectionにmarkerId, latitude, longitudeをaddする',
+      () async {
+        const markerId = 'test-marker-id';
+        const latitude = 35.0;
+        const longitude = 139.0;
+        when(mockCollection.add(any)).thenAnswer(
+          (_) async => MockDocumentReference<Map<String, dynamic>>(),
+        );
 
-      await repository.savePin(position);
+        await repository.savePin(markerId, latitude, longitude);
 
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf(
-              containsPair('latitude', position.latitude),
-              containsPair('longitude', position.longitude),
+        verify(
+          mockCollection.add(
+            argThat(
+              allOf(
+                containsPair('markerId', markerId),
+                containsPair('latitude', latitude),
+                containsPair('longitude', longitude),
+                contains('createdAt'),
+              ),
             ),
           ),
-        ),
-      ).called(1);
-    });
+        ).called(1);
+      },
+    );
 
     test('getPinsがFirestoreからPinのリストを返す', () async {
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);

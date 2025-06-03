@@ -5,10 +5,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i3;
 
-import 'package:flutter_verification/domain/entities/pin.dart' as _i5;
+import 'package:flutter_verification/domain/entities/pin.dart' as _i4;
 import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart'
     as _i2;
-import 'package:google_maps_flutter/google_maps_flutter.dart' as _i4;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -34,21 +33,25 @@ class MockPinRepositoryImpl extends _i1.Mock implements _i2.PinRepositoryImpl {
   }
 
   @override
-  _i3.Future<void> savePin(_i4.LatLng? position) =>
+  _i3.Future<void> savePin(
+    String? markerId,
+    double? latitude,
+    double? longitude,
+  ) =>
       (super.noSuchMethod(
-            Invocation.method(#savePin, [position]),
+            Invocation.method(#savePin, [markerId, latitude, longitude]),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
           as _i3.Future<void>);
 
   @override
-  _i3.Future<List<_i5.Pin>> getPins() =>
+  _i3.Future<List<_i4.Pin>> getPins() =>
       (super.noSuchMethod(
             Invocation.method(#getPins, []),
-            returnValue: _i3.Future<List<_i5.Pin>>.value(<_i5.Pin>[]),
+            returnValue: _i3.Future<List<_i4.Pin>>.value(<_i4.Pin>[]),
           )
-          as _i3.Future<List<_i5.Pin>>);
+          as _i3.Future<List<_i4.Pin>>);
 
   @override
   _i3.Future<void> deletePin(double? latitude, double? longitude) =>
