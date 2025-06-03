@@ -19,21 +19,32 @@ void main() {
 
   group('SavePinUseCase', () {
     test('正常にピンを保存できる', () async {
-      final position = const LatLng(35.0, 135.0);
+      const markerId = 'test-marker-id';
+      const latitude = 35.0;
+      const longitude = 139.0;
       when(
-        mockPinRepository.savePin(position),
+        mockPinRepository.savePin(markerId, latitude, longitude),
       ).thenAnswer((_) async => Future.value());
 
-      await savePinUseCase.execute(position);
+      await savePinUseCase.execute(markerId, latitude, longitude);
 
-      verify(mockPinRepository.savePin(position)).called(1);
+      verify(
+        mockPinRepository.savePin(markerId, latitude, longitude),
+      ).called(1);
     });
 
     test('保存時に例外が発生した場合、例外が投げられる', () async {
-      final position = const LatLng(35.0, 135.0);
-      when(mockPinRepository.savePin(position)).thenThrow(Exception('保存失敗'));
+      const markerId = 'test-marker-id';
+      const latitude = 35.0;
+      const longitude = 139.0;
+      when(
+        mockPinRepository.savePin(markerId, latitude, longitude),
+      ).thenThrow(Exception('保存失敗'));
 
-      expect(() => savePinUseCase.execute(position), throwsException);
+      expect(
+        () => savePinUseCase.execute(markerId, latitude, longitude),
+        throwsException,
+      );
     });
   });
 }

@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
 import '../mappers/pin_mapper.dart';
@@ -11,10 +10,15 @@ class PinRepositoryImpl implements PinRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> savePin(LatLng position) async {
+  Future<void> savePin(
+    String markerId,
+    double latitude,
+    double longitude,
+  ) async {
     await _firestore.collection('pins').add({
-      'latitude': position.latitude,
-      'longitude': position.longitude,
+      'markerId': markerId,
+      'latitude': latitude,
+      'longitude': longitude,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }

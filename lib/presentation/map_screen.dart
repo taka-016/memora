@@ -59,10 +59,10 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _addPin(LatLng position) async {
-    await _pinManager.addPin(position, null);
+    Marker marker = await _pinManager.addPin(position, null);
     setState(() {});
     try {
-      await _pinManager.savePin(position);
+      await _pinManager.savePin(marker);
       if (mounted) {
         ScaffoldMessenger.of(
           context,

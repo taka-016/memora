@@ -30,8 +30,12 @@ class MockPinRepository implements PinRepository {
   }
 
   @override
-  Future<void> savePin(LatLng position) async {
-    pins.add(position);
+  Future<void> savePin(
+    String markerId,
+    double latitude,
+    double longitude,
+  ) async {
+    pins.add(LatLng(latitude, longitude));
   }
 
   @override
