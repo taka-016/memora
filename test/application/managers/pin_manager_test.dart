@@ -15,6 +15,7 @@ class MockPinRepository implements PinRepository {
         .map(
           (e) => Pin(
             id: e.key.toString(),
+            markerId: e.key.toString(),
             latitude: e.value.latitude,
             longitude: e.value.longitude,
           ),
