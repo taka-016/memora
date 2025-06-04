@@ -1,3 +1,4 @@
+import 'package:flutter_verification/domain/entities/pin.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
@@ -13,10 +14,14 @@ class PinManager {
 
   PinManager({required this.pinRepository});
 
-  Future<Marker> addPin(LatLng position, VoidCallback? onTap) async {
+  Future<Marker> addPin(
+    LatLng position,
+    MarkerId? markerId,
+    VoidCallback? onTap,
+  ) async {
     final uuid = Uuid();
     final marker = Marker(
-      markerId: MarkerId(uuid.v4()),
+      markerId: markerId ?? MarkerId(uuid.v4()),
       position: position,
       onTap: () {
         if (onTap != null) onTap();
@@ -29,22 +34,22 @@ class PinManager {
 
   Future<void> removePin(MarkerId markerId) async {
     try {
-      final marker = markers.firstWhere((m) => m.markerId == markerId);
       markers.removeWhere((m) => m.markerId == markerId);
       final deletePinUseCase = DeletePinUseCase(pinRepository);
-      await deletePinUseCase.execute(
-        marker.position.latitude,
-        marker.position.longitude,
-      );
+      await deletePinUseCase.execute(markerId.value);
     } catch (e) {
       // markerが見つからない場合は何もしない
     }
   }
 
-  Future<void> loadInitialPins(List<LatLng> pins, VoidCallback? onTap) async {
+  Future<void> loadInitialPins(List<Pin> pins, VoidCallback? onTap) async {
     markers.clear();
     for (final pin in pins) {
-      await addPin(pin, onTap);
+      await addPin(
+        LatLng(pin.latitude, pin.longitude),
+        MarkerId(pin.markerId),
+        onTap,
+      );
     }
   }
 

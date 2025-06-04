@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_verification/domain/entities/pin.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
@@ -7,7 +8,7 @@ import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
 
 class MapScreen extends StatefulWidget {
-  final List<LatLng>? initialPins;
+  final List<Pin>? initialPins;
   final LocationService? locationService;
   final PinRepository? pinRepository;
 
@@ -59,7 +60,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _addPin(LatLng position) async {
-    Marker marker = await _pinManager.addPin(position, null);
+    Marker marker = await _pinManager.addPin(position, null, null);
     setState(() {});
     try {
       await _pinManager.savePin(marker);

@@ -88,16 +88,11 @@ void main() {
     });
 
     test('deletePinがpins collectionの該当ドキュメントを削除する', () async {
-      const latitude = 35.0;
-      const longitude = 139.0;
+      const markerId = 'test-marker-id';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      // Firestoreのwhere検索のモックは省略（本体はFirestoreのテストで担保）
-      // 今回はdeletePinが例外なく呼ばれることのみ確認
+
       when(
-        mockCollection.where('latitude', isEqualTo: latitude),
-      ).thenReturn(mockCollection);
-      when(
-        mockCollection.where('longitude', isEqualTo: longitude),
+        mockCollection.where('markerId', isEqualTo: markerId),
       ).thenReturn(mockCollection);
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
@@ -106,10 +101,9 @@ void main() {
       when(mockCollection.doc('dummy_id')).thenReturn(mockDocRef);
       when(mockDocRef.delete()).thenAnswer((_) async {});
 
-      await repository.deletePin(latitude, longitude);
+      await repository.deletePin(markerId);
 
-      verify(mockCollection.where('latitude', isEqualTo: latitude)).called(1);
-      verify(mockCollection.where('longitude', isEqualTo: longitude)).called(1);
+      verify(mockCollection.where('markerId', isEqualTo: markerId)).called(1);
       verify(mockCollection.get()).called(1);
       verify(mockCollection.doc('dummy_id')).called(1);
       verify(mockDocRef.delete()).called(1);

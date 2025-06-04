@@ -5,7 +5,10 @@ import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
 
 class MockPinRepository implements PinRepository {
-  List<LatLng> pins = [const LatLng(10, 10), const LatLng(20, 20)];
+  List<Pin> pins = [
+    Pin(id: '1', markerId: '1', latitude: 10, longitude: 10),
+    Pin(id: '2', markerId: '2', latitude: 20, longitude: 20),
+  ];
 
   @override
   Future<List<Pin>> getPins() async {
@@ -14,8 +17,8 @@ class MockPinRepository implements PinRepository {
         .entries
         .map(
           (e) => Pin(
-            id: e.key.toString(),
-            markerId: e.key.toString(),
+            id: e.value.id,
+            markerId: e.value.markerId,
             latitude: e.value.latitude,
             longitude: e.value.longitude,
           ),
@@ -29,12 +32,19 @@ class MockPinRepository implements PinRepository {
     double latitude,
     double longitude,
   ) async {
-    pins.add(LatLng(latitude, longitude));
+    pins.add(
+      Pin(
+        id: markerId,
+        markerId: markerId,
+        latitude: latitude,
+        longitude: longitude,
+      ),
+    );
   }
 
   @override
-  Future<void> deletePin(double latitude, double longitude) async {
-    pins.removeWhere((p) => p.latitude == latitude && p.longitude == longitude);
+  Future<void> deletePin(String markerId) async {
+    pins.removeWhere((pin) => pin.markerId == markerId);
   }
 }
 
@@ -51,32 +61,31 @@ void main() {
     });
 
     test('ピンを追加できる', () async {
+      final markerId = MarkerId('test-marker-id');
       final position = const LatLng(35.0, 139.0);
-      await pinManager.addPin(position, null);
-      expect(pinManager.markers.any((m) => m.position == position), isTrue);
+      await pinManager.addPin(position, markerId, null);
+      expect(pinManager.markers.any((m) => m.markerId == markerId), isTrue);
     });
 
-    // test('ピンを削除できる', () async {
-    //   final position = const LatLng(35.0, 139.0);
-    //   await pinManager.addPin(position, null);
-    //   final marker = pinManager.markers.firstWhere(
-    //     (m) => m.position == position,
-    //   );
-    //   // まずリポジトリにも追加
-    //   await mockRepo.savePin(
-    //     marker.markerId,
-    //     position.latitude,
-    //     position.longitude,
-    //   );
-    //   // removePinをawaitで呼び出せるようにする前提
-    //   await pinManager.removePin(marker.markerId);
-    //   expect(pinManager.markers.any((m) => m.position == position), isFalse);
-    //   // リポジトリからも削除されていることを確認
-    //   expect(mockRepo.pins.any((p) => p == position), isFalse);
-    // });
+    test('ピンを削除できる', () async {
+      final markerId = MarkerId('test-marker-id');
+      final position = const LatLng(35.0, 139.0);
+      await pinManager.addPin(position, markerId, null);
+      await mockRepo.savePin(
+        markerId.value,
+        position.latitude,
+        position.longitude,
+      );
+      await pinManager.removePin(markerId);
+      expect(pinManager.markers.any((m) => m.markerId == markerId), isFalse);
+      expect(mockRepo.pins.any((p) => p.markerId == markerId.value), isFalse);
+    });
 
     test('初期ピンを読み込める', () async {
-      final pins = [const LatLng(35.1, 139.1), const LatLng(35.2, 139.2)];
+      final pins = [
+        Pin(id: '1', markerId: '1', latitude: 35.1, longitude: 139.1),
+        Pin(id: '2', markerId: '2', latitude: 35.2, longitude: 139.2),
+      ];
       await pinManager.loadInitialPins(pins, null);
       expect(pinManager.markers.length, pins.length);
     });
@@ -84,7 +93,7 @@ void main() {
     test('永続化層からピンを読み込める', () async {
       await pinManager.loadSavedPins();
       expect(pinManager.markers.length, mockRepo.pins.length);
-      expect(pinManager.markers[0].position, mockRepo.pins[0]);
+      expect(pinManager.markers[0].markerId.value, mockRepo.pins[0].markerId);
     });
   });
 }
