@@ -32,10 +32,10 @@ void main() {
       final result = await loadPinsUseCase.execute();
 
       // Assert
-      expect(result, isA<List<LatLng>>());
+      expect(result, isA<List<Pin>>());
       expect(result.length, 2);
-      expect(result[0], equals(const LatLng(35.681236, 139.767125)));
-      expect(result[1], equals(const LatLng(34.123456, 135.123456)));
+      expect(result[0].markerId, pins[0].markerId);
+      expect(result[1].markerId, pins[1].markerId);
       verify(mockPinRepository.getPins()).called(1);
     });
 
@@ -47,7 +47,7 @@ void main() {
       final result = await loadPinsUseCase.execute();
 
       // Assert
-      expect(result, isA<List<LatLng>>());
+      expect(result, isA<List<Pin>>());
       expect(result.isEmpty, true);
       verify(mockPinRepository.getPins()).called(1);
     });
