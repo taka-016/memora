@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
+import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 import 'map_screen.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -20,7 +20,8 @@ class _MyHomePageState extends State<MyHomePage> {
         'onTap': () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => MapScreen(pinRepository: PinRepositoryImpl()),
+              builder: (_) =>
+                  MapScreen(pinRepository: FirestorePinRepository()),
             ),
           );
         },

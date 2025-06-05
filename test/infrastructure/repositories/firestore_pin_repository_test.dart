@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
+import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -11,13 +11,13 @@ import 'package:flutter_verification/infrastructure/repositories/pin_repository_
   QuerySnapshot,
   QueryDocumentSnapshot,
 ])
-import 'pin_repository_impl_test.mocks.dart';
+import 'firestore_pin_repository_test.mocks.dart';
 
 void main() {
-  group('PinRepositoryImpl', () {
+  group('FirestorePinRepository', () {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
-    late PinRepositoryImpl repository;
+    late FirestorePinRepository repository;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
     late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc1;
     late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc2;
@@ -29,7 +29,7 @@ void main() {
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockFirestore.collection('pins')).thenReturn(mockCollection);
-      repository = PinRepositoryImpl(firestore: mockFirestore);
+      repository = FirestorePinRepository(firestore: mockFirestore);
     });
 
     test(
