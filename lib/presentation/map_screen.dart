@@ -5,7 +5,7 @@ import 'package:flutter_verification/infrastructure/services/geolocator_location
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/pin_manager.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
+import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 
 class MapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -35,7 +35,7 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _pinManager = PinManager(
-      pinRepository: widget.pinRepository ?? PinRepositoryImpl(),
+      pinRepository: widget.pinRepository ?? FirestorePinRepository(),
     );
     _pinManager.onPinTap = (LatLng position) {
       final marker = _pinManager.markers.firstWhere(

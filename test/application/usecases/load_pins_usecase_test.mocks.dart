@@ -6,7 +6,7 @@
 import 'dart:async' as _i3;
 
 import 'package:flutter_verification/domain/entities/pin.dart' as _i4;
-import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart'
+import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart'
     as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -24,11 +24,12 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-/// A class which mocks [PinRepositoryImpl].
+/// A class which mocks [FirestorePinRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockPinRepositoryImpl extends _i1.Mock implements _i2.PinRepositoryImpl {
-  MockPinRepositoryImpl() {
+class MockFirestorePinRepository extends _i1.Mock
+    implements _i2.FirestorePinRepository {
+  MockFirestorePinRepository() {
     _i1.throwOnMissingStub(this);
   }
 

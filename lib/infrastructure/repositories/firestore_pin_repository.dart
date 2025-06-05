@@ -3,10 +3,10 @@ import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
 import '../mappers/pin_mapper.dart';
 
-class PinRepositoryImpl implements PinRepository {
+class FirestorePinRepository implements PinRepository {
   final FirebaseFirestore _firestore;
 
-  PinRepositoryImpl({FirebaseFirestore? firestore})
+  FirestorePinRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override

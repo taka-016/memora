@@ -2,18 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
-import 'package:flutter_verification/infrastructure/repositories/pin_repository_impl.dart';
+import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
 
-@GenerateMocks([PinRepositoryImpl])
+@GenerateMocks([FirestorePinRepository])
 import 'load_pins_usecase_test.mocks.dart';
 
 void main() {
-  late MockPinRepositoryImpl mockPinRepository;
+  late MockFirestorePinRepository mockPinRepository;
   late LoadPinsUseCase loadPinsUseCase;
 
   setUp(() {
-    mockPinRepository = MockPinRepositoryImpl();
+    mockPinRepository = MockFirestorePinRepository();
     loadPinsUseCase = LoadPinsUseCase(mockPinRepository);
   });
 
