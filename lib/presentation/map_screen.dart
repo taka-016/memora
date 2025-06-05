@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/infrastructure/services/location_service_impl.dart';
+import 'package:flutter_verification/infrastructure/services/geolocator_location_service.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/pin_manager.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
@@ -29,7 +29,7 @@ class _MapScreenState extends State<MapScreen> {
   GoogleMapController? _mapController;
 
   LocationService get _locationService =>
-      widget.locationService ?? LocationServiceImpl();
+      widget.locationService ?? GeolocatorLocationService();
 
   @override
   void initState() {
