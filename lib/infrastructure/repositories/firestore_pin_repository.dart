@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
-import '../mappers/pin_mapper.dart';
+import '../mappers/firestore_pin_mapper.dart';
 
 class FirestorePinRepository implements PinRepository {
   final FirebaseFirestore _firestore;
@@ -27,7 +27,9 @@ class FirestorePinRepository implements PinRepository {
   Future<List<Pin>> getPins() async {
     try {
       final snapshot = await _firestore.collection('pins').get();
-      return snapshot.docs.map((doc) => PinMapper.fromFirestore(doc)).toList();
+      return snapshot.docs
+          .map((doc) => FirestorePinMapper.fromFirestore(doc))
+          .toList();
     } catch (e) {
       return [];
     }
