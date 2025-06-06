@@ -6,7 +6,6 @@ class LoadPinsUseCase {
 
   LoadPinsUseCase(this._pinRepository);
 
-  /// ピンの位置リストを取得して返す
   Future<List<Pin>> execute() async {
     return await _pinRepository.getPins();
   }
