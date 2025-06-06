@@ -13,45 +13,25 @@ import 'package:flutter_verification/domain/entities/pin.dart';
 @GenerateMocks([LocationService])
 class MockPinRepository implements PinRepository {
   List<Pin> pins = [
-    Pin(id: '1', markerId: '1', latitude: 10, longitude: 10),
-    Pin(id: '2', markerId: '2', latitude: 20, longitude: 20),
+    Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
+    Pin(id: '2', pinId: '2', latitude: 20, longitude: 20),
   ];
 
   @override
   Future<List<Pin>> getPins() async {
-    return pins
-        .asMap()
-        .entries
-        .map(
-          (e) => Pin(
-            id: e.value.id,
-            markerId: e.value.markerId,
-            latitude: e.value.latitude,
-            longitude: e.value.longitude,
-          ),
-        )
-        .toList();
+    return pins.toList();
   }
 
   @override
-  Future<void> savePin(
-    String markerId,
-    double latitude,
-    double longitude,
-  ) async {
+  Future<void> savePin(String pinId, double latitude, double longitude) async {
     pins.add(
-      Pin(
-        id: markerId,
-        markerId: markerId,
-        latitude: latitude,
-        longitude: longitude,
-      ),
+      Pin(id: pinId, pinId: pinId, latitude: latitude, longitude: longitude),
     );
   }
 
   @override
-  Future<void> deletePin(String markerId) async {
-    pins.removeWhere((pin) => pin.markerId == markerId);
+  Future<void> deletePin(String pinId) async {
+    pins.removeWhere((pin) => pin.pinId == pinId);
   }
 }
 
@@ -120,9 +100,7 @@ void main() {
   testWidgets('ピンをタップすると削除メニュー付きポップアップが表示される', (WidgetTester tester) async {
     // MapScreenクラスが内部でLoadPinsUseCaseを作成するため、
     // この代わりに初期ピンをinitialPinsで渡して検証する
-    final initialPins = [
-      Pin(id: '1', markerId: '1', latitude: 10, longitude: 10),
-    ];
+    final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
     await tester.pumpWidget(
       MaterialApp(
         home: MapScreen(
@@ -146,9 +124,7 @@ void main() {
   testWidgets('マップ起動時に保存済みのピンが表示される', (WidgetTester tester) async {
     // MapScreenクラスが内部でLoadPinsUseCaseを作成するため、
     // この代わりに初期ピンをinitialPinsで渡して検証する
-    final initialPins = [
-      Pin(id: '1', markerId: '1', latitude: 10, longitude: 10),
-    ];
+    final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
 
     // MapScreenに表示されるピン数を確認
     await tester.pumpWidget(

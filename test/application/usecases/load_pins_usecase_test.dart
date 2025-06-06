@@ -21,8 +21,8 @@ void main() {
     test('getPinsが呼ばれたとき、LatLngのリストを返す', () async {
       // Arrange
       final pins = [
-        Pin(id: '1', markerId: '1', latitude: 35.681236, longitude: 139.767125),
-        Pin(id: '2', markerId: '2', latitude: 34.123456, longitude: 135.123456),
+        Pin(id: '1', pinId: '1', latitude: 35.681236, longitude: 139.767125),
+        Pin(id: '2', pinId: '2', latitude: 34.123456, longitude: 135.123456),
       ];
 
       when(mockPinRepository.getPins()).thenAnswer((_) async => pins);
@@ -33,8 +33,8 @@ void main() {
       // Assert
       expect(result, isA<List<Pin>>());
       expect(result.length, 2);
-      expect(result[0].markerId, pins[0].markerId);
-      expect(result[1].markerId, pins[1].markerId);
+      expect(result[0].pinId, pins[0].pinId);
+      expect(result[1].pinId, pins[1].pinId);
       verify(mockPinRepository.getPins()).called(1);
     });
 

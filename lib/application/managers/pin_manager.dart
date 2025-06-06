@@ -47,7 +47,7 @@ class PinManager {
     for (final pin in pins) {
       await addPin(
         LatLng(pin.latitude, pin.longitude),
-        MarkerId(pin.markerId),
+        MarkerId(pin.pinId),
         onTap,
       );
     }

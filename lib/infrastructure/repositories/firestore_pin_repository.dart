@@ -10,13 +10,9 @@ class FirestorePinRepository implements PinRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> savePin(
-    String markerId,
-    double latitude,
-    double longitude,
-  ) async {
+  Future<void> savePin(String pinId, double latitude, double longitude) async {
     await _firestore.collection('pins').add({
-      'markerId': markerId,
+      'pinId': pinId,
       'latitude': latitude,
       'longitude': longitude,
       'createdAt': FieldValue.serverTimestamp(),
@@ -36,10 +32,10 @@ class FirestorePinRepository implements PinRepository {
   }
 
   @override
-  Future<void> deletePin(String markerId) async {
+  Future<void> deletePin(String pinId) async {
     final query = await _firestore
         .collection('pins')
-        .where('markerId', isEqualTo: markerId)
+        .where('pinId', isEqualTo: pinId)
         .get();
     for (final doc in query.docs) {
       await _firestore.collection('pins').doc(doc.id).delete();

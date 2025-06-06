@@ -4,7 +4,7 @@ class DeletePinUseCase {
   final PinRepository pinRepository;
   DeletePinUseCase(this.pinRepository);
 
-  Future<void> execute(String markerId) async {
-    await pinRepository.deletePin(markerId);
+  Future<void> execute(String pinId) async {
+    await pinRepository.deletePin(pinId);
   }
 }

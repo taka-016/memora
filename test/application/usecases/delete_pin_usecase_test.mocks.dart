@@ -42,21 +42,21 @@ class MockPinRepository extends _i1.Mock implements _i2.PinRepository {
 
   @override
   _i3.Future<void> savePin(
-    String? markerId,
+    String? pinId,
     double? latitude,
     double? longitude,
   ) =>
       (super.noSuchMethod(
-            Invocation.method(#savePin, [markerId, latitude, longitude]),
+            Invocation.method(#savePin, [pinId, latitude, longitude]),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
           as _i3.Future<void>);
 
   @override
-  _i3.Future<void> deletePin(String? markerId) =>
+  _i3.Future<void> deletePin(String? pinId) =>
       (super.noSuchMethod(
-            Invocation.method(#deletePin, [markerId]),
+            Invocation.method(#deletePin, [pinId]),
             returnValue: _i3.Future<void>.value(),
             returnValueForMissingStub: _i3.Future<void>.value(),
           )
