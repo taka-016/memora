@@ -1,7 +1,7 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_verification/domain/services/location_service.dart';
+import 'package:flutter_verification/domain/services/current_location_service.dart';
 
-class GeolocatorLocationService implements LocationService {
+class GeolocatorCurrentLocationService implements CurrentLocationService {
   @override
   Future<CurrentLocation?> getCurrentLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();

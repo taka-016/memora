@@ -4,13 +4,13 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/presentation/google_map_screen.dart';
 import 'package:mockito/annotations.dart';
-import 'package:flutter_verification/domain/services/location_service.dart';
+import 'package:flutter_verification/domain/services/current_location_service.dart';
 import 'package:mockito/mockito.dart';
-import 'map_screen_test.mocks.dart';
+import 'google_map_screen_test.mocks.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
 
-@GenerateMocks([LocationService])
+@GenerateMocks([CurrentLocationService])
 class MockPinRepository implements PinRepository {
   List<Pin> pins = [
     Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
@@ -143,8 +143,10 @@ void main() {
     expect(find.byKey(Key('map_marker_1')), findsOneWidget);
   });
 
-  testWidgets('現在地ボタンを押すとLocationServiceが呼ばれる', (WidgetTester tester) async {
-    final mockService = MockLocationService();
+  testWidgets('現在地ボタンを押すとCurrentLocationServiceが呼ばれる', (
+    WidgetTester tester,
+  ) async {
+    final mockService = MockCurrentLocationService();
     when(mockService.getCurrentLocation()).thenAnswer(
       (_) async => const CurrentLocation(latitude: 1.0, longitude: 2.0),
     );
