@@ -2,7 +2,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_verification/presentation/map_screen.dart';
+import 'package:flutter_verification/presentation/google_map_screen.dart';
 import 'package:mockito/annotations.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:mockito/mockito.dart';
@@ -50,7 +50,8 @@ class TestMyHomePage extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => MapScreen(pinRepository: MockPinRepository()),
+                  builder: (_) =>
+                      GoogleMapScreen(pinRepository: MockPinRepository()),
                 ),
               );
             },
@@ -95,41 +96,41 @@ void main() {
     expect(find.byIcon(Icons.my_location), findsOneWidget);
   });
 
-  // GoogleMapのピン追加・削除はWidgetテストで直接検証できないため、UIの存在確認のみ行う
+  // GoogleMapのマーカー追加・削除はWidgetテストで直接検証できないため、UIの存在確認のみ行う
 
-  testWidgets('ピンをタップすると削除メニュー付きポップアップが表示される', (WidgetTester tester) async {
-    // MapScreenクラスが内部でLoadPinsUseCaseを作成するため、
-    // この代わりに初期ピンをinitialPinsで渡して検証する
+  testWidgets('マーカーをタップすると削除メニュー付きポップアップが表示される', (WidgetTester tester) async {
+    // GoogleMapScreenクラスが内部でLoadPinsUseCaseを作成するため、
+    // この代わりに初期マーカーをinitialPinsで渡して検証する
     final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
     await tester.pumpWidget(
       MaterialApp(
-        home: MapScreen(
+        home: GoogleMapScreen(
           initialPins: initialPins,
           pinRepository: MockPinRepository(),
         ),
       ),
     );
 
-    // ピンのFinder（仮: Key('map_pin_0')で1つ目のピンを識別）
-    final pinFinder = find.byKey(Key('map_pin_0'));
-    expect(pinFinder, findsOneWidget);
+    // マーカーのFinder（仮: Key('map_marker_0')で1つ目のマーカーを識別）
+    final markerFinder = find.byKey(Key('map_marker_0'));
+    expect(markerFinder, findsOneWidget);
 
-    // ピンをタップ
-    await tester.tap(pinFinder);
+    // マーカーをタップ
+    await tester.tap(markerFinder);
     await tester.pumpAndSettle();
 
     // ポップアップメニューが表示され、「削除」メニューが存在することを確認
     expect(find.text('削除'), findsOneWidget);
   });
-  testWidgets('マップ起動時に保存済みのピンが表示される', (WidgetTester tester) async {
-    // MapScreenクラスが内部でLoadPinsUseCaseを作成するため、
-    // この代わりに初期ピンをinitialPinsで渡して検証する
+  testWidgets('マップ起動時に保存済みのマーカーが表示される', (WidgetTester tester) async {
+    // GoogleMapScreenクラスが内部でLoadPinsUseCaseを作成するため、
+    // この代わりに初期マーカーをinitialPinsで渡して検証する
     final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
 
-    // MapScreenに表示されるピン数を確認
+    // GoogleMapScreenに表示されるマーカー数を確認
     await tester.pumpWidget(
       MaterialApp(
-        home: MapScreen(
+        home: GoogleMapScreen(
           initialPins: initialPins,
           pinRepository: MockPinRepository(),
         ),
@@ -137,9 +138,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // 初期ピンの2つがKey('map_pin_0')とKey('map_pin_1')で表示されることを確認
-    expect(find.byKey(Key('map_pin_0')), findsOneWidget);
-    expect(find.byKey(Key('map_pin_1')), findsOneWidget);
+    // 初期マーカーの2つがKey('map_marker_0')とKey('map_marker_1')で表示されることを確認
+    expect(find.byKey(Key('map_marker_0')), findsOneWidget);
+    expect(find.byKey(Key('map_marker_1')), findsOneWidget);
   });
 
   testWidgets('現在地ボタンを押すとLocationServiceが呼ばれる', (WidgetTester tester) async {
@@ -150,7 +151,7 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: MapScreen(
+        home: GoogleMapScreen(
           locationService: mockService,
           pinRepository: MockPinRepository(),
         ),

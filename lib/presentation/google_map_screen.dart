@@ -7,12 +7,12 @@ import 'package:flutter_verification/application/managers/pin_manager.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 
-class MapScreen extends StatefulWidget {
+class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
   final LocationService? locationService;
   final PinRepository? pinRepository;
 
-  const MapScreen({
+  const GoogleMapScreen({
     super.key,
     this.initialPins,
     this.locationService,
@@ -20,10 +20,10 @@ class MapScreen extends StatefulWidget {
   });
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  State<GoogleMapScreen> createState() => _GoogleMapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _GoogleMapScreenState extends State<GoogleMapScreen> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   late final PinManager _pinManager;
   GoogleMapController? _mapController;
@@ -42,48 +42,51 @@ class _MapScreenState extends State<MapScreen> {
         (m) => m.position == position,
       );
       final index = _pinManager.markers.indexOf(marker);
-      _onPinTap(marker.markerId, position, index);
+      _onMarkerTap(marker.markerId, position, index);
     };
     _initializeMap();
   }
 
   Future<void> _initializeMap() async {
-    await _loadInitialPins();
-    await _loadSavedPins();
+    await _loadInitialMarkers();
+    await _loadSavedMarkers();
     setState(() {});
   }
 
-  Future<void> _loadInitialPins() async {
+  Future<void> _loadInitialMarkers() async {
     if (widget.initialPins != null) {
-      await _pinManager.loadInitialPins(widget.initialPins!, null);
+      await _pinManager.loadInitialMarkers(widget.initialPins!, null);
     }
   }
 
-  Future<void> _addPin(LatLng position) async {
-    Marker marker = await _pinManager.addPin(position, null, null);
+  Future<void> _addMarker(LatLng position) async {
+    Marker marker = await _pinManager.addMarker(position, null, null);
     setState(() {});
     try {
-      await _pinManager.savePin(marker);
+      await _pinManager.saveMarker(marker);
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('ピンを保存しました')));
+        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('ピン保存に失敗: $e')));
+        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
       }
     }
   }
 
-  Future<void> _loadSavedPins() async {
+  Future<void> _loadSavedMarkers() async {
     try {
-      await _pinManager.loadSavedPins();
+      await _pinManager.loadSavedMarkers();
     } catch (e) {
-      // Firebase初期化エラーやその他のエラーを捕捉
-      // テスト環境などではメッセージを表示しない
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカーの読み込みに失敗: $e')));
+      }
     }
   }
 
@@ -92,25 +95,25 @@ class _MapScreenState extends State<MapScreen> {
     _moveToCurrentLocation();
   }
 
-  Future<void> _removePin(MarkerId markerId) async {
+  Future<void> _removeMarker(MarkerId markerId) async {
     try {
-      await _pinManager.removePin(markerId);
+      await _pinManager.removeMarker(markerId);
       setState(() {});
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('ピンを削除しました')));
+        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('ピン削除に失敗: $e')));
+        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
       }
     }
   }
 
-  void _onPinTap(MarkerId markerId, LatLng position, int markerIndex) async {
+  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
     final RenderBox overlay =
         Overlay.of(context).context.findRenderObject() as RenderBox;
     final Offset overlayOffset = overlay.localToGlobal(Offset.zero);
@@ -126,7 +129,7 @@ class _MapScreenState extends State<MapScreen> {
       items: [const PopupMenuItem<String>(value: 'delete', child: Text('削除'))],
     );
     if (selected == 'delete') {
-      await _removePin(markerId);
+      await _removeMarker(markerId);
     }
   }
 
@@ -160,7 +163,7 @@ class _MapScreenState extends State<MapScreen> {
               zoom: 15,
             ),
             markers: _pinManager.markers.toSet(),
-            onTap: _addPin,
+            onTap: _addMarker,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
           ),
@@ -171,8 +174,8 @@ class _MapScreenState extends State<MapScreen> {
               left: 100.0 + i * 10,
               top: 200.0 + i * 10,
               child: GestureDetector(
-                key: Key('map_pin_$i'),
-                onTap: () => _onPinTap(marker.markerId, marker.position, i),
+                key: Key('map_marker_$i'),
+                onTap: () => _onMarkerTap(marker.markerId, marker.position, i),
                 behavior: HitTestBehavior.translucent,
                 child: const SizedBox(width: 40, height: 40),
               ),
