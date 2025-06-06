@@ -4,11 +4,7 @@ class SavePinUseCase {
   final PinRepository pinRepository;
   SavePinUseCase(this.pinRepository);
 
-  Future<void> execute(
-    String markerId,
-    double latitude,
-    double longitude,
-  ) async {
-    await pinRepository.savePin(markerId, latitude, longitude);
+  Future<void> execute(String pinId, double latitude, double longitude) async {
+    await pinRepository.savePin(pinId, latitude, longitude);
   }
 }

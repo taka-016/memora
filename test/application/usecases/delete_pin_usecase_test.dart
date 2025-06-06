@@ -18,21 +18,21 @@ void main() {
 
   group('DeletePinUseCase', () {
     test('指定した座標のピンを削除する', () async {
-      const markerId = 'test-marker-id';
+      const pinId = 'test-marker-id';
       when(
-        mockPinRepository.deletePin(markerId),
+        mockPinRepository.deletePin(pinId),
       ).thenAnswer((_) async => Future.value());
 
-      await deletePinUseCase.execute(markerId);
+      await deletePinUseCase.execute(pinId);
 
-      verify(mockPinRepository.deletePin(markerId)).called(1);
+      verify(mockPinRepository.deletePin(pinId)).called(1);
     });
 
     test('削除時に例外が発生した場合、例外が投げられる', () async {
-      const markerId = 'test-marker-id';
-      when(mockPinRepository.deletePin(markerId)).thenThrow(Exception('削除失敗'));
+      const pinId = 'test-marker-id';
+      when(mockPinRepository.deletePin(pinId)).thenThrow(Exception('削除失敗'));
 
-      expect(() => deletePinUseCase.execute(markerId), throwsException);
+      expect(() => deletePinUseCase.execute(pinId), throwsException);
     });
   });
 }
