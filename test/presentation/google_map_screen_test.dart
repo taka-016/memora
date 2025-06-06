@@ -166,4 +166,12 @@ void main() {
     // LocationService.getCurrentLocationが呼ばれたことを検証
     verify(mockService.getCurrentLocation()).called(1);
   });
+
+  testWidgets('GoogleMapScreenに検索バーが表示される', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: GoogleMapScreen(pinRepository: MockPinRepository())),
+    );
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('場所を検索'), findsOneWidget);
+  });
 }
