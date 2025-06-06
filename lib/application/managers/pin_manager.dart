@@ -14,7 +14,7 @@ class PinManager {
 
   PinManager({required this.pinRepository});
 
-  Future<Marker> addPin(
+  Future<Marker> addMarker(
     LatLng position,
     MarkerId? markerId,
     VoidCallback? onTap,
@@ -32,7 +32,7 @@ class PinManager {
     return marker;
   }
 
-  Future<void> removePin(MarkerId markerId) async {
+  Future<void> removeMarker(MarkerId markerId) async {
     try {
       markers.removeWhere((m) => m.markerId == markerId);
       final deletePinUseCase = DeletePinUseCase(pinRepository);
@@ -42,10 +42,10 @@ class PinManager {
     }
   }
 
-  Future<void> loadInitialPins(List<Pin> pins, VoidCallback? onTap) async {
+  Future<void> loadInitialMarkers(List<Pin> pins, VoidCallback? onTap) async {
     markers.clear();
     for (final pin in pins) {
-      await addPin(
+      await addMarker(
         LatLng(pin.latitude, pin.longitude),
         MarkerId(pin.pinId),
         onTap,
@@ -53,13 +53,13 @@ class PinManager {
     }
   }
 
-  Future<void> loadSavedPins() async {
+  Future<void> loadSavedMarkers() async {
     final loadPinsUseCase = LoadPinsUseCase(pinRepository);
     final pins = await loadPinsUseCase.execute();
-    await loadInitialPins(pins, null);
+    await loadInitialMarkers(pins, null);
   }
 
-  Future<void> savePin(Marker marker) async {
+  Future<void> saveMarker(Marker marker) async {
     final savePinUseCase = SavePinUseCase(pinRepository);
     await savePinUseCase.execute(
       marker.markerId.value,

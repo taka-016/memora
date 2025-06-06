@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
-import 'map_screen.dart';
+import 'google_map_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -21,7 +21,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) =>
-                  MapScreen(pinRepository: FirestorePinRepository()),
+                  GoogleMapScreen(pinRepository: FirestorePinRepository()),
             ),
           );
         },

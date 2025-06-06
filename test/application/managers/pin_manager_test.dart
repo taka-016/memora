@@ -43,20 +43,20 @@ void main() {
     test('ピンを追加できる', () async {
       final markerId = MarkerId('test-marker-id');
       final position = const LatLng(35.0, 139.0);
-      await pinManager.addPin(position, markerId, null);
+      await pinManager.addMarker(position, markerId, null);
       expect(pinManager.markers.any((m) => m.markerId == markerId), isTrue);
     });
 
     test('ピンを削除できる', () async {
       final markerId = MarkerId('test-marker-id');
       final position = const LatLng(35.0, 139.0);
-      await pinManager.addPin(position, markerId, null);
+      await pinManager.addMarker(position, markerId, null);
       await mockRepo.savePin(
         markerId.value,
         position.latitude,
         position.longitude,
       );
-      await pinManager.removePin(markerId);
+      await pinManager.removeMarker(markerId);
       expect(pinManager.markers.any((m) => m.markerId == markerId), isFalse);
       expect(mockRepo.pins.any((p) => p.pinId == markerId.value), isFalse);
     });
@@ -66,12 +66,12 @@ void main() {
         Pin(id: '1', pinId: '1', latitude: 35.1, longitude: 139.1),
         Pin(id: '2', pinId: '2', latitude: 35.2, longitude: 139.2),
       ];
-      await pinManager.loadInitialPins(pins, null);
+      await pinManager.loadInitialMarkers(pins, null);
       expect(pinManager.markers.length, pins.length);
     });
 
     test('永続化層からピンを読み込める', () async {
-      await pinManager.loadSavedPins();
+      await pinManager.loadSavedMarkers();
       expect(pinManager.markers.length, mockRepo.pins.length);
       expect(pinManager.markers[0].markerId.value, mockRepo.pins[0].pinId);
     });
