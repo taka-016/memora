@@ -3,7 +3,7 @@ import 'package:flutter_verification/domain/entities/pin.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/infrastructure/services/geolocator_location_service.dart';
 import 'package:flutter_verification/domain/services/location_service.dart';
-import 'package:flutter_verification/application/managers/pin_manager.dart';
+import 'package:flutter_verification/application/managers/google_map_marker_manager.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 
@@ -25,7 +25,7 @@ class GoogleMapScreen extends StatefulWidget {
 
 class _GoogleMapScreenState extends State<GoogleMapScreen> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
-  late final PinManager _pinManager;
+  late final GoogleMapMarkerManager _pinManager;
   GoogleMapController? _mapController;
 
   LocationService get _locationService =>
@@ -34,7 +34,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   @override
   void initState() {
     super.initState();
-    _pinManager = PinManager(
+    _pinManager = GoogleMapMarkerManager(
       pinRepository: widget.pinRepository ?? FirestorePinRepository(),
     );
     _pinManager.onPinTap = (LatLng position) {

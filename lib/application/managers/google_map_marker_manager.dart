@@ -7,12 +7,12 @@ import 'package:flutter_verification/application/usecases/delete_pin_usecase.dar
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:uuid/uuid.dart';
 
-class PinManager {
+class GoogleMapMarkerManager {
   final List<Marker> markers = [];
   void Function(LatLng position)? onPinTap;
   final PinRepository pinRepository;
 
-  PinManager({required this.pinRepository});
+  GoogleMapMarkerManager({required this.pinRepository});
 
   Future<Marker> addMarker(
     LatLng position,
