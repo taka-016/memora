@@ -1,4 +1,4 @@
-abstract class LocationService {
+abstract class CurrentLocationService {
   Future<CurrentLocation?> getCurrentLocation();
 }
 
