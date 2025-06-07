@@ -6,6 +6,8 @@ import 'package:flutter_verification/domain/services/location_service.dart';
 import 'package:flutter_verification/application/managers/google_map_marker_manager.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:flutter_verification/presentation/widgets/google_places_search_bar.dart';
+import 'package:flutter_verification/keys.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -150,6 +152,15 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     );
   }
 
+  void _moveToSearchedLocation(double latitude, double longitude) {
+    final location = LatLng(latitude, longitude);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 15),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,6 +177,15 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
             onTap: _addMarker,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
+          ),
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: GooglePlacesSearchBar(
+              apiKey: googleMapsApiKey,
+              onPlaceSelected: _moveToSearchedLocation,
+            ),
           ),
           ..._pinManager.markers.toList().asMap().entries.map((entry) {
             final i = entry.key;
