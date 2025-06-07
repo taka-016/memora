@@ -45,7 +45,6 @@ class GooglePlacesSearchBarState extends State<GooglePlacesSearchBar> {
           fillColor: Colors.white,
         ),
         debounceTime: 400,
-        countries: const ['jp'],
         isLatLngRequired: true,
         getPlaceDetailWithLatLng: (prediction) {
           try {
