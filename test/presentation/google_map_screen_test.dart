@@ -9,6 +9,7 @@ import 'package:mockito/mockito.dart';
 import 'google_map_screen_test.mocks.dart';
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:flutter_verification/presentation/widgets/google_places_search_bar.dart';
 
 @GenerateMocks([CurrentLocationService])
 class MockPinRepository implements PinRepository {
@@ -168,12 +169,12 @@ void main() {
     // LocationService.getCurrentLocationが呼ばれたことを検証
     verify(mockService.getCurrentLocation()).called(1);
   });
-
-  testWidgets('GoogleMapScreenに検索バーが表示される', (WidgetTester tester) async {
+  testWidgets('GooglePlacesSearchBarが表示される', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(home: GoogleMapScreen(pinRepository: MockPinRepository())),
     );
-    expect(find.byType(TextField), findsOneWidget);
-    expect(find.text('場所を検索'), findsOneWidget);
+    await tester.pumpAndSettle();
+    // 検索バーが表示されていること
+    expect(find.byType(GooglePlacesSearchBar), findsOneWidget);
   });
 }
