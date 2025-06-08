@@ -7,6 +7,8 @@ import 'package:flutter_verification/application/managers/google_map_marker_mana
 import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:flutter_verification/presentation/widgets/search_bar.dart';
+import 'package:flutter_verification/infrastructure/services/google_places_api_location_search_service.dart';
+import 'package:flutter_verification/keys.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -151,8 +153,23 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     );
   }
 
+  Future<void> _moveToSearchedLocation(
+    double latitude,
+    double longitude,
+  ) async {
+    final location = LatLng(latitude, longitude);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 15),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final locationSearchService = GooglePlacesApiLocationSearchService(
+      apiKey: googlePlacesApiKey,
+    );
     return Scaffold(
       appBar: AppBar(title: const Text('Googleマップ')),
       body: Stack(
@@ -172,7 +189,16 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
             top: 16,
             left: 16,
             right: 16,
-            child: const CustomSearchBar(hintText: '場所を検索'),
+            child: CustomSearchBar(
+              hintText: '場所を検索',
+              locationSearchService: locationSearchService,
+              onCandidateSelected: (candidate) async {
+                await _moveToSearchedLocation(
+                  candidate.latitude,
+                  candidate.longitude,
+                );
+              },
+            ),
           ),
           ..._pinManager.markers.toList().asMap().entries.map((entry) {
             final i = entry.key;
