@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
-import 'package:flutter_verification/application/usecases/delete_pin_usecase.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/application/usecases/delete_pin_usecase.dart';
 
 @GenerateMocks([PinRepository])
 import 'delete_pin_usecase_test.mocks.dart';

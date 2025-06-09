@@ -2,13 +2,13 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_verification/presentation/google_map_screen.dart';
+import 'package:memora/presentation/google_map_screen.dart';
 import 'package:mockito/annotations.dart';
-import 'package:flutter_verification/domain/services/current_location_service.dart';
+import 'package:memora/domain/services/current_location_service.dart';
 import 'package:mockito/mockito.dart';
 import 'google_map_screen_test.mocks.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
-import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 @GenerateMocks([CurrentLocationService])
 class MockPinRepository implements PinRepository {

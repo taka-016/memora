@@ -1,5 +1,5 @@
-import 'package:flutter_verification/domain/entities/pin.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
 
 class LoadPinsUseCase {
   final PinRepository _pinRepository;

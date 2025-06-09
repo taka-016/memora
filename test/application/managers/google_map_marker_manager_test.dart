@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/application/managers/google_map_marker_manager.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
-import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:memora/application/managers/google_map_marker_manager.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 class MockPinRepository implements PinRepository {
   List<Pin> pins = [

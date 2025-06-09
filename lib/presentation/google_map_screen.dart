@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_verification/domain/entities/pin.dart';
-import 'package:flutter_verification/env/env.dart';
+import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_verification/infrastructure/services/geolocator_current_location_service.dart';
-import 'package:flutter_verification/domain/services/current_location_service.dart';
-import 'package:flutter_verification/application/managers/google_map_marker_manager.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
-import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
-import 'package:flutter_verification/presentation/widgets/search_bar.dart';
-import 'package:flutter_verification/infrastructure/services/google_places_api_location_search_service.dart';
+import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
+import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/managers/google_map_marker_manager.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/presentation/widgets/search_bar.dart';
+import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;

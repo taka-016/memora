@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:flutter_verification/domain/entities/pin.dart';
-import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
-import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
+import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/application/usecases/load_pins_usecase.dart';
 
 @GenerateMocks([FirestorePinRepository])
 import 'load_pins_usecase_test.mocks.dart';

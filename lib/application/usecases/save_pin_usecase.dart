@@ -1,4 +1,4 @@
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
 
 class SavePinUseCase {
   final PinRepository pinRepository;

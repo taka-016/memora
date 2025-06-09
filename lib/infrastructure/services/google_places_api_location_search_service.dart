@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_verification/domain/services/location_search_service.dart';
-import 'package:flutter_verification/domain/entities/location_candidate.dart';
+import 'package:memora/domain/services/location_search_service.dart';
+import 'package:memora/domain/entities/location_candidate.dart';
 
 /// Google Places APIのText Search APIを利用した位置検索サービス実装
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
