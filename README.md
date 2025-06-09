@@ -1,16 +1,9 @@
 # flutter_verification
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## env.g.dartの生成
+1. .envファイルをプロジェクトルートに作成し、必要な環境変数を設定します。
+   - 使用する環境変数は.env.exampleを参考にしてください。
+2. `flutter_verification`プロジェクトのルートディレクトリで以下のコマンドを実行して、`env.g.dart`ファイルを生成します。
+    ```bash
+    flutter pub run build_runner build --delete-conflicting-outputs
+    ```
