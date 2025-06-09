@@ -181,7 +181,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
               zoom: 15,
             ),
             markers: _pinManager.markers.toSet(),
-            onTap: _addMarker,
+            onLongPress: _addMarker,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
           ),
