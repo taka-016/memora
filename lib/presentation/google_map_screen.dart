@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:flutter_verification/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_verification/infrastructure/services/geolocator_current_location_service.dart';
 import 'package:flutter_verification/domain/services/current_location_service.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_verification/domain/repositories/pin_repository.dart';
 import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:flutter_verification/presentation/widgets/search_bar.dart';
 import 'package:flutter_verification/infrastructure/services/google_places_api_location_search_service.dart';
-import 'package:flutter_verification/keys.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -168,7 +168,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   @override
   Widget build(BuildContext context) {
     final locationSearchService = GooglePlacesApiLocationSearchService(
-      apiKey: googlePlacesApiKey,
+      apiKey: Env.googlePlacesApiKey,
     );
     return Scaffold(
       appBar: AppBar(title: const Text('Googleマップ')),
