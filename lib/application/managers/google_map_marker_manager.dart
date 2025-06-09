@@ -1,10 +1,10 @@
-import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_verification/application/usecases/load_pins_usecase.dart';
-import 'package:flutter_verification/application/usecases/save_pin_usecase.dart';
-import 'package:flutter_verification/application/usecases/delete_pin_usecase.dart';
-import 'package:flutter_verification/domain/repositories/pin_repository.dart';
+import 'package:memora/application/usecases/load_pins_usecase.dart';
+import 'package:memora/application/usecases/save_pin_usecase.dart';
+import 'package:memora/application/usecases/delete_pin_usecase.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:uuid/uuid.dart';
 
 class GoogleMapMarkerManager {

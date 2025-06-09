@@ -1,4 +1,4 @@
-package com.example.flutter_verification
+package com.example.memora
 
 import io.flutter.embedding.android.FlutterActivity
 

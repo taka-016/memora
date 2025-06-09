@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 class FirestorePinMapper {
   static Pin fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {

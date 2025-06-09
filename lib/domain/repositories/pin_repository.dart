@@ -1,4 +1,4 @@
-import 'package:flutter_verification/domain/entities/pin.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 abstract class PinRepository {
   Future<List<Pin>> getPins();

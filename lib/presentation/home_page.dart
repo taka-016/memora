@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'google_map_screen.dart';
 
 class MyHomePage extends StatefulWidget {

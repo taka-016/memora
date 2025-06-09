@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:flutter_verification/infrastructure/mappers/firestore_pin_mapper.dart';
+import 'package:memora/infrastructure/mappers/firestore_pin_mapper.dart';
 import '../repositories/firestore_pin_repository_test.mocks.dart';
 
 void main() {

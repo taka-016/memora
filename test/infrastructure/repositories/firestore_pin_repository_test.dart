@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_verification/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 
 @GenerateMocks([
   FirebaseFirestore,

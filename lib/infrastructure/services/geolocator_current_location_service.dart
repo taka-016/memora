@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_verification/domain/services/current_location_service.dart';
+import 'package:memora/domain/services/current_location_service.dart';
 
 class GeolocatorCurrentLocationService implements CurrentLocationService {
   @override
