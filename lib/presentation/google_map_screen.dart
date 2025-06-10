@@ -9,6 +9,7 @@ import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/presentation/widgets/search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
+import 'package:memora/presentation/widgets/pin_detail_modal.dart';
 
 class GoogleMapScreen extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -117,23 +118,58 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
   }
 
   void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
-    final RenderBox overlay =
-        Overlay.of(context).context.findRenderObject() as RenderBox;
-    final Offset overlayOffset = overlay.localToGlobal(Offset.zero);
-
-    final selected = await showMenu<String>(
+    await showGeneralDialog(
       context: context,
-      position: RelativeRect.fromLTRB(
-        overlayOffset.dx + 100,
-        overlayOffset.dy + 200,
-        overlayOffset.dx + 100,
-        overlayOffset.dy + 200,
-      ),
-      items: [const PopupMenuItem<String>(value: 'delete', child: Text('削除'))],
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.9,
+              heightFactor: 0.6,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: PinDetailModal(
+                    onSave: () {},
+                    onDelete: () async {
+                      await _removeMarker(markerId);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final isReverse = animation.status == AnimationStatus.reverse;
+        final fadeCurve = isReverse ? Curves.easeInCubic : Curves.easeOut;
+        final scaleCurve = isReverse ? Curves.easeInCubic : Curves.easeOutBack;
+
+        return FadeTransition(
+          opacity: animation.drive(CurveTween(curve: fadeCurve)),
+          child: ScaleTransition(
+            scale: animation.drive(
+              Tween<double>(
+                begin: 0.8,
+                end: 1.0,
+              ).chain(CurveTween(curve: scaleCurve)),
+            ),
+            child: child,
+          ),
+        );
+      },
     );
-    if (selected == 'delete') {
-      await _removeMarker(markerId);
-    }
   }
 
   Future<void> _moveToCurrentLocation() async {

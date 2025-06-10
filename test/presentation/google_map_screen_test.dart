@@ -9,6 +9,7 @@ import 'package:mockito/mockito.dart';
 import 'google_map_screen_test.mocks.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/presentation/widgets/pin_detail_modal.dart';
 
 @GenerateMocks([CurrentLocationService])
 class MockPinRepository implements PinRepository {
@@ -175,5 +176,27 @@ void main() {
     );
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('場所を検索'), findsOneWidget);
+  });
+
+  testWidgets('ピンをタップしたときにPinDetailModalが表示される', (WidgetTester tester) async {
+    final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GoogleMapScreen(
+          initialPins: initialPins,
+          pinRepository: MockPinRepository(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // マーカーのタップをシミュレート
+    final markerKey = find.byKey(const Key('map_marker_0'));
+    expect(markerKey, findsOneWidget);
+    await tester.tap(markerKey);
+    await tester.pumpAndSettle();
+
+    // PinDetailModalが表示されていることを確認
+    expect(find.byType(PinDetailModal), findsOneWidget);
   });
 }
