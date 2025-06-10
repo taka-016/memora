@@ -63,61 +63,7 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
     }
   }
 
-  Future<void> _addMarker(LatLng position) async {
-    Marker marker = await _pinManager.addMarker(position, null, null);
-    setState(() {});
-    try {
-      await _pinManager.saveMarker(marker);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
-      }
-    }
-  }
-
-  Future<void> _loadSavedMarkers() async {
-    try {
-      await _pinManager.loadSavedMarkers();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('マーカーの読み込みに失敗: $e')));
-      }
-    }
-  }
-
-  void _onMapCreated(GoogleMapController controller) {
-    _mapController = controller;
-    _moveToCurrentLocation();
-  }
-
-  Future<void> _removeMarker(MarkerId markerId) async {
-    try {
-      await _pinManager.removeMarker(markerId);
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
-      }
-    }
-  }
-
-  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
+  Future<void> _showPinDetailModal(MarkerId markerId) async {
     await showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -199,6 +145,65 @@ class _GoogleMapScreenState extends State<GoogleMapScreen> {
         CameraPosition(target: location, zoom: 15),
       ),
     );
+  }
+
+  Future<void> _removeMarker(MarkerId markerId) async {
+    try {
+      await _pinManager.removeMarker(markerId);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
+      }
+    }
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _moveToCurrentLocation();
+  }
+
+  Future<void> _loadSavedMarkers() async {
+    try {
+      await _pinManager.loadSavedMarkers();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカーの読み込みに失敗: $e')));
+      }
+    }
+  }
+
+  Future<void> _addMarker(LatLng position) async {
+    Marker marker = await _pinManager.addMarker(position, null, null);
+    setState(() {});
+    try {
+      await _pinManager.saveMarker(marker);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
+      }
+    }
+    await _showPinDetailModal(marker.markerId);
+  }
+
+  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
+    await _showPinDetailModal(markerId);
   }
 
   @override
