@@ -23,8 +23,8 @@ void main() {
     );
 
     expect(find.byType(TextFormField), findsNWidgets(3));
-    expect(find.byKey(const Key('fromDateField')), findsOneWidget);
-    expect(find.byKey(const Key('toDateField')), findsOneWidget);
-    expect(find.byKey(const Key('memoField')), findsOneWidget);
+    expect(find.byKey(const Key('tripStartDateField')), findsOneWidget);
+    expect(find.byKey(const Key('tripEndDateField')), findsOneWidget);
+    expect(find.byKey(const Key('tripMemoField')), findsOneWidget);
   });
 }
