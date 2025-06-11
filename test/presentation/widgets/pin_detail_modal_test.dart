@@ -16,4 +16,15 @@ void main() {
     expect(find.text('削除'), findsOneWidget);
     expect(find.byIcon(Icons.close), findsOneWidget);
   });
+
+  testWidgets('詳細入力画面のUI要素が表示される', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: PinDetailModal())),
+    );
+
+    expect(find.byType(TextFormField), findsNWidgets(3));
+    expect(find.byKey(const Key('fromDateField')), findsOneWidget);
+    expect(find.byKey(const Key('toDateField')), findsOneWidget);
+    expect(find.byKey(const Key('memoField')), findsOneWidget);
+  });
 }
