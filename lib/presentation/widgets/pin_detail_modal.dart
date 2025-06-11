@@ -71,13 +71,13 @@ class _PinDetailModalState extends State<PinDetailModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('旅行期間From'),
+                  Text('旅行開始日'),
                   SizedBox(height: 8),
                   GestureDetector(
                     onTap: () => _selectFromDate(context),
                     child: AbsorbPointer(
                       child: TextFormField(
-                        key: const Key('fromDateField'),
+                        key: const Key('tripStartDateField'),
                         readOnly: true,
                         decoration: InputDecoration(
                           hintText: '日付を選択',
@@ -92,13 +92,13 @@ class _PinDetailModalState extends State<PinDetailModal> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  Text('旅行期間To'),
+                  Text('旅行終了日'),
                   SizedBox(height: 8),
                   GestureDetector(
                     onTap: () => _selectToDate(context),
                     child: AbsorbPointer(
                       child: TextFormField(
-                        key: const Key('toDateField'),
+                        key: const Key('tripEndDateField'),
                         readOnly: true,
                         decoration: InputDecoration(
                           hintText: '日付を選択',
@@ -116,7 +116,7 @@ class _PinDetailModalState extends State<PinDetailModal> {
                   Text('旅の記録'),
                   SizedBox(height: 8),
                   TextFormField(
-                    key: const Key('memoField'),
+                    key: const Key('tripMemoField'),
                     minLines: 4,
                     maxLines: null,
                     controller: memoController,
