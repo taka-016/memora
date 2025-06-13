@@ -26,8 +26,8 @@ erDiagram
     }
     groups {
         string id PK
-        string groupName
-        string groupMemo
+        string name
+        string memo
     }
     group_members {
         string id PK
@@ -37,11 +37,11 @@ erDiagram
     group_events {
         string id PK
         string groupId FK
-        string eventType
-        string eventName
-        timestamp eventStartDate
-        timestamp eventEndDate
-        string eventMemo
+        string type
+        string name
+        timestamp startDate
+        timestamp endDate
+        string memo
     }
     members {
         string id PK
@@ -49,19 +49,25 @@ erDiagram
         string hiraganaLastName
         string kanjiFirstName
         string kanjiLastName
+        string firstName
+        string lastName
         string nickname
         string type
         timestamp birthday
         string gender
+        string email
+        string phoneNumber
+        string passportNumber
+        string passportExpiration
     }
     member_events {
         string id PK
         string memberId FK
-        string eventType
-        string eventName
-        timestamp eventStartDate
-        timestamp eventEndDate
-        string eventMemo
+        string type
+        string name
+        timestamp startDate
+        timestamp endDate
+        string memo
     }
 
     trip_entries ||--o{ trip_participants : "id → tripId"
