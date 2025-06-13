@@ -1,0 +1,35 @@
+class Member {
+  final String id;
+  final String hiraganaFirstName;
+  final String hiraganaLastName;
+  final String kanjiFirstName;
+  final String kanjiLastName;
+  final String firstName;
+  final String lastName;
+  final String nickname;
+  final String type;
+  final DateTime birthday;
+  final String gender;
+  final String email;
+  final String phoneNumber;
+  final String passportNumber;
+  final String passportExpiration;
+
+  Member({
+    required this.id,
+    required this.hiraganaFirstName,
+    required this.hiraganaLastName,
+    required this.kanjiFirstName,
+    required this.kanjiLastName,
+    required this.firstName,
+    required this.lastName,
+    required this.nickname,
+    required this.type,
+    required this.birthday,
+    required this.gender,
+    required this.email,
+    required this.phoneNumber,
+    required this.passportNumber,
+    required this.passportExpiration,
+  });
+}
