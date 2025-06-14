@@ -10,10 +10,12 @@ class Member {
   final String type;
   final DateTime birthday;
   final String gender;
-  final String email;
-  final String phoneNumber;
-  final String passportNumber;
-  final String passportExpiration;
+  final String? email;
+  final String? phoneNumber;
+  final String? passportNumber;
+  final String? passportExpiration;
+  final String? anaMileageNumber;
+  final String? jalMileageNumber;
 
   Member({
     required this.id,
@@ -27,9 +29,11 @@ class Member {
     required this.type,
     required this.birthday,
     required this.gender,
-    required this.email,
-    required this.phoneNumber,
-    required this.passportNumber,
-    required this.passportExpiration,
+    this.email,
+    this.phoneNumber,
+    this.passportNumber,
+    this.passportExpiration,
+    this.anaMileageNumber,
+    this.jalMileageNumber,
   });
 }
