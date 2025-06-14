@@ -6,6 +6,7 @@ USER root
 RUN apt-get update && apt-get install -y \
     git \
     curl \
+    android-tools-adb \
     && rm -rf /var/lib/apt/lists/*
 
 # 作業ディレクトリの設定
