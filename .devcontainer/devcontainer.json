@@ -1,5 +1,5 @@
 {
-    "name": "Flutter Android Development",
+    "name": "memora",
     "build": {
         "dockerfile": "../Dockerfile"
     },
