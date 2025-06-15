@@ -5,7 +5,14 @@
     },
     "mounts": [
         "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached"
+        "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.claude.json,target=/root/.claude.json,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.claude,target=/root/.claude,type=bind,consistency=cached",
+        "source=android-config,target=/root/.android,type=volume",
+        "source=android-sdk,target=/opt/android-sdk-linux,type=volume",
+        "source=dart-cache,target=/root/.pub-cache,type=volume",
+        "source=build-cache,target=/root/.cache,type=volume",
+        "source=config-cache,target=/root/.config,type=volume"
     ],
     "runArgs": [
         "--privileged"
