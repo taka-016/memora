@@ -2,6 +2,13 @@
 
 ```mermaid
 erDiagram
+    account {
+        string id PK
+        string email
+        string password
+        string name
+        string memberId FK
+    }
     trip_entries {
         string id PK
         string tripName
