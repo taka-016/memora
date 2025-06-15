@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/env/env.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
+import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/managers/google_map_marker_manager.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/presentation/widgets/search_bar.dart';
+import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
+import 'package:memora/presentation/widgets/pin_detail_modal.dart';
+
+class GoogleMapWidget extends StatefulWidget {
+  final List<Pin>? initialPins;
+  final CurrentLocationService? locationService;
+  final PinRepository? pinRepository;
+
+  const GoogleMapWidget({
+    super.key,
+    this.initialPins,
+    this.locationService,
+    this.pinRepository,
+  });
+
+  @override
+  State<GoogleMapWidget> createState() => _GoogleMapWidgetState();
+}
+
+class _GoogleMapWidgetState extends State<GoogleMapWidget> {
+  static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
+  late final GoogleMapMarkerManager _pinManager;
+  GoogleMapController? _mapController;
+
+  CurrentLocationService get _locationService =>
+      widget.locationService ?? GeolocatorCurrentLocationService();
+
+  @override
+  void initState() {
+    super.initState();
+    _pinManager = GoogleMapMarkerManager(
+      pinRepository: widget.pinRepository ?? FirestorePinRepository(),
+    );
+    _pinManager.onPinTap = (LatLng position) {
+      final marker = _pinManager.markers.firstWhere(
+        (m) => m.position == position,
+      );
+      final index = _pinManager.markers.indexOf(marker);
+      _onMarkerTap(marker.markerId, position, index);
+    };
+    _initializeMap();
+  }
+
+  Future<void> _initializeMap() async {
+    await _loadInitialMarkers();
+    await _loadSavedMarkers();
+    setState(() {});
+  }
+
+  Future<void> _loadInitialMarkers() async {
+    if (widget.initialPins != null) {
+      await _pinManager.loadInitialMarkers(widget.initialPins!, null);
+    }
+  }
+
+  Future<void> _showPinDetailModal(MarkerId markerId) async {
+    await showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Center(
+            child: FractionallySizedBox(
+              widthFactor: 0.9,
+              heightFactor: 0.6,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: PinDetailModal(
+                    onSave: () {},
+                    onDelete: () async {
+                      await _removeMarker(markerId);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                    onClose: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final isReverse = animation.status == AnimationStatus.reverse;
+        final fadeCurve = isReverse ? Curves.easeInCubic : Curves.easeOut;
+        final scaleCurve = isReverse ? Curves.easeInCubic : Curves.easeOutBack;
+
+        return FadeTransition(
+          opacity: animation.drive(CurveTween(curve: fadeCurve)),
+          child: ScaleTransition(
+            scale: animation.drive(
+              Tween<double>(
+                begin: 0.8,
+                end: 1.0,
+              ).chain(CurveTween(curve: scaleCurve)),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _moveToCurrentLocation() async {
+    final loc = await _locationService.getCurrentLocation();
+    if (loc == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('現在地が取得できませんでした')));
+      return;
+    }
+    final location = LatLng(loc.latitude, loc.longitude);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 15),
+      ),
+    );
+  }
+
+  Future<void> _moveToSearchedLocation(
+    double latitude,
+    double longitude,
+  ) async {
+    final location = LatLng(latitude, longitude);
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: 15),
+      ),
+    );
+  }
+
+  Future<void> _removeMarker(MarkerId markerId) async {
+    try {
+      await _pinManager.removeMarker(markerId);
+      setState(() {});
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
+      }
+    }
+  }
+
+  void _onMapCreated(GoogleMapController controller) {
+    _mapController = controller;
+    _moveToCurrentLocation();
+  }
+
+  Future<void> _loadSavedMarkers() async {
+    try {
+      await _pinManager.loadSavedMarkers();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカーの読み込みに失敗: $e')));
+      }
+    }
+  }
+
+  Future<void> _addMarker(LatLng position) async {
+    Marker marker = await _pinManager.addMarker(position, null, null);
+    setState(() {});
+    try {
+      await _pinManager.saveMarker(marker);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
+      }
+    }
+    await _showPinDetailModal(marker.markerId);
+  }
+
+  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
+    await _showPinDetailModal(markerId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final locationSearchService = GooglePlacesApiLocationSearchService(
+      apiKey: Env.googlePlacesApiKey,
+    );
+    return Stack(
+      children: [
+        GoogleMap(
+          onMapCreated: _onMapCreated,
+          initialCameraPosition: CameraPosition(
+            target: _defaultPosition,
+            zoom: 15,
+          ),
+          markers: _pinManager.markers.toSet(),
+          onLongPress: _addMarker,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+        ),
+        Positioned(
+          top: 16,
+          left: 16,
+          right: 16,
+          child: CustomSearchBar(
+            hintText: '場所を検索',
+            locationSearchService: locationSearchService,
+            onCandidateSelected: (candidate) async {
+              await _moveToSearchedLocation(
+                candidate.latitude,
+                candidate.longitude,
+              );
+            },
+          ),
+        ),
+        ..._pinManager.markers.toList().asMap().entries.map((entry) {
+          final i = entry.key;
+          final marker = entry.value;
+          return Positioned(
+            left: 100.0 + i * 10,
+            top: 200.0 + i * 10,
+            child: GestureDetector(
+              key: Key('map_marker_$i'),
+              onTap: () => _onMarkerTap(marker.markerId, marker.position, i),
+              behavior: HitTestBehavior.translucent,
+              child: const SizedBox(width: 40, height: 40),
+            ),
+          );
+        }),
+        Positioned(
+          bottom: 180,
+          right: 4,
+          child: FloatingActionButton(
+            heroTag: 'my_location_fab',
+            onPressed: _moveToCurrentLocation,
+            child: const Icon(Icons.my_location),
+          ),
+        ),
+      ],
+    );
+  }
+}
