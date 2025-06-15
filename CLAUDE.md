@@ -22,6 +22,10 @@
 - 位置情報（pin）はGoogle Maps上にピン留めして作成することができ、訪問日やメモを追加することができる
 - 旅行の参加者（trip_participant）はグループ外のメンバーも含めることができる
 
+**設計資料**
+- ER図: doc/er_diagram.md
+- todo: doc/todo.md
+
 ## 開発コマンド
 
 **主要コマンド:**
