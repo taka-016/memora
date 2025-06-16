@@ -5,7 +5,8 @@
       "Bash(ls:*)",
       "Bash(grep:*)",
       "Bash(flutter:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(dart run build_runner build:*)"
     ],
     "deny": []
   }
