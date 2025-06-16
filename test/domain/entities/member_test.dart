@@ -42,5 +42,38 @@ void main() {
       expect(member.anaMileageNumber, 'ANA123456');
       expect(member.jalMileageNumber, 'JAL123456');
     });
+
+    test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
+      final now = DateTime(2000, 1, 1);
+      final member = Member(
+        id: 'member001',
+        hiraganaFirstName: 'たろう',
+        hiraganaLastName: 'やまだ',
+        kanjiFirstName: '太郎',
+        kanjiLastName: '山田',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        type: '一般',
+        birthday: now,
+        gender: 'male',
+      );
+      expect(member.id, 'member001');
+      expect(member.hiraganaFirstName, 'たろう');
+      expect(member.hiraganaLastName, 'やまだ');
+      expect(member.kanjiFirstName, '太郎');
+      expect(member.kanjiLastName, '山田');
+      expect(member.firstName, 'Taro');
+      expect(member.lastName, 'Yamada');
+      expect(member.nickname, null);
+      expect(member.type, '一般');
+      expect(member.birthday, now);
+      expect(member.gender, 'male');
+      expect(member.email, null);
+      expect(member.phoneNumber, null);
+      expect(member.passportNumber, null);
+      expect(member.passportExpiration, null);
+      expect(member.anaMileageNumber, null);
+      expect(member.jalMileageNumber, null);
+    });
   });
 }

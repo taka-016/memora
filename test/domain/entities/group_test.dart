@@ -9,5 +9,12 @@ void main() {
       expect(group.name, 'グループ名');
       expect(group.memo, 'メモ');
     });
+
+    test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
+      final group = Group(id: 'group001', name: 'グループ名');
+      expect(group.id, 'group001');
+      expect(group.name, 'グループ名');
+      expect(group.memo, null);
+    });
   });
 }

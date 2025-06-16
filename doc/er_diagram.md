@@ -4,64 +4,64 @@
 erDiagram
     account {
         string id PK
-        string email
-        string password
-        string name
+        string email "NOT NULL"
+        string password "NOT NULL"
+        string name "NOT NULL"
         string memberId FK
     }
     trip_entries {
         string id PK
         string tripName
-        timestamp tripStartDate
-        timestamp tripEndDate
+        timestamp tripStartDate "NOT NULL"
+        timestamp tripEndDate "NOT NULL"
         string tripMemo
     }
     trip_participants {
         string id PK
-        string tripId FK
-        string memberId FK
+        string tripId FK "NOT NULL"
+        string memberId FK "NOT NULL"
     }
     pins {
         string id PK
-        string pinId
+        string pinId "NOT NULL"
         string tripId FK
-        number latitude
-        number longitude
+        number latitude "NOT NULL"
+        number longitude "NOT NULL"
         timestamp visitStartDate
         timestamp visitEndDate
         string visitMemo
     }
     groups {
         string id PK
-        string name
+        string name "NOT NULL"
         string memo
     }
     group_members {
         string id PK
-        string groupId FK
-        string memberId FK
+        string groupId FK "NOT NULL"
+        string memberId FK "NOT NULL"
     }
     group_events {
         string id PK
-        string groupId FK
-        string type
+        string groupId FK "NOT NULL"
+        string type "NOT NULL"
         string name
-        timestamp startDate
-        timestamp endDate
+        timestamp startDate "NOT NULL"
+        timestamp endDate "NOT NULL"
         string memo
     }
     members {
         string id PK
-        string hiraganaFirstName
-        string hiraganaLastName
-        string kanjiFirstName
-        string kanjiLastName
-        string firstName
-        string lastName
+        string hiraganaFirstName "NOT NULL"
+        string hiraganaLastName "NOT NULL"
+        string kanjiFirstName "NOT NULL"
+        string kanjiLastName "NOT NULL"
+        string firstName "NOT NULL"
+        string lastName "NOT NULL"
         string nickname
-        string type
-        timestamp birthday
-        string gender
+        string type "NOT NULL"
+        timestamp birthday "NOT NULL"
+        string gender "NOT NULL"
         string email
         string phoneNumber
         string passportNumber
@@ -71,11 +71,11 @@ erDiagram
     }
     member_events {
         string id PK
-        string memberId FK
-        string type
+        string memberId FK "NOT NULL"
+        string type "NOT NULL"
         string name
-        timestamp startDate
-        timestamp endDate
+        timestamp startDate "NOT NULL"
+        timestamp endDate "NOT NULL"
         string memo
     }
 
