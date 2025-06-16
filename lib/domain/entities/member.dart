@@ -6,7 +6,7 @@ class Member {
   final String kanjiLastName;
   final String firstName;
   final String lastName;
-  final String nickname;
+  final String? nickname;
   final String type;
   final DateTime birthday;
   final String gender;
@@ -25,7 +25,7 @@ class Member {
     required this.kanjiLastName,
     required this.firstName,
     required this.lastName,
-    required this.nickname,
+    this.nickname,
     required this.type,
     required this.birthday,
     required this.gender,
