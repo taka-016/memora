@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'presentation/home_page.dart';
+import 'presentation/top_page.dart';
+import 'application/usecases/get_groups_with_members_usecase.dart';
+import 'infrastructure/repositories/firestore_group_repository.dart';
+import 'infrastructure/repositories/firestore_group_member_repository.dart';
+import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
@@ -17,8 +21,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 依存性注入
+    final groupRepository = FirestoreGroupRepository();
+    final groupMemberRepository = FirestoreGroupMemberRepository();
+    final memberRepository = FirestoreMemberRepository();
+    final getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
+      groupRepository: groupRepository,
+      groupMemberRepository: groupMemberRepository,
+      memberRepository: memberRepository,
+    );
+
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'memora',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
@@ -29,7 +43,7 @@ class MyApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: TopPage(getGroupsWithMembersUsecase: getGroupsWithMembersUsecase),
     );
   }
 }
