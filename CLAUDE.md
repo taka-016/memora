@@ -33,7 +33,7 @@
 - `flutter test` - 全テストを実行（コミット前に必須）
 - `flutter analyze` - 静的コード解析（コミット前に必須）
 - `flutter pub get` - 依存関係をインストール
-- `flutter pub run build_runner build --delete-conflicting-outputs` - 環境変数からenv.g.dartを生成
+- `flutter pub run build_runner build --delete-conflicting-outputs` - モックやコード生成を実行
 
 **テスト:**
 - `flutter test test/unit/` - ユニットテストのみ実行
