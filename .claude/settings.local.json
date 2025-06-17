@@ -7,7 +7,9 @@
       "Bash(flutter:*)",
       "Bash(npx:*)",
       "Bash(dart run build_runner build:*)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(rm:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

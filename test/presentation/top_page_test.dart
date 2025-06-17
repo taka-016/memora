@@ -46,21 +46,20 @@ void main() {
 
   Widget createTestWidget() {
     return MaterialApp(
-      home: TopPage(getGroupsWithMembersUsecase: mockUsecase),
+      home: TopPage(
+        getGroupsWithMembersUsecase: mockUsecase,
+        isTestEnvironment: true,
+      ),
     );
   }
 
   group('TopPage', () {
-    testWidgets('グループが複数件ある場合、グループ一覧が表示される', (WidgetTester tester) async {
+    testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
           group: Group(id: '1', name: 'グループ1'),
-          members: [testMembers[0]],
-        ),
-        GroupWithMembers(
-          group: Group(id: '2', name: 'グループ2'),
-          members: [testMembers[1]],
+          members: testMembers,
         ),
       ];
       when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
@@ -70,12 +69,66 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('グループ2'), findsOneWidget);
+      expect(find.byIcon(Icons.menu), findsOneWidget);
+      expect(find.byKey(const Key('hamburger_menu')), findsOneWidget);
     });
 
-    testWidgets('グループが1件の場合、メンバー一覧が表示される', (WidgetTester tester) async {
+    testWidgets('ハンバーガーメニューをタップするとDrawerが開く', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(Drawer), findsOneWidget);
+    });
+
+    testWidgets('Drawerにメニューアイテムが表示される', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('トップページ'), findsOneWidget);
+      expect(find.text('グループ年表'), findsOneWidget);
+      expect(find.text('マップ表示'), findsOneWidget);
+      expect(find.text('グループ設定'), findsOneWidget);
+      expect(find.text('メンバー設定'), findsOneWidget);
+      expect(find.text('設定'), findsOneWidget);
+      expect(find.byIcon(Icons.home), findsOneWidget);
+      expect(find.byIcon(Icons.timeline), findsOneWidget);
+      expect(find.byIcon(Icons.map), findsOneWidget);
+      expect(find.byIcon(Icons.group_work), findsOneWidget);
+      expect(find.byIcon(Icons.people), findsOneWidget);
+      expect(find.byIcon(Icons.settings), findsOneWidget);
+    });
+
+    testWidgets('初期状態ではトップページ画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -93,28 +146,15 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('太郎 山田'), findsOneWidget);
       expect(find.text('花子 山田'), findsOneWidget);
-      expect(find.text('グループ一覧'), findsNothing);
+      expect(find.byKey(const Key('group_member')), findsOneWidget);
     });
 
-    testWidgets('グループが0件の場合、グループ作成ボタンが表示される', (WidgetTester tester) async {
-      // Arrange
-      when(mockUsecase.execute()).thenAnswer((_) async => []);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('グループを作成'), findsOneWidget);
-      expect(find.byType(ElevatedButton), findsOneWidget);
-    });
-
-    testWidgets('グループにメンバーがいない場合、メンバー追加ボタンが表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「マップ表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
           group: Group(id: '1', name: 'グループ1'),
-          members: [],
+          members: testMembers,
         ),
       ];
       when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
@@ -123,22 +163,25 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // マップ表示メニューをタップ
+      await tester.tap(find.text('マップ表示'));
+      await tester.pumpAndSettle();
+
       // Assert
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('メンバーを追加'), findsOneWidget);
-      expect(find.byType(ElevatedButton), findsOneWidget);
+      expect(find.byKey(const Key('map_display')), findsOneWidget);
+      expect(find.byKey(const Key('group_member')), findsNothing);
     });
 
-    testWidgets('グループを選択すると、そのグループのメンバー一覧が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「トップページ」を選択すると、トップページ画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
           group: Group(id: '1', name: 'グループ1'),
-          members: [testMembers[0]],
-        ),
-        GroupWithMembers(
-          group: Group(id: '2', name: 'グループ2'),
-          members: [testMembers[1]],
+          members: testMembers,
         ),
       ];
       when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
@@ -147,48 +190,159 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // 最初はグループ一覧が表示される
-      expect(find.text('グループ一覧'), findsOneWidget);
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
 
-      // グループ1をタップ
-      await tester.tap(find.text('グループ1'));
+      // マップ表示メニューをタップして画面切り替え
+      await tester.tap(find.text('マップ表示'));
+      await tester.pumpAndSettle();
+
+      // 再度ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // トップページメニューをタップ
+      await tester.tap(find.text('トップページ'));
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('太郎 山田'), findsOneWidget);
-      expect(find.text('グループ一覧'), findsNothing);
+      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
-    testWidgets('ローディング中はCircularProgressIndicatorが表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「グループ年表」を選択すると、グループ年表画面が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute()).thenAnswer((_) async {
-        await Future.delayed(const Duration(milliseconds: 100));
-        return [];
-      });
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pump();
-
-      // Assert
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      
-      // タイマーを完了させる
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('エラーが発生した場合、エラーメッセージが表示される', (WidgetTester tester) async {
-      // Arrange
-      when(mockUsecase.execute()).thenThrow(Exception('データ取得エラー'));
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // グループ年表メニューをタップ
+      await tester.tap(find.text('グループ年表'));
+      await tester.pumpAndSettle();
+
       // Assert
-      expect(find.text('エラーが発生しました'), findsOneWidget);
-      expect(find.text('再読み込み'), findsOneWidget);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_member')), findsNothing);
+    });
+
+    testWidgets('メニューから「グループ設定」を選択すると、グループ設定画面が表示される', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // グループ設定メニューをタップ
+      await tester.tap(find.text('グループ設定'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_settings')), findsOneWidget);
+      expect(find.byKey(const Key('group_member')), findsNothing);
+    });
+
+    testWidgets('メニューから「メンバー設定」を選択すると、メンバー設定画面が表示される', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // メンバー設定メニューをタップ
+      await tester.tap(find.text('メンバー設定'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('member_settings')), findsOneWidget);
+      expect(find.byKey(const Key('group_member')), findsNothing);
+    });
+
+    testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // 設定メニューをタップ
+      await tester.tap(find.text('設定'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('group_member')), findsNothing);
+    });
+
+    testWidgets('メニュー選択後にDrawerが自動的に閉じる', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // マップ表示メニューをタップ
+      await tester.tap(find.text('マップ表示'));
+      await tester.pumpAndSettle();
+
+      // Assert - Drawerが閉じている
+      expect(find.byType(Drawer), findsNothing);
     });
   });
 }

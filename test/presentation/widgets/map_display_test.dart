@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/presentation/widgets/google_map_widget.dart';
+import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/presentation/widgets/pin_detail_modal.dart';
-import 'google_map_widget_test.mocks.dart';
+import 'map_display_test.mocks.dart';
 
 @GenerateMocks([CurrentLocationService])
 class MockPinRepository implements PinRepository {
@@ -36,7 +36,7 @@ class MockPinRepository implements PinRepository {
 }
 
 void main() {
-  group('GoogleMapWidget', () {
+  group('MapDisplay', () {
     late MockCurrentLocationService mockLocationService;
     late MockPinRepository mockPinRepository;
 
@@ -45,7 +45,7 @@ void main() {
       mockPinRepository = MockPinRepository();
     });
 
-    testWidgets('GoogleMapWidgetが正しく表示される', (WidgetTester tester) async {
+    testWidgets('MapDisplayが正しく表示される', (WidgetTester tester) async {
       final testPins = [
         Pin(
           id: 'pin1',
@@ -57,7 +57,7 @@ void main() {
 
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: GoogleMapWidget(
+          body: MapDisplay(
             initialPins: testPins,
             locationService: mockLocationService,
             pinRepository: mockPinRepository,
@@ -65,14 +65,14 @@ void main() {
         ),
       ));
 
-      expect(find.byType(GoogleMapWidget), findsOneWidget);
+      expect(find.byType(MapDisplay), findsOneWidget);
       expect(find.byType(GoogleMap), findsOneWidget);
     });
 
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: GoogleMapWidget(
+          body: MapDisplay(
             locationService: mockLocationService,
             pinRepository: mockPinRepository,
           ),
@@ -86,7 +86,7 @@ void main() {
     testWidgets('現在地ボタンが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
-          body: GoogleMapWidget(
+          body: MapDisplay(
             locationService: mockLocationService,
             pinRepository: mockPinRepository,
           ),
@@ -101,7 +101,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GoogleMapWidget(
+            body: MapDisplay(
               initialPins: initialPins,
               locationService: mockLocationService,
               pinRepository: mockPinRepository,
@@ -128,7 +128,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GoogleMapWidget(
+            body: MapDisplay(
               initialPins: initialPins,
               locationService: mockLocationService,
               pinRepository: mockPinRepository,
@@ -154,7 +154,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GoogleMapWidget(
+            body: MapDisplay(
               locationService: mockService,
               pinRepository: mockPinRepository,
             ),
@@ -176,7 +176,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GoogleMapWidget(
+            body: MapDisplay(
               initialPins: initialPins,
               locationService: mockLocationService,
               pinRepository: mockPinRepository,
