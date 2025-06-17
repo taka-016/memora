@@ -11,12 +11,12 @@ import 'package:memora/presentation/widgets/search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/widgets/pin_detail_modal.dart';
 
-class GoogleMapWidget extends StatefulWidget {
+class MapDisplay extends StatefulWidget {
   final List<Pin>? initialPins;
   final CurrentLocationService? locationService;
   final PinRepository? pinRepository;
 
-  const GoogleMapWidget({
+  const MapDisplay({
     super.key,
     this.initialPins,
     this.locationService,
@@ -24,10 +24,10 @@ class GoogleMapWidget extends StatefulWidget {
   });
 
   @override
-  State<GoogleMapWidget> createState() => _GoogleMapWidgetState();
+  State<MapDisplay> createState() => _MapDisplayState();
 }
 
-class _GoogleMapWidgetState extends State<GoogleMapWidget> {
+class _MapDisplayState extends State<MapDisplay> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   late final GoogleMapMarkerManager _pinManager;
   GoogleMapController? _mapController;
@@ -211,7 +211,9 @@ class _GoogleMapWidgetState extends State<GoogleMapWidget> {
     final locationSearchService = GooglePlacesApiLocationSearchService(
       apiKey: Env.googlePlacesApiKey,
     );
-    return Stack(
+    return Container(
+      key: const Key('map_display'),
+      child: Stack(
       children: [
         GoogleMap(
           onMapCreated: _onMapCreated,
@@ -263,6 +265,7 @@ class _GoogleMapWidgetState extends State<GoogleMapWidget> {
           ),
         ),
       ],
+      ),
     );
   }
 }
