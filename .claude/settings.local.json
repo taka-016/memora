@@ -6,7 +6,8 @@
       "Bash(grep:*)",
       "Bash(flutter:*)",
       "Bash(npx:*)",
-      "Bash(dart run build_runner build:*)"
+      "Bash(dart run build_runner build:*)",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }
