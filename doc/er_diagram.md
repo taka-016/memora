@@ -4,13 +4,14 @@
 erDiagram
     account {
         string id PK
-        string email "NOT NULL"
-        string password "NOT NULL"
         string name "NOT NULL"
+        string password "NOT NULL"
+        string email "NOT NULL"
         string memberId FK
     }
     trip_entries {
         string id PK
+        string groupId FK "NOT NULL"
         string tripName
         timestamp tripStartDate "NOT NULL"
         timestamp tripEndDate "NOT NULL"
@@ -86,4 +87,6 @@ erDiagram
     groups ||--o{ group_members : "id → groupId"
     group_members ||--|| members : "memberId → id"
     groups ||--o{ group_events : "id → groupId"
+    groups ||--o{ trip_entries : "id → groupId"
+    account ||--|| members : "memberId → id"
 ```
