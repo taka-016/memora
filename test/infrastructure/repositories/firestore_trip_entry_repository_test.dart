@@ -37,6 +37,7 @@ void main() {
     test('saveTripEntryがtrip_entries collectionに旅行情報をaddする', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
+        groupId: 'group001',
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -53,6 +54,7 @@ void main() {
         mockCollection.add(
           argThat(
             allOf([
+              containsPair('groupId', 'group001'),
               containsPair('tripName', 'テスト旅行'),
               containsPair('tripMemo', 'テストメモ'),
               contains('tripStartDate'),
@@ -69,6 +71,7 @@ void main() {
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
       when(mockDoc1.id).thenReturn('trip001');
       when(mockDoc1.data()).thenReturn({
+        'groupId': 'group001',
         'tripName': 'テスト旅行1',
         'tripStartDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
         'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
@@ -76,6 +79,7 @@ void main() {
       });
       when(mockDoc2.id).thenReturn('trip002');
       when(mockDoc2.data()).thenReturn({
+        'groupId': 'group002',
         'tripStartDate': Timestamp.fromDate(DateTime(2025, 7, 1)),
         'tripEndDate': Timestamp.fromDate(DateTime(2025, 7, 5)),
       });
@@ -84,9 +88,11 @@ void main() {
 
       expect(result.length, 2);
       expect(result[0].id, 'trip001');
+      expect(result[0].groupId, 'group001');
       expect(result[0].tripName, 'テスト旅行1');
       expect(result[0].tripMemo, 'テストメモ1');
       expect(result[1].id, 'trip002');
+      expect(result[1].groupId, 'group002');
       expect(result[1].tripName, null);
       expect(result[1].tripMemo, null);
     });
@@ -122,6 +128,7 @@ void main() {
       when(mockDocSnapshot.exists).thenReturn(true);
       when(mockDocSnapshot.id).thenReturn(tripId);
       when(mockDocSnapshot.data()).thenReturn({
+        'groupId': 'group001',
         'tripName': 'テスト旅行',
         'tripStartDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
         'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
@@ -132,6 +139,7 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.id, tripId);
+      expect(result.groupId, 'group001');
       expect(result.tripName, 'テスト旅行');
     });
 
