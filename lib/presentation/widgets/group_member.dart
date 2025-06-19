@@ -29,12 +29,14 @@ class _GroupMemberState extends State<GroupMember> {
 
   Future<void> _loadData() async {
     try {
+      if (!mounted) return;
       setState(() {
         _state = GroupMemberState.loading;
       });
 
       final groupsWithMembers = await widget.getGroupsWithMembersUsecase.execute();
       
+      if (!mounted) return;
       setState(() {
         _groupsWithMembers = groupsWithMembers;
         
@@ -48,6 +50,7 @@ class _GroupMemberState extends State<GroupMember> {
         }
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _state = GroupMemberState.error;
         _errorMessage = 'エラーが発生しました';
@@ -56,6 +59,7 @@ class _GroupMemberState extends State<GroupMember> {
   }
 
   void _selectGroup(GroupWithMembers group) {
+    if (!mounted) return;
     setState(() {
       _selectedGroup = group;
       _state = GroupMemberState.memberList;
@@ -63,6 +67,7 @@ class _GroupMemberState extends State<GroupMember> {
   }
 
   void _backToGroupList() {
+    if (!mounted) return;
     setState(() {
       _selectedGroup = null;
       _state = GroupMemberState.groupList;

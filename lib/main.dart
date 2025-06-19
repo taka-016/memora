@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'presentation/top_page.dart';
+import 'presentation/auth/auth_guard.dart';
+import 'application/managers/auth_manager.dart';
+import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
@@ -22,6 +26,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // 依存性注入
+    final authService = FirebaseAuthService();
+    final authManager = AuthManager(authService: authService);
+
     final groupRepository = FirestoreGroupRepository();
     final groupMemberRepository = FirestoreGroupMemberRepository();
     final memberRepository = FirestoreMemberRepository();
@@ -31,17 +38,27 @@ class MyApp extends StatelessWidget {
       memberRepository: memberRepository,
     );
 
-    return MaterialApp(
-      title: 'memora',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
-      locale: const Locale('ja'),
-      supportedLocales: const [Locale('ja'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: TopPage(getGroupsWithMembersUsecase: getGroupsWithMembersUsecase),
+    return ChangeNotifierProvider.value(
+      value: authManager,
+      child: MaterialApp(
+        title: 'memora',
+        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+        locale: const Locale('ja'),
+        supportedLocales: const [Locale('ja'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Consumer<AuthManager>(
+          builder: (context, authManager, child) {
+            return AuthGuard(
+              authManager: authManager,
+              child: TopPage(getGroupsWithMembersUsecase: getGroupsWithMembersUsecase),
+            );
+          },
+        ),
+      ),
     );
   }
 }

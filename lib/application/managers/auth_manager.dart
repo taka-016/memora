@@ -16,6 +16,7 @@ class AuthManager extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       final currentUser = await authService.getCurrentUser();
+      
       if (currentUser != null) {
         _updateState(AuthState.authenticated(currentUser));
       } else {
@@ -46,7 +47,7 @@ class AuthManager extends ChangeNotifier {
       );
       _updateState(AuthState.authenticated(user));
     } catch (e) {
-      _updateState(AuthState.error('ログインに失敗しました: ${e.toString()}'));
+      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
   }
 
@@ -62,7 +63,7 @@ class AuthManager extends ChangeNotifier {
       );
       _updateState(AuthState.authenticated(user));
     } catch (e) {
-      _updateState(AuthState.error('サインアップに失敗しました: ${e.toString()}'));
+      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
   }
 
@@ -105,6 +106,26 @@ class AuthManager extends ChangeNotifier {
   void clearError() {
     if (_state.status == AuthStatus.error) {
       _updateState(const AuthState.unauthenticated());
+    }
+  }
+
+  String _getFirebaseErrorMessage(String error) {
+    if (error.contains('email-already-in-use')) {
+      return 'このメールアドレスは既に使用されています。別のメールアドレスを使用するか、ログインしてください。';
+    } else if (error.contains('weak-password')) {
+      return 'パスワードが弱すぎます。より強力なパスワードを設定してください。';
+    } else if (error.contains('invalid-email')) {
+      return '無効なメールアドレスです。正しいメールアドレスを入力してください。';
+    } else if (error.contains('user-not-found')) {
+      return 'ユーザーが見つかりません。メールアドレスを確認してください。';
+    } else if (error.contains('wrong-password')) {
+      return 'パスワードが間違っています。';
+    } else if (error.contains('user-disabled')) {
+      return 'このアカウントは無効になっています。';
+    } else if (error.contains('too-many-requests')) {
+      return 'リクエストが多すぎます。しばらく時間をおいてから再試行してください。';
+    } else {
+      return 'エラーが発生しました。しばらく時間をおいてから再試行してください。';
     }
   }
 

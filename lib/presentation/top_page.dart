@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_member.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
@@ -74,6 +76,16 @@ class _TopPageState extends State<TopPage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              final authManager = Provider.of<AuthManager>(context, listen: false);
+              authManager.logout();
+            },
+            tooltip: 'ログアウト',
+          ),
+        ],
       ),
       drawer: Drawer(
         child: ListView(
