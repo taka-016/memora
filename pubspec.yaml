@@ -40,6 +40,8 @@ dependencies:
   envied: ^1.1.1
   flutter_localizations:
     sdk: flutter
+  firebase_auth: ^4.15.0
+  equatable: ^2.0.5
 
 dev_dependencies:
   flutter_test:
