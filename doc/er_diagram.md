@@ -2,13 +2,6 @@
 
 ```mermaid
 erDiagram
-    account {
-        string id PK
-        string name "NOT NULL"
-        string password "NOT NULL"
-        string email "NOT NULL"
-        string memberId FK
-    }
     trip_entries {
         string id PK
         string groupId FK "NOT NULL"
