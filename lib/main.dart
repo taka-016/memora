@@ -33,9 +33,7 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       title: 'memora',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
       localizationsDelegates: const [
