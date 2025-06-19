@@ -4,7 +4,7 @@
             "android": {
                 "default": {
                     "projectId": "utopian-bonito-461312-r2",
-                    "appId": "1:84109084305:android:d2cebf195e87b1092ae130",
+                    "appId": "1:84109084305:android:dbca0e8e751167d32ae130",
                     "fileOutput": "android/app/google-services.json"
                 }
             },
@@ -12,7 +12,7 @@
                 "lib/firebase_options.dart": {
                     "projectId": "utopian-bonito-461312-r2",
                     "configurations": {
-                        "android": "1:84109084305:android:d2cebf195e87b1092ae130"
+                        "android": "1:84109084305:android:dbca0e8e751167d32ae130"
                     }
                 }
             }
