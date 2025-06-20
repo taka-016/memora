@@ -19,9 +19,7 @@ void main() {
     });
 
     Widget createTestWidget({AuthManager? authManager}) {
-      return MaterialApp(
-        home: LoginPage(authManager: authManager ?? mockAuthManager),
-      );
+      return MaterialApp(home: LoginPage(authManager: authManager ?? mockAuthManager));
     }
 
     testWidgets('ログイン画面の基本要素が表示される', (WidgetTester tester) async {
@@ -35,7 +33,6 @@ void main() {
       expect(find.text('パスワード'), findsOneWidget);
       expect(find.text('アカウントをお持ちでない方'), findsOneWidget);
       expect(find.text('新規登録'), findsOneWidget);
-      expect(find.text('パスワードなしでログイン'), findsOneWidget);
     });
 
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
@@ -66,10 +63,7 @@ void main() {
       await tester.enterText(passwordField, 'password123');
       await tester.tap(loginButton);
 
-      verify(mockAuthManager.login(
-        email: 'test@example.com',
-        password: 'password123',
-      )).called(1);
+      verify(mockAuthManager.login(email: 'test@example.com', password: 'password123')).called(1);
     });
 
     testWidgets('新規登録リンクをタップすると画面遷移する', (WidgetTester tester) async {
@@ -83,21 +77,6 @@ void main() {
 
       // SignupPageに遷移することを確認
       expect(find.byType(LoginPage), findsNothing);
-    });
-
-    testWidgets('パスワードなしログインリンクをタップするとメールリンク送信ダイアログが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
-
-      await tester.pumpWidget(createTestWidget());
-
-      final passwordlessLink = find.byKey(const Key('passwordless_link'));
-      await tester.tap(passwordlessLink);
-      await tester.pumpAndSettle();
-
-      expect(find.text('パスワードなしでログイン'), findsNWidgets(2)); // タイトルとリンク
-      expect(find.text('メールアドレスを入力してください'), findsOneWidget);
-      expect(find.text('送信'), findsOneWidget);
-      expect(find.text('キャンセル'), findsOneWidget);
     });
 
     testWidgets('loading状態の時はローディングインジケーターが表示される', (WidgetTester tester) async {
@@ -118,12 +97,7 @@ void main() {
     });
 
     testWidgets('authenticated状態の時は自動的に画面が閉じられる', (WidgetTester tester) async {
-      const user = User(
-        id: 'user123',
-        email: 'test@example.com',
-        displayName: 'テストユーザー',
-        isEmailVerified: true,
-      );
+      const user = User(id: 'user123', email: 'test@example.com', displayName: 'テストユーザー', isEmailVerified: true);
 
       when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
 

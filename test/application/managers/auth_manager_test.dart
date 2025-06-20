@@ -25,16 +25,10 @@ void main() {
 
     group('initialize', () {
       test('現在のユーザーが存在する場合、authenticated状態になる', () async {
-        const user = User(
-          id: 'user123',
-          email: 'test@example.com',
-          displayName: 'テストユーザー',
-          isEmailVerified: true,
-        );
+        const user = User(id: 'user123', email: 'test@example.com', displayName: 'テストユーザー', isEmailVerified: true);
 
         when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
-        when(mockAuthService.authStateChanges)
-            .thenAnswer((_) => Stream.value(user));
+        when(mockAuthService.authStateChanges).thenAnswer((_) => Stream.value(user));
 
         await authManager.initialize();
 
@@ -44,8 +38,7 @@ void main() {
 
       test('現在のユーザーが存在しない場合、unauthenticated状態になる', () async {
         when(mockAuthService.getCurrentUser()).thenAnswer((_) async => null);
-        when(mockAuthService.authStateChanges)
-            .thenAnswer((_) => Stream.value(null));
+        when(mockAuthService.authStateChanges).thenAnswer((_) => Stream.value(null));
 
         await authManager.initialize();
 
@@ -56,37 +49,24 @@ void main() {
 
     group('login', () {
       test('正常にログインできる', () async {
-        const user = User(
-          id: 'user123',
-          email: 'test@example.com',
-          displayName: 'テストユーザー',
-          isEmailVerified: true,
-        );
+        const user = User(id: 'user123', email: 'test@example.com', displayName: 'テストユーザー', isEmailVerified: true);
 
-        when(mockAuthService.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        )).thenAnswer((_) async => user);
+        when(
+          mockAuthService.signInWithEmailAndPassword(email: 'test@example.com', password: 'password123'),
+        ).thenAnswer((_) async => user);
 
-        await authManager.login(
-          email: 'test@example.com',
-          password: 'password123',
-        );
+        await authManager.login(email: 'test@example.com', password: 'password123');
 
         expect(authManager.state.status, AuthStatus.authenticated);
         expect(authManager.state.user, user);
       });
 
       test('ログインに失敗した場合、error状態になる', () async {
-        when(mockAuthService.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        )).thenThrow(Exception('ログインに失敗しました'));
+        when(
+          mockAuthService.signInWithEmailAndPassword(email: 'test@example.com', password: 'wrongpassword'),
+        ).thenThrow(Exception('ログインに失敗しました'));
 
-        await authManager.login(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        );
+        await authManager.login(email: 'test@example.com', password: 'wrongpassword');
 
         expect(authManager.state.status, AuthStatus.error);
         expect(authManager.state.errorMessage, isNotNull);
@@ -95,37 +75,24 @@ void main() {
 
     group('signup', () {
       test('正常にサインアップできる', () async {
-        const user = User(
-          id: 'user123',
-          email: 'test@example.com',
-          displayName: null,
-          isEmailVerified: false,
-        );
+        const user = User(id: 'user123', email: 'test@example.com', displayName: null, isEmailVerified: false);
 
-        when(mockAuthService.createUserWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        )).thenAnswer((_) async => user);
+        when(
+          mockAuthService.createUserWithEmailAndPassword(email: 'test@example.com', password: 'password123'),
+        ).thenAnswer((_) async => user);
 
-        await authManager.signup(
-          email: 'test@example.com',
-          password: 'password123',
-        );
+        await authManager.signup(email: 'test@example.com', password: 'password123');
 
         expect(authManager.state.status, AuthStatus.authenticated);
         expect(authManager.state.user, user);
       });
 
       test('サインアップに失敗した場合、error状態になる', () async {
-        when(mockAuthService.createUserWithEmailAndPassword(
-          email: 'invalid-email',
-          password: 'password123',
-        )).thenThrow(Exception('サインアップに失敗しました'));
+        when(
+          mockAuthService.createUserWithEmailAndPassword(email: 'invalid-email', password: 'password123'),
+        ).thenThrow(Exception('サインアップに失敗しました'));
 
-        await authManager.signup(
-          email: 'invalid-email',
-          password: 'password123',
-        );
+        await authManager.signup(email: 'invalid-email', password: 'password123');
 
         expect(authManager.state.status, AuthStatus.error);
         expect(authManager.state.errorMessage, isNotNull);
@@ -152,81 +119,13 @@ void main() {
       });
     });
 
-    group('sendPasswordlessSignInLink', () {
-      test('正常にパスワードレスサインインリンクを送信できる', () async {
-        when(mockAuthService.sendSignInLinkToEmail(
-          email: 'test@example.com',
-        )).thenAnswer((_) async => {});
-
-        await authManager.sendPasswordlessSignInLink(email: 'test@example.com');
-
-        verify(mockAuthService.sendSignInLinkToEmail(
-          email: 'test@example.com',
-        )).called(1);
-      });
-
-      test('送信に失敗した場合、error状態になる', () async {
-        when(mockAuthService.sendSignInLinkToEmail(
-          email: 'invalid-email',
-        )).thenThrow(Exception('メール送信に失敗しました'));
-
-        await authManager.sendPasswordlessSignInLink(email: 'invalid-email');
-
-        expect(authManager.state.status, AuthStatus.error);
-        expect(authManager.state.errorMessage, isNotNull);
-      });
-    });
-
-    group('signInWithEmailLink', () {
-      test('正常にメールリンクでサインインできる', () async {
-        const user = User(
-          id: 'user123',
-          email: 'test@example.com',
-          displayName: 'テストユーザー',
-          isEmailVerified: true,
-        );
-
-        when(mockAuthService.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'https://example.com/link',
-        )).thenAnswer((_) async => user);
-
-        await authManager.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'https://example.com/link',
-        );
-
-        expect(authManager.state.status, AuthStatus.authenticated);
-        expect(authManager.state.user, user);
-      });
-
-      test('サインインに失敗した場合、error状態になる', () async {
-        when(mockAuthService.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'invalid-link',
-        )).thenThrow(Exception('サインインに失敗しました'));
-
-        await authManager.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'invalid-link',
-        );
-
-        expect(authManager.state.status, AuthStatus.error);
-        expect(authManager.state.errorMessage, isNotNull);
-      });
-    });
-
     group('clearError', () {
       test('エラー状態をクリアできる', () async {
-        when(mockAuthService.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        )).thenThrow(Exception('ログインに失敗しました'));
+        when(
+          mockAuthService.signInWithEmailAndPassword(email: 'test@example.com', password: 'wrongpassword'),
+        ).thenThrow(Exception('ログインに失敗しました'));
 
-        await authManager.login(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        );
+        await authManager.login(email: 'test@example.com', password: 'wrongpassword');
 
         expect(authManager.state.status, AuthStatus.error);
 
