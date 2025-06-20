@@ -19,7 +19,9 @@ void main() {
     });
 
     Widget createTestWidget({AuthManager? authManager}) {
-      return MaterialApp(home: LoginPage(authManager: authManager ?? mockAuthManager));
+      return MaterialApp(
+        home: LoginPage(authManager: authManager ?? mockAuthManager),
+      );
     }
 
     testWidgets('ログイン画面の基本要素が表示される', (WidgetTester tester) async {
@@ -63,7 +65,12 @@ void main() {
       await tester.enterText(passwordField, 'password123');
       await tester.tap(loginButton);
 
-      verify(mockAuthManager.login(email: 'test@example.com', password: 'password123')).called(1);
+      verify(
+        mockAuthManager.login(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
     });
 
     testWidgets('新規登録リンクをタップすると画面遷移する', (WidgetTester tester) async {
@@ -88,7 +95,9 @@ void main() {
     });
 
     testWidgets('error状態の時はエラーメッセージが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.error('ログインに失敗しました'));
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.error('ログインに失敗しました'));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -97,7 +106,12 @@ void main() {
     });
 
     testWidgets('authenticated状態の時は自動的に画面が閉じられる', (WidgetTester tester) async {
-      const user = User(id: 'user123', email: 'test@example.com', displayName: 'テストユーザー', isEmailVerified: true);
+      const user = User(
+        id: 'user123',
+        email: 'test@example.com',
+        displayName: 'テストユーザー',
+        isEmailVerified: true,
+      );
 
       when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
 

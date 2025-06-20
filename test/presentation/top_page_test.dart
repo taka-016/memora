@@ -176,7 +176,9 @@ void main() {
       expect(find.byKey(const Key('group_member')), findsNothing);
     });
 
-    testWidgets('メニューから「トップページ」を選択すると、トップページ画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「トップページ」を選択すると、トップページ画面が表示される', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -211,7 +213,9 @@ void main() {
       expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
-    testWidgets('メニューから「グループ年表」を選択すると、グループ年表画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「グループ年表」を選択すると、グループ年表画面が表示される', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -238,7 +242,9 @@ void main() {
       expect(find.byKey(const Key('group_member')), findsNothing);
     });
 
-    testWidgets('メニューから「グループ設定」を選択すると、グループ設定画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「グループ設定」を選択すると、グループ設定画面が表示される', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -265,7 +271,9 @@ void main() {
       expect(find.byKey(const Key('group_member')), findsNothing);
     });
 
-    testWidgets('メニューから「メンバー設定」を選択すると、メンバー設定画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「メンバー設定」を選択すると、メンバー設定画面が表示される', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(

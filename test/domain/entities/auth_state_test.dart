@@ -18,7 +18,7 @@ void main() {
         displayName: 'テストユーザー',
         isEmailVerified: true,
       );
-      
+
       const authState = AuthState.authenticated(user);
       expect(authState.status, AuthStatus.authenticated);
       expect(authState.user, user);

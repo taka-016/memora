@@ -35,8 +35,7 @@
                 "dart.previewFlutterUiGuidesCustomTracking": true,
                 "files.associations": {
                     "*.dart": "dart"
-                },
-                "dart.lineLength": 120
+                }
             }
         }
     },
