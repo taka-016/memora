@@ -39,14 +39,18 @@ class _AuthGuardState extends State<AuthGuard> {
       listenable: widget.authManager,
       builder: (context, child) {
         final authState = widget.authManager.state;
-        
+
         if (!_isInitialized) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
-        
+
         switch (authState.status) {
           case AuthStatus.loading:
-            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
           case AuthStatus.authenticated:
             return widget.child;
           case AuthStatus.unauthenticated:

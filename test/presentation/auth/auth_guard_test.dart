@@ -62,7 +62,9 @@ void main() {
       expect(find.text('Protected Content'), findsNothing);
     });
 
-    testWidgets('loading状態の場合、ローディングインジケーターが表示される', (WidgetTester tester) async {
+    testWidgets('loading状態の場合、ローディングインジケーターが表示される', (
+      WidgetTester tester,
+    ) async {
       when(mockAuthManager.state).thenReturn(const AuthState.loading());
 
       await tester.pumpWidget(createTestWidget());

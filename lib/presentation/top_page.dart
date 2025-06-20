@@ -10,13 +10,13 @@ import 'package:memora/presentation/widgets/group_settings.dart';
 import 'package:memora/presentation/widgets/member_settings.dart';
 import 'package:memora/presentation/widgets/settings.dart';
 
-enum NavigationItem { 
-  topPage,           // トップページ (初期表示のグループ情報)
-  groupTimeline,     // グループ年表
-  mapDisplay,        // マップ表示
-  groupSettings,     // グループ設定
-  memberSettings,    // メンバー設定
-  settings           // 設定
+enum NavigationItem {
+  topPage, // トップページ (初期表示のグループ情報)
+  groupTimeline, // グループ年表
+  mapDisplay, // マップ表示
+  groupSettings, // グループ設定
+  memberSettings, // メンバー設定
+  settings, // 設定
 }
 
 class TopPage extends StatefulWidget {
@@ -52,7 +52,7 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.groupTimeline:
         return const GroupTimeline();
       case NavigationItem.mapDisplay:
-        return widget.isTestEnvironment 
+        return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
             : const MapDisplay();
       case NavigationItem.groupSettings:
@@ -80,7 +80,10 @@ class _TopPageState extends State<TopPage> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              final authManager = Provider.of<AuthManager>(context, listen: false);
+              final authManager = Provider.of<AuthManager>(
+                context,
+                listen: false,
+              );
               authManager.logout();
             },
             tooltip: 'ログアウト',
@@ -92,15 +95,10 @@ class _TopPageState extends State<TopPage> {
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.deepPurple,
-              ),
+              decoration: BoxDecoration(color: Colors.deepPurple),
               child: Text(
                 'memora',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+                style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
             ListTile(
@@ -113,7 +111,8 @@ class _TopPageState extends State<TopPage> {
               leading: const Icon(Icons.timeline),
               title: const Text('グループ年表'),
               selected: _selectedItem == NavigationItem.groupTimeline,
-              onTap: () => _onNavigationItemSelected(NavigationItem.groupTimeline),
+              onTap: () =>
+                  _onNavigationItemSelected(NavigationItem.groupTimeline),
             ),
             ListTile(
               leading: const Icon(Icons.map),
@@ -125,13 +124,15 @@ class _TopPageState extends State<TopPage> {
               leading: const Icon(Icons.group_work),
               title: const Text('グループ設定'),
               selected: _selectedItem == NavigationItem.groupSettings,
-              onTap: () => _onNavigationItemSelected(NavigationItem.groupSettings),
+              onTap: () =>
+                  _onNavigationItemSelected(NavigationItem.groupSettings),
             ),
             ListTile(
               leading: const Icon(Icons.people),
               title: const Text('メンバー設定'),
               selected: _selectedItem == NavigationItem.memberSettings,
-              onTap: () => _onNavigationItemSelected(NavigationItem.memberSettings),
+              onTap: () =>
+                  _onNavigationItemSelected(NavigationItem.memberSettings),
             ),
             ListTile(
               leading: const Icon(Icons.settings),

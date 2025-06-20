@@ -28,10 +28,7 @@ void main() {
     test('ログアウトに失敗した場合、例外を投げる', () async {
       when(mockAuthService.signOut()).thenThrow(Exception('ログアウトに失敗しました'));
 
-      expect(
-        () => logoutUsecase.execute(),
-        throwsException,
-      );
+      expect(() => logoutUsecase.execute(), throwsException);
     });
   });
 }

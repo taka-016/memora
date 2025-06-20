@@ -26,10 +26,12 @@ void main() {
         isEmailVerified: true,
       );
 
-      when(mockAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).thenAnswer((_) async => user);
+      when(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).thenAnswer((_) async => user);
 
       final result = await loginUsecase.execute(
         email: 'test@example.com',
@@ -37,17 +39,21 @@ void main() {
       );
 
       expect(result, user);
-      verify(mockAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).called(1);
+      verify(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
     });
 
     test('ログインに失敗した場合、例外を投げる', () async {
-      when(mockAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'wrongpassword',
-      )).thenThrow(Exception('ログインに失敗しました'));
+      when(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'wrongpassword',
+        ),
+      ).thenThrow(Exception('ログインに失敗しました'));
 
       expect(
         () => loginUsecase.execute(

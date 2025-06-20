@@ -45,7 +45,9 @@ void main() {
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
-      final confirmPasswordField = find.byKey(const Key('confirm_password_field'));
+      final confirmPasswordField = find.byKey(
+        const Key('confirm_password_field'),
+      );
 
       await tester.enterText(emailField, 'test@example.com');
       await tester.enterText(passwordField, 'password123');
@@ -62,7 +64,9 @@ void main() {
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
-      final confirmPasswordField = find.byKey(const Key('confirm_password_field'));
+      final confirmPasswordField = find.byKey(
+        const Key('confirm_password_field'),
+      );
       final signupButton = find.byKey(const Key('signup_button'));
 
       await tester.enterText(emailField, 'test@example.com');
@@ -70,10 +74,12 @@ void main() {
       await tester.enterText(confirmPasswordField, 'password123');
       await tester.tap(signupButton);
 
-      verify(mockAuthManager.signup(
-        email: 'test@example.com',
-        password: 'password123',
-      )).called(1);
+      verify(
+        mockAuthManager.signup(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
     });
 
     testWidgets('ログインリンクをタップすると画面が戻る', (WidgetTester tester) async {
@@ -98,7 +104,9 @@ void main() {
     });
 
     testWidgets('error状態の時はエラーメッセージが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.error('サインアップに失敗しました'));
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.error('サインアップに失敗しました'));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -113,7 +121,9 @@ void main() {
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
-      final confirmPasswordField = find.byKey(const Key('confirm_password_field'));
+      final confirmPasswordField = find.byKey(
+        const Key('confirm_password_field'),
+      );
       final signupButton = find.byKey(const Key('signup_button'));
 
       await tester.enterText(emailField, 'test@example.com');

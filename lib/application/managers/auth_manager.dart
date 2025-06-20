@@ -38,7 +38,10 @@ class AuthManager extends ChangeNotifier {
   Future<void> login({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.signInWithEmailAndPassword(email: email, password: password);
+      final user = await authService.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
@@ -48,7 +51,10 @@ class AuthManager extends ChangeNotifier {
   Future<void> signup({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.createUserWithEmailAndPassword(email: email, password: password);
+      final user = await authService.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));

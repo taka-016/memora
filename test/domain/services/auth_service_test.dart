@@ -7,7 +7,6 @@ import 'package:memora/domain/services/auth_service.dart';
 import 'auth_service_test.mocks.dart';
 
 @GenerateMocks([AuthService])
-
 void main() {
   group('AuthService インターフェース', () {
     late MockAuthService mockAuthService;
@@ -39,10 +38,12 @@ void main() {
         isEmailVerified: true,
       );
 
-      when(mockAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).thenAnswer((_) async => user);
+      when(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).thenAnswer((_) async => user);
 
       final result = await mockAuthService.signInWithEmailAndPassword(
         email: 'test@example.com',
@@ -50,10 +51,12 @@ void main() {
       );
 
       expect(result, user);
-      verify(mockAuthService.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).called(1);
+      verify(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
     });
 
     test('createUserWithEmailAndPasswordメソッドが存在する', () async {
@@ -64,10 +67,12 @@ void main() {
         isEmailVerified: false,
       );
 
-      when(mockAuthService.createUserWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).thenAnswer((_) async => user);
+      when(
+        mockAuthService.createUserWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).thenAnswer((_) async => user);
 
       final result = await mockAuthService.createUserWithEmailAndPassword(
         email: 'test@example.com',
@@ -75,10 +80,12 @@ void main() {
       );
 
       expect(result, user);
-      verify(mockAuthService.createUserWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      )).called(1);
+      verify(
+        mockAuthService.createUserWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
     });
 
     test('signOutメソッドが存在する', () async {
@@ -89,14 +96,14 @@ void main() {
     });
 
     test('sendSignInLinkToEmailメソッドが存在する', () async {
-      when(mockAuthService.sendSignInLinkToEmail(
-        email: 'test@example.com',
-      )).thenAnswer((_) async => {});
+      when(
+        mockAuthService.sendSignInLinkToEmail(email: 'test@example.com'),
+      ).thenAnswer((_) async => {});
 
       await mockAuthService.sendSignInLinkToEmail(email: 'test@example.com');
-      verify(mockAuthService.sendSignInLinkToEmail(
-        email: 'test@example.com',
-      )).called(1);
+      verify(
+        mockAuthService.sendSignInLinkToEmail(email: 'test@example.com'),
+      ).called(1);
     });
 
     test('signInWithEmailLinkメソッドが存在する', () async {
@@ -107,10 +114,12 @@ void main() {
         isEmailVerified: true,
       );
 
-      when(mockAuthService.signInWithEmailLink(
-        email: 'test@example.com',
-        emailLink: 'https://example.com/link',
-      )).thenAnswer((_) async => user);
+      when(
+        mockAuthService.signInWithEmailLink(
+          email: 'test@example.com',
+          emailLink: 'https://example.com/link',
+        ),
+      ).thenAnswer((_) async => user);
 
       final result = await mockAuthService.signInWithEmailLink(
         email: 'test@example.com',
@@ -118,10 +127,12 @@ void main() {
       );
 
       expect(result, user);
-      verify(mockAuthService.signInWithEmailLink(
-        email: 'test@example.com',
-        emailLink: 'https://example.com/link',
-      )).called(1);
+      verify(
+        mockAuthService.signInWithEmailLink(
+          email: 'test@example.com',
+          emailLink: 'https://example.com/link',
+        ),
+      ).called(1);
     });
 
     test('authStateChangesストリームが存在する', () {
@@ -132,8 +143,9 @@ void main() {
         isEmailVerified: true,
       );
 
-      when(mockAuthService.authStateChanges)
-          .thenAnswer((_) => Stream.value(user));
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => Stream.value(user));
 
       final stream = mockAuthService.authStateChanges;
       expect(stream, isA<Stream<User?>>());

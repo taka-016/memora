@@ -4,14 +4,16 @@ import '../../domain/services/auth_service.dart';
 
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? firebaseAuth})
-      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   final FirebaseAuth _firebaseAuth;
 
   @override
   Future<domain.User?> getCurrentUser() async {
     final firebaseUser = _firebaseAuth.currentUser;
-    return firebaseUser != null ? _mapFirebaseUserToDomainUser(firebaseUser) : null;
+    return firebaseUser != null
+        ? _mapFirebaseUserToDomainUser(firebaseUser)
+        : null;
   }
 
   @override
@@ -23,11 +25,11 @@ class FirebaseAuthService implements AuthService {
       email: email,
       password: password,
     );
-    
+
     if (userCredential.user == null) {
       throw Exception('ログインに失敗しました');
     }
-    
+
     return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
@@ -40,11 +42,11 @@ class FirebaseAuthService implements AuthService {
       email: email,
       password: password,
     );
-    
+
     if (userCredential.user == null) {
       throw Exception('ユーザー作成に失敗しました');
     }
-    
+
     return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
@@ -54,9 +56,7 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
-  Future<void> sendSignInLinkToEmail({
-    required String email,
-  }) async {
+  Future<void> sendSignInLinkToEmail({required String email}) async {
     final actionCodeSettings = ActionCodeSettings(
       url: 'https://memora.page.link/signIn',
       handleCodeInApp: true,
@@ -64,7 +64,7 @@ class FirebaseAuthService implements AuthService {
       androidInstallApp: true,
       androidMinimumVersion: '21',
     );
-    
+
     await _firebaseAuth.sendSignInLinkToEmail(
       email: email,
       actionCodeSettings: actionCodeSettings,
@@ -80,19 +80,19 @@ class FirebaseAuthService implements AuthService {
       email: email,
       emailLink: emailLink,
     );
-    
+
     if (userCredential.user == null) {
       throw Exception('メールリンクでのサインインに失敗しました');
     }
-    
+
     return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
   @override
   Stream<domain.User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
-      return firebaseUser != null 
-          ? _mapFirebaseUserToDomainUser(firebaseUser) 
+      return firebaseUser != null
+          ? _mapFirebaseUserToDomainUser(firebaseUser)
           : null;
     });
   }
