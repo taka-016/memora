@@ -16,7 +16,7 @@ class AuthManager extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       final currentUser = await authService.getCurrentUser();
-      
+
       if (currentUser != null) {
         _updateState(AuthState.authenticated(currentUser));
       } else {
@@ -35,32 +35,20 @@ class AuthManager extends ChangeNotifier {
     }
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final user = await authService.signInWithEmailAndPassword(email: email, password: password);
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
   }
 
-  Future<void> signup({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> signup({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final user = await authService.createUserWithEmailAndPassword(email: email, password: password);
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
@@ -74,32 +62,6 @@ class AuthManager extends ChangeNotifier {
       _updateState(const AuthState.unauthenticated());
     } catch (e) {
       _updateState(AuthState.error('ログアウトに失敗しました: ${e.toString()}'));
-    }
-  }
-
-  Future<void> sendPasswordlessSignInLink({
-    required String email,
-  }) async {
-    try {
-      await authService.sendSignInLinkToEmail(email: email);
-    } catch (e) {
-      _updateState(AuthState.error('メール送信に失敗しました: ${e.toString()}'));
-    }
-  }
-
-  Future<void> signInWithEmailLink({
-    required String email,
-    required String emailLink,
-  }) async {
-    try {
-      _updateState(const AuthState.loading());
-      final user = await authService.signInWithEmailLink(
-        email: email,
-        emailLink: emailLink,
-      );
-      _updateState(AuthState.authenticated(user));
-    } catch (e) {
-      _updateState(AuthState.error('サインインに失敗しました: ${e.toString()}'));
     }
   }
 

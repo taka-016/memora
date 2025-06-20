@@ -44,10 +44,7 @@ class _SignupPageState extends State<SignupPage> {
 
   Future<void> _signup() async {
     if (_formKey.currentState?.validate() ?? false) {
-      await widget.authManager.signup(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      await widget.authManager.signup(email: _emailController.text.trim(), password: _passwordController.text);
     }
   }
 
@@ -58,9 +55,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('新規登録'),
-      ),
+      appBar: AppBar(title: const Text('新規登録')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListenableBuilder(
@@ -106,10 +101,7 @@ class _SignupPageState extends State<SignupPage> {
                     TextFormField(
                       key: const Key('email_field'),
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'メールアドレス',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'メールアドレス', border: OutlineInputBorder()),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -125,17 +117,11 @@ class _SignupPageState extends State<SignupPage> {
                     TextFormField(
                       key: const Key('password_field'),
                       controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'パスワード',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'パスワード', border: OutlineInputBorder()),
                       obscureText: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'パスワードを入力してください';
-                        }
-                        if (value.length < 6) {
-                          return 'パスワードは6文字以上で入力してください';
                         }
                         return null;
                       },
@@ -144,10 +130,7 @@ class _SignupPageState extends State<SignupPage> {
                     TextFormField(
                       key: const Key('confirm_password_field'),
                       controller: _confirmPasswordController,
-                      decoration: const InputDecoration(
-                        labelText: 'パスワード確認',
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: const InputDecoration(labelText: 'パスワード確認', border: OutlineInputBorder()),
                       obscureText: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -163,9 +146,7 @@ class _SignupPageState extends State<SignupPage> {
                     ElevatedButton(
                       key: const Key('signup_button'),
                       onPressed: _signup,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       child: const Text('登録', style: TextStyle(fontSize: 16)),
                     ),
                     const SizedBox(height: 32),
