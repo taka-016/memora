@@ -25,7 +25,11 @@ class _AuthGuardState extends State<AuthGuard> {
   Future<void> _initializeAuth() async {
     if (!_isInitialized) {
       await widget.authManager.initialize();
-      _isInitialized = true;
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+      }
     }
   }
 
