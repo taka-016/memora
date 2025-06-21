@@ -10,12 +10,13 @@ void main() {
     test('FirestoreのDocumentSnapshotからTripParticipantへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('participant001');
-      when(mockDoc.data()).thenReturn({
-        'tripId': 'trip001',
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc.data(),
+      ).thenReturn({'tripId': 'trip001', 'memberId': 'member001'});
 
-      final tripParticipant = FirestoreTripParticipantMapper.fromFirestore(mockDoc);
+      final tripParticipant = FirestoreTripParticipantMapper.fromFirestore(
+        mockDoc,
+      );
 
       expect(tripParticipant.id, 'participant001');
       expect(tripParticipant.tripId, 'trip001');

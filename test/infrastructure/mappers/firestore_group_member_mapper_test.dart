@@ -10,10 +10,9 @@ void main() {
     test('FirestoreのDocumentSnapshotからGroupMemberへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('groupmember001');
-      when(mockDoc.data()).thenReturn({
-        'groupId': 'group001',
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc.data(),
+      ).thenReturn({'groupId': 'group001', 'memberId': 'member001'});
 
       final groupMember = FirestoreGroupMemberMapper.fromFirestore(mockDoc);
 

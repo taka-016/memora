@@ -11,11 +11,7 @@ class GroupTimeline extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.timeline,
-              size: 100,
-              color: Colors.grey,
-            ),
+            Icon(Icons.timeline, size: 100, color: Colors.grey),
             SizedBox(height: 16),
             Text(
               'グループ年表',
@@ -26,13 +22,7 @@ class GroupTimeline extends StatelessWidget {
               ),
             ),
             SizedBox(height: 8),
-            Text(
-              '今後実装予定',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
+            Text('今後実装予定', style: TextStyle(fontSize: 16, color: Colors.grey)),
           ],
         ),
       ),

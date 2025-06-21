@@ -11,9 +11,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
   @override
   Future<void> saveTripEntry(TripEntry tripEntry) async {
-    await _firestore.collection('trip_entries').add(
-      FirestoreTripEntryMapper.toFirestore(tripEntry),
-    );
+    await _firestore
+        .collection('trip_entries')
+        .add(FirestoreTripEntryMapper.toFirestore(tripEntry));
   }
 
   @override

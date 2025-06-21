@@ -11,9 +11,9 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
 
   @override
   Future<void> saveGroupMember(GroupMember groupMember) async {
-    await _firestore.collection('group_members').add(
-      FirestoreGroupMemberMapper.toFirestore(groupMember),
-    );
+    await _firestore
+        .collection('group_members')
+        .add(FirestoreGroupMemberMapper.toFirestore(groupMember));
   }
 
   @override

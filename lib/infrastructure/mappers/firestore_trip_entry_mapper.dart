@@ -8,8 +8,10 @@ class FirestoreTripEntryMapper {
       id: doc.id,
       groupId: data?['groupId'] as String? ?? '',
       tripName: data?['tripName'] as String?,
-      tripStartDate: (data?['tripStartDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      tripEndDate: (data?['tripEndDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      tripStartDate:
+          (data?['tripStartDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      tripEndDate:
+          (data?['tripEndDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       tripMemo: data?['tripMemo'] as String?,
     );
   }

@@ -30,44 +30,48 @@ void main() {
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockFirestore.collection('trip_participants')).thenReturn(mockCollection);
+      when(
+        mockFirestore.collection('trip_participants'),
+      ).thenReturn(mockCollection);
       repository = FirestoreTripParticipantRepository(firestore: mockFirestore);
     });
 
-    test('saveTripParticipantがtrip_participants collectionに参加者情報をaddする', () async {
-      final tripParticipant = TripParticipant(
-        id: 'participant001',
-        tripId: 'trip001',
-        memberId: 'member001',
-      );
+    test(
+      'saveTripParticipantがtrip_participants collectionに参加者情報をaddする',
+      () async {
+        final tripParticipant = TripParticipant(
+          id: 'participant001',
+          tripId: 'trip001',
+          memberId: 'member001',
+        );
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+        when(mockCollection.add(any)).thenAnswer(
+          (_) async => MockDocumentReference<Map<String, dynamic>>(),
+        );
 
-      await repository.saveTripParticipant(tripParticipant);
+        await repository.saveTripParticipant(tripParticipant);
 
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('tripId', 'trip001'),
-              containsPair('memberId', 'member001'),
-              contains('createdAt'),
-            ]),
+        verify(
+          mockCollection.add(
+            argThat(
+              allOf([
+                containsPair('tripId', 'trip001'),
+                containsPair('memberId', 'member001'),
+                contains('createdAt'),
+              ]),
+            ),
           ),
-        ),
-      ).called(1);
-    });
+        ).called(1);
+      },
+    );
 
     test('getTripParticipantsがFirestoreからTripParticipantのリストを返す', () async {
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('participant001');
-      when(mockDoc1.data()).thenReturn({
-        'tripId': 'trip001',
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'tripId': 'trip001', 'memberId': 'member001'});
 
       final result = await repository.getTripParticipants();
 
@@ -85,30 +89,34 @@ void main() {
       expect(result, isEmpty);
     });
 
-    test('deleteTripParticipantがtrip_participants collectionの該当ドキュメントを削除する', () async {
-      const participantId = 'participant001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+    test(
+      'deleteTripParticipantがtrip_participants collectionの該当ドキュメントを削除する',
+      () async {
+        const participantId = 'participant001';
+        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      when(mockCollection.doc(participantId)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
+        when(mockCollection.doc(participantId)).thenReturn(mockDocRef);
+        when(mockDocRef.delete()).thenAnswer((_) async {});
 
-      await repository.deleteTripParticipant(participantId);
+        await repository.deleteTripParticipant(participantId);
 
-      verify(mockCollection.doc(participantId)).called(1);
-      verify(mockDocRef.delete()).called(1);
-    });
+        verify(mockCollection.doc(participantId)).called(1);
+        verify(mockDocRef.delete()).called(1);
+      },
+    );
 
     test('getTripParticipantsByTripIdが特定の旅行の参加者リストを返す', () async {
       const tripId = 'trip001';
 
-      when(mockCollection.where('tripId', isEqualTo: tripId)).thenReturn(mockQuery);
+      when(
+        mockCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('participant001');
-      when(mockDoc1.data()).thenReturn({
-        'tripId': tripId,
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'tripId': tripId, 'memberId': 'member001'});
 
       final result = await repository.getTripParticipantsByTripId(tripId);
 
@@ -121,7 +129,9 @@ void main() {
     test('getTripParticipantsByTripIdがエラー時に空のリストを返す', () async {
       const tripId = 'trip001';
 
-      when(mockCollection.where('tripId', isEqualTo: tripId)).thenReturn(mockQuery);
+      when(
+        mockCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockQuery);
       when(mockQuery.get()).thenThrow(Exception('Firestore error'));
 
       final result = await repository.getTripParticipantsByTripId(tripId);

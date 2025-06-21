@@ -11,9 +11,9 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
 
   @override
   Future<void> saveGroupEvent(GroupEvent groupEvent) async {
-    await _firestore.collection('group_events').add(
-      FirestoreGroupEventMapper.toFirestore(groupEvent),
-    );
+    await _firestore
+        .collection('group_events')
+        .add(FirestoreGroupEventMapper.toFirestore(groupEvent));
   }
 
   @override

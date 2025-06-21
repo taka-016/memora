@@ -30,7 +30,9 @@ void main() {
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockFirestore.collection('group_members')).thenReturn(mockCollection);
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockCollection);
       repository = FirestoreGroupMemberRepository(firestore: mockFirestore);
     });
 
@@ -64,10 +66,9 @@ void main() {
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('groupmember001');
-      when(mockDoc1.data()).thenReturn({
-        'groupId': 'group001',
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'groupId': 'group001', 'memberId': 'member001'});
 
       final result = await repository.getGroupMembers();
 
@@ -101,14 +102,15 @@ void main() {
     test('getGroupMembersByGroupIdが特定のグループのメンバーリストを返す', () async {
       const groupId = 'group001';
 
-      when(mockCollection.where('groupId', isEqualTo: groupId)).thenReturn(mockQuery);
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('groupmember001');
-      when(mockDoc1.data()).thenReturn({
-        'groupId': groupId,
-        'memberId': 'member001',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'groupId': groupId, 'memberId': 'member001'});
 
       final result = await repository.getGroupMembersByGroupId(groupId);
 

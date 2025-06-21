@@ -25,7 +25,12 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final pin = Pin(id: 'id001', pinId: 'pin001', latitude: 35.0, longitude: 139.0);
+      final pin = Pin(
+        id: 'id001',
+        pinId: 'pin001',
+        latitude: 35.0,
+        longitude: 139.0,
+      );
       expect(pin.id, 'id001');
       expect(pin.pinId, 'pin001');
       expect(pin.tripId, null);

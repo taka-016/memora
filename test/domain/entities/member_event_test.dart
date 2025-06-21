@@ -25,7 +25,13 @@ void main() {
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
       final now = DateTime.now();
-      final event = MemberEvent(id: 'event001', memberId: 'member001', type: 'typeA', startDate: now, endDate: now);
+      final event = MemberEvent(
+        id: 'event001',
+        memberId: 'member001',
+        type: 'typeA',
+        startDate: now,
+        endDate: now,
+      );
       expect(event.id, 'event001');
       expect(event.memberId, 'member001');
       expect(event.type, 'typeA');

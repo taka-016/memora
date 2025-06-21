@@ -81,7 +81,9 @@ void main() {
       ];
 
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
-      when(mockGroupMemberRepository.getGroupMembers()).thenAnswer((_) async => groupMembers);
+      when(
+        mockGroupMemberRepository.getGroupMembers(),
+      ).thenAnswer((_) async => groupMembers);
       when(mockMemberRepository.getMembers()).thenAnswer((_) async => members);
 
       // Act
@@ -100,12 +102,12 @@ void main() {
 
     test('メンバーがいないグループの場合、空のメンバーリストが返されること', () async {
       // Arrange
-      final groups = [
-        Group(id: '1', name: 'グループ1'),
-      ];
+      final groups = [Group(id: '1', name: 'グループ1')];
 
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
-      when(mockGroupMemberRepository.getGroupMembers()).thenAnswer((_) async => []);
+      when(
+        mockGroupMemberRepository.getGroupMembers(),
+      ).thenAnswer((_) async => []);
       when(mockMemberRepository.getMembers()).thenAnswer((_) async => []);
 
       // Act
@@ -120,7 +122,9 @@ void main() {
     test('グループが存在しない場合、空のリストが返されること', () async {
       // Arrange
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => []);
-      when(mockGroupMemberRepository.getGroupMembers()).thenAnswer((_) async => []);
+      when(
+        mockGroupMemberRepository.getGroupMembers(),
+      ).thenAnswer((_) async => []);
       when(mockMemberRepository.getMembers()).thenAnswer((_) async => []);
 
       // Act

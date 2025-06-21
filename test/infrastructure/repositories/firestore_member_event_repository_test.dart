@@ -30,7 +30,9 @@ void main() {
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockFirestore.collection('member_events')).thenReturn(mockCollection);
+      when(
+        mockFirestore.collection('member_events'),
+      ).thenReturn(mockCollection);
       repository = FirestoreMemberEventRepository(firestore: mockFirestore);
     });
 
@@ -115,7 +117,9 @@ void main() {
     test('getMemberEventsByMemberIdが特定のメンバーのイベントリストを返す', () async {
       const memberId = 'member001';
 
-      when(mockCollection.where('memberId', isEqualTo: memberId)).thenReturn(mockQuery);
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('memberevent001');

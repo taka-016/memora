@@ -27,8 +27,10 @@
 
 **主要コマンド**
 - `flutter run` - アプリケーションを実行
-- `flutter test` - 全テストを実行（コミット前に必須）
-- `flutter analyze` - 静的コード解析（コミット前に必須）
+- `./check.sh` - フォーマット・解析・テストを一括実行（コミット前に必須）
+- `flutter test` - 全テストを実行
+- `flutter analyze` - 静的コード解析
+- `dart format .` - コードフォーマット
 - `flutter pub get` - 依存関係をインストール
 - `flutter pub run build_runner build --delete-conflicting-outputs` - モックやコード生成を実行
 
@@ -72,8 +74,8 @@
 - 作業の前に、必ず`doc/todo_list.md`を確認し、ToDoリストに沿って進めること。
 - `doc/todo_list.md`はユーザーが管理するため、変更しないこと。
 - コマンド実行は1つずつ行い、結果を確認しながら進めること
-- 作業の最後に必ず`flutter analyze`と`flutter test`を実行すること
-- コミット前に`flutter analyze`と`flutter test`を必ず実行すること
+- 作業の最後に必ず`./check.sh`を実行すること
+- コミット前に`./check.sh`を必ず実行すること
 
 ## TDDワークフロー
 1. **Red:** まずテストケースを書き、テストを実行して失敗することを確認する

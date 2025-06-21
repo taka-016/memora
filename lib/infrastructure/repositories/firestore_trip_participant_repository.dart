@@ -11,9 +11,9 @@ class FirestoreTripParticipantRepository implements TripParticipantRepository {
 
   @override
   Future<void> saveTripParticipant(TripParticipant tripParticipant) async {
-    await _firestore.collection('trip_participants').add(
-      FirestoreTripParticipantMapper.toFirestore(tripParticipant),
-    );
+    await _firestore
+        .collection('trip_participants')
+        .add(FirestoreTripParticipantMapper.toFirestore(tripParticipant));
   }
 
   @override
@@ -30,11 +30,16 @@ class FirestoreTripParticipantRepository implements TripParticipantRepository {
 
   @override
   Future<void> deleteTripParticipant(String tripParticipantId) async {
-    await _firestore.collection('trip_participants').doc(tripParticipantId).delete();
+    await _firestore
+        .collection('trip_participants')
+        .doc(tripParticipantId)
+        .delete();
   }
 
   @override
-  Future<List<TripParticipant>> getTripParticipantsByTripId(String tripId) async {
+  Future<List<TripParticipant>> getTripParticipantsByTripId(
+    String tripId,
+  ) async {
     try {
       final snapshot = await _firestore
           .collection('trip_participants')

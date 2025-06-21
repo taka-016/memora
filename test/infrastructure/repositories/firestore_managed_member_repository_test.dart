@@ -20,40 +20,46 @@ void main() {
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
-      when(mockFirestore.collection('managed_members')).thenReturn(mockCollection);
+      when(
+        mockFirestore.collection('managed_members'),
+      ).thenReturn(mockCollection);
       repository = FirestoreManagedMemberRepository(firestore: mockFirestore);
     });
 
-    test('saveManagedMemberがmanaged_members collectionに管理メンバー情報をaddする', () async {
-      final managedMember = ManagedMember(
-        id: 'managedmember001',
-        memberId: 'member001',
-        managedMemberId: 'member002',
-      );
+    test(
+      'saveManagedMemberがmanaged_members collectionに管理メンバー情報をaddする',
+      () async {
+        final managedMember = ManagedMember(
+          id: 'managedmember001',
+          memberId: 'member001',
+          managedMemberId: 'member002',
+        );
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+        when(mockCollection.add(any)).thenAnswer(
+          (_) async => MockDocumentReference<Map<String, dynamic>>(),
+        );
 
-      await repository.saveManagedMember(managedMember);
+        await repository.saveManagedMember(managedMember);
 
-      verify(
-        mockCollection.add(argThat(
-          allOf([
-            containsPair('memberId', 'member001'),
-            containsPair('managedMemberId', 'member002'),
-            containsPair('createdAt', isA<FieldValue>()),
-          ])
-        )),
-      ).called(1);
-    });
+        verify(
+          mockCollection.add(
+            argThat(
+              allOf([
+                containsPair('memberId', 'member001'),
+                containsPair('managedMemberId', 'member002'),
+                containsPair('createdAt', isA<FieldValue>()),
+              ]),
+            ),
+          ),
+        ).called(1);
+      },
+    );
 
     test('getManagedMembersが管理メンバーのリストを返す', () async {
       when(mockDoc1.id).thenReturn('managedmember001');
-      when(mockDoc1.data()).thenReturn({
-        'memberId': 'member001',
-        'managedMemberId': 'member002',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'memberId': 'member001', 'managedMemberId': 'member002'});
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
 
@@ -76,12 +82,13 @@ void main() {
     });
 
     test('getManagedMembersByMemberIdが指定されたmemberIdの管理メンバーを返す', () async {
-      when(mockCollection.where('memberId', isEqualTo: 'member001')).thenReturn(mockQuery);
+      when(
+        mockCollection.where('memberId', isEqualTo: 'member001'),
+      ).thenReturn(mockQuery);
       when(mockDoc1.id).thenReturn('managedmember001');
-      when(mockDoc1.data()).thenReturn({
-        'memberId': 'member001',
-        'managedMemberId': 'member002',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'memberId': 'member001', 'managedMemberId': 'member002'});
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
 
@@ -92,21 +99,27 @@ void main() {
       expect(result[0].managedMemberId, 'member002');
     });
 
-    test('getManagedMembersByManagedMemberIdが指定されたmanagedMemberIdの管理メンバーを返す', () async {
-      when(mockCollection.where('managedMemberId', isEqualTo: 'member002')).thenReturn(mockQuery);
-      when(mockDoc1.id).thenReturn('managedmember001');
-      when(mockDoc1.data()).thenReturn({
-        'memberId': 'member001',
-        'managedMemberId': 'member002',
-      });
-      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+    test(
+      'getManagedMembersByManagedMemberIdが指定されたmanagedMemberIdの管理メンバーを返す',
+      () async {
+        when(
+          mockCollection.where('managedMemberId', isEqualTo: 'member002'),
+        ).thenReturn(mockQuery);
+        when(mockDoc1.id).thenReturn('managedmember001');
+        when(
+          mockDoc1.data(),
+        ).thenReturn({'memberId': 'member001', 'managedMemberId': 'member002'});
+        when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+        when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
 
-      final result = await repository.getManagedMembersByManagedMemberId('member002');
+        final result = await repository.getManagedMembersByManagedMemberId(
+          'member002',
+        );
 
-      expect(result.length, 1);
-      expect(result[0].memberId, 'member001');
-      expect(result[0].managedMemberId, 'member002');
-    });
+        expect(result.length, 1);
+        expect(result[0].memberId, 'member001');
+        expect(result[0].managedMemberId, 'member002');
+      },
+    );
   });
 }
