@@ -42,7 +42,9 @@ class MyApp extends StatelessWidget {
       value: authManager,
       child: MaterialApp(
         title: 'memora',
-        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        ),
         locale: const Locale('ja'),
         supportedLocales: const [Locale('ja'), Locale('en')],
         localizationsDelegates: const [
@@ -54,7 +56,9 @@ class MyApp extends StatelessWidget {
           builder: (context, authManager, child) {
             return AuthGuard(
               authManager: authManager,
-              child: TopPage(getGroupsWithMembersUsecase: getGroupsWithMembersUsecase),
+              child: TopPage(
+                getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
+              ),
             );
           },
         ),

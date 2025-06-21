@@ -55,49 +55,57 @@ void main() {
         ),
       ];
 
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: MapDisplay(
-            initialPins: testPins,
-            locationService: mockLocationService,
-            pinRepository: mockPinRepository,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MapDisplay(
+              initialPins: testPins,
+              locationService: mockLocationService,
+              pinRepository: mockPinRepository,
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.byType(MapDisplay), findsOneWidget);
       expect(find.byType(GoogleMap), findsOneWidget);
     });
 
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: MapDisplay(
-            locationService: mockLocationService,
-            pinRepository: mockPinRepository,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MapDisplay(
+              locationService: mockLocationService,
+              pinRepository: mockPinRepository,
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('場所を検索'), findsOneWidget);
     });
 
     testWidgets('現在地ボタンが表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: MapDisplay(
-            locationService: mockLocationService,
-            pinRepository: mockPinRepository,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MapDisplay(
+              locationService: mockLocationService,
+              pinRepository: mockPinRepository,
+            ),
           ),
         ),
-      ));
+      );
 
       expect(find.byIcon(Icons.my_location), findsOneWidget);
     });
 
     testWidgets('マーカーをタップすると削除メニュー付きポップアップが表示される', (WidgetTester tester) async {
-      final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
+      final initialPins = [
+        Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
+      ];
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -123,7 +131,9 @@ void main() {
     });
 
     testWidgets('マップ起動時に保存済みのマーカーが表示される', (WidgetTester tester) async {
-      final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
+      final initialPins = [
+        Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
+      ];
 
       await tester.pumpWidget(
         MaterialApp(
@@ -172,7 +182,9 @@ void main() {
     });
 
     testWidgets('ピンをタップしたときにPinDetailModalが表示される', (WidgetTester tester) async {
-      final initialPins = [Pin(id: '1', pinId: '1', latitude: 10, longitude: 10)];
+      final initialPins = [
+        Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
+      ];
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

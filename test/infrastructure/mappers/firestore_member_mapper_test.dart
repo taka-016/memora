@@ -114,9 +114,7 @@ void main() {
     });
 
     test('nullフィールドを含むMemberからFirestoreのMapへ変換できる', () {
-      final member = Member(
-        id: 'member003',
-      );
+      final member = Member(id: 'member003');
 
       final data = FirestoreMemberMapper.toFirestore(member);
 

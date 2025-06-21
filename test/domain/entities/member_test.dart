@@ -46,9 +46,7 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final member = Member(
-        id: 'member002',
-      );
+      final member = Member(id: 'member002');
       expect(member.id, 'member002');
       expect(member.accountId, null);
       expect(member.hiraganaFirstName, null);

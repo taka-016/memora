@@ -214,57 +214,57 @@ class _MapDisplayState extends State<MapDisplay> {
     return Container(
       key: const Key('map_display'),
       child: Stack(
-      children: [
-        GoogleMap(
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: CameraPosition(
-            target: _defaultPosition,
-            zoom: 15,
-          ),
-          markers: _pinManager.markers.toSet(),
-          onLongPress: _addMarker,
-          myLocationEnabled: true,
-          myLocationButtonEnabled: false,
-        ),
-        Positioned(
-          top: 16,
-          left: 16,
-          right: 16,
-          child: CustomSearchBar(
-            hintText: '場所を検索',
-            locationSearchService: locationSearchService,
-            onCandidateSelected: (candidate) async {
-              await _moveToSearchedLocation(
-                candidate.latitude,
-                candidate.longitude,
-              );
-            },
-          ),
-        ),
-        ..._pinManager.markers.toList().asMap().entries.map((entry) {
-          final i = entry.key;
-          final marker = entry.value;
-          return Positioned(
-            left: 100.0 + i * 10,
-            top: 200.0 + i * 10,
-            child: GestureDetector(
-              key: Key('map_marker_$i'),
-              onTap: () => _onMarkerTap(marker.markerId, marker.position, i),
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox(width: 40, height: 40),
+        children: [
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(
+              target: _defaultPosition,
+              zoom: 15,
             ),
-          );
-        }),
-        Positioned(
-          bottom: 180,
-          right: 4,
-          child: FloatingActionButton(
-            heroTag: 'my_location_fab',
-            onPressed: _moveToCurrentLocation,
-            child: const Icon(Icons.my_location),
+            markers: _pinManager.markers.toSet(),
+            onLongPress: _addMarker,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
           ),
-        ),
-      ],
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: CustomSearchBar(
+              hintText: '場所を検索',
+              locationSearchService: locationSearchService,
+              onCandidateSelected: (candidate) async {
+                await _moveToSearchedLocation(
+                  candidate.latitude,
+                  candidate.longitude,
+                );
+              },
+            ),
+          ),
+          ..._pinManager.markers.toList().asMap().entries.map((entry) {
+            final i = entry.key;
+            final marker = entry.value;
+            return Positioned(
+              left: 100.0 + i * 10,
+              top: 200.0 + i * 10,
+              child: GestureDetector(
+                key: Key('map_marker_$i'),
+                onTap: () => _onMarkerTap(marker.markerId, marker.position, i),
+                behavior: HitTestBehavior.translucent,
+                child: const SizedBox(width: 40, height: 40),
+              ),
+            );
+          }),
+          Positioned(
+            bottom: 180,
+            right: 4,
+            child: FloatingActionButton(
+              heroTag: 'my_location_fab',
+              onPressed: _moveToCurrentLocation,
+              child: const Icon(Icons.my_location),
+            ),
+          ),
+        ],
       ),
     );
   }

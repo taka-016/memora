@@ -37,7 +37,9 @@ class FirestoreMemberMapper {
       'lastName': member.lastName,
       'nickname': member.nickname,
       'type': member.type,
-      'birthday': member.birthday != null ? Timestamp.fromDate(member.birthday!) : null,
+      'birthday': member.birthday != null
+          ? Timestamp.fromDate(member.birthday!)
+          : null,
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,

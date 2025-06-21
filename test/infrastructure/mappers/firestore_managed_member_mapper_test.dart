@@ -10,10 +10,9 @@ void main() {
     test('FirestoreのDocumentSnapshotからManagedMemberへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('managedmember001');
-      when(mockDoc.data()).thenReturn({
-        'memberId': 'member001',
-        'managedMemberId': 'member002',
-      });
+      when(
+        mockDoc.data(),
+      ).thenReturn({'memberId': 'member001', 'managedMemberId': 'member002'});
 
       final managedMember = FirestoreManagedMemberMapper.fromFirestore(mockDoc);
 

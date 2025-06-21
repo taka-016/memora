@@ -11,11 +11,7 @@ class MapDisplayPlaceholder extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.map,
-              size: 100,
-              color: Colors.grey,
-            ),
+            Icon(Icons.map, size: 100, color: Colors.grey),
             SizedBox(height: 16),
             Text(
               'マップ表示',
@@ -28,10 +24,7 @@ class MapDisplayPlaceholder extends StatelessWidget {
             SizedBox(height: 8),
             Text(
               'Google Mapウィジェット実装済み',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
               textAlign: TextAlign.center,
             ),
           ],

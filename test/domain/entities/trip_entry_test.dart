@@ -21,7 +21,12 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final entry = TripEntry(id: 'abc123', groupId: 'group456', tripStartDate: DateTime(2025, 6, 1), tripEndDate: DateTime(2025, 6, 10));
+      final entry = TripEntry(
+        id: 'abc123',
+        groupId: 'group456',
+        tripStartDate: DateTime(2025, 6, 1),
+        tripEndDate: DateTime(2025, 6, 10),
+      );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
       expect(entry.tripName, null);

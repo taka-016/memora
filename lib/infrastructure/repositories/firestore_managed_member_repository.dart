@@ -11,9 +11,9 @@ class FirestoreManagedMemberRepository implements ManagedMemberRepository {
 
   @override
   Future<void> saveManagedMember(ManagedMember managedMember) async {
-    await _firestore.collection('managed_members').add(
-      FirestoreManagedMemberMapper.toFirestore(managedMember),
-    );
+    await _firestore
+        .collection('managed_members')
+        .add(FirestoreManagedMemberMapper.toFirestore(managedMember));
   }
 
   @override
@@ -30,11 +30,16 @@ class FirestoreManagedMemberRepository implements ManagedMemberRepository {
 
   @override
   Future<void> deleteManagedMember(String managedMemberId) async {
-    await _firestore.collection('managed_members').doc(managedMemberId).delete();
+    await _firestore
+        .collection('managed_members')
+        .doc(managedMemberId)
+        .delete();
   }
 
   @override
-  Future<List<ManagedMember>> getManagedMembersByMemberId(String memberId) async {
+  Future<List<ManagedMember>> getManagedMembersByMemberId(
+    String memberId,
+  ) async {
     try {
       final snapshot = await _firestore
           .collection('managed_members')
@@ -49,7 +54,9 @@ class FirestoreManagedMemberRepository implements ManagedMemberRepository {
   }
 
   @override
-  Future<List<ManagedMember>> getManagedMembersByManagedMemberId(String managedMemberId) async {
+  Future<List<ManagedMember>> getManagedMembersByManagedMemberId(
+    String managedMemberId,
+  ) async {
     try {
       final snapshot = await _firestore
           .collection('managed_members')

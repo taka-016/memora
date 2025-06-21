@@ -11,9 +11,9 @@ class FirestoreMemberRepository implements MemberRepository {
 
   @override
   Future<void> saveMember(Member member) async {
-    await _firestore.collection('members').add(
-      FirestoreMemberMapper.toFirestore(member),
-    );
+    await _firestore
+        .collection('members')
+        .add(FirestoreMemberMapper.toFirestore(member));
   }
 
   @override

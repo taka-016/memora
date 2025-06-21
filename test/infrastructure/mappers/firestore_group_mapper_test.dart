@@ -10,10 +10,7 @@ void main() {
     test('FirestoreのDocumentSnapshotからGroupへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group001');
-      when(mockDoc.data()).thenReturn({
-        'name': 'テストグループ',
-        'memo': 'テストメモ',
-      });
+      when(mockDoc.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
 
       final group = FirestoreGroupMapper.fromFirestore(mockDoc);
 
@@ -25,9 +22,7 @@ void main() {
     test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group002');
-      when(mockDoc.data()).thenReturn({
-        'name': 'テストグループ2',
-      });
+      when(mockDoc.data()).thenReturn({'name': 'テストグループ2'});
 
       final group = FirestoreGroupMapper.fromFirestore(mockDoc);
 
@@ -37,11 +32,7 @@ void main() {
     });
 
     test('GroupからFirestoreのMapへ変換できる', () {
-      final group = Group(
-        id: 'group001',
-        name: 'テストグループ',
-        memo: 'テストメモ',
-      );
+      final group = Group(id: 'group001', name: 'テストグループ', memo: 'テストメモ');
 
       final data = FirestoreGroupMapper.toFirestore(group);
 
@@ -51,10 +42,7 @@ void main() {
     });
 
     test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
-      final group = Group(
-        id: 'group002',
-        name: 'テストグループ2',
-      );
+      final group = Group(id: 'group002', name: 'テストグループ2');
 
       final data = FirestoreGroupMapper.toFirestore(group);
 

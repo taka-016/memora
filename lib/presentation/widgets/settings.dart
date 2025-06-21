@@ -13,11 +13,7 @@ class Settings extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.settings,
-              size: 100,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.settings, size: 100, color: Colors.grey),
             const SizedBox(height: 16),
             const Text(
               '設定',
@@ -30,15 +26,15 @@ class Settings extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               '今後実装予定',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                final authManager = Provider.of<AuthManager>(context, listen: false);
+                final authManager = Provider.of<AuthManager>(
+                  context,
+                  listen: false,
+                );
                 authManager.logout();
               },
               style: ElevatedButton.styleFrom(

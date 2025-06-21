@@ -50,10 +50,12 @@ void main() {
 
     group('signInWithEmailAndPassword', () {
       test('正常にログインできる', () async {
-        when(mockFirebaseAuth.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        )).thenAnswer((_) async => mockUserCredential);
+        when(
+          mockFirebaseAuth.signInWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenAnswer((_) async => mockUserCredential);
         when(mockUserCredential.user).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.uid).thenReturn('user123');
         when(mockFirebaseUser.email).thenReturn('test@example.com');
@@ -72,10 +74,12 @@ void main() {
       });
 
       test('ログインに失敗した場合、例外をスローする', () async {
-        when(mockFirebaseAuth.signInWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        )).thenThrow(FirebaseAuthException(code: 'wrong-password'));
+        when(
+          mockFirebaseAuth.signInWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'wrongpassword',
+          ),
+        ).thenThrow(FirebaseAuthException(code: 'wrong-password'));
 
         expect(
           () => firebaseAuthService.signInWithEmailAndPassword(
@@ -89,10 +93,12 @@ void main() {
 
     group('createUserWithEmailAndPassword', () {
       test('正常にユーザーを作成できる', () async {
-        when(mockFirebaseAuth.createUserWithEmailAndPassword(
-          email: 'test@example.com',
-          password: 'password123',
-        )).thenAnswer((_) async => mockUserCredential);
+        when(
+          mockFirebaseAuth.createUserWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenAnswer((_) async => mockUserCredential);
         when(mockUserCredential.user).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.uid).thenReturn('user123');
         when(mockFirebaseUser.email).thenReturn('test@example.com');
@@ -123,28 +129,34 @@ void main() {
 
     group('sendSignInLinkToEmail', () {
       test('正常にメールリンクを送信できる', () async {
-        when(mockFirebaseAuth.sendSignInLinkToEmail(
-          email: 'test@example.com',
-          actionCodeSettings: anyNamed('actionCodeSettings'),
-        )).thenAnswer((_) async => {});
+        when(
+          mockFirebaseAuth.sendSignInLinkToEmail(
+            email: 'test@example.com',
+            actionCodeSettings: anyNamed('actionCodeSettings'),
+          ),
+        ).thenAnswer((_) async => {});
 
         await firebaseAuthService.sendSignInLinkToEmail(
           email: 'test@example.com',
         );
 
-        verify(mockFirebaseAuth.sendSignInLinkToEmail(
-          email: 'test@example.com',
-          actionCodeSettings: anyNamed('actionCodeSettings'),
-        )).called(1);
+        verify(
+          mockFirebaseAuth.sendSignInLinkToEmail(
+            email: 'test@example.com',
+            actionCodeSettings: anyNamed('actionCodeSettings'),
+          ),
+        ).called(1);
       });
     });
 
     group('signInWithEmailLink', () {
       test('正常にメールリンクでサインインできる', () async {
-        when(mockFirebaseAuth.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'https://example.com/link',
-        )).thenAnswer((_) async => mockUserCredential);
+        when(
+          mockFirebaseAuth.signInWithEmailLink(
+            email: 'test@example.com',
+            emailLink: 'https://example.com/link',
+          ),
+        ).thenAnswer((_) async => mockUserCredential);
         when(mockUserCredential.user).thenReturn(mockFirebaseUser);
         when(mockFirebaseUser.uid).thenReturn('user123');
         when(mockFirebaseUser.email).thenReturn('test@example.com');
@@ -165,8 +177,9 @@ void main() {
 
     group('authStateChanges', () {
       test('認証状態の変更を監視できる', () {
-        when(mockFirebaseAuth.authStateChanges())
-            .thenAnswer((_) => Stream.value(mockFirebaseUser));
+        when(
+          mockFirebaseAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.value(mockFirebaseUser));
         when(mockFirebaseUser.uid).thenReturn('user123');
         when(mockFirebaseUser.email).thenReturn('test@example.com');
         when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
@@ -175,7 +188,7 @@ void main() {
         final stream = firebaseAuthService.authStateChanges;
 
         expect(stream, isA<Stream<domain.User?>>());
-        
+
         stream.listen((user) {
           expect(user, isNotNull);
           expect(user!.id, 'user123');

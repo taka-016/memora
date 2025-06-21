@@ -33,11 +33,7 @@ void main() {
     });
 
     test('saveGroupがgroups collectionにグループ情報をaddする', () async {
-      final group = Group(
-        id: 'group001',
-        name: 'テストグループ',
-        memo: 'テストメモ',
-      );
+      final group = Group(id: 'group001', name: 'テストグループ', memo: 'テストメモ');
 
       when(
         mockCollection.add(any),
@@ -62,10 +58,7 @@ void main() {
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('group001');
-      when(mockDoc1.data()).thenReturn({
-        'name': 'テストグループ',
-        'memo': 'テストメモ',
-      });
+      when(mockDoc1.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
 
       final result = await repository.getGroups();
 
@@ -105,10 +98,9 @@ void main() {
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
       when(mockDocSnapshot.exists).thenReturn(true);
       when(mockDocSnapshot.id).thenReturn(groupId);
-      when(mockDocSnapshot.data()).thenReturn({
-        'name': 'テストグループ',
-        'memo': 'テストメモ',
-      });
+      when(
+        mockDocSnapshot.data(),
+      ).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
 
       final result = await repository.getGroupById(groupId);
 

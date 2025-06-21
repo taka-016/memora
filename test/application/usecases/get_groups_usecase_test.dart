@@ -36,9 +36,7 @@ void main() {
 
     test('グループが1件取得できること', () async {
       // Arrange
-      final groups = [
-        Group(id: '1', name: 'グループ1', memo: 'メモ1'),
-      ];
+      final groups = [Group(id: '1', name: 'グループ1', memo: 'メモ1')];
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
 
       // Act
@@ -67,10 +65,7 @@ void main() {
       when(mockGroupRepository.getGroups()).thenThrow(Exception('データベースエラー'));
 
       // Act & Assert
-      expect(
-        () async => await usecase.execute(),
-        throwsA(isA<Exception>()),
-      );
+      expect(() async => await usecase.execute(), throwsA(isA<Exception>()));
     });
   });
 }

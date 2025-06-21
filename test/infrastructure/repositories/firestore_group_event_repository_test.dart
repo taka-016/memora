@@ -115,7 +115,9 @@ void main() {
     test('getGroupEventsByGroupIdが特定のグループのイベントリストを返す', () async {
       const groupId = 'group001';
 
-      when(mockCollection.where('groupId', isEqualTo: groupId)).thenReturn(mockQuery);
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('groupevent001');
