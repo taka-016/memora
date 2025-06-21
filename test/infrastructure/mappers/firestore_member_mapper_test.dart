@@ -11,6 +11,7 @@ void main() {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('member001');
       when(mockDoc.data()).thenReturn({
+        'accountId': 'account001',
         'hiraganaFirstName': 'たろう',
         'hiraganaLastName': 'やまだ',
         'kanjiFirstName': '太郎',
@@ -32,6 +33,7 @@ void main() {
       final member = FirestoreMemberMapper.fromFirestore(mockDoc);
 
       expect(member.id, 'member001');
+      expect(member.accountId, 'account001');
       expect(member.hiraganaFirstName, 'たろう');
       expect(member.hiraganaLastName, 'やまだ');
       expect(member.kanjiFirstName, '太郎');
@@ -53,23 +55,22 @@ void main() {
     test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('member002');
-      when(mockDoc.data()).thenReturn({
-        'hiraganaFirstName': 'はなこ',
-        'hiraganaLastName': 'やまだ',
-        'kanjiFirstName': '花子',
-        'kanjiLastName': '山田',
-        'firstName': 'Hanako',
-        'lastName': 'Yamada',
-        'type': '一般',
-        'birthday': Timestamp.fromDate(DateTime(2001, 2, 2)),
-        'gender': 'female',
-      });
+      when(mockDoc.data()).thenReturn({});
 
       final member = FirestoreMemberMapper.fromFirestore(mockDoc);
 
       expect(member.id, 'member002');
-      expect(member.hiraganaFirstName, 'はなこ');
+      expect(member.accountId, null);
+      expect(member.hiraganaFirstName, null);
+      expect(member.hiraganaLastName, null);
+      expect(member.kanjiFirstName, null);
+      expect(member.kanjiLastName, null);
+      expect(member.firstName, null);
+      expect(member.lastName, null);
       expect(member.nickname, null);
+      expect(member.type, null);
+      expect(member.birthday, null);
+      expect(member.gender, null);
       expect(member.email, null);
       expect(member.phoneNumber, null);
       expect(member.passportNumber, null);
@@ -81,6 +82,7 @@ void main() {
     test('MemberからFirestoreのMapへ変換できる', () {
       final member = Member(
         id: 'member001',
+        accountId: 'account001',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
@@ -96,6 +98,7 @@ void main() {
 
       final data = FirestoreMemberMapper.toFirestore(member);
 
+      expect(data['accountId'], 'account001');
       expect(data['hiraganaFirstName'], 'たろう');
       expect(data['hiraganaLastName'], 'やまだ');
       expect(data['kanjiFirstName'], '太郎');
@@ -107,6 +110,33 @@ void main() {
       expect(data['birthday'], isA<Timestamp>());
       expect(data['gender'], 'male');
       expect(data['email'], 'taro@example.com');
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('nullフィールドを含むMemberからFirestoreのMapへ変換できる', () {
+      final member = Member(
+        id: 'member003',
+      );
+
+      final data = FirestoreMemberMapper.toFirestore(member);
+
+      expect(data['accountId'], null);
+      expect(data['hiraganaFirstName'], null);
+      expect(data['hiraganaLastName'], null);
+      expect(data['kanjiFirstName'], null);
+      expect(data['kanjiLastName'], null);
+      expect(data['firstName'], null);
+      expect(data['lastName'], null);
+      expect(data['nickname'], null);
+      expect(data['type'], null);
+      expect(data['birthday'], null);
+      expect(data['gender'], null);
+      expect(data['email'], null);
+      expect(data['phoneNumber'], null);
+      expect(data['passportNumber'], null);
+      expect(data['passportExpiration'], null);
+      expect(data['anaMileageNumber'], null);
+      expect(data['jalMileageNumber'], null);
       expect(data['createdAt'], isA<FieldValue>());
     });
   });
