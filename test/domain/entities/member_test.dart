@@ -7,6 +7,7 @@ void main() {
       final now = DateTime(2000, 1, 1);
       final member = Member(
         id: 'member001',
+        accountId: 'account001',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
@@ -25,6 +26,7 @@ void main() {
         jalMileageNumber: 'JAL123456',
       );
       expect(member.id, 'member001');
+      expect(member.accountId, 'account001');
       expect(member.hiraganaFirstName, 'たろう');
       expect(member.hiraganaLastName, 'やまだ');
       expect(member.kanjiFirstName, '太郎');
@@ -44,30 +46,21 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final now = DateTime(2000, 1, 1);
       final member = Member(
-        id: 'member001',
-        hiraganaFirstName: 'たろう',
-        hiraganaLastName: 'やまだ',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '山田',
-        firstName: 'Taro',
-        lastName: 'Yamada',
-        type: '一般',
-        birthday: now,
-        gender: 'male',
+        id: 'member002',
       );
-      expect(member.id, 'member001');
-      expect(member.hiraganaFirstName, 'たろう');
-      expect(member.hiraganaLastName, 'やまだ');
-      expect(member.kanjiFirstName, '太郎');
-      expect(member.kanjiLastName, '山田');
-      expect(member.firstName, 'Taro');
-      expect(member.lastName, 'Yamada');
+      expect(member.id, 'member002');
+      expect(member.accountId, null);
+      expect(member.hiraganaFirstName, null);
+      expect(member.hiraganaLastName, null);
+      expect(member.kanjiFirstName, null);
+      expect(member.kanjiLastName, null);
+      expect(member.firstName, null);
+      expect(member.lastName, null);
       expect(member.nickname, null);
-      expect(member.type, '一般');
-      expect(member.birthday, now);
-      expect(member.gender, 'male');
+      expect(member.type, null);
+      expect(member.birthday, null);
+      expect(member.gender, null);
       expect(member.email, null);
       expect(member.phoneNumber, null);
       expect(member.passportNumber, null);

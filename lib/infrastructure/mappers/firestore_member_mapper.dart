@@ -6,16 +6,17 @@ class FirestoreMemberMapper {
     final data = doc.data();
     return Member(
       id: doc.id,
-      hiraganaFirstName: data?['hiraganaFirstName'] as String? ?? '',
-      hiraganaLastName: data?['hiraganaLastName'] as String? ?? '',
-      kanjiFirstName: data?['kanjiFirstName'] as String? ?? '',
-      kanjiLastName: data?['kanjiLastName'] as String? ?? '',
-      firstName: data?['firstName'] as String? ?? '',
-      lastName: data?['lastName'] as String? ?? '',
+      accountId: data?['accountId'] as String?,
+      hiraganaFirstName: data?['hiraganaFirstName'] as String?,
+      hiraganaLastName: data?['hiraganaLastName'] as String?,
+      kanjiFirstName: data?['kanjiFirstName'] as String?,
+      kanjiLastName: data?['kanjiLastName'] as String?,
+      firstName: data?['firstName'] as String?,
+      lastName: data?['lastName'] as String?,
       nickname: data?['nickname'] as String?,
-      type: data?['type'] as String? ?? '',
-      birthday: (data?['birthday'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      gender: data?['gender'] as String? ?? '',
+      type: data?['type'] as String?,
+      birthday: (data?['birthday'] as Timestamp?)?.toDate(),
+      gender: data?['gender'] as String?,
       email: data?['email'] as String?,
       phoneNumber: data?['phoneNumber'] as String?,
       passportNumber: data?['passportNumber'] as String?,
@@ -27,6 +28,7 @@ class FirestoreMemberMapper {
 
   static Map<String, dynamic> toFirestore(Member member) {
     return {
+      'accountId': member.accountId,
       'hiraganaFirstName': member.hiraganaFirstName,
       'hiraganaLastName': member.hiraganaLastName,
       'kanjiFirstName': member.kanjiFirstName,
@@ -35,7 +37,7 @@ class FirestoreMemberMapper {
       'lastName': member.lastName,
       'nickname': member.nickname,
       'type': member.type,
-      'birthday': Timestamp.fromDate(member.birthday),
+      'birthday': member.birthday != null ? Timestamp.fromDate(member.birthday!) : null,
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,

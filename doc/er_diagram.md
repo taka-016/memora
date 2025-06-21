@@ -46,16 +46,17 @@ erDiagram
     }
     members {
         string id PK
-        string hiraganaFirstName "NOT NULL"
-        string hiraganaLastName "NOT NULL"
-        string kanjiFirstName "NOT NULL"
-        string kanjiLastName "NOT NULL"
-        string firstName "NOT NULL"
-        string lastName "NOT NULL"
+        string accountId
+        string hiraganaFirstName
+        string hiraganaLastName
+        string kanjiFirstName
+        string kanjiLastName
+        string firstName
+        string lastName
         string nickname
-        string type "NOT NULL"
-        timestamp birthday "NOT NULL"
-        string gender "NOT NULL"
+        string type
+        timestamp birthday
+        string gender
         string email
         string phoneNumber
         string passportNumber

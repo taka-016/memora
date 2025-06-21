@@ -6,10 +6,7 @@ enum GroupMemberState { loading, groupList, memberList, empty, error }
 class GroupMember extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
 
-  const GroupMember({
-    super.key,
-    required this.getGroupsWithMembersUsecase,
-  });
+  const GroupMember({super.key, required this.getGroupsWithMembersUsecase});
 
   @override
   State<GroupMember> createState() => _GroupMemberState();
@@ -34,12 +31,13 @@ class _GroupMemberState extends State<GroupMember> {
         _state = GroupMemberState.loading;
       });
 
-      final groupsWithMembers = await widget.getGroupsWithMembersUsecase.execute();
-      
+      final groupsWithMembers = await widget.getGroupsWithMembersUsecase
+          .execute();
+
       if (!mounted) return;
       setState(() {
         _groupsWithMembers = groupsWithMembers;
-        
+
         if (groupsWithMembers.isEmpty) {
           _state = GroupMemberState.empty;
         } else if (groupsWithMembers.length == 1) {
@@ -76,26 +74,23 @@ class _GroupMemberState extends State<GroupMember> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      key: const Key('group_member'),
-      child: _buildBody(),
-    );
+    return Container(key: const Key('group_member'), child: _buildBody());
   }
 
   Widget _buildBody() {
     switch (_state) {
       case GroupMemberState.loading:
         return const Center(child: CircularProgressIndicator());
-      
+
       case GroupMemberState.empty:
         return _buildEmptyState();
-      
+
       case GroupMemberState.groupList:
         return _buildGroupList();
-      
+
       case GroupMemberState.memberList:
         return _buildMemberList();
-      
+
       case GroupMemberState.error:
         return _buildErrorState();
     }
@@ -106,10 +101,7 @@ class _GroupMemberState extends State<GroupMember> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'グループがありません',
-            style: TextStyle(fontSize: 18),
-          ),
+          const Text('グループがありません', style: TextStyle(fontSize: 18)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
@@ -124,7 +116,7 @@ class _GroupMemberState extends State<GroupMember> {
 
   Widget _buildGroupList() {
     return Column(
-      children: [        
+      children: [
         if (_groupsWithMembers.length > 1)
           Padding(
             padding: const EdgeInsets.only(left: 8, top: 8),
@@ -183,7 +175,10 @@ class _GroupMemberState extends State<GroupMember> {
                 ),
                 Text(
                   _selectedGroup!.group.name,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -205,10 +200,16 @@ class _GroupMemberState extends State<GroupMember> {
               itemBuilder: (context, index) {
                 final member = _selectedGroup!.members[index];
                 return ListTile(
-                  title: Text('${member.kanjiFirstName} ${member.kanjiLastName}'),
+                  title: Text(
+                    '${member.kanjiFirstName ?? '未設定'} ${member.kanjiLastName ?? ''}',
+                  ),
                   subtitle: Text(member.nickname ?? ''),
                   leading: CircleAvatar(
-                    child: Text(member.kanjiFirstName[0]),
+                    child: Text(
+                      member.kanjiFirstName?.isNotEmpty == true
+                          ? member.kanjiFirstName![0]
+                          : '?',
+                    ),
                   ),
                 );
               },
@@ -223,10 +224,7 @@ class _GroupMemberState extends State<GroupMember> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'メンバーがいません',
-            style: TextStyle(fontSize: 18),
-          ),
+          const Text('メンバーがいません', style: TextStyle(fontSize: 18)),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
@@ -244,15 +242,9 @@ class _GroupMemberState extends State<GroupMember> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            _errorMessage,
-            style: const TextStyle(fontSize: 18),
-          ),
+          Text(_errorMessage, style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _loadData,
-            child: const Text('再読み込み'),
-          ),
+          ElevatedButton(onPressed: _loadData, child: const Text('再読み込み')),
         ],
       ),
     );
