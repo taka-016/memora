@@ -27,7 +27,8 @@
                 "Dart-Code.flutter",
                 "ms-vscode.vscode-json",
                 "redhat.vscode-yaml",
-                "bierner.markdown-mermaid"
+                "bierner.markdown-mermaid",
+                "anthropic.claude-code"
             ],
             "settings": {
                 "dart.showInspectorNotificationsForWidgetErrors": false,
