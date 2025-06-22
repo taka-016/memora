@@ -21,14 +21,8 @@ void main() {
   group('GetOrCreateMemberUseCase', () {
     const testUid = 'test-uid-12345';
     const testEmail = 'test@example.com';
-    const testDisplayName = 'Test User';
 
-    final testUser = User(
-      id: testUid,
-      email: testEmail,
-      displayName: testDisplayName,
-      isEmailVerified: true,
-    );
+    final testUser = User(id: testUid, email: testEmail, isEmailVerified: true);
 
     test('既存メンバーが見つかった場合、そのメンバーを返す', () async {
       // arrange
@@ -66,7 +60,6 @@ void main() {
       // assert
       expect(result.accountId, equals(testUid));
       expect(result.email, equals(testEmail));
-      expect(result.firstName, equals(testDisplayName));
 
       verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
       verify(
@@ -74,37 +67,9 @@ void main() {
           argThat(
             predicate<Member>(
               (member) =>
-                  member.accountId == testUid &&
-                  member.email == testEmail &&
-                  member.firstName == testDisplayName,
+                  member.accountId == testUid && member.email == testEmail,
             ),
           ),
-        ),
-      ).called(1);
-    });
-
-    test('displayNameがnullの場合、emailをfirstNameとして使用', () async {
-      // arrange
-      final userWithoutDisplayName = User(
-        id: testUid,
-        email: testEmail,
-        displayName: null,
-        isEmailVerified: true,
-      );
-
-      when(
-        mockMemberRepository.getMemberByAccountId(testUid),
-      ).thenAnswer((_) async => null);
-      when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
-
-      // act
-      final result = await useCase.execute(userWithoutDisplayName);
-
-      // assert
-      expect(result.firstName, equals(testEmail));
-      verify(
-        mockMemberRepository.saveMember(
-          argThat(predicate<Member>((member) => member.firstName == testEmail)),
         ),
       ).called(1);
     });
