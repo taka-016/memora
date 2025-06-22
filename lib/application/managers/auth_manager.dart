@@ -17,51 +17,27 @@ class AuthManager extends ChangeNotifier {
   AuthState get state => _state;
 
   Future<void> initialize() async {
-    try {
-      final currentUser = await authService.getCurrentUser();
-
-      if (currentUser != null) {
-        // 現在ユーザーが存在する場合、メンバー取得・作成処理を実行
+    _authStateSubscription = authService.authStateChanges.listen((user) async {
+      if (user != null) {
+        // 認証状態変更時にメンバー取得・作成処理を実行
         if (getOrCreateMemberUseCase != null) {
-          await getOrCreateMemberUseCase!.execute(currentUser);
+          await getOrCreateMemberUseCase!.execute(user);
         }
-        _updateState(AuthState.authenticated(currentUser));
+        _updateState(AuthState.authenticated(user));
       } else {
         _updateState(const AuthState.unauthenticated());
       }
-
-      _authStateSubscription = authService.authStateChanges.listen((
-        user,
-      ) async {
-        if (user != null) {
-          // 認証状態変更時にメンバー取得・作成処理を実行
-          if (getOrCreateMemberUseCase != null) {
-            await getOrCreateMemberUseCase!.execute(user);
-          }
-          _updateState(AuthState.authenticated(user));
-        } else {
-          _updateState(const AuthState.unauthenticated());
-        }
-      });
-    } catch (e) {
-      _updateState(AuthState.error('初期化に失敗しました: ${e.toString()}'));
-    }
+    });
   }
 
   Future<void> login({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.signInWithEmailAndPassword(
+      await authService.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // ログイン成功時にメンバー取得・作成処理を実行
-      if (getOrCreateMemberUseCase != null) {
-        await getOrCreateMemberUseCase!.execute(user);
-      }
-
-      _updateState(AuthState.authenticated(user));
+      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
@@ -70,17 +46,11 @@ class AuthManager extends ChangeNotifier {
   Future<void> signup({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      final user = await authService.createUserWithEmailAndPassword(
+      await authService.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // サインアップ成功時にメンバー取得・作成処理を実行
-      if (getOrCreateMemberUseCase != null) {
-        await getOrCreateMemberUseCase!.execute(user);
-      }
-
-      _updateState(AuthState.authenticated(user));
+      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
@@ -90,7 +60,7 @@ class AuthManager extends ChangeNotifier {
     try {
       _updateState(const AuthState.loading());
       await authService.signOut();
-      _updateState(const AuthState.unauthenticated());
+      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
     } catch (e) {
       _updateState(AuthState.error('ログアウトに失敗しました: ${e.toString()}'));
     }
