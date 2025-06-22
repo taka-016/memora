@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -26,7 +27,21 @@ void main() {
     });
 
     group('initialize', () {
-      test('現在のユーザーが存在する場合、authenticated状態になる', () async {
+      test('initializeでauthStateChangesのリスナーが登録される', () async {
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        await authManager.initialize();
+
+        expect(authManager.state.status, AuthStatus.loading);
+        verify(mockAuthService.authStateChanges).called(1);
+
+        controller.close();
+      });
+
+      test('ユーザーログイン時にauthenticated状態になる', () async {
         const user = User(
           id: 'user123',
           email: 'test@example.com',
@@ -34,27 +49,96 @@ void main() {
           isEmailVerified: true,
         );
 
-        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
+        final controller = StreamController<User?>();
         when(
           mockAuthService.authStateChanges,
-        ).thenAnswer((_) => Stream.value(user));
+        ).thenAnswer((_) => controller.stream);
 
         await authManager.initialize();
 
+        // act
+        controller.add(user);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
         expect(authManager.state.status, AuthStatus.authenticated);
         expect(authManager.state.user, user);
+
+        controller.close();
       });
 
-      test('現在のユーザーが存在しない場合、unauthenticated状態になる', () async {
-        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => null);
+      test('ユーザーログアウト時にunauthenticated状態になる', () async {
+        final controller = StreamController<User?>();
         when(
           mockAuthService.authStateChanges,
-        ).thenAnswer((_) => Stream.value(null));
+        ).thenAnswer((_) => controller.stream);
 
         await authManager.initialize();
 
+        // act
+        controller.add(null);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
         expect(authManager.state.status, AuthStatus.unauthenticated);
         expect(authManager.state.user, isNull);
+
+        controller.close();
+      });
+
+      test('authStateChanges経由でメンバー取得・作成処理が実行される', () async {
+        // arrange
+        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+        const user = User(
+          id: 'user123',
+          email: 'test@example.com',
+          displayName: 'テストユーザー',
+          isEmailVerified: true,
+        );
+
+        final member = Member(
+          id: 'member-id-1',
+          accountId: 'user123',
+          firstName: 'テストユーザー',
+          email: 'test@example.com',
+        );
+
+        // authStateChangesでユーザー状態変更をシミュレート
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => null);
+
+        when(
+          mockGetOrCreateMemberUseCase.execute(user),
+        ).thenAnswer((_) async => member);
+
+        // AuthManagerにUseCaseを依存注入
+        authManager = AuthManager(
+          authService: mockAuthService,
+          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+        );
+
+        await authManager.initialize();
+
+        // act - authStateChangesでユーザー変更をエミット
+        controller.add(user);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
+        verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+
+        controller.close();
       });
     });
 
@@ -79,56 +163,12 @@ void main() {
           password: 'password123',
         );
 
-        expect(authManager.state.status, AuthStatus.authenticated);
-        expect(authManager.state.user, user);
-      });
-
-      test('ログイン成功時にメンバー取得・作成処理が実行される', () async {
-        // arrange
-        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
-        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
-
-        // AuthManagerにUseCaseを依存注入するために新しいインスタンスを作成
-        authManager = AuthManager(
-          authService: mockAuthService,
-          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
-        );
-
-        const user = User(
-          id: 'user123',
-          email: 'test@example.com',
-          displayName: 'テストユーザー',
-          isEmailVerified: true,
-        );
-
-        final member = Member(
-          id: 'member-id-1',
-          accountId: 'user123',
-          firstName: 'テストユーザー',
-          email: 'test@example.com',
-        );
-
-        when(
+        verify(
           mockAuthService.signInWithEmailAndPassword(
             email: 'test@example.com',
             password: 'password123',
           ),
-        ).thenAnswer((_) async => user);
-
-        when(
-          mockGetOrCreateMemberUseCase.execute(user),
-        ).thenAnswer((_) async => member);
-
-        // act
-        await authManager.login(
-          email: 'test@example.com',
-          password: 'password123',
-        );
-
-        // assert
-        expect(authManager.state.status, AuthStatus.authenticated);
-        expect(authManager.state.user, user);
-        verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+        ).called(1);
       });
 
       test('ログインに失敗した場合、error状態になる', () async {
@@ -170,8 +210,12 @@ void main() {
           password: 'password123',
         );
 
-        expect(authManager.state.status, AuthStatus.authenticated);
-        expect(authManager.state.user, user);
+        verify(
+          mockAuthService.createUserWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).called(1);
       });
 
       test('サインアップに失敗した場合、error状態になる', () async {
@@ -198,8 +242,7 @@ void main() {
 
         await authManager.logout();
 
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.user, isNull);
+        verify(mockAuthService.signOut()).called(1);
       });
 
       test('ログアウトに失敗した場合、error状態になる', () async {
