@@ -8,6 +8,7 @@ import 'presentation/auth/auth_guard.dart';
 import 'application/managers/auth_manager.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
+import 'application/usecases/get_or_create_member_usecase.dart';
 import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
@@ -27,11 +28,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // 依存性注入
     final authService = FirebaseAuthService();
-    final authManager = AuthManager(authService: authService);
+    final memberRepository = FirestoreMemberRepository();
+    final getOrCreateMemberUseCase = GetOrCreateMemberUseCase(memberRepository);
+    final authManager = AuthManager(
+      authService: authService,
+      getOrCreateMemberUseCase: getOrCreateMemberUseCase,
+    );
 
     final groupRepository = FirestoreGroupRepository();
     final groupMemberRepository = FirestoreGroupMemberRepository();
-    final memberRepository = FirestoreMemberRepository();
     final getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupRepository: groupRepository,
       groupMemberRepository: groupMemberRepository,

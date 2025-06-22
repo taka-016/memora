@@ -3,12 +3,14 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/services/auth_service.dart';
 import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/application/usecases/get_or_create_member_usecase.dart';
 
 import 'auth_manager_test.mocks.dart';
 
-@GenerateMocks([AuthService])
+@GenerateMocks([AuthService, GetOrCreateMemberUseCase])
 void main() {
   group('AuthManager', () {
     late AuthManager authManager;
@@ -79,6 +81,54 @@ void main() {
 
         expect(authManager.state.status, AuthStatus.authenticated);
         expect(authManager.state.user, user);
+      });
+
+      test('ログイン成功時にメンバー取得・作成処理が実行される', () async {
+        // arrange
+        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+        // AuthManagerにUseCaseを依存注入するために新しいインスタンスを作成
+        authManager = AuthManager(
+          authService: mockAuthService,
+          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+        );
+
+        const user = User(
+          id: 'user123',
+          email: 'test@example.com',
+          displayName: 'テストユーザー',
+          isEmailVerified: true,
+        );
+
+        final member = Member(
+          id: 'member-id-1',
+          accountId: 'user123',
+          firstName: 'テストユーザー',
+          email: 'test@example.com',
+        );
+
+        when(
+          mockAuthService.signInWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenAnswer((_) async => user);
+
+        when(
+          mockGetOrCreateMemberUseCase.execute(user),
+        ).thenAnswer((_) async => member);
+
+        // act
+        await authManager.login(
+          email: 'test@example.com',
+          password: 'password123',
+        );
+
+        // assert
+        expect(authManager.state.status, AuthStatus.authenticated);
+        expect(authManager.state.user, user);
+        verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
       });
 
       test('ログインに失敗した場合、error状態になる', () async {

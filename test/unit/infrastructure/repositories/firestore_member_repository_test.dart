@@ -12,6 +12,7 @@ import 'package:memora/domain/entities/member.dart';
   QuerySnapshot,
   QueryDocumentSnapshot,
   DocumentSnapshot,
+  Query,
 ])
 import 'firestore_member_repository_test.mocks.dart';
 
@@ -182,6 +183,54 @@ void main() {
       final result = await repository.getMemberById(memberId);
 
       expect(result, isNull);
+    });
+
+    test('getMemberByAccountIdがaccountIdでメンバーを取得する', () async {
+      const accountId = 'test-uid-12345';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('accountId', isEqualTo: accountId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.id).thenReturn('member001');
+      when(mockDoc.data()).thenReturn({
+        'accountId': accountId,
+        'hiraganaFirstName': 'たろう',
+        'hiraganaLastName': 'やまだ',
+        'firstName': 'Taro',
+        'lastName': 'Yamada',
+        'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
+        'gender': 'male',
+        'email': 'taro@example.com',
+      });
+
+      final result = await repository.getMemberByAccountId(accountId);
+
+      expect(result, isNotNull);
+      expect(result!.accountId, accountId);
+      expect(result.firstName, 'Taro');
+      verify(mockCollection.where('accountId', isEqualTo: accountId)).called(1);
+    });
+
+    test('getMemberByAccountIdが存在しないaccountIdでnullを返す', () async {
+      const accountId = 'nonexistent-uid';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('accountId', isEqualTo: accountId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+
+      final result = await repository.getMemberByAccountId(accountId);
+
+      expect(result, isNull);
+      verify(mockCollection.where('accountId', isEqualTo: accountId)).called(1);
     });
   });
 }

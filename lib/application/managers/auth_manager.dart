@@ -3,11 +3,14 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/services/auth_service.dart';
+import '../usecases/get_or_create_member_usecase.dart';
 
 class AuthManager extends ChangeNotifier {
-  AuthManager({required this.authService}) : _state = const AuthState.loading();
+  AuthManager({required this.authService, this.getOrCreateMemberUseCase})
+    : _state = const AuthState.loading();
 
   final AuthService authService;
+  final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
   AuthState _state;
   StreamSubscription<User?>? _authStateSubscription;
 
@@ -18,13 +21,23 @@ class AuthManager extends ChangeNotifier {
       final currentUser = await authService.getCurrentUser();
 
       if (currentUser != null) {
+        // 現在ユーザーが存在する場合、メンバー取得・作成処理を実行
+        if (getOrCreateMemberUseCase != null) {
+          await getOrCreateMemberUseCase!.execute(currentUser);
+        }
         _updateState(AuthState.authenticated(currentUser));
       } else {
         _updateState(const AuthState.unauthenticated());
       }
 
-      _authStateSubscription = authService.authStateChanges.listen((user) {
+      _authStateSubscription = authService.authStateChanges.listen((
+        user,
+      ) async {
         if (user != null) {
+          // 認証状態変更時にメンバー取得・作成処理を実行
+          if (getOrCreateMemberUseCase != null) {
+            await getOrCreateMemberUseCase!.execute(user);
+          }
           _updateState(AuthState.authenticated(user));
         } else {
           _updateState(const AuthState.unauthenticated());
@@ -42,6 +55,12 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
+
+      // ログイン成功時にメンバー取得・作成処理を実行
+      if (getOrCreateMemberUseCase != null) {
+        await getOrCreateMemberUseCase!.execute(user);
+      }
+
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
@@ -55,6 +74,12 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
+
+      // サインアップ成功時にメンバー取得・作成処理を実行
+      if (getOrCreateMemberUseCase != null) {
+        await getOrCreateMemberUseCase!.execute(user);
+      }
+
       _updateState(AuthState.authenticated(user));
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
