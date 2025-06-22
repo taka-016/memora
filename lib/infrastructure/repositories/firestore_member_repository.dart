@@ -45,4 +45,21 @@ class FirestoreMemberRepository implements MemberRepository {
       return null;
     }
   }
+
+  @override
+  Future<Member?> getMemberByAccountId(String accountId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('members')
+          .where('accountId', isEqualTo: accountId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return FirestoreMemberMapper.fromFirestore(querySnapshot.docs.first);
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }

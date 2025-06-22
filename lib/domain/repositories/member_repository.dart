@@ -5,4 +5,5 @@ abstract class MemberRepository {
   Future<void> saveMember(Member member);
   Future<void> deleteMember(String memberId);
   Future<Member?> getMemberById(String memberId);
+  Future<Member?> getMemberByAccountId(String accountId);
 }
