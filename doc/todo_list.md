@@ -58,5 +58,6 @@
   - [x] 認証状態管理マネージャー作成
   - [x] ログイン・サインアップ画面UI実装
   - [x] 認証ガード機能実装（未認証時のリダイレクト処理）
-- [ ] ログイン成功時に、アカウントのUIDでmembersのaccountIdを紐づけて取得する
-  - [ ] UIDでmembersが紐づかなかった場合、membersを新規作成しaccountIdにUIDを保持させる
+- [x] ログイン成功時に、アカウントのUIDでmembersのaccountIdを紐づけて取得する
+  - [x] UIDでmembersが紐づかなかった場合、membersを新規作成しaccountIdにUIDを保持させる
+- [x] ログアウトボタンはメニューの最下部に配置する

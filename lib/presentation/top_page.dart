@@ -76,19 +76,6 @@ class _TopPageState extends State<TopPage> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              final authManager = Provider.of<AuthManager>(
-                context,
-                listen: false,
-              );
-              authManager.logout();
-            },
-            tooltip: 'ログアウト',
-          ),
-        ],
       ),
       drawer: Drawer(
         child: ListView(
@@ -139,6 +126,18 @@ class _TopPageState extends State<TopPage> {
               title: const Text('設定'),
               selected: _selectedItem == NavigationItem.settings,
               onTap: () => _onNavigationItemSelected(NavigationItem.settings),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('ログアウト'),
+              onTap: () {
+                final authManager = Provider.of<AuthManager>(
+                  context,
+                  listen: false,
+                );
+                authManager.logout();
+              },
             ),
           ],
         ),
