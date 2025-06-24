@@ -61,3 +61,6 @@
 - [x] ログイン成功時に、アカウントのUIDでmembersのaccountIdを紐づけて取得する
   - [x] UIDでmembersが紐づかなかった場合、membersを新規作成しaccountIdにUIDを保持させる
 - [x] ログアウトボタンはメニューの最下部に配置する
+- [x] ログインユーザーのニックネームをメニューの上部に表示する
+- [x] ログインユーザーのニックネームが未設定の場合は、kanjiLastName+半角スペース+kanjiFirstNameを表示する
+- [x] ログインユーザーのkanjiLastNameとkanjiFirstNameが両方未設定の場合は、"名前未設定"と表示する

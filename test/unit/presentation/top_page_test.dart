@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/top_page.dart';
@@ -9,7 +10,7 @@ import 'package:mockito/mockito.dart';
 
 import 'top_page_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase])
+@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
 
@@ -44,11 +45,14 @@ void main() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
   });
 
-  Widget createTestWidget() {
+  Widget createTestWidget({
+    MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
+  }) {
     return MaterialApp(
       home: TopPage(
         getGroupsWithMembersUsecase: mockUsecase,
         isTestEnvironment: true,
+        getCurrentMemberUseCase: getCurrentMemberUseCase,
       ),
     );
   }
@@ -144,8 +148,8 @@ void main() {
 
       // Assert
       expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('太郎 山田'), findsOneWidget);
-      expect(find.text('花子 山田'), findsOneWidget);
+      expect(find.text('山田 太郎'), findsOneWidget);
+      expect(find.text('山田 花子'), findsOneWidget);
       expect(find.byKey(const Key('group_member')), findsOneWidget);
     });
 
@@ -351,6 +355,85 @@ void main() {
 
       // Assert - Drawerが閉じている
       expect(find.byType(Drawer), findsNothing);
+    });
+
+    testWidgets('ログインユーザーのニックネームが表示される', (WidgetTester tester) async {
+      // Arrange
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      final currentMember = Member(
+        id: 'current_member',
+        nickname: 'ログインユーザー',
+        kanjiLastName: '佐藤',
+        kanjiFirstName: '花子',
+      );
+
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenAnswer((_) async => currentMember);
+
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Drawerを開く
+      await tester.tap(find.byKey(const Key('hamburger_menu')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('memora'), findsWidgets);
+      expect(find.text('ログインユーザー'), findsOneWidget);
+    });
+
+    testWidgets('ログインユーザーのニックネームが未設定の場合、漢字姓名が表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      final currentMember = Member(
+        id: 'current_member',
+        kanjiLastName: '佐藤',
+        kanjiFirstName: '花子',
+      );
+
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenAnswer((_) async => currentMember);
+
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Drawerを開く
+      await tester.tap(find.byKey(const Key('hamburger_menu')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('memora'), findsWidgets);
+      expect(find.text('佐藤 花子'), findsOneWidget);
     });
   });
 }

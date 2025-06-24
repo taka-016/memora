@@ -9,6 +9,8 @@ import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_settings.dart';
 import 'package:memora/presentation/widgets/member_settings.dart';
 import 'package:memora/presentation/widgets/settings.dart';
+import 'package:memora/presentation/widgets/user_drawer_header.dart';
+import 'package:memora/application/usecases/get_current_member_usecase.dart';
 
 enum NavigationItem {
   topPage, // トップページ (初期表示のグループ情報)
@@ -22,11 +24,13 @@ enum NavigationItem {
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final bool isTestEnvironment;
+  final GetCurrentMemberUseCase? getCurrentMemberUseCase;
 
   const TopPage({
     super.key,
     required this.getGroupsWithMembersUsecase,
     this.isTestEnvironment = false,
+    this.getCurrentMemberUseCase,
   });
 
   @override
@@ -35,6 +39,18 @@ class TopPage extends StatefulWidget {
 
 class _TopPageState extends State<TopPage> {
   NavigationItem _selectedItem = NavigationItem.topPage;
+  GetCurrentMemberUseCase? _getCurrentMemberUseCase;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeGetCurrentMemberUseCase();
+  }
+
+  void _initializeGetCurrentMemberUseCase() {
+    // getCurrentMemberUseCaseが渡された場合はそれを使用、nullの場合はnullのまま
+    _getCurrentMemberUseCase = widget.getCurrentMemberUseCase;
+  }
 
   void _onNavigationItemSelected(NavigationItem item) {
     setState(() {
@@ -81,13 +97,17 @@ class _TopPageState extends State<TopPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.deepPurple),
-              child: Text(
-                'memora',
-                style: TextStyle(color: Colors.white, fontSize: 24),
-              ),
-            ),
+            _getCurrentMemberUseCase != null
+                ? UserDrawerHeader(
+                    getCurrentMemberUseCase: _getCurrentMemberUseCase!,
+                  )
+                : const DrawerHeader(
+                    decoration: BoxDecoration(color: Colors.deepPurple),
+                    child: Text(
+                      'memora',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ),
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('トップページ'),
