@@ -160,3 +160,19 @@
 - 外部依存関係にはMockitoを使用したモックを使用する
 - カバレッジ目標: 80%以上
 - `./check.sh`を通過することを必須とする
+
+### テストベストプラクティス
+- **非同期テストの制御**: `Future.delayed`を使った待機は避ける。環境によって不安定になるため、`Completer`を使用してテストコードが非同期処理のタイミングを制御する
+  ```dart
+  // ❌ 避けるべき方法
+  when(mockUseCase.execute()).thenAnswer((_) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return result;
+  });
+  
+  // ✅ 推奨する方法
+  final completer = Completer<Result>();
+  when(mockUseCase.execute()).thenAnswer((_) => completer.future);
+  // テストコードで完了タイミングを制御
+  completer.complete(result);
+  ```

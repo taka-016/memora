@@ -9,6 +9,7 @@ import 'application/managers/auth_manager.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'application/usecases/get_or_create_member_usecase.dart';
+import 'application/usecases/get_current_member_usecase.dart';
 import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
@@ -43,6 +44,11 @@ class MyApp extends StatelessWidget {
       memberRepository: memberRepository,
     );
 
+    final getCurrentMemberUseCase = GetCurrentMemberUseCase(
+      memberRepository,
+      authService,
+    );
+
     return ChangeNotifierProvider.value(
       value: authManager,
       child: MaterialApp(
@@ -63,6 +69,7 @@ class MyApp extends StatelessWidget {
               authManager: authManager,
               child: TopPage(
                 getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
+                getCurrentMemberUseCase: getCurrentMemberUseCase,
               ),
             );
           },
