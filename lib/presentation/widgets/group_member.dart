@@ -201,13 +201,13 @@ class _GroupMemberState extends State<GroupMember> {
                 final member = _selectedGroup!.members[index];
                 return ListTile(
                   title: Text(
-                    '${member.kanjiFirstName ?? '未設定'} ${member.kanjiLastName ?? ''}',
+                    '${member.kanjiLastName ?? '名前未設定'} ${member.kanjiFirstName ?? ''}',
                   ),
                   subtitle: Text(member.nickname ?? ''),
                   leading: CircleAvatar(
                     child: Text(
-                      member.kanjiFirstName?.isNotEmpty == true
-                          ? member.kanjiFirstName![0]
+                      member.kanjiLastName?.isNotEmpty == true
+                          ? member.kanjiLastName![0]
                           : '?',
                     ),
                   ),
