@@ -28,5 +28,7 @@ abstract class AuthService {
 
   Future<void> deleteUser();
 
+  Future<void> reauthenticate({required String password});
+
   Stream<User?> get authStateChanges;
 }

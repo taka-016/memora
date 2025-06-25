@@ -116,6 +116,22 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> reauthenticate({required String password}) async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('ユーザーがログインしていません');
+    }
+    if (currentUser.email == null) {
+      throw Exception('メールアドレスが取得できません');
+    }
+    final credential = EmailAuthProvider.credential(
+      email: currentUser.email!,
+      password: password,
+    );
+    await currentUser.reauthenticateWithCredential(credential);
+  }
+
+  @override
   Stream<domain.User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
       return firebaseUser != null
