@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../application/managers/auth_manager.dart';
+import '../../application/utils/password_validator.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key, required this.authManager});
@@ -72,126 +73,160 @@ class _SignupPageState extends State<SignupPage> {
             return AutofillGroup(
               child: Form(
                 key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (widget.authManager.state.status == AuthStatus.loading)
-                      const Center(child: CircularProgressIndicator())
-                    else ...[
-                      if (widget.authManager.state.status == AuthStatus.error)
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.shade300),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.error, color: Colors.red.shade700),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  widget.authManager.state.errorMessage ??
-                                      'エラーが発生しました',
-                                  style: TextStyle(color: Colors.red.shade700),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.authManager.state.status == AuthStatus.loading)
+                        const Center(child: CircularProgressIndicator())
+                      else ...[
+                        if (widget.authManager.state.status == AuthStatus.error)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.red.shade300),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error, color: Colors.red.shade700),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    widget.authManager.state.errorMessage ??
+                                        'エラーが発生しました',
+                                    style: TextStyle(
+                                      color: Colors.red.shade700,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: Colors.red.shade700,
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.close,
+                                    color: Colors.red.shade700,
+                                  ),
+                                  onPressed: () {
+                                    widget.authManager.clearError();
+                                  },
+                                  tooltip: 'エラーを閉じる',
                                 ),
-                                onPressed: () {
-                                  widget.authManager.clearError();
-                                },
-                                tooltip: 'エラーを閉じる',
-                              ),
-                            ],
+                              ],
+                            ),
+                          ),
+                        TextFormField(
+                          key: const Key('email_field'),
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'メールアドレス',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.email],
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'メールアドレスを入力してください';
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return '正しいメールアドレスを入力してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const Key('password_field'),
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            labelText: 'パスワード',
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.password],
+                          validator: (value) {
+                            return PasswordValidator.validate(value);
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'パスワード要件:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
                           ),
                         ),
-                      TextFormField(
-                        key: const Key('email_field'),
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'メールアドレス',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        autofillHints: const [AutofillHints.email],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'メールアドレスを入力してください';
-                          }
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
-                            return '正しいメールアドレスを入力してください';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const Key('password_field'),
-                        controller: _passwordController,
-                        decoration: const InputDecoration(
-                          labelText: 'パスワード',
-                          border: OutlineInputBorder(),
-                        ),
-                        obscureText: true,
-                        autofillHints: const [AutofillHints.password],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'パスワードを入力してください';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const Key('confirm_password_field'),
-                        controller: _confirmPasswordController,
-                        decoration: const InputDecoration(
-                          labelText: 'パスワード確認',
-                          border: OutlineInputBorder(),
-                        ),
-                        obscureText: true,
-                        autofillHints: const [AutofillHints.password],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'パスワード確認を入力してください';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'パスワードが一致しません';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        key: const Key('signup_button'),
-                        onPressed: _signup,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text('登録', style: TextStyle(fontSize: 16)),
-                      ),
-                      const SizedBox(height: 32),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('すでにアカウントをお持ちの方'),
-                          TextButton(
-                            key: const Key('login_link'),
-                            onPressed: _navigateToLogin,
-                            child: const Text('ログイン'),
+                        const SizedBox(height: 4),
+                        ...PasswordValidator.getPasswordRequirements().map(
+                          (requirement) => Padding(
+                            padding: const EdgeInsets.only(
+                              left: 8.0,
+                              bottom: 2.0,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle_outline,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  requirement,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          key: const Key('confirm_password_field'),
+                          controller: _confirmPasswordController,
+                          decoration: const InputDecoration(
+                            labelText: 'パスワード確認',
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.password],
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'パスワード確認を入力してください';
+                            }
+                            if (value != _passwordController.text) {
+                              return 'パスワードが一致しません';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          key: const Key('signup_button'),
+                          onPressed: _signup,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text(
+                            '登録',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('すでにアカウントをお持ちの方'),
+                            TextButton(
+                              key: const Key('login_link'),
+                              onPressed: _navigateToLogin,
+                              child: const Text('ログイン'),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             );

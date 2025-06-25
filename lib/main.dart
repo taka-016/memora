@@ -7,6 +7,7 @@ import 'presentation/top_page.dart';
 import 'presentation/auth/auth_guard.dart';
 import 'application/managers/auth_manager.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
+import 'domain/services/auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'application/usecases/get_or_create_member_usecase.dart';
 import 'application/usecases/get_current_member_usecase.dart';
@@ -49,8 +50,11 @@ class MyApp extends StatelessWidget {
       authService,
     );
 
-    return ChangeNotifierProvider.value(
-      value: authManager,
+    return MultiProvider(
+      providers: [
+        Provider<AuthService>.value(value: authService),
+        ChangeNotifierProvider.value(value: authManager),
+      ],
       child: MaterialApp(
         title: 'memora',
         theme: ThemeData(

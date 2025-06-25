@@ -22,5 +22,11 @@ abstract class AuthService {
     required String emailLink,
   });
 
+  Future<void> updateEmail({required String newEmail});
+
+  Future<void> updatePassword({required String newPassword});
+
+  Future<void> deleteUser();
+
   Stream<User?> get authStateChanges;
 }

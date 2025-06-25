@@ -50,11 +50,11 @@ void main() {
       );
 
       await tester.enterText(emailField, 'test@example.com');
-      await tester.enterText(passwordField, 'password123');
-      await tester.enterText(confirmPasswordField, 'password123');
+      await tester.enterText(passwordField, 'ValidPass123!');
+      await tester.enterText(confirmPasswordField, 'ValidPass123!');
 
       expect(find.text('test@example.com'), findsOneWidget);
-      expect(find.text('password123'), findsNWidgets(2));
+      expect(find.text('ValidPass123!'), findsNWidgets(2));
     });
 
     testWidgets('登録ボタンをタップするとsignupメソッドが呼ばれる', (WidgetTester tester) async {
@@ -70,14 +70,14 @@ void main() {
       final signupButton = find.byKey(const Key('signup_button'));
 
       await tester.enterText(emailField, 'test@example.com');
-      await tester.enterText(passwordField, 'password123');
-      await tester.enterText(confirmPasswordField, 'password123');
+      await tester.enterText(passwordField, 'ValidPass123!');
+      await tester.enterText(confirmPasswordField, 'ValidPass123!');
       await tester.tap(signupButton);
 
       verify(
         mockAuthManager.signup(
           email: 'test@example.com',
-          password: 'password123',
+          password: 'ValidPass123!',
         ),
       ).called(1);
     });
@@ -127,7 +127,7 @@ void main() {
       final signupButton = find.byKey(const Key('signup_button'));
 
       await tester.enterText(emailField, 'test@example.com');
-      await tester.enterText(passwordField, 'password123');
+      await tester.enterText(passwordField, 'ValidPass123!');
       await tester.enterText(confirmPasswordField, 'different_password');
       await tester.tap(signupButton);
       await tester.pump();
@@ -147,7 +147,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('メールアドレスを入力してください'), findsOneWidget);
-      expect(find.text('パスワードを入力してください'), findsOneWidget);
+      expect(find.text('パスワードは8文字以上で入力してください'), findsOneWidget);
       expect(find.text('パスワード確認を入力してください'), findsOneWidget);
     });
   });
