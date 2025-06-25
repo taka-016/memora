@@ -1,0 +1,102 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../application/usecases/update_email_usecase.dart';
+import '../../application/usecases/update_password_usecase.dart';
+import '../../application/usecases/delete_user_usecase.dart';
+import '../../domain/services/auth_service.dart';
+import 'email_change_dialog.dart';
+import 'password_change_dialog.dart';
+import 'account_delete_dialog.dart';
+
+class AccountSettings extends StatelessWidget {
+  const AccountSettings({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('アカウント設定')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.email),
+                title: const Text('メールアドレス変更'),
+                subtitle: const Text('現在のメールアドレスを変更'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  final authService = Provider.of<AuthService>(
+                    context,
+                    listen: false,
+                  );
+                  final updateEmailUseCase = UpdateEmailUseCase(
+                    authService: authService,
+                  );
+                  showDialog(
+                    context: context,
+                    builder: (context) => EmailChangeDialog(
+                      updateEmailUseCase: updateEmailUseCase,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.lock),
+                title: const Text('パスワード変更'),
+                subtitle: const Text('現在のパスワードを変更'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  final authService = Provider.of<AuthService>(
+                    context,
+                    listen: false,
+                  );
+                  final updatePasswordUseCase = UpdatePasswordUseCase(
+                    authService: authService,
+                  );
+                  showDialog(
+                    context: context,
+                    builder: (context) => PasswordChangeDialog(
+                      updatePasswordUseCase: updatePasswordUseCase,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text(
+                  'アカウント削除',
+                  style: TextStyle(color: Colors.red),
+                ),
+                subtitle: const Text('アカウントを完全に削除'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  final authService = Provider.of<AuthService>(
+                    context,
+                    listen: false,
+                  );
+                  final deleteUserUseCase = DeleteUserUseCase(
+                    authService: authService,
+                  );
+                  showDialog(
+                    context: context,
+                    builder: (context) => AccountDeleteDialog(
+                      deleteUserUseCase: deleteUserUseCase,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

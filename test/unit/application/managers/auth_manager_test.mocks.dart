@@ -143,6 +143,33 @@ class MockAuthService extends _i1.Mock implements _i4.AuthService {
             ),
           )
           as _i5.Future<_i2.User>);
+
+  @override
+  _i5.Future<void> updateEmail({required String? newEmail}) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateEmail, [], {#newEmail: newEmail}),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updatePassword({required String? newPassword}) =>
+      (super.noSuchMethod(
+            Invocation.method(#updatePassword, [], {#newPassword: newPassword}),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteUser() =>
+      (super.noSuchMethod(
+            Invocation.method(#deleteUser, []),
+            returnValue: _i5.Future<void>.value(),
+            returnValueForMissingStub: _i5.Future<void>.value(),
+          )
+          as _i5.Future<void>);
 }
 
 /// A class which mocks [GetOrCreateMemberUseCase].

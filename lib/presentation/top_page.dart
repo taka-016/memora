@@ -10,6 +10,7 @@ import 'package:memora/presentation/widgets/group_settings.dart';
 import 'package:memora/presentation/widgets/member_settings.dart';
 import 'package:memora/presentation/widgets/settings.dart';
 import 'package:memora/presentation/widgets/user_drawer_header.dart';
+import 'package:memora/presentation/widgets/account_settings.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 
 enum NavigationItem {
@@ -19,6 +20,7 @@ enum NavigationItem {
   groupSettings, // グループ設定
   memberSettings, // メンバー設定
   settings, // 設定
+  accountSettings, // アカウント設定
 }
 
 class TopPage extends StatefulWidget {
@@ -77,6 +79,8 @@ class _TopPageState extends State<TopPage> {
         return const MemberSettings();
       case NavigationItem.settings:
         return const Settings();
+      case NavigationItem.accountSettings:
+        return const AccountSettings();
     }
   }
 
@@ -146,6 +150,13 @@ class _TopPageState extends State<TopPage> {
               title: const Text('設定'),
               selected: _selectedItem == NavigationItem.settings,
               onTap: () => _onNavigationItemSelected(NavigationItem.settings),
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_circle),
+              title: const Text('アカウント設定'),
+              selected: _selectedItem == NavigationItem.accountSettings,
+              onTap: () =>
+                  _onNavigationItemSelected(NavigationItem.accountSettings),
             ),
             const Divider(),
             ListTile(
