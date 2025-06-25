@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/update_email_usecase.dart';
+import '../../application/usecases/reauthenticate_usecase.dart';
+import 'reauthenticate_dialog.dart';
 
 class EmailChangeDialog extends StatefulWidget {
   final UpdateEmailUseCase updateEmailUseCase;
+  final ReauthenticateUseCase reauthenticateUseCase;
 
-  const EmailChangeDialog({super.key, required this.updateEmailUseCase});
+  const EmailChangeDialog({
+    super.key,
+    required this.updateEmailUseCase,
+    required this.reauthenticateUseCase,
+  });
 
   @override
   State<EmailChangeDialog> createState() => _EmailChangeDialogState();
@@ -35,21 +42,73 @@ class _EmailChangeDialogState extends State<EmailChangeDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('メールアドレスを更新しました')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
+            duration: Duration(seconds: 5),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('エラーが発生しました: ${e.toString()}')));
+        // requires-recent-loginエラーの場合は再認証ダイアログを表示
+        if (e.toString().contains('requires-recent-login')) {
+          await _showReauthenticateDialog();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
+          );
+        }
       }
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _showReauthenticateDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => ReauthenticateDialog(
+        reauthenticateUseCase: widget.reauthenticateUseCase,
+      ),
+    );
+
+    if (result == true && mounted) {
+      // 再認証成功後にメールアドレス変更を再実行（再帰を避けるため直接実行）
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        await widget.updateEmailUseCase.execute(
+          newEmail: _newEmailController.text.trim(),
+        );
+
+        if (mounted) {
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
+              duration: Duration(seconds: 5),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../application/usecases/update_email_usecase.dart';
 import '../../application/usecases/update_password_usecase.dart';
 import '../../application/usecases/delete_user_usecase.dart';
+import '../../application/usecases/reauthenticate_usecase.dart';
 import '../../domain/services/auth_service.dart';
 import 'email_change_dialog.dart';
 import 'password_change_dialog.dart';
@@ -34,10 +35,14 @@ class AccountSettings extends StatelessWidget {
                   final updateEmailUseCase = UpdateEmailUseCase(
                     authService: authService,
                   );
+                  final reauthenticateUseCase = ReauthenticateUseCase(
+                    authService: authService,
+                  );
                   showDialog(
                     context: context,
                     builder: (context) => EmailChangeDialog(
                       updateEmailUseCase: updateEmailUseCase,
+                      reauthenticateUseCase: reauthenticateUseCase,
                     ),
                   );
                 },
@@ -58,10 +63,14 @@ class AccountSettings extends StatelessWidget {
                   final updatePasswordUseCase = UpdatePasswordUseCase(
                     authService: authService,
                   );
+                  final reauthenticateUseCase = ReauthenticateUseCase(
+                    authService: authService,
+                  );
                   showDialog(
                     context: context,
                     builder: (context) => PasswordChangeDialog(
                       updatePasswordUseCase: updatePasswordUseCase,
+                      reauthenticateUseCase: reauthenticateUseCase,
                     ),
                   );
                 },
@@ -85,10 +94,14 @@ class AccountSettings extends StatelessWidget {
                   final deleteUserUseCase = DeleteUserUseCase(
                     authService: authService,
                   );
+                  final reauthenticateUseCase = ReauthenticateUseCase(
+                    authService: authService,
+                  );
                   showDialog(
                     context: context,
                     builder: (context) => AccountDeleteDialog(
                       deleteUserUseCase: deleteUserUseCase,
+                      reauthenticateUseCase: reauthenticateUseCase,
                     ),
                   );
                 },
