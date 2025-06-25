@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordlessEmailController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void initState() {
@@ -141,18 +142,27 @@ class _LoginPageState extends State<LoginPage> {
                       TextFormField(
                         key: const Key('password_field'),
                         controller: _passwordController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'パスワード',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscurePassword = !_obscurePassword;
+                              });
+                            },
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: _obscurePassword,
                         autofillHints: const [AutofillHints.password],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'パスワードを入力してください';
-                          }
-                          if (value.length < 6) {
-                            return 'パスワードは6文字以上で入力してください';
                           }
                           return null;
                         },

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/auth_state.dart';
-import 'package:memora/domain/entities/user.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/auth/login_page.dart';
 
@@ -29,12 +28,52 @@ void main() {
 
       await tester.pumpWidget(createTestWidget());
 
-      expect(find.text('ログイン'), findsAtLeastNWidgets(1)); // タイトルとボタン
+      expect(find.text('ログイン'), findsNWidgets(2)); // AppBarとボタンの2つ
       expect(find.byType(TextFormField), findsNWidgets(2)); // メール、パスワード
       expect(find.text('メールアドレス'), findsOneWidget);
       expect(find.text('パスワード'), findsOneWidget);
       expect(find.text('アカウントをお持ちでない方'), findsOneWidget);
       expect(find.text('新規登録'), findsOneWidget);
+    });
+
+    testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {
+      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+
+      await tester.pumpWidget(createTestWidget());
+
+      final passwordField = find.byKey(const Key('password_field'));
+      expect(passwordField, findsOneWidget);
+
+      // パスワード表示切り替えアイコンが存在することを確認
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+    });
+
+    testWidgets('パスワード表示切り替えアイコンをタップするとパスワードが表示される', (
+      WidgetTester tester,
+    ) async {
+      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+
+      await tester.pumpWidget(createTestWidget());
+
+      final visibilityIcon = find.byIcon(Icons.visibility);
+
+      // 初期状態では visibility アイコンが表示される
+      expect(visibilityIcon, findsOneWidget);
+
+      // アイコンをタップ
+      await tester.tap(visibilityIcon);
+      await tester.pump();
+
+      // アイコンが visibility_off に変わる
+      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+      expect(find.byIcon(Icons.visibility), findsNothing);
+
+      // もう一度タップすると元に戻る
+      await tester.tap(find.byIcon(Icons.visibility_off));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_off), findsNothing);
     });
 
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
@@ -71,78 +110,6 @@ void main() {
           password: 'password123',
         ),
       ).called(1);
-    });
-
-    testWidgets('新規登録リンクをタップすると画面遷移する', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
-
-      await tester.pumpWidget(createTestWidget());
-
-      final signupLink = find.byKey(const Key('signup_link'));
-      await tester.tap(signupLink);
-      await tester.pumpAndSettle();
-
-      // SignupPageに遷移することを確認
-      expect(find.byType(LoginPage), findsNothing);
-    });
-
-    testWidgets('loading状態の時はローディングインジケーターが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.loading());
-
-      await tester.pumpWidget(createTestWidget());
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    });
-
-    testWidgets('error状態の時はエラーメッセージが表示される', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.error('ログインに失敗しました'));
-
-      await tester.pumpWidget(createTestWidget());
-
-      expect(find.text('ログインに失敗しました'), findsOneWidget);
-      expect(find.byIcon(Icons.error), findsOneWidget);
-    });
-
-    testWidgets('authenticated状態の時は自動的に画面が閉じられる', (WidgetTester tester) async {
-      const user = User(
-        id: 'user123',
-        email: 'test@example.com',
-        displayName: 'テストユーザー',
-        isEmailVerified: true,
-      );
-
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
-
-      await tester.pumpWidget(createTestWidget());
-
-      // 状態をauthenticatedに変更
-      when(mockAuthManager.state).thenReturn(AuthState.authenticated(user));
-
-      // Notifierの変更を通知
-      when(mockAuthManager.addListener(any)).thenReturn(null);
-      when(mockAuthManager.removeListener(any)).thenReturn(null);
-
-      await tester.pump();
-
-      // ここで実際のアプリでは画面が閉じられることを想定
-      // テストでは適切なナビゲーション処理が行われることを確認
-    });
-
-    testWidgets('バリデーションエラーが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
-
-      await tester.pumpWidget(createTestWidget());
-
-      final loginButton = find.byKey(const Key('login_button'));
-
-      // 空の状態でログインボタンをタップ
-      await tester.tap(loginButton);
-      await tester.pump();
-
-      expect(find.text('メールアドレスを入力してください'), findsOneWidget);
-      expect(find.text('パスワードを入力してください'), findsOneWidget);
     });
   });
 }

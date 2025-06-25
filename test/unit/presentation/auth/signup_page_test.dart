@@ -38,6 +38,34 @@ void main() {
       expect(find.text('ログイン'), findsOneWidget);
     });
 
+    testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {
+      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+
+      await tester.pumpWidget(createTestWidget());
+
+      // パスワードフィールドとパスワード確認フィールドの両方に表示切り替えアイコンがあることを確認
+      expect(find.byIcon(Icons.visibility), findsNWidgets(2));
+    });
+
+    testWidgets('パスワード表示切り替えアイコンをタップするとパスワードが表示される', (
+      WidgetTester tester,
+    ) async {
+      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+
+      await tester.pumpWidget(createTestWidget());
+
+      final visibilityIcons = find.byIcon(Icons.visibility);
+      expect(visibilityIcons, findsNWidgets(2));
+
+      // 最初のパスワードフィールドのアイコンをタップ
+      await tester.tap(visibilityIcons.first);
+      await tester.pump();
+
+      // アイコンの数が変わることを確認（1つが visibility_off に変わる）
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_off), findsOneWidget);
+    });
+
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
       when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
 
