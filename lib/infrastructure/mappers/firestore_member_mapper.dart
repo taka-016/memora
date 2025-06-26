@@ -7,6 +7,7 @@ class FirestoreMemberMapper {
     return Member(
       id: doc.id,
       accountId: data?['accountId'] as String?,
+      administratorId: data?['administratorId'] as String?,
       hiraganaFirstName: data?['hiraganaFirstName'] as String?,
       hiraganaLastName: data?['hiraganaLastName'] as String?,
       kanjiFirstName: data?['kanjiFirstName'] as String?,
@@ -29,6 +30,7 @@ class FirestoreMemberMapper {
   static Map<String, dynamic> toFirestore(Member member) {
     return {
       'accountId': member.accountId,
+      'administratorId': member.administratorId,
       'hiraganaFirstName': member.hiraganaFirstName,
       'hiraganaLastName': member.hiraganaLastName,
       'kanjiFirstName': member.kanjiFirstName,

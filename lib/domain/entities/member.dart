@@ -1,6 +1,7 @@
 class Member {
   final String id;
   final String? accountId;
+  final String? administratorId;
   final String? hiraganaFirstName;
   final String? hiraganaLastName;
   final String? kanjiFirstName;
@@ -21,6 +22,7 @@ class Member {
   Member({
     required this.id,
     this.accountId,
+    this.administratorId,
     this.hiraganaFirstName,
     this.hiraganaLastName,
     this.kanjiFirstName,

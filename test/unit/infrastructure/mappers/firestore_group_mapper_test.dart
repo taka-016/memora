@@ -10,11 +10,16 @@ void main() {
     test('FirestoreのDocumentSnapshotからGroupへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group001');
-      when(mockDoc.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
+      when(mockDoc.data()).thenReturn({
+        'administratorId': 'admin001',
+        'name': 'テストグループ',
+        'memo': 'テストメモ',
+      });
 
       final group = FirestoreGroupMapper.fromFirestore(mockDoc);
 
       expect(group.id, 'group001');
+      expect(group.administratorId, 'admin001');
       expect(group.name, 'テストグループ');
       expect(group.memo, 'テストメモ');
     });
@@ -22,30 +27,44 @@ void main() {
     test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group002');
-      when(mockDoc.data()).thenReturn({'name': 'テストグループ2'});
+      when(
+        mockDoc.data(),
+      ).thenReturn({'administratorId': 'admin002', 'name': 'テストグループ2'});
 
       final group = FirestoreGroupMapper.fromFirestore(mockDoc);
 
       expect(group.id, 'group002');
+      expect(group.administratorId, 'admin002');
       expect(group.name, 'テストグループ2');
       expect(group.memo, null);
     });
 
     test('GroupからFirestoreのMapへ変換できる', () {
-      final group = Group(id: 'group001', name: 'テストグループ', memo: 'テストメモ');
+      final group = Group(
+        id: 'group001',
+        administratorId: 'admin001',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+      );
 
       final data = FirestoreGroupMapper.toFirestore(group);
 
+      expect(data['administratorId'], 'admin001');
       expect(data['name'], 'テストグループ');
       expect(data['memo'], 'テストメモ');
       expect(data['createdAt'], isA<FieldValue>());
     });
 
     test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
-      final group = Group(id: 'group002', name: 'テストグループ2');
+      final group = Group(
+        id: 'group002',
+        administratorId: 'admin002',
+        name: 'テストグループ2',
+      );
 
       final data = FirestoreGroupMapper.toFirestore(group);
 
+      expect(data['administratorId'], 'admin002');
       expect(data['name'], 'テストグループ2');
       expect(data['memo'], null);
       expect(data['createdAt'], isA<FieldValue>());

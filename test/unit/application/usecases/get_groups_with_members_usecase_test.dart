@@ -33,8 +33,8 @@ void main() {
     test('グループとそのメンバーが取得できること', () async {
       // Arrange
       final groups = [
-        Group(id: '1', name: 'グループ1'),
-        Group(id: '2', name: 'グループ2'),
+        Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+        Group(id: '2', administratorId: 'admin2', name: 'グループ2'),
       ];
       final groupMembers = [
         GroupMember(id: '1', groupId: '1', memberId: 'member1'),
@@ -102,7 +102,7 @@ void main() {
 
     test('メンバーがいないグループの場合、空のメンバーリストが返されること', () async {
       // Arrange
-      final groups = [Group(id: '1', name: 'グループ1')];
+      final groups = [Group(id: '1', administratorId: 'admin1', name: 'グループ1')];
 
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
       when(

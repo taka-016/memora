@@ -33,7 +33,12 @@ void main() {
     });
 
     test('saveGroupがgroups collectionにグループ情報をaddする', () async {
-      final group = Group(id: 'group001', name: 'テストグループ', memo: 'テストメモ');
+      final group = Group(
+        id: 'group001',
+        administratorId: 'admin001',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+      );
 
       when(
         mockCollection.add(any),
