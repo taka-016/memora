@@ -45,4 +45,19 @@ class FirestoreGroupRepository implements GroupRepository {
       return null;
     }
   }
+
+  @override
+  Future<List<Group>> getGroupsByAdministratorId(String administratorId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('groups')
+          .where('administratorId', isEqualTo: administratorId)
+          .get();
+      return snapshot.docs
+          .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }

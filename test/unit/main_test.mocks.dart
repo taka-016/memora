@@ -5,8 +5,11 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
+import 'package:memora/application/usecases/get_current_member_usecase.dart'
+    as _i8;
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart'
     as _i5;
+import 'package:memora/domain/entities/member.dart' as _i7;
 import 'package:memora/domain/repositories/group_member_repository.dart' as _i3;
 import 'package:memora/domain/repositories/group_repository.dart' as _i2;
 import 'package:memora/domain/repositories/member_repository.dart' as _i4;
@@ -87,12 +90,30 @@ class MockGetGroupsWithMembersUsecase extends _i1.Mock
           as _i4.MemberRepository);
 
   @override
-  _i6.Future<List<_i5.GroupWithMembers>> execute() =>
+  _i6.Future<List<_i5.GroupWithMembers>> execute(_i7.Member? currentMember) =>
       (super.noSuchMethod(
-            Invocation.method(#execute, []),
+            Invocation.method(#execute, [currentMember]),
             returnValue: _i6.Future<List<_i5.GroupWithMembers>>.value(
               <_i5.GroupWithMembers>[],
             ),
           )
           as _i6.Future<List<_i5.GroupWithMembers>>);
+}
+
+/// A class which mocks [GetCurrentMemberUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockGetCurrentMemberUseCase extends _i1.Mock
+    implements _i8.GetCurrentMemberUseCase {
+  MockGetCurrentMemberUseCase() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<_i7.Member?> execute() =>
+      (super.noSuchMethod(
+            Invocation.method(#execute, []),
+            returnValue: _i6.Future<_i7.Member?>.value(),
+          )
+          as _i6.Future<_i7.Member?>);
 }

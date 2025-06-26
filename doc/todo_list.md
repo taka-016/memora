@@ -70,3 +70,15 @@
   - [x] パスワードの変更機能
   - [x] アカウント削除機能
 - [x] パスワードポリシーを大文字、小文字、特殊文字、数字が必要かつ最低8文字以上とする
+
+## グループ管理
+- [x] GroupをadministratorIdで抽出する処理をリポジトリに追加する
+- [x] GruopMemberをmemberIdで抽出する処理をリポジトリに追加する
+- [x] GetGroupsWithMembersUsecaseのexecuteメソッドを修正する
+  - [x] memberを引数に取るようにする
+  - [x] getGroupsは使用せず、getGroupsByAdministratorIdを使用する
+  - [x] getGroupMembersは使用せず、getGroupMembersByGroupIdを使用する（getGroupsの結果で紐づける）
+  - [x] getMembersは使用せず、getMemberByIdを使用する（getGroupMembersの結果で紐づける）
+  - [x] GroupMemberはmemberを引数に取るようにする
+  - [x] getGroupsWithMembersUsecase.executeにmemberを渡す
+  - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す

@@ -68,6 +68,16 @@ class MockGroupRepository extends _i1.Mock implements _i2.GroupRepository {
             returnValue: _i3.Future<_i4.Group?>.value(),
           )
           as _i3.Future<_i4.Group?>);
+
+  @override
+  _i3.Future<List<_i4.Group>> getGroupsByAdministratorId(
+    String? administratorId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getGroupsByAdministratorId, [administratorId]),
+            returnValue: _i3.Future<List<_i4.Group>>.value(<_i4.Group>[]),
+          )
+          as _i3.Future<List<_i4.Group>>);
 }
 
 /// A class which mocks [GroupMemberRepository].
@@ -111,6 +121,18 @@ class MockGroupMemberRepository extends _i1.Mock
   _i3.Future<List<_i6.GroupMember>> getGroupMembersByGroupId(String? groupId) =>
       (super.noSuchMethod(
             Invocation.method(#getGroupMembersByGroupId, [groupId]),
+            returnValue: _i3.Future<List<_i6.GroupMember>>.value(
+              <_i6.GroupMember>[],
+            ),
+          )
+          as _i3.Future<List<_i6.GroupMember>>);
+
+  @override
+  _i3.Future<List<_i6.GroupMember>> getGroupMembersByMemberId(
+    String? memberId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getGroupMembersByMemberId, [memberId]),
             returnValue: _i3.Future<List<_i6.GroupMember>>.value(
               <_i6.GroupMember>[],
             ),

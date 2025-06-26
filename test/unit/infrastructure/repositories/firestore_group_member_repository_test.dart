@@ -119,5 +119,39 @@ void main() {
       expect(result[0].groupId, groupId);
       expect(result[0].memberId, 'member001');
     });
+
+    test('getGroupMembersByMemberIdが指定したmemberIdのグループメンバーリストを返す', () async {
+      const memberId = 'member001';
+
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('groupmember001');
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'groupId': 'group001', 'memberId': memberId});
+
+      final result = await repository.getGroupMembersByMemberId(memberId);
+
+      expect(result.length, 1);
+      expect(result[0].id, 'groupmember001');
+      expect(result[0].groupId, 'group001');
+      expect(result[0].memberId, memberId);
+    });
+
+    test('getGroupMembersByMemberIdがエラー時に空のリストを返す', () async {
+      const memberId = 'member001';
+
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenThrow(Exception('Firestore error'));
+
+      final result = await repository.getGroupMembersByMemberId(memberId);
+
+      expect(result, isEmpty);
+    });
   });
 }

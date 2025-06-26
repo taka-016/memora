@@ -47,4 +47,19 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
       return [];
     }
   }
+
+  @override
+  Future<List<GroupMember>> getGroupMembersByMemberId(String memberId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('group_members')
+          .where('memberId', isEqualTo: memberId)
+          .get();
+      return snapshot.docs
+          .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
 }
