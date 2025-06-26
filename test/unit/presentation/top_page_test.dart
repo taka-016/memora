@@ -48,11 +48,18 @@ void main() {
   Widget createTestWidget({
     MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
   }) {
+    final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+    when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer((_) async => Member(
+      id: 'default_member',
+      kanjiLastName: 'デフォルト',
+      kanjiFirstName: 'ユーザー',
+    ));
+    
     return MaterialApp(
       home: TopPage(
         getGroupsWithMembersUsecase: mockUsecase,
         isTestEnvironment: true,
-        getCurrentMemberUseCase: getCurrentMemberUseCase,
+        getCurrentMemberUseCase: getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
       ),
     );
   }
@@ -66,7 +73,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -85,7 +92,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -107,7 +114,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -140,7 +147,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -161,7 +168,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -190,7 +197,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -227,7 +234,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -256,7 +263,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -285,7 +292,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -312,7 +319,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -339,7 +346,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -377,7 +384,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       final widget = createTestWidget(
         getCurrentMemberUseCase: testGetCurrentMemberUseCase,
@@ -417,7 +424,7 @@ void main() {
           members: testMembers,
         ),
       ];
-      when(mockUsecase.execute()).thenAnswer((_) async => groupsWithMembers);
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       final widget = createTestWidget(
         getCurrentMemberUseCase: testGetCurrentMemberUseCase,

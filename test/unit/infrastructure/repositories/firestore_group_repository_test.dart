@@ -12,6 +12,7 @@ import 'package:memora/domain/entities/group.dart';
   QuerySnapshot,
   QueryDocumentSnapshot,
   DocumentSnapshot,
+  Query,
 ])
 import 'firestore_group_repository_test.mocks.dart';
 
@@ -126,6 +127,49 @@ void main() {
       final result = await repository.getGroupById(groupId);
 
       expect(result, isNull);
+    });
+
+    test('getGroupsByAdministratorIdが指定したadministratorIdのグループ一覧を返す', () async {
+      const administratorId = 'admin001';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('administratorId', isEqualTo: administratorId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('group001');
+      when(mockDoc1.data()).thenReturn({
+        'administratorId': administratorId,
+        'name': 'テストグループ',
+        'memo': 'テストメモ',
+      });
+
+      final result = await repository.getGroupsByAdministratorId(
+        administratorId,
+      );
+
+      expect(result.length, 1);
+      expect(result[0].id, 'group001');
+      expect(result[0].administratorId, administratorId);
+      expect(result[0].name, 'テストグループ');
+      expect(result[0].memo, 'テストメモ');
+    });
+
+    test('getGroupsByAdministratorIdがエラー時に空のリストを返す', () async {
+      const administratorId = 'admin001';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('administratorId', isEqualTo: administratorId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenThrow(Exception('Firestore error'));
+
+      final result = await repository.getGroupsByAdministratorId(
+        administratorId,
+      );
+
+      expect(result, isEmpty);
     });
   });
 }

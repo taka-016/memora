@@ -22,22 +22,25 @@ class GetGroupsWithMembersUsecase {
     required this.memberRepository,
   });
 
-  Future<List<GroupWithMembers>> execute() async {
-    final groups = await groupRepository.getGroups();
-    final groupMembers = await groupMemberRepository.getGroupMembers();
-    final allMembers = await memberRepository.getMembers();
+  Future<List<GroupWithMembers>> execute(Member member) async {
+    final groups = await groupRepository.getGroupsByAdministratorId(member.id);
 
     final result = <GroupWithMembers>[];
 
     for (final group in groups) {
-      final groupMemberIds = groupMembers
-          .where((gm) => gm.groupId == group.id)
-          .map((gm) => gm.memberId)
-          .toList();
+      final groupMembers = await groupMemberRepository.getGroupMembersByGroupId(
+        group.id,
+      );
 
-      final members = allMembers
-          .where((member) => groupMemberIds.contains(member.id))
-          .toList();
+      final members = <Member>[];
+      for (final groupMember in groupMembers) {
+        final member = await memberRepository.getMemberById(
+          groupMember.memberId,
+        );
+        if (member != null) {
+          members.add(member);
+        }
+      }
 
       result.add(GroupWithMembers(group: group, members: members));
     }

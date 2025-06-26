@@ -5,4 +5,5 @@ abstract class GroupRepository {
   Future<void> saveGroup(Group group);
   Future<void> deleteGroup(String groupId);
   Future<Group?> getGroupById(String groupId);
+  Future<List<Group>> getGroupsByAdministratorId(String administratorId);
 }

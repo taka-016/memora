@@ -81,8 +81,12 @@ class _TopPageState extends State<TopPage> {
   Widget _buildBody() {
     switch (_selectedItem) {
       case NavigationItem.topPage:
+        if (_currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
         return GroupMember(
           getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
+          member: _currentMember!,
         );
       case NavigationItem.groupTimeline:
         return const GroupTimeline();

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/entities/member.dart';
 
 enum GroupMemberState { loading, groupList, memberList, empty, error }
 
 class GroupMember extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
+  final Member member;
 
-  const GroupMember({super.key, required this.getGroupsWithMembersUsecase});
+  const GroupMember({
+    super.key,
+    required this.getGroupsWithMembersUsecase,
+    required this.member,
+  });
 
   @override
   State<GroupMember> createState() => _GroupMemberState();
@@ -32,7 +38,7 @@ class _GroupMemberState extends State<GroupMember> {
       });
 
       final groupsWithMembers = await widget.getGroupsWithMembersUsecase
-          .execute();
+          .execute(widget.member);
 
       if (!mounted) return;
       setState(() {
