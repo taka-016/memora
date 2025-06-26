@@ -115,7 +115,10 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 24.0,
+      ),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.95,
         padding: const EdgeInsets.all(24.0),
@@ -146,7 +149,10 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
                         children: [
                           const Icon(Icons.check_circle_outline, size: 16),
                           const SizedBox(width: 4),
-                          Text(requirement, style: const TextStyle(fontSize: 12)),
+                          Text(
+                            requirement,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ],
                       ),
                     ),
@@ -213,7 +219,9 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                  onPressed: _isLoading
+                      ? null
+                      : () => Navigator.of(context).pop(),
                   child: const Text('キャンセル'),
                 ),
                 const SizedBox(width: 8),

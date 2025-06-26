@@ -62,7 +62,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -81,7 +81,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -103,7 +103,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -136,7 +136,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -157,7 +157,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -186,7 +186,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -223,7 +223,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -252,7 +252,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -281,7 +281,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -308,7 +308,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -335,7 +335,7 @@ void main() {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -373,7 +373,7 @@ void main() {
 
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];
@@ -413,7 +413,7 @@ void main() {
 
       final groupsWithMembers = [
         GroupWithMembers(
-          group: Group(id: '1', name: 'グループ1'),
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
           members: testMembers,
         ),
       ];

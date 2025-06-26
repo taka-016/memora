@@ -21,8 +21,8 @@ void main() {
     test('グループが複数件取得できること', () async {
       // Arrange
       final groups = [
-        Group(id: '1', name: 'グループ1', memo: 'メモ1'),
-        Group(id: '2', name: 'グループ2', memo: 'メモ2'),
+        Group(id: '1', administratorId: 'admin1', name: 'グループ1', memo: 'メモ1'),
+        Group(id: '2', administratorId: 'admin2', name: 'グループ2', memo: 'メモ2'),
       ];
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
 
@@ -36,7 +36,9 @@ void main() {
 
     test('グループが1件取得できること', () async {
       // Arrange
-      final groups = [Group(id: '1', name: 'グループ1', memo: 'メモ1')];
+      final groups = [
+        Group(id: '1', administratorId: 'admin1', name: 'グループ1', memo: 'メモ1'),
+      ];
       when(mockGroupRepository.getGroups()).thenAnswer((_) async => groups);
 
       // Act
