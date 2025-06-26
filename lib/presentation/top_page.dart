@@ -12,6 +12,7 @@ import 'package:memora/presentation/widgets/settings.dart';
 import 'package:memora/presentation/widgets/user_drawer_header.dart';
 import 'package:memora/presentation/widgets/account_settings.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
+import 'package:memora/domain/entities/member.dart';
 
 enum NavigationItem {
   topPage, // トップページ (初期表示のグループ情報)
@@ -42,6 +43,7 @@ class TopPage extends StatefulWidget {
 class _TopPageState extends State<TopPage> {
   NavigationItem _selectedItem = NavigationItem.topPage;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
+  Member? _currentMember;
 
   @override
   void initState() {
@@ -49,9 +51,24 @@ class _TopPageState extends State<TopPage> {
     _initializeGetCurrentMemberUseCase();
   }
 
-  void _initializeGetCurrentMemberUseCase() {
-    // getCurrentMemberUseCaseが渡された場合はそれを使用、nullの場合はnullのまま
+  void _initializeGetCurrentMemberUseCase() async {
     _getCurrentMemberUseCase = widget.getCurrentMemberUseCase;
+    if (_getCurrentMemberUseCase != null) {
+      await _loadCurrentMember();
+    }
+  }
+
+  Future<void> _loadCurrentMember() async {
+    try {
+      final member = await _getCurrentMemberUseCase!.execute();
+      if (mounted) {
+        setState(() {
+          _currentMember = member;
+        });
+      }
+    } catch (e) {
+      // エラー時はnullのまま
+    }
   }
 
   void _onNavigationItemSelected(NavigationItem item) {
@@ -102,9 +119,7 @@ class _TopPageState extends State<TopPage> {
           padding: EdgeInsets.zero,
           children: [
             _getCurrentMemberUseCase != null
-                ? UserDrawerHeader(
-                    getCurrentMemberUseCase: _getCurrentMemberUseCase!,
-                  )
+                ? UserDrawerHeader(member: _currentMember)
                 : const DrawerHeader(
                     decoration: BoxDecoration(color: Colors.deepPurple),
                     child: Text(
