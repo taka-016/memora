@@ -6,6 +6,7 @@ RUN apt-get update
 
 # 基本パッケージのインストール
 RUN apt-get install -y \
+    tzdata \
     git \
     curl \
     nano \
@@ -28,6 +29,11 @@ RUN rm -rf /var/lib/apt/lists/*
 
 # gemini-cliのインストール
 RUN npm install -g @google/gemini-cli
+
+# タイムゾーンをJSTに設定
+RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+  && echo "Asia/Tokyo" > /etc/timezone \
+  && dpkg-reconfigure -f noninteractive tzdata
 
 # 作業ディレクトリの設定
 WORKDIR /workspace
