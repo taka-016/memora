@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import '../../application/usecases/update_password_usecase.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
 import '../../application/utils/password_validator.dart';
-import 'reauthenticate_dialog.dart';
+import 'reauthenticate_modal.dart';
 
-class PasswordChangeDialog extends StatefulWidget {
+class PasswordChangeModal extends StatefulWidget {
   final UpdatePasswordUseCase updatePasswordUseCase;
   final ReauthenticateUseCase reauthenticateUseCase;
 
-  const PasswordChangeDialog({
+  const PasswordChangeModal({
     super.key,
     required this.updatePasswordUseCase,
     required this.reauthenticateUseCase,
   });
 
   @override
-  State<PasswordChangeDialog> createState() => _PasswordChangeDialogState();
+  State<PasswordChangeModal> createState() => _PasswordChangeModalState();
 }
 
-class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
+class _PasswordChangeModalState extends State<PasswordChangeModal> {
   final _formKey = GlobalKey<FormState>();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -74,7 +74,7 @@ class _PasswordChangeDialogState extends State<PasswordChangeDialog> {
   Future<void> _showReauthenticateDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ReauthenticateDialog(
+      builder: (context) => ReauthenticateModal(
         reauthenticateUseCase: widget.reauthenticateUseCase,
       ),
     );

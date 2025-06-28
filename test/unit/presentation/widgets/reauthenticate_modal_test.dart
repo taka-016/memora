@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/widgets/reauthenticate_dialog.dart';
+import 'package:memora/presentation/widgets/reauthenticate_modal.dart';
 import 'package:memora/application/usecases/reauthenticate_usecase.dart';
 
-import 'reauthenticate_dialog_test.mocks.dart';
+import 'reauthenticate_modal_test.mocks.dart';
 
 @GenerateMocks([ReauthenticateUseCase])
 void main() {
-  group('ReauthenticateDialog', () {
+  group('ReauthenticateModal', () {
     late MockReauthenticateUseCase mockReauthenticateUseCase;
 
     setUp(() {
@@ -24,7 +24,7 @@ void main() {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => ReauthenticateDialog(
+                  builder: (context) => ReauthenticateModal(
                     reauthenticateUseCase: mockReauthenticateUseCase,
                   ),
                 );
@@ -86,7 +86,7 @@ void main() {
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(ReauthenticateDialog), findsNothing);
+      expect(find.byType(ReauthenticateModal), findsNothing);
     });
 
     testWidgets('空のパスワードで認証ボタンをタップしてもダイアログは閉じない', (WidgetTester tester) async {
@@ -97,7 +97,7 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pump();
 
-      expect(find.byType(ReauthenticateDialog), findsOneWidget);
+      expect(find.byType(ReauthenticateModal), findsOneWidget);
       verifyNever(
         mockReauthenticateUseCase.execute(password: anyNamed('password')),
       );

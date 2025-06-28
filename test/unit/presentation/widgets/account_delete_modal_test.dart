@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/widgets/account_delete_dialog.dart';
+import 'package:memora/presentation/widgets/account_delete_modal.dart';
 import 'package:memora/application/usecases/delete_user_usecase.dart';
 import 'package:memora/application/usecases/reauthenticate_usecase.dart';
 
-import 'account_delete_dialog_test.mocks.dart';
+import 'account_delete_modal_test.mocks.dart';
 
 @GenerateMocks([DeleteUserUseCase, ReauthenticateUseCase])
 void main() {
-  group('AccountDeleteDialog', () {
+  group('AccountDeleteModal', () {
     late MockDeleteUserUseCase mockDeleteUserUseCase;
     late MockReauthenticateUseCase mockReauthenticateUseCase;
 
@@ -27,7 +27,7 @@ void main() {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => AccountDeleteDialog(
+                  builder: (context) => AccountDeleteModal(
                     deleteUserUseCase: mockDeleteUserUseCase,
                     reauthenticateUseCase: mockReauthenticateUseCase,
                   ),
@@ -96,7 +96,7 @@ void main() {
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(AccountDeleteDialog), findsNothing);
+      expect(find.byType(AccountDeleteModal), findsNothing);
     });
 
     testWidgets('削除ボタンは赤色で表示される', (WidgetTester tester) async {

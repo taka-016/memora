@@ -90,9 +90,9 @@ class MockGetGroupsWithMembersUsecase extends _i1.Mock
           as _i4.MemberRepository);
 
   @override
-  _i6.Future<List<_i5.GroupWithMembers>> execute(_i7.Member? currentMember) =>
+  _i6.Future<List<_i5.GroupWithMembers>> execute(_i7.Member? member) =>
       (super.noSuchMethod(
-            Invocation.method(#execute, [currentMember]),
+            Invocation.method(#execute, [member]),
             returnValue: _i6.Future<List<_i5.GroupWithMembers>>.value(
               <_i5.GroupWithMembers>[],
             ),
