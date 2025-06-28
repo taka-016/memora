@@ -17,13 +17,15 @@ void main() {
   setUp(() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
     mockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-    
+
     when(mockUsecase.execute(any)).thenAnswer((_) async => []);
-    when(mockGetCurrentMemberUseCase.execute()).thenAnswer((_) async => Member(
-      id: 'test_member',
-      kanjiLastName: 'テスト',
-      kanjiFirstName: 'ユーザー',
-    ));
+    when(mockGetCurrentMemberUseCase.execute()).thenAnswer(
+      (_) async => Member(
+        id: 'test_member',
+        kanjiLastName: 'テスト',
+        kanjiFirstName: 'ユーザー',
+      ),
+    );
   });
 
   Widget createTestApp() {

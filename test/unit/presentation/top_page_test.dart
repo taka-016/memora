@@ -49,17 +49,20 @@ void main() {
     MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
   }) {
     final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-    when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer((_) async => Member(
-      id: 'default_member',
-      kanjiLastName: 'デフォルト',
-      kanjiFirstName: 'ユーザー',
-    ));
-    
+    when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
+      (_) async => Member(
+        id: 'default_member',
+        kanjiLastName: 'デフォルト',
+        kanjiFirstName: 'ユーザー',
+      ),
+    );
+
     return MaterialApp(
       home: TopPage(
         getGroupsWithMembersUsecase: mockUsecase,
         isTestEnvironment: true,
-        getCurrentMemberUseCase: getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+        getCurrentMemberUseCase:
+            getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
       ),
     );
   }
