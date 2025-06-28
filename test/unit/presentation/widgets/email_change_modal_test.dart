@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/widgets/email_change_dialog.dart';
+import 'package:memora/presentation/widgets/email_change_modal.dart';
 import 'package:memora/application/usecases/update_email_usecase.dart';
 import 'package:memora/application/usecases/reauthenticate_usecase.dart';
 
-import 'email_change_dialog_test.mocks.dart';
+import 'email_change_modal_test.mocks.dart';
 
 @GenerateMocks([UpdateEmailUseCase, ReauthenticateUseCase])
 void main() {
-  group('EmailChangeDialog', () {
+  group('EmailChangeModal', () {
     late MockUpdateEmailUseCase mockUpdateEmailUseCase;
     late MockReauthenticateUseCase mockReauthenticateUseCase;
 
@@ -27,7 +27,7 @@ void main() {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => EmailChangeDialog(
+                  builder: (context) => EmailChangeModal(
                     updateEmailUseCase: mockUpdateEmailUseCase,
                     reauthenticateUseCase: mockReauthenticateUseCase,
                   ),

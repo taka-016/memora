@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
 
-class ReauthenticateDialog extends StatefulWidget {
-  const ReauthenticateDialog({
+class ReauthenticateModal extends StatefulWidget {
+  const ReauthenticateModal({
     super.key,
     required this.reauthenticateUseCase,
     this.onSuccess,
@@ -12,10 +12,10 @@ class ReauthenticateDialog extends StatefulWidget {
   final VoidCallback? onSuccess;
 
   @override
-  State<ReauthenticateDialog> createState() => _ReauthenticateDialogState();
+  State<ReauthenticateModal> createState() => _ReauthenticateModalState();
 }
 
-class _ReauthenticateDialogState extends State<ReauthenticateDialog> {
+class _ReauthenticateModalState extends State<ReauthenticateModal> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
