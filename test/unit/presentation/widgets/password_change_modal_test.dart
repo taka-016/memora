@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/widgets/password_change_dialog.dart';
+import 'package:memora/presentation/widgets/password_change_modal.dart';
 import 'package:memora/application/usecases/update_password_usecase.dart';
 import 'package:memora/application/usecases/reauthenticate_usecase.dart';
 
-import 'password_change_dialog_test.mocks.dart';
+import 'password_change_modal_test.mocks.dart';
 
 @GenerateMocks([UpdatePasswordUseCase, ReauthenticateUseCase])
 void main() {
-  group('PasswordChangeDialog', () {
+  group('PasswordChangeModal', () {
     late MockUpdatePasswordUseCase mockUpdatePasswordUseCase;
     late MockReauthenticateUseCase mockReauthenticateUseCase;
 
@@ -27,7 +27,7 @@ void main() {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => PasswordChangeDialog(
+                  builder: (context) => PasswordChangeModal(
                     updatePasswordUseCase: mockUpdatePasswordUseCase,
                     reauthenticateUseCase: mockReauthenticateUseCase,
                   ),
@@ -131,7 +131,7 @@ void main() {
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(PasswordChangeDialog), findsNothing);
+      expect(find.byType(PasswordChangeModal), findsNothing);
     });
 
     testWidgets('パスワード要件が表示される', (WidgetTester tester) async {

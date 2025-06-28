@@ -5,9 +5,9 @@ import '../../application/usecases/update_password_usecase.dart';
 import '../../application/usecases/delete_user_usecase.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
 import '../../domain/services/auth_service.dart';
-import 'email_change_dialog.dart';
-import 'password_change_dialog.dart';
-import 'account_delete_dialog.dart';
+import 'email_change_modal.dart';
+import 'password_change_modal.dart';
+import 'account_delete_modal.dart';
 
 class AccountSettings extends StatelessWidget {
   const AccountSettings({super.key});
@@ -40,7 +40,7 @@ class AccountSettings extends StatelessWidget {
                   );
                   showDialog(
                     context: context,
-                    builder: (context) => EmailChangeDialog(
+                    builder: (context) => EmailChangeModal(
                       updateEmailUseCase: updateEmailUseCase,
                       reauthenticateUseCase: reauthenticateUseCase,
                     ),
@@ -68,7 +68,7 @@ class AccountSettings extends StatelessWidget {
                   );
                   showDialog(
                     context: context,
-                    builder: (context) => PasswordChangeDialog(
+                    builder: (context) => PasswordChangeModal(
                       updatePasswordUseCase: updatePasswordUseCase,
                       reauthenticateUseCase: reauthenticateUseCase,
                     ),
@@ -99,7 +99,7 @@ class AccountSettings extends StatelessWidget {
                   );
                   showDialog(
                     context: context,
-                    builder: (context) => AccountDeleteDialog(
+                    builder: (context) => AccountDeleteModal(
                       deleteUserUseCase: deleteUserUseCase,
                       reauthenticateUseCase: reauthenticateUseCase,
                     ),
