@@ -76,9 +76,13 @@
 - [x] GruopMemberをmemberIdで抽出する処理をリポジトリに追加する
 - [x] GetGroupsWithMembersUsecaseのexecuteメソッドを修正する
   - [x] memberを引数に取るようにする
-  - [x] getGroupsは使用せず、getGroupsByAdministratorIdを使用する
-  - [x] getGroupMembersは使用せず、getGroupMembersByGroupIdを使用する（getGroupsの結果で紐づける）
-  - [x] getMembersは使用せず、getMemberByIdを使用する（getGroupMembersの結果で紐づける）
+  - [x] Group取得はgetGroupsは使用せず、getGroupsByAdministratorIdを使用する（member.idを使用）
+  - [x] Groupは以下の結果もマージする
+    - [x] GroupMemberをgetGroupMembersByMemberIdで取得（member.idを使用）
+    - [x] GroupをgetGroupsByGroupIdで取得（groupMember.groupIdを使用）
+  - [x] GroupMember取得はgetGroupMembersは使用せず、getGroupMembersByGroupIdを使用する（getGroupsの結果で紐づける）
+  - [x] Members取得はgetMembersは使用せず、getMemberByIdを使用する（getGroupMembersの結果で紐づける）
+- [x] GroupMemberの修正
   - [x] GroupMemberはmemberを引数に取るようにする
   - [x] getGroupsWithMembersUsecase.executeにmemberを渡す
   - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す
