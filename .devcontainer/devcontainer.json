@@ -38,7 +38,7 @@
             }
         }
     },
-    "postCreateCommand": "flutter doctor && flutter pub get",
+    "postCreateCommand": "bash .devcontainer/setup.sh",
     "forwardPorts": [
         8080
     ],
