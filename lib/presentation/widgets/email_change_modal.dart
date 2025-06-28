@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/update_email_usecase.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
-import 'reauthenticate_dialog.dart';
+import 'reauthenticate_modal.dart';
 
-class EmailChangeDialog extends StatefulWidget {
+class EmailChangeModal extends StatefulWidget {
   final UpdateEmailUseCase updateEmailUseCase;
   final ReauthenticateUseCase reauthenticateUseCase;
 
-  const EmailChangeDialog({
+  const EmailChangeModal({
     super.key,
     required this.updateEmailUseCase,
     required this.reauthenticateUseCase,
   });
 
   @override
-  State<EmailChangeDialog> createState() => _EmailChangeDialogState();
+  State<EmailChangeModal> createState() => _EmailChangeModalState();
 }
 
-class _EmailChangeDialogState extends State<EmailChangeDialog> {
+class _EmailChangeModalState extends State<EmailChangeModal> {
   final _formKey = GlobalKey<FormState>();
   final _newEmailController = TextEditingController();
   bool _isLoading = false;
@@ -72,7 +72,7 @@ class _EmailChangeDialogState extends State<EmailChangeDialog> {
   Future<void> _showReauthenticateDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ReauthenticateDialog(
+      builder: (context) => ReauthenticateModal(
         reauthenticateUseCase: widget.reauthenticateUseCase,
       ),
     );

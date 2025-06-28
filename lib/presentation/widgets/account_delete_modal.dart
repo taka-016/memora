@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/delete_user_usecase.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
-import 'reauthenticate_dialog.dart';
+import 'reauthenticate_modal.dart';
 
-class AccountDeleteDialog extends StatefulWidget {
+class AccountDeleteModal extends StatefulWidget {
   final DeleteUserUseCase deleteUserUseCase;
   final ReauthenticateUseCase reauthenticateUseCase;
 
-  const AccountDeleteDialog({
+  const AccountDeleteModal({
     super.key,
     required this.deleteUserUseCase,
     required this.reauthenticateUseCase,
   });
 
   @override
-  State<AccountDeleteDialog> createState() => _AccountDeleteDialogState();
+  State<AccountDeleteModal> createState() => _AccountDeleteModalState();
 }
 
-class _AccountDeleteDialogState extends State<AccountDeleteDialog> {
+class _AccountDeleteModalState extends State<AccountDeleteModal> {
   bool _isLoading = false;
 
   Future<void> _deleteAccount() async {
@@ -57,7 +57,7 @@ class _AccountDeleteDialogState extends State<AccountDeleteDialog> {
   Future<void> _showReauthenticateDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (context) => ReauthenticateDialog(
+      builder: (context) => ReauthenticateModal(
         reauthenticateUseCase: widget.reauthenticateUseCase,
       ),
     );

@@ -86,3 +86,17 @@
   - [x] GroupMemberはmemberを引数に取るようにする
   - [x] getGroupsWithMembersUsecase.executeにmemberを渡す
   - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す
+
+## メンバー設定画面
+- [ ] メンバー一覧表示
+  - [ ] ログインユーザーが管理しているメンバーの一覧を表示する
+  - [ ] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
+- [ ] メンバー新規登録
+  - [ ] 
+  - [ ] membersのid,accountId,administratorId以外の入力項目を作成する
+  - [ ] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
+- [ ] メンバー情報編集
+  - [ ] メンバー一覧から対象メンバーの行の編集ボタンをクリックして開く
+
+## 全体
+- [x] 画面の一部にポップアップして表示する画面のファイル名の末尾は"dialog"ではなく"modal"で統一する
