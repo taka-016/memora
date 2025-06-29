@@ -44,8 +44,12 @@ class _MemberSettingsState extends State<MemberSettings> {
   @override
   void initState() {
     super.initState();
-    
-    if (widget.getCurrentMemberUseCase != null) {
+
+    if (widget.getCurrentMemberUseCase != null &&
+        widget.getManagedMembersUsecase != null &&
+        widget.createMemberUsecase != null &&
+        widget.updateMemberUsecase != null &&
+        widget.deleteMemberUsecase != null) {
       // テスト環境では注入されたユースケースを使用
       _getCurrentMemberUseCase = widget.getCurrentMemberUseCase!;
       _getManagedMembersUsecase = widget.getManagedMembersUsecase!;
@@ -53,27 +57,27 @@ class _MemberSettingsState extends State<MemberSettings> {
       _updateMemberUsecase = widget.updateMemberUsecase!;
       _deleteMemberUsecase = widget.deleteMemberUsecase!;
       _loadData();
+    } else {
+      // 本番環境ではFirebaseを直接使用
+      _initializeUseCases();
     }
-    // 本番環境の初期化は_initializeUseCasesメソッドで遅延実行
   }
 
   void _initializeUseCases() {
-    if (widget.getCurrentMemberUseCase == null) {
-      // 本番環境では従来通りFirebaseを直接使用
-      final memberRepository = FirestoreMemberRepository();
-      final authService = FirebaseAuthService();
-      
-      _getCurrentMemberUseCase = GetCurrentMemberUseCase(
-        memberRepository,
-        authService,
-      );
-      _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
-      _createMemberUsecase = CreateMemberUsecase(memberRepository);
-      _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
-      _deleteMemberUsecase = DeleteMemberUsecase(memberRepository);
-      
-      _loadData();
-    }
+    // 本番環境では従来通りFirebaseを直接使用
+    final memberRepository = FirestoreMemberRepository();
+    final authService = FirebaseAuthService();
+
+    _getCurrentMemberUseCase = GetCurrentMemberUseCase(
+      memberRepository,
+      authService,
+    );
+    _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
+    _createMemberUsecase = CreateMemberUsecase(memberRepository);
+    _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
+    _deleteMemberUsecase = DeleteMemberUsecase(memberRepository);
+
+    _loadData();
   }
 
   Future<void> _loadData() async {
@@ -105,7 +109,7 @@ class _MemberSettingsState extends State<MemberSettings> {
 
   Future<void> _showMemberEditModal({Member? member}) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+
     await showDialog(
       context: context,
       builder: (context) => MemberEditModal(
@@ -148,7 +152,9 @@ class _MemberSettingsState extends State<MemberSettings> {
             }
           } catch (e) {
             if (mounted) {
-              scaffoldMessenger.showSnackBar(SnackBar(content: Text('操作に失敗しました: $e')));
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('操作に失敗しました: $e')),
+              );
             }
           }
         },
@@ -158,7 +164,7 @@ class _MemberSettingsState extends State<MemberSettings> {
 
   Future<void> _deleteMember(Member member) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -185,11 +191,15 @@ class _MemberSettingsState extends State<MemberSettings> {
         await _deleteMemberUsecase.execute(member.id);
         await _loadData();
         if (mounted) {
-          scaffoldMessenger.showSnackBar(const SnackBar(content: Text('メンバーを削除しました')));
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('メンバーを削除しました')),
+          );
         }
       } catch (e) {
         if (mounted) {
-          scaffoldMessenger.showSnackBar(SnackBar(content: Text('削除に失敗しました: $e')));
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('削除に失敗しました: $e')),
+          );
         }
       }
     }
@@ -210,155 +220,127 @@ class _MemberSettingsState extends State<MemberSettings> {
 
   @override
   Widget build(BuildContext context) {
-    // テスト環境で依存関係が注入されていない場合はプレースホルダーを表示
-    if (widget.getCurrentMemberUseCase == null) {
-      return Container(
-        key: const Key('member_settings'),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.people, size: 100, color: Colors.grey),
-              SizedBox(height: 16),
-              Text(
-                'メンバー設定',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text('メンバー設定画面', style: TextStyle(fontSize: 16, color: Colors.grey)),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_currentMember == null) {
-      return const Center(child: Text('ログインが必要です'));
-    }
-
     return Scaffold(
       key: const Key('member_settings'),
-      body: Builder(
-        builder: (context) {
-          // 本番環境では初回描画時にFirebaseを初期化
-          if (widget.getCurrentMemberUseCase == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _initializeUseCases();
-            });
-          }
-          
-          return Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.people, size: 32),
-                    const SizedBox(width: 16),
-                    const Text(
-                      'メンバー設定',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const Spacer(),
-                    ElevatedButton.icon(
-                      onPressed: () => _showMemberEditModal(),
-                      icon: const Icon(Icons.add),
-                      label: const Text('メンバー追加'),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(),
-              Expanded(
-                child: _managedMembers.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.people_outline,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              '管理しているメンバーがいません',
-                              style: TextStyle(fontSize: 18, color: Colors.grey),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'メンバー追加ボタンから新しいメンバーを追加してください',
-                              style: TextStyle(fontSize: 14, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: _loadData,
-                        child: ListView.builder(
-                          itemCount: _managedMembers.length,
-                          itemBuilder: (context, index) {
-                            final member = _managedMembers[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  child: Text(
-                                    _getMemberDisplayName(member).substring(0, 1),
-                                  ),
-                                ),
-                                title: Text(_getMemberDisplayName(member)),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (member.email != null)
-                                      Text('メール: ${member.email}'),
-                                    if (member.phoneNumber != null)
-                                      Text('電話: ${member.phoneNumber}'),
-                                    if (member.birthday != null)
-                                      Text(
-                                        '生年月日: ${member.birthday!.year}/${member.birthday!.month}/${member.birthday!.day}',
-                                      ),
-                                  ],
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () =>
-                                          _showMemberEditModal(member: member),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: () => _deleteMember(member),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _currentMember == null
+          ? const Center(child: Text('ログインが必要です'))
+          : Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.people, size: 32),
+                      const SizedBox(width: 16),
+                      const Text(
+                        'メンバー設定',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-              ),
-            ],
-          );
-        },
-      ),
+                      const Spacer(),
+                      ElevatedButton.icon(
+                        onPressed: () => _showMemberEditModal(),
+                        icon: const Icon(Icons.add),
+                        label: const Text('メンバー追加'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(),
+                Expanded(
+                  child: _managedMembers.isEmpty
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                '管理しているメンバーがいません',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'メンバー追加ボタンから新しいメンバーを追加してください',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: _loadData,
+                          child: ListView.builder(
+                            itemCount: _managedMembers.length,
+                            itemBuilder: (context, index) {
+                              final member = _managedMembers[index];
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 4,
+                                ),
+                                child: ListTile(
+                                  leading: CircleAvatar(
+                                    child: Text(
+                                      _getMemberDisplayName(
+                                        member,
+                                      ).substring(0, 1),
+                                    ),
+                                  ),
+                                  title: Text(_getMemberDisplayName(member)),
+                                  subtitle: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (member.email != null)
+                                        Text('メール: ${member.email}'),
+                                      if (member.phoneNumber != null)
+                                        Text('電話: ${member.phoneNumber}'),
+                                      if (member.birthday != null)
+                                        Text(
+                                          '生年月日: ${member.birthday!.year}/${member.birthday!.month}/${member.birthday!.day}',
+                                        ),
+                                    ],
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit),
+                                        onPressed: () => _showMemberEditModal(
+                                          member: member,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.delete,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () => _deleteMember(member),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                ),
+              ],
+            ),
     );
   }
 }
