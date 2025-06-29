@@ -55,7 +55,7 @@ erDiagram
         string kanjiLastName
         string firstName
         string lastName
-        string nickname
+        string displayName "NOT NULL"
         string type
         timestamp birthday
         string gender

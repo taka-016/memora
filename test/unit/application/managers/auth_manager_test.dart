@@ -104,6 +104,7 @@ void main() {
 
         final member = Member(
           id: 'member-id-1',
+          displayName: '表示名',
           accountId: 'user123',
           firstName: 'テストユーザー',
           email: 'test@example.com',

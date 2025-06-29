@@ -25,6 +25,7 @@ void main() {
       lastName: '太郎',
       hiraganaFirstName: 'てすと',
       hiraganaLastName: 'たろう',
+      displayName: 'テストユーザー',
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
       phoneNumber: '090-1234-5678',

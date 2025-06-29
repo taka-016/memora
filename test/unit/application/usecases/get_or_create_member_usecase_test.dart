@@ -31,6 +31,7 @@ void main() {
         accountId: testUid,
         firstName: 'Test',
         lastName: 'User',
+        displayName: '表示名',
         email: testEmail,
       );
 

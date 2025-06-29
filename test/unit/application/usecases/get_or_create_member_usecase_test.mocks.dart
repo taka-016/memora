@@ -49,6 +49,15 @@ class MockMemberRepository extends _i1.Mock implements _i2.MemberRepository {
           as _i3.Future<void>);
 
   @override
+  _i3.Future<void> updateMember(_i4.Member? member) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateMember, [member]),
+            returnValue: _i3.Future<void>.value(),
+            returnValueForMissingStub: _i3.Future<void>.value(),
+          )
+          as _i3.Future<void>);
+
+  @override
   _i3.Future<void> deleteMember(String? memberId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteMember, [memberId]),
@@ -72,4 +81,14 @@ class MockMemberRepository extends _i1.Mock implements _i2.MemberRepository {
             returnValue: _i3.Future<_i4.Member?>.value(),
           )
           as _i3.Future<_i4.Member?>);
+
+  @override
+  _i3.Future<List<_i4.Member>> getMembersByAdministratorId(
+    String? administratorId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMembersByAdministratorId, [administratorId]),
+            returnValue: _i3.Future<List<_i4.Member>>.value(<_i4.Member>[]),
+          )
+          as _i3.Future<List<_i4.Member>>);
 }

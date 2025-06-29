@@ -35,7 +35,7 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
+    test('saveMemberがmembers collectionにメンバー情報をsetする', () async {
       final member = Member(
         id: 'member001',
         hiraganaFirstName: 'たろう',
@@ -44,21 +44,22 @@ void main() {
         kanjiLastName: '山田',
         firstName: 'Taro',
         lastName: 'Yamada',
-        nickname: 'たろちゃん',
+        displayName: 'たろちゃん',
         type: '一般',
         birthday: DateTime(2000, 1, 1),
         gender: 'male',
         email: 'taro@example.com',
       );
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      when(mockCollection.doc('member001')).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveMember(member);
 
+      verify(mockCollection.doc('member001')).called(1);
       verify(
-        mockCollection.add(
+        mockDocRef.set(
           argThat(
             allOf([
               containsPair('hiraganaFirstName', 'たろう'),
@@ -67,7 +68,7 @@ void main() {
               containsPair('kanjiLastName', '山田'),
               containsPair('firstName', 'Taro'),
               containsPair('lastName', 'Yamada'),
-              containsPair('nickname', 'たろちゃん'),
+              containsPair('displayName', 'たろちゃん'),
               containsPair('type', '一般'),
               containsPair('gender', 'male'),
               containsPair('email', 'taro@example.com'),
@@ -90,7 +91,7 @@ void main() {
         'kanjiLastName': '山田',
         'firstName': 'Taro',
         'lastName': 'Yamada',
-        'nickname': 'たろちゃん',
+        'displayName': '太郎',
         'type': '一般',
         'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
         'gender': 'male',
@@ -104,6 +105,7 @@ void main() {
         'kanjiLastName': '山田',
         'firstName': 'Hanako',
         'lastName': 'Yamada',
+        'displayName': '花子',
         'type': '一般',
         'birthday': Timestamp.fromDate(DateTime(2001, 2, 2)),
         'gender': 'female',
@@ -114,11 +116,11 @@ void main() {
       expect(result.length, 2);
       expect(result[0].id, 'member001');
       expect(result[0].hiraganaFirstName, 'たろう');
-      expect(result[0].nickname, 'たろちゃん');
+      expect(result[0].displayName, '太郎');
       expect(result[0].email, 'taro@example.com');
       expect(result[1].id, 'member002');
       expect(result[1].hiraganaFirstName, 'はなこ');
-      expect(result[1].nickname, null);
+      expect(result[1].displayName, '花子');
       expect(result[1].email, null);
     });
 

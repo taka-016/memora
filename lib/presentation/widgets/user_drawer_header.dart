@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../application/utils/nickname_display_util.dart';
 import '../../domain/entities/member.dart';
 
 class UserDrawerHeader extends StatelessWidget {
-  final Member? member;
+  final Member member;
 
   const UserDrawerHeader({super.key, required this.member});
 
@@ -20,9 +19,7 @@ class UserDrawerHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            member != null
-                ? NicknameDisplayUtil.getDisplayName(member!)
-                : '名前未設定',
+            member.displayName,
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ],

@@ -13,7 +13,16 @@ class FirestoreMemberRepository implements MemberRepository {
   Future<void> saveMember(Member member) async {
     await _firestore
         .collection('members')
-        .add(FirestoreMemberMapper.toFirestore(member));
+        .doc(member.id)
+        .set(FirestoreMemberMapper.toFirestore(member));
+  }
+
+  @override
+  Future<void> updateMember(Member member) async {
+    await _firestore
+        .collection('members')
+        .doc(member.id)
+        .update(FirestoreMemberMapper.toFirestore(member));
   }
 
   @override
@@ -60,6 +69,24 @@ class FirestoreMemberRepository implements MemberRepository {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  @override
+  Future<List<Member>> getMembersByAdministratorId(
+    String administratorId,
+  ) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('members')
+          .where('administratorId', isEqualTo: administratorId)
+          .get();
+
+      return querySnapshot.docs
+          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 }
