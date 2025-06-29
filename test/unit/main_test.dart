@@ -22,6 +22,7 @@ void main() {
     when(mockGetCurrentMemberUseCase.execute()).thenAnswer(
       (_) async => Member(
         id: 'test_member',
+        displayName: '表示名',
         kanjiLastName: 'テスト',
         kanjiFirstName: 'ユーザー',
       ),

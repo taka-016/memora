@@ -206,17 +206,8 @@ class _GroupMemberState extends State<GroupMember> {
               itemBuilder: (context, index) {
                 final member = _selectedGroup!.members[index];
                 return ListTile(
-                  title: Text(
-                    '${member.kanjiLastName ?? '名前未設定'} ${member.kanjiFirstName ?? ''}',
-                  ),
-                  subtitle: Text(member.nickname ?? ''),
-                  leading: CircleAvatar(
-                    child: Text(
-                      member.kanjiLastName?.isNotEmpty == true
-                          ? member.kanjiLastName![0]
-                          : '?',
-                    ),
-                  ),
+                  title: Text(member.displayName),
+                  leading: CircleAvatar(child: Text(member.displayName[0])),
                 );
               },
             ),
