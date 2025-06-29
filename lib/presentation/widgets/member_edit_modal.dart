@@ -99,130 +99,130 @@ class _MemberEditModalState extends State<MemberEditModal> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-              TextFormField(
-                controller: _nicknameController,
-                decoration: const InputDecoration(
-                  labelText: 'ニックネーム',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'ニックネームを入力してください';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _kanjiLastNameController,
-                decoration: const InputDecoration(
-                  labelText: '姓（漢字）',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _kanjiFirstNameController,
-                decoration: const InputDecoration(
-                  labelText: '名（漢字）',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _hiraganaLastNameController,
-                decoration: const InputDecoration(
-                  labelText: '姓（ひらがな）',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _hiraganaFirstNameController,
-                decoration: const InputDecoration(
-                  labelText: '名（ひらがな）',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _gender,
-                decoration: const InputDecoration(
-                  labelText: '性別',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'male', child: Text('男性')),
-                  DropdownMenuItem(value: 'female', child: Text('女性')),
-                  DropdownMenuItem(value: 'other', child: Text('その他')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _gender = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () async {
-                  final selectedDate = await showDatePicker(
-                    context: context,
-                    initialDate: _birthday ?? DateTime.now(),
-                    firstDate: DateTime(1900),
-                    lastDate: DateTime.now(),
-                  );
-                  if (selectedDate != null) {
-                    setState(() {
-                      _birthday = selectedDate;
-                    });
-                  }
-                },
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: '生年月日',
-                    border: OutlineInputBorder(),
-                  ),
-                  child: Text(
-                    _birthday != null
-                        ? '${_birthday!.year}/${_birthday!.month}/${_birthday!.day}'
-                        : '選択してください',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'メールアドレス',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _phoneNumberController,
-                decoration: const InputDecoration(
-                  labelText: '電話番号',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
+                      TextFormField(
+                        controller: _nicknameController,
+                        decoration: const InputDecoration(
+                          labelText: 'ニックネーム',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'ニックネームを入力してください';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _kanjiLastNameController,
+                        decoration: const InputDecoration(
+                          labelText: '姓（漢字）',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _kanjiFirstNameController,
+                        decoration: const InputDecoration(
+                          labelText: '名（漢字）',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _hiraganaLastNameController,
+                        decoration: const InputDecoration(
+                          labelText: '姓（ひらがな）',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _hiraganaFirstNameController,
+                        decoration: const InputDecoration(
+                          labelText: '名（ひらがな）',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _firstNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'First Name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _lastNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Last Name',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _gender,
+                        decoration: const InputDecoration(
+                          labelText: '性別',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem(value: 'male', child: Text('男性')),
+                          DropdownMenuItem(value: 'female', child: Text('女性')),
+                          DropdownMenuItem(value: 'other', child: Text('その他')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            _gender = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      InkWell(
+                        onTap: () async {
+                          final selectedDate = await showDatePicker(
+                            context: context,
+                            initialDate: _birthday ?? DateTime.now(),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
+                          if (selectedDate != null) {
+                            setState(() {
+                              _birthday = selectedDate;
+                            });
+                          }
+                        },
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: '生年月日',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Text(
+                            _birthday != null
+                                ? '${_birthday!.year}/${_birthday!.month}/${_birthday!.day}'
+                                : '選択してください',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'メールアドレス',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _phoneNumberController,
+                        decoration: const InputDecoration(
+                          labelText: '電話番号',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.phone,
+                      ),
                     ],
                   ),
                 ),
@@ -251,10 +251,12 @@ class _MemberEditModalState extends State<MemberEditModal> {
                         kanjiFirstName: _kanjiFirstNameController.text.isEmpty
                             ? null
                             : _kanjiFirstNameController.text,
-                        hiraganaLastName: _hiraganaLastNameController.text.isEmpty
+                        hiraganaLastName:
+                            _hiraganaLastNameController.text.isEmpty
                             ? null
                             : _hiraganaLastNameController.text,
-                        hiraganaFirstName: _hiraganaFirstNameController.text.isEmpty
+                        hiraganaFirstName:
+                            _hiraganaFirstNameController.text.isEmpty
                             ? null
                             : _hiraganaFirstNameController.text,
                         firstName: _firstNameController.text.isEmpty
