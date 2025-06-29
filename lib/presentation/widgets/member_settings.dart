@@ -142,8 +142,8 @@ class _MemberSettingsState extends State<MemberSettings> {
             } else {
               await _updateMemberUsecase.execute(editedMember);
             }
-            await _loadData();
             if (mounted) {
+              await _loadData();
               scaffoldMessenger.showSnackBar(
                 SnackBar(
                   content: Text(member == null ? 'メンバーを作成しました' : 'メンバーを更新しました'),
@@ -189,8 +189,8 @@ class _MemberSettingsState extends State<MemberSettings> {
     if (confirmed == true) {
       try {
         await _deleteMemberUsecase.execute(member.id);
-        await _loadData();
         if (mounted) {
+          await _loadData();
           scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('メンバーを削除しました')),
           );
