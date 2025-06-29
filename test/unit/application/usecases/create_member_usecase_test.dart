@@ -18,23 +18,11 @@ void main() {
   });
 
   group('CreateMemberUsecase', () {
-    test('should create a new member with administrator ID set', () async {
+    test('should create a new member', () async {
       // Arrange
-      final administratorMember = Member(
-        id: 'admin-member-id',
-        accountId: 'admin-account-id',
-        administratorId: 'admin-administrator-id',
-        nickname: 'Admin',
-        kanjiLastName: '管理',
-        kanjiFirstName: '太郎',
-        hiraganaLastName: 'カンリ',
-        hiraganaFirstName: 'タロウ',
-        gender: 'male',
-        birthday: DateTime(1990, 1, 1),
-      );
-
-      final newMemberData = Member(
+      final newMember = Member(
         id: 'new-member-id',
+        administratorId: 'admin-member-id',
         nickname: '新メンバー',
         kanjiLastName: '新田',
         kanjiFirstName: '三郎',
@@ -47,48 +35,27 @@ void main() {
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
 
       // Act
-      await usecase.execute(administratorMember, newMemberData);
+      await usecase.execute(newMember);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.saveMember(captureAny),
-      ).captured;
-      final savedMember = captured.first as Member;
-
-      expect(savedMember.administratorId, equals('admin-member-id'));
-      expect(savedMember.nickname, equals('新メンバー'));
-      expect(savedMember.kanjiLastName, equals('新田'));
-      expect(savedMember.kanjiFirstName, equals('三郎'));
-      expect(savedMember.hiraganaLastName, equals('ニッタ'));
-      expect(savedMember.hiraganaFirstName, equals('サブロウ'));
-      expect(savedMember.gender, equals('male'));
-      expect(savedMember.birthday, equals(DateTime(2005, 3, 15)));
+      verify(mockMemberRepository.saveMember(newMember)).called(1);
     });
 
     test('should create member with minimal data', () async {
       // Arrange
-      final administratorMember = Member(
-        id: 'admin-member-id',
-        accountId: 'admin-account-id',
-        administratorId: 'admin-administrator-id',
-        nickname: 'Admin',
+      final newMember = Member(
+        id: 'new-member-id',
+        administratorId: 'admin-member-id',
+        nickname: 'ミニマル',
       );
-
-      final newMemberData = Member(id: 'new-member-id', nickname: 'ミニマル');
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
 
       // Act
-      await usecase.execute(administratorMember, newMemberData);
+      await usecase.execute(newMember);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.saveMember(captureAny),
-      ).captured;
-      final savedMember = captured.first as Member;
-
-      expect(savedMember.administratorId, equals('admin-member-id'));
-      expect(savedMember.nickname, equals('ミニマル'));
+      verify(mockMemberRepository.saveMember(newMember)).called(1);
     });
   });
 }

@@ -138,7 +138,7 @@ class _MemberSettingsState extends State<MemberSettings> {
                 anaMileageNumber: editedMember.anaMileageNumber,
                 jalMileageNumber: editedMember.jalMileageNumber,
               );
-              await _createMemberUsecase.execute(_currentMember!, newMember);
+              await _createMemberUsecase.execute(newMember);
             } else {
               await _updateMemberUsecase.execute(editedMember);
             }
