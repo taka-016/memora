@@ -11,7 +11,9 @@
         "source=android-sdk,target=/opt/android-sdk-linux,type=volume"
     ],
     "runArgs": [
-        "--privileged"
+        "--privileged",
+        "--env-file",
+        ".devcontainer/.env"
     ],
     "workspaceFolder": "/workspace",
     "features": {
