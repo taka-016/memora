@@ -97,6 +97,9 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.groupSettings:
         return const GroupSettings();
       case NavigationItem.memberSettings:
+        if (_currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
         return widget.isTestEnvironment
             ? Container(
                 key: const Key('member_settings'),
@@ -123,7 +126,7 @@ class _TopPageState extends State<TopPage> {
                   ),
                 ),
               )
-            : MemberSettings(getCurrentMemberUseCase: _getCurrentMemberUseCase);
+            : MemberSettings(member: _currentMember!);
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:

@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../../application/usecases/get_current_member_usecase.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
 import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
 import '../../application/usecases/delete_member_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
-import '../../infrastructure/services/firebase_auth_service.dart';
 import 'member_edit_modal.dart';
 
 class MemberSettings extends StatefulWidget {
-  final GetCurrentMemberUseCase? getCurrentMemberUseCase;
+  final Member member;
   final GetManagedMembersUsecase? getManagedMembersUsecase;
   final CreateMemberUsecase? createMemberUsecase;
   final UpdateMemberUsecase? updateMemberUsecase;
@@ -19,7 +17,7 @@ class MemberSettings extends StatefulWidget {
 
   const MemberSettings({
     super.key,
-    this.getCurrentMemberUseCase,
+    required this.member,
     this.getManagedMembersUsecase,
     this.createMemberUsecase,
     this.updateMemberUsecase,
@@ -31,13 +29,11 @@ class MemberSettings extends StatefulWidget {
 }
 
 class _MemberSettingsState extends State<MemberSettings> {
-  late final GetCurrentMemberUseCase _getCurrentMemberUseCase;
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
   late final CreateMemberUsecase _createMemberUsecase;
   late final UpdateMemberUsecase _updateMemberUsecase;
   late final DeleteMemberUsecase _deleteMemberUsecase;
 
-  Member? _currentMember;
   List<Member> _managedMembers = [];
   bool _isLoading = true;
 
@@ -45,13 +41,11 @@ class _MemberSettingsState extends State<MemberSettings> {
   void initState() {
     super.initState();
 
-    if (widget.getCurrentMemberUseCase != null &&
-        widget.getManagedMembersUsecase != null &&
+    if (widget.getManagedMembersUsecase != null &&
         widget.createMemberUsecase != null &&
         widget.updateMemberUsecase != null &&
         widget.deleteMemberUsecase != null) {
       // テスト環境では注入されたユースケースを使用
-      _getCurrentMemberUseCase = widget.getCurrentMemberUseCase!;
       _getManagedMembersUsecase = widget.getManagedMembersUsecase!;
       _createMemberUsecase = widget.createMemberUsecase!;
       _updateMemberUsecase = widget.updateMemberUsecase!;
@@ -66,12 +60,7 @@ class _MemberSettingsState extends State<MemberSettings> {
   void _initializeUseCases() {
     // 本番環境では従来通りFirebaseを直接使用
     final memberRepository = FirestoreMemberRepository();
-    final authService = FirebaseAuthService();
 
-    _getCurrentMemberUseCase = GetCurrentMemberUseCase(
-      memberRepository,
-      authService,
-    );
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
     _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
@@ -86,12 +75,7 @@ class _MemberSettingsState extends State<MemberSettings> {
     });
 
     try {
-      _currentMember = await _getCurrentMemberUseCase.execute();
-      if (_currentMember != null) {
-        _managedMembers = await _getManagedMembersUsecase.execute(
-          _currentMember!,
-        );
-      }
+      _managedMembers = await _getManagedMembersUsecase.execute(widget.member);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -120,7 +104,7 @@ class _MemberSettingsState extends State<MemberSettings> {
               final newMember = Member(
                 id: const Uuid().v4(),
                 accountId: editedMember.accountId,
-                administratorId: _currentMember!.id,
+                administratorId: widget.member.id,
                 nickname: editedMember.nickname,
                 kanjiLastName: editedMember.kanjiLastName,
                 kanjiFirstName: editedMember.kanjiFirstName,
@@ -224,8 +208,6 @@ class _MemberSettingsState extends State<MemberSettings> {
       key: const Key('member_settings'),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _currentMember == null
-          ? const Center(child: Text('ログインが必要です'))
           : Column(
               children: [
                 Container(
