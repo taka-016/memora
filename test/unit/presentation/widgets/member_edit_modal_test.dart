@@ -27,7 +27,7 @@ void main() {
         id: 'test-id',
         accountId: 'test-account',
         administratorId: null,
-        nickname: 'テストユーザー',
+        displayName: 'テストユーザー',
         kanjiLastName: '山田',
         kanjiFirstName: '太郎',
         hiraganaLastName: 'やまだ',
@@ -65,7 +65,7 @@ void main() {
         id: 'test-id',
         accountId: 'test-account',
         administratorId: null,
-        nickname: 'テストユーザー',
+        displayName: 'テストユーザー',
         kanjiLastName: '山田',
         kanjiFirstName: '太郎',
         hiraganaLastName: 'やまだ',
@@ -120,7 +120,7 @@ void main() {
       await tester.pump();
 
       // Assert
-      expect(find.text('ニックネームを入力してください'), findsOneWidget);
+      expect(find.text('表示名を入力してください'), findsOneWidget);
     });
 
     testWidgets('正しく入力された場合onSaveが呼ばれること', (WidgetTester tester) async {
@@ -142,8 +142,8 @@ void main() {
 
       // Act
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'ニックネーム').first,
-        'テストニックネーム',
+        find.widgetWithText(TextFormField, '表示名').first,
+        'テスト表示名',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, '姓（漢字）').first,
@@ -163,7 +163,7 @@ void main() {
 
       // Assert
       expect(savedMember, isNotNull);
-      expect(savedMember!.nickname, 'テストニックネーム');
+      expect(savedMember!.displayName, 'テスト表示名');
       expect(savedMember!.kanjiLastName, '田中');
       expect(savedMember!.kanjiFirstName, '花子');
       expect(savedMember!.email, 'hanako@example.com');
@@ -230,10 +230,10 @@ void main() {
         ),
       );
 
-      // Act - ニックネームのみ入力（必須項目）
+      // Act - 表示名のみ入力（必須項目）
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'ニックネーム').first,
-        'テストニックネーム',
+        find.widgetWithText(TextFormField, '表示名').first,
+        'テスト表示名',
       );
 
       await tester.tap(find.text('作成'));
@@ -241,7 +241,7 @@ void main() {
 
       // Assert
       expect(savedMember, isNotNull);
-      expect(savedMember!.nickname, 'テストニックネーム');
+      expect(savedMember!.displayName, 'テスト表示名');
       expect(savedMember!.kanjiLastName, isNull);
       expect(savedMember!.kanjiFirstName, isNull);
       expect(savedMember!.email, isNull);

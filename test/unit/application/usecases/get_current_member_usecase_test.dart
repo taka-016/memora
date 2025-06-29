@@ -30,7 +30,7 @@ void main() {
     final testMember = Member(
       id: 'member123',
       accountId: 'user123',
-      nickname: 'テストユーザー',
+      displayName: 'テストユーザー',
       kanjiLastName: '田中',
       kanjiFirstName: '太郎',
     );

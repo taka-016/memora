@@ -14,7 +14,7 @@ class FirestoreMemberMapper {
       kanjiLastName: data?['kanjiLastName'] as String?,
       firstName: data?['firstName'] as String?,
       lastName: data?['lastName'] as String?,
-      nickname: data?['nickname'] as String?,
+      displayName: data?['displayName'] as String? ?? '',
       type: data?['type'] as String?,
       birthday: (data?['birthday'] as Timestamp?)?.toDate(),
       gender: data?['gender'] as String?,
@@ -37,7 +37,7 @@ class FirestoreMemberMapper {
       'kanjiLastName': member.kanjiLastName,
       'firstName': member.firstName,
       'lastName': member.lastName,
-      'nickname': member.nickname,
+      'displayName': member.displayName,
       'type': member.type,
       'birthday': member.birthday != null
           ? Timestamp.fromDate(member.birthday!)

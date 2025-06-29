@@ -23,7 +23,7 @@ void main() {
       final newMember = Member(
         id: 'new-member-id',
         administratorId: 'admin-member-id',
-        nickname: '新メンバー',
+        displayName: '新メンバー',
         kanjiLastName: '新田',
         kanjiFirstName: '三郎',
         hiraganaLastName: 'ニッタ',
@@ -46,7 +46,7 @@ void main() {
       final newMember = Member(
         id: 'new-member-id',
         administratorId: 'admin-member-id',
-        nickname: 'ミニマル',
+        displayName: 'ミニマル',
       );
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});

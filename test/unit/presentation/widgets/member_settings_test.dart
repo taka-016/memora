@@ -20,7 +20,7 @@ void main() {
       id: 'test-member-id',
       accountId: 'test-account-id',
       administratorId: null,
-      nickname: 'Test User',
+      displayName: 'Test User',
       kanjiLastName: '山田',
       kanjiFirstName: '太郎',
       hiraganaLastName: 'やまだ',
@@ -47,7 +47,7 @@ void main() {
           id: 'managed-member-1',
           accountId: 'managed-account-1',
           administratorId: testMember.id,
-          nickname: 'Managed User 1',
+          displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
           hiraganaLastName: 'さとう',
@@ -175,7 +175,7 @@ void main() {
           id: 'managed-member-1',
           accountId: 'managed-account-1',
           administratorId: testMember.id,
-          nickname: 'Managed User 1',
+          displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
           hiraganaLastName: 'さとう',
@@ -224,13 +224,13 @@ void main() {
       ).called(2);
     });
 
-    testWidgets('メンバー表示名が正しく表示されること', (WidgetTester tester) async {
+    testWidgets('メンバーの表示名が正しく表示されること', (WidgetTester tester) async {
       // Arrange
       final memberWithNickname = Member(
         id: 'member-1',
         accountId: 'account-1',
         administratorId: testMember.id,
-        nickname: 'ニックネーム',
+        displayName: '表示名',
         kanjiLastName: '佐藤',
         kanjiFirstName: '花子',
         hiraganaLastName: 'さとう',
@@ -264,8 +264,8 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Assert - ニックネームが優先表示される
-      expect(find.text('ニックネーム'), findsOneWidget);
+      // Assert - 表示名が優先表示される
+      expect(find.text('表示名'), findsOneWidget);
     });
 
     testWidgets('編集ボタンと削除ボタンが表示されること', (WidgetTester tester) async {
@@ -275,7 +275,7 @@ void main() {
           id: 'managed-member-1',
           accountId: 'managed-account-1',
           administratorId: testMember.id,
-          nickname: 'Managed User 1',
+          displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
           hiraganaLastName: 'さとう',

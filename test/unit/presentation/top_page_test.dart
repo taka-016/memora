@@ -23,6 +23,7 @@ void main() {
       kanjiLastName: '山田',
       firstName: 'Taro',
       lastName: 'Yamada',
+      displayName: '太郎',
       type: 'family',
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
@@ -35,6 +36,7 @@ void main() {
       kanjiLastName: '山田',
       firstName: 'Hanako',
       lastName: 'Yamada',
+      displayName: '花子',
       type: 'family',
       birthday: DateTime(1985, 5, 10),
       gender: 'female',
@@ -52,6 +54,7 @@ void main() {
     when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
       (_) async => Member(
         id: 'default_member',
+        displayName: '表示名',
         kanjiLastName: 'デフォルト',
         kanjiFirstName: 'ユーザー',
       ),
@@ -158,8 +161,8 @@ void main() {
 
       // Assert
       expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('山田 太郎'), findsOneWidget);
-      expect(find.text('山田 花子'), findsOneWidget);
+      expect(find.text('太郎'), findsOneWidget);
+      expect(find.text('花子'), findsOneWidget);
       expect(find.byKey(const Key('group_member')), findsOneWidget);
     });
 
@@ -367,12 +370,12 @@ void main() {
       expect(find.byType(Drawer), findsNothing);
     });
 
-    testWidgets('ログインユーザーのニックネームが表示される', (WidgetTester tester) async {
+    testWidgets('ログインユーザーの表示名が表示される', (WidgetTester tester) async {
       // Arrange
       final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       final currentMember = Member(
         id: 'current_member',
-        nickname: 'ログインユーザー',
+        displayName: 'ログインユーザー',
         kanjiLastName: '佐藤',
         kanjiFirstName: '花子',
       );
@@ -404,46 +407,6 @@ void main() {
       // Assert
       expect(find.text('memora'), findsWidgets);
       expect(find.text('ログインユーザー'), findsOneWidget);
-    });
-
-    testWidgets('ログインユーザーのニックネームが未設定の場合、漢字姓名が表示される', (
-      WidgetTester tester,
-    ) async {
-      // Arrange
-      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-      final currentMember = Member(
-        id: 'current_member',
-        kanjiLastName: '佐藤',
-        kanjiFirstName: '花子',
-      );
-
-      when(
-        testGetCurrentMemberUseCase.execute(),
-      ).thenAnswer((_) async => currentMember);
-
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      final widget = createTestWidget(
-        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
-      );
-
-      // Act
-      await tester.pumpWidget(widget);
-      await tester.pumpAndSettle();
-
-      // Drawerを開く
-      await tester.tap(find.byKey(const Key('hamburger_menu')));
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('memora'), findsWidgets);
-      expect(find.text('佐藤 花子'), findsOneWidget);
     });
   });
 }

@@ -19,7 +19,7 @@ void main() {
         'kanjiLastName': '山田',
         'firstName': 'Taro',
         'lastName': 'Yamada',
-        'nickname': 'たろちゃん',
+        'displayName': 'たろちゃん',
         'type': '一般',
         'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
         'gender': 'male',
@@ -42,7 +42,7 @@ void main() {
       expect(member.kanjiLastName, '山田');
       expect(member.firstName, 'Taro');
       expect(member.lastName, 'Yamada');
-      expect(member.nickname, 'たろちゃん');
+      expect(member.displayName, 'たろちゃん');
       expect(member.type, '一般');
       expect(member.birthday, DateTime(2000, 1, 1));
       expect(member.gender, 'male');
@@ -57,7 +57,7 @@ void main() {
     test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('member002');
-      when(mockDoc.data()).thenReturn({});
+      when(mockDoc.data()).thenReturn({'displayName': 'たろちゃん'});
 
       final member = FirestoreMemberMapper.fromFirestore(mockDoc);
 
@@ -70,7 +70,7 @@ void main() {
       expect(member.kanjiLastName, null);
       expect(member.firstName, null);
       expect(member.lastName, null);
-      expect(member.nickname, null);
+      expect(member.displayName, 'たろちゃん');
       expect(member.type, null);
       expect(member.birthday, null);
       expect(member.gender, null);
@@ -93,7 +93,7 @@ void main() {
         kanjiLastName: '山田',
         firstName: 'Taro',
         lastName: 'Yamada',
-        nickname: 'たろちゃん',
+        displayName: 'たろちゃん',
         type: '一般',
         birthday: DateTime(2000, 1, 1),
         gender: 'male',
@@ -110,7 +110,7 @@ void main() {
       expect(data['kanjiLastName'], '山田');
       expect(data['firstName'], 'Taro');
       expect(data['lastName'], 'Yamada');
-      expect(data['nickname'], 'たろちゃん');
+      expect(data['displayName'], 'たろちゃん');
       expect(data['type'], '一般');
       expect(data['birthday'], isA<Timestamp>());
       expect(data['gender'], 'male');
@@ -119,7 +119,7 @@ void main() {
     });
 
     test('nullフィールドを含むMemberからFirestoreのMapへ変換できる', () {
-      final member = Member(id: 'member003');
+      final member = Member(id: 'member003', displayName: 'たろちゃん');
 
       final data = FirestoreMemberMapper.toFirestore(member);
 
@@ -131,7 +131,7 @@ void main() {
       expect(data['kanjiLastName'], null);
       expect(data['firstName'], null);
       expect(data['lastName'], null);
-      expect(data['nickname'], null);
+      expect(data['displayName'], 'たろちゃん');
       expect(data['type'], null);
       expect(data['birthday'], null);
       expect(data['gender'], null);

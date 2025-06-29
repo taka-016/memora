@@ -84,7 +84,7 @@ class _MemberSettingsState extends State<MemberSettings> {
                 id: const Uuid().v4(),
                 accountId: editedMember.accountId,
                 administratorId: widget.member.id,
-                nickname: editedMember.nickname,
+                displayName: editedMember.displayName,
                 kanjiLastName: editedMember.kanjiLastName,
                 kanjiFirstName: editedMember.kanjiFirstName,
                 hiraganaLastName: editedMember.hiraganaLastName,
@@ -132,9 +132,7 @@ class _MemberSettingsState extends State<MemberSettings> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('メンバー削除'),
-        content: Text(
-          '${member.nickname ?? member.kanjiLastName ?? member.firstName ?? 'このメンバー'}を削除しますか？',
-        ),
+        content: Text('${member.displayName}を削除しますか？'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -166,19 +164,6 @@ class _MemberSettingsState extends State<MemberSettings> {
         }
       }
     }
-  }
-
-  String _getMemberDisplayName(Member member) {
-    if (member.nickname != null && member.nickname!.isNotEmpty) {
-      return member.nickname!;
-    }
-    if (member.kanjiLastName != null && member.kanjiFirstName != null) {
-      return '${member.kanjiLastName} ${member.kanjiFirstName}';
-    }
-    if (member.firstName != null && member.lastName != null) {
-      return '${member.firstName} ${member.lastName}';
-    }
-    return '名前未設定';
   }
 
   @override
@@ -256,12 +241,10 @@ class _MemberSettingsState extends State<MemberSettings> {
                                 child: ListTile(
                                   leading: CircleAvatar(
                                     child: Text(
-                                      _getMemberDisplayName(
-                                        member,
-                                      ).substring(0, 1),
+                                      member.displayName.substring(0, 1),
                                     ),
                                   ),
-                                  title: Text(_getMemberDisplayName(member)),
+                                  title: Text(member.displayName),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,

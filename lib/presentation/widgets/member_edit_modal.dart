@@ -13,7 +13,7 @@ class MemberEditModal extends StatefulWidget {
 
 class _MemberEditModalState extends State<MemberEditModal> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nicknameController;
+  late TextEditingController _displayNameController;
   late TextEditingController _kanjiLastNameController;
   late TextEditingController _kanjiFirstNameController;
   late TextEditingController _hiraganaLastNameController;
@@ -28,8 +28,8 @@ class _MemberEditModalState extends State<MemberEditModal> {
   @override
   void initState() {
     super.initState();
-    _nicknameController = TextEditingController(
-      text: widget.member?.nickname ?? '',
+    _displayNameController = TextEditingController(
+      text: widget.member?.displayName ?? '',
     );
     _kanjiLastNameController = TextEditingController(
       text: widget.member?.kanjiLastName ?? '',
@@ -59,7 +59,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
 
   @override
   void dispose() {
-    _nicknameController.dispose();
+    _displayNameController.dispose();
     _kanjiLastNameController.dispose();
     _kanjiFirstNameController.dispose();
     _hiraganaLastNameController.dispose();
@@ -100,14 +100,14 @@ class _MemberEditModalState extends State<MemberEditModal> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextFormField(
-                        controller: _nicknameController,
+                        controller: _displayNameController,
                         decoration: const InputDecoration(
-                          labelText: 'ニックネーム',
+                          labelText: '表示名',
                           border: OutlineInputBorder(),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'ニックネームを入力してください';
+                            return '表示名を入力してください';
                           }
                           return null;
                         },
@@ -244,7 +244,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
                         id: widget.member?.id ?? '',
                         accountId: widget.member?.accountId,
                         administratorId: widget.member?.administratorId,
-                        nickname: _nicknameController.text,
+                        displayName: _displayNameController.text,
                         kanjiLastName: _kanjiLastNameController.text.isEmpty
                             ? null
                             : _kanjiLastNameController.text,

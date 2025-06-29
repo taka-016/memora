@@ -20,6 +20,7 @@ class GetOrCreateMemberUseCase {
     // メンバーが見つからない場合、新規作成
     final newMember = Member(
       id: '', // Firestoreで自動生成されるID
+      displayName: user.email,
       accountId: user.id,
       email: user.email,
     );
