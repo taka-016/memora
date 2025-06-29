@@ -151,8 +151,8 @@ class _TopPageState extends State<TopPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            _getCurrentMemberUseCase != null
-                ? UserDrawerHeader(member: _currentMember)
+            _currentMember != null
+                ? UserDrawerHeader(member: _currentMember!)
                 : const DrawerHeader(
                     decoration: BoxDecoration(color: Colors.deepPurple),
                     child: Text(

@@ -24,7 +24,7 @@ void main() {
         id: 'member-id',
         accountId: null,
         administratorId: 'admin-member-id',
-        nickname: '更新後メンバー',
+        displayName: '更新後メンバー',
         kanjiLastName: '更新',
         kanjiFirstName: '太郎',
         hiraganaLastName: 'コウシン',
@@ -44,7 +44,7 @@ void main() {
 
     test('should update member with minimal data', () async {
       // Arrange
-      final updatedMember = Member(id: 'member-id', nickname: '更新ニックネーム');
+      final updatedMember = Member(id: 'member-id', displayName: '更新表示名');
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
 

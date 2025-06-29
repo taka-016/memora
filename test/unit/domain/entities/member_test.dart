@@ -15,7 +15,7 @@ void main() {
         kanjiLastName: '山田',
         firstName: 'Taro',
         lastName: 'Yamada',
-        nickname: 'たろちゃん',
+        displayName: 'たろちゃん',
         type: '一般',
         birthday: now,
         gender: 'male',
@@ -35,7 +35,7 @@ void main() {
       expect(member.kanjiLastName, '山田');
       expect(member.firstName, 'Taro');
       expect(member.lastName, 'Yamada');
-      expect(member.nickname, 'たろちゃん');
+      expect(member.displayName, 'たろちゃん');
       expect(member.type, '一般');
       expect(member.birthday, now);
       expect(member.gender, 'male');
@@ -48,7 +48,7 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final member = Member(id: 'member002');
+      final member = Member(id: 'member002', displayName: 'たろちゃん');
       expect(member.id, 'member002');
       expect(member.accountId, null);
       expect(member.administratorId, null);
@@ -58,7 +58,7 @@ void main() {
       expect(member.kanjiLastName, null);
       expect(member.firstName, null);
       expect(member.lastName, null);
-      expect(member.nickname, null);
+      expect(member.displayName, 'たろちゃん');
       expect(member.type, null);
       expect(member.birthday, null);
       expect(member.gender, null);

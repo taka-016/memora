@@ -8,7 +8,7 @@ class Member {
   final String? kanjiLastName;
   final String? firstName;
   final String? lastName;
-  final String? nickname;
+  final String displayName;
   final String? type;
   final DateTime? birthday;
   final String? gender;
@@ -29,7 +29,7 @@ class Member {
     this.kanjiLastName,
     this.firstName,
     this.lastName,
-    this.nickname,
+    required this.displayName,
     this.type,
     this.birthday,
     this.gender,

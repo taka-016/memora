@@ -25,6 +25,7 @@ void main() {
       kanjiLastName: '山田',
       firstName: 'Taro',
       lastName: 'Yamada',
+      displayName: 'タロちゃん',
       type: 'family',
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
@@ -70,11 +71,13 @@ void main() {
         id: 'member1',
         kanjiFirstName: '太郎',
         kanjiLastName: '田中',
+        displayName: '田中',
       );
       final member2 = Member(
         id: 'member2',
         kanjiFirstName: '花子',
         kanjiLastName: '佐藤',
+        displayName: '佐藤',
       );
       final groupsWithMembers = [
         GroupWithMembers(
@@ -107,11 +110,13 @@ void main() {
         id: 'member1',
         kanjiFirstName: '太郎',
         kanjiLastName: '田中',
+        displayName: '田中',
       );
       final member2 = Member(
         id: 'member2',
         kanjiFirstName: '花子',
         kanjiLastName: '佐藤',
+        displayName: '佐藤',
       );
       final groupsWithMembers = [
         GroupWithMembers(
@@ -129,8 +134,8 @@ void main() {
 
       // Assert
       expect(find.text('テストグループ'), findsOneWidget);
-      expect(find.text('田中 太郎'), findsOneWidget);
-      expect(find.text('佐藤 花子'), findsOneWidget);
+      expect(find.text('田中'), findsOneWidget);
+      expect(find.text('佐藤'), findsOneWidget);
     });
 
     testWidgets('グループ一覧からグループを選択するとメンバー一覧が表示される', (WidgetTester tester) async {
@@ -139,11 +144,13 @@ void main() {
         id: 'member1',
         kanjiFirstName: '太郎',
         kanjiLastName: '田中',
+        displayName: '田中',
       );
       final member2 = Member(
         id: 'member2',
         kanjiFirstName: '花子',
         kanjiLastName: '佐藤',
+        displayName: '佐藤',
       );
       final groupsWithMembers = [
         GroupWithMembers(
@@ -169,8 +176,8 @@ void main() {
 
       // Assert
       expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('田中 太郎'), findsOneWidget);
-      expect(find.text('佐藤 花子'), findsNothing);
+      expect(find.text('田中'), findsOneWidget);
+      expect(find.text('佐藤'), findsNothing);
     });
 
     testWidgets('メンバー一覧から戻るボタンでグループ一覧に戻る', (WidgetTester tester) async {
@@ -179,11 +186,13 @@ void main() {
         id: 'member1',
         kanjiFirstName: '太郎',
         kanjiLastName: '田中',
+        displayName: '田中',
       );
       final member2 = Member(
         id: 'member2',
         kanjiFirstName: '花子',
         kanjiLastName: '佐藤',
+        displayName: '佐藤',
       );
       final groupsWithMembers = [
         GroupWithMembers(
@@ -315,38 +324,13 @@ void main() {
       verify(mockUsecase.execute(testMember)).called(2); // 最初のエラー + 再読み込み
     });
 
-    testWidgets('メンバーの名前が未設定の場合、「名前未設定」が表示される', (WidgetTester tester) async {
-      // Arrange
-      final memberWithoutName = Member(
-        id: 'member_no_name',
-        kanjiFirstName: null,
-        kanjiLastName: null,
-      );
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
-          members: [memberWithoutName],
-        ),
-      ];
-      when(
-        mockUsecase.execute(testMember),
-      ).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('名前未設定 '), findsOneWidget);
-    });
-
-    testWidgets('メンバーのニックネームが設定されている場合、表示される', (WidgetTester tester) async {
+    testWidgets('メンバーが表示される', (WidgetTester tester) async {
       // Arrange
       final memberWithNickname = Member(
         id: 'member_with_nickname',
         kanjiFirstName: '太郎',
         kanjiLastName: '田中',
-        nickname: 'タロちゃん',
+        displayName: 'タロちゃん',
       );
       final groupsWithMembers = [
         GroupWithMembers(
@@ -363,7 +347,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('田中 太郎'), findsOneWidget);
       expect(find.text('タロちゃん'), findsOneWidget);
     });
   });
