@@ -75,14 +75,30 @@ class _MemberEditModalState extends State<MemberEditModal> {
   Widget build(BuildContext context) {
     final isEditing = widget.member != null;
 
-    return AlertDialog(
-      title: Text(isEditing ? 'メンバー編集' : 'メンバー新規作成'),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 24.0,
+      ),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.95,
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isEditing ? 'メンバー編集' : 'メンバー新規作成',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
               TextFormField(
                 controller: _nicknameController,
                 decoration: const InputDecoration(
@@ -207,63 +223,72 @@ class _MemberEditModalState extends State<MemberEditModal> {
                 ),
                 keyboardType: TextInputType.phone,
               ),
-            ],
-          ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('キャンセル'),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      final member = Member(
+                        id: widget.member?.id ?? '',
+                        accountId: widget.member?.accountId,
+                        administratorId: widget.member?.administratorId,
+                        nickname: _nicknameController.text,
+                        kanjiLastName: _kanjiLastNameController.text.isEmpty
+                            ? null
+                            : _kanjiLastNameController.text,
+                        kanjiFirstName: _kanjiFirstNameController.text.isEmpty
+                            ? null
+                            : _kanjiFirstNameController.text,
+                        hiraganaLastName: _hiraganaLastNameController.text.isEmpty
+                            ? null
+                            : _hiraganaLastNameController.text,
+                        hiraganaFirstName: _hiraganaFirstNameController.text.isEmpty
+                            ? null
+                            : _hiraganaFirstNameController.text,
+                        firstName: _firstNameController.text.isEmpty
+                            ? null
+                            : _firstNameController.text,
+                        lastName: _lastNameController.text.isEmpty
+                            ? null
+                            : _lastNameController.text,
+                        gender: _gender,
+                        birthday: _birthday,
+                        email: _emailController.text.isEmpty
+                            ? null
+                            : _emailController.text,
+                        phoneNumber: _phoneNumberController.text.isEmpty
+                            ? null
+                            : _phoneNumberController.text,
+                        type: widget.member?.type,
+                        passportNumber: widget.member?.passportNumber,
+                        passportExpiration: widget.member?.passportExpiration,
+                        anaMileageNumber: widget.member?.anaMileageNumber,
+                        jalMileageNumber: widget.member?.jalMileageNumber,
+                      );
+
+                      widget.onSave(member);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text(isEditing ? '更新' : '作成'),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              final member = Member(
-                id: widget.member?.id ?? '',
-                accountId: widget.member?.accountId,
-                administratorId: widget.member?.administratorId,
-                nickname: _nicknameController.text,
-                kanjiLastName: _kanjiLastNameController.text.isEmpty
-                    ? null
-                    : _kanjiLastNameController.text,
-                kanjiFirstName: _kanjiFirstNameController.text.isEmpty
-                    ? null
-                    : _kanjiFirstNameController.text,
-                hiraganaLastName: _hiraganaLastNameController.text.isEmpty
-                    ? null
-                    : _hiraganaLastNameController.text,
-                hiraganaFirstName: _hiraganaFirstNameController.text.isEmpty
-                    ? null
-                    : _hiraganaFirstNameController.text,
-                firstName: _firstNameController.text.isEmpty
-                    ? null
-                    : _firstNameController.text,
-                lastName: _lastNameController.text.isEmpty
-                    ? null
-                    : _lastNameController.text,
-                gender: _gender,
-                birthday: _birthday,
-                email: _emailController.text.isEmpty
-                    ? null
-                    : _emailController.text,
-                phoneNumber: _phoneNumberController.text.isEmpty
-                    ? null
-                    : _phoneNumberController.text,
-                type: widget.member?.type,
-                passportNumber: widget.member?.passportNumber,
-                passportExpiration: widget.member?.passportExpiration,
-                anaMileageNumber: widget.member?.anaMileageNumber,
-                jalMileageNumber: widget.member?.jalMileageNumber,
-              );
-
-              widget.onSave(member);
-              Navigator.of(context).pop();
-            }
-          },
-          child: Text(isEditing ? '更新' : '作成'),
-        ),
-      ],
     );
   }
 }
