@@ -56,6 +56,15 @@ class MockMemberRepository extends _i1.Mock implements _i3.MemberRepository {
           as _i4.Future<void>);
 
   @override
+  _i4.Future<void> updateMember(_i5.Member? member) =>
+      (super.noSuchMethod(
+            Invocation.method(#updateMember, [member]),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
   _i4.Future<void> deleteMember(String? memberId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteMember, [memberId]),
@@ -79,6 +88,16 @@ class MockMemberRepository extends _i1.Mock implements _i3.MemberRepository {
             returnValue: _i4.Future<_i5.Member?>.value(),
           )
           as _i4.Future<_i5.Member?>);
+
+  @override
+  _i4.Future<List<_i5.Member>> getMembersByAdministratorId(
+    String? administratorId,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#getMembersByAdministratorId, [administratorId]),
+            returnValue: _i4.Future<List<_i5.Member>>.value(<_i5.Member>[]),
+          )
+          as _i4.Future<List<_i5.Member>>);
 }
 
 /// A class which mocks [AuthService].
