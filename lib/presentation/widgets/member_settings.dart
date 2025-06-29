@@ -5,23 +5,18 @@ import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
 import '../../application/usecases/delete_member_usecase.dart';
 import '../../domain/entities/member.dart';
+import '../../domain/repositories/member_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import 'member_edit_modal.dart';
 
 class MemberSettings extends StatefulWidget {
   final Member member;
-  final GetManagedMembersUsecase? getManagedMembersUsecase;
-  final CreateMemberUsecase? createMemberUsecase;
-  final UpdateMemberUsecase? updateMemberUsecase;
-  final DeleteMemberUsecase? deleteMemberUsecase;
+  final MemberRepository? memberRepository;
 
   const MemberSettings({
     super.key,
     required this.member,
-    this.getManagedMembersUsecase,
-    this.createMemberUsecase,
-    this.updateMemberUsecase,
-    this.deleteMemberUsecase,
+    this.memberRepository,
   });
 
   @override
@@ -41,25 +36,9 @@ class _MemberSettingsState extends State<MemberSettings> {
   void initState() {
     super.initState();
 
-    if (widget.getManagedMembersUsecase != null &&
-        widget.createMemberUsecase != null &&
-        widget.updateMemberUsecase != null &&
-        widget.deleteMemberUsecase != null) {
-      // テスト環境では注入されたユースケースを使用
-      _getManagedMembersUsecase = widget.getManagedMembersUsecase!;
-      _createMemberUsecase = widget.createMemberUsecase!;
-      _updateMemberUsecase = widget.updateMemberUsecase!;
-      _deleteMemberUsecase = widget.deleteMemberUsecase!;
-      _loadData();
-    } else {
-      // 本番環境ではFirebaseを直接使用
-      _initializeUseCases();
-    }
-  }
-
-  void _initializeUseCases() {
-    // 本番環境では従来通りFirebaseを直接使用
-    final memberRepository = FirestoreMemberRepository();
+    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
+    final memberRepository =
+        widget.memberRepository ?? FirestoreMemberRepository();
 
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
