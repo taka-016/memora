@@ -23,20 +23,42 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 依存性注入
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late AuthManager authManager;
+
+  @override
+  void initState() {
+    super.initState();
+    // 依存性注入と初期化
     final authService = FirebaseAuthService();
     final memberRepository = FirestoreMemberRepository();
     final getOrCreateMemberUseCase = GetOrCreateMemberUseCase(memberRepository);
-    final authManager = AuthManager(
+    authManager = AuthManager(
       authService: authService,
       getOrCreateMemberUseCase: getOrCreateMemberUseCase,
     );
+    // AuthManagerを初期化してauthStateChangesの監視を開始
+    authManager.initialize();
+  }
 
+  @override
+  void dispose() {
+    authManager.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // build時の依存関係作成
+    final authService = FirebaseAuthService();
+    final memberRepository = FirestoreMemberRepository();
     final groupRepository = FirestoreGroupRepository();
     final groupMemberRepository = FirestoreGroupMemberRepository();
     final getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
