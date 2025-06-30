@@ -44,34 +44,24 @@ class AccountSettings extends StatelessWidget {
                 ),
               );
               if (result == true && context.mounted) {
-                try {
-                  await updateEmailUseCase.execute(newEmail: newEmail);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
-                        duration: Duration(seconds: 5),
-                      ),
-                    );
-                  }
-                } catch (retryError) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('エラーが発生しました: ${retryError.toString()}')),
-                    );
-                  }
-                  rethrow;
+                await updateEmailUseCase.execute(newEmail: newEmail);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
+                      duration: Duration(seconds: 5),
+                    ),
+                  );
                 }
               }
-              // キャンセルの場合は何もしない（ダイアログを閉じない）
             } else {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
                 );
               }
-              rethrow;
             }
+            rethrow;
           }
         },
       ),
@@ -108,31 +98,21 @@ class AccountSettings extends StatelessWidget {
                 ),
               );
               if (result == true && context.mounted) {
-                try {
-                  await updatePasswordUseCase.execute(newPassword: newPassword);
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
-                  }
-                } catch (retryError) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('エラーが発生しました: ${retryError.toString()}')),
-                    );
-                  }
-                  rethrow;
+                await updatePasswordUseCase.execute(newPassword: newPassword);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
                 }
               }
-              // キャンセルの場合は何もしない（ダイアログを閉じない）
             } else {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
                 );
               }
-              rethrow;
             }
+            rethrow;
           }
         },
       ),
