@@ -104,9 +104,7 @@ void main() {
       );
     });
 
-    testWidgets('エラー発生時にコールバックが例外をスローする', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('エラー発生時にコールバックが例外をスローする', (WidgetTester tester) async {
       bool callbackCalled = false;
       Exception? thrownException;
 
@@ -121,7 +119,9 @@ void main() {
                     builder: (context) => PasswordChangeModal(
                       onPasswordChange: (password) async {
                         callbackCalled = true;
-                        thrownException = Exception('[firebase_auth/requires-recent-login]');
+                        thrownException = Exception(
+                          '[firebase_auth/requires-recent-login]',
+                        );
                         throw thrownException!;
                       },
                     ),
