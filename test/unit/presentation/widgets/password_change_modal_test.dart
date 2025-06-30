@@ -12,11 +12,9 @@ import 'password_change_modal_test.mocks.dart';
 void main() {
   group('PasswordChangeModal', () {
     late MockUpdatePasswordUseCase mockUpdatePasswordUseCase;
-    late MockReauthenticateUseCase mockReauthenticateUseCase;
 
     setUp(() {
       mockUpdatePasswordUseCase = MockUpdatePasswordUseCase();
-      mockReauthenticateUseCase = MockReauthenticateUseCase();
     });
 
     Widget createTestWidget() {
@@ -28,8 +26,11 @@ void main() {
                 showDialog(
                   context: context,
                   builder: (context) => PasswordChangeModal(
-                    updatePasswordUseCase: mockUpdatePasswordUseCase,
-                    reauthenticateUseCase: mockReauthenticateUseCase,
+                    onPasswordChange: (password) async {
+                      await mockUpdatePasswordUseCase.execute(
+                        newPassword: password,
+                      );
+                    },
                   ),
                 );
               },
@@ -103,14 +104,36 @@ void main() {
       );
     });
 
-    testWidgets('requires-recent-loginエラー時に再認証ダイアログが表示される', (
+    testWidgets('エラー発生時にコールバックが例外をスローする', (
       WidgetTester tester,
     ) async {
-      when(
-        mockUpdatePasswordUseCase.execute(newPassword: anyNamed('newPassword')),
-      ).thenThrow(Exception('[firebase_auth/requires-recent-login]'));
+      bool callbackCalled = false;
+      Exception? thrownException;
 
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => PasswordChangeModal(
+                      onPasswordChange: (password) async {
+                        callbackCalled = true;
+                        thrownException = Exception('[firebase_auth/requires-recent-login]');
+                        throw thrownException!;
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -120,7 +143,9 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pump();
 
-      expect(find.text('パスワード再入力'), findsOneWidget);
+      expect(callbackCalled, isTrue);
+      expect(thrownException, isNotNull);
+      expect(thrownException.toString(), contains('requires-recent-login'));
     });
 
     testWidgets('キャンセルボタンをタップするとダイアログが閉じる', (WidgetTester tester) async {
