@@ -33,13 +33,7 @@ class _EmailChangeModalState extends State<EmailChangeModal> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      // エラーハンドリングは呼び出し側で行うが、
-      // requires-recent-loginエラーの場合はダイアログを閉じない
-      if (!e.toString().contains('requires-recent-login')) {
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
-      }
+      // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {
         setState(() {
