@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class EmailChangeModal extends StatefulWidget {
-  final Future<bool> Function(String) onEmailChange;
+  final Function(String) onEmailChange;
 
   const EmailChangeModal({super.key, required this.onEmailChange});
 
@@ -27,15 +27,24 @@ class _EmailChangeModalState extends State<EmailChangeModal> {
       _isLoading = true;
     });
 
-    final success = await widget.onEmailChange(_newEmailController.text.trim());
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      if (success) {
+    try {
+      await widget.onEmailChange(_newEmailController.text.trim());
+      if (mounted) {
         Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // エラーハンドリングは呼び出し側で行うが、
+      // requires-recent-loginエラーの場合はダイアログを閉じない
+      if (!e.toString().contains('requires-recent-login')) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

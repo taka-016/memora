@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../application/utils/password_validator.dart';
 
 class PasswordChangeModal extends StatefulWidget {
-  final Future<bool> Function(String) onPasswordChange;
+  final Function(String) onPasswordChange;
 
   const PasswordChangeModal({super.key, required this.onPasswordChange});
 
@@ -32,15 +32,24 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
       _isLoading = true;
     });
 
-    final success = await widget.onPasswordChange(_newPasswordController.text);
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      if (success) {
+    try {
+      await widget.onPasswordChange(_newPasswordController.text);
+      if (mounted) {
         Navigator.of(context).pop();
+      }
+    } catch (e) {
+      // エラーハンドリングは呼び出し側で行うが、
+      // requires-recent-loginエラーの場合はダイアログを閉じない
+      if (!e.toString().contains('requires-recent-login')) {
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }

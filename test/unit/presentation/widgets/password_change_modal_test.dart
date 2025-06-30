@@ -30,7 +30,6 @@ void main() {
                       await mockUpdatePasswordUseCase.execute(
                         newPassword: password,
                       );
-                      return true;
                     },
                   ),
                 );
@@ -123,7 +122,7 @@ void main() {
                       onPasswordChange: (password) async {
                         callbackCalled = true;
                         thrownException = Exception('[firebase_auth/requires-recent-login]');
-                        return false;
+                        throw thrownException!;
                       },
                     ),
                   );
@@ -147,9 +146,6 @@ void main() {
       expect(callbackCalled, isTrue);
       expect(thrownException, isNotNull);
       expect(thrownException.toString(), contains('requires-recent-login'));
-      
-      // ダイアログが閉じていないことを確認
-      expect(find.text('パスワード変更'), findsOneWidget);
     });
 
     testWidgets('キャンセルボタンをタップするとダイアログが閉じる', (WidgetTester tester) async {

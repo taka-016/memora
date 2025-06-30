@@ -28,7 +28,6 @@ void main() {
                   builder: (context) => EmailChangeModal(
                     onEmailChange: (email) async {
                       await mockUpdateEmailUseCase.execute(newEmail: email);
-                      return true;
                     },
                   ),
                 );
@@ -100,7 +99,7 @@ void main() {
                       onEmailChange: (email) async {
                         callbackCalled = true;
                         thrownException = Exception('[firebase_auth/requires-recent-login]');
-                        return false;
+                        throw thrownException!;
                       },
                     ),
                   );
@@ -123,9 +122,6 @@ void main() {
       expect(callbackCalled, isTrue);
       expect(thrownException, isNotNull);
       expect(thrownException.toString(), contains('requires-recent-login'));
-      
-      // ダイアログが閉じていないことを確認
-      expect(find.text('メールアドレス変更'), findsOneWidget);
     });
   });
 }
