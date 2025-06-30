@@ -67,8 +67,21 @@ class _TopPageState extends State<TopPage> {
         });
       }
     } catch (e) {
-      // エラー時はnullのまま
+      // 認証エラーの場合はログアウト処理を実行
+      if (_isAuthenticationError(e.toString()) && mounted) {
+        final authManager = Provider.of<AuthManager>(context, listen: false);
+        await authManager.logout();
+      }
+      // その他のエラー時はnullのまま
     }
+  }
+
+  bool _isAuthenticationError(String error) {
+    return error.contains('firebase_auth/unknown') ||
+        error.contains('securetoken.googleapis.com') ||
+        error.contains('GrantToken are blocked') ||
+        error.contains('permission-denied') ||
+        error.contains('unauthenticated');
   }
 
   void _onNavigationItemSelected(NavigationItem item) {

@@ -141,6 +141,51 @@ void main() {
 
         controller.close();
       });
+
+      test('無効なトークンを持つユーザーの場合、認証エラーが発生してunauthenticated状態になる', () async {
+        // arrange
+        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+        const user = User(
+          id: 'user123',
+          email: 'test@example.com',
+          displayName: 'テストユーザー',
+          isEmailVerified: true,
+        );
+
+        // 無効なトークンによる認証エラーをシミュレート
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        when(mockGetOrCreateMemberUseCase.execute(user)).thenThrow(
+          Exception(
+            '[firebase_auth/unknown] An internal error has occurred. [ Requests to this API securetoken.googleapis.com method google.identity.securetoken.v1.SecureToken.GrantToken are blocked.',
+          ),
+        );
+
+        // AuthManagerにUseCaseを依存注入
+        authManager = AuthManager(
+          authService: mockAuthService,
+          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+        );
+
+        await authManager.initialize();
+
+        // act - authStateChangesで無効なトークンを持つユーザーをエミット
+        controller.add(user);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert - 無効なトークンエラーが発生した場合はunauthenticated状態にする
+        expect(authManager.state.status, AuthStatus.unauthenticated);
+        expect(authManager.state.user, isNull);
+
+        controller.close();
+      });
     });
 
     group('login', () {

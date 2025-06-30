@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:provider/provider.dart';
 
 import 'top_page_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
+@GenerateMocks([
+  GetGroupsWithMembersUsecase,
+  GetCurrentMemberUseCase,
+  AuthManager,
+])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
 
@@ -49,6 +55,7 @@ void main() {
 
   Widget createTestWidget({
     MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
+    MockAuthManager? authManager,
   }) {
     final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
     when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
@@ -60,12 +67,17 @@ void main() {
       ),
     );
 
+    final defaultMockAuthManager = MockAuthManager();
+
     return MaterialApp(
-      home: TopPage(
-        getGroupsWithMembersUsecase: mockUsecase,
-        isTestEnvironment: true,
-        getCurrentMemberUseCase:
-            getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+      home: ChangeNotifierProvider<AuthManager>(
+        create: (_) => authManager ?? defaultMockAuthManager,
+        child: TopPage(
+          getGroupsWithMembersUsecase: mockUsecase,
+          isTestEnvironment: true,
+          getCurrentMemberUseCase:
+              getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+        ),
       ),
     );
   }
@@ -407,6 +419,43 @@ void main() {
       // Assert
       expect(find.text('memora'), findsWidgets);
       expect(find.text('ログインユーザー'), findsOneWidget);
+    });
+
+    testWidgets('GetCurrentMemberUseCaseで認証エラーが発生した場合、AuthManagerにlogoutが呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      final testAuthManager = MockAuthManager();
+
+      // 認証エラーをシミュレート
+      when(testGetCurrentMemberUseCase.execute()).thenThrow(
+        Exception(
+          '[firebase_auth/unknown] An internal error has occurred. [ Requests to this API securetoken.googleapis.com method google.identity.securetoken.v1.SecureToken.GrantToken are blocked.',
+        ),
+      );
+
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+        authManager: testAuthManager,
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pump(); // 初期ビルド
+      await tester.pump(); // _loadCurrentMember実行
+      await tester.pump(); // logout処理実行
+
+      // Assert - 認証エラー時にAuthManager.logout()が呼ばれることを期待
+      verify(testAuthManager.logout()).called(1);
     });
   });
 }

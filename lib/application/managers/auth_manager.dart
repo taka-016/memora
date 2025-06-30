@@ -19,11 +19,22 @@ class AuthManager extends ChangeNotifier {
   Future<void> initialize() async {
     _authStateSubscription = authService.authStateChanges.listen((user) async {
       if (user != null) {
-        // 認証状態変更時にメンバー取得・作成処理を実行
-        if (getOrCreateMemberUseCase != null) {
-          await getOrCreateMemberUseCase!.execute(user);
+        try {
+          // 認証状態変更時にメンバー取得・作成処理を実行
+          if (getOrCreateMemberUseCase != null) {
+            await getOrCreateMemberUseCase!.execute(user);
+          }
+          _updateState(AuthState.authenticated(user));
+        } catch (e) {
+          // 無効なトークンエラーなど認証関連のエラーの場合、未認証状態にする
+          if (_isAuthenticationError(e.toString())) {
+            _updateState(const AuthState.unauthenticated());
+          } else {
+            _updateState(
+              AuthState.error(_getFirebaseErrorMessage(e.toString())),
+            );
+          }
         }
-        _updateState(AuthState.authenticated(user));
       } else {
         _updateState(const AuthState.unauthenticated());
       }
@@ -70,6 +81,14 @@ class AuthManager extends ChangeNotifier {
     if (_state.status == AuthStatus.error) {
       _updateState(const AuthState.unauthenticated());
     }
+  }
+
+  bool _isAuthenticationError(String error) {
+    return error.contains('firebase_auth/unknown') ||
+        error.contains('securetoken.googleapis.com') ||
+        error.contains('GrantToken are blocked') ||
+        error.contains('permission-denied') ||
+        error.contains('unauthenticated');
   }
 
   String _getFirebaseErrorMessage(String error) {

@@ -3,16 +3,20 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i6;
+import 'dart:async' as _i8;
+import 'dart:ui' as _i12;
 
+import 'package:memora/application/managers/auth_manager.dart' as _i11;
 import 'package:memora/application/usecases/get_current_member_usecase.dart'
-    as _i8;
+    as _i10;
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart'
-    as _i5;
-import 'package:memora/domain/entities/member.dart' as _i7;
+    as _i7;
+import 'package:memora/domain/entities/auth_state.dart' as _i6;
+import 'package:memora/domain/entities/member.dart' as _i9;
 import 'package:memora/domain/repositories/group_member_repository.dart' as _i3;
 import 'package:memora/domain/repositories/group_repository.dart' as _i2;
 import 'package:memora/domain/repositories/member_repository.dart' as _i4;
+import 'package:memora/domain/services/auth_service.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -47,11 +51,21 @@ class _FakeMemberRepository_2 extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeAuthService_3 extends _i1.SmartFake implements _i5.AuthService {
+  _FakeAuthService_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeAuthState_4 extends _i1.SmartFake implements _i6.AuthState {
+  _FakeAuthState_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [GetGroupsWithMembersUsecase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGetGroupsWithMembersUsecase extends _i1.Mock
-    implements _i5.GetGroupsWithMembersUsecase {
+    implements _i7.GetGroupsWithMembersUsecase {
   MockGetGroupsWithMembersUsecase() {
     _i1.throwOnMissingStub(this);
   }
@@ -90,30 +104,135 @@ class MockGetGroupsWithMembersUsecase extends _i1.Mock
           as _i4.MemberRepository);
 
   @override
-  _i6.Future<List<_i5.GroupWithMembers>> execute(_i7.Member? member) =>
+  _i8.Future<List<_i7.GroupWithMembers>> execute(_i9.Member? member) =>
       (super.noSuchMethod(
             Invocation.method(#execute, [member]),
-            returnValue: _i6.Future<List<_i5.GroupWithMembers>>.value(
-              <_i5.GroupWithMembers>[],
+            returnValue: _i8.Future<List<_i7.GroupWithMembers>>.value(
+              <_i7.GroupWithMembers>[],
             ),
           )
-          as _i6.Future<List<_i5.GroupWithMembers>>);
+          as _i8.Future<List<_i7.GroupWithMembers>>);
 }
 
 /// A class which mocks [GetCurrentMemberUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGetCurrentMemberUseCase extends _i1.Mock
-    implements _i8.GetCurrentMemberUseCase {
+    implements _i10.GetCurrentMemberUseCase {
   MockGetCurrentMemberUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i6.Future<_i7.Member?> execute() =>
+  _i8.Future<_i9.Member?> execute() =>
       (super.noSuchMethod(
             Invocation.method(#execute, []),
-            returnValue: _i6.Future<_i7.Member?>.value(),
+            returnValue: _i8.Future<_i9.Member?>.value(),
           )
-          as _i6.Future<_i7.Member?>);
+          as _i8.Future<_i9.Member?>);
+}
+
+/// A class which mocks [AuthManager].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockAuthManager extends _i1.Mock implements _i11.AuthManager {
+  MockAuthManager() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i5.AuthService get authService =>
+      (super.noSuchMethod(
+            Invocation.getter(#authService),
+            returnValue: _FakeAuthService_3(
+              this,
+              Invocation.getter(#authService),
+            ),
+          )
+          as _i5.AuthService);
+
+  @override
+  _i6.AuthState get state =>
+      (super.noSuchMethod(
+            Invocation.getter(#state),
+            returnValue: _FakeAuthState_4(this, Invocation.getter(#state)),
+          )
+          as _i6.AuthState);
+
+  @override
+  bool get hasListeners =>
+      (super.noSuchMethod(Invocation.getter(#hasListeners), returnValue: false)
+          as bool);
+
+  @override
+  _i8.Future<void> initialize() =>
+      (super.noSuchMethod(
+            Invocation.method(#initialize, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> login({required String? email, required String? password}) =>
+      (super.noSuchMethod(
+            Invocation.method(#login, [], {#email: email, #password: password}),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> signup({
+    required String? email,
+    required String? password,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#signup, [], {
+              #email: email,
+              #password: password,
+            }),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  _i8.Future<void> logout() =>
+      (super.noSuchMethod(
+            Invocation.method(#logout, []),
+            returnValue: _i8.Future<void>.value(),
+            returnValueForMissingStub: _i8.Future<void>.value(),
+          )
+          as _i8.Future<void>);
+
+  @override
+  void clearError() => super.noSuchMethod(
+    Invocation.method(#clearError, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void addListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+    Invocation.method(#addListener, [listener]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void removeListener(_i12.VoidCallback? listener) => super.noSuchMethod(
+    Invocation.method(#removeListener, [listener]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void notifyListeners() => super.noSuchMethod(
+    Invocation.method(#notifyListeners, []),
+    returnValueForMissingStub: null,
+  );
 }
