@@ -34,10 +34,9 @@ class AccountSettings extends StatelessWidget {
                 ),
               );
             }
-            return true;
           } catch (e) {
             if (e.toString().contains('requires-recent-login')) {
-              if (!context.mounted) return false;
+              if (!context.mounted) return;
               final result = await showDialog<bool>(
                 context: context,
                 builder: (context) => ReauthenticateModal(
@@ -55,24 +54,23 @@ class AccountSettings extends StatelessWidget {
                       ),
                     );
                   }
-                  return true;
                 } catch (retryError) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('エラーが発生しました: ${retryError.toString()}')),
                     );
                   }
-                  return false;
+                  rethrow;
                 }
               }
-              return false;
+              // キャンセルの場合は何もしない（ダイアログを閉じない）
             } else {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
                 );
               }
-              return false;
+              rethrow;
             }
           }
         },
@@ -100,10 +98,9 @@ class AccountSettings extends StatelessWidget {
                 context,
               ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
             }
-            return true;
           } catch (e) {
             if (e.toString().contains('requires-recent-login')) {
-              if (!context.mounted) return false;
+              if (!context.mounted) return;
               final result = await showDialog<bool>(
                 context: context,
                 builder: (context) => ReauthenticateModal(
@@ -118,24 +115,23 @@ class AccountSettings extends StatelessWidget {
                       context,
                     ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
                   }
-                  return true;
                 } catch (retryError) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('エラーが発生しました: ${retryError.toString()}')),
                     );
                   }
-                  return false;
+                  rethrow;
                 }
               }
-              return false;
+              // キャンセルの場合は何もしない（ダイアログを閉じない）
             } else {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
                 );
               }
-              return false;
+              rethrow;
             }
           }
         },
