@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../application/usecases/update_password_usecase.dart';
-import '../../application/usecases/reauthenticate_usecase.dart';
 import '../../application/utils/password_validator.dart';
-import 'reauthenticate_modal.dart';
 
 class PasswordChangeModal extends StatefulWidget {
-  final UpdatePasswordUseCase updatePasswordUseCase;
-  final ReauthenticateUseCase reauthenticateUseCase;
+  final Function(String) onPasswordChange;
 
-  const PasswordChangeModal({
-    super.key,
-    required this.updatePasswordUseCase,
-    required this.reauthenticateUseCase,
-  });
+  const PasswordChangeModal({super.key, required this.onPasswordChange});
 
   @override
   State<PasswordChangeModal> createState() => _PasswordChangeModalState();
@@ -41,73 +33,17 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
     });
 
     try {
-      await widget.updatePasswordUseCase.execute(
-        newPassword: _newPasswordController.text,
-      );
-
+      await widget.onPasswordChange(_newPasswordController.text);
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
       }
     } catch (e) {
-      if (mounted) {
-        // requires-recent-loginエラーの場合は再認証ダイアログを表示
-        if (e.toString().contains('requires-recent-login')) {
-          await _showReauthenticateDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-      }
+      // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-      }
-    }
-  }
-
-  Future<void> _showReauthenticateDialog() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => ReauthenticateModal(
-        reauthenticateUseCase: widget.reauthenticateUseCase,
-      ),
-    );
-
-    if (result == true && mounted) {
-      // 再認証成功後にパスワード変更を再実行（再帰を避けるため直接実行）
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        await widget.updatePasswordUseCase.execute(
-          newPassword: _newPasswordController.text,
-        );
-
-        if (mounted) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
       }
     }
   }

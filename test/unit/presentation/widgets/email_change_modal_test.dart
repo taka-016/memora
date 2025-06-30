@@ -12,11 +12,9 @@ import 'email_change_modal_test.mocks.dart';
 void main() {
   group('EmailChangeModal', () {
     late MockUpdateEmailUseCase mockUpdateEmailUseCase;
-    late MockReauthenticateUseCase mockReauthenticateUseCase;
 
     setUp(() {
       mockUpdateEmailUseCase = MockUpdateEmailUseCase();
-      mockReauthenticateUseCase = MockReauthenticateUseCase();
     });
 
     Widget createTestWidget() {
@@ -28,8 +26,9 @@ void main() {
                 showDialog(
                   context: context,
                   builder: (context) => EmailChangeModal(
-                    updateEmailUseCase: mockUpdateEmailUseCase,
-                    reauthenticateUseCase: mockReauthenticateUseCase,
+                    onEmailChange: (email) async {
+                      await mockUpdateEmailUseCase.execute(newEmail: email);
+                    },
                   ),
                 );
               },
@@ -82,14 +81,36 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('requires-recent-loginエラー時に再認証ダイアログが表示される', (
+    testWidgets('エラー発生時にコールバックが例外をスローする', (
       WidgetTester tester,
     ) async {
-      when(
-        mockUpdateEmailUseCase.execute(newEmail: anyNamed('newEmail')),
-      ).thenThrow(Exception('[firebase_auth/requires-recent-login]'));
+      bool callbackCalled = false;
+      Exception? thrownException;
 
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => EmailChangeModal(
+                      onEmailChange: (email) async {
+                        callbackCalled = true;
+                        thrownException = Exception('[firebase_auth/requires-recent-login]');
+                        throw thrownException!;
+                      },
+                    ),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
+            ),
+          ),
+        ),
+      );
+
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -98,7 +119,9 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pump();
 
-      expect(find.text('パスワード再入力'), findsOneWidget);
+      expect(callbackCalled, isTrue);
+      expect(thrownException, isNotNull);
+      expect(thrownException.toString(), contains('requires-recent-login'));
     });
   });
 }
