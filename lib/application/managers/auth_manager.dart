@@ -40,15 +40,6 @@ class AuthManager extends ChangeNotifier {
     });
   }
 
-  bool _isAuthenticationError(dynamic error) {
-    final errorMessage = error.toString().toLowerCase();
-    return errorMessage.contains('unauthenticated') ||
-        errorMessage.contains('permission-denied') ||
-        errorMessage.contains('認証') ||
-        errorMessage.contains('token') ||
-        errorMessage.contains('auth');
-  }
-
   Future<void> login({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
