@@ -21,13 +21,39 @@ class AuthManager extends ChangeNotifier {
       if (user != null) {
         // 認証状態変更時にメンバー取得・作成処理を実行
         if (getOrCreateMemberUseCase != null) {
-          await getOrCreateMemberUseCase!.execute(user);
+          try {
+            // トークンを明示的にリフレッシュしてからメンバー取得を実行
+            await authService.validateCurrentUserToken();
+            await getOrCreateMemberUseCase!.execute(user);
+            _updateState(AuthState.authenticated(user));
+          } catch (e) {
+            // トークンリフレッシュ失敗やFirestoreアクセスエラーの場合
+            if (_isAuthenticationError(e)) {
+              // 強制ログアウトして再認証を促す
+              await authService.signOut();
+              _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+            } else {
+              // その他のエラーは認証済み状態を維持するがエラーを記録
+              _updateState(AuthState.authenticated(user));
+              debugPrint('メンバー取得エラー: $e');
+            }
+          }
+        } else {
+          _updateState(AuthState.authenticated(user));
         }
-        _updateState(AuthState.authenticated(user));
       } else {
         _updateState(const AuthState.unauthenticated());
       }
     });
+  }
+
+  bool _isAuthenticationError(dynamic error) {
+    final errorMessage = error.toString().toLowerCase();
+    return errorMessage.contains('unauthenticated') ||
+        errorMessage.contains('permission-denied') ||
+        errorMessage.contains('認証') ||
+        errorMessage.contains('token') ||
+        errorMessage.contains('auth');
   }
 
   Future<void> login({required String email, required String password}) async {

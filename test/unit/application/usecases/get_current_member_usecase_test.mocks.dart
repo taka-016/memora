@@ -243,4 +243,13 @@ class MockAuthService extends _i1.Mock implements _i6.AuthService {
             returnValueForMissingStub: _i4.Future<void>.value(),
           )
           as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> validateCurrentUserToken() =>
+      (super.noSuchMethod(
+            Invocation.method(#validateCurrentUserToken, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
 }

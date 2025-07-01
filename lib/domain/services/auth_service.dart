@@ -30,5 +30,7 @@ abstract class AuthService {
 
   Future<void> reauthenticate({required String password});
 
+  Future<void> validateCurrentUserToken();
+
   Stream<User?> get authStateChanges;
 }
