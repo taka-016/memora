@@ -132,6 +132,22 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> validateCurrentUserToken() async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('ユーザーがログインしていません');
+    }
+
+    try {
+      // forceRefresh: trueでサーバーからトークンを強制取得
+      // トークンが期限切れの場合、ここで例外が発生する
+      await currentUser.getIdToken(true);
+    } catch (e) {
+      throw Exception('認証トークンが無効です: $e');
+    }
+  }
+
+  @override
   Stream<domain.User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
       return firebaseUser != null
