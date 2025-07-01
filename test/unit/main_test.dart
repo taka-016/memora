@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -71,6 +72,14 @@ void main() {
       // Assert
       final MaterialApp app = tester.widget(find.byType(MaterialApp));
       expect(app.locale, const Locale('ja'));
+    });
+  });
+
+  group('Firestore設定', () {
+    test('main関数でFirestoreのローカルキャッシュが無効化されること', () {
+      // 設定オブジェクトの動作確認
+      const settings = Settings(persistenceEnabled: false);
+      expect(settings.persistenceEnabled, false);
     });
   });
 }

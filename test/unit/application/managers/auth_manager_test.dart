@@ -116,7 +116,10 @@ void main() {
           mockAuthService.authStateChanges,
         ).thenAnswer((_) => controller.stream);
 
-        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => null);
+        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
+        when(
+          mockAuthService.validateCurrentUserToken(),
+        ).thenAnswer((_) async {});
 
         when(
           mockGetOrCreateMemberUseCase.execute(user),
@@ -138,6 +141,52 @@ void main() {
 
         // assert
         verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+
+        controller.close();
+      });
+
+      test('認証エラー時に強制ログアウトしてerror状態になる', () async {
+        // arrange
+        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+        const user = User(
+          id: 'user123',
+          email: 'test@example.com',
+          displayName: 'テストユーザー',
+          isEmailVerified: true,
+        );
+
+        // authStateChangesでユーザー状態変更をシミュレート
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        // validateCurrentUserToken()で認証エラーをシミュレート
+        when(
+          mockAuthService.validateCurrentUserToken(),
+        ).thenThrow(Exception('認証トークンが無効です'));
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+        // AuthManagerにUseCaseを依存注入
+        authManager = AuthManager(
+          authService: mockAuthService,
+          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+        );
+
+        await authManager.initialize();
+
+        // act - authStateChangesでユーザー変更をエミット
+        controller.add(user);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
+        verify(mockAuthService.signOut()).called(1);
+        expect(authManager.state.status, AuthStatus.error);
+        expect(authManager.state.errorMessage, '認証が無効です。再度ログインしてください。');
 
         controller.close();
       });
