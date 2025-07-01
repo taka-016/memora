@@ -175,6 +175,70 @@ void main() {
       });
     });
 
+    group('validateCurrentUserToken', () {
+      test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {
+        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+        when(
+          mockFirebaseUser.getIdToken(true),
+        ).thenAnswer((_) async => 'valid-token');
+
+        await firebaseAuthService.validateCurrentUserToken();
+
+        verify(mockFirebaseUser.getIdToken(true)).called(1);
+      });
+
+      test('現在のユーザーが存在しない場合は例外をスロー', () async {
+        when(mockFirebaseAuth.currentUser).thenReturn(null);
+
+        expect(
+          () => firebaseAuthService.validateCurrentUserToken(),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('ユーザーがログインしていません'),
+            ),
+          ),
+        );
+      });
+
+      test('トークンの取得に失敗した場合は例外をスロー', () async {
+        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+        when(
+          mockFirebaseUser.getIdToken(true),
+        ).thenThrow(FirebaseAuthException(code: 'network-request-failed'));
+
+        expect(
+          () => firebaseAuthService.validateCurrentUserToken(),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('認証トークンが無効です'),
+            ),
+          ),
+        );
+      });
+
+      test('トークンが期限切れの場合は例外をスロー', () async {
+        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+        when(
+          mockFirebaseUser.getIdToken(true),
+        ).thenThrow(FirebaseAuthException(code: 'user-token-expired'));
+
+        expect(
+          () => firebaseAuthService.validateCurrentUserToken(),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('認証トークンが無効です'),
+            ),
+          ),
+        );
+      });
+    });
+
     group('authStateChanges', () {
       test('認証状態の変更を監視できる', () {
         when(
