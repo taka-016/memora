@@ -27,16 +27,9 @@ class AuthManager extends ChangeNotifier {
             await getOrCreateMemberUseCase!.execute(user);
             _updateState(AuthState.authenticated(user));
           } catch (e) {
-            // トークンリフレッシュ失敗やFirestoreアクセスエラーの場合
-            if (_isAuthenticationError(e)) {
-              // 強制ログアウトして再認証を促す
-              await authService.signOut();
-              _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
-            } else {
-              // その他のエラーは認証済み状態を維持するがエラーを記録
-              _updateState(AuthState.authenticated(user));
-              debugPrint('メンバー取得エラー: $e');
-            }
+            // エラーの場合、強制ログアウトして再認証を促す
+            await authService.signOut();
+            _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
           }
         } else {
           _updateState(AuthState.authenticated(user));
