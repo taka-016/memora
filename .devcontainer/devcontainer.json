@@ -10,6 +10,7 @@
         "source=android-config,target=/root/.android,type=volume",
         "source=android-sdk,target=/opt/android-sdk-linux,type=volume"
     ],
+    "initializeCommand": "[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true",
     "runArgs": [
         "--privileged",
         "--env-file",
