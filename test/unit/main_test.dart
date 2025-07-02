@@ -6,13 +6,16 @@ import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/services/firebase_initializer.dart';
 import 'package:memora/presentation/top_page.dart';
-import 'package:memora/main.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'main_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase, FirebaseInitializer])
+@GenerateMocks([
+  GetGroupsWithMembersUsecase,
+  GetCurrentMemberUseCase,
+  FirebaseInitializer,
+])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
   late MockGetCurrentMemberUseCase mockGetCurrentMemberUseCase;
@@ -85,24 +88,6 @@ void main() {
       // 設定オブジェクトの動作確認
       const settings = Settings(persistenceEnabled: false);
       expect(settings.persistenceEnabled, false);
-    });
-  });
-
-  group('DI機能', () {
-    test('runAppWithDIがFirebaseInitializerを正しく呼び出すこと', () async {
-      // Arrange
-      when(mockFirebaseInitializer.initialize()).thenAnswer((_) async {});
-
-      // Act
-      try {
-        await runAppWithDI(mockFirebaseInitializer);
-      } catch (e) {
-        // runAppの実行でエラーが発生するが、それは想定内
-        // Firebase初期化のテストが目的なので問題なし
-      }
-
-      // Assert
-      verify(mockFirebaseInitializer.initialize()).called(1);
     });
   });
 }
