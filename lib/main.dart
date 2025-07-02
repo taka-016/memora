@@ -22,7 +22,7 @@ Future<void> main() async {
 
 Future<void> runAppWithDI(FirebaseInitializer firebaseInitializer) async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Firebase初期化
   try {
     await firebaseInitializer.initialize();
