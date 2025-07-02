@@ -13,6 +13,7 @@ import 'package:memora/domain/entities/member.dart' as _i7;
 import 'package:memora/domain/repositories/group_member_repository.dart' as _i3;
 import 'package:memora/domain/repositories/group_repository.dart' as _i2;
 import 'package:memora/domain/repositories/member_repository.dart' as _i4;
+import 'package:memora/domain/services/firebase_initializer.dart' as _i9;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -116,4 +117,23 @@ class MockGetCurrentMemberUseCase extends _i1.Mock
             returnValue: _i6.Future<_i7.Member?>.value(),
           )
           as _i6.Future<_i7.Member?>);
+}
+
+/// A class which mocks [FirebaseInitializer].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockFirebaseInitializer extends _i1.Mock
+    implements _i9.FirebaseInitializer {
+  MockFirebaseInitializer() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i6.Future<void> initialize() =>
+      (super.noSuchMethod(
+            Invocation.method(#initialize, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
 }
