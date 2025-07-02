@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'presentation/top_page.dart';
 import 'presentation/auth/auth_guard.dart';
 import 'application/managers/auth_manager.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
-import 'infrastructure/services/production_firebase_initializer.dart';
 import 'domain/services/auth_service.dart';
-import 'domain/services/firebase_initializer.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'application/usecases/get_or_create_member_usecase.dart';
 import 'application/usecases/get_current_member_usecase.dart';
@@ -17,19 +18,13 @@ import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
-  await runAppWithDI(ProductionFirebaseInitializer());
-}
-
-Future<void> runAppWithDI(FirebaseInitializer firebaseInitializer) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Firebase初期化
-  try {
-    await firebaseInitializer.initialize();
-  } catch (e) {
-    // Firebase初期化エラーをキャッチ
-    // print('Firebase initialization failed: $e');
-  }
+  // Firestoreのローカルキャッシュを無効化
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: false,
+  );
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
