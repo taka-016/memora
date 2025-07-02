@@ -4,27 +4,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/services/firebase_initializer.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'main_test.mocks.dart';
 
-@GenerateMocks([
-  GetGroupsWithMembersUsecase,
-  GetCurrentMemberUseCase,
-  FirebaseInitializer,
-])
+@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
   late MockGetCurrentMemberUseCase mockGetCurrentMemberUseCase;
-  late MockFirebaseInitializer mockFirebaseInitializer;
 
   setUp(() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
     mockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-    mockFirebaseInitializer = MockFirebaseInitializer();
 
     when(mockUsecase.execute(any)).thenAnswer((_) async => []);
     when(mockGetCurrentMemberUseCase.execute()).thenAnswer(
@@ -35,7 +28,6 @@ void main() {
         kanjiFirstName: 'ユーザー',
       ),
     );
-    when(mockFirebaseInitializer.initialize()).thenAnswer((_) async {});
   });
 
   Widget createTestApp() {
