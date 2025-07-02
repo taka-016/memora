@@ -6,7 +6,9 @@ import '../../firebase_options.dart';
 class ProductionFirebaseInitializer implements FirebaseInitializer {
   @override
   Future<void> initialize() async {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
     // Firestoreのローカルキャッシュを無効化
     FirebaseFirestore.instance.settings = const Settings(
