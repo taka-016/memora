@@ -73,5 +73,37 @@ void main() {
         ),
       ).called(1);
     });
+
+    test('getMemberByAccountIdで例外が発生した場合、falseを返す', () async {
+      // arrange
+      when(
+        mockMemberRepository.getMemberByAccountId(testUid),
+      ).thenThrow(Exception('Database error'));
+
+      // act
+      final result = await useCase.execute(testUser);
+
+      // assert
+      expect(result, equals(false));
+      verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
+      verifyNever(mockMemberRepository.saveMember(any));
+    });
+
+    test('saveMemberで例外が発生した場合、falseを返す', () async {
+      // arrange
+      when(
+        mockMemberRepository.getMemberByAccountId(testUid),
+      ).thenAnswer((_) async => null);
+      when(mockMemberRepository.saveMember(any))
+          .thenThrow(Exception('Save failed'));
+
+      // act
+      final result = await useCase.execute(testUser);
+
+      // assert
+      expect(result, equals(false));
+      verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
+      verify(mockMemberRepository.saveMember(any)).called(1);
+    });
   });
 }

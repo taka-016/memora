@@ -8,24 +8,28 @@ class GetOrCreateMemberUseCase {
   GetOrCreateMemberUseCase(this._memberRepository);
 
   Future<bool> execute(User user) async {
-    // 既存のメンバーをaccountIdで検索
-    final existingMember = await _memberRepository.getMemberByAccountId(
-      user.id,
-    );
+    try {
+      // 既存のメンバーをaccountIdで検索
+      final existingMember = await _memberRepository.getMemberByAccountId(
+        user.id,
+      );
 
-    if (existingMember != null) {
+      if (existingMember != null) {
+        return true;
+      }
+
+      // メンバーが見つからない場合、新規作成
+      final newMember = Member(
+        id: '', // Firestoreで自動生成されるID
+        displayName: user.email,
+        accountId: user.id,
+        email: user.email,
+      );
+
+      await _memberRepository.saveMember(newMember);
       return true;
+    } catch (e) {
+      return false;
     }
-
-    // メンバーが見つからない場合、新規作成
-    final newMember = Member(
-      id: '', // Firestoreで自動生成されるID
-      displayName: user.email,
-      accountId: user.id,
-      email: user.email,
-    );
-
-    await _memberRepository.saveMember(newMember);
-    return true;
   }
 }
