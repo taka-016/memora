@@ -24,7 +24,7 @@ void main() {
 
     final testUser = User(id: testUid, email: testEmail, isEmailVerified: true);
 
-    test('既存メンバーが見つかった場合、そのメンバーを返す', () async {
+    test('既存メンバーが見つかった場合、trueを返す', () async {
       // arrange
       final existingMember = Member(
         id: 'member-id-1',
@@ -43,12 +43,12 @@ void main() {
       final result = await useCase.execute(testUser);
 
       // assert
-      expect(result, equals(existingMember));
+      expect(result, equals(true));
       verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
       verifyNever(mockMemberRepository.saveMember(any));
     });
 
-    test('既存メンバーが見つからない場合、新しいメンバーを作成して返す', () async {
+    test('既存メンバーが見つからない場合、新しいメンバーを作成してtrueを返す', () async {
       // arrange
       when(
         mockMemberRepository.getMemberByAccountId(testUid),
@@ -59,8 +59,7 @@ void main() {
       final result = await useCase.execute(testUser);
 
       // assert
-      expect(result.accountId, equals(testUid));
-      expect(result.email, equals(testEmail));
+      expect(result, equals(true));
 
       verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
       verify(
@@ -73,6 +72,38 @@ void main() {
           ),
         ),
       ).called(1);
+    });
+
+    test('getMemberByAccountIdで例外が発生した場合、falseを返す', () async {
+      // arrange
+      when(
+        mockMemberRepository.getMemberByAccountId(testUid),
+      ).thenThrow(Exception('Database error'));
+
+      // act
+      final result = await useCase.execute(testUser);
+
+      // assert
+      expect(result, equals(false));
+      verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
+      verifyNever(mockMemberRepository.saveMember(any));
+    });
+
+    test('saveMemberで例外が発生した場合、falseを返す', () async {
+      // arrange
+      when(
+        mockMemberRepository.getMemberByAccountId(testUid),
+      ).thenAnswer((_) async => null);
+      when(mockMemberRepository.saveMember(any))
+          .thenThrow(Exception('Save failed'));
+
+      // act
+      final result = await useCase.execute(testUser);
+
+      // assert
+      expect(result, equals(false));
+      verify(mockMemberRepository.getMemberByAccountId(testUid)).called(1);
+      verify(mockMemberRepository.saveMember(any)).called(1);
     });
   });
 }
