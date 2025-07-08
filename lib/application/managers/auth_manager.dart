@@ -24,8 +24,14 @@ class AuthManager extends ChangeNotifier {
           try {
             // トークンを明示的にリフレッシュしてからメンバー取得を実行
             await authService.validateCurrentUserToken();
-            await getOrCreateMemberUseCase!.execute(user);
-            _updateState(AuthState.authenticated(user));
+            final result = await getOrCreateMemberUseCase!.execute(user);
+            if (result) {
+              _updateState(AuthState.authenticated(user));
+            } else {
+              // GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウト
+              await authService.signOut();
+              _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+            }
           } catch (e) {
             // エラーの場合、強制ログアウトして再認証を促す
             await authService.signOut();

@@ -61,6 +61,7 @@
 - [x] ログイン成功時に、アカウントのUIDでmembersのaccountIdを紐づけて取得する
   - [x] UIDでmembersが紐づかなかった場合、membersを新規作成しaccountIdにUIDを保持させる
   - [x] GetOrCreateMemberUseCaseは戻り値をbooleanにする
+  - [x] AuthManagerでGetOrCreateMemberUseCaseの戻り値を見る（Falseの場合、強制ログアウト）
 - [x] ログアウトボタンはメニューの最下部に配置する
 - [x] ログインユーザーのニックネームをメニューの上部に表示する
 - [x] ログインユーザーのニックネームが未設定の場合は、kanjiLastName+半角スペース+kanjiFirstNameを表示する
