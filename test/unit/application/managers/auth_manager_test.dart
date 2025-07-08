@@ -181,6 +181,61 @@ void main() {
 
         controller.close();
       });
+
+      test(
+        'GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウトしてerror状態になる',
+        () async {
+          // arrange
+          late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+          mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+          const user = User(
+            id: 'user123',
+            email: 'test@example.com',
+            displayName: 'テストユーザー',
+            isEmailVerified: true,
+          );
+
+          // authStateChangesでユーザー状態変更をシミュレート
+          final controller = StreamController<User?>();
+          when(
+            mockAuthService.authStateChanges,
+          ).thenAnswer((_) => controller.stream);
+
+          when(
+            mockAuthService.validateCurrentUserToken(),
+          ).thenAnswer((_) async {});
+
+          // GetOrCreateMemberUseCaseがfalseを返すようにモック
+          when(
+            mockGetOrCreateMemberUseCase.execute(user),
+          ).thenAnswer((_) async => false);
+
+          when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+          // AuthManagerにUseCaseを依存注入
+          authManager = AuthManager(
+            authService: mockAuthService,
+            getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+          );
+
+          await authManager.initialize();
+
+          // act - authStateChangesでユーザー変更をエミット
+          controller.add(user);
+
+          // authStateChangesリスナー内の非同期処理完了を待つ
+          await Future(() {});
+
+          // assert
+          verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+          verify(mockAuthService.signOut()).called(1);
+          expect(authManager.state.status, AuthStatus.error);
+          expect(authManager.state.errorMessage, '認証が無効です。再度ログインしてください。');
+
+          controller.close();
+        },
+      );
     });
 
     group('login', () {
