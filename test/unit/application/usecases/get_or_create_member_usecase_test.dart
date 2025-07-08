@@ -94,8 +94,9 @@ void main() {
       when(
         mockMemberRepository.getMemberByAccountId(testUid),
       ).thenAnswer((_) async => null);
-      when(mockMemberRepository.saveMember(any))
-          .thenThrow(Exception('Save failed'));
+      when(
+        mockMemberRepository.saveMember(any),
+      ).thenThrow(Exception('Save failed'));
 
       // act
       final result = await useCase.execute(testUser);
