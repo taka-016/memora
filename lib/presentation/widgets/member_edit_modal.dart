@@ -82,6 +82,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
       ),
       child: Container(
         width: MediaQuery.of(context).size.width * 0.95,
+        height: MediaQuery.of(context).size.height * 0.8,
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -168,9 +169,9 @@ class _MemberEditModalState extends State<MemberEditModal> {
                           border: OutlineInputBorder(),
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'male', child: Text('男性')),
-                          DropdownMenuItem(value: 'female', child: Text('女性')),
-                          DropdownMenuItem(value: 'other', child: Text('その他')),
+                          DropdownMenuItem(value: '男性', child: Text('男性')),
+                          DropdownMenuItem(value: '女性', child: Text('女性')),
+                          DropdownMenuItem(value: 'その他', child: Text('その他')),
                         ],
                         onChanged: (value) {
                           setState(() {

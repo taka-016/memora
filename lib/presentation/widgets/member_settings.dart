@@ -54,7 +54,11 @@ class _MemberSettingsState extends State<MemberSettings> {
     });
 
     try {
-      _managedMembers = await _getManagedMembersUsecase.execute(widget.member);
+      final managedMembers = await _getManagedMembersUsecase.execute(
+        widget.member,
+      );
+      // 1行目にログインユーザーのメンバーを表示するため、先頭に追加
+      _managedMembers = [widget.member, ...managedMembers];
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -198,90 +202,45 @@ class _MemberSettingsState extends State<MemberSettings> {
                 ),
                 const Divider(),
                 Expanded(
-                  child: _managedMembers.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                '管理しているメンバーがいません',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'メンバー追加ボタンから新しいメンバーを追加してください',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
+                  child: RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ListView.builder(
+                      itemCount: _managedMembers.length,
+                      itemBuilder: (context, index) {
+                        final member = _managedMembers[index];
+                        final isCurrentUser = index == 0; // 1行目はログインユーザー
+
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
                           ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: ListView.builder(
-                            itemCount: _managedMembers.length,
-                            itemBuilder: (context, index) {
-                              final member = _managedMembers[index];
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(
-                                      member.displayName.substring(0, 1),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              child: Text(member.displayName.substring(0, 1)),
+                            ),
+                            title: Text(member.displayName),
+                            subtitle:
+                                member.email != null ||
+                                    member.phoneNumber != null
+                                ? Text(member.email ?? member.phoneNumber ?? '')
+                                : null,
+                            onTap: () => _showMemberEditModal(member: member),
+                            trailing:
+                                !isCurrentUser // ログインユーザーでない場合のみ削除ボタンを表示
+                                ? IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
                                     ),
-                                  ),
-                                  title: Text(member.displayName),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (member.email != null)
-                                        Text('メール: ${member.email}'),
-                                      if (member.phoneNumber != null)
-                                        Text('電話: ${member.phoneNumber}'),
-                                      if (member.birthday != null)
-                                        Text(
-                                          '生年月日: ${member.birthday!.year}/${member.birthday!.month}/${member.birthday!.day}',
-                                        ),
-                                    ],
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () => _showMemberEditModal(
-                                          member: member,
-                                        ),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () => _deleteMember(member),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                                    onPressed: () => _deleteMember(member),
+                                  )
+                                : null,
                           ),
-                        ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
