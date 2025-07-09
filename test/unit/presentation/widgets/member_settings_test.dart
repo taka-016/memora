@@ -311,8 +311,127 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byIcon(Icons.edit), findsOneWidget);
-      expect(find.byIcon(Icons.delete), findsOneWidget);
+      expect(find.byIcon(Icons.edit), findsNWidgets(2)); // ログインユーザー + 管理メンバー
+      expect(find.byIcon(Icons.delete), findsNWidgets(2)); // ログインユーザー + 管理メンバー
+    });
+
+    testWidgets('1行目にログインユーザーのメンバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: 'managed-account-1',
+          administratorId: testMember.id,
+          displayName: 'Managed User 1',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'さとう',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Sato',
+          gender: '女性',
+          birthday: DateTime(1995, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-9876-5432',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberSettings(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert
+      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile));
+      expect(listTiles.length, 2); // ログインユーザー + 管理メンバー1人
+
+      // 1行目がログインユーザー（testMember）であることを確認
+      expect(find.text('Test User'), findsOneWidget);
+      expect(find.text('メール: test@example.com'), findsOneWidget);
+    });
+
+    testWidgets('1行目のログインユーザーメンバーは削除不可であること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: 'managed-account-1',
+          administratorId: testMember.id,
+          displayName: 'Managed User 1',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'さとう',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Sato',
+          gender: '女性',
+          birthday: DateTime(1995, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-9876-5432',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberSettings(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert
+      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile));
+      expect(listTiles.length, 2);
+
+      // 1行目（ログインユーザー）の削除ボタンが無効化されていることを確認
+      final firstListTile = listTiles.first;
+      final firstTrailing = firstListTile.trailing as Row;
+      final firstButtons = firstTrailing.children.whereType<IconButton>();
+
+      // 1行目に編集ボタンはある
+      expect(
+        firstButtons.any(
+          (button) =>
+              button.icon is Icon && (button.icon as Icon).icon == Icons.edit,
+        ),
+        true,
+      );
+      // 1行目に削除ボタンはないか、無効化されている
+      final deleteButton = firstButtons.firstWhere(
+        (button) =>
+            button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
+        orElse: () => IconButton(onPressed: null, icon: Icon(Icons.delete)),
+      );
+      expect(deleteButton.onPressed, null);
     });
   });
 }
