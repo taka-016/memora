@@ -92,7 +92,7 @@ void main() {
       ).called(1);
       expect(find.text('メンバー設定'), findsOneWidget);
       expect(find.text('Managed User 1'), findsOneWidget);
-      expect(find.text('メール: hanako@example.com'), findsOneWidget);
+      expect(find.text('hanako@example.com'), findsOneWidget);
     });
 
     testWidgets('管理しているメンバーがいない場合、空状態が表示されること', (WidgetTester tester) async {
@@ -312,7 +312,10 @@ void main() {
 
       // Assert
       expect(find.byIcon(Icons.edit), findsNWidgets(2)); // ログインユーザー + 管理メンバー
-      expect(find.byIcon(Icons.delete), findsNWidgets(2)); // ログインユーザー + 管理メンバー
+      expect(
+        find.byIcon(Icons.delete),
+        findsOneWidget,
+      ); // 管理メンバーのみ（ログインユーザーは非表示）
     });
 
     testWidgets('1行目にログインユーザーのメンバーが表示されること', (WidgetTester tester) async {
@@ -363,7 +366,7 @@ void main() {
 
       // 1行目がログインユーザー（testMember）であることを確認
       expect(find.text('Test User'), findsOneWidget);
-      expect(find.text('メール: test@example.com'), findsOneWidget);
+      expect(find.text('test@example.com'), findsOneWidget);
     });
 
     testWidgets('1行目のログインユーザーメンバーは削除不可であること', (WidgetTester tester) async {
@@ -425,13 +428,26 @@ void main() {
         ),
         true,
       );
-      // 1行目に削除ボタンはないか、無効化されている
-      final deleteButton = firstButtons.firstWhere(
-        (button) =>
-            button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
-        orElse: () => IconButton(onPressed: null, icon: Icon(Icons.delete)),
+      // 1行目に削除ボタンがない（非表示）
+      expect(
+        firstButtons.any(
+          (button) =>
+              button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
+        ),
+        false,
       );
-      expect(deleteButton.onPressed, null);
+
+      // 2行目（管理メンバー）には削除ボタンがある
+      final secondListTile = listTiles.last;
+      final secondTrailing = secondListTile.trailing as Row;
+      final secondButtons = secondTrailing.children.whereType<IconButton>();
+      expect(
+        secondButtons.any(
+          (button) =>
+              button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
+        ),
+        true,
+      );
     });
   });
 }

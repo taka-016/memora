@@ -223,21 +223,15 @@ class _MemberSettingsState extends State<MemberSettings> {
                                   ),
                                 ),
                                 title: Text(_managedMembers[0].displayName),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (_managedMembers[0].email != null)
-                                      Text('メール: ${_managedMembers[0].email}'),
-                                    if (_managedMembers[0].phoneNumber != null)
-                                      Text(
-                                        '電話: ${_managedMembers[0].phoneNumber}',
-                                      ),
-                                    if (_managedMembers[0].birthday != null)
-                                      Text(
-                                        '生年月日: ${_managedMembers[0].birthday!.year}/${_managedMembers[0].birthday!.month}/${_managedMembers[0].birthday!.day}',
-                                      ),
-                                  ],
-                                ),
+                                subtitle:
+                                    _managedMembers[0].email != null ||
+                                        _managedMembers[0].phoneNumber != null
+                                    ? Text(
+                                        _managedMembers[0].email ??
+                                            _managedMembers[0].phoneNumber ??
+                                            '',
+                                      )
+                                    : null,
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -247,13 +241,7 @@ class _MemberSettingsState extends State<MemberSettings> {
                                         member: _managedMembers[0],
                                       ),
                                     ),
-                                    IconButton(
-                                      icon: const Icon(
-                                        Icons.delete,
-                                        color: Colors.red,
-                                      ),
-                                      onPressed: null, // ログインユーザーは削除不可
-                                    ),
+                                    // ログインユーザーは削除ボタンを非表示
                                   ],
                                 ),
                               ),
@@ -311,20 +299,15 @@ class _MemberSettingsState extends State<MemberSettings> {
                                     ),
                                   ),
                                   title: Text(member.displayName),
-                                  subtitle: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (member.email != null)
-                                        Text('メール: ${member.email}'),
-                                      if (member.phoneNumber != null)
-                                        Text('電話: ${member.phoneNumber}'),
-                                      if (member.birthday != null)
-                                        Text(
-                                          '生年月日: ${member.birthday!.year}/${member.birthday!.month}/${member.birthday!.day}',
-                                        ),
-                                    ],
-                                  ),
+                                  subtitle:
+                                      member.email != null ||
+                                          member.phoneNumber != null
+                                      ? Text(
+                                          member.email ??
+                                              member.phoneNumber ??
+                                              '',
+                                        )
+                                      : null,
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -334,15 +317,15 @@ class _MemberSettingsState extends State<MemberSettings> {
                                           member: member,
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete,
-                                          color: Colors.red,
+                                      if (!isCurrentUser) // ログインユーザーでない場合のみ削除ボタンを表示
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () =>
+                                              _deleteMember(member),
                                         ),
-                                        onPressed: isCurrentUser
-                                            ? null
-                                            : () => _deleteMember(member),
-                                      ),
                                     ],
                                   ),
                                 ),
