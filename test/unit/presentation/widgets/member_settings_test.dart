@@ -271,7 +271,7 @@ void main() {
       expect(find.text('表示名'), findsOneWidget);
     });
 
-    testWidgets('編集ボタンと削除ボタンが表示されること', (WidgetTester tester) async {
+    testWidgets('削除ボタンが適切に表示されること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
         Member(
@@ -314,7 +314,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byIcon(Icons.edit), findsNWidgets(2)); // ログインユーザー + 管理メンバー
+      expect(find.byIcon(Icons.edit), findsNothing); // 編集ボタンは廃止
       expect(
         find.byIcon(Icons.delete),
         findsOneWidget,
@@ -420,37 +420,68 @@ void main() {
 
       // 1行目（ログインユーザー）の削除ボタンが無効化されていることを確認
       final firstListTile = listTiles.first;
-      final firstTrailing = firstListTile.trailing as Row;
-      final firstButtons = firstTrailing.children.whereType<IconButton>();
-
-      // 1行目に編集ボタンはある
-      expect(
-        firstButtons.any(
-          (button) =>
-              button.icon is Icon && (button.icon as Icon).icon == Icons.edit,
-        ),
-        true,
-      );
-      // 1行目に削除ボタンがない（非表示）
-      expect(
-        firstButtons.any(
-          (button) =>
-              button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
-        ),
-        false,
-      );
+      expect(firstListTile.trailing, null); // ログインユーザーはtrailingがnull
 
       // 2行目（管理メンバー）には削除ボタンがある
       final secondListTile = listTiles.last;
-      final secondTrailing = secondListTile.trailing as Row;
-      final secondButtons = secondTrailing.children.whereType<IconButton>();
-      expect(
-        secondButtons.any(
-          (button) =>
-              button.icon is Icon && (button.icon as Icon).icon == Icons.delete,
+      expect(secondListTile.trailing, isA<IconButton>());
+      final secondTrailing = secondListTile.trailing as IconButton;
+      expect(secondTrailing.icon, isA<Icon>());
+      final secondIcon = secondTrailing.icon as Icon;
+      expect(secondIcon.icon, Icons.delete);
+    });
+
+    testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: 'managed-account-1',
+          administratorId: testMember.id,
+          displayName: 'Managed User 1',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'さとう',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Sato',
+          gender: '女性',
+          birthday: DateTime(1995, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-9876-5432',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
         ),
-        true,
+      ];
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberSettings(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
       );
+
+      await tester.pumpAndSettle();
+
+      // Assert - 行タップで編集モーダルが開くこと
+      expect(find.text('メンバー編集'), findsNothing);
+
+      // 管理メンバーの行をタップ（2番目のListTile）
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pump();
+
+      // 編集モーダルが開いていることを確認
+      expect(find.text('メンバー編集'), findsOneWidget);
     });
   });
 }
