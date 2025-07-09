@@ -95,7 +95,9 @@ void main() {
       expect(find.text('hanako@example.com'), findsOneWidget);
     });
 
-    testWidgets('管理しているメンバーがいない場合、空状態が表示されること', (WidgetTester tester) async {
+    testWidgets('管理しているメンバーがいない場合でもログインユーザーが表示されること', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
@@ -114,8 +116,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('管理しているメンバーがいません'), findsOneWidget);
-      expect(find.text('メンバー追加ボタンから新しいメンバーを追加してください'), findsOneWidget);
+      expect(find.text('Test User'), findsOneWidget);
+      expect(find.text('test@example.com'), findsOneWidget);
+      expect(find.byType(ListTile), findsOneWidget); // ログインユーザーのみ
     });
 
     testWidgets('メンバー追加ボタンが表示されること', (WidgetTester tester) async {
