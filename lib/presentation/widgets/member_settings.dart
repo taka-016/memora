@@ -225,24 +225,17 @@ class _MemberSettingsState extends State<MemberSettings> {
                                     member.phoneNumber != null
                                 ? Text(member.email ?? member.phoneNumber ?? '')
                                 : null,
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () =>
-                                      _showMemberEditModal(member: member),
-                                ),
-                                if (!isCurrentUser) // ログインユーザーでない場合のみ削除ボタンを表示
-                                  IconButton(
+                            onTap: () => _showMemberEditModal(member: member),
+                            trailing:
+                                !isCurrentUser // ログインユーザーでない場合のみ削除ボタンを表示
+                                ? IconButton(
                                     icon: const Icon(
                                       Icons.delete,
                                       color: Colors.red,
                                     ),
                                     onPressed: () => _deleteMember(member),
-                                  ),
-                              ],
-                            ),
+                                  )
+                                : null,
                           ),
                         );
                       },
