@@ -74,8 +74,6 @@ class _MemberSettingsState extends State<MemberSettings> {
     }
   }
 
-  bool get _hasOnlyCurrentUser => _managedMembers.length == 1;
-
   Future<void> _showMemberEditModal({Member? member}) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -204,135 +202,52 @@ class _MemberSettingsState extends State<MemberSettings> {
                 ),
                 const Divider(),
                 Expanded(
-                  child: _hasOnlyCurrentUser
-                      ? Column(
-                          children: [
-                            // ログインユーザーのメンバーを表示
-                            Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              child: ListTile(
-                                leading: CircleAvatar(
-                                  child: Text(
-                                    _managedMembers[0].displayName.substring(
-                                      0,
-                                      1,
-                                    ),
-                                  ),
-                                ),
-                                title: Text(_managedMembers[0].displayName),
-                                subtitle:
-                                    _managedMembers[0].email != null ||
-                                        _managedMembers[0].phoneNumber != null
-                                    ? Text(
-                                        _managedMembers[0].email ??
-                                            _managedMembers[0].phoneNumber ??
-                                            '',
-                                      )
-                                    : null,
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () => _showMemberEditModal(
-                                        member: _managedMembers[0],
-                                      ),
-                                    ),
-                                    // ログインユーザーは削除ボタンを非表示
-                                  ],
-                                ),
-                              ),
-                            ),
-                            // 空状態メッセージ
-                            const Expanded(
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.people_outline,
-                                      size: 64,
-                                      color: Colors.grey,
-                                    ),
-                                    SizedBox(height: 16),
-                                    Text(
-                                      '管理しているメンバーがいません',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'メンバー追加ボタンから新しいメンバーを追加してください',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: ListView.builder(
-                            itemCount: _managedMembers.length,
-                            itemBuilder: (context, index) {
-                              final member = _managedMembers[index];
-                              final isCurrentUser = index == 0; // 1行目はログインユーザー
+                  child: RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: ListView.builder(
+                      itemCount: _managedMembers.length,
+                      itemBuilder: (context, index) {
+                        final member = _managedMembers[index];
+                        final isCurrentUser = index == 0; // 1行目はログインユーザー
 
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(
-                                      member.displayName.substring(0, 1),
-                                    ),
-                                  ),
-                                  title: Text(member.displayName),
-                                  subtitle:
-                                      member.email != null ||
-                                          member.phoneNumber != null
-                                      ? Text(
-                                          member.email ??
-                                              member.phoneNumber ??
-                                              '',
-                                        )
-                                      : null,
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit),
-                                        onPressed: () => _showMemberEditModal(
-                                          member: member,
-                                        ),
-                                      ),
-                                      if (!isCurrentUser) // ログインユーザーでない場合のみ削除ボタンを表示
-                                        IconButton(
-                                          icon: const Icon(
-                                            Icons.delete,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () =>
-                                              _deleteMember(member),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
                           ),
-                        ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              child: Text(member.displayName.substring(0, 1)),
+                            ),
+                            title: Text(member.displayName),
+                            subtitle:
+                                member.email != null ||
+                                    member.phoneNumber != null
+                                ? Text(member.email ?? member.phoneNumber ?? '')
+                                : null,
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () =>
+                                      _showMemberEditModal(member: member),
+                                ),
+                                if (!isCurrentUser) // ログインユーザーでない場合のみ削除ボタンを表示
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () => _deleteMember(member),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ],
             ),
