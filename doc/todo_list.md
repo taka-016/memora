@@ -97,6 +97,7 @@
 - [x] メンバー一覧表示
   - [x] ログインユーザーが管理しているメンバーの一覧を表示する
   - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
+  - [x] 1行目にログインユーザーに紐づくmember(TopPageの_currentMember)を表示する（削除不可とする）
 - [x] メンバー新規登録
   - [x] Memberのid,accountId,administratorId以外の入力項目を作成する(モーダル画面)
   - [x] 登録時にログインユーザーのmemberIdをadministratorIdにセットする

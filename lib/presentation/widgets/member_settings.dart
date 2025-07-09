@@ -54,7 +54,11 @@ class _MemberSettingsState extends State<MemberSettings> {
     });
 
     try {
-      _managedMembers = await _getManagedMembersUsecase.execute(widget.member);
+      final managedMembers = await _getManagedMembersUsecase.execute(
+        widget.member,
+      );
+      // 1行目にログインユーザーのメンバーを表示するため、先頭に追加
+      _managedMembers = [widget.member, ...managedMembers];
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -69,6 +73,8 @@ class _MemberSettingsState extends State<MemberSettings> {
       }
     }
   }
+
+  bool get _hasOnlyCurrentUser => _managedMembers.length == 1;
 
   Future<void> _showMemberEditModal({Member? member}) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -198,34 +204,92 @@ class _MemberSettingsState extends State<MemberSettings> {
                 ),
                 const Divider(),
                 Expanded(
-                  child: _managedMembers.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                size: 64,
-                                color: Colors.grey,
+                  child: _hasOnlyCurrentUser
+                      ? Column(
+                          children: [
+                            // ログインユーザーのメンバーを表示
+                            Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
                               ),
-                              SizedBox(height: 16),
-                              Text(
-                                '管理しているメンバーがいません',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey,
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  child: Text(
+                                    _managedMembers[0].displayName.substring(
+                                      0,
+                                      1,
+                                    ),
+                                  ),
+                                ),
+                                title: Text(_managedMembers[0].displayName),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (_managedMembers[0].email != null)
+                                      Text('メール: ${_managedMembers[0].email}'),
+                                    if (_managedMembers[0].phoneNumber != null)
+                                      Text(
+                                        '電話: ${_managedMembers[0].phoneNumber}',
+                                      ),
+                                    if (_managedMembers[0].birthday != null)
+                                      Text(
+                                        '生年月日: ${_managedMembers[0].birthday!.year}/${_managedMembers[0].birthday!.month}/${_managedMembers[0].birthday!.day}',
+                                      ),
+                                  ],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () => _showMemberEditModal(
+                                        member: _managedMembers[0],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: null, // ログインユーザーは削除不可
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(height: 8),
-                              Text(
-                                'メンバー追加ボタンから新しいメンバーを追加してください',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
+                            ),
+                            // 空状態メッセージ
+                            const Expanded(
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(height: 16),
+                                    Text(
+                                      '管理しているメンバーがいません',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'メンバー追加ボタンから新しいメンバーを追加してください',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         )
                       : RefreshIndicator(
                           onRefresh: _loadData,
@@ -233,6 +297,8 @@ class _MemberSettingsState extends State<MemberSettings> {
                             itemCount: _managedMembers.length,
                             itemBuilder: (context, index) {
                               final member = _managedMembers[index];
+                              final isCurrentUser = index == 0; // 1行目はログインユーザー
+
                               return Card(
                                 margin: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -273,7 +339,9 @@ class _MemberSettingsState extends State<MemberSettings> {
                                           Icons.delete,
                                           color: Colors.red,
                                         ),
-                                        onPressed: () => _deleteMember(member),
+                                        onPressed: isCurrentUser
+                                            ? null
+                                            : () => _deleteMember(member),
                                       ),
                                     ],
                                   ),
