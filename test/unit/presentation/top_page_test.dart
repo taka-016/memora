@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/auth_state.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:provider/provider.dart';
 
 import 'top_page_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
+@GenerateMocks([
+  GetGroupsWithMembersUsecase,
+  GetCurrentMemberUseCase,
+  AuthManager,
+])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
 
@@ -49,6 +57,7 @@ void main() {
 
   Widget createTestWidget({
     MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
+    MockAuthManager? authManager,
   }) {
     final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
     when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
@@ -60,12 +69,30 @@ void main() {
       ),
     );
 
-    return MaterialApp(
-      home: TopPage(
-        getGroupsWithMembersUsecase: mockUsecase,
-        isTestEnvironment: true,
-        getCurrentMemberUseCase:
-            getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+    final defaultMockAuthManager = MockAuthManager();
+    when(defaultMockAuthManager.state).thenReturn(
+      AuthState.authenticated(
+        const User(
+          id: 'test_user_id',
+          email: 'test@example.com',
+          isEmailVerified: true,
+        ),
+      ),
+    );
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthManager>.value(
+          value: authManager ?? defaultMockAuthManager,
+        ),
+      ],
+      child: MaterialApp(
+        home: TopPage(
+          getGroupsWithMembersUsecase: mockUsecase,
+          isTestEnvironment: true,
+          getCurrentMemberUseCase:
+              getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+        ),
       ),
     );
   }
@@ -370,7 +397,7 @@ void main() {
       expect(find.byType(Drawer), findsNothing);
     });
 
-    testWidgets('ログインユーザーの表示名が表示される', (WidgetTester tester) async {
+    testWidgets('ログインユーザーのメールアドレスが表示される', (WidgetTester tester) async {
       // Arrange
       final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       final currentMember = Member(
@@ -406,7 +433,7 @@ void main() {
 
       // Assert
       expect(find.text('memora'), findsWidgets);
-      expect(find.text('ログインユーザー'), findsOneWidget);
+      expect(find.text('test@example.com'), findsOneWidget);
     });
   });
 }

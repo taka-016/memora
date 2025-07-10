@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/member.dart';
 
 class UserDrawerHeader extends StatelessWidget {
-  final Member member;
+  final String email;
 
-  const UserDrawerHeader({super.key, required this.member});
+  const UserDrawerHeader({super.key, required this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,7 @@ class UserDrawerHeader extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            member.displayName,
+            email,
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
         ],
