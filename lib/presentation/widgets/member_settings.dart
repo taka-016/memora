@@ -57,8 +57,13 @@ class _MemberSettingsState extends State<MemberSettings> {
       final managedMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
-      // 1行目にログインユーザーのメンバーを表示するため、先頭に追加
-      _managedMembers = [widget.member, ...managedMembers];
+      // 1行目にログインユーザーのメンバーを表示するため、DBから最新情報を取得
+      final memberRepository =
+          widget.memberRepository ?? FirestoreMemberRepository();
+      final currentMember = await memberRepository.getMemberById(
+        widget.member.id,
+      );
+      _managedMembers = [currentMember ?? widget.member, ...managedMembers];
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
