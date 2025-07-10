@@ -5,5 +5,5 @@
    - 使用する環境変数は.env.exampleを参考にしてください。
 2. `memora`プロジェクトのルートディレクトリで以下のコマンドを実行して、`env.g.dart`ファイルを生成します。
     ```bash
-    flutter pub run build_runner build --delete-conflicting-outputs
+    dart run build_runner build --delete-conflicting-outputs
     ```
