@@ -37,6 +37,11 @@ void main() {
       anaMileageNumber: null,
       jalMileageNumber: null,
     );
+
+    // 共通的なモック設定: getMemberByIdはデフォルトでtestMemberを返す
+    when(
+      mockMemberRepository.getMemberById(testMember.id),
+    ).thenAnswer((_) async => testMember);
   });
 
   group('MemberSettings', () {
@@ -482,6 +487,117 @@ void main() {
 
       // 編集モーダルが開いていることを確認
       expect(find.text('メンバー編集'), findsOneWidget);
+    });
+
+    testWidgets('1行目のログインユーザーメンバーを編集後にDBから再取得されること', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: 'managed-account-1',
+          administratorId: testMember.id,
+          displayName: 'Managed User 1',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'さとう',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Sato',
+          gender: '女性',
+          birthday: DateTime(1995, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-9876-5432',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+      ];
+
+      // 更新後のログインユーザーメンバー
+      final updatedTestMember = Member(
+        id: testMember.id,
+        accountId: testMember.accountId,
+        administratorId: testMember.administratorId,
+        displayName: '更新されたユーザー',
+        kanjiLastName: '更新',
+        kanjiFirstName: '太郎',
+        hiraganaLastName: 'こうしん',
+        hiraganaFirstName: 'たろう',
+        firstName: 'Updated',
+        lastName: 'User',
+        gender: testMember.gender,
+        birthday: testMember.birthday,
+        email: testMember.email,
+        phoneNumber: testMember.phoneNumber,
+        type: testMember.type,
+        passportNumber: testMember.passportNumber,
+        passportExpiration: testMember.passportExpiration,
+        anaMileageNumber: testMember.anaMileageNumber,
+        jalMileageNumber: testMember.jalMileageNumber,
+      );
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
+
+      // 初期ロード時は元のメンバー情報を返し、更新後は更新されたメンバー情報を返す
+      var callCount = 0;
+      when(mockMemberRepository.getMemberById(testMember.id)).thenAnswer((
+        _,
+      ) async {
+        callCount++;
+        if (callCount == 1) {
+          return testMember;
+        } else {
+          return updatedTestMember;
+        }
+      });
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberSettings(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert - 初期状態では元の表示名が表示されること
+      expect(find.text('Test User'), findsOneWidget);
+      expect(find.text('更新されたユーザー'), findsNothing);
+
+      // 1行目のログインユーザーメンバーの行をタップ（編集）
+      await tester.tap(find.byType(ListTile).at(0));
+      await tester.pump();
+
+      // 編集モーダルが開いていることを確認
+      expect(find.text('メンバー編集'), findsOneWidget);
+
+      // 編集モーダルで更新ボタンをタップ（実際の編集内容は割愛）
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      // 編集後の更新処理が完了するまで待機
+      await tester.pumpAndSettle();
+
+      // Assert - メンバー更新が実行されること
+      verify(mockMemberRepository.updateMember(any)).called(1);
+
+      // DBから最新情報を再取得していることを確認（初期ロード時 + 編集後のリロード時）
+      verify(mockMemberRepository.getMemberById(testMember.id)).called(2);
+
+      // 更新後のメンバー情報が表示されること
+      expect(find.text('更新されたユーザー'), findsOneWidget);
+      expect(find.text('Test User'), findsNothing);
     });
   });
 }
