@@ -4,6 +4,7 @@ import '../../application/usecases/get_managed_members_usecase.dart';
 import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
 import '../../application/usecases/delete_member_usecase.dart';
+import '../../application/usecases/get_member_by_id_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/repositories/member_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
@@ -28,6 +29,7 @@ class _MemberSettingsState extends State<MemberSettings> {
   late final CreateMemberUsecase _createMemberUsecase;
   late final UpdateMemberUsecase _updateMemberUsecase;
   late final DeleteMemberUsecase _deleteMemberUsecase;
+  late final GetMemberByIdUseCase _getMemberByIdUseCase;
 
   List<Member> _managedMembers = [];
   bool _isLoading = true;
@@ -44,6 +46,7 @@ class _MemberSettingsState extends State<MemberSettings> {
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
     _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
     _deleteMemberUsecase = DeleteMemberUsecase(memberRepository);
+    _getMemberByIdUseCase = GetMemberByIdUseCase(memberRepository);
 
     _loadData();
   }
@@ -58,9 +61,7 @@ class _MemberSettingsState extends State<MemberSettings> {
         widget.member,
       );
       // 1行目にログインユーザーのメンバーを表示するため、DBから最新情報を取得
-      final memberRepository =
-          widget.memberRepository ?? FirestoreMemberRepository();
-      final currentMember = await memberRepository.getMemberById(
+      final currentMember = await _getMemberByIdUseCase.execute(
         widget.member.id,
       );
       if (currentMember == null) {
