@@ -63,7 +63,10 @@ class _MemberSettingsState extends State<MemberSettings> {
       final currentMember = await memberRepository.getMemberById(
         widget.member.id,
       );
-      _managedMembers = [currentMember ?? widget.member, ...managedMembers];
+      if (currentMember == null) {
+        throw Exception('ログインユーザーメンバーの最新情報の取得に失敗しました');
+      }
+      _managedMembers = [currentMember, ...managedMembers];
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(

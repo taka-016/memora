@@ -489,6 +489,39 @@ void main() {
       expect(find.text('メンバー編集'), findsOneWidget);
     });
 
+    testWidgets('ログインユーザーメンバーの取得に失敗した場合、エラーが表示されること', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => []);
+
+      when(
+        mockMemberRepository.getMemberById(testMember.id),
+      ).thenAnswer((_) async => null); // nullを返すように設定
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MemberSettings(
+              member: testMember,
+              memberRepository: mockMemberRepository,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.text('データの読み込みに失敗しました: Exception: ログインユーザーメンバーの最新情報の取得に失敗しました'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('1行目のログインユーザーメンバーを編集後にDBから再取得されること', (
       WidgetTester tester,
     ) async {
