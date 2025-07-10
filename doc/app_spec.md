@@ -56,5 +56,4 @@
 `doc/usecase_diagram.md`を参照
 
 ## データ構造
-
 `doc/er_diagram.md`を参照
