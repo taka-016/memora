@@ -13,6 +13,7 @@ import 'package:memora/presentation/widgets/user_drawer_header.dart';
 import 'package:memora/presentation/widgets/account_settings.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/auth_state.dart';
 
 enum NavigationItem {
   topPage, // トップページ (初期表示のグループ情報)
@@ -151,15 +152,21 @@ class _TopPageState extends State<TopPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            _currentMember != null
-                ? UserDrawerHeader(member: _currentMember!)
-                : const DrawerHeader(
+            Consumer<AuthManager>(
+              builder: (context, authManager, child) {
+                if (authManager.state.status == AuthStatus.authenticated) {
+                  return UserDrawerHeader(email: authManager.state.user!.email);
+                } else {
+                  return const DrawerHeader(
                     decoration: BoxDecoration(color: Colors.deepPurple),
                     child: Text(
                       'memora',
                       style: TextStyle(color: Colors.white, fontSize: 24),
                     ),
-                  ),
+                  );
+                }
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('トップページ'),
