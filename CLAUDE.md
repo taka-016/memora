@@ -11,7 +11,7 @@
 **主要コマンド**
 - `flutter run` - アプリケーションを実行
 - `flutter pub get` - 依存関係をインストール
-- `flutter pub run build_runner build --delete-conflicting-outputs` - モックやコード生成を実行
+- `dart run build_runner build --delete-conflicting-outputs` - モックやコード生成を実行
 - `./check.sh` - フォーマット・解析・テストを一括実行
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
@@ -158,12 +158,72 @@
 - `chore/` プレフィックスを付けてその他の変更ブランチ名を作成
 
 ## コミット形式
-- `[feat]` 新機能の概要
-- `[fix]` 修正内容の概要
-- `[refactor]` リファクタ内容の概要
-- `[docs]` ドキュメントの更新内容
-- `[test]` テストの追加・修正内容
-- `[chore]` その他の変更
+※Conventional Commits仕様に従います。
+
+### 基本形式
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+### 必須フィールド
+- **type**: コミットの種類（必須）
+- **subject**: コミットの概要（必須、50文字以内）
+
+### オプションフィールド
+- **scope**: 変更の範囲（オプション）
+- **body**: 詳細な説明（オプション）
+- **footer**: 破壊的変更やIssue参照（オプション）
+
+### typeの種類
+- `feat`: 新機能の追加
+- `fix`: バグ修正
+- `docs`: ドキュメントの変更
+- `style`: コードの意味に影響しない変更（フォーマット、セミコロン等）
+- `refactor`: バグ修正や新機能追加以外のコード変更
+- `perf`: パフォーマンス改善
+- `test`: テストの追加・修正
+- `build`: ビルドシステムや外部依存関係の変更
+- `ci`: CI設定ファイルやスクリプトの変更
+- `chore`: その他の変更（設定ファイル、依存関係等）
+
+### scopeの例
+- `auth`: 認証関連
+- `ui`: UI関連
+- `api`: API関連
+- `db`: データベース関連
+- `config`: 設定関連
+
+### 例
+```
+feat(auth): ログイン機能を追加
+
+Google認証とメール認証に対応
+セッション管理機能も含む
+
+Closes #123
+```
+
+```
+fix(ui): ボタンの表示位置を修正
+```
+
+```
+docs: READMEの更新
+
+インストール手順を追加
+```
+
+### 破壊的変更
+破壊的変更がある場合は、typeの後に`!`を付けるか、footerに`BREAKING CHANGE:`を記載：
+```
+feat!: APIエンドポイントを変更
+
+BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
+```
 
 ## Lint設定
 - flutter_lintsパッケージを使用
@@ -176,7 +236,7 @@
 `.env`の環境変数:
 - `GOOGLE_PLACES_API_KEY` - 位置検索機能に必要
 
-環境変数の変更後は`flutter pub run build_runner build --delete-conflicting-outputs`を実行してください。
+環境変数の変更後は`dart run build_runner build --delete-conflicting-outputs`を実行してください。
 
 ## Firebase設定
 アプリはFirestoreを使用してデータを永続化する。
