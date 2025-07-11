@@ -21,9 +21,9 @@ void main() {
     test('正常にサインアップできる', () async {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: null,
-        isEmailVerified: false,
+        isVerified: false,
       );
 
       when(

@@ -155,7 +155,9 @@ class _TopPageState extends State<TopPage> {
             Consumer<AuthManager>(
               builder: (context, authManager, child) {
                 if (authManager.state.status == AuthStatus.authenticated) {
-                  return UserDrawerHeader(email: authManager.state.user!.email);
+                  return UserDrawerHeader(
+                    email: authManager.state.user!.loginId,
+                  );
                 } else {
                   return const DrawerHeader(
                     decoration: BoxDecoration(color: Colors.deepPurple),

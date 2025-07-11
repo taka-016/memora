@@ -34,9 +34,9 @@ void main() {
 
         expect(result, isNotNull);
         expect(result!.id, 'user123');
-        expect(result.email, 'test@example.com');
+        expect(result.loginId, 'test@example.com');
         expect(result.displayName, 'テストユーザー');
-        expect(result.isEmailVerified, true);
+        expect(result.isVerified, true);
       });
 
       test('Firebase Userが存在しない場合、nullを返す', () async {
@@ -68,9 +68,9 @@ void main() {
         );
 
         expect(result.id, 'user123');
-        expect(result.email, 'test@example.com');
+        expect(result.loginId, 'test@example.com');
         expect(result.displayName, 'テストユーザー');
-        expect(result.isEmailVerified, true);
+        expect(result.isVerified, true);
       });
 
       test('ログインに失敗した場合、例外をスローする', () async {
@@ -111,9 +111,9 @@ void main() {
         );
 
         expect(result.id, 'user123');
-        expect(result.email, 'test@example.com');
+        expect(result.loginId, 'test@example.com');
         expect(result.displayName, isNull);
-        expect(result.isEmailVerified, false);
+        expect(result.isVerified, false);
       });
     });
 
@@ -169,9 +169,9 @@ void main() {
         );
 
         expect(result.id, 'user123');
-        expect(result.email, 'test@example.com');
+        expect(result.loginId, 'test@example.com');
         expect(result.displayName, 'テストユーザー');
-        expect(result.isEmailVerified, true);
+        expect(result.isVerified, true);
       });
     });
 
@@ -256,7 +256,7 @@ void main() {
         stream.listen((user) {
           expect(user, isNotNull);
           expect(user!.id, 'user123');
-          expect(user.email, 'test@example.com');
+          expect(user.loginId, 'test@example.com');
         });
       });
     });

@@ -24,8 +24,8 @@ void main() {
   group('GetCurrentMemberUseCase', () {
     const testUser = User(
       id: 'user123',
-      email: 'test@example.com',
-      isEmailVerified: true,
+      loginId: 'test@example.com',
+      isVerified: true,
     );
     final testMember = Member(
       id: 'member123',

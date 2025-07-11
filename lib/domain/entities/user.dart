@@ -3,30 +3,30 @@ import 'package:equatable/equatable.dart';
 class User extends Equatable {
   const User({
     required this.id,
-    required this.email,
+    required this.loginId,
     this.displayName,
-    required this.isEmailVerified,
+    required this.isVerified,
   });
 
   final String id;
-  final String email;
+  final String loginId;
   final String? displayName;
-  final bool isEmailVerified;
+  final bool isVerified;
 
   User copyWith({
     String? id,
-    String? email,
+    String? loginId,
     String? displayName,
-    bool? isEmailVerified,
+    bool? isVerified,
   }) {
     return User(
       id: id ?? this.id,
-      email: email ?? this.email,
+      loginId: loginId ?? this.loginId,
       displayName: displayName ?? this.displayName,
-      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      isVerified: isVerified ?? this.isVerified,
     );
   }
 
   @override
-  List<Object?> get props => [id, email, displayName, isEmailVerified];
+  List<Object?> get props => [id, loginId, displayName, isVerified];
 }

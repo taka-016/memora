@@ -6,53 +6,53 @@ void main() {
     test('正常にUserエンティティを作成できる', () {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       expect(user.id, 'user123');
-      expect(user.email, 'test@example.com');
+      expect(user.loginId, 'test@example.com');
       expect(user.displayName, 'テストユーザー');
-      expect(user.isEmailVerified, true);
+      expect(user.isVerified, true);
     });
 
     test('copyWithメソッドで一部のプロパティを更新できる', () {
       const originalUser = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: false,
+        isVerified: false,
       );
 
-      final updatedUser = originalUser.copyWith(isEmailVerified: true);
+      final updatedUser = originalUser.copyWith(isVerified: true);
 
       expect(updatedUser.id, 'user123');
-      expect(updatedUser.email, 'test@example.com');
+      expect(updatedUser.loginId, 'test@example.com');
       expect(updatedUser.displayName, 'テストユーザー');
-      expect(updatedUser.isEmailVerified, true);
+      expect(updatedUser.isVerified, true);
     });
 
     test('等価性の比較ができる', () {
       const user1 = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       const user2 = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       const user3 = User(
         id: 'user456',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       expect(user1, equals(user2));
