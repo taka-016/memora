@@ -74,8 +74,8 @@ void main() {
       AuthState.authenticated(
         const User(
           id: 'test_user_id',
-          email: 'test@example.com',
-          isEmailVerified: true,
+          loginId: 'test@example.com',
+          isVerified: true,
         ),
       ),
     );

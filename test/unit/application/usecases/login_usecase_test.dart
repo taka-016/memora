@@ -21,9 +21,9 @@ void main() {
     test('正常にログインできる', () async {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       when(

@@ -22,7 +22,7 @@ void main() {
     const testUid = 'test-uid-12345';
     const testEmail = 'test@example.com';
 
-    final testUser = User(id: testUid, email: testEmail, isEmailVerified: true);
+    final testUser = User(id: testUid, loginId: testEmail, isVerified: true);
 
     test('既存メンバーが見つかった場合、trueを返す', () async {
       // arrange

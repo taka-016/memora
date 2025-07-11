@@ -14,9 +14,9 @@ void main() {
     test('認証済み状態を正常に作成できる', () {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       const authState = AuthState.authenticated(user);
@@ -43,9 +43,9 @@ void main() {
     test('isAuthenticated ゲッターが正しく動作する', () {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       const authenticatedState = AuthState.authenticated(user);
@@ -60,9 +60,9 @@ void main() {
     test('等価性の比較ができる', () {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       const state1 = AuthState.authenticated(user);

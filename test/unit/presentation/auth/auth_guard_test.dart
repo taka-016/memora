@@ -36,9 +36,9 @@ void main() {
     testWidgets('認証済みの場合、子ウィジェットが表示される', (WidgetTester tester) async {
       const user = User(
         id: 'user123',
-        email: 'test@example.com',
+        loginId: 'test@example.com',
         displayName: 'テストユーザー',
-        isEmailVerified: true,
+        isVerified: true,
       );
 
       when(mockAuthManager.state).thenReturn(AuthState.authenticated(user));

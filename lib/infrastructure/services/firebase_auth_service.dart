@@ -159,9 +159,9 @@ class FirebaseAuthService implements AuthService {
   domain.User _mapFirebaseUserToDomainUser(User firebaseUser) {
     return domain.User(
       id: firebaseUser.uid,
-      email: firebaseUser.email ?? '',
+      loginId: firebaseUser.email ?? '',
       displayName: firebaseUser.displayName,
-      isEmailVerified: firebaseUser.emailVerified,
+      isVerified: firebaseUser.emailVerified,
     );
   }
 }

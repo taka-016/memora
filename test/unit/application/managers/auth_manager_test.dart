@@ -43,9 +43,9 @@ void main() {
       test('ユーザーログイン時にauthenticated状態になる', () async {
         const user = User(
           id: 'user123',
-          email: 'test@example.com',
+          loginId: 'test@example.com',
           displayName: 'テストユーザー',
-          isEmailVerified: true,
+          isVerified: true,
         );
 
         final controller = StreamController<User?>();
@@ -96,9 +96,9 @@ void main() {
 
         const user = User(
           id: 'user123',
-          email: 'test@example.com',
+          loginId: 'test@example.com',
           displayName: 'テストユーザー',
-          isEmailVerified: true,
+          isVerified: true,
         );
 
         // authStateChangesでユーザー状態変更をシミュレート
@@ -143,9 +143,9 @@ void main() {
 
         const user = User(
           id: 'user123',
-          email: 'test@example.com',
+          loginId: 'test@example.com',
           displayName: 'テストユーザー',
-          isEmailVerified: true,
+          isVerified: true,
         );
 
         // authStateChangesでユーザー状態変更をシミュレート
@@ -191,9 +191,9 @@ void main() {
 
           const user = User(
             id: 'user123',
-            email: 'test@example.com',
+            loginId: 'test@example.com',
             displayName: 'テストユーザー',
-            isEmailVerified: true,
+            isVerified: true,
           );
 
           // authStateChangesでユーザー状態変更をシミュレート
@@ -242,9 +242,9 @@ void main() {
       test('正常にログインできる', () async {
         const user = User(
           id: 'user123',
-          email: 'test@example.com',
+          loginId: 'test@example.com',
           displayName: 'テストユーザー',
-          isEmailVerified: true,
+          isVerified: true,
         );
 
         when(
@@ -289,9 +289,9 @@ void main() {
       test('正常にサインアップできる', () async {
         const user = User(
           id: 'user123',
-          email: 'test@example.com',
+          loginId: 'test@example.com',
           displayName: null,
-          isEmailVerified: false,
+          isVerified: false,
         );
 
         when(
