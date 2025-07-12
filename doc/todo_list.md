@@ -120,7 +120,7 @@
 ## グループ設定画面
 - [x] usecaseの作成
   - [x] GroupをadministratorIdで取得するusecaseを作成する（GetManagedMembersUsecaseを参考に）
-  - [x] GroupMemberをgroupIdで取得するusecaseを作成する
+  - [x] GroupMemberをgroupIdで取得するusecaseを作成する（GetGroupMembersByGroupIdUsecase）
   - [x] Groupを新規作成するusecaseを作成する（CreateMemberUsecaseを参考に）
   - [x] Groupを編集するusecaseを作成する（UpdateMemberUsecaseを参考に）
   - [x] Groupを削除するusecaseを作成する（DeleteMemberUsecaseを参考に）
