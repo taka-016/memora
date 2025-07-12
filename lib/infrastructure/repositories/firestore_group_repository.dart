@@ -17,6 +17,14 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> updateGroup(Group group) async {
+    await _firestore
+        .collection('groups')
+        .doc(group.id)
+        .update(FirestoreGroupMapper.toFirestore(group));
+  }
+
+  @override
   Future<List<Group>> getGroups() async {
     try {
       final snapshot = await _firestore.collection('groups').get();
