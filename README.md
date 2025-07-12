@@ -58,7 +58,12 @@ This application uses Firebase/Firestore and requires the following APIs to be e
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-5. Configure Android local properties:
+5. Remove the .env file (contains sensitive information):
+   ```bash
+   rm .env
+   ```
+
+6. Configure Android local properties:
    ```bash
    # Create android/local.properties with the following content:
    sdk.dir=/path/to/your/android/sdk
