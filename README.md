@@ -25,10 +25,6 @@ Please refer to the following for detailed design documentation:
 
 ## Development Environment
 
-### Required Environment Variables
-
-- `GOOGLE_PLACES_API_KEY` - Google Places API key (Places API enabled)
-
 ### Google Cloud Platform API Configuration
 
 Enable the following APIs in your Google Cloud Console and configure the corresponding API keys:
