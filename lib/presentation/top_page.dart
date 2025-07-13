@@ -96,7 +96,36 @@ class _TopPageState extends State<TopPage> {
             ? const MapDisplayPlaceholder()
             : const MapDisplay();
       case NavigationItem.groupSettings:
-        return const GroupSettings();
+        if (_currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return widget.isTestEnvironment
+            ? Container(
+                key: const Key('group_settings'),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.group_work, size: 100, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text(
+                        'グループ設定',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'グループ設定画面',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : GroupSettings(member: _currentMember!);
       case NavigationItem.memberSettings:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());

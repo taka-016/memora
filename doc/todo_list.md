@@ -118,25 +118,25 @@
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
 
 ## グループ設定画面
+- [x] グループ設定メニューから開く
 - [x] usecaseの作成
   - [x] GroupをadministratorIdで取得するusecaseを作成する（GetManagedMembersUsecaseを参考に）
   - [x] GroupMemberをgroupIdで取得するusecaseを作成する（GetGroupMembersByGroupIdUsecase）
   - [x] Groupを新規作成するusecaseを作成する（CreateMemberUsecaseを参考に）
   - [x] Groupを編集するusecaseを作成する（UpdateMemberUsecaseを参考に）
   - [x] Groupを削除するusecaseを作成する（DeleteMemberUsecaseを参考に）
-- [ ] グループ設定メニューから開く
-- [ ] グループ一覧表示
-  - [ ] ログインユーザーが管理しているグループの一覧を表示する
-  - [ ] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
-- [ ] グループ新規登録
+- [x] グループ一覧表示(MemberSettingsを参考に)
+  - [x] ログインユーザーが管理しているグループの一覧を表示する
+  - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
+- [ ] グループ新規登録(MemberSettings,MemberEditModalを参考に)
   - [ ] Groupのid,administratorId以外の入力項目を作成する(モーダル画面)
   - [ ] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
   - [ ] グループに所属させるメンバーを選択できる（ログインユーザーが管理しているメンバーから選択）
-- [ ] グループ情報編集
+- [ ] グループ情報編集(MemberSettings,MemberEditModalを参考に)
   - [ ] グループ一覧から対象グループの編集ボタンをクリックして開く
   - [ ] グループ新規登録と同一の情報がすべて編集可能（同一画面を使いまわす）
   - [ ] グループに所属させるメンバーの追加削除ができる（ログインユーザーが管理しているメンバーから選択）
-- [ ] グループ削除
+- [ ] グループ削除(MemberSettingsを参考に)
   - [ ] グループ一覧から対象グループの削除ボタンをクリック
   - [ ] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
 
