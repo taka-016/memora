@@ -128,10 +128,10 @@
 - [x] グループ一覧表示(MemberSettingsを参考に)
   - [x] ログインユーザーが管理しているグループの一覧を表示する
   - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
-- [ ] グループ新規登録(MemberSettings,MemberEditModalを参考に)
-  - [ ] Groupのid,administratorId以外の入力項目を作成する(モーダル画面)
-  - [ ] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
-  - [ ] グループに所属させるメンバーを選択できる（ログインユーザーが管理しているメンバーから選択）
+- [x] グループ新規登録(MemberSettings,MemberEditModalを参考に)
+  - [x] Groupのid,administratorId以外の入力項目を作成する(モーダル画面)
+  - [x] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
+  - [x] グループに所属させるメンバーを選択できる（ログインユーザーが管理しているメンバーから選択）
 - [ ] グループ情報編集(MemberSettings,MemberEditModalを参考に)
   - [ ] グループ一覧から対象グループの編集ボタンをクリックして開く
   - [ ] グループ新規登録と同一の情報がすべて編集可能（同一画面を使いまわす）
