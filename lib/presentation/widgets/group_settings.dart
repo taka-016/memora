@@ -1,16 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../application/usecases/get_managed_groups_usecase.dart';
 import '../../application/usecases/delete_group_usecase.dart';
+import '../../application/usecases/create_group_usecase.dart';
+import '../../application/usecases/get_managed_members_usecase.dart';
+import '../../application/usecases/create_group_member_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/entities/group.dart';
+import '../../domain/entities/group_member.dart';
 import '../../domain/repositories/group_repository.dart';
+import '../../domain/repositories/member_repository.dart';
+import '../../domain/repositories/group_member_repository.dart';
 import '../../infrastructure/repositories/firestore_group_repository.dart';
+import '../../infrastructure/repositories/firestore_member_repository.dart';
+import '../../infrastructure/repositories/firestore_group_member_repository.dart';
+import 'group_edit_modal.dart';
 
 class GroupSettings extends StatefulWidget {
   final Member member;
   final GroupRepository? groupRepository;
+  final MemberRepository? memberRepository;
+  final GroupMemberRepository? groupMemberRepository;
 
-  const GroupSettings({super.key, required this.member, this.groupRepository});
+  const GroupSettings({
+    super.key,
+    required this.member,
+    this.groupRepository,
+    this.memberRepository,
+    this.groupMemberRepository,
+  });
 
   @override
   State<GroupSettings> createState() => _GroupSettingsState();
@@ -19,6 +37,9 @@ class GroupSettings extends StatefulWidget {
 class _GroupSettingsState extends State<GroupSettings> {
   late final GetManagedGroupsUsecase _getManagedGroupsUsecase;
   late final DeleteGroupUsecase _deleteGroupUsecase;
+  late final CreateGroupUsecase _createGroupUsecase;
+  late final GetManagedMembersUsecase _getManagedMembersUsecase;
+  late final CreateGroupMemberUsecase _createGroupMemberUsecase;
 
   List<Group> _managedGroups = [];
   bool _isLoading = true;
@@ -30,9 +51,16 @@ class _GroupSettingsState extends State<GroupSettings> {
     // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final groupRepository =
         widget.groupRepository ?? FirestoreGroupRepository();
+    final memberRepository =
+        widget.memberRepository ?? FirestoreMemberRepository();
+    final groupMemberRepository =
+        widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
 
     _getManagedGroupsUsecase = GetManagedGroupsUsecase(groupRepository);
     _deleteGroupUsecase = DeleteGroupUsecase(groupRepository);
+    _createGroupUsecase = CreateGroupUsecase(groupRepository);
+    _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
+    _createGroupMemberUsecase = CreateGroupMemberUsecase(groupMemberRepository);
 
     _loadData();
   }
@@ -103,6 +131,75 @@ class _GroupSettingsState extends State<GroupSettings> {
     }
   }
 
+  Future<void> _showGroupEditModal({Group? group}) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      // 利用可能なメンバーを取得
+      final availableMembers = await _getManagedMembersUsecase.execute(
+        widget.member,
+      );
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (context) => GroupEditModal(
+          group: group,
+          availableMembers: availableMembers,
+          onSave: (editedGroup, selectedMemberIds) async {
+            try {
+              if (group == null) {
+                final newGroupId = const Uuid().v4();
+                final newGroup = Group(
+                  id: newGroupId,
+                  administratorId: widget.member.id,
+                  name: editedGroup.name,
+                  memo: editedGroup.memo,
+                );
+                await _createGroupUsecase.execute(newGroup);
+
+                // 選択されたメンバーをGroupMemberとして登録
+                for (final memberId in selectedMemberIds) {
+                  final groupMember = GroupMember(
+                    id: const Uuid().v4(),
+                    groupId: newGroupId,
+                    memberId: memberId,
+                  );
+                  await _createGroupMemberUsecase.execute(groupMember);
+                }
+              } else {
+                // TODO: グループ更新機能は後で実装
+              }
+              if (mounted) {
+                await _loadData();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      group == null ? 'グループを作成しました' : 'グループを更新しました',
+                    ),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('操作に失敗しました: $e')),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -126,7 +223,7 @@ class _GroupSettingsState extends State<GroupSettings> {
                       ),
                       const Spacer(),
                       ElevatedButton.icon(
-                        onPressed: () => {},
+                        onPressed: () => _showGroupEditModal(),
                         icon: const Icon(Icons.add),
                         label: const Text('グループ追加'),
                       ),
