@@ -82,14 +82,12 @@ class _GroupEditModalState extends State<GroupEditModal> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
-                        key: const Key('memo_field'),
                         controller: _memoController,
                         decoration: const InputDecoration(
                           labelText: 'メモ',
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 3,
-                        textAlignVertical: TextAlignVertical.top,
                       ),
                       const SizedBox(height: 16),
                       if (widget.availableMembers.isNotEmpty) ...[
