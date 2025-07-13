@@ -104,7 +104,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
                         const SizedBox(height: 8),
                         Container(
                           key: const Key('member_list_container'),
-                          height: 300,
+                          height: 350,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey.shade300),
                             borderRadius: BorderRadius.circular(4),
