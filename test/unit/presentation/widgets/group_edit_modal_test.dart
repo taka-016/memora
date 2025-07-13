@@ -185,5 +185,32 @@ void main() {
       // モーダルが閉じることを確認
       expect(find.text('グループ新規作成'), findsNothing);
     });
+
+    testWidgets('メンバー数が多い場合、メンバー一覧のみスクロール可能', (WidgetTester tester) async {
+      // 多数のメンバーを生成
+      final availableMembers = List.generate(
+        10,
+        (index) => Member(
+          id: 'member$index',
+          administratorId: 'admin-id',
+          displayName: 'メンバー$index',
+        ),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      // メンバー選択セクションが存在することを確認
+      expect(find.text('メンバー選択'), findsOneWidget);
+
+      // メンバー一覧コンテナが存在することを確認
+      expect(find.byKey(const Key('member_list_container')), findsOneWidget);
+    });
   });
 }

@@ -82,12 +82,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        key: const Key('memo_field'),
                         controller: _memoController,
                         decoration: const InputDecoration(
                           labelText: 'メモ',
                           border: OutlineInputBorder(),
                         ),
                         maxLines: 3,
+                        textAlignVertical: TextAlignVertical.top,
                       ),
                       const SizedBox(height: 16),
                       if (widget.availableMembers.isNotEmpty) ...[
@@ -102,23 +104,39 @@ class _GroupEditModalState extends State<GroupEditModal> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        ...widget.availableMembers.map(
-                          (member) => CheckboxListTile(
-                            title: Text(member.displayName),
-                            subtitle:
-                                member.email != null ||
-                                    member.phoneNumber != null
-                                ? Text(member.email ?? member.phoneNumber ?? '')
-                                : null,
-                            value: _selectedMemberIds.contains(member.id),
-                            onChanged: (value) {
-                              setState(() {
-                                if (value == true) {
-                                  _selectedMemberIds.add(member.id);
-                                } else {
-                                  _selectedMemberIds.remove(member.id);
-                                }
-                              });
+                        Container(
+                          key: const Key('member_list_container'),
+                          height: 200,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: ListView.builder(
+                            itemCount: widget.availableMembers.length,
+                            itemBuilder: (context, index) {
+                              final member = widget.availableMembers[index];
+                              return CheckboxListTile(
+                                title: Text(member.displayName),
+                                subtitle:
+                                    member.email != null ||
+                                        member.phoneNumber != null
+                                    ? Text(
+                                        member.email ??
+                                            member.phoneNumber ??
+                                            '',
+                                      )
+                                    : null,
+                                value: _selectedMemberIds.contains(member.id),
+                                onChanged: (value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      _selectedMemberIds.add(member.id);
+                                    } else {
+                                      _selectedMemberIds.remove(member.id);
+                                    }
+                                  });
+                                },
+                              );
                             },
                           ),
                         ),
