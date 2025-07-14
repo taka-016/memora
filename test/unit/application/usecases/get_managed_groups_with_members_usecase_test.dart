@@ -30,7 +30,7 @@ void main() {
   });
 
   group('GetManagedGroupsWithMembersUsecase', () {
-    test('should return list of managed groups with their members', () async {
+    test('管理するグループとそのメンバーの一覧を返すこと', () async {
       // arrange
       const administratorId = 'admin123';
       final administratorMember = Member(
@@ -102,7 +102,7 @@ void main() {
       verify(mockMemberRepository.getMemberById('member2'));
     });
 
-    test('should return empty list when no groups found', () async {
+    test('グループが見つからない場合に空のリストを返すこと', () async {
       // arrange
       const administratorId = 'admin123';
       final administratorMember = Member(
