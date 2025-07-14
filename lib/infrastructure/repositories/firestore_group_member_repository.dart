@@ -62,4 +62,19 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
       return [];
     }
   }
+
+  @override
+  Future<void> deleteGroupMembersByGroupId(String groupId) async {
+    final batch = _firestore.batch();
+    final snapshot = await _firestore
+        .collection('group_members')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }
