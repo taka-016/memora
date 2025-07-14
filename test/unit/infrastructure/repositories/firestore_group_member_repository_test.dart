@@ -12,6 +12,7 @@ import 'package:memora/domain/entities/group_member.dart';
   QuerySnapshot,
   QueryDocumentSnapshot,
   Query,
+  WriteBatch,
 ])
 import 'firestore_group_member_repository_test.mocks.dart';
 
@@ -152,6 +153,31 @@ void main() {
       final result = await repository.getGroupMembersByMemberId(memberId);
 
       expect(result, isEmpty);
+    });
+
+    test('deleteGroupMembersByGroupIdがグループのすべてのメンバーを一括削除する', () async {
+      const groupId = 'group001';
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocRef2 = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
+
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+      when(mockDoc1.reference).thenReturn(mockDocRef1);
+      when(mockDoc2.reference).thenReturn(mockDocRef2);
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
+
+      await repository.deleteGroupMembersByGroupId(groupId);
+
+      verify(mockFirestore.batch()).called(1);
+      verify(mockWriteBatch.delete(mockDocRef1)).called(1);
+      verify(mockWriteBatch.delete(mockDocRef2)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
     });
   });
 }

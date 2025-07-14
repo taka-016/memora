@@ -6,7 +6,7 @@ import '../../application/usecases/create_group_usecase.dart';
 import '../../application/usecases/update_group_usecase.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
 import '../../application/usecases/create_group_member_usecase.dart';
-import '../../application/usecases/get_group_members_by_group_id_usecase.dart';
+import '../../application/usecases/delete_group_members_by_group_id_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/group_member.dart';
@@ -44,7 +44,8 @@ class _GroupSettingsState extends State<GroupSettings> {
   late final UpdateGroupUsecase _updateGroupUsecase;
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
   late final CreateGroupMemberUsecase _createGroupMemberUsecase;
-  late final GetGroupMembersByGroupIdUsecase _getGroupMembersByGroupIdUsecase;
+  late final DeleteGroupMembersByGroupIdUsecase
+  _deleteGroupMembersByGroupIdUsecase;
 
   List<ManagedGroupWithMembers> _managedGroupsWithMembers = [];
   bool _isLoading = true;
@@ -71,7 +72,7 @@ class _GroupSettingsState extends State<GroupSettings> {
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createGroupMemberUsecase = CreateGroupMemberUsecase(groupMemberRepository);
-    _getGroupMembersByGroupIdUsecase = GetGroupMembersByGroupIdUsecase(
+    _deleteGroupMembersByGroupIdUsecase = DeleteGroupMembersByGroupIdUsecase(
       groupMemberRepository,
     );
 
@@ -197,14 +198,8 @@ class _GroupSettingsState extends State<GroupSettings> {
                 // グループ情報を更新
                 await _updateGroupUsecase.execute(editedGroup);
 
-                // 既存のGroupMemberを削除
-                final existingGroupMembers =
-                    await _getGroupMembersByGroupIdUsecase.execute(group.id);
-                for (final groupMember in existingGroupMembers) {
-                  await (widget.groupMemberRepository ??
-                          FirestoreGroupMemberRepository())
-                      .deleteGroupMember(groupMember.id);
-                }
+                // 既存のGroupMemberを一括削除
+                await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
 
                 // 新しいGroupMemberを作成
                 for (final memberId in selectedMemberIds) {
