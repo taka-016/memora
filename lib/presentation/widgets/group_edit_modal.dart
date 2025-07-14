@@ -6,12 +6,14 @@ class GroupEditModal extends StatefulWidget {
   final Group? group;
   final Function(Group, List<String>) onSave;
   final List<Member> availableMembers;
+  final List<String>? selectedMemberIds;
 
   const GroupEditModal({
     super.key,
     this.group,
     required this.onSave,
     required this.availableMembers,
+    this.selectedMemberIds,
   });
 
   @override
@@ -29,6 +31,11 @@ class _GroupEditModalState extends State<GroupEditModal> {
     super.initState();
     _nameController = TextEditingController(text: widget.group?.name ?? '');
     _memoController = TextEditingController(text: widget.group?.memo ?? '');
+
+    // 既存の選択されたメンバーIDを設定
+    if (widget.selectedMemberIds != null) {
+      _selectedMemberIds.addAll(widget.selectedMemberIds!);
+    }
   }
 
   @override
