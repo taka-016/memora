@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import '../../application/usecases/get_managed_groups_usecase.dart';
+import '../../application/usecases/get_managed_groups_with_members_usecase.dart';
 import '../../application/usecases/delete_group_usecase.dart';
 import '../../application/usecases/create_group_usecase.dart';
+import '../../application/usecases/update_group_usecase.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
 import '../../application/usecases/create_group_member_usecase.dart';
+import '../../application/usecases/delete_group_members_by_group_id_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/entities/group.dart';
 import '../../domain/entities/group_member.dart';
@@ -35,13 +37,17 @@ class GroupSettings extends StatefulWidget {
 }
 
 class _GroupSettingsState extends State<GroupSettings> {
-  late final GetManagedGroupsUsecase _getManagedGroupsUsecase;
+  late final GetManagedGroupsWithMembersUsecase
+  _getManagedGroupsWithMembersUsecase;
   late final DeleteGroupUsecase _deleteGroupUsecase;
   late final CreateGroupUsecase _createGroupUsecase;
+  late final UpdateGroupUsecase _updateGroupUsecase;
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
   late final CreateGroupMemberUsecase _createGroupMemberUsecase;
+  late final DeleteGroupMembersByGroupIdUsecase
+  _deleteGroupMembersByGroupIdUsecase;
 
-  List<Group> _managedGroups = [];
+  List<ManagedGroupWithMembers> _managedGroupsWithMembers = [];
   bool _isLoading = true;
 
   @override
@@ -56,11 +62,19 @@ class _GroupSettingsState extends State<GroupSettings> {
     final groupMemberRepository =
         widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
 
-    _getManagedGroupsUsecase = GetManagedGroupsUsecase(groupRepository);
+    _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
+      groupRepository,
+      groupMemberRepository,
+      memberRepository,
+    );
     _deleteGroupUsecase = DeleteGroupUsecase(groupRepository);
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
+    _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createGroupMemberUsecase = CreateGroupMemberUsecase(groupMemberRepository);
+    _deleteGroupMembersByGroupIdUsecase = DeleteGroupMembersByGroupIdUsecase(
+      groupMemberRepository,
+    );
 
     _loadData();
   }
@@ -71,10 +85,9 @@ class _GroupSettingsState extends State<GroupSettings> {
     });
 
     try {
-      final managedGroups = await _getManagedGroupsUsecase.execute(
-        widget.member,
-      );
-      _managedGroups = managedGroups;
+      final managedGroupsWithMembers = await _getManagedGroupsWithMembersUsecase
+          .execute(widget.member);
+      _managedGroupsWithMembers = managedGroupsWithMembers;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -140,6 +153,18 @@ class _GroupSettingsState extends State<GroupSettings> {
         widget.member,
       );
 
+      // 既存のグループメンバーIDを取得（編集の場合）
+      List<String>? existingMemberIds;
+      if (group != null) {
+        // 既に_managedGroupsWithMembersにメンバー情報が含まれているので、それを使用
+        final groupWithMembers = _managedGroupsWithMembers.firstWhere(
+          (gwm) => gwm.group.id == group.id,
+        );
+        existingMemberIds = groupWithMembers.members
+            .map((member) => member.id)
+            .toList();
+      }
+
       if (!mounted) return;
 
       await showDialog(
@@ -147,6 +172,7 @@ class _GroupSettingsState extends State<GroupSettings> {
         builder: (context) => GroupEditModal(
           group: group,
           availableMembers: availableMembers,
+          selectedMemberIds: existingMemberIds,
           onSave: (editedGroup, selectedMemberIds) async {
             try {
               if (group == null) {
@@ -169,7 +195,21 @@ class _GroupSettingsState extends State<GroupSettings> {
                   await _createGroupMemberUsecase.execute(groupMember);
                 }
               } else {
-                // TODO: グループ更新機能は後で実装
+                // グループ情報を更新
+                await _updateGroupUsecase.execute(editedGroup);
+
+                // 既存のGroupMemberを一括削除
+                await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
+
+                // 新しいGroupMemberを作成
+                for (final memberId in selectedMemberIds) {
+                  final groupMember = GroupMember(
+                    id: const Uuid().v4(),
+                    groupId: group.id,
+                    memberId: memberId,
+                  );
+                  await _createGroupMemberUsecase.execute(groupMember);
+                }
               }
               if (mounted) {
                 await _loadData();
@@ -232,7 +272,7 @@ class _GroupSettingsState extends State<GroupSettings> {
                 ),
                 const Divider(),
                 Expanded(
-                  child: _managedGroups.isEmpty
+                  child: _managedGroupsWithMembers.isEmpty
                       ? const Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -265,9 +305,11 @@ class _GroupSettingsState extends State<GroupSettings> {
                       : RefreshIndicator(
                           onRefresh: _loadData,
                           child: ListView.builder(
-                            itemCount: _managedGroups.length,
+                            itemCount: _managedGroupsWithMembers.length,
                             itemBuilder: (context, index) {
-                              final group = _managedGroups[index];
+                              final groupWithMembers =
+                                  _managedGroupsWithMembers[index];
+                              final group = groupWithMembers.group;
 
                               return Card(
                                 margin: const EdgeInsets.symmetric(
@@ -289,6 +331,8 @@ class _GroupSettingsState extends State<GroupSettings> {
                                     ),
                                     onPressed: () => _deleteGroup(group),
                                   ),
+                                  onTap: () =>
+                                      _showGroupEditModal(group: group),
                                 ),
                               );
                             },

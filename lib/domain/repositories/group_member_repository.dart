@@ -6,4 +6,5 @@ abstract class GroupMemberRepository {
   Future<void> deleteGroupMember(String groupMemberId);
   Future<List<GroupMember>> getGroupMembersByGroupId(String groupId);
   Future<List<GroupMember>> getGroupMembersByMemberId(String memberId);
+  Future<void> deleteGroupMembersByGroupId(String groupId);
 }
