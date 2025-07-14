@@ -17,7 +17,7 @@ void main() {
   });
 
   group('DeleteMemberUsecase', () {
-    test('should delete member by ID', () async {
+    test('IDによってメンバーを削除すること', () async {
       // Arrange
       const memberId = 'member-to-delete-id';
 
@@ -30,7 +30,7 @@ void main() {
       verify(mockMemberRepository.deleteMember(memberId)).called(1);
     });
 
-    test('should handle empty member ID', () async {
+    test('空のメンバーIDを処理すること', () async {
       // Arrange
       const memberId = '';
 

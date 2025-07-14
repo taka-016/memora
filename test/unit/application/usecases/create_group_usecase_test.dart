@@ -18,7 +18,7 @@ void main() {
   });
 
   group('CreateGroupUsecase', () {
-    test('should save group to repository', () async {
+    test('グループをリポジトリに保存すること', () async {
       // arrange
       final group = Group(
         id: 'group123',
@@ -35,7 +35,7 @@ void main() {
       verify(mockGroupRepository.saveGroup(group));
     });
 
-    test('should complete without error for valid group', () async {
+    test('有効なグループに対してエラーなく完了すること', () async {
       // arrange
       final group = Group(
         id: 'group123',

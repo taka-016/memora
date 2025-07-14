@@ -18,66 +18,63 @@ void main() {
   });
 
   group('GetManagedMembersUsecase', () {
-    test(
-      'should return list of managed members when administrator member is provided',
-      () async {
-        // Arrange
-        final administratorMember = Member(
-          id: 'admin-member-id',
-          accountId: 'admin-account-id',
-          administratorId: 'admin-administrator-id',
-          displayName: 'Admin',
-          kanjiLastName: '管理',
-          kanjiFirstName: '太郎',
-          hiraganaLastName: 'カンリ',
-          hiraganaFirstName: 'タロウ',
+    test('管理者メンバーが提供された時に管理されるメンバーのリストを返すこと', () async {
+      // Arrange
+      final administratorMember = Member(
+        id: 'admin-member-id',
+        accountId: 'admin-account-id',
+        administratorId: 'admin-administrator-id',
+        displayName: 'Admin',
+        kanjiLastName: '管理',
+        kanjiFirstName: '太郎',
+        hiraganaLastName: 'カンリ',
+        hiraganaFirstName: 'タロウ',
+        gender: 'male',
+        birthday: DateTime(1990, 1, 1),
+      );
+
+      final expectedMembers = [
+        Member(
+          id: 'member-1',
+          accountId: null,
+          administratorId: 'admin-member-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'タナカ',
+          hiraganaFirstName: 'ハナコ',
+          gender: 'female',
+          birthday: DateTime(1995, 5, 10),
+        ),
+        Member(
+          id: 'member-2',
+          accountId: null,
+          administratorId: 'admin-member-id',
+          displayName: 'メンバー2',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '次郎',
+          hiraganaLastName: 'サトウ',
+          hiraganaFirstName: 'ジロウ',
           gender: 'male',
-          birthday: DateTime(1990, 1, 1),
-        );
+          birthday: DateTime(2000, 12, 25),
+        ),
+      ];
 
-        final expectedMembers = [
-          Member(
-            id: 'member-1',
-            accountId: null,
-            administratorId: 'admin-member-id',
-            displayName: 'メンバー1',
-            kanjiLastName: '田中',
-            kanjiFirstName: '花子',
-            hiraganaLastName: 'タナカ',
-            hiraganaFirstName: 'ハナコ',
-            gender: 'female',
-            birthday: DateTime(1995, 5, 10),
-          ),
-          Member(
-            id: 'member-2',
-            accountId: null,
-            administratorId: 'admin-member-id',
-            displayName: 'メンバー2',
-            kanjiLastName: '佐藤',
-            kanjiFirstName: '次郎',
-            hiraganaLastName: 'サトウ',
-            hiraganaFirstName: 'ジロウ',
-            gender: 'male',
-            birthday: DateTime(2000, 12, 25),
-          ),
-        ];
+      when(
+        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+      ).thenAnswer((_) async => expectedMembers);
 
-        when(
-          mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
-        ).thenAnswer((_) async => expectedMembers);
+      // Act
+      final result = await usecase.execute(administratorMember);
 
-        // Act
-        final result = await usecase.execute(administratorMember);
+      // Assert
+      expect(result, equals(expectedMembers));
+      verify(
+        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+      ).called(1);
+    });
 
-        // Assert
-        expect(result, equals(expectedMembers));
-        verify(
-          mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
-        ).called(1);
-      },
-    );
-
-    test('should return empty list when no managed members exist', () async {
+    test('管理されるメンバーが存在しない場合に空のリストを返すこと', () async {
       // Arrange
       final administratorMember = Member(
         id: 'admin-member-id',
