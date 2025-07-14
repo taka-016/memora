@@ -88,16 +88,48 @@ void main() {
     });
 
     testWidgets('利用可能なメンバーが表示される', (WidgetTester tester) async {
-      const availableMembers = [
+      final availableMembers = [
         Member(
           id: 'member1',
+          accountId: 'account1',
           administratorId: 'admin-id',
           displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
         ),
         Member(
           id: 'member2',
+          accountId: 'account2',
           administratorId: 'admin-id',
           displayName: 'メンバー2',
+          kanjiLastName: '鈴木',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'すずき',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Suzuki',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-8765-4321',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
         ),
       ];
 
@@ -115,11 +147,27 @@ void main() {
     });
 
     testWidgets('メンバーを選択できる', (WidgetTester tester) async {
-      const availableMembers = [
+      final availableMembers = [
         Member(
           id: 'member1',
+          accountId: 'account1',
           administratorId: 'admin-id',
           displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
         ),
       ];
 
@@ -192,8 +240,24 @@ void main() {
         10,
         (index) => Member(
           id: 'member$index',
+          accountId: 'account$index',
           administratorId: 'admin-id',
           displayName: 'メンバー$index',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'test$index@example.com',
+          phoneNumber: '090-1234-567$index',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
         ),
       );
 
@@ -211,6 +275,113 @@ void main() {
 
       // メンバー一覧コンテナが存在することを確認
       expect(find.byKey(const Key('member_list_container')), findsOneWidget);
+    });
+
+    testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
+      const group = Group(
+        id: 'test-id',
+        administratorId: 'admin-id',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+      );
+
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          administratorId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+        Member(
+          id: 'member2',
+          accountId: 'account2',
+          administratorId: 'admin-id',
+          displayName: 'メンバー2',
+          kanjiLastName: '鈴木',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'すずき',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Suzuki',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-8765-4321',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: group,
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: availableMembers,
+            selectedMemberIds: ['member1'], // member1が既に選択されている
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // member1のチェックボックスが選択されていることを確認
+      final checkbox1 = tester.widget<CheckboxListTile>(
+        find.byType(CheckboxListTile).first,
+      );
+      expect(checkbox1.value, isTrue);
+
+      // member2のチェックボックスが選択されていないことを確認
+      final checkbox2 = tester.widget<CheckboxListTile>(
+        find.byType(CheckboxListTile).at(1),
+      );
+      expect(checkbox2.value, isFalse);
+    });
+
+    testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {
+      const group = Group(
+        id: 'test-id',
+        administratorId: 'admin-id',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: group,
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: const [],
+          ),
+        ),
+      );
+
+      // グループ名が正しく表示されることを確認
+      expect(find.text('テストグループ'), findsOneWidget);
+
+      // メモが正しく表示されることを確認
+      expect(find.text('テストメモ'), findsOneWidget);
+
+      // 更新ボタンが表示されることを確認
+      expect(find.text('更新'), findsOneWidget);
     });
   });
 }
