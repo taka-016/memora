@@ -17,7 +17,7 @@ void main() {
   });
 
   group('DeleteGroupUsecase', () {
-    test('should delete group from repository', () async {
+    test('リポジトリからグループを削除すること', () async {
       // arrange
       const groupId = 'group123';
 
@@ -32,7 +32,7 @@ void main() {
       verify(mockGroupRepository.deleteGroup(groupId));
     });
 
-    test('should complete without error for valid group id', () async {
+    test('有効なグループIDに対してエラーなく完了すること', () async {
       // arrange
       const groupId = 'group123';
 

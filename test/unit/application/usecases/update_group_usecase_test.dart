@@ -18,7 +18,7 @@ void main() {
   });
 
   group('UpdateGroupUsecase', () {
-    test('should update group in repository', () async {
+    test('リポジトリでグループを更新すること', () async {
       // arrange
       final group = Group(
         id: 'group123',
@@ -35,7 +35,7 @@ void main() {
       verify(mockGroupRepository.updateGroup(group));
     });
 
-    test('should complete without error for valid group', () async {
+    test('有効なグループに対してエラーなく完了すること', () async {
       // arrange
       final group = Group(
         id: 'group123',

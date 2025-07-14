@@ -18,7 +18,7 @@ void main() {
   });
 
   group('UpdateMemberUsecase', () {
-    test('should update member information', () async {
+    test('メンバー情報を更新すること', () async {
       // Arrange
       final updatedMember = Member(
         id: 'member-id',
@@ -42,7 +42,7 @@ void main() {
       verify(mockMemberRepository.updateMember(updatedMember)).called(1);
     });
 
-    test('should update member with minimal data', () async {
+    test('最小限のデータでメンバーを更新すること', () async {
       // Arrange
       final updatedMember = Member(id: 'member-id', displayName: '更新表示名');
 
