@@ -18,7 +18,7 @@ void main() {
   });
 
   group('CreateMemberUsecase', () {
-    test('should create a new member', () async {
+    test('新しいメンバーを作成すること', () async {
       // Arrange
       final newMember = Member(
         id: 'new-member-id',
@@ -41,7 +41,7 @@ void main() {
       verify(mockMemberRepository.saveMember(newMember)).called(1);
     });
 
-    test('should create member with minimal data', () async {
+    test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
       final newMember = Member(
         id: 'new-member-id',
