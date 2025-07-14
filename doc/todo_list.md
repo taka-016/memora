@@ -137,6 +137,13 @@
   - [x] グループ一覧から対象グループの行をクリックして編集する
   - [x] グループ新規登録と同一の情報がすべて編集可能（同一画面を使いまわす）
   - [x] グループに所属させるメンバーの追加削除ができる（ログインユーザーが管理しているメンバーから選択）
+- [x] GetManagedGroupsUsecaseをGetManagedGroupsWithMembersUsecaseに改修
+  - [x] GetManagedGroupsUsecaseにメンバー情報も取得する機能を追加
+  - [x] ファイル名とクラス名をget_managed_groups_with_members_usecaseに変更
+  - [x] グループ設定画面でGetManagedGroupsWithMembersUsecaseを使用
+- [x] _showGroupEditModalの既存グループメンバー取得処理を削除
+  - [x] GetManagedGroupsWithMembersUsecaseで既にメンバー情報を取得しているため、重複する処理を削除
+  - [x] 編集モーダルには内部で保持しているメンバー情報を渡すように変更
 - [ ] グループ削除(MemberSettingsを参考に)
   - [ ] グループ一覧から対象グループの削除ボタンをクリック
   - [ ] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
