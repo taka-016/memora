@@ -6,7 +6,7 @@ class CreateGroupUsecase {
 
   CreateGroupUsecase(this._groupRepository);
 
-  Future<void> execute(Group group) async {
-    await _groupRepository.saveGroup(group);
+  Future<String> execute(Group group) async {
+    return await _groupRepository.saveGroup(group);
   }
 }
