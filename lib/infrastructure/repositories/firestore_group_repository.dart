@@ -13,7 +13,8 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<void> saveGroup(Group group) async {
     await _firestore
         .collection('groups')
-        .add(FirestoreGroupMapper.toFirestore(group));
+        .doc(group.id)
+        .set(FirestoreGroupMapper.toFirestore(group));
   }
 
   @override

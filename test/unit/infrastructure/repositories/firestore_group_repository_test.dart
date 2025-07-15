@@ -33,7 +33,7 @@ void main() {
       repository = FirestoreGroupRepository(firestore: mockFirestore);
     });
 
-    test('saveGroupがgroups collectionにグループ情報をaddする', () async {
+    test('saveGroupがgroups collectionにグループ情報を指定したIDで保存する', () async {
       final group = Group(
         id: 'group001',
         administratorId: 'admin001',
@@ -41,14 +41,15 @@ void main() {
         memo: 'テストメモ',
       );
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      when(mockCollection.doc('group001')).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveGroup(group);
 
+      verify(mockCollection.doc('group001')).called(1);
       verify(
-        mockCollection.add(
+        mockDocRef.set(
           argThat(
             allOf([
               containsPair('name', 'テストグループ'),
