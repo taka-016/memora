@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path | select(endswith(\".dart\"))' | xargs -r dart format"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[$(date +\"%Y-%m-%d %H:%M:%S\")] $USER: $(jq -r '.tool_input.command')\" >> \".claude/command_history/$(date +%Y-%m-%d).log\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r 'if .tool_input.command | test(\"(^|\\s)(rm\\s+-rf|dd\\s+if=|:\\(\\)\\s*\\{\\s*:|:\\|:&\\s*\\};)\") then {\"decision\": \"block\", \"reason\": \"危険なコマンドは実行できません。別の方法を検討してください。\"} else empty end'"
+          }
+        ]
+      }
+    ]
+  }
+}
