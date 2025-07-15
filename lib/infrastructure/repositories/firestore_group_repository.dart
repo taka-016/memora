@@ -10,10 +10,11 @@ class FirestoreGroupRepository implements GroupRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> saveGroup(Group group) async {
-    await _firestore
+  Future<String> saveGroup(Group group) async {
+    final docRef = await _firestore
         .collection('groups')
         .add(FirestoreGroupMapper.toFirestore(group));
+    return docRef.id;
   }
 
   @override

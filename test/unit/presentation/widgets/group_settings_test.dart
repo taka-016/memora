@@ -553,5 +553,117 @@ void main() {
       // Assert - メンバー作成処理が呼ばれることを確認
       verify(mockGroupMemberRepository.saveGroupMember(any)).called(1);
     });
+
+    testWidgets('グループ削除時にグループメンバーも削除されること', (WidgetTester tester) async {
+      // Arrange
+      final managedGroups = [
+        Group(
+          id: 'group-1',
+          administratorId: testMember.id,
+          name: 'Test Group 1',
+          memo: 'Test memo 1',
+        ),
+      ];
+
+      when(
+        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedGroups);
+
+      when(
+        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
+      ).thenAnswer((_) async => []);
+
+      when(mockGroupRepository.deleteGroup('group-1')).thenAnswer((_) async {});
+      when(
+        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
+      ).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GroupSettings(
+              member: testMember,
+              groupRepository: mockGroupRepository,
+              memberRepository: mockMemberRepository,
+              groupMemberRepository: mockGroupMemberRepository,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 削除ボタンをタップ
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+
+      // 確認ダイアログで削除ボタンをタップ
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      // Assert - グループメンバー削除処理が呼ばれることを確認
+      verify(
+        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
+      ).called(1);
+      verify(mockGroupRepository.deleteGroup('group-1')).called(1);
+    });
+
+    testWidgets('グループ削除時にエラーが発生した場合、エラーメッセージが表示されること', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final managedGroups = [
+        Group(
+          id: 'group-1',
+          administratorId: testMember.id,
+          name: 'Test Group 1',
+          memo: 'Test memo 1',
+        ),
+      ];
+
+      when(
+        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedGroups);
+
+      when(
+        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
+      ).thenAnswer((_) async => []);
+
+      // グループメンバー削除は成功するが、グループ削除でエラーが発生
+      when(
+        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
+      ).thenAnswer((_) async {});
+      when(
+        mockGroupRepository.deleteGroup('group-1'),
+      ).thenThrow(Exception('削除エラー'));
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GroupSettings(
+              member: testMember,
+              groupRepository: mockGroupRepository,
+              memberRepository: mockMemberRepository,
+              groupMemberRepository: mockGroupMemberRepository,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 削除ボタンをタップ
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+
+      // 確認ダイアログで削除ボタンをタップ
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      // Assert - エラーメッセージが表示されることを確認
+      expect(find.text('削除に失敗しました: Exception: 削除エラー'), findsOneWidget);
+    });
   });
 }
