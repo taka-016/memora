@@ -45,6 +45,7 @@ app.*.map.json
 /android/app/release
 
 .claude/settings.local.json
+.claude/command_history
 firebase_options.dart
 google-services.json
 .env
