@@ -33,23 +33,23 @@ void main() {
       repository = FirestoreGroupRepository(firestore: mockFirestore);
     });
 
-    test('saveGroupがgroups collectionにグループ情報を指定したIDで保存する', () async {
+    test('saveGroupがgroups collectionにグループ情報を追加し、自動採番IDを返す', () async {
       final group = Group(
-        id: 'group001',
+        id: '',
         administratorId: 'admin001',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
 
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.doc('group001')).thenReturn(mockDocRef);
-      when(mockDocRef.set(any)).thenAnswer((_) async {});
+      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(mockDocRef.id).thenReturn('auto_generated_id');
 
-      await repository.saveGroup(group);
+      final result = await repository.saveGroup(group);
 
-      verify(mockCollection.doc('group001')).called(1);
+      expect(result, 'auto_generated_id');
       verify(
-        mockDocRef.set(
+        mockCollection.add(
           argThat(
             allOf([
               containsPair('name', 'テストグループ'),

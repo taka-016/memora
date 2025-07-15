@@ -18,32 +18,37 @@ void main() {
   });
 
   group('CreateGroupUsecase', () {
-    test('グループをリポジトリに保存すること', () async {
+    test('グループをリポジトリに保存し、生成されたIDを返すこと', () async {
       // arrange
       final group = Group(
-        id: 'group123',
+        id: '',
         name: 'Test Group',
         administratorId: 'admin123',
       );
 
-      when(mockGroupRepository.saveGroup(group)).thenAnswer((_) async => {});
+      when(
+        mockGroupRepository.saveGroup(group),
+      ).thenAnswer((_) async => 'generated_id');
 
       // act
-      await usecase.execute(group);
+      final result = await usecase.execute(group);
 
       // assert
+      expect(result, 'generated_id');
       verify(mockGroupRepository.saveGroup(group));
     });
 
     test('有効なグループに対してエラーなく完了すること', () async {
       // arrange
       final group = Group(
-        id: 'group123',
+        id: '',
         name: 'Test Group',
         administratorId: 'admin123',
       );
 
-      when(mockGroupRepository.saveGroup(group)).thenAnswer((_) async => {});
+      when(
+        mockGroupRepository.saveGroup(group),
+      ).thenAnswer((_) async => 'generated_id');
 
       // act & assert
       expect(() => usecase.execute(group), returnsNormally);
