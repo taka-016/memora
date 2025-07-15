@@ -179,14 +179,13 @@ class _GroupSettingsState extends State<GroupSettings> {
           onSave: (editedGroup, selectedMemberIds) async {
             try {
               if (group == null) {
-                final newGroupId = const Uuid().v4();
                 final newGroup = Group(
-                  id: newGroupId,
+                  id: '', // IDは自動採番されるため空文字列
                   administratorId: widget.member.id,
                   name: editedGroup.name,
                   memo: editedGroup.memo,
                 );
-                await _createGroupUsecase.execute(newGroup);
+                final newGroupId = await _createGroupUsecase.execute(newGroup);
 
                 // 選択されたメンバーをGroupMemberとして登録
                 for (final memberId in selectedMemberIds) {
