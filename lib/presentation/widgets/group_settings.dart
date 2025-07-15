@@ -127,6 +127,9 @@ class _GroupSettingsState extends State<GroupSettings> {
 
     if (confirmed == true) {
       try {
+        // グループに紐づくグループメンバーを削除
+        await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
+        // グループを削除
         await _deleteGroupUsecase.execute(group.id);
         if (mounted) {
           await _loadData();
