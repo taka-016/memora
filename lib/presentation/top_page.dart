@@ -208,18 +208,18 @@ class _TopPageState extends State<TopPage> {
               onTap: () => _onNavigationItemSelected(NavigationItem.mapDisplay),
             ),
             ListTile(
-              leading: const Icon(Icons.group_work),
-              title: const Text('グループ設定'),
-              selected: _selectedItem == NavigationItem.groupSettings,
-              onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.groupSettings),
-            ),
-            ListTile(
               leading: const Icon(Icons.people),
               title: const Text('メンバー設定'),
               selected: _selectedItem == NavigationItem.memberSettings,
               onTap: () =>
                   _onNavigationItemSelected(NavigationItem.memberSettings),
+            ),
+            ListTile(
+              leading: const Icon(Icons.group_work),
+              title: const Text('グループ設定'),
+              selected: _selectedItem == NavigationItem.groupSettings,
+              onTap: () =>
+                  _onNavigationItemSelected(NavigationItem.groupSettings),
             ),
             ListTile(
               leading: const Icon(Icons.settings),
