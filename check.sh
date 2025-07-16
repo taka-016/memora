@@ -17,8 +17,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "🧪 Running test..."
-export PATH="$PATH":"$HOME/.pub-cache/bin"
-very_good test
+dart pub global run very_good_cli:very_good test
 
 if [ $? -ne 0 ]; then
     echo "❌ Tests failed"
