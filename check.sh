@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🔧 Running dart format..."
+echo "🔧 Running format..."
 dart format .
 
 if [ $? -ne 0 ]; then
@@ -8,7 +8,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "🔍 Running flutter analyze..."
+echo "🔍 Running analyze..."
 flutter analyze
 
 if [ $? -ne 0 ]; then
@@ -16,8 +16,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "🧪 Running flutter test..."
-flutter test
+echo "🧪 Running test..."
+export PATH="$PATH":"$HOME/.pub-cache/bin"
+very_good test
 
 if [ $? -ne 0 ]; then
     echo "❌ Tests failed"
