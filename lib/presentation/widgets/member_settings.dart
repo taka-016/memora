@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
 import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
@@ -93,28 +92,10 @@ class _MemberSettingsState extends State<MemberSettings> {
         onSave: (editedMember) async {
           try {
             if (member == null) {
-              final newMember = Member(
-                id: const Uuid().v4(),
-                accountId: editedMember.accountId,
-                administratorId: widget.member.id,
-                displayName: editedMember.displayName,
-                kanjiLastName: editedMember.kanjiLastName,
-                kanjiFirstName: editedMember.kanjiFirstName,
-                hiraganaLastName: editedMember.hiraganaLastName,
-                hiraganaFirstName: editedMember.hiraganaFirstName,
-                firstName: editedMember.firstName,
-                lastName: editedMember.lastName,
-                gender: editedMember.gender,
-                birthday: editedMember.birthday,
-                email: editedMember.email,
-                phoneNumber: editedMember.phoneNumber,
-                type: editedMember.type,
-                passportNumber: editedMember.passportNumber,
-                passportExpiration: editedMember.passportExpiration,
-                anaMileageNumber: editedMember.anaMileageNumber,
-                jalMileageNumber: editedMember.jalMileageNumber,
+              await _createMemberUsecase.execute(
+                editedMember,
+                widget.member.id,
               );
-              await _createMemberUsecase.execute(newMember);
             } else {
               await _updateMemberUsecase.execute(editedMember);
             }
