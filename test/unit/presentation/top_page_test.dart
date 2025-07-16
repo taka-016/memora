@@ -158,13 +158,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('トップページ'), findsOneWidget);
       expect(find.text('グループ年表'), findsOneWidget);
       expect(find.text('マップ表示'), findsOneWidget);
       expect(find.text('グループ設定'), findsOneWidget);
       expect(find.text('メンバー設定'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
-      expect(find.byIcon(Icons.home), findsOneWidget);
       expect(find.byIcon(Icons.timeline), findsOneWidget);
       expect(find.byIcon(Icons.map), findsOneWidget);
       expect(find.byIcon(Icons.group_work), findsOneWidget);
@@ -172,7 +170,7 @@ void main() {
       expect(find.byIcon(Icons.settings), findsOneWidget);
     });
 
-    testWidgets('初期状態ではトップページ画面が表示される', (WidgetTester tester) async {
+    testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -187,9 +185,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
+      expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('太郎'), findsOneWidget);
-      expect(find.text('花子'), findsOneWidget);
+      expect(find.text('2人のメンバー'), findsOneWidget);
       expect(find.byKey(const Key('group_member')), findsOneWidget);
     });
 
@@ -220,44 +218,7 @@ void main() {
       expect(find.byKey(const Key('group_member')), findsNothing);
     });
 
-    testWidgets('メニューから「トップページ」を選択すると、トップページ画面が表示される', (
-      WidgetTester tester,
-    ) async {
-      // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // マップ表示メニューをタップして画面切り替え
-      await tester.tap(find.text('マップ表示'));
-      await tester.pumpAndSettle();
-
-      // 再度ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // トップページメニューをタップ
-      await tester.tap(find.text('トップページ'));
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.byKey(const Key('group_member')), findsOneWidget);
-      expect(find.byKey(const Key('map_display')), findsNothing);
-    });
-
-    testWidgets('メニューから「グループ年表」を選択すると、グループ年表画面が表示される', (
+    testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -282,8 +243,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsNothing);
+      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
     testWidgets('メニューから「グループ設定」を選択すると、グループ設定画面が表示される', (

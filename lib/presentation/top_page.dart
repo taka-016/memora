@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_member.dart';
-import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_settings.dart';
@@ -16,7 +15,6 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/auth_state.dart';
 
 enum NavigationItem {
-  topPage, // トップページ (初期表示のグループ情報)
   groupTimeline, // グループ年表
   mapDisplay, // マップ表示
   groupSettings, // グループ設定
@@ -42,7 +40,7 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  NavigationItem _selectedItem = NavigationItem.topPage;
+  NavigationItem _selectedItem = NavigationItem.groupTimeline;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
 
@@ -81,7 +79,7 @@ class _TopPageState extends State<TopPage> {
 
   Widget _buildBody() {
     switch (_selectedItem) {
-      case NavigationItem.topPage:
+      case NavigationItem.groupTimeline:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -89,8 +87,6 @@ class _TopPageState extends State<TopPage> {
           getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
           member: _currentMember!,
         );
-      case NavigationItem.groupTimeline:
-        return const GroupTimeline();
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
@@ -197,12 +193,6 @@ class _TopPageState extends State<TopPage> {
                   );
                 }
               },
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('トップページ'),
-              selected: _selectedItem == NavigationItem.topPage,
-              onTap: () => _onNavigationItemSelected(NavigationItem.topPage),
             ),
             ListTile(
               leading: const Icon(Icons.timeline),
