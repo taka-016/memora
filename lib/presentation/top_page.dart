@@ -90,7 +90,13 @@ class _TopPageState extends State<TopPage> {
           member: _currentMember!,
         );
       case NavigationItem.groupTimeline:
-        return const GroupTimeline();
+        if (_currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return GroupTimeline(
+          currentMember: _currentMember!,
+          getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
+        );
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
