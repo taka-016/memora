@@ -102,9 +102,10 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('グループ2'), findsOneWidget);
       expect(find.text('1人のメンバー'), findsNWidgets(2));
+      expect(find.byIcon(Icons.arrow_forward_ios), findsNWidgets(2));
     });
 
-    testWidgets('グループが1つの場合、直接メンバー一覧が表示される', (WidgetTester tester) async {
+    testWidgets('グループが1つの場合でも、グループ一覧が表示される', (WidgetTester tester) async {
       // Arrange
       final member1 = Member(
         id: 'member1',
@@ -133,97 +134,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('テストグループ'), findsOneWidget);
-      expect(find.text('田中'), findsOneWidget);
-      expect(find.text('佐藤'), findsOneWidget);
-    });
-
-    testWidgets('グループ一覧からグループを選択するとメンバー一覧が表示される', (WidgetTester tester) async {
-      // Arrange
-      final member1 = Member(
-        id: 'member1',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '田中',
-        displayName: '田中',
-      );
-      final member2 = Member(
-        id: 'member2',
-        kanjiFirstName: '花子',
-        kanjiLastName: '佐藤',
-        displayName: '佐藤',
-      );
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: [member1],
-        ),
-        GroupWithMembers(
-          group: Group(id: '2', administratorId: 'admin1', name: 'グループ2'),
-          members: [member2],
-        ),
-      ];
-      when(
-        mockUsecase.execute(testMember),
-      ).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // グループ1をタップ
-      await tester.tap(find.text('グループ1'));
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('田中'), findsOneWidget);
-      expect(find.text('佐藤'), findsNothing);
-    });
-
-    testWidgets('メンバー一覧から戻るボタンでグループ一覧に戻る', (WidgetTester tester) async {
-      // Arrange
-      final member1 = Member(
-        id: 'member1',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '田中',
-        displayName: '田中',
-      );
-      final member2 = Member(
-        id: 'member2',
-        kanjiFirstName: '花子',
-        kanjiLastName: '佐藤',
-        displayName: '佐藤',
-      );
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: [member1],
-        ),
-        GroupWithMembers(
-          group: Group(id: '2', administratorId: 'admin1', name: 'グループ2'),
-          members: [member2],
-        ),
-      ];
-      when(
-        mockUsecase.execute(testMember),
-      ).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // グループ1をタップしてメンバー一覧へ
-      await tester.tap(find.text('グループ1'));
-      await tester.pumpAndSettle();
-
-      // 戻るボタンをタップ
-      await tester.tap(find.byIcon(Icons.arrow_back));
-      await tester.pumpAndSettle();
-
-      // Assert
       expect(find.text('グループ一覧'), findsOneWidget);
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('グループ2'), findsOneWidget);
+      expect(find.text('テストグループ'), findsOneWidget);
+      expect(find.text('2人のメンバー'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
 
     testWidgets('グループが存在しない場合、空状態が表示される', (WidgetTester tester) async {
@@ -236,29 +150,7 @@ void main() {
 
       // Assert
       expect(find.text('グループがありません'), findsOneWidget);
-      expect(find.text('グループを作成'), findsOneWidget);
-    });
-
-    testWidgets('メンバーがいないグループの場合、空メンバー状態が表示される', (WidgetTester tester) async {
-      // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
-          members: [],
-        ),
-      ];
-      when(
-        mockUsecase.execute(testMember),
-      ).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('テストグループ'), findsOneWidget);
-      expect(find.text('メンバーがいません'), findsOneWidget);
-      expect(find.text('メンバーを追加'), findsOneWidget);
+      expect(find.text('グループを作成'), findsNothing);
     });
 
     testWidgets('ローディング中はCircularProgressIndicatorが表示される', (
@@ -319,12 +211,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
+      expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsNothing);
       verify(mockUsecase.execute(testMember)).called(2); // 最初のエラー + 再読み込み
     });
 
-    testWidgets('メンバーが表示される', (WidgetTester tester) async {
+    testWidgets('グループ一覧でメンバー数が表示される', (WidgetTester tester) async {
       // Arrange
       final memberWithNickname = Member(
         id: 'member_with_nickname',
@@ -347,7 +240,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('タロちゃん'), findsOneWidget);
+      expect(find.text('グループ一覧'), findsOneWidget);
+      expect(find.text('テストグループ'), findsOneWidget);
+      expect(find.text('1人のメンバー'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
   });
 }
