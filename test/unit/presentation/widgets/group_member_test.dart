@@ -102,6 +102,7 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('グループ2'), findsOneWidget);
       expect(find.text('1人のメンバー'), findsNWidgets(2));
+      expect(find.byIcon(Icons.arrow_forward_ios), findsNWidgets(2));
     });
 
     testWidgets('グループが1つの場合でも、グループ一覧が表示される', (WidgetTester tester) async {
@@ -136,6 +137,7 @@ void main() {
       expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('2人のメンバー'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
 
     testWidgets('グループが存在しない場合、空状態が表示される', (WidgetTester tester) async {
@@ -241,6 +243,7 @@ void main() {
       expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('1人のメンバー'), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
   });
 }
