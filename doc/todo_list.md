@@ -124,6 +124,7 @@
 - [x] メンバー削除
   - [x] メンバー一覧から対象メンバーの削除ボタンをクリック
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
+- [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
 
 ## グループ設定画面
 - [x] グループ設定メニューから開く
