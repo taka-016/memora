@@ -32,7 +32,8 @@
                 "anthropic.claude-code",
                 "DavidAnson.vscode-markdownlint",
                 "donjayamanne.githistory",
-                "eamodio.gitlens"
+                "eamodio.gitlens",
+                "yzhang.markdown-all-in-one"
             ],
             "settings": {
                 "dart.showInspectorNotificationsForWidgetErrors": false,
