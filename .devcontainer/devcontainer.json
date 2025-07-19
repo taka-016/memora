@@ -29,7 +29,10 @@
                 "ms-vscode.vscode-json",
                 "redhat.vscode-yaml",
                 "bierner.markdown-mermaid",
-                "anthropic.claude-code"
+                "anthropic.claude-code",
+                "DavidAnson.vscode-markdownlint",
+                "donjayamanne.githistory",
+                "eamodio.gitlens"
             ],
             "settings": {
                 "dart.showInspectorNotificationsForWidgetErrors": false,
