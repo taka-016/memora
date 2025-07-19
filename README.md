@@ -21,7 +21,7 @@ Please refer to the following for detailed design documentation:
 - [Application Specification](./doc/app_spec.md) - Functional requirements and UI structure
 - [ER Diagram](./doc/er_diagram.md) - Database design
 - [Use Case Diagram](./doc/usecase_diagram.md) - System usage scenarios
-- [TODO List](./doc/todo_list.md) - Development progress status
+- [TODO List](./doc/todo.md) - Development progress status
 
 ## Development Environment
 
