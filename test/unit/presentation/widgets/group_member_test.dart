@@ -6,7 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/presentation/widgets/group_member.dart';
+import 'package:memora/presentation/widgets/group_list.dart';
 
 import 'group_member_test.mocks.dart';
 
@@ -35,7 +35,7 @@ void main() {
   Widget createTestWidget({Member? member}) {
     return MaterialApp(
       home: Scaffold(
-        body: GroupMember(
+        body: GroupList(
           getGroupsWithMembersUsecase: mockUsecase,
           member: member ?? testMember,
         ),
@@ -43,7 +43,7 @@ void main() {
     );
   }
 
-  group('GroupMember', () {
+  group('GroupList', () {
     testWidgets('メンバー引数を受け取るコンストラクタが正常に動作する', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [

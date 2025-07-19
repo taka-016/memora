@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
-import 'package:memora/presentation/widgets/group_member.dart';
+import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_settings.dart';
@@ -83,7 +83,7 @@ class _TopPageState extends State<TopPage> {
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return GroupMember(
+        return GroupList(
           getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
           member: _currentMember!,
         );
