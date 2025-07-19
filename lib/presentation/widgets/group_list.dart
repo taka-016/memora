@@ -2,24 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 
-enum GroupMemberState { loading, groupList, empty, error }
+enum GroupListState { loading, groupList, empty, error }
 
-class GroupMember extends StatefulWidget {
+class GroupList extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final Member member;
 
-  const GroupMember({
+  const GroupList({
     super.key,
     required this.getGroupsWithMembersUsecase,
     required this.member,
   });
 
   @override
-  State<GroupMember> createState() => _GroupMemberState();
+  State<GroupList> createState() => _GroupListState();
 }
 
-class _GroupMemberState extends State<GroupMember> {
-  GroupMemberState _state = GroupMemberState.loading;
+class _GroupListState extends State<GroupList> {
+  GroupListState _state = GroupListState.loading;
   List<GroupWithMembers> _groupsWithMembers = [];
   String _errorMessage = '';
 
@@ -33,7 +33,7 @@ class _GroupMemberState extends State<GroupMember> {
     try {
       if (!mounted) return;
       setState(() {
-        _state = GroupMemberState.loading;
+        _state = GroupListState.loading;
       });
 
       final groupsWithMembers = await widget.getGroupsWithMembersUsecase
@@ -44,15 +44,15 @@ class _GroupMemberState extends State<GroupMember> {
         _groupsWithMembers = groupsWithMembers;
 
         if (groupsWithMembers.isEmpty) {
-          _state = GroupMemberState.empty;
+          _state = GroupListState.empty;
         } else {
-          _state = GroupMemberState.groupList;
+          _state = GroupListState.groupList;
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _state = GroupMemberState.error;
+        _state = GroupListState.error;
         _errorMessage = 'エラーが発生しました';
       });
     }
@@ -65,16 +65,16 @@ class _GroupMemberState extends State<GroupMember> {
 
   Widget _buildBody() {
     switch (_state) {
-      case GroupMemberState.loading:
+      case GroupListState.loading:
         return const Center(child: CircularProgressIndicator());
 
-      case GroupMemberState.empty:
+      case GroupListState.empty:
         return _buildEmptyState();
 
-      case GroupMemberState.groupList:
+      case GroupListState.groupList:
         return _buildGroupList();
 
-      case GroupMemberState.error:
+      case GroupListState.error:
         return _buildErrorState();
     }
   }
