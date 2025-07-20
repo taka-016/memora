@@ -2,26 +2,25 @@
 FROM instrumentisto/flutter:3.32.2-androidsdk35-r0
 
 USER root
-RUN apt-get update
 
 # 基本パッケージのインストール
-RUN apt-get install -y \
-    tzdata \
-    git \
-    curl \
-    nano \
-    vim \
-    emacs-nox \
-    tree \
-    gnupg \
-    ca-certificates
+RUN apt-get update && apt-get install -y \
+  tzdata \
+  git \
+  curl \
+  nano \
+  vim \
+  emacs-nox \
+  tree \
+  gnupg \
+  ca-certificates
 
 # ADBのインストール
-RUN apt-get install -y android-tools-adb
+RUN apt-get update && apt-get install -y android-tools-adb
 
 # Node.jsの最新版インストール
 RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
-RUN apt-get install -y nodejs=24.3.0-1nodesource*
+RUN apt-get update && apt-get install -y nodejs=24.3.0-1nodesource*
 RUN npm install -g npm@latest
 
 # 不要なパッケージの削除
@@ -34,6 +33,3 @@ RUN npm install -g @google/gemini-cli
 RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
   && echo "Asia/Tokyo" > /etc/timezone \
   && dpkg-reconfigure -f noninteractive tzdata
-
-# 作業ディレクトリの設定
-WORKDIR /workspace

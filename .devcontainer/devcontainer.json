@@ -3,8 +3,9 @@
     "build": {
         "dockerfile": "../Dockerfile"
     },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind",
+    "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "mounts": [
-        "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
         "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
         "source=claude-global,target=/root/.claude,type=volume",
         "source=android-config,target=/root/.android,type=volume",
@@ -16,7 +17,6 @@
         "--env-file",
         ".devcontainer/.env"
     ],
-    "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1.0": {},
         "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
