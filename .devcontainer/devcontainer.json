@@ -46,6 +46,7 @@
         }
     },
     "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/init.sh",
     "forwardPorts": [
         8080
     ],
