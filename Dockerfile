@@ -33,3 +33,6 @@ RUN npm install -g @google/gemini-cli
 RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
   && echo "Asia/Tokyo" > /etc/timezone \
   && dpkg-reconfigure -f noninteractive tzdata
+
+# /root/.gitconfig を削除
+RUN rm -f /root/.gitconfig
