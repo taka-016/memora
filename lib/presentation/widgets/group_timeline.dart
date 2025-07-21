@@ -22,6 +22,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   // 水平スクロール制御用
   final ScrollController _horizontalScrollController = ScrollController();
+  final GlobalKey _dataTableKey = GlobalKey();
 
   @override
   void initState() {
@@ -67,6 +68,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
+          key: _dataTableKey,
           columns: columns,
           rows: _createTimelineRows(columns.length),
         ),
@@ -147,21 +149,30 @@ class _GroupTimelineState extends State<GroupTimeline> {
   void _scrollToCurrentYear() {
     if (!_horizontalScrollController.hasClients) return;
 
-    // DataTableの各列の推定幅を使用して中央位置を計算
-    const double estimatedColumnWidth = 120.0; // 年列の推定幅
-    const double firstColumnWidth = 80.0; // 「種類」列の推定幅
-    const double buttonColumnWidth = 100.0; // 「さらに表示」ボタン列の推定幅
+    // DataTableの実際のサイズを取得
+    final dataTableRenderBox =
+        _dataTableKey.currentContext?.findRenderObject() as RenderBox?;
+    if (dataTableRenderBox == null) return;
 
-    // 現在の年は中央（オフセット0）の位置にある
-    // 「種類」列 + 「さらに表示」ボタン列 + 過去の年の列数分をスキップして中央の年にスクロール
-    final double scrollOffset =
-        firstColumnWidth +
-        buttonColumnWidth +
-        (_initialYearRange * estimatedColumnWidth) -
-        (estimatedColumnWidth / 2);
+    final tableWidth = dataTableRenderBox.size.width;
+
+    // ScrollViewのビューポート幅を取得
+    final scrollViewRenderBox = context.findRenderObject() as RenderBox?;
+    if (scrollViewRenderBox == null) return;
+
+    final viewportWidth = scrollViewRenderBox.size.width;
+
+    // 現在の年が中央に来るようにスクロール位置を計算
+    // テーブル全体の中央から、ビューポート幅の半分を引く
+    final scrollOffset = (tableWidth / 2) - (viewportWidth / 2);
+
+    // スクロール範囲内に調整
+    final maxScrollExtent =
+        _horizontalScrollController.position.maxScrollExtent;
+    final targetOffset = scrollOffset.clamp(0.0, maxScrollExtent);
 
     _horizontalScrollController.animateTo(
-      scrollOffset,
+      targetOffset,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
