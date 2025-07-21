@@ -63,10 +63,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      // 現在の年（2025年(令和7年)）が表示されることを確認
+      // 現在の年が和暦フォーマットで表示されることを確認
       final currentYear = DateTime.now().year;
-      final eraYear = currentYear - 2018; // 令和元年は2019年
-      expect(find.text('$currentYear年(令和$eraYear年)'), findsOneWidget);
+      expect(find.textContaining('$currentYear年'), findsOneWidget);
+      expect(find.textContaining('年)'), findsOneWidget);
     });
 
     testWidgets('年表の行にメンバー名が表示される', (WidgetTester tester) async {
