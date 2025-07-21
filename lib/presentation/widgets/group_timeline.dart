@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/utils/japanese_era.dart';
 
 class GroupTimeline extends StatelessWidget {
   final GroupWithMembers groupWithMembers;
@@ -28,9 +29,9 @@ class GroupTimeline extends StatelessWidget {
   }
 
   Widget _buildTimelineTable() {
-    // 現在の年を取得
+    // 現在の年を取得し、和暦ユーティリティを使用してフォーマット
     final currentYear = DateTime.now().year;
-    final eraYear = currentYear - 2018; // 令和元年は2019年
+    final eraFormatted = JapaneseEra.formatJapaneseEraYear(currentYear);
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -38,7 +39,7 @@ class GroupTimeline extends StatelessWidget {
         child: DataTable(
           columns: [
             const DataColumn(label: Text('種類')),
-            DataColumn(label: Text('$currentYear年(令和$eraYear年)')),
+            DataColumn(label: Text(eraFormatted)),
           ],
           rows: [
             const DataRow(cells: [DataCell(Text('旅行')), DataCell(Text(''))]),
