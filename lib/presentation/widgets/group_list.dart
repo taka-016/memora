@@ -7,11 +7,13 @@ enum GroupListState { loading, groupList, empty, error }
 class GroupList extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final Member member;
+  final void Function(GroupWithMembers)? onGroupSelected;
 
   const GroupList({
     super.key,
     required this.getGroupsWithMembersUsecase,
     required this.member,
+    this.onGroupSelected,
   });
 
   @override
@@ -105,7 +107,7 @@ class _GroupListState extends State<GroupList> {
                 subtitle: Text('${groupWithMembers.members.length}人のメンバー'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: グループ年表への遷移処理
+                  widget.onGroupSelected?.call(groupWithMembers);
                 },
               );
             },
