@@ -162,9 +162,16 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     final viewportWidth = scrollViewRenderBox.size.width;
 
-    // 現在の年が中央に来るようにスクロール位置を計算
-    // テーブル全体の中央から、ビューポート幅の半分を引く
-    final scrollOffset = (tableWidth / 2) - (viewportWidth / 2);
+    // 項目数を計算（種類列 + さらに表示ボタン列2つ + 年の列数）
+    final totalColumns = 1 + 2 + (_endYearOffset - _startYearOffset + 1);
+
+    // 1項目あたりの平均幅を計算
+    final averageColumnWidth = tableWidth / totalColumns;
+
+    // 現在の年が少し右にオフセットされるようにスクロール位置を計算
+    // テーブル全体の中央から、ビューポート幅の半分を引き、項目幅の半分を右にオフセット
+    final rightOffset = averageColumnWidth / 2;
+    final scrollOffset = (tableWidth / 2) - (viewportWidth / 2) + rightOffset;
 
     // スクロール範囲内に調整
     final maxScrollExtent =
