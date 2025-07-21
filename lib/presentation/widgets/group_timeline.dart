@@ -29,9 +29,10 @@ class GroupTimeline extends StatelessWidget {
   }
 
   Widget _buildTimelineTable() {
-    // 現在の年を取得し、和暦ユーティリティを使用してフォーマット
+    // 現在の年を取得し、西暦と和暦を組み合わせてフォーマット
     final currentYear = DateTime.now().year;
     final eraFormatted = JapaneseEra.formatJapaneseEraYear(currentYear);
+    final combinedYearFormat = '$currentYear年($eraFormatted)';
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -39,7 +40,7 @@ class GroupTimeline extends StatelessWidget {
         child: DataTable(
           columns: [
             const DataColumn(label: Text('種類')),
-            DataColumn(label: Text(eraFormatted)),
+            DataColumn(label: Text(combinedYearFormat)),
           ],
           rows: [
             const DataRow(cells: [DataCell(Text('旅行')), DataCell(Text(''))]),
