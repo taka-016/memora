@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
+import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_settings.dart';
@@ -23,6 +24,11 @@ enum NavigationItem {
   accountSettings, // アカウント設定
 }
 
+enum GroupTimelineScreenState {
+  groupList, // グループ一覧を表示
+  timeline, // 年表を表示
+}
+
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final bool isTestEnvironment;
@@ -41,8 +47,11 @@ class TopPage extends StatefulWidget {
 
 class _TopPageState extends State<TopPage> {
   NavigationItem _selectedItem = NavigationItem.groupTimeline;
+  GroupTimelineScreenState _groupTimelineState =
+      GroupTimelineScreenState.groupList;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
+  GroupWithMembers? _selectedGroup;
 
   @override
   void initState() {
@@ -73,8 +82,20 @@ class _TopPageState extends State<TopPage> {
   void _onNavigationItemSelected(NavigationItem item) {
     setState(() {
       _selectedItem = item;
+      // グループ年表以外を選択した場合は状態をリセット
+      if (item != NavigationItem.groupTimeline) {
+        _groupTimelineState = GroupTimelineScreenState.groupList;
+        _selectedGroup = null;
+      }
     });
     Navigator.of(context).pop();
+  }
+
+  void _onGroupSelected(GroupWithMembers groupWithMembers) {
+    setState(() {
+      _groupTimelineState = GroupTimelineScreenState.timeline;
+      _selectedGroup = groupWithMembers;
+    });
   }
 
   Widget _buildBody() {
@@ -83,10 +104,16 @@ class _TopPageState extends State<TopPage> {
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return GroupList(
-          getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
-          member: _currentMember!,
-        );
+        switch (_groupTimelineState) {
+          case GroupTimelineScreenState.groupList:
+            return GroupList(
+              getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
+              member: _currentMember!,
+              onGroupSelected: _onGroupSelected,
+            );
+          case GroupTimelineScreenState.timeline:
+            return GroupTimeline(groupWithMembers: _selectedGroup!);
+        }
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()

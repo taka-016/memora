@@ -245,5 +245,44 @@ void main() {
       expect(find.text('1人のメンバー'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
+
+    testWidgets('グループ行をタップしたときにコールバック関数が呼ばれる', (WidgetTester tester) async {
+      // Arrange
+      GroupWithMembers? selectedGroup;
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
+          members: [testMember],
+        ),
+      ];
+      when(
+        mockUsecase.execute(testMember),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: GroupList(
+              getGroupsWithMembersUsecase: mockUsecase,
+              member: testMember,
+              onGroupSelected: (groupWithMembers) {
+                selectedGroup = groupWithMembers;
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // グループ行をタップ
+      await tester.tap(find.text('テストグループ'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(selectedGroup, isNotNull);
+      expect(selectedGroup!.group.id, '1');
+      expect(selectedGroup!.group.name, 'テストグループ');
+    });
   });
 }
