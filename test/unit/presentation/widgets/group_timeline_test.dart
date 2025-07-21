@@ -66,7 +66,7 @@ void main() {
       // 現在の年が和暦フォーマットで表示されることを確認
       final currentYear = DateTime.now().year;
       expect(find.textContaining('$currentYear年'), findsOneWidget);
-      expect(find.textContaining('年)'), findsOneWidget);
+      expect(find.textContaining('年)'), findsNWidgets(11)); // 前後5年分合計11年
     });
 
     testWidgets('年表の行にメンバー名が表示される', (WidgetTester tester) async {
@@ -76,6 +76,20 @@ void main() {
 
       // Assert
       expect(find.text('タロちゃん'), findsOneWidget);
+    });
+
+    testWidgets('現在の年を中央として前後5年分の年が表示される', (WidgetTester tester) async {
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      final currentYear = DateTime.now().year;
+      // 合計11年分（-5年から+5年）の年が表示されることを確認
+      for (int i = -5; i <= 5; i++) {
+        final year = currentYear + i;
+        expect(find.textContaining('$year年'), findsOneWidget);
+      }
     });
   });
 }
