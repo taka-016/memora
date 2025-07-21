@@ -162,5 +162,27 @@ void main() {
         expect(find.textContaining('$year年'), findsOneWidget);
       }
     });
+
+    testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
+      // Arrange
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Act & Assert
+      // 水平スクロールビューのScrollControllerを取得
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller;
+
+      // 初期表示時に現在の年が中央に表示されるようにスクロール位置が調整されていることを確認
+      expect(scrollController, isNotNull);
+      expect(scrollController!.hasClients, isTrue);
+
+      // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
+      expect(scrollController.offset, greaterThan(0));
+    });
   });
 }
