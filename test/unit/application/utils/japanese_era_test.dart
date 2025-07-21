@@ -135,9 +135,8 @@ void main() {
         final result = JapaneseEra.formatJapaneseEraYear(currentYear);
 
         // Assert
-        // 現在の年に対応する和暦フォーマットが返される
-        expect(result, contains('年('));
-        expect(result, contains('年)'));
+        // 現在の年に対応する和暦フォーマットが返される（年号を含む）
+        expect(result, matches(r'[令和平成昭和大正明治].*年'));
       });
 
       test('令和6年(2024年)を正しくフォーマットできる', () {
@@ -145,7 +144,7 @@ void main() {
         final result = JapaneseEra.formatJapaneseEraYear(2024);
 
         // Assert
-        expect(result, '2024年(令和6年)');
+        expect(result, '令和6年');
       });
 
       test('令和元年(2019年)を正しくフォーマットできる', () {
@@ -153,7 +152,7 @@ void main() {
         final result = JapaneseEra.formatJapaneseEraYear(2019);
 
         // Assert
-        expect(result, '2019年(令和元年)');
+        expect(result, '令和元年');
       });
 
       test('平成30年(2018年)を正しくフォーマットできる', () {
@@ -161,7 +160,7 @@ void main() {
         final result = JapaneseEra.formatJapaneseEraYear(2018);
 
         // Assert
-        expect(result, '2018年(平成30年)');
+        expect(result, '平成30年');
       });
 
       test('平成元年(1989年)を正しくフォーマットできる', () {
@@ -169,7 +168,39 @@ void main() {
         final result = JapaneseEra.formatJapaneseEraYear(1989);
 
         // Assert
-        expect(result, '1989年(平成元年)');
+        expect(result, '平成元年');
+      });
+
+      test('昭和63年(1988年)を正しくフォーマットできる', () {
+        // Act
+        final result = JapaneseEra.formatJapaneseEraYear(1988);
+
+        // Assert
+        expect(result, '昭和63年');
+      });
+
+      test('大正9年(1920年)を正しくフォーマットできる', () {
+        // Act
+        final result = JapaneseEra.formatJapaneseEraYear(1920);
+
+        // Assert
+        expect(result, '大正9年');
+      });
+
+      test('明治33年(1900年)を正しくフォーマットできる', () {
+        // Act
+        final result = JapaneseEra.formatJapaneseEraYear(1900);
+
+        // Assert
+        expect(result, '明治33年');
+      });
+
+      test('明治以前(1867年)は西暦年のみ表示される', () {
+        // Act
+        final result = JapaneseEra.formatJapaneseEraYear(1867);
+
+        // Assert
+        expect(result, '1867年');
       });
     });
   });

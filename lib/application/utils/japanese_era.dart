@@ -27,10 +27,10 @@ class JapaneseEra {
     return '${date.year}年${date.month}月${date.day}日';
   }
 
-  /// 指定された西暦年を "2024年(令和6年)" 形式でフォーマットする
+  /// 指定された西暦年を和暦年形式でフォーマットする
   ///
   /// [year] 西暦年
-  /// 戻り値: "西暦年(和暦年)" の形式の文字列
+  /// 戻り値: "令和6年" のような和暦年の文字列（明治以前は西暦年）
   static String formatJapaneseEraYear(int year) {
     // 年の中間の日付（7月1日）で判定することで、その年の主要な和暦を使用
     final date = DateTime(year, 7, 1);
@@ -40,7 +40,7 @@ class JapaneseEra {
       if (!date.isBefore(start)) {
         final eraYear = year - start.year + 1;
         final eraYearString = (eraYear == 1) ? '元' : '$eraYear';
-        return '$year年(${era['name']}$eraYearString年)';
+        return '${era['name']}$eraYearString年';
       }
     }
 
