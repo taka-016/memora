@@ -20,6 +20,24 @@ class _GroupTimelineState extends State<GroupTimeline> {
   int _startYearOffset = -_initialYearRange;
   int _endYearOffset = _initialYearRange;
 
+  // 水平スクロール制御用
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // 初期表示時に現在の年が中央に表示されるようにスクロール位置を調整
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToCurrentYear();
+    });
+  }
+
+  @override
+  void dispose() {
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -45,6 +63,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
     final columns = _createYearColumns();
 
     return SingleChildScrollView(
+      controller: _horizontalScrollController,
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
@@ -123,5 +142,28 @@ class _GroupTimelineState extends State<GroupTimeline> {
     setState(() {
       _endYearOffset += _yearRangeIncrement;
     });
+  }
+
+  void _scrollToCurrentYear() {
+    if (!_horizontalScrollController.hasClients) return;
+
+    // DataTableの各列の推定幅を使用して中央位置を計算
+    const double estimatedColumnWidth = 120.0; // 年列の推定幅
+    const double firstColumnWidth = 80.0; // 「種類」列の推定幅
+    const double buttonColumnWidth = 100.0; // 「さらに表示」ボタン列の推定幅
+
+    // 現在の年は中央（オフセット0）の位置にある
+    // 「種類」列 + 「さらに表示」ボタン列 + 過去の年の列数分をスキップして中央の年にスクロール
+    final double scrollOffset =
+        firstColumnWidth +
+        buttonColumnWidth +
+        (_initialYearRange * estimatedColumnWidth) -
+        (estimatedColumnWidth / 2);
+
+    _horizontalScrollController.animateTo(
+      scrollOffset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 }
