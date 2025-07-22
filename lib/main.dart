@@ -30,33 +30,51 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // 依存性注入
-    final authService = FirebaseAuthService();
-    final memberRepository = FirestoreMemberRepository();
-    final getOrCreateMemberUseCase = GetOrCreateMemberUseCase(memberRepository);
-    final authManager = AuthManager(
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // 依存性注入を一度だけ初期化
+  late final AuthService authService;
+  late final FirestoreMemberRepository memberRepository;
+  late final GetOrCreateMemberUseCase getOrCreateMemberUseCase;
+  late final AuthManager authManager;
+  late final FirestoreGroupRepository groupRepository;
+  late final FirestoreGroupMemberRepository groupMemberRepository;
+  late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
+  late final GetCurrentMemberUseCase getCurrentMemberUseCase;
+
+  @override
+  void initState() {
+    super.initState();
+    authService = FirebaseAuthService();
+    memberRepository = FirestoreMemberRepository();
+    getOrCreateMemberUseCase = GetOrCreateMemberUseCase(memberRepository);
+    authManager = AuthManager(
       authService: authService,
       getOrCreateMemberUseCase: getOrCreateMemberUseCase,
     );
 
-    final groupRepository = FirestoreGroupRepository();
-    final groupMemberRepository = FirestoreGroupMemberRepository();
-    final getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
+    groupRepository = FirestoreGroupRepository();
+    groupMemberRepository = FirestoreGroupMemberRepository();
+    getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupRepository: groupRepository,
       groupMemberRepository: groupMemberRepository,
       memberRepository: memberRepository,
     );
 
-    final getCurrentMemberUseCase = GetCurrentMemberUseCase(
+    getCurrentMemberUseCase = GetCurrentMemberUseCase(
       memberRepository,
       authService,
     );
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         Provider<AuthService>.value(value: authService),
