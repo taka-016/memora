@@ -236,7 +236,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Widget _buildRowResizer(int rowIndex) {
     return SizedBox(
-      height: 8,
+      height: 12,
       child: Row(
         children: [
           // 固定列の境界線上にリサイザー
@@ -248,26 +248,17 @@ class _GroupTimelineState extends State<GroupTimeline> {
                 setState(() {
                   _rowHeights[rowIndex] =
                       (_rowHeights[rowIndex] + details.delta.dy).clamp(
-                        24.0,
-                        200.0,
+                        50.0,
+                        250.0,
                       );
                 });
               },
               child: Container(
-                height: 8,
-                color: Colors.transparent,
-                child: Center(
-                  child: Container(
-                    height: 2,
-                    width: double.infinity,
-                    color: _borderColor,
-                  ),
-                ),
+                height: 12,
+                color: const Color.fromARGB(255, 255, 227, 227),
               ),
             ),
           ),
-          // 区切り線
-          Container(width: 1, height: 8, color: _borderColor),
           // スクロール可能領域のリサイザー
           Expanded(
             child: GestureDetector(
@@ -275,21 +266,14 @@ class _GroupTimelineState extends State<GroupTimeline> {
                 setState(() {
                   _rowHeights[rowIndex] =
                       (_rowHeights[rowIndex] + details.delta.dy).clamp(
-                        24.0,
-                        200.0,
+                        50.0,
+                        250.0,
                       );
                 });
               },
               child: Container(
-                height: 8,
-                color: Colors.transparent,
-                child: Center(
-                  child: Container(
-                    height: 2,
-                    width: double.infinity,
-                    color: _borderColor,
-                  ),
-                ),
+                height: 12,
+                color: const Color.fromARGB(255, 255, 227, 227),
               ),
             ),
           ),
@@ -310,6 +294,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           border: Border(
+            top: BorderSide(color: _borderColor, width: _borderWidth),
             bottom: BorderSide(color: _borderColor, width: _borderWidth),
             right: BorderSide(color: _borderColor, width: _borderWidth),
           ),
@@ -334,6 +319,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             border: Border(
+              top: BorderSide(color: _borderColor, width: _borderWidth),
               bottom: BorderSide(color: _borderColor, width: _borderWidth),
               right: BorderSide(color: _borderColor, width: _borderWidth),
             ),
@@ -351,6 +337,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           border: Border(
+            top: BorderSide(color: _borderColor, width: _borderWidth),
             bottom: BorderSide(color: _borderColor, width: _borderWidth),
             right: BorderSide(color: _borderColor, width: _borderWidth),
           ),
