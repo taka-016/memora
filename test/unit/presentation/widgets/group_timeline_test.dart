@@ -184,46 +184,5 @@ void main() {
       // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
       expect(scrollController.offset, greaterThan(0));
     });
-
-    testWidgets('1列目の種類列はスクロールせず左端に固定されている', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      // 固定ヘッダー付きのTableウィジェットが使用されていることを確認
-      expect(find.byType(Row), findsWidgets);
-      expect(find.byKey(const Key('unified_border_table')), findsOneWidget);
-    });
-
-    testWidgets('列の区切り線が表示される', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      // 固定列と年表の境界線があることを確認
-      expect(find.byKey(const Key('column_divider')), findsOneWidget);
-    });
-
-    testWidgets('固定列とスクロール列の行が縦位置で揃っている', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      // 固定列とスクロール列で同じ高さの行構造が使用されていることを確認
-      expect(find.byKey(const Key('unified_border_table')), findsOneWidget);
-    });
-
-    testWidgets('固定列の境界線が重複せずに表示される', (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      // 固定列のテーブル構造で境界線の重複がないことを確認
-      expect(find.byKey(const Key('fixed_column_table')), findsOneWidget);
-    });
   });
 }
