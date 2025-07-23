@@ -14,6 +14,7 @@
 
 - `flutter run` - アプリケーションを実行
 - `flutter pub get` - 依存関係をインストール
+- `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build --delete-conflicting-outputs` - モックやコード生成を実行
 - `./check.sh` - フォーマット・解析・テストを一括実行
 - `flutter analyze` - 静的コード解析
