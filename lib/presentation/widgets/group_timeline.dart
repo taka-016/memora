@@ -62,8 +62,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Widget _buildTimelineTable() {
     return Container(
-      key: const Key('fixed_header_table'),
+      key: const Key('aligned_table_structure'),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 固定列（種類列）
           _buildFixedColumn(),
@@ -78,34 +79,46 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Widget _buildFixedColumn() {
     final members = widget.groupWithMembers.members;
+    const double dataRowHeight = 48.0; // DataTableのデフォルト行高さ
+    const double headerRowHeight = 56.0; // DataTableのデフォルトヘッダー高さ
+
     return SizedBox(
       width: 100,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // ヘッダー
-          _buildFixedCell('種類'),
-          // データ行
-          _buildFixedCell('旅行'),
-          _buildFixedCell('イベント'),
-          ...members.map((member) => _buildFixedCell(member.displayName)),
+          // ヘッダー（DataTableのヘッダー高さに合わせる）
+          _buildFixedCell('種類', headerRowHeight),
+          // データ行（DataTableのデータ行高さに合わせる）
+          _buildFixedCell('旅行', dataRowHeight),
+          _buildFixedCell('イベント', dataRowHeight),
+          ...members.map(
+            (member) => _buildFixedCell(member.displayName, dataRowHeight),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFixedCell(String text) {
+  Widget _buildFixedCell(String text, double height) {
     return Container(
-      height: 48,
-      alignment: Alignment.center,
+      height: height,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
       child: Text(text),
     );
   }
 
   Widget _buildColumnDivider() {
+    final members = widget.groupWithMembers.members;
+    // ヘッダー高さ + データ行数（旅行・イベント + メンバー数）× データ行高さ
+    final totalHeight = 56.0 + (2 + members.length) * 48.0;
+
     return Container(
       key: const Key('column_divider'),
       width: 2,
+      height: totalHeight,
       color: Colors.grey,
     );
   }
