@@ -184,5 +184,26 @@ void main() {
       // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
       expect(scrollController.offset, greaterThan(0));
     });
+
+    testWidgets('1列目の種類列はスクロールせず左端に固定されている', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Act & Assert
+      // 固定ヘッダー付きのTableウィジェットが使用されていることを確認
+      expect(find.byType(Row), findsWidgets);
+      expect(find.byKey(const Key('fixed_header_table')), findsOneWidget);
+    });
+
+    testWidgets('列の区切り線が表示される', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Act & Assert
+      // 固定列と年表の境界線があることを確認
+      expect(find.byKey(const Key('column_divider')), findsOneWidget);
+    });
   });
 }

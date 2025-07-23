@@ -61,7 +61,58 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   Widget _buildTimelineTable() {
+    return Container(
+      key: const Key('fixed_header_table'),
+      child: Row(
+        children: [
+          // 固定列（種類列）
+          _buildFixedColumn(),
+          // 列の区切り線
+          _buildColumnDivider(),
+          // スクロール可能な列（年の列）
+          Expanded(child: _buildScrollableColumns()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedColumn() {
+    final members = widget.groupWithMembers.members;
+    return SizedBox(
+      width: 100,
+      child: Column(
+        children: [
+          // ヘッダー
+          _buildFixedCell('種類'),
+          // データ行
+          _buildFixedCell('旅行'),
+          _buildFixedCell('イベント'),
+          ...members.map((member) => _buildFixedCell(member.displayName)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedCell(String text) {
+    return Container(
+      height: 48,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
+      child: Text(text),
+    );
+  }
+
+  Widget _buildColumnDivider() {
+    return Container(
+      key: const Key('column_divider'),
+      width: 2,
+      color: Colors.grey,
+    );
+  }
+
+  Widget _buildScrollableColumns() {
     final columns = _createYearColumns();
+    final rows = _createTimelineRows(columns.length);
 
     return SingleChildScrollView(
       controller: _horizontalScrollController,
@@ -69,8 +120,12 @@ class _GroupTimelineState extends State<GroupTimeline> {
       child: SingleChildScrollView(
         child: DataTable(
           key: _dataTableKey,
-          columns: columns,
-          rows: _createTimelineRows(columns.length),
+          columns: columns.skip(1).toList(), // 種類列を除外
+          rows: rows
+              .map(
+                (row) => DataRow(cells: row.cells.skip(1).toList()), // 種類列を除外
+              )
+              .toList(),
         ),
       ),
     );
