@@ -16,6 +16,12 @@ class _GroupTimelineState extends State<GroupTimeline> {
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
 
+  // テーブルスタイル定数
+  static const double _dataRowHeight = 48.0; // DataTableのデフォルト行高さ
+  static const double _headerRowHeight = 56.0; // DataTableのデフォルトヘッダー高さ
+  static const Color _borderColor = Colors.grey;
+  static const double _borderWidth = 1.0;
+
   // 表示する年の範囲を管理
   int _startYearOffset = -_initialYearRange;
   int _endYearOffset = _initialYearRange;
@@ -61,7 +67,85 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   Widget _buildTimelineTable() {
+    return Container(
+      key: const Key('unified_border_table'),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 固定列（種類列）
+          _buildFixedColumn(),
+          // 列の区切り線
+          _buildColumnDivider(),
+          // スクロール可能な列（年の列）
+          Expanded(child: _buildScrollableColumns()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFixedColumn() {
+    final members = widget.groupWithMembers.members;
+
+    // 固定列のデータを準備
+    final rows = [
+      ['種類'], // ヘッダー
+      ['旅行'], // データ行
+      ['イベント'],
+      ...members.map((member) => [member.displayName]),
+    ];
+
+    return SizedBox(
+      width: 100,
+      key: const Key('fixed_column_table'),
+      child: Table(
+        border: TableBorder(
+          left: BorderSide(color: _borderColor, width: _borderWidth),
+          // right: 列区切り線と重複するため削除
+          top: BorderSide(color: _borderColor, width: _borderWidth),
+          bottom: BorderSide(color: _borderColor, width: _borderWidth),
+          horizontalInside: BorderSide(
+            color: _borderColor,
+            width: _borderWidth,
+          ),
+        ),
+        children: rows.asMap().entries.map((entry) {
+          final index = entry.key;
+          final row = entry.value;
+          final isHeader = index == 0;
+          final height = isHeader ? _headerRowHeight : _dataRowHeight;
+
+          return TableRow(
+            children: [
+              Container(
+                height: height,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text(row[0]),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildColumnDivider() {
+    final members = widget.groupWithMembers.members;
+    // ヘッダー高さ + データ行数（旅行・イベント + メンバー数）× データ行高さ
+    final totalHeight =
+        _headerRowHeight + (2 + members.length) * _dataRowHeight;
+
+    return Container(
+      key: const Key('column_divider'),
+      width: _borderWidth,
+      height: totalHeight,
+      color: _borderColor,
+    );
+  }
+
+  Widget _buildScrollableColumns() {
     final columns = _createYearColumns();
+    final rows = _createTimelineRows(columns.length);
 
     return SingleChildScrollView(
       controller: _horizontalScrollController,
@@ -69,8 +153,26 @@ class _GroupTimelineState extends State<GroupTimeline> {
       child: SingleChildScrollView(
         child: DataTable(
           key: _dataTableKey,
-          columns: columns,
-          rows: _createTimelineRows(columns.length),
+          border: TableBorder(
+            // left: 固定列との重複を避けるため削除
+            right: BorderSide(color: _borderColor, width: _borderWidth),
+            top: BorderSide(color: _borderColor, width: _borderWidth),
+            bottom: BorderSide(color: _borderColor, width: _borderWidth),
+            horizontalInside: BorderSide(
+              color: _borderColor,
+              width: _borderWidth,
+            ),
+            verticalInside: BorderSide(
+              color: _borderColor,
+              width: _borderWidth,
+            ),
+          ),
+          columns: columns.skip(1).toList(), // 種類列を除外
+          rows: rows
+              .map(
+                (row) => DataRow(cells: row.cells.skip(1).toList()), // 種類列を除外
+              )
+              .toList(),
         ),
       ),
     );
