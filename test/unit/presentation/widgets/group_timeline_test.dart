@@ -184,5 +184,105 @@ void main() {
       // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
       expect(scrollController.offset, greaterThan(0));
     });
+
+    testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      // 行の境界にリサイザーが表示されることを確認（最後の行以外にリサイザーがある）
+      expect(
+        find.byKey(const Key('row_resizer_0')),
+        findsOneWidget,
+      ); // 旅行行のリサイザー
+      expect(
+        find.byKey(const Key('row_resizer_1')),
+        findsOneWidget,
+      ); // イベント行のリサイザー
+      // メンバー行は最後の行なのでリサイザーはない
+    });
+
+    testWidgets('行の高さをドラッグで変更すると、固定列も連動して高さが変わる', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 初期の行の高さを取得
+      final initialFixedRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_0')))
+          .height;
+      final initialScrollableRowHeight = tester
+          .getSize(find.byKey(const Key('scrollable_row_0')))
+          .height;
+
+      expect(initialFixedRowHeight, equals(48.0)); // デフォルト値の確認
+      expect(initialScrollableRowHeight, equals(48.0));
+
+      // Act
+      // 旅行行のリサイザーをドラッグ
+      final resizerKey = find.byKey(const Key('row_resizer_0'));
+      await tester.drag(
+        resizerKey,
+        const Offset(0, 20),
+        warnIfMissed: false,
+      ); // 下に20px移動
+      await tester.pumpAndSettle();
+
+      // Assert
+      // 固定列とスクロール可能列の両方の行の高さが変更されていることを確認
+      final finalFixedRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_0')))
+          .height;
+      final finalScrollableRowHeight = tester
+          .getSize(find.byKey(const Key('scrollable_row_0')))
+          .height;
+
+      expect(finalFixedRowHeight, equals(initialFixedRowHeight + 20));
+      expect(finalScrollableRowHeight, equals(initialScrollableRowHeight + 20));
+    });
+
+    testWidgets('複数の行の高さを個別に変更できる', (WidgetTester tester) async {
+      // Arrange
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 初期の行の高さを取得
+      final initialTravelRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_0')))
+          .height;
+      final initialEventRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_1')))
+          .height;
+
+      // Act
+      // 旅行行のリサイザーをドラッグ
+      await tester.drag(
+        find.byKey(const Key('row_resizer_0')),
+        const Offset(0, 10),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      // イベント行のリサイザーをドラッグ
+      await tester.drag(
+        find.byKey(const Key('row_resizer_1')),
+        const Offset(0, 30),
+        warnIfMissed: false,
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      // 各行の高さが個別に変更されていることを確認
+      final finalTravelRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_0')))
+          .height;
+      final finalEventRowHeight = tester
+          .getSize(find.byKey(const Key('fixed_row_1')))
+          .height;
+
+      expect(finalTravelRowHeight, equals(initialTravelRowHeight + 10));
+      expect(finalEventRowHeight, equals(initialEventRowHeight + 30));
+    });
   });
 }
