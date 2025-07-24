@@ -1,6 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+
+class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
+  @override
+  void rejectGesture(int pointer) {
+    acceptGesture(pointer);
+  }
+}
 
 class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
@@ -17,10 +25,20 @@ class _GroupTimelineState extends State<GroupTimeline> {
   static const int _yearRangeIncrement = 5;
 
   // テーブルスタイル定数
-  static const double _dataRowHeight = 48.0; // DataTableのデフォルト行高さ
+  static const double _dataRowHeight = 100.0; // DataTableのデフォルト行高さ
   static const double _headerRowHeight = 56.0; // DataTableのデフォルトヘッダー高さ
   static const Color _borderColor = Colors.grey;
   static const double _borderWidth = 1.0;
+
+  // 列幅定数
+  static const double _fixedColumnWidth = 100.0; // 固定列の幅
+  static const double _buttonColumnWidth = 100.0; // ボタン列の幅
+  static const double _yearColumnWidth = 120.0; // 年列の幅
+
+  // リサイズ関連定数
+  static const double _resizeBottomMargin = 100.0; // 最終行のリサイズ操作のための余白
+  static const double _rowMinHeight = 100.0; // 行の最小高さ
+  static const double _rowMaxHeight = 500.0; // 行の最大高さ
 
   // 表示する年の範囲を管理
   int _startYearOffset = -_initialYearRange;
@@ -30,9 +48,35 @@ class _GroupTimelineState extends State<GroupTimeline> {
   final ScrollController _horizontalScrollController = ScrollController();
   final GlobalKey _dataTableKey = GlobalKey();
 
+  // 各行のScrollControllerを管理
+  late List<ScrollController> _rowScrollControllers;
+
+  // スクロール同期中かどうかを追跡
+  bool _isSyncing = false;
+
+  // 行の高さを管理するList
+  late List<double> _rowHeights;
+
   @override
   void initState() {
     super.initState();
+    // 行の高さを初期化（ヘッダー行を除く）
+    final totalDataRows =
+        2 + widget.groupWithMembers.members.length; // 旅行 + イベント + メンバー数
+    _rowHeights = List.filled(totalDataRows, _dataRowHeight);
+
+    // 各行用のScrollControllerを初期化（ヘッダー用1つ + データ行数）
+    _rowScrollControllers = List.generate(
+      totalDataRows + 1,
+      (index) => ScrollController(),
+    );
+
+    // スクロール同期のリスナーを設定
+    for (int i = 0; i < _rowScrollControllers.length; i++) {
+      final controller = _rowScrollControllers[i];
+      controller.addListener(() => _syncScrollControllers(i));
+    }
+
     // 初期表示時に現在の年が中央に表示されるようにスクロール位置を調整
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentYear();
@@ -42,6 +86,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
   @override
   void dispose() {
     _horizontalScrollController.dispose();
+    for (final controller in _rowScrollControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -69,123 +116,210 @@ class _GroupTimelineState extends State<GroupTimeline> {
   Widget _buildTimelineTable() {
     return Container(
       key: const Key('unified_border_table'),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          // 固定列（種類列）
-          _buildFixedColumn(),
-          // 列の区切り線
-          _buildColumnDivider(),
-          // スクロール可能な列（年の列）
-          Expanded(child: _buildScrollableColumns()),
+          // ヘッダー行
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 固定ヘッダー列
+              _buildFixedHeaderCell(),
+              // 列の区切り線
+              Container(
+                width: _borderWidth,
+                height: _headerRowHeight,
+                color: _borderColor,
+              ),
+              // スクロール可能なヘッダー列
+              Expanded(child: _buildScrollableHeaderRow()),
+            ],
+          ),
+          // データ行
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ..._buildDataRowsWithResizers(),
+                  // 最終行のリサイズ操作のための余白
+                  SizedBox(height: _resizeBottomMargin),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFixedColumn() {
-    final members = widget.groupWithMembers.members;
-
-    // 固定列のデータを準備
-    final rows = [
-      ['種類'], // ヘッダー
-      ['旅行'], // データ行
-      ['イベント'],
-      ...members.map((member) => [member.displayName]),
-    ];
-
-    return SizedBox(
-      width: 100,
-      key: const Key('fixed_column_table'),
-      child: Table(
-        border: TableBorder(
+  Widget _buildFixedHeaderCell() {
+    return Container(
+      width: _fixedColumnWidth,
+      height: _headerRowHeight,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        border: Border(
           left: BorderSide(color: _borderColor, width: _borderWidth),
-          // right: 列区切り線と重複するため削除
           top: BorderSide(color: _borderColor, width: _borderWidth),
           bottom: BorderSide(color: _borderColor, width: _borderWidth),
-          horizontalInside: BorderSide(
-            color: _borderColor,
-            width: _borderWidth,
-          ),
         ),
-        children: rows.asMap().entries.map((entry) {
-          final index = entry.key;
-          final row = entry.value;
-          final isHeader = index == 0;
-          final height = isHeader ? _headerRowHeight : _dataRowHeight;
-
-          return TableRow(
-            children: [
-              Container(
-                height: height,
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text(row[0]),
-              ),
-            ],
-          );
-        }).toList(),
       ),
     );
   }
 
-  Widget _buildColumnDivider() {
-    final members = widget.groupWithMembers.members;
-    // ヘッダー高さ + データ行数（旅行・イベント + メンバー数）× データ行高さ
-    final totalHeight =
-        _headerRowHeight + (2 + members.length) * _dataRowHeight;
-
-    return Container(
-      key: const Key('column_divider'),
-      width: _borderWidth,
-      height: totalHeight,
-      color: _borderColor,
-    );
-  }
-
-  Widget _buildScrollableColumns() {
-    final columns = _createYearColumns();
-    final rows = _createTimelineRows(columns.length);
-
+  Widget _buildScrollableHeaderRow() {
     return SingleChildScrollView(
-      controller: _horizontalScrollController,
+      controller: _rowScrollControllers[0], // ヘッダー行用
       scrollDirection: Axis.horizontal,
-      child: SingleChildScrollView(
-        child: DataTable(
-          key: _dataTableKey,
-          border: TableBorder(
-            // left: 固定列との重複を避けるため削除
-            right: BorderSide(color: _borderColor, width: _borderWidth),
-            top: BorderSide(color: _borderColor, width: _borderWidth),
-            bottom: BorderSide(color: _borderColor, width: _borderWidth),
-            horizontalInside: BorderSide(
-              color: _borderColor,
-              width: _borderWidth,
-            ),
-            verticalInside: BorderSide(
-              color: _borderColor,
-              width: _borderWidth,
-            ),
-          ),
-          columns: columns.skip(1).toList(), // 種類列を除外
-          rows: rows
-              .map(
-                (row) => DataRow(cells: row.cells.skip(1).toList()), // 種類列を除外
-              )
-              .toList(),
-        ),
-      ),
+      child: Container(key: _dataTableKey, child: _buildHeaderRow()),
     );
   }
 
-  List<DataColumn> _createYearColumns() {
+  List<Widget> _buildDataRowsWithResizers() {
+    final members = widget.groupWithMembers.members;
+    final dataRowLabels = ['旅行', 'イベント', ...members.map((m) => m.displayName)];
+
+    List<Widget> widgets = [];
+
+    for (int i = 0; i < dataRowLabels.length; i++) {
+      // データ行
+      widgets.add(_buildDataRow(i, dataRowLabels[i]));
+    }
+
+    return widgets;
+  }
+
+  Widget _buildDataRow(int rowIndex, String label) {
+    return Stack(
+      children: [
+        // メインの行
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 固定列のデータセル
+            Container(
+              key: Key('fixed_row_$rowIndex'),
+              width: _fixedColumnWidth,
+              height: _rowHeights[rowIndex],
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: _borderColor, width: _borderWidth),
+                  bottom: BorderSide(color: _borderColor, width: _borderWidth),
+                ),
+              ),
+              child: Text(label),
+            ),
+            // 列の区切り線
+            Container(
+              width: _borderWidth,
+              height: _rowHeights[rowIndex],
+              color: _borderColor,
+            ),
+            // スクロール可能な列
+            Expanded(
+              child: SingleChildScrollView(
+                controller:
+                    _rowScrollControllers[rowIndex + 1], // データ行用（ヘッダー行の次から）
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  key: Key('scrollable_row_$rowIndex'),
+                  height: _rowHeights[rowIndex],
+                  child: _buildScrollableDataCells(rowIndex),
+                ),
+              ),
+            ),
+          ],
+        ),
+        // リサイザーアイコン
+        if (rowIndex < _rowHeights.length)
+          Positioned(
+            left: 0, // 固定列の中央（100px / 2 - アイコン幅の半分）
+            bottom: -19, // 境界線の中央に配置
+            child: RawGestureDetector(
+              key: Key('row_resizer_icon_$rowIndex'),
+              gestures: {
+                _VerticalDragGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      _VerticalDragGestureRecognizer
+                    >(() => _VerticalDragGestureRecognizer(), (
+                      _VerticalDragGestureRecognizer instance,
+                    ) {
+                      instance.onUpdate = (details) {
+                        setState(() {
+                          _rowHeights[rowIndex] =
+                              (_rowHeights[rowIndex] + details.delta.dy).clamp(
+                                _rowMinHeight,
+                                _rowMaxHeight,
+                              );
+                        });
+                      };
+                    }),
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeUpDown,
+                child: Container(
+                  width: _fixedColumnWidth,
+                  height: 50,
+                  decoration: const BoxDecoration(color: Colors.transparent),
+                  child: const Icon(
+                    Icons.drag_handle,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildScrollableDataCells(int rowIndex) {
+    final columnCount = 2 + (_endYearOffset - _startYearOffset + 1);
+
+    return Row(
+      children: List.generate(columnCount, (columnIndex) {
+        final width = columnIndex == 0 || columnIndex == columnCount - 1
+            ? _buttonColumnWidth
+            : _yearColumnWidth;
+        return SizedBox(
+          width: width,
+          height: _rowHeights[rowIndex],
+          child: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: _borderColor, width: _borderWidth),
+                right: BorderSide(color: _borderColor, width: _borderWidth),
+              ),
+            ),
+            child: const Text(''),
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildHeaderRow() {
     final currentYear = DateTime.now().year;
-    List<DataColumn> columns = [const DataColumn(label: Text('種類'))];
+    List<Widget> cells = [];
 
     // 「さらに表示」ボタンを先頭に追加
-    columns.add(
-      DataColumn(
-        label: TextButton(
+    cells.add(
+      Container(
+        width: _buttonColumnWidth,
+        height: _headerRowHeight,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: _borderColor, width: _borderWidth),
+            bottom: BorderSide(color: _borderColor, width: _borderWidth),
+            right: BorderSide(color: _borderColor, width: _borderWidth),
+          ),
+        ),
+        child: TextButton(
           key: const Key('show_more_past'),
           onPressed: _showMorePast,
           child: const Text('さらに表示'),
@@ -198,13 +332,37 @@ class _GroupTimelineState extends State<GroupTimeline> {
       final year = currentYear + i;
       final eraFormatted = JapaneseEra.formatJapaneseEraYear(year);
       final combinedYearFormat = '$year年($eraFormatted)';
-      columns.add(DataColumn(label: Text(combinedYearFormat)));
+      cells.add(
+        Container(
+          width: _yearColumnWidth,
+          height: _headerRowHeight,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: _borderColor, width: _borderWidth),
+              bottom: BorderSide(color: _borderColor, width: _borderWidth),
+              right: BorderSide(color: _borderColor, width: _borderWidth),
+            ),
+          ),
+          child: Text(combinedYearFormat),
+        ),
+      );
     }
 
     // 「さらに表示」ボタンを末尾に追加
-    columns.add(
-      DataColumn(
-        label: TextButton(
+    cells.add(
+      Container(
+        width: _buttonColumnWidth,
+        height: _headerRowHeight,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: _borderColor, width: _borderWidth),
+            bottom: BorderSide(color: _borderColor, width: _borderWidth),
+            right: BorderSide(color: _borderColor, width: _borderWidth),
+          ),
+        ),
+        child: TextButton(
           key: const Key('show_more_future'),
           onPressed: _showMoreFuture,
           child: const Text('さらに表示'),
@@ -212,28 +370,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
       ),
     );
 
-    return columns;
-  }
-
-  List<DataRow> _createTimelineRows(int columnCount) {
-    List<DataCell> createEmptyRowCells() {
-      // 種類列を除いたセル数で空のセルを作成
-      return List.generate(
-        columnCount - 1,
-        (index) => const DataCell(Text('')),
-      );
-    }
-
-    return [
-      DataRow(cells: [const DataCell(Text('旅行')), ...createEmptyRowCells()]),
-      DataRow(cells: [const DataCell(Text('イベント')), ...createEmptyRowCells()]),
-      // メンバーの行
-      ...widget.groupWithMembers.members.map(
-        (member) => DataRow(
-          cells: [DataCell(Text(member.displayName)), ...createEmptyRowCells()],
-        ),
-      ),
-    ];
+    return Row(children: cells);
   }
 
   void _showMorePast() {
@@ -248,39 +385,46 @@ class _GroupTimelineState extends State<GroupTimeline> {
     });
   }
 
+  void _syncScrollControllers(int sourceIndex) {
+    if (_isSyncing) return; // 無限ループを防ぐ
+
+    final sourceController = _rowScrollControllers[sourceIndex];
+    if (!sourceController.hasClients) return;
+
+    _isSyncing = true;
+    final targetOffset = sourceController.offset;
+
+    for (int i = 0; i < _rowScrollControllers.length; i++) {
+      if (i != sourceIndex && _rowScrollControllers[i].hasClients) {
+        _rowScrollControllers[i].jumpTo(targetOffset);
+      }
+    }
+
+    _isSyncing = false;
+  }
+
   void _scrollToCurrentYear() {
-    if (!_horizontalScrollController.hasClients) return;
+    // 最初のScrollController（ヘッダー行）のみを使用
+    final primaryController = _rowScrollControllers[0];
+    if (!primaryController.hasClients) return;
 
-    // DataTableの実際のサイズを取得
-    final dataTableRenderBox =
-        _dataTableKey.currentContext?.findRenderObject() as RenderBox?;
-    if (dataTableRenderBox == null) return;
-
-    final tableWidth = dataTableRenderBox.size.width;
-
-    // ScrollViewのビューポート幅を取得
     final scrollViewRenderBox = context.findRenderObject() as RenderBox?;
     if (scrollViewRenderBox == null) return;
 
     final viewportWidth = scrollViewRenderBox.size.width;
 
-    // 項目数を計算（種類列 + さらに表示ボタン列2つ + 年の列数）
-    final totalColumns = 1 + 2 + (_endYearOffset - _startYearOffset + 1);
+    // 1項目あたりの平均幅を計算（ボタン列、年列）
+    final yearColumnsCount = _endYearOffset - _startYearOffset + 2;
+    final totalWidth =
+        2 * _buttonColumnWidth + yearColumnsCount * _yearColumnWidth;
 
-    // 1項目あたりの平均幅を計算
-    final averageColumnWidth = tableWidth / totalColumns;
+    // 現在の年が中央に来るようにスクロール位置を計算
+    final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
 
-    // 現在の年が少し右にオフセットされるようにスクロール位置を計算
-    // テーブル全体の中央から、ビューポート幅の半分を引き、項目幅の半分を右にオフセット
-    final rightOffset = averageColumnWidth / 2;
-    final scrollOffset = (tableWidth / 2) - (viewportWidth / 2) + rightOffset;
-
-    // スクロール範囲内に調整
-    final maxScrollExtent =
-        _horizontalScrollController.position.maxScrollExtent;
+    final maxScrollExtent = primaryController.position.maxScrollExtent;
     final targetOffset = scrollOffset.clamp(0.0, maxScrollExtent);
 
-    _horizontalScrollController.animateTo(
+    primaryController.animateTo(
       targetOffset,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
