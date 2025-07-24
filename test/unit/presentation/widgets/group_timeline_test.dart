@@ -191,16 +191,19 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      // 行の境界にリサイザーが表示されることを確認（最後の行以外にリサイザーがある）
+      // 行の境界にリサイザーが表示されることを確認（すべての行にリサイザーがある）
       expect(
-        find.byKey(const Key('row_resizer_0')),
+        find.byKey(const Key('row_resizer_icon_0')),
         findsOneWidget,
       ); // 旅行行のリサイザー
       expect(
-        find.byKey(const Key('row_resizer_1')),
+        find.byKey(const Key('row_resizer_icon_1')),
         findsOneWidget,
       ); // イベント行のリサイザー
-      // メンバー行は最後の行なのでリサイザーはない
+      expect(
+        find.byKey(const Key('row_resizer_icon_2')),
+        findsOneWidget,
+      ); // メンバー行のリサイザー
     });
 
     testWidgets('行の高さをドラッグで変更すると、固定列も連動して高さが変わる', (WidgetTester tester) async {
@@ -216,12 +219,12 @@ void main() {
           .getSize(find.byKey(const Key('scrollable_row_0')))
           .height;
 
-      expect(initialFixedRowHeight, equals(48.0)); // デフォルト値の確認
-      expect(initialScrollableRowHeight, equals(48.0));
+      expect(initialFixedRowHeight, equals(100.0)); // デフォルト値の確認
+      expect(initialScrollableRowHeight, equals(100.0));
 
       // Act
       // 旅行行のリサイザーをドラッグ
-      final resizerKey = find.byKey(const Key('row_resizer_0'));
+      final resizerKey = find.byKey(const Key('row_resizer_icon_0'));
       await tester.drag(
         resizerKey,
         const Offset(0, 20),
@@ -258,7 +261,7 @@ void main() {
       // Act
       // 旅行行のリサイザーをドラッグ
       await tester.drag(
-        find.byKey(const Key('row_resizer_0')),
+        find.byKey(const Key('row_resizer_icon_0')),
         const Offset(0, 10),
         warnIfMissed: false,
       );
@@ -266,7 +269,7 @@ void main() {
 
       // イベント行のリサイザーをドラッグ
       await tester.drag(
-        find.byKey(const Key('row_resizer_1')),
+        find.byKey(const Key('row_resizer_icon_1')),
         const Offset(0, 30),
         warnIfMissed: false,
       );
