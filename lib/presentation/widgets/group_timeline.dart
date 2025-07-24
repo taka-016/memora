@@ -1,6 +1,14 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+
+class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
+  @override
+  void rejectGesture(int pointer) {
+    acceptGesture(pointer);
+  }
+}
 
 class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
@@ -17,10 +25,20 @@ class _GroupTimelineState extends State<GroupTimeline> {
   static const int _yearRangeIncrement = 5;
 
   // テーブルスタイル定数
-  static const double _dataRowHeight = 48.0; // DataTableのデフォルト行高さ
+  static const double _dataRowHeight = 100.0; // DataTableのデフォルト行高さ
   static const double _headerRowHeight = 56.0; // DataTableのデフォルトヘッダー高さ
   static const Color _borderColor = Colors.grey;
   static const double _borderWidth = 1.0;
+
+  // 列幅定数
+  static const double _fixedColumnWidth = 100.0; // 固定列の幅
+  static const double _buttonColumnWidth = 100.0; // ボタン列の幅
+  static const double _yearColumnWidth = 120.0; // 年列の幅
+
+  // リサイズ関連定数
+  static const double _resizeBottomMargin = 100.0; // 最終行のリサイズ操作のための余白
+  static const double _rowMinHeight = 100.0; // 行の最小高さ
+  static const double _rowMaxHeight = 500.0; // 行の最大高さ
 
   // 表示する年の範囲を管理
   int _startYearOffset = -_initialYearRange;
@@ -116,8 +134,18 @@ class _GroupTimelineState extends State<GroupTimeline> {
               Expanded(child: _buildScrollableHeaderRow()),
             ],
           ),
-          // データ行とリサイザー
-          Expanded(child: Column(children: _buildDataRowsWithResizers())),
+          // データ行
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  ..._buildDataRowsWithResizers(),
+                  // 最終行のリサイズ操作のための余白
+                  SizedBox(height: _resizeBottomMargin),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -125,7 +153,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Widget _buildFixedHeaderCell() {
     return Container(
-      width: 100,
+      width: _fixedColumnWidth,
       height: _headerRowHeight,
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -135,7 +163,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
           bottom: BorderSide(color: _borderColor, width: _borderWidth),
         ),
       ),
-      child: const Text('種類'),
     );
   }
 
@@ -156,53 +183,94 @@ class _GroupTimelineState extends State<GroupTimeline> {
     for (int i = 0; i < dataRowLabels.length; i++) {
       // データ行
       widgets.add(_buildDataRow(i, dataRowLabels[i]));
-
-      // リサイザー（最後の行以外）
-      if (i < dataRowLabels.length - 1) {
-        widgets.add(_buildRowResizer(i));
-      }
     }
 
     return widgets;
   }
 
   Widget _buildDataRow(int rowIndex, String label) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        // 固定列のデータセル
-        Container(
-          key: Key('fixed_row_$rowIndex'),
-          width: 100,
-          height: _rowHeights[rowIndex],
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: _borderColor, width: _borderWidth),
-              bottom: BorderSide(color: _borderColor, width: _borderWidth),
-            ),
-          ),
-          child: Text(label),
-        ),
-        // 列の区切り線
-        Container(
-          width: _borderWidth,
-          height: _rowHeights[rowIndex],
-          color: _borderColor,
-        ),
-        // スクロール可能な列
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _rowScrollControllers[rowIndex + 1], // データ行用（ヘッダー行の次から）
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              key: Key('scrollable_row_$rowIndex'),
+        // メインの行
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 固定列のデータセル
+            Container(
+              key: Key('fixed_row_$rowIndex'),
+              width: _fixedColumnWidth,
               height: _rowHeights[rowIndex],
-              child: _buildScrollableDataCells(rowIndex),
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              decoration: BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: _borderColor, width: _borderWidth),
+                  bottom: BorderSide(color: _borderColor, width: _borderWidth),
+                ),
+              ),
+              child: Text(label),
+            ),
+            // 列の区切り線
+            Container(
+              width: _borderWidth,
+              height: _rowHeights[rowIndex],
+              color: _borderColor,
+            ),
+            // スクロール可能な列
+            Expanded(
+              child: SingleChildScrollView(
+                controller:
+                    _rowScrollControllers[rowIndex + 1], // データ行用（ヘッダー行の次から）
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  key: Key('scrollable_row_$rowIndex'),
+                  height: _rowHeights[rowIndex],
+                  child: _buildScrollableDataCells(rowIndex),
+                ),
+              ),
+            ),
+          ],
+        ),
+        // リサイザーアイコン
+        if (rowIndex < _rowHeights.length)
+          Positioned(
+            left: 0, // 固定列の中央（100px / 2 - アイコン幅の半分）
+            bottom: -19, // 境界線の中央に配置
+            child: RawGestureDetector(
+              key: Key('row_resizer_icon_$rowIndex'),
+              gestures: {
+                _VerticalDragGestureRecognizer:
+                    GestureRecognizerFactoryWithHandlers<
+                      _VerticalDragGestureRecognizer
+                    >(() => _VerticalDragGestureRecognizer(), (
+                      _VerticalDragGestureRecognizer instance,
+                    ) {
+                      instance.onUpdate = (details) {
+                        setState(() {
+                          _rowHeights[rowIndex] =
+                              (_rowHeights[rowIndex] + details.delta.dy).clamp(
+                                _rowMinHeight,
+                                _rowMaxHeight,
+                              );
+                        });
+                      };
+                    }),
+              },
+              child: MouseRegion(
+                cursor: SystemMouseCursors.resizeUpDown,
+                child: Container(
+                  width: _fixedColumnWidth,
+                  height: 50,
+                  decoration: const BoxDecoration(color: Colors.transparent),
+                  child: const Icon(
+                    Icons.drag_handle,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -213,8 +281,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
     return Row(
       children: List.generate(columnCount, (columnIndex) {
         final width = columnIndex == 0 || columnIndex == columnCount - 1
-            ? 100.0
-            : 120.0;
+            ? _buttonColumnWidth
+            : _yearColumnWidth;
         return SizedBox(
           width: width,
           height: _rowHeights[rowIndex],
@@ -234,54 +302,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
     );
   }
 
-  Widget _buildRowResizer(int rowIndex) {
-    return SizedBox(
-      height: 12,
-      child: Row(
-        children: [
-          // 固定列の境界線上にリサイザー
-          SizedBox(
-            width: 100,
-            child: GestureDetector(
-              key: Key('row_resizer_$rowIndex'),
-              onPanUpdate: (details) {
-                setState(() {
-                  _rowHeights[rowIndex] =
-                      (_rowHeights[rowIndex] + details.delta.dy).clamp(
-                        50.0,
-                        250.0,
-                      );
-                });
-              },
-              child: Container(
-                height: 12,
-                color: const Color.fromARGB(255, 255, 227, 227),
-              ),
-            ),
-          ),
-          // スクロール可能領域のリサイザー
-          Expanded(
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _rowHeights[rowIndex] =
-                      (_rowHeights[rowIndex] + details.delta.dy).clamp(
-                        50.0,
-                        250.0,
-                      );
-                });
-              },
-              child: Container(
-                height: 12,
-                color: const Color.fromARGB(255, 255, 227, 227),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildHeaderRow() {
     final currentYear = DateTime.now().year;
     List<Widget> cells = [];
@@ -289,7 +309,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
     // 「さらに表示」ボタンを先頭に追加
     cells.add(
       Container(
-        width: 100,
+        width: _buttonColumnWidth,
         height: _headerRowHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -314,7 +334,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
       final combinedYearFormat = '$year年($eraFormatted)';
       cells.add(
         Container(
-          width: 120,
+          width: _yearColumnWidth,
           height: _headerRowHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
@@ -332,7 +352,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
     // 「さらに表示」ボタンを末尾に追加
     cells.add(
       Container(
-        width: 100,
+        width: _buttonColumnWidth,
         height: _headerRowHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
@@ -393,12 +413,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     final viewportWidth = scrollViewRenderBox.size.width;
 
-    // 1項目あたりの平均幅を計算（ボタン列：100px、年列：120px）
-    final buttonColumnWidth = 100.0;
-    final yearColumnWidth = 120.0;
-    final yearColumnsCount = _endYearOffset - _startYearOffset + 1;
+    // 1項目あたりの平均幅を計算（ボタン列、年列）
+    final yearColumnsCount = _endYearOffset - _startYearOffset + 2;
     final totalWidth =
-        2 * buttonColumnWidth + yearColumnsCount * yearColumnWidth;
+        2 * _buttonColumnWidth + yearColumnsCount * _yearColumnWidth;
 
     // 現在の年が中央に来るようにスクロール位置を計算
     final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
