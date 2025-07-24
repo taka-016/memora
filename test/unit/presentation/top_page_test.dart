@@ -396,5 +396,44 @@ void main() {
       expect(find.text('memora'), findsWidgets);
       expect(find.text('test@example.com'), findsOneWidget);
     });
+
+    testWidgets('グループ年表から戻るボタンでグループ一覧に戻ることができる', (WidgetTester tester) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenAnswer((_) async => testMembers.first);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // グループ一覧からグループ選択
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // グループ年表が表示されることを確認
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('back_button')), findsOneWidget);
+
+      // Act - 戻るボタンをタップ
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      // Assert - グループ一覧に戻ることを確認
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_member')), findsOneWidget);
+    });
   });
 }
