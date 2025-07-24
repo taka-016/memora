@@ -287,5 +287,73 @@ void main() {
       expect(finalTravelRowHeight, equals(initialTravelRowHeight + 10));
       expect(finalEventRowHeight, equals(initialEventRowHeight + 30));
     });
+
+    testWidgets('onBackPressedが設定されている場合、左上に戻るアイコンが表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            height: 800,
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              onBackPressed: () {},
+            ),
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('back_button')), findsOneWidget);
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+    });
+
+    testWidgets('onBackPressedが設定されていない場合、戻るアイコンは表示されない', (
+      WidgetTester tester,
+    ) async {
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('back_button')), findsNothing);
+      expect(find.byIcon(Icons.arrow_back), findsNothing);
+    });
+
+    testWidgets('戻るアイコンをタップするとコールバック関数が呼ばれる', (WidgetTester tester) async {
+      // Arrange
+      bool callbackCalled = false;
+
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200,
+            height: 800,
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              onBackPressed: () {
+                callbackCalled = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(callbackCalled, isTrue);
+    });
   });
 }
