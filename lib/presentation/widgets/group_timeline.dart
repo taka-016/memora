@@ -12,8 +12,13 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
 
 class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
+  final VoidCallback? onBackPressed;
 
-  const GroupTimeline({super.key, required this.groupWithMembers});
+  const GroupTimeline({
+    super.key,
+    required this.groupWithMembers,
+    this.onBackPressed,
+  });
 
   @override
   State<GroupTimeline> createState() => _GroupTimelineState();
@@ -101,9 +106,30 @@ class _GroupTimelineState extends State<GroupTimeline> {
           // ヘッダー
           Container(
             padding: const EdgeInsets.all(16),
-            child: Text(
-              widget.groupWithMembers.group.name,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            child: Stack(
+              children: [
+                // 戻るボタン（左上）
+                if (widget.onBackPressed != null)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: IconButton(
+                      key: const Key('back_button'),
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: widget.onBackPressed,
+                    ),
+                  ),
+                // グループ名（中央）
+                Center(
+                  child: Text(
+                    widget.groupWithMembers.group.name,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           // 年表のテーブル
