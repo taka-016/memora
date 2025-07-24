@@ -8,7 +8,7 @@ import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
 
-import 'group_member_test.mocks.dart';
+import 'group_list_test.mocks.dart';
 
 @GenerateMocks([GetGroupsWithMembersUsecase])
 void main() {
@@ -61,7 +61,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
       verify(mockUsecase.execute(testMember)).called(1);
     });
 

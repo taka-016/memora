@@ -112,7 +112,15 @@ class _TopPageState extends State<TopPage> {
               onGroupSelected: _onGroupSelected,
             );
           case GroupTimelineScreenState.timeline:
-            return GroupTimeline(groupWithMembers: _selectedGroup!);
+            return GroupTimeline(
+              groupWithMembers: _selectedGroup!,
+              onBackPressed: () {
+                setState(() {
+                  _groupTimelineState = GroupTimelineScreenState.groupList;
+                  _selectedGroup = null;
+                });
+              },
+            );
         }
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
