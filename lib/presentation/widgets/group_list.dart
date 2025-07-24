@@ -62,7 +62,7 @@ class _GroupListState extends State<GroupList> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(key: const Key('group_member'), child: _buildBody());
+    return Container(key: const Key('group_list'), child: _buildBody());
   }
 
   Widget _buildBody() {

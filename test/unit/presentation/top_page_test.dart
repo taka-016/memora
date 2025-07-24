@@ -188,7 +188,7 @@ void main() {
       expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('2人のメンバー'), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
     testWidgets('メニューから「マップ表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
@@ -215,7 +215,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('map_display')), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
     testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
@@ -243,7 +243,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
       expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
@@ -273,7 +273,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_settings')), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
     testWidgets('メニューから「メンバー設定」を選択すると、メンバー設定画面が表示される', (
@@ -302,7 +302,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('member_settings')), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
@@ -329,7 +329,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('settings')), findsOneWidget);
-      expect(find.byKey(const Key('group_member')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
     testWidgets('メニュー選択後にDrawerが自動的に閉じる', (WidgetTester tester) async {
@@ -433,7 +433,7 @@ void main() {
 
       // Assert - グループ一覧に戻ることを確認
       expect(find.byKey(const Key('group_timeline')), findsNothing);
-      expect(find.byKey(const Key('group_member')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
   });
 }
