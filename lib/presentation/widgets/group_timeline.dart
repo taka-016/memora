@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+import 'package:memora/presentation/widgets/trip_management_modal.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -309,19 +310,33 @@ class _GroupTimelineState extends State<GroupTimeline> {
         final width = columnIndex == 0 || columnIndex == columnCount - 1
             ? _buttonColumnWidth
             : _yearColumnWidth;
+
+        // 旅行行（rowIndex == 0）の場合のみタップ可能にする
+        final isTripRow = rowIndex == 0;
+        final isYearColumn = columnIndex != 0 && columnIndex != columnCount - 1;
+
         return SizedBox(
           width: width,
           height: _rowHeights[rowIndex],
-          child: Container(
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: _borderColor, width: _borderWidth),
-                right: BorderSide(color: _borderColor, width: _borderWidth),
+          child: GestureDetector(
+            onTap: isTripRow && isYearColumn
+                ? () => _onTripCellTapped(columnIndex)
+                : null,
+            child: Container(
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: _borderColor, width: _borderWidth),
+                  right: BorderSide(color: _borderColor, width: _borderWidth),
+                ),
+                // 旅行セルの場合、ホバー効果を追加
+                color: isTripRow && isYearColumn
+                    ? Colors.blue.shade50
+                    : Colors.transparent,
               ),
+              child: const Text(''),
             ),
-            child: const Text(''),
           ),
         );
       }),
@@ -454,6 +469,25 @@ class _GroupTimelineState extends State<GroupTimeline> {
       targetOffset,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
+    );
+  }
+
+  void _onTripCellTapped(int columnIndex) {
+    // 将来的に年を特定する場合のために列インデックスを保持
+    // final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
+    // final currentYear = DateTime.now().year;
+    // final selectedYear = currentYear + _startYearOffset + yearIndex;
+
+    // 旅行管理モーダルを表示
+    showDialog(
+      context: context,
+      builder: (context) => TripManagementModal(
+        groupId: widget.groupWithMembers.group.id,
+        onSave: (tripEntry) {
+          // 旅行データの保存処理（後でUseCaseを実装）
+          // TODO: TripEntryの保存処理を実装
+        },
+      ),
     );
   }
 }
