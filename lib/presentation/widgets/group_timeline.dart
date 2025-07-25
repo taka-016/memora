@@ -2,7 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
-import 'package:memora/presentation/widgets/trip_management_modal.dart';
+import 'package:memora/presentation/widgets/trip_management.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -473,20 +473,18 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   void _onTripCellTapped(int columnIndex) {
-    // 将来的に年を特定する場合のために列インデックスを保持
-    // final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
-    // final currentYear = DateTime.now().year;
-    // final selectedYear = currentYear + _startYearOffset + yearIndex;
+    // 年を特定する
+    final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
+    final currentYear = DateTime.now().year;
+    final selectedYear = currentYear + _startYearOffset + yearIndex;
 
-    // 旅行管理モーダルを表示
-    showDialog(
-      context: context,
-      builder: (context) => TripManagementModal(
-        groupId: widget.groupWithMembers.group.id,
-        onSave: (tripEntry) {
-          // 旅行データの保存処理（後でUseCaseを実装）
-          // TODO: TripEntryの保存処理を実装
-        },
+    // 旅行管理ウィジェットに遷移
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => TripManagement(
+          groupId: widget.groupWithMembers.group.id,
+          year: selectedYear,
+        ),
       ),
     );
   }

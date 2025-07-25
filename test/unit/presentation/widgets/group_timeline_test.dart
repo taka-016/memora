@@ -356,7 +356,7 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
-    testWidgets('旅行セルをタップすると旅行管理モーダルが表示される', (WidgetTester tester) async {
+    testWidgets('旅行セルをタップすると旅行管理画面に遷移する', (WidgetTester tester) async {
       // Arrange
       final widget = MaterialApp(
         home: Scaffold(
@@ -380,12 +380,10 @@ void main() {
       await tester.tap(scrollableRow, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      // Assert - 旅行管理モーダルが表示される
-      expect(find.text('旅行新規作成'), findsOneWidget);
-      expect(find.byKey(const Key('trip_name_field')), findsOneWidget);
-      expect(find.byKey(const Key('start_date_field')), findsOneWidget);
-      expect(find.byKey(const Key('end_date_field')), findsOneWidget);
-      expect(find.byKey(const Key('trip_memo_field')), findsOneWidget);
+      // Assert - TripManagement画面が表示される
+      expect(find.text('2025年の旅行一覧'), findsOneWidget); // 現在年を含む
+      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsOneWidget);
     });
 
     testWidgets('旅行行以外のセルはタップできない', (WidgetTester tester) async {
