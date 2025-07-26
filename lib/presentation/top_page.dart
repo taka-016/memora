@@ -6,7 +6,7 @@ import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
-import 'package:memora/presentation/widgets/group_settings.dart';
+import 'package:memora/presentation/widgets/group_management.dart';
 import 'package:memora/presentation/widgets/member_management.dart';
 import 'package:memora/presentation/widgets/settings.dart';
 import 'package:memora/presentation/widgets/user_drawer_header.dart';
@@ -19,7 +19,7 @@ import 'package:memora/domain/entities/auth_state.dart';
 enum NavigationItem {
   groupTimeline, // グループ年表
   mapDisplay, // マップ表示
-  groupSettings, // グループ設定
+  groupManagement, // グループ設定
   memberManagement, // メンバー設定
   settings, // 設定
   accountSettings, // アカウント設定
@@ -151,7 +151,7 @@ class _TopPageState extends State<TopPage> {
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
             : const MapDisplay();
-      case NavigationItem.groupSettings:
+      case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -181,7 +181,7 @@ class _TopPageState extends State<TopPage> {
                   ),
                 ),
               )
-            : GroupSettings(member: _currentMember!);
+            : GroupManagement(member: _currentMember!);
       case NavigationItem.memberManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
@@ -277,9 +277,9 @@ class _TopPageState extends State<TopPage> {
             ListTile(
               leading: const Icon(Icons.group_work),
               title: const Text('グループ設定'),
-              selected: _selectedItem == NavigationItem.groupSettings,
+              selected: _selectedItem == NavigationItem.groupManagement,
               onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.groupSettings),
+                  _onNavigationItemSelected(NavigationItem.groupManagement),
             ),
             ListTile(
               leading: const Icon(Icons.settings),
