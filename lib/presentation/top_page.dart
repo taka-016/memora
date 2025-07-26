@@ -165,7 +165,7 @@ class _TopPageState extends State<TopPage> {
                       Icon(Icons.group_work, size: 100, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
-                        'グループ設定',
+                        'グループ管理',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -174,7 +174,7 @@ class _TopPageState extends State<TopPage> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'グループ設定画面',
+                        'グループ管理画面',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
@@ -196,7 +196,7 @@ class _TopPageState extends State<TopPage> {
                       Icon(Icons.people, size: 100, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
-                        'メンバー設定',
+                        'メンバー管理',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -205,7 +205,7 @@ class _TopPageState extends State<TopPage> {
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'メンバー設定画面',
+                        'メンバー管理画面',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
@@ -263,20 +263,20 @@ class _TopPageState extends State<TopPage> {
             ),
             ListTile(
               leading: const Icon(Icons.map),
-              title: const Text('マップ表示'),
+              title: const Text('地図表示'),
               selected: _selectedItem == NavigationItem.mapDisplay,
               onTap: () => _onNavigationItemSelected(NavigationItem.mapDisplay),
             ),
             ListTile(
               leading: const Icon(Icons.people),
-              title: const Text('メンバー設定'),
+              title: const Text('メンバー管理'),
               selected: _selectedItem == NavigationItem.memberManagement,
               onTap: () =>
                   _onNavigationItemSelected(NavigationItem.memberManagement),
             ),
             ListTile(
               leading: const Icon(Icons.group_work),
-              title: const Text('グループ設定'),
+              title: const Text('グループ管理'),
               selected: _selectedItem == NavigationItem.groupManagement,
               onTap: () =>
                   _onNavigationItemSelected(NavigationItem.groupManagement),

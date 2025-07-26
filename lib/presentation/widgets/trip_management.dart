@@ -67,11 +67,10 @@ class _TripManagementState extends State<TripManagement> {
                         icon: const Icon(Icons.arrow_back),
                         onPressed: widget.onBackPressed,
                       ),
-                    const Icon(Icons.flight_takeoff, size: 32),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        '${widget.year}年の旅行一覧',
+                        '${widget.year}年の旅行管理',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

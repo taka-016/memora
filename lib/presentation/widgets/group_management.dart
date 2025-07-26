@@ -254,10 +254,9 @@ class _GroupManagementState extends State<GroupManagement> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Icon(Icons.group_work, size: 32),
                       const SizedBox(width: 16),
                       const Text(
-                        'グループ設定',
+                        'グループ管理',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

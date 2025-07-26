@@ -159,9 +159,9 @@ void main() {
 
       // Assert
       expect(find.text('グループ年表'), findsOneWidget);
-      expect(find.text('マップ表示'), findsOneWidget);
-      expect(find.text('グループ設定'), findsOneWidget);
-      expect(find.text('メンバー設定'), findsOneWidget);
+      expect(find.text('地図表示'), findsOneWidget);
+      expect(find.text('グループ管理'), findsOneWidget);
+      expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
       expect(find.byIcon(Icons.timeline), findsOneWidget);
       expect(find.byIcon(Icons.map), findsOneWidget);
@@ -191,7 +191,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
-    testWidgets('メニューから「マップ表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -209,8 +209,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // マップ表示メニューをタップ
-      await tester.tap(find.text('マップ表示'));
+      // 地図表示メニューをタップ
+      await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
       // Assert
@@ -247,7 +247,7 @@ void main() {
       expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
-    testWidgets('メニューから「グループ設定」を選択すると、グループ設定画面が表示される', (
+    testWidgets('メニューから「グループ管理」を選択すると、グループ管理画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -267,8 +267,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // グループ設定メニューをタップ
-      await tester.tap(find.text('グループ設定'));
+      // グループ管理メニューをタップ
+      await tester.tap(find.text('グループ管理'));
       await tester.pumpAndSettle();
 
       // Assert
@@ -276,7 +276,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('メニューから「メンバー設定」を選択すると、メンバー設定画面が表示される', (
+    testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -296,8 +296,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // メンバー設定メニューをタップ
-      await tester.tap(find.text('メンバー設定'));
+      // メンバー管理メニューをタップ
+      await tester.tap(find.text('メンバー管理'));
       await tester.pumpAndSettle();
 
       // Assert
@@ -350,8 +350,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // マップ表示メニューをタップ
-      await tester.tap(find.text('マップ表示'));
+      // 地図表示メニューをタップ
+      await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
       // Assert - Drawerが閉じている
