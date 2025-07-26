@@ -8,9 +8,9 @@ import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/group_member_repository.dart';
-import 'package:memora/presentation/widgets/group_settings.dart';
+import 'package:memora/presentation/widgets/group_management.dart';
 
-import 'group_settings_test.mocks.dart';
+import 'group_management_test.mocks.dart';
 
 @GenerateMocks([GroupRepository, MemberRepository, GroupMemberRepository])
 void main() {
@@ -46,7 +46,7 @@ void main() {
     );
   });
 
-  group('GroupSettings', () {
+  group('GroupManagement', () {
     testWidgets('初期化時にグループリストが読み込まれること', (WidgetTester tester) async {
       // Arrange
       final managedGroups = [
@@ -80,7 +80,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -117,7 +117,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -145,7 +145,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -172,7 +172,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -215,7 +215,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -265,7 +265,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -310,7 +310,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -369,7 +369,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -429,7 +429,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -513,7 +513,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -582,7 +582,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
@@ -642,7 +642,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: GroupSettings(
+            body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,

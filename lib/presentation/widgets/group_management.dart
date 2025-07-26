@@ -18,13 +18,13 @@ import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../infrastructure/repositories/firestore_group_member_repository.dart';
 import 'group_edit_modal.dart';
 
-class GroupSettings extends StatefulWidget {
+class GroupManagement extends StatefulWidget {
   final Member member;
   final GroupRepository? groupRepository;
   final MemberRepository? memberRepository;
   final GroupMemberRepository? groupMemberRepository;
 
-  const GroupSettings({
+  const GroupManagement({
     super.key,
     required this.member,
     this.groupRepository,
@@ -33,10 +33,10 @@ class GroupSettings extends StatefulWidget {
   });
 
   @override
-  State<GroupSettings> createState() => _GroupSettingsState();
+  State<GroupManagement> createState() => _GroupManagementState();
 }
 
-class _GroupSettingsState extends State<GroupSettings> {
+class _GroupManagementState extends State<GroupManagement> {
   late final GetManagedGroupsWithMembersUsecase
   _getManagedGroupsWithMembersUsecase;
   late final DeleteGroupUsecase _deleteGroupUsecase;
