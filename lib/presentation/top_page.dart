@@ -7,7 +7,7 @@ import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/presentation/widgets/map_display.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_settings.dart';
-import 'package:memora/presentation/widgets/member_settings.dart';
+import 'package:memora/presentation/widgets/member_management.dart';
 import 'package:memora/presentation/widgets/settings.dart';
 import 'package:memora/presentation/widgets/user_drawer_header.dart';
 import 'package:memora/presentation/widgets/account_settings.dart';
@@ -20,7 +20,7 @@ enum NavigationItem {
   groupTimeline, // グループ年表
   mapDisplay, // マップ表示
   groupSettings, // グループ設定
-  memberSettings, // メンバー設定
+  memberManagement, // メンバー設定
   settings, // 設定
   accountSettings, // アカウント設定
 }
@@ -182,7 +182,7 @@ class _TopPageState extends State<TopPage> {
                 ),
               )
             : GroupSettings(member: _currentMember!);
-      case NavigationItem.memberSettings:
+      case NavigationItem.memberManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -212,7 +212,7 @@ class _TopPageState extends State<TopPage> {
                   ),
                 ),
               )
-            : MemberSettings(member: _currentMember!);
+            : MemberManagement(member: _currentMember!);
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:
@@ -270,9 +270,9 @@ class _TopPageState extends State<TopPage> {
             ListTile(
               leading: const Icon(Icons.people),
               title: const Text('メンバー設定'),
-              selected: _selectedItem == NavigationItem.memberSettings,
+              selected: _selectedItem == NavigationItem.memberManagement,
               onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.memberSettings),
+                  _onNavigationItemSelected(NavigationItem.memberManagement),
             ),
             ListTile(
               leading: const Icon(Icons.group_work),

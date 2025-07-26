@@ -144,15 +144,15 @@
   - [x] Groupを新規作成するusecaseを作成する（CreateMemberUsecaseを参考に）
   - [x] Groupを編集するusecaseを作成する（UpdateMemberUsecaseを参考に）
   - [x] Groupを削除するusecaseを作成する（DeleteMemberUsecaseを参考に）
-- [x] グループ一覧表示(MemberSettingsを参考に)
+- [x] グループ一覧表示(MemberManagementを参考に)
   - [x] ログインユーザーが管理しているグループの一覧を表示する
   - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
-- [x] グループ新規登録(MemberSettings,MemberEditModalを参考に)
+- [x] グループ新規登録(MemberManagement,MemberEditModalを参考に)
   - [x] Groupのid,administratorId以外の入力項目を作成する(モーダル画面)
   - [x] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
   - [x] グループに所属させるメンバーを選択できる（ログインユーザーが管理しているメンバーから選択）
   - [x] メンバー選択の対象数が多い場合、メンバー一覧のみをスクロールする
-- [x] グループ情報編集(MemberSettings,MemberEditModalを参考に)
+- [x] グループ情報編集(MemberManagement,MemberEditModalを参考に)
   - [x] グループ一覧から対象グループの行をクリックして編集する
   - [x] グループ新規登録と同一の情報がすべて編集可能（同一画面を使いまわす）
   - [x] グループに所属させるメンバーの追加削除ができる（ログインユーザーが管理しているメンバーから選択）
@@ -167,7 +167,7 @@
   - [x] DeleteGroupMembersByGroupIdUsecaseを作成
   - [x] 既存のGroupMember削除処理で_getGroupMembersByGroupIdUsecaseの重複呼び出しを削除
   - [x] 新しいユースケースを使用してグループのすべてのメンバーを一括削除
-- [x] グループ削除(MemberSettingsを参考に)
+- [x] グループ削除(MemberManagementを参考に)
   - [x] グループ一覧から対象グループの削除ボタンをクリック
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
   - [x] グループに紐づくグループメンバーもあわせて削除する
