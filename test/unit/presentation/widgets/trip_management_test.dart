@@ -10,18 +10,24 @@ void main() {
     testWidgets('ウィジェットが正しく表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: const TripManagement(groupId: testGroupId, year: testYear),
+          home: Scaffold(
+            body: const TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+            ),
+          ),
         ),
       );
 
       // タイトルが正しく表示されることを確認
       expect(find.text('$testYear年の旅行一覧'), findsOneWidget);
 
-      // 戻るボタンが表示されることを確認
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+      // 戻るボタンは表示されない（onBackPressedがnullのため）
+      expect(find.byIcon(Icons.arrow_back), findsNothing);
 
-      // FloatingActionButtonが表示されることを確認
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      // 旅行追加ボタンが表示されることを確認
+      expect(find.text('旅行追加'), findsOneWidget);
 
       // 空状態メッセージが表示されることを確認
       expect(find.text('この年の旅行はまだありません'), findsOneWidget);
@@ -30,7 +36,13 @@ void main() {
     testWidgets('ローディング完了後に空状態メッセージが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: const TripManagement(groupId: testGroupId, year: testYear),
+          home: Scaffold(
+            body: const TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+            ),
+          ),
         ),
       );
 
@@ -40,48 +52,48 @@ void main() {
       // 空状態メッセージが表示されることを確認
       expect(find.text('この年の旅行はまだありません'), findsOneWidget);
 
-      // FloatingActionButtonが表示されることを確認
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      // 旅行追加ボタンが表示されることを確認
+      expect(find.text('旅行追加'), findsOneWidget);
       expect(find.byIcon(Icons.add), findsOneWidget);
     });
 
-    testWidgets('FloatingActionButtonをタップすると追加機能のメッセージが表示される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('旅行追加ボタンをタップすると追加機能のメッセージが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
-          home: const TripManagement(groupId: testGroupId, year: testYear),
+          home: Scaffold(
+            body: const TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+            ),
+          ),
         ),
       );
 
       // ローディング完了まで待機
       await tester.pumpAndSettle();
 
-      // FloatingActionButtonをタップ
-      await tester.tap(find.byType(FloatingActionButton));
+      // 旅行追加ボタンをタップ
+      await tester.tap(find.text('旅行追加'));
       await tester.pump();
 
       // スナックバーメッセージが表示されることを確認
       expect(find.text('旅行追加機能は後で実装します'), findsOneWidget);
     });
 
-    testWidgets('戻るボタンをタップするとNavigator.popが呼ばれる', (WidgetTester tester) async {
-      bool popCalled = false;
+    testWidgets('戻るボタンをタップするとonBackPressedが呼ばれる', (WidgetTester tester) async {
+      bool backPressed = false;
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Navigator(
-            onDidRemovePage: (page) {
-              popCalled = true;
-            },
-            pages: [
-              MaterialPage(
-                child: const TripManagement(
-                  groupId: testGroupId,
-                  year: testYear,
-                ),
-              ),
-            ],
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: () {
+                backPressed = true;
+              },
+            ),
           ),
         ),
       );
@@ -90,8 +102,8 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_back));
       await tester.pump();
 
-      // popが呼ばれたことを確認
-      expect(popCalled, isTrue);
+      // onBackPressedが呼ばれたことを確認
+      expect(backPressed, isTrue);
     });
 
     testWidgets('年とグループIDが正しく設定される', (WidgetTester tester) async {
@@ -100,7 +112,13 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: const TripManagement(groupId: testGroupId, year: testYear),
+          home: Scaffold(
+            body: const TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+            ),
+          ),
         ),
       );
 
