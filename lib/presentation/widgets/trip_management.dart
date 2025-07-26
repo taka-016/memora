@@ -67,22 +67,19 @@ class _TripManagementState extends State<TripManagement> {
                         icon: const Icon(Icons.arrow_back),
                         onPressed: widget.onBackPressed,
                       ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Text(
-                        '${widget.year}年の旅行管理',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    const SizedBox(width: 16),
+                    Text(
+                      '${widget.year}年の旅行管理',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
                     ElevatedButton.icon(
                       onPressed: _showAddTripDialog,
                       icon: const Icon(Icons.add),
