@@ -5,9 +5,9 @@ import 'package:mockito/mockito.dart';
 
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/presentation/widgets/member_settings.dart';
+import 'package:memora/presentation/widgets/member_management.dart';
 
-import 'member_settings_test.mocks.dart';
+import 'member_management_test.mocks.dart';
 
 @GenerateMocks([MemberRepository])
 void main() {
@@ -44,7 +44,7 @@ void main() {
     ).thenAnswer((_) async => testMember);
   });
 
-  group('MemberSettings', () {
+  group('MemberManagement', () {
     testWidgets('初期化時にメンバーリストが読み込まれること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
@@ -78,7 +78,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -111,7 +111,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -135,7 +135,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -159,7 +159,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MemberSettings(
+            body: MemberManagement(
               member: testMember,
               memberRepository: mockMemberRepository,
             ),
@@ -209,7 +209,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -263,7 +263,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -309,7 +309,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -359,7 +359,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -410,7 +410,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -469,7 +469,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),
@@ -505,7 +505,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MemberSettings(
+            body: MemberManagement(
               member: testMember,
               memberRepository: mockMemberRepository,
             ),
@@ -595,7 +595,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: MemberSettings(
+          home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
           ),

@@ -9,21 +9,21 @@ import '../../domain/repositories/member_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import 'member_edit_modal.dart';
 
-class MemberSettings extends StatefulWidget {
+class MemberManagement extends StatefulWidget {
   final Member member;
   final MemberRepository? memberRepository;
 
-  const MemberSettings({
+  const MemberManagement({
     super.key,
     required this.member,
     this.memberRepository,
   });
 
   @override
-  State<MemberSettings> createState() => _MemberSettingsState();
+  State<MemberManagement> createState() => _MemberManagementState();
 }
 
-class _MemberSettingsState extends State<MemberSettings> {
+class _MemberManagementState extends State<MemberManagement> {
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
   late final CreateMemberUsecase _createMemberUsecase;
   late final UpdateMemberUsecase _updateMemberUsecase;
