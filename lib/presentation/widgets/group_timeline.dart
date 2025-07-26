@@ -2,7 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
-import 'package:memora/presentation/widgets/trip_management.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -14,11 +13,13 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
 class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
+  final Function(String groupId, int year)? onTripManagementSelected;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
     this.onBackPressed,
+    this.onTripManagementSelected,
   });
 
   @override
@@ -479,13 +480,11 @@ class _GroupTimelineState extends State<GroupTimeline> {
     final selectedYear = currentYear + _startYearOffset + yearIndex;
 
     // 旅行管理ウィジェットに遷移
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => TripManagement(
-          groupId: widget.groupWithMembers.group.id,
-          year: selectedYear,
-        ),
-      ),
-    );
+    if (widget.onTripManagementSelected != null) {
+      widget.onTripManagementSelected!(
+        widget.groupWithMembers.group.id,
+        selectedYear,
+      );
+    }
   }
 }

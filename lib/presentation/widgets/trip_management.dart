@@ -4,8 +4,14 @@ import '../../domain/entities/trip_entry.dart';
 class TripManagement extends StatefulWidget {
   final String groupId;
   final int year;
+  final VoidCallback? onBackPressed;
 
-  const TripManagement({super.key, required this.groupId, required this.year});
+  const TripManagement({
+    super.key,
+    required this.groupId,
+    required this.year,
+    this.onBackPressed,
+  });
 
   @override
   State<TripManagement> createState() => _TripManagementState();
@@ -45,18 +51,52 @@ class _TripManagementState extends State<TripManagement> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.year}年の旅行一覧'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTripDialog,
-        child: const Icon(Icons.add),
+    return Container(
+      key: const Key('trip_management'),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    if (widget.onBackPressed != null)
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: widget.onBackPressed,
+                      ),
+                    const Icon(Icons.flight_takeoff, size: 32),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        '${widget.year}年の旅行一覧',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: _showAddTripDialog,
+                      icon: const Icon(Icons.add),
+                      label: const Text('旅行追加'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+          Expanded(child: _buildBody()),
+        ],
       ),
     );
   }
@@ -83,7 +123,28 @@ class _TripManagementState extends State<TripManagement> {
     }
 
     if (_tripEntries.isEmpty) {
-      return const Center(child: Text('この年の旅行はまだありません'));
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'この年の旅行はまだありません',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              '旅行を追加してください',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(

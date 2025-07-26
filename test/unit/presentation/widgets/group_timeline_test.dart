@@ -356,14 +356,25 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
-    testWidgets('旅行セルをタップすると旅行管理画面に遷移する', (WidgetTester tester) async {
+    testWidgets('旅行セルをタップするとonTripManagementSelectedが呼ばれる', (
+      WidgetTester tester,
+    ) async {
       // Arrange
+      String? selectedGroupId;
+      int? selectedYear;
+
       final widget = MaterialApp(
         home: Scaffold(
           body: SizedBox(
             width: 1200,
             height: 800,
-            child: GroupTimeline(groupWithMembers: testGroupWithMembers),
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              onTripManagementSelected: (groupId, year) {
+                selectedGroupId = groupId;
+                selectedYear = year;
+              },
+            ),
           ),
         ),
       );
@@ -380,10 +391,9 @@ void main() {
       await tester.tap(scrollableRow, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      // Assert - TripManagement画面が表示される
-      expect(find.text('2025年の旅行一覧'), findsOneWidget); // 現在年を含む
-      expect(find.byIcon(Icons.arrow_back), findsOneWidget);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      // Assert - onTripManagementSelectedが呼ばれる
+      expect(selectedGroupId, equals(testGroupWithMembers.group.id));
+      expect(selectedYear, isNotNull);
     });
 
     testWidgets('旅行行以外のセルはタップできない', (WidgetTester tester) async {

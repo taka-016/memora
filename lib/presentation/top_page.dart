@@ -11,6 +11,7 @@ import 'package:memora/presentation/widgets/member_settings.dart';
 import 'package:memora/presentation/widgets/settings.dart';
 import 'package:memora/presentation/widgets/user_drawer_header.dart';
 import 'package:memora/presentation/widgets/account_settings.dart';
+import 'package:memora/presentation/widgets/trip_management.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/auth_state.dart';
@@ -27,6 +28,7 @@ enum NavigationItem {
 enum GroupTimelineScreenState {
   groupList, // グループ一覧を表示
   timeline, // 年表を表示
+  tripManagement, // 旅行管理を表示
 }
 
 class TopPage extends StatefulWidget {
@@ -52,6 +54,8 @@ class _TopPageState extends State<TopPage> {
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
   GroupWithMembers? _selectedGroup;
+  String? _selectedGroupId;
+  int? _selectedYear;
 
   @override
   void initState() {
@@ -98,6 +102,14 @@ class _TopPageState extends State<TopPage> {
     });
   }
 
+  void _onTripManagementSelected(String groupId, int year) {
+    setState(() {
+      _groupTimelineState = GroupTimelineScreenState.tripManagement;
+      _selectedGroupId = groupId;
+      _selectedYear = year;
+    });
+  }
+
   Widget _buildBody() {
     switch (_selectedItem) {
       case NavigationItem.groupTimeline:
@@ -118,6 +130,19 @@ class _TopPageState extends State<TopPage> {
                 setState(() {
                   _groupTimelineState = GroupTimelineScreenState.groupList;
                   _selectedGroup = null;
+                });
+              },
+              onTripManagementSelected: _onTripManagementSelected,
+            );
+          case GroupTimelineScreenState.tripManagement:
+            return TripManagement(
+              groupId: _selectedGroupId!,
+              year: _selectedYear!,
+              onBackPressed: () {
+                setState(() {
+                  _groupTimelineState = GroupTimelineScreenState.timeline;
+                  _selectedGroupId = null;
+                  _selectedYear = null;
                 });
               },
             );
