@@ -21,7 +21,7 @@ void main() {
       );
 
       // タイトルが正しく表示されることを確認
-      expect(find.text('$testYear年の旅行一覧'), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsOneWidget);
 
       // 戻るボタンは表示されない（onBackPressedがnullのため）
       expect(find.byIcon(Icons.arrow_back), findsNothing);
@@ -123,7 +123,7 @@ void main() {
       );
 
       // タイトルに年が正しく表示されることを確認
-      expect(find.text('$testYear年の旅行一覧'), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsOneWidget);
     });
   });
 }

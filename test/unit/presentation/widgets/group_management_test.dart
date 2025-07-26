@@ -100,7 +100,7 @@ void main() {
       verify(
         mockGroupRepository.getGroupsByAdministratorId(testMember.id),
       ).called(1);
-      expect(find.text('グループ設定'), findsOneWidget);
+      expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('Test Group 1'), findsOneWidget);
       expect(find.text('Test Group 2'), findsOneWidget);
       expect(find.text('Test memo 1'), findsOneWidget);

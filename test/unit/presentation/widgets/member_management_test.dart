@@ -95,7 +95,7 @@ void main() {
       verify(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
       ).called(1);
-      expect(find.text('メンバー設定'), findsOneWidget);
+      expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('Managed User 1'), findsOneWidget);
       expect(find.text('hanako@example.com'), findsOneWidget);
     });

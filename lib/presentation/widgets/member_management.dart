@@ -172,10 +172,9 @@ class _MemberManagementState extends State<MemberManagement> {
                   padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      const Icon(Icons.people, size: 32),
                       const SizedBox(width: 16),
                       const Text(
-                        'メンバー設定',
+                        'メンバー管理',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
