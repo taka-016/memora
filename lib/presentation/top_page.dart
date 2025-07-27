@@ -53,9 +53,9 @@ class _TopPageState extends State<TopPage> {
       GroupTimelineScreenState.groupList;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
-  GroupWithMembers? _selectedGroup;
   String? _selectedGroupId;
   int? _selectedYear;
+  GroupTimeline? _groupTimelineInstance;
 
   @override
   void initState() {
@@ -89,7 +89,7 @@ class _TopPageState extends State<TopPage> {
       // グループ年表以外を選択した場合は状態をリセット
       if (item != NavigationItem.groupTimeline) {
         _groupTimelineState = GroupTimelineScreenState.groupList;
-        _selectedGroup = null;
+        _groupTimelineInstance = null;
       }
     });
     Navigator.of(context).pop();
@@ -98,7 +98,17 @@ class _TopPageState extends State<TopPage> {
   void _onGroupSelected(GroupWithMembers groupWithMembers) {
     setState(() {
       _groupTimelineState = GroupTimelineScreenState.timeline;
-      _selectedGroup = groupWithMembers;
+      // グループ一覧からの遷移は毎回新しいインスタンスを作成
+      _groupTimelineInstance = GroupTimeline(
+        groupWithMembers: groupWithMembers,
+        onBackPressed: () {
+          setState(() {
+            _groupTimelineState = GroupTimelineScreenState.groupList;
+            _groupTimelineInstance = null;
+          });
+        },
+        onTripManagementSelected: _onTripManagementSelected,
+      );
     });
   }
 
@@ -124,16 +134,7 @@ class _TopPageState extends State<TopPage> {
               onGroupSelected: _onGroupSelected,
             );
           case GroupTimelineScreenState.timeline:
-            return GroupTimeline(
-              groupWithMembers: _selectedGroup!,
-              onBackPressed: () {
-                setState(() {
-                  _groupTimelineState = GroupTimelineScreenState.groupList;
-                  _selectedGroup = null;
-                });
-              },
-              onTripManagementSelected: _onTripManagementSelected,
-            );
+            return _groupTimelineInstance!;
           case GroupTimelineScreenState.tripManagement:
             return TripManagement(
               groupId: _selectedGroupId!,
