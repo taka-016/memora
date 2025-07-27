@@ -36,42 +36,76 @@ Enable the following APIs in your Google Cloud Console and configure the corresp
 
 ### Firebase Configuration
 
-This application uses Firebase/Firestore and requires the following APIs to be enabled:
+This application uses Firebase/Firestore for data persistence and Firebase Authentication for user management. The following APIs must be enabled in your Firebase Console:
 
 - **Identity Toolkit API** - Required for Firebase Authentication
 - **Token Service API** - Required for secure token management
-- `firebase_options.dart` - Generated Firebase configuration
-- `firebase.json` - Firebase project configuration
 
-### Setup
+#### Required Configuration Files
 
-1. Clone the project
-2. Create environment variable file:
+- `firebase_options.dart` - Generated Firebase configuration file
+- `firebase.json` - Firebase project configuration file
+
+#### Firebase Setup Instructions
+
+1. Create Firebase Project:
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Create a new project or select existing project
+   - Enable Authentication and Firestore Database
+
+2. Configure Flutter App:
+
+   ```bash
+   # Install Firebase CLI (if not already installed)
+   npm install -g firebase-tools
+   
+   # Login to Firebase
+   firebase login
+   
+   # Install FlutterFire CLI
+   dart pub global activate flutterfire_cli
+   
+   # Configure Firebase for your Flutter app
+   flutterfire configure
+   ```
+
+3. Enable Required Services:
+   - In Firebase Console, enable Authentication (Google and Email/Password providers)
+   - Enable Firestore Database in production mode
+   - Configure Firestore security rules as needed
+
+4. Verify Configuration:
+   - Ensure `firebase_options.dart` is generated in `/lib/`
+   - Ensure `firebase.json` exists in project root
+
+### Environment Setup
+
+1. Create environment variable file:
 
    ```bash
    cp .env.example .env
    # Edit .env file to set required environment variables
    ```
 
-3. Install dependencies:
+2. Install dependencies:
 
    ```bash
    flutter pub get
    ```
 
-4. Generate configuration from environment variables:
+3. Generate configuration from environment variables:
 
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-5. Remove the .env file (contains sensitive information):
+4. Remove the .env file (contains sensitive information):
 
    ```bash
    rm .env
    ```
 
-6. Configure Android local properties:
+5. Configure Android local properties:
 
    ```bash
    # Create android/local.properties with the following content:
