@@ -57,6 +57,13 @@ class _TopPageState extends State<TopPage> {
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
 
+  // テスト用メソッド
+  @visibleForTesting
+  GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
+
+  @visibleForTesting
+  GroupTimelineScreenState get groupTimelineStateForTest => _groupTimelineState;
+
   @override
   void initState() {
     super.initState();
