@@ -185,6 +185,36 @@ void main() {
       expect(scrollController.offset, greaterThan(0));
     });
 
+    testWidgets('現在の年へのスクロールは初回のみで、再ビルド時はスクロールしない', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // 初回のスクロール位置を取得
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller;
+      final initialOffset = scrollController!.offset;
+
+      // スクロール位置を手動で変更
+      scrollController.jumpTo(0);
+      await tester.pumpAndSettle();
+      expect(scrollController.offset, equals(0));
+
+      // Act - ウィジェットを再ビルド
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert - スクロール位置が自動的に中央に戻らないことを確認
+      expect(scrollController.offset, equals(0));
+      expect(scrollController.offset, isNot(equals(initialOffset)));
+    });
+
     testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(createTestWidget());

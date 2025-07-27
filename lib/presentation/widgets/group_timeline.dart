@@ -64,6 +64,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
   // 行の高さを管理するList
   late List<double> _rowHeights;
 
+  // 初回表示かどうかを管理するフラグ
+  bool _isFirstTime = true;
+
   @override
   void initState() {
     super.initState();
@@ -86,7 +89,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     // 初期表示時に現在の年が中央に表示されるようにスクロール位置を調整
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToCurrentYear();
+      if (_isFirstTime) {
+        _scrollToCurrentYear();
+        _isFirstTime = false;
+      }
     });
   }
 
