@@ -1,24 +1,26 @@
 # memora
 
-**A Flutter application for recording and sharing events within groups such as families**
+A Flutter application for recording and sharing events within groups such as families
 
 ## Overview
 
-Memora is a mobile application that allows groups such as families and friends to record and share past and future events in a timeline format.
+Memora is a Flutter mobile application designed for groups such as families and friends to record, organize, and share memories through an interactive timeline interface. The application provides a comprehensive platform for managing personal and group events, travel experiences, and life milestones in chronological order.
 
 ### Key Features
 
-- **Event Management**: Display and manage personal and group events in timeline format
-- **Travel Records**: Manage travel information and routes on maps
-- **Member Management**: Manage member information within groups
-- **Authentication**: Secure account management with Firebase Authentication
-- **Map Features**: Location management integrated with Google Maps
+- **Timeline Visualization**: Interactive timeline displaying events, travels, and life events across past, present, and future years with adjustable row heights and year-based column organization
+- **Group & Member Management**: Create and manage multiple groups with flexible member assignment, allowing members to belong to multiple groups simultaneously
+- **Event Management**: Create, edit, and delete personal and group events with validation for required fields (name, date) and chronological organization
+- **Travel Management**: Comprehensive travel planning with start/end date validation, location pinning, visit scheduling, and itinerary ordering through drag-and-drop interface
+- **Interactive Maps**: Google Maps integration with location search, manual pin placement, travel route visualization, and historical visit tracking for frequently visited places
+- **Life Event Automation**: Automatic calculation and display of future life events (Shichi-Go-San ceremony, school milestones, coming of age) based on member birthdays
 
 ## Documentation
 
 Please refer to the following for detailed design documentation:
 
 - [Application Specification](./doc/app_spec.md) - Functional requirements and UI structure
+- [User Stories](./doc/user_stories.md) - User scenarios and acceptance criteria
 - [ER Diagram](./doc/er_diagram.md) - Database design
 - [Use Case Diagram](./doc/usecase_diagram.md) - System usage scenarios
 - [TODO List](./doc/todo.md) - Development progress status
@@ -28,12 +30,14 @@ Please refer to the following for detailed design documentation:
 ### Google Cloud Platform API Configuration
 
 Enable the following APIs in your Google Cloud Console and configure the corresponding API keys:
+
 - **Maps SDK for Android** - Required for map functionality on Android devices. Set the API key in `android/local.properties` as `MAPS_API_KEY`
 - **Places API** - Required for location search functionality. Set the API key in `.env` as `GOOGLE_PLACES_API_KEY`
 
 ### Firebase Configuration
 
 This application uses Firebase/Firestore and requires the following APIs to be enabled:
+
 - **Identity Toolkit API** - Required for Firebase Authentication
 - **Token Service API** - Required for secure token management
 - `firebase_options.dart` - Generated Firebase configuration
@@ -43,27 +47,32 @@ This application uses Firebase/Firestore and requires the following APIs to be e
 
 1. Clone the project
 2. Create environment variable file:
+
    ```bash
    cp .env.example .env
    # Edit .env file to set required environment variables
    ```
 
 3. Install dependencies:
+
    ```bash
    flutter pub get
    ```
 
 4. Generate configuration from environment variables:
+
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
 
 5. Remove the .env file (contains sensitive information):
+
    ```bash
    rm .env
    ```
 
 6. Configure Android local properties:
+
    ```bash
    # Create android/local.properties with the following content:
    sdk.dir=/path/to/your/android/sdk
