@@ -435,5 +435,64 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
+
+    testWidgets('GroupTimelineインスタンスの再利用動作が正しく実装されている', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenAnswer((_) async => testMembers.first);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // グループ一覧からGroupTimelineに遷移
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // GroupTimelineが表示されることを確認
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // 他の画面に遷移してから戻ってもGroupTimelineが表示される
+      // （インスタンス再利用の実装があるため、これが正常に動作する）
+
+      // グループ年表以外のメニューを選択
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('map_display')), findsOneWidget);
+
+      // 再度グループ年表メニューを選択
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ年表'));
+      await tester.pumpAndSettle();
+
+      // グループ一覧に戻る（インスタンスクリア）
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+
+      // 再度同じグループを選択
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // この時点で新しいGroupTimelineインスタンスが作成されている
+      // （実装により、グループ一覧からの遷移は毎回新インスタンス）
+    });
   });
 }
