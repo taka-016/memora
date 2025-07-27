@@ -34,7 +34,7 @@ Enable the following APIs in your Google Cloud Console and configure the corresp
 - **Maps SDK for Android** - Required for map functionality on Android devices. Set the API key in `android/local.properties` as `MAPS_API_KEY`
 - **Places API** - Required for location search functionality. Set the API key in `.env` as `GOOGLE_PLACES_API_KEY`
 
-#### Environment Setup
+#### Environment Setup Instructions
 
 1. Create environment variable file:
 
