@@ -34,6 +34,47 @@ Enable the following APIs in your Google Cloud Console and configure the corresp
 - **Maps SDK for Android** - Required for map functionality on Android devices. Set the API key in `android/local.properties` as `MAPS_API_KEY`
 - **Places API** - Required for location search functionality. Set the API key in `.env` as `GOOGLE_PLACES_API_KEY`
 
+#### Environment Setup
+
+1. Create environment variable file:
+
+   ```bash
+   cp .env.example .env
+   # Edit .env file to set required environment variables
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   flutter pub get
+   ```
+
+3. Generate configuration from environment variables:
+
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. Remove the .env file (contains sensitive information):
+
+   ```bash
+   rm .env
+   ```
+
+5. Configure Android local properties:
+
+   ```bash
+   # Create android/local.properties with the following content:
+   sdk.dir=/path/to/your/android/sdk
+   flutter.sdk=/path/to/your/flutter/sdk
+   flutter.buildMode=debug
+   flutter.versionName=1.0.0
+   flutter.versionCode=1
+   
+   # Google Maps API key
+   MAPS_API_KEY=your_maps_api_key_here
+   ```
+
 ### Firebase Configuration
 
 This application uses Firebase/Firestore for data persistence and Firebase Authentication for user management. The following APIs must be enabled in your Firebase Console:
@@ -77,47 +118,6 @@ This application uses Firebase/Firestore for data persistence and Firebase Authe
 4. Verify Configuration:
    - Ensure `firebase_options.dart` is generated in `/lib/`
    - Ensure `firebase.json` exists in project root
-
-### Environment Setup
-
-1. Create environment variable file:
-
-   ```bash
-   cp .env.example .env
-   # Edit .env file to set required environment variables
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   flutter pub get
-   ```
-
-3. Generate configuration from environment variables:
-
-   ```bash
-   dart run build_runner build --delete-conflicting-outputs
-   ```
-
-4. Remove the .env file (contains sensitive information):
-
-   ```bash
-   rm .env
-   ```
-
-5. Configure Android local properties:
-
-   ```bash
-   # Create android/local.properties with the following content:
-   sdk.dir=/path/to/your/android/sdk
-   flutter.sdk=/path/to/your/flutter/sdk
-   flutter.buildMode=debug
-   flutter.versionName=1.0.0
-   flutter.versionCode=1
-   
-   # Google Maps API key
-   MAPS_API_KEY=your_maps_api_key_here
-   ```
 
 ## License
 
