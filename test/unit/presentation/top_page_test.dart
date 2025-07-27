@@ -435,5 +435,111 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
+
+    testWidgets('IndexedStackとGroupTimelineインスタンス管理が正しく動作している', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenAnswer((_) async => testMembers.first);
+
+      final widget = createTestWidget(
+        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // TopPageウィジェットを取得
+      final topPageFinder = find.byType(TopPage);
+      final topPageState = tester.state(topPageFinder) as dynamic;
+
+      // 1. IndexedStackが正しくセットアップされていることを検証
+      final indexedStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(
+        indexedStack.children.length,
+        3,
+      ); // GroupList, GroupTimeline, TripManagement
+      expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
+
+      // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
+      expect(topPageState.groupTimelineInstanceForTest, isNull);
+      expect(
+        topPageState.groupTimelineStateForTest,
+        GroupTimelineScreenState.groupList,
+      );
+
+      // GroupTimelineに遷移
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // 3. グループ選択後のIndexとインスタンス状態を検証
+      final timelineIndexedStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
+      expect(topPageState.groupTimelineInstanceForTest, isNotNull);
+      expect(
+        topPageState.groupTimelineStateForTest,
+        GroupTimelineScreenState.timeline,
+      );
+
+      // 他画面に遷移（地図表示）
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+
+      // 4. 他画面遷移時にGroupTimelineインスタンスがリセットされることを検証
+      expect(topPageState.groupTimelineInstanceForTest, isNull);
+      expect(
+        topPageState.groupTimelineStateForTest,
+        GroupTimelineScreenState.groupList,
+      );
+
+      // グループ年表に戻る
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ年表'));
+      await tester.pumpAndSettle();
+
+      // 5. グループ年表メニューに戻った時の状態を検証
+      final backToTimelineStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
+      expect(topPageState.groupTimelineInstanceForTest, isNull);
+      expect(
+        topPageState.groupTimelineStateForTest,
+        GroupTimelineScreenState.groupList,
+      );
+
+      // 再度同じグループを選択
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // 6. 再選択時の状態を検証
+      final finalIndexedStack = tester.widget<IndexedStack>(
+        find.byType(IndexedStack),
+      );
+      expect(finalIndexedStack.index, 1); // GroupTimeline（index: 1）
+      expect(topPageState.groupTimelineInstanceForTest, isNotNull);
+      expect(
+        topPageState.groupTimelineStateForTest,
+        GroupTimelineScreenState.timeline,
+      );
+    });
   });
 }
