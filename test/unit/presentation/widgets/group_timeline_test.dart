@@ -418,5 +418,77 @@ void main() {
       // 実装上、GestureDetectorはタップ可能でないセルではnullのonTapが設定されている
       expect(find.text('旅行新規作成'), findsNothing);
     });
+
+    testWidgets('shouldScrollToCurrentYearがtrueの場合、初期表示時に現在の年にスクロールされる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 600,
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              shouldScrollToCurrentYear: true,
+            ),
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Assert
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller;
+
+      expect(scrollController, isNotNull);
+      expect(scrollController!.hasClients, isTrue);
+      // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
+      expect(scrollController.offset, greaterThan(0));
+    });
+
+    testWidgets('shouldScrollToCurrentYearがfalseの場合、初期表示時にスクロールされない', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+
+      final widget = MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 800,
+            height: 600,
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              shouldScrollToCurrentYear: false,
+            ),
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Assert
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller;
+
+      expect(scrollController, isNotNull);
+      expect(scrollController!.hasClients, isTrue);
+      // スクロール位置が0（左端）であることを確認（スクロールされていない）
+      expect(scrollController.offset, equals(0.0));
+    });
   });
 }

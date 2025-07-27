@@ -51,6 +51,7 @@ class _TopPageState extends State<TopPage> {
   NavigationItem _selectedItem = NavigationItem.groupTimeline;
   GroupTimelineScreenState _groupTimelineState =
       GroupTimelineScreenState.groupList;
+  GroupTimelineScreenState? _previousTimelineState;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
   GroupWithMembers? _selectedGroup;
@@ -104,6 +105,7 @@ class _TopPageState extends State<TopPage> {
 
   void _onTripManagementSelected(String groupId, int year) {
     setState(() {
+      _previousTimelineState = _groupTimelineState;
       _groupTimelineState = GroupTimelineScreenState.tripManagement;
       _selectedGroupId = groupId;
       _selectedYear = year;
@@ -126,10 +128,13 @@ class _TopPageState extends State<TopPage> {
           case GroupTimelineScreenState.timeline:
             return GroupTimeline(
               groupWithMembers: _selectedGroup!,
+              shouldScrollToCurrentYear:
+                  _previousTimelineState == null, // グループ一覧から遷移時のみ現在の年にスクロール
               onBackPressed: () {
                 setState(() {
                   _groupTimelineState = GroupTimelineScreenState.groupList;
                   _selectedGroup = null;
+                  _previousTimelineState = null;
                 });
               },
               onTripManagementSelected: _onTripManagementSelected,
@@ -143,6 +148,7 @@ class _TopPageState extends State<TopPage> {
                   _groupTimelineState = GroupTimelineScreenState.timeline;
                   _selectedGroupId = null;
                   _selectedYear = null;
+                  // _previousTimelineStateはそのままにして、年表に戻った時のスクロール位置を保持
                 });
               },
             );

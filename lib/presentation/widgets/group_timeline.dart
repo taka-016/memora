@@ -14,12 +14,14 @@ class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
+  final bool shouldScrollToCurrentYear;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
     this.onBackPressed,
     this.onTripManagementSelected,
+    this.shouldScrollToCurrentYear = true,
   });
 
   @override
@@ -84,10 +86,12 @@ class _GroupTimelineState extends State<GroupTimeline> {
       controller.addListener(() => _syncScrollControllers(i));
     }
 
-    // 初期表示時に現在の年が中央に表示されるようにスクロール位置を調整
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToCurrentYear();
-    });
+    // グループ一覧から遷移した場合のみ現在の年にスクロール
+    if (widget.shouldScrollToCurrentYear) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToCurrentYear();
+      });
+    }
   }
 
   @override
