@@ -120,34 +120,55 @@ class _TopPageState extends State<TopPage> {
     });
   }
 
+  int _getGroupTimelineIndex() {
+    switch (_groupTimelineState) {
+      case GroupTimelineScreenState.groupList:
+        return 0;
+      case GroupTimelineScreenState.timeline:
+        return 1;
+      case GroupTimelineScreenState.tripManagement:
+        return 2;
+    }
+  }
+
+  Widget _buildGroupTimelineStack() {
+    if (_currentMember == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return IndexedStack(
+      index: _getGroupTimelineIndex(),
+      children: [
+        // 0: グループ一覧
+        GroupList(
+          getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
+          member: _currentMember!,
+          onGroupSelected: _onGroupSelected,
+        ),
+        // 1: グループ年表
+        _groupTimelineInstance ?? Container(),
+        // 2: 旅行管理
+        _selectedGroupId != null && _selectedYear != null
+            ? TripManagement(
+                groupId: _selectedGroupId!,
+                year: _selectedYear!,
+                onBackPressed: () {
+                  setState(() {
+                    _groupTimelineState = GroupTimelineScreenState.timeline;
+                    _selectedGroupId = null;
+                    _selectedYear = null;
+                  });
+                },
+              )
+            : Container(),
+      ],
+    );
+  }
+
   Widget _buildBody() {
     switch (_selectedItem) {
       case NavigationItem.groupTimeline:
-        if (_currentMember == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        switch (_groupTimelineState) {
-          case GroupTimelineScreenState.groupList:
-            return GroupList(
-              getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
-              member: _currentMember!,
-              onGroupSelected: _onGroupSelected,
-            );
-          case GroupTimelineScreenState.timeline:
-            return _groupTimelineInstance!;
-          case GroupTimelineScreenState.tripManagement:
-            return TripManagement(
-              groupId: _selectedGroupId!,
-              year: _selectedYear!,
-              onBackPressed: () {
-                setState(() {
-                  _groupTimelineState = GroupTimelineScreenState.timeline;
-                  _selectedGroupId = null;
-                  _selectedYear = null;
-                });
-              },
-            );
-        }
+        return _buildGroupTimelineStack();
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()

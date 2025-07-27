@@ -64,6 +64,7 @@ class _TripManagementState extends State<TripManagement> {
                   children: [
                     if (widget.onBackPressed != null)
                       IconButton(
+                        key: const Key('back_button'),
                         icon: const Icon(Icons.arrow_back),
                         onPressed: widget.onBackPressed,
                       ),
