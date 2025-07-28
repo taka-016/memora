@@ -57,7 +57,9 @@ void main() {
       expect(find.byIcon(Icons.add), findsOneWidget);
     });
 
-    testWidgets('旅行追加ボタンをタップすると追加機能のメッセージが表示される', (WidgetTester tester) async {
+    testWidgets('旅行追加ボタンをタップするとTripEditModalが表示される', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -75,10 +77,10 @@ void main() {
 
       // 旅行追加ボタンをタップ
       await tester.tap(find.text('旅行追加'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      // スナックバーメッセージが表示されることを確認
-      expect(find.text('旅行追加機能は後で実装します'), findsOneWidget);
+      // TripEditModalが表示されることを確認
+      expect(find.text('旅行新規作成'), findsOneWidget);
     });
 
     testWidgets('戻るボタンをタップするとonBackPressedが呼ばれる', (WidgetTester tester) async {
