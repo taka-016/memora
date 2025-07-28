@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/trip_entry.dart';
+import 'trip_edit_modal.dart';
 
 class TripManagement extends StatefulWidget {
   final String groupId;
@@ -191,16 +192,27 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   void _showAddTripDialog() {
-    // TODO: 旅行追加ダイアログを表示
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('旅行追加機能は後で実装します')));
+    showDialog(
+      context: context,
+      builder: (context) => TripEditModal(
+        groupId: widget.groupId,
+        onSave: (tripEntry) {
+          // TODO: 実際の保存処理を実装
+        },
+      ),
+    );
   }
 
   void _showEditTripDialog(TripEntry tripEntry) {
-    // TODO: 旅行編集ダイアログを表示
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${tripEntry.tripName}の編集機能は後で実装します')),
+    showDialog(
+      context: context,
+      builder: (context) => TripEditModal(
+        groupId: widget.groupId,
+        tripEntry: tripEntry,
+        onSave: (updatedTripEntry) {
+          // TODO: 実際の更新処理を実装
+        },
+      ),
     );
   }
 
