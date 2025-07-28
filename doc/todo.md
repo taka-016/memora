@@ -109,7 +109,7 @@
   - [x] getGroupsWithMembersUsecase.executeにmemberを渡す
   - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す
 
-## メンバー設定画面
+## メンバー管理画面
 
 - [x] メンバー設定メニューから開く
 - [x] メンバー一覧表示
@@ -135,7 +135,7 @@
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
 - [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
 
-## グループ設定画面
+## グループ管理画面
 
 - [x] グループ設定メニューから開く
 - [x] usecaseの作成
@@ -199,6 +199,14 @@
   - [x] toppage内のウィジェットとして表示する
   - [x] タイトル、追加ボタン、リストのデザインをグループ管理画面と同様にする
   - [ ] パラメータで受け取ったグループIDと年でtrip_entriesを抽出し、一覧表示する
+- [x] 旅行追加ボタンを押すと、旅行作成画面（trip_edit_modal）をモーダルで表示する
+- [x] 旅行作成画面
+  - [x] trip_entriesの新規作成および編集で使用する
+  - [x] 旅行期間From、旅行期間Toの入力フィールド
+  - [x] メモの入力フィールド
+  - [x] DB書き込みボタンの名称を新規作成時は「作成」、編集時は「更新」と表示する
+- [ ] group_managementとgroup_edit_modalの構造を参考にし、
+データの準備までをモーダル画面で行い、ユースケースの呼び出しは呼び出し元画面で行う
 
 ## デザイン
 
