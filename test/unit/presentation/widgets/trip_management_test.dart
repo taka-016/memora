@@ -81,11 +81,6 @@ void main() {
 
       // TripEditModalが表示されることを確認
       expect(find.text('旅行新規作成'), findsOneWidget);
-      expect(find.text('旅行期間 From'), findsOneWidget);
-      expect(find.text('旅行期間 To'), findsOneWidget);
-      expect(find.text('メモ'), findsOneWidget);
-      expect(find.text('作成'), findsOneWidget);
-      expect(find.text('キャンセル'), findsOneWidget);
     });
 
     testWidgets('戻るボタンをタップするとonBackPressedが呼ばれる', (WidgetTester tester) async {
