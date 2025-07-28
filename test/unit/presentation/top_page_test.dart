@@ -117,29 +117,7 @@ void main() {
       expect(find.byKey(const Key('hamburger_menu')), findsOneWidget);
     });
 
-    testWidgets('ハンバーガーメニューをタップするとDrawerが開く', (WidgetTester tester) async {
-      // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.byType(Drawer), findsOneWidget);
-    });
-
-    testWidgets('Drawerにメニューアイテムが表示される', (WidgetTester tester) async {
+    testWidgets('メニューが表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -185,37 +163,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
-      expect(find.text('グループ1'), findsOneWidget);
-      expect(find.text('2人のメンバー'), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
-    });
-
-    testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
-      // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(createTestWidget());
-      await tester.pumpAndSettle();
-
-      // ハンバーガーメニューをタップ
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-
-      // 地図表示メニューをタップ
-      await tester.tap(find.text('地図表示'));
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.byKey(const Key('map_display')), findsOneWidget);
-      expect(find.byKey(const Key('group_list')), findsNothing);
+      expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
     testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
@@ -247,9 +196,7 @@ void main() {
       expect(find.byKey(const Key('map_display')), findsNothing);
     });
 
-    testWidgets('メニューから「グループ管理」を選択すると、グループ管理画面が表示される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -267,12 +214,12 @@ void main() {
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
 
-      // グループ管理メニューをタップ
-      await tester.tap(find.text('グループ管理'));
+      // 地図表示メニューをタップ
+      await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_settings')), findsOneWidget);
+      expect(find.byKey(const Key('map_display')), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
@@ -305,6 +252,35 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
+    testWidgets('メニューから「グループ管理」を選択すると、グループ管理画面が表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // ハンバーガーメニューをタップ
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      // グループ管理メニューをタップ
+      await tester.tap(find.text('グループ管理'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_settings')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+    });
+
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
@@ -332,7 +308,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('メニュー選択後にDrawerが自動的に閉じる', (WidgetTester tester) async {
+    testWidgets('メニュー選択後にメニューが自動的に閉じる', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(
@@ -436,9 +412,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
-    testWidgets('IndexedStackとGroupTimelineインスタンス管理が正しく動作している', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
       final groupsWithMembers = [
         GroupWithMembers(

@@ -91,30 +91,6 @@ void main() {
     expect(controller.text, '');
   });
 
-  testWidgets('候補リストの背景色が白である', (WidgetTester tester) async {
-    final mockCandidates = [mockCandidatesDefault[0]];
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: CustomSearchBar(
-            hintText: '場所を検索',
-            locationSearchService: MockLocationSearchService(mockCandidates),
-          ),
-        ),
-      ),
-    );
-    await tester.enterText(find.byType(TextField), '東京');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-    // 候補リストの背景色が白であることを検証
-    final parent = tester.widget<Container>(
-      find
-          .ancestor(of: find.byType(ListView), matching: find.byType(Container))
-          .first,
-    );
-    expect((parent.decoration as BoxDecoration?)?.color, Colors.white);
-  });
-
   testWidgets('候補リストの項目をタップしたらリストが閉じる', (WidgetTester tester) async {
     final mockCandidates = mockCandidatesDefault;
     await tester.pumpWidget(

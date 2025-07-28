@@ -395,28 +395,5 @@ void main() {
       expect(selectedGroupId, equals(testGroupWithMembers.group.id));
       expect(selectedYear, isNotNull);
     });
-
-    testWidgets('旅行行以外のセルはタップできない', (WidgetTester tester) async {
-      // Arrange
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 1200,
-            height: 800,
-            child: GroupTimeline(groupWithMembers: testGroupWithMembers),
-          ),
-        ),
-      );
-
-      await tester.pumpWidget(widget);
-      await tester.pumpAndSettle();
-
-      // Act - イベント行やメンバー行のセルをタップ（実際にはタップできないことをテスト）
-      // この場合、モーダルが表示されないことを確認
-
-      // 旅行行以外をタップしてもモーダルが表示されないことを確認
-      // 実装上、GestureDetectorはタップ可能でないセルではnullのonTapが設定されている
-      expect(find.text('旅行新規作成'), findsNothing);
-    });
   });
 }

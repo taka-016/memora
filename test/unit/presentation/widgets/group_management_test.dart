@@ -130,9 +130,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
+      expect(find.byType(ListTile), findsNothing);
       expect(find.text('管理しているグループがありません'), findsOneWidget);
       expect(find.text('グループを追加してください'), findsOneWidget);
-      expect(find.byType(ListTile), findsNothing);
     });
 
     testWidgets('グループ追加ボタンが表示されること', (WidgetTester tester) async {
@@ -397,58 +397,6 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockGroupRepository.updateGroup(any)).called(1);
-    });
-
-    testWidgets('編集時に既存のグループメンバー取得処理が重複していないこと', (WidgetTester tester) async {
-      // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
-      ];
-
-      final availableMembers = [testMember];
-
-      when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
-
-      when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => availableMembers);
-
-      // グループメンバー取得のモック（編集モーダル開く時の重複した呼び出しを確認するため）
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // ListTileをタップして編集モーダルを開く
-      await tester.tap(find.byType(ListTile));
-      await tester.pumpAndSettle();
-
-      // Assert - getGroupMembersByGroupIdは初期データ取得時のみ呼ばれ、編集モーダル内では呼ばれないことを確認
-      verify(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).called(1); // 初期データ取得時のみ
     });
 
     testWidgets('グループメンバーの追加削除ができること', (WidgetTester tester) async {

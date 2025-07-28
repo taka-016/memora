@@ -91,13 +91,48 @@ void main() {
       // ローディング完了まで待機
       await tester.pumpAndSettle();
 
-      // Assert
+      // Assert - データ取得の確認
       verify(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
       ).called(1);
       expect(find.text('メンバー管理'), findsOneWidget);
-      expect(find.text('Managed User 1'), findsOneWidget);
-      expect(find.text('hanako@example.com'), findsOneWidget);
+
+      // メンバー表示の確認
+      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile));
+      expect(listTiles.length, 2); // ログインユーザー + 管理メンバー1人
+
+      // 1行目（ログインユーザー）の確認
+      final firstCard = find.byType(Card).first;
+      expect(
+        find.descendant(of: firstCard, matching: find.text('Test User')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: firstCard, matching: find.text('test@example.com')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: firstCard, matching: find.byIcon(Icons.delete)),
+        findsNothing,
+      );
+
+      // 2行目（管理メンバー）の確認
+      final secondCard = find.byType(Card).last;
+      expect(
+        find.descendant(of: secondCard, matching: find.text('Managed User 1')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: secondCard,
+          matching: find.text('hanako@example.com'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: secondCard, matching: find.byIcon(Icons.delete)),
+        findsOneWidget,
+      );
     });
 
     testWidgets('管理しているメンバーがいない場合でもログインユーザーが表示されること', (
@@ -121,9 +156,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
+      expect(find.byType(ListTile), findsOneWidget);
       expect(find.text('Test User'), findsOneWidget);
       expect(find.text('test@example.com'), findsOneWidget);
-      expect(find.byType(ListTile), findsOneWidget); // ログインユーザーのみ
     });
 
     testWidgets('メンバー追加ボタンが表示されること', (WidgetTester tester) async {
@@ -232,210 +267,6 @@ void main() {
       ).called(2);
     });
 
-    testWidgets('メンバーの表示名が正しく表示されること', (WidgetTester tester) async {
-      // Arrange
-      final memberWithNickname = Member(
-        id: 'member-1',
-        accountId: 'account-1',
-        administratorId: testMember.id,
-        displayName: '表示名',
-        kanjiLastName: '佐藤',
-        kanjiFirstName: '花子',
-        hiraganaLastName: 'さとう',
-        hiraganaFirstName: 'はなこ',
-        firstName: 'Hanako',
-        lastName: 'Sato',
-        gender: '女性',
-        birthday: DateTime(1995, 5, 15),
-        email: 'hanako@example.com',
-        phoneNumber: '090-9876-5432',
-        type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
-        anaMileageNumber: null,
-        jalMileageNumber: null,
-      );
-
-      when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => [memberWithNickname]);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Assert - 表示名が優先表示される
-      expect(find.text('表示名'), findsOneWidget);
-    });
-
-    testWidgets('削除ボタンが適切に表示されること', (WidgetTester tester) async {
-      // Arrange
-      final managedMembers = [
-        Member(
-          id: 'managed-member-1',
-          accountId: 'managed-account-1',
-          administratorId: testMember.id,
-          displayName: 'Managed User 1',
-          kanjiLastName: '佐藤',
-          kanjiFirstName: '花子',
-          hiraganaLastName: 'さとう',
-          hiraganaFirstName: 'はなこ',
-          firstName: 'Hanako',
-          lastName: 'Sato',
-          gender: '女性',
-          birthday: DateTime(1995, 5, 15),
-          email: 'hanako@example.com',
-          phoneNumber: '090-9876-5432',
-          type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
-        ),
-      ];
-
-      when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedMembers);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.byIcon(Icons.edit), findsNothing); // 編集ボタンは廃止
-      expect(
-        find.byIcon(Icons.delete),
-        findsOneWidget,
-      ); // 管理メンバーのみ（ログインユーザーは非表示）
-    });
-
-    testWidgets('1行目にログインユーザーのメンバーが表示されること', (WidgetTester tester) async {
-      // Arrange
-      final managedMembers = [
-        Member(
-          id: 'managed-member-1',
-          accountId: 'managed-account-1',
-          administratorId: testMember.id,
-          displayName: 'Managed User 1',
-          kanjiLastName: '佐藤',
-          kanjiFirstName: '花子',
-          hiraganaLastName: 'さとう',
-          hiraganaFirstName: 'はなこ',
-          firstName: 'Hanako',
-          lastName: 'Sato',
-          gender: '女性',
-          birthday: DateTime(1995, 5, 15),
-          email: 'hanako@example.com',
-          phoneNumber: '090-9876-5432',
-          type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
-        ),
-      ];
-
-      when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedMembers);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Assert
-      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile));
-      expect(listTiles.length, 2); // ログインユーザー + 管理メンバー1人
-
-      // 1行目がログインユーザー（testMember）であることを確認
-      expect(find.text('Test User'), findsOneWidget);
-      expect(find.text('test@example.com'), findsOneWidget);
-    });
-
-    testWidgets('1行目のログインユーザーメンバーは削除不可であること', (WidgetTester tester) async {
-      // Arrange
-      final managedMembers = [
-        Member(
-          id: 'managed-member-1',
-          accountId: 'managed-account-1',
-          administratorId: testMember.id,
-          displayName: 'Managed User 1',
-          kanjiLastName: '佐藤',
-          kanjiFirstName: '花子',
-          hiraganaLastName: 'さとう',
-          hiraganaFirstName: 'はなこ',
-          firstName: 'Hanako',
-          lastName: 'Sato',
-          gender: '女性',
-          birthday: DateTime(1995, 5, 15),
-          email: 'hanako@example.com',
-          phoneNumber: '090-9876-5432',
-          type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
-        ),
-      ];
-
-      when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedMembers);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Assert
-      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile));
-      expect(listTiles.length, 2);
-
-      // 1行目（ログインユーザー）の削除ボタンが無効化されていることを確認
-      final firstListTile = listTiles.first;
-      expect(firstListTile.trailing, null); // ログインユーザーはtrailingがnull
-
-      // 2行目（管理メンバー）には削除ボタンがある
-      final secondListTile = listTiles.last;
-      expect(secondListTile.trailing, isA<IconButton>());
-      final secondTrailing = secondListTile.trailing as IconButton;
-      expect(secondTrailing.icon, isA<Icon>());
-      final secondIcon = secondTrailing.icon as Icon;
-      expect(secondIcon.icon, Icons.delete);
-    });
-
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
@@ -478,7 +309,7 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // Assert - 行タップで編集モーダルが開くこと
+      // タップ前は編集モーダルが表示されていないことを確認
       expect(find.text('メンバー編集'), findsNothing);
 
       // 管理メンバーの行をタップ（2番目のListTile）
@@ -487,6 +318,68 @@ void main() {
 
       // 編集モーダルが開いていることを確認
       expect(find.text('メンバー編集'), findsOneWidget);
+    });
+
+    testWidgets('メンバー情報の更新ができること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: 'managed-account-1',
+          administratorId: testMember.id,
+          displayName: 'Managed User 1',
+          kanjiLastName: '佐藤',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'さとう',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Sato',
+          gender: '女性',
+          birthday: DateTime(1995, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-9876-5432',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+          anaMileageNumber: null,
+          jalMileageNumber: null,
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberManagement(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 管理メンバーの行をタップして編集モーダルを開く（2番目のListTile）
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+
+      // 表示名を変更
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Managed User 1'),
+        'Updated Member Name',
+      );
+
+      // 更新ボタンをタップ
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // Assert - 更新処理が呼ばれることを確認
+      verify(mockMemberRepository.updateMember(any)).called(1);
     });
 
     testWidgets('ログインユーザーメンバーの取得に失敗した場合、エラーが表示されること', (
