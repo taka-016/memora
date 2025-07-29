@@ -67,7 +67,10 @@ class _GroupManagementState extends State<GroupManagement> {
       groupMemberRepository,
       memberRepository,
     );
-    _deleteGroupUsecase = DeleteGroupUsecase(groupRepository);
+    _deleteGroupUsecase = DeleteGroupUsecase(
+      groupRepository,
+      groupMemberRepository,
+    );
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
@@ -127,9 +130,7 @@ class _GroupManagementState extends State<GroupManagement> {
 
     if (confirmed == true) {
       try {
-        // グループに紐づくグループメンバーを削除
-        await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
-        // グループを削除
+        // グループを削除（グループメンバーも一緒に削除される）
         await _deleteGroupUsecase.execute(group.id);
         if (mounted) {
           await _loadData();
