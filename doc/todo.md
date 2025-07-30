@@ -175,7 +175,7 @@
   - [x] グループに紐づくグループメンバーもあわせて削除する
 - [x] グループ新規作成時にグループメンバーを作成した場合、group_membersのgroupIdにグループのidが入っていない不具合を修正（idを統一する必要がある）
 - [x] グループに紐づくグループメンバーの削除は_deleteGroupUsecase.executeの責務とする
-- [ ] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
+- [x] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
 
 ## グループ年表画面
 
