@@ -13,9 +13,13 @@ import '../../domain/entities/group_member.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/repositories/member_repository.dart';
 import '../../domain/repositories/group_member_repository.dart';
+import '../../domain/repositories/group_event_repository.dart';
+import '../../domain/repositories/trip_entry_repository.dart';
 import '../../infrastructure/repositories/firestore_group_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../infrastructure/repositories/firestore_group_member_repository.dart';
+import '../../infrastructure/repositories/firestore_group_event_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'group_edit_modal.dart';
 
 class GroupManagement extends StatefulWidget {
@@ -23,6 +27,8 @@ class GroupManagement extends StatefulWidget {
   final GroupRepository? groupRepository;
   final MemberRepository? memberRepository;
   final GroupMemberRepository? groupMemberRepository;
+  final GroupEventRepository? groupEventRepository;
+  final TripEntryRepository? tripEntryRepository;
 
   const GroupManagement({
     super.key,
@@ -30,6 +36,8 @@ class GroupManagement extends StatefulWidget {
     this.groupRepository,
     this.memberRepository,
     this.groupMemberRepository,
+    this.groupEventRepository,
+    this.tripEntryRepository,
   });
 
   @override
@@ -61,6 +69,10 @@ class _GroupManagementState extends State<GroupManagement> {
         widget.memberRepository ?? FirestoreMemberRepository();
     final groupMemberRepository =
         widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
+    final groupEventRepository =
+        widget.groupEventRepository ?? FirestoreGroupEventRepository();
+    final tripEntryRepository =
+        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
 
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
       groupRepository,
@@ -70,6 +82,8 @@ class _GroupManagementState extends State<GroupManagement> {
     _deleteGroupUsecase = DeleteGroupUsecase(
       groupRepository,
       groupMemberRepository,
+      groupEventRepository,
+      tripEntryRepository,
     );
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
