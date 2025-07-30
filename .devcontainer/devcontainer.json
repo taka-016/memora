@@ -14,8 +14,6 @@
     "initializeCommand": "[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true",
     "runArgs": [
         "--privileged",
-        "--env",
-        "DISABLE_AUTOUPDATER=1",
         "--env-file",
         ".devcontainer/.env"
     ],
