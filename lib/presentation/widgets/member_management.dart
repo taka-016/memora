@@ -216,7 +216,9 @@ class _MemberManagementState extends State<MemberManagement> {
                                 : null,
                             onTap: () => _showMemberEditModal(member: member),
                             trailing:
-                                !isCurrentUser // ログインユーザーでない場合のみ削除ボタンを表示
+                                !isCurrentUser &&
+                                    member.accountId ==
+                                        null // ログインユーザーでなく、かつaccountIdを持たない場合のみ削除ボタンを表示
                                 ? IconButton(
                                     icon: const Icon(
                                       Icons.delete,
