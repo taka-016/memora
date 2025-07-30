@@ -29,8 +29,8 @@ RUN rm -rf /var/lib/apt/lists/*
 # gemini-cliのインストール
 RUN npm install -g @google/gemini-cli
 
-# claude codeのインストール（v1.0.24指定）
-RUN npm install -g @anthropic-ai/claude-code@1.0.24
+# claude codeのインストール
+RUN npm install -g @anthropic-ai/claude-code
 
 # タイムゾーンをJSTに設定
 RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
