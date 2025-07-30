@@ -47,4 +47,18 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
       return [];
     }
   }
+
+  @override
+  Future<void> deleteGroupEventsByGroupId(String groupId) async {
+    final snapshot = await _firestore
+        .collection('group_events')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }

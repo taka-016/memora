@@ -45,4 +45,18 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       return null;
     }
   }
+
+  @override
+  Future<void> deleteTripEntriesByGroupId(String groupId) async {
+    final snapshot = await _firestore
+        .collection('trip_entries')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
 }
