@@ -5,4 +5,5 @@ abstract class MemberEventRepository {
   Future<void> saveMemberEvent(MemberEvent memberEvent);
   Future<void> deleteMemberEvent(String memberEventId);
   Future<List<MemberEvent>> getMemberEventsByMemberId(String memberId);
+  Future<void> deleteMemberEventsByMemberId(String memberId);
 }

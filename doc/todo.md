@@ -135,7 +135,7 @@
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
 - [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
 - [x] accountIdを持っているメンバーは削除不可とする（削除ボタンを表示しない）
-- [ ] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
+- [x] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
 
 ## グループ管理画面
 

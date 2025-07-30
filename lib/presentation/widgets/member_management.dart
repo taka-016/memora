@@ -6,17 +6,29 @@ import '../../application/usecases/delete_member_usecase.dart';
 import '../../application/usecases/get_member_by_id_usecase.dart';
 import '../../domain/entities/member.dart';
 import '../../domain/repositories/member_repository.dart';
+import '../../domain/repositories/trip_participant_repository.dart';
+import '../../domain/repositories/group_member_repository.dart';
+import '../../domain/repositories/member_event_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_participant_repository.dart';
+import '../../infrastructure/repositories/firestore_group_member_repository.dart';
+import '../../infrastructure/repositories/firestore_member_event_repository.dart';
 import 'member_edit_modal.dart';
 
 class MemberManagement extends StatefulWidget {
   final Member member;
   final MemberRepository? memberRepository;
+  final TripParticipantRepository? tripParticipantRepository;
+  final GroupMemberRepository? groupMemberRepository;
+  final MemberEventRepository? memberEventRepository;
 
   const MemberManagement({
     super.key,
     required this.member,
     this.memberRepository,
+    this.tripParticipantRepository,
+    this.groupMemberRepository,
+    this.memberEventRepository,
   });
 
   @override
@@ -40,11 +52,23 @@ class _MemberManagementState extends State<MemberManagement> {
     // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final memberRepository =
         widget.memberRepository ?? FirestoreMemberRepository();
+    final tripParticipantRepository =
+        widget.tripParticipantRepository ??
+        FirestoreTripParticipantRepository();
+    final groupMemberRepository =
+        widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
+    final memberEventRepository =
+        widget.memberEventRepository ?? FirestoreMemberEventRepository();
 
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
     _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
-    _deleteMemberUsecase = DeleteMemberUsecase(memberRepository);
+    _deleteMemberUsecase = DeleteMemberUsecase(
+      memberRepository,
+      tripParticipantRepository,
+      groupMemberRepository,
+      memberEventRepository,
+    );
     _getMemberByIdUseCase = GetMemberByIdUseCase(memberRepository);
 
     _loadData();

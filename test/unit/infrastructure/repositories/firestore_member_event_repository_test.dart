@@ -12,6 +12,7 @@ import 'package:memora/domain/entities/member_event.dart';
   QuerySnapshot,
   QueryDocumentSnapshot,
   Query,
+  WriteBatch,
 ])
 import 'firestore_member_event_repository_test.mocks.dart';
 
@@ -137,6 +138,32 @@ void main() {
       expect(result.length, 1);
       expect(result[0].id, 'memberevent001');
       expect(result[0].memberId, memberId);
+    });
+
+    test('deleteMemberEventsByMemberIdが指定したmemberIdの全イベントを削除する', () async {
+      const memberId = 'member001';
+      final mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocRef2 = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
+
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+      when(mockDoc1.reference).thenReturn(mockDocRef1);
+      when(mockDoc2.reference).thenReturn(mockDocRef2);
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
+
+      await repository.deleteMemberEventsByMemberId(memberId);
+
+      verify(mockFirestore.batch()).called(1);
+      verify(mockWriteBatch.delete(mockDocRef1)).called(1);
+      verify(mockWriteBatch.delete(mockDocRef2)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
     });
   });
 }
