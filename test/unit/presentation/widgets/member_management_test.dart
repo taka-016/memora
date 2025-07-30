@@ -5,17 +5,31 @@ import 'package:mockito/mockito.dart';
 
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
+import 'package:memora/domain/repositories/group_member_repository.dart';
+import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/presentation/widgets/member_management.dart';
 
 import 'member_management_test.mocks.dart';
 
-@GenerateMocks([MemberRepository])
+@GenerateMocks([
+  MemberRepository,
+  TripParticipantRepository,
+  GroupMemberRepository,
+  MemberEventRepository,
+])
 void main() {
   late MockMemberRepository mockMemberRepository;
+  late MockTripParticipantRepository mockTripParticipantRepository;
+  late MockGroupMemberRepository mockGroupMemberRepository;
+  late MockMemberEventRepository mockMemberEventRepository;
   late Member testMember;
 
   setUp(() {
     mockMemberRepository = MockMemberRepository();
+    mockTripParticipantRepository = MockTripParticipantRepository();
+    mockGroupMemberRepository = MockGroupMemberRepository();
+    mockMemberEventRepository = MockMemberEventRepository();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -81,6 +95,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -149,6 +166,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -173,6 +193,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -197,6 +220,9 @@ void main() {
             body: MemberManagement(
               member: testMember,
               memberRepository: mockMemberRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
+              groupMemberRepository: mockGroupMemberRepository,
+              memberEventRepository: mockMemberEventRepository,
             ),
           ),
         ),
@@ -247,6 +273,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -303,6 +332,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -358,6 +390,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -401,6 +436,9 @@ void main() {
             body: MemberManagement(
               member: testMember,
               memberRepository: mockMemberRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
+              groupMemberRepository: mockGroupMemberRepository,
+              memberEventRepository: mockMemberEventRepository,
             ),
           ),
         ),
@@ -444,6 +482,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
@@ -563,6 +604,9 @@ void main() {
           home: MemberManagement(
             member: testMember,
             memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
           ),
         ),
       );
