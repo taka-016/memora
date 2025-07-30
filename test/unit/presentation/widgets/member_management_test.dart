@@ -50,7 +50,7 @@ void main() {
       final managedMembers = [
         Member(
           id: 'managed-member-1',
-          accountId: 'managed-account-1',
+          accountId: null,
           administratorId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
@@ -216,7 +216,7 @@ void main() {
       final managedMembers = [
         Member(
           id: 'managed-member-1',
-          accountId: 'managed-account-1',
+          accountId: null,
           administratorId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
@@ -272,7 +272,7 @@ void main() {
       final managedMembers = [
         Member(
           id: 'managed-member-1',
-          accountId: 'managed-account-1',
+          accountId: null,
           administratorId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
@@ -325,7 +325,7 @@ void main() {
       final managedMembers = [
         Member(
           id: 'managed-member-1',
-          accountId: 'managed-account-1',
+          accountId: null,
           administratorId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
@@ -415,6 +415,78 @@ void main() {
       );
     });
 
+    testWidgets('accountIdを持つメンバーは削除ボタンが表示されないこと', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        // accountIdを持つメンバー（削除ボタンが表示されない）
+        Member(
+          id: 'managed-member-1',
+          accountId: 'account-id-1',
+          administratorId: testMember.id,
+          displayName: 'Account Linked Member',
+        ),
+        // accountIdを持たないメンバー（削除ボタンが表示される）
+        Member(
+          id: 'managed-member-2',
+          accountId: null,
+          administratorId: testMember.id,
+          displayName: 'Regular Member',
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberManagement(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert
+      final cards = find.byType(Card);
+      expect(cards, findsNWidgets(3)); // ログインユーザー + 管理メンバー2人
+
+      // 1行目（ログインユーザー）- accountIdありなので削除ボタンなし
+      final firstCard = cards.at(0);
+      expect(
+        find.descendant(of: firstCard, matching: find.byIcon(Icons.delete)),
+        findsNothing,
+      );
+
+      // 2行目（accountIdありのメンバー）- 削除ボタンなし
+      final secondCard = cards.at(1);
+      expect(
+        find.descendant(
+          of: secondCard,
+          matching: find.text('Account Linked Member'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: secondCard, matching: find.byIcon(Icons.delete)),
+        findsNothing,
+      );
+
+      // 3行目（accountIdなしのメンバー）- 削除ボタンあり
+      final thirdCard = cards.at(2);
+      expect(
+        find.descendant(of: thirdCard, matching: find.text('Regular Member')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: thirdCard, matching: find.byIcon(Icons.delete)),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('1行目のログインユーザーメンバーを編集後にDBから再取得されること', (
       WidgetTester tester,
     ) async {
@@ -422,7 +494,7 @@ void main() {
       final managedMembers = [
         Member(
           id: 'managed-member-1',
-          accountId: 'managed-account-1',
+          accountId: null,
           administratorId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
