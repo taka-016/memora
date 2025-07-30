@@ -1,8 +1,6 @@
 # CLAUDE.md
 
-## プロジェクト概要
-
-### 設計資料
+## 設計資料
 
 - アプリケーション仕様： doc/app_spec.md
 - ユーザーストーリー: doc/user_stories.md
@@ -10,7 +8,7 @@
 - ER図: doc/er_diagram.md
 - todo: doc/todo.md
 
-### 主要コマンド
+## 主要コマンド
 
 - `flutter run` - アプリケーションを実行
 - `flutter pub get` - 依存関係をインストール
