@@ -179,5 +179,30 @@ void main() {
       verify(mockWriteBatch.delete(mockDocRef2)).called(1);
       verify(mockWriteBatch.commit()).called(1);
     });
+
+    test('deleteGroupMembersByMemberIdが指定したmemberIdの全グループメンバーを削除する', () async {
+      const memberId = 'member001';
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocRef2 = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
+
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+      when(mockDoc1.reference).thenReturn(mockDocRef1);
+      when(mockDoc2.reference).thenReturn(mockDocRef2);
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
+
+      await repository.deleteGroupMembersByMemberId(memberId);
+
+      verify(mockFirestore.batch()).called(1);
+      verify(mockWriteBatch.delete(mockDocRef1)).called(1);
+      verify(mockWriteBatch.delete(mockDocRef2)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
+    });
   });
 }
