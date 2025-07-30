@@ -138,5 +138,31 @@ void main() {
 
       expect(result, isEmpty);
     });
+
+    test('deleteTripParticipantsByMemberIdが指定したmemberIdの全参加者を削除する', () async {
+      const memberId = 'member001';
+      final mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocRef2 = MockDocumentReference<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+      when(mockDoc1.reference).thenReturn(mockDocRef1);
+      when(mockDoc2.reference).thenReturn(mockDocRef2);
+      when(mockDocRef1.delete()).thenAnswer((_) async {});
+      when(mockDocRef2.delete()).thenAnswer((_) async {});
+
+      await repository.deleteTripParticipantsByMemberId(memberId);
+
+      verify(mockCollection.where('memberId', isEqualTo: memberId)).called(1);
+      verify(mockQuery.get()).called(1);
+      verify(mockDocRef1.delete()).called(1);
+      verify(mockDocRef2.delete()).called(1);
+    });
   });
 }
