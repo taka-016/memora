@@ -134,6 +134,8 @@
   - [x] メンバー一覧から対象メンバーの削除ボタンをクリック
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
 - [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
+- [x] accountIdを持っているメンバーは削除不可とする（削除ボタンを表示しない）
+- [ ] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
 
 ## グループ管理画面
 
@@ -173,6 +175,7 @@
   - [x] グループに紐づくグループメンバーもあわせて削除する
 - [x] グループ新規作成時にグループメンバーを作成した場合、group_membersのgroupIdにグループのidが入っていない不具合を修正（idを統一する必要がある）
 - [x] グループに紐づくグループメンバーの削除は_deleteGroupUsecase.executeの責務とする
+- [ ] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
 
 ## グループ年表画面
 
