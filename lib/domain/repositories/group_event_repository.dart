@@ -5,4 +5,5 @@ abstract class GroupEventRepository {
   Future<void> saveGroupEvent(GroupEvent groupEvent);
   Future<void> deleteGroupEvent(String groupEventId);
   Future<List<GroupEvent>> getGroupEventsByGroupId(String groupId);
+  Future<void> deleteGroupEventsByGroupId(String groupId);
 }

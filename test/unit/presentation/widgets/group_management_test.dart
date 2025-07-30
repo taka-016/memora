@@ -8,21 +8,33 @@ import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/group_member_repository.dart';
+import 'package:memora/domain/repositories/group_event_repository.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/presentation/widgets/group_management.dart';
 
 import 'group_management_test.mocks.dart';
 
-@GenerateMocks([GroupRepository, MemberRepository, GroupMemberRepository])
+@GenerateMocks([
+  GroupRepository,
+  MemberRepository,
+  GroupMemberRepository,
+  GroupEventRepository,
+  TripEntryRepository,
+])
 void main() {
   late MockGroupRepository mockGroupRepository;
   late MockMemberRepository mockMemberRepository;
   late MockGroupMemberRepository mockGroupMemberRepository;
+  late MockGroupEventRepository mockGroupEventRepository;
+  late MockTripEntryRepository mockTripEntryRepository;
   late Member testMember;
 
   setUp(() {
     mockGroupRepository = MockGroupRepository();
     mockMemberRepository = MockMemberRepository();
     mockGroupMemberRepository = MockGroupMemberRepository();
+    mockGroupEventRepository = MockGroupEventRepository();
+    mockTripEntryRepository = MockTripEntryRepository();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -85,6 +97,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -122,6 +136,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -150,6 +166,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -177,6 +195,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -220,6 +240,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -270,6 +292,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -315,6 +339,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -374,6 +400,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -466,6 +494,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -535,6 +565,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),
@@ -595,6 +627,8 @@ void main() {
               groupRepository: mockGroupRepository,
               memberRepository: mockMemberRepository,
               groupMemberRepository: mockGroupMemberRepository,
+              groupEventRepository: mockGroupEventRepository,
+              tripEntryRepository: mockTripEntryRepository,
             ),
           ),
         ),

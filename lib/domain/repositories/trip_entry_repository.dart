@@ -5,4 +5,5 @@ abstract class TripEntryRepository {
   Future<void> saveTripEntry(TripEntry tripEntry);
   Future<void> deleteTripEntry(String tripId);
   Future<TripEntry?> getTripEntryById(String tripId);
+  Future<void> deleteTripEntriesByGroupId(String groupId);
 }
