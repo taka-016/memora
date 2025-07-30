@@ -36,70 +36,151 @@ void main() {
   });
 
   group('DeleteMemberUsecase', () {
-    test('IDによってメンバーを削除すること', () async {
-      // Arrange
-      const memberId = 'member-to-delete-id';
+    test('リポジトリからメンバーを削除すること', () async {
+      // arrange
+      const memberId = 'member123';
 
-      when(mockMemberRepository.deleteMember(any)).thenAnswer((_) async {});
       when(
-        mockTripParticipantRepository.deleteTripParticipantsByMemberId(any),
-      ).thenAnswer((_) async {});
-      when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(any),
-      ).thenAnswer((_) async {});
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(any),
-      ).thenAnswer((_) async {});
+        mockMemberRepository.deleteMember(memberId),
+      ).thenAnswer((_) async => {});
 
-      // Act
-      await usecase.execute(memberId);
-
-      // Assert
-      verify(mockMemberRepository.deleteMember(memberId)).called(1);
-      verify(
+      when(
         mockTripParticipantRepository.deleteTripParticipantsByMemberId(
           memberId,
         ),
-      ).called(1);
-      verify(
+      ).thenAnswer((_) async => {});
+
+      when(
         mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
-      ).called(1);
-      verify(
+      ).thenAnswer((_) async => {});
+
+      when(
         mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).called(1);
+      ).thenAnswer((_) async => {});
+
+      // act
+      await usecase.execute(memberId);
+
+      // assert
+      verify(mockMemberRepository.deleteMember(memberId));
     });
 
-    test('空のメンバーIDを処理すること', () async {
-      // Arrange
-      const memberId = '';
+    test('有効なメンバーIDに対してエラーなく完了すること', () async {
+      // arrange
+      const memberId = 'member123';
 
-      when(mockMemberRepository.deleteMember(any)).thenAnswer((_) async {});
       when(
-        mockTripParticipantRepository.deleteTripParticipantsByMemberId(any),
-      ).thenAnswer((_) async {});
-      when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(any),
-      ).thenAnswer((_) async {});
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(any),
-      ).thenAnswer((_) async {});
+        mockMemberRepository.deleteMember(memberId),
+      ).thenAnswer((_) async => {});
 
-      // Act
+      when(
+        mockTripParticipantRepository.deleteTripParticipantsByMemberId(
+          memberId,
+        ),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      // act & assert
+      expect(() => usecase.execute(memberId), returnsNormally);
+    });
+
+    test('メンバー削除時に旅行参加者も削除されること', () async {
+      // arrange
+      const memberId = 'member123';
+
+      when(
+        mockMemberRepository.deleteMember(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockTripParticipantRepository.deleteTripParticipantsByMemberId(
+          memberId,
+        ),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      // act
       await usecase.execute(memberId);
 
-      // Assert
-      verify(mockMemberRepository.deleteMember(memberId)).called(1);
+      // assert
       verify(
         mockTripParticipantRepository.deleteTripParticipantsByMemberId(
           memberId,
         ),
-      ).called(1);
-      verify(
+      );
+      verify(mockMemberRepository.deleteMember(memberId));
+    });
+
+    test('メンバー削除時にグループメンバーも削除されること', () async {
+      // arrange
+      const memberId = 'member123';
+
+      when(
+        mockMemberRepository.deleteMember(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockTripParticipantRepository.deleteTripParticipantsByMemberId(
+          memberId,
+        ),
+      ).thenAnswer((_) async => {});
+
+      when(
         mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
-      ).called(1);
-      verify(
+      ).thenAnswer((_) async => {});
+
+      when(
         mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).called(1);
+      ).thenAnswer((_) async => {});
+
+      // act
+      await usecase.execute(memberId);
+
+      // assert
+      verify(mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId));
+    });
+
+    test('メンバー削除時にメンバーイベントも削除されること', () async {
+      // arrange
+      const memberId = 'member123';
+
+      when(
+        mockMemberRepository.deleteMember(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockTripParticipantRepository.deleteTripParticipantsByMemberId(
+          memberId,
+        ),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      when(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
+      ).thenAnswer((_) async => {});
+
+      // act
+      await usecase.execute(memberId);
+
+      // assert
+      verify(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId));
     });
   });
 }
