@@ -23,6 +23,7 @@ class _TripEditModalState extends State<TripEditModal> {
   late TextEditingController _memoController;
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _dateErrorMessage;
 
   @override
   void initState() {
@@ -87,6 +88,7 @@ class _TripEditModalState extends State<TripEditModal> {
                         onDateSelected: (date) {
                           setState(() {
                             _startDate = date;
+                            _dateErrorMessage = null;
                           });
                         },
                       ),
@@ -97,9 +99,20 @@ class _TripEditModalState extends State<TripEditModal> {
                         onDateSelected: (date) {
                           setState(() {
                             _endDate = date;
+                            _dateErrorMessage = null;
                           });
                         },
                       ),
+                      if (_dateErrorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _dateErrorMessage!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _memoController,
@@ -125,6 +138,24 @@ class _TripEditModalState extends State<TripEditModal> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
+                    setState(() {
+                      _dateErrorMessage = null;
+                    });
+
+                    if (_startDate == null || _endDate == null) {
+                      setState(() {
+                        _dateErrorMessage = '開始日と終了日を選択してください';
+                      });
+                      return;
+                    }
+
+                    if (_startDate!.isAfter(_endDate!)) {
+                      setState(() {
+                        _dateErrorMessage = '開始日は終了日より前の日付を選択してください';
+                      });
+                      return;
+                    }
+
                     if (_formKey.currentState!.validate()) {
                       final tripEntry = TripEntry(
                         id: widget.tripEntry?.id ?? '',
@@ -132,8 +163,8 @@ class _TripEditModalState extends State<TripEditModal> {
                         tripName: _nameController.text.isEmpty
                             ? null
                             : _nameController.text,
-                        tripStartDate: _startDate ?? DateTime.now(),
-                        tripEndDate: _endDate ?? DateTime.now(),
+                        tripStartDate: _startDate!,
+                        tripEndDate: _endDate!,
                         tripMemo: _memoController.text.isEmpty
                             ? null
                             : _memoController.text,

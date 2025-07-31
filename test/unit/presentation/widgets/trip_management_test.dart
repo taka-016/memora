@@ -147,6 +147,18 @@ void main() {
       // モーダル内で旅行名を入力
       await tester.enterText(find.byType(TextFormField).first, 'テスト旅行');
 
+      // 開始日を設定
+      await tester.tap(find.text('旅行期間 From'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
+      // 終了日を設定
+      await tester.tap(find.text('旅行期間 To'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+
       // 作成ボタンをタップ
       await tester.tap(find.text('作成'));
       await tester.pumpAndSettle();
