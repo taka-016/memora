@@ -17,6 +17,14 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
+  Future<void> updateTripEntry(TripEntry tripEntry) async {
+    await _firestore
+        .collection('trip_entries')
+        .doc(tripEntry.id)
+        .update(FirestoreTripEntryMapper.toFirestore(tripEntry));
+  }
+
+  @override
   Future<List<TripEntry>> getTripEntries() async {
     try {
       final snapshot = await _firestore.collection('trip_entries').get();
@@ -43,6 +51,33 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  @override
+  Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
+    String groupId,
+    int year,
+  ) async {
+    try {
+      final startOfYear = DateTime(year, 1, 1);
+      final endOfYear = DateTime(year + 1, 1, 1);
+
+      final snapshot = await _firestore
+          .collection('trip_entries')
+          .where('groupId', isEqualTo: groupId)
+          .where(
+            'tripStartDate',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
+          )
+          .where('tripStartDate', isLessThan: Timestamp.fromDate(endOfYear))
+          .get();
+
+      return snapshot.docs
+          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 
