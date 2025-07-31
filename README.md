@@ -94,30 +94,24 @@ This application uses Firebase/Firestore for data persistence and Firebase Authe
    - Create a new project or select existing project
    - Enable Authentication and Firestore Database
 
-2. Configure Flutter App:
-
-   ```bash
-   # Install Firebase CLI (if not already installed)
-   npm install -g firebase-tools
-   
-   # Login to Firebase
-   firebase login
-   
-   # Install FlutterFire CLI
-   dart pub global activate flutterfire_cli
-   
-   # Configure Firebase for your Flutter app
-   flutterfire configure
-   ```
-
-3. Enable Required Services:
+2. Enable Required Services:
    - In Firebase Console, enable Authentication (Google and Email/Password providers)
    - Enable Firestore Database in production mode
    - Configure Firestore security rules as needed
 
-4. Verify Configuration:
-   - Ensure `firebase_options.dart` is generated in `/lib/`
-   - Ensure `firebase.json` exists in project root
+3. Run Firebase Setup Script:
+
+   ```bash
+   ./setup_firebase.sh
+   ```
+
+   This script will:
+   - Install Firebase CLI and FlutterFire CLI (if needed)
+   - Guide you through Firebase login
+   - Configure Flutter Firebase integration (flutterfire configure)
+   - Add Firestore indexes configuration to firebase.json
+   - Set up Firebase project alias
+   - Deploy required Firestore indexes
 
 ## License
 

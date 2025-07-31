@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "trip_entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tripStartDate",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
