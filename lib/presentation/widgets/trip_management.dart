@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../application/usecases/create_trip_entry_usecase.dart';
+import '../../application/usecases/get_trip_entries_usecase.dart';
+import '../../application/usecases/update_trip_entry_usecase.dart';
+import '../../application/usecases/delete_trip_entry_usecase.dart';
 import '../../domain/entities/trip_entry.dart';
+import '../../domain/repositories/trip_entry_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'trip_edit_modal.dart';
 
 class TripManagement extends StatefulWidget {
   final String groupId;
   final int year;
   final VoidCallback? onBackPressed;
+  final TripEntryRepository? tripEntryRepository;
 
   const TripManagement({
     super.key,
     required this.groupId,
     required this.year,
     this.onBackPressed,
+    this.tripEntryRepository,
   });
 
   @override
@@ -19,6 +27,11 @@ class TripManagement extends StatefulWidget {
 }
 
 class _TripManagementState extends State<TripManagement> {
+  late final GetTripEntriesUsecase _getTripEntriesUsecase;
+  late final CreateTripEntryUsecase _createTripEntryUsecase;
+  late final UpdateTripEntryUsecase _updateTripEntryUsecase;
+  late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
+
   List<TripEntry> _tripEntries = [];
   bool _isLoading = true;
   String? _errorMessage;
@@ -26,6 +39,16 @@ class _TripManagementState extends State<TripManagement> {
   @override
   void initState() {
     super.initState();
+
+    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
+    final tripEntryRepository =
+        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+
+    _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
+    _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
+    _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
+    _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
+
     _loadTripEntries();
   }
 
@@ -36,10 +59,13 @@ class _TripManagementState extends State<TripManagement> {
         _errorMessage = null;
       });
 
-      // TODO: 実際のUseCaseを使って旅行一覧を取得する
-      // 今は空のリストで初期化
+      final tripEntries = await _getTripEntriesUsecase.execute(
+        widget.groupId,
+        widget.year,
+      );
+
       setState(() {
-        _tripEntries = [];
+        _tripEntries = tripEntries;
         _isLoading = false;
       });
     } catch (e) {
@@ -192,25 +218,57 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   void _showAddTripDialog() {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
-        onSave: (tripEntry) {
-          // TODO: 実際の保存処理を実装
+        onSave: (tripEntry) async {
+          try {
+            await _createTripEntryUsecase.execute(tripEntry);
+            if (mounted) {
+              await _loadTripEntries();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('旅行を作成しました')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('作成に失敗しました: $e')),
+              );
+            }
+          }
         },
       ),
     );
   }
 
   void _showEditTripDialog(TripEntry tripEntry) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
     showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
         tripEntry: tripEntry,
-        onSave: (updatedTripEntry) {
-          // TODO: 実際の更新処理を実装
+        onSave: (updatedTripEntry) async {
+          try {
+            await _updateTripEntryUsecase.execute(updatedTripEntry);
+            if (mounted) {
+              await _loadTripEntries();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('旅行を更新しました')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('更新に失敗しました: $e')),
+              );
+            }
+          }
         },
       ),
     );
@@ -240,14 +298,23 @@ class _TripManagementState extends State<TripManagement> {
     );
   }
 
-  void _deleteTripEntry(TripEntry tripEntry) {
-    // TODO: 実際の削除処理を実装
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('${tripEntry.tripName}を削除しました')));
+  void _deleteTripEntry(TripEntry tripEntry) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    setState(() {
-      _tripEntries.remove(tripEntry);
-    });
+    try {
+      await _deleteTripEntryUsecase.execute(tripEntry.id);
+      if (mounted) {
+        await _loadTripEntries();
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('${tripEntry.tripName}を削除しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
+      }
+    }
   }
 }
