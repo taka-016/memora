@@ -52,3 +52,4 @@ google-services.json
 env.g.dart
 repomix-output.xml
 **/*.mocks.dart
+.firebaserc
