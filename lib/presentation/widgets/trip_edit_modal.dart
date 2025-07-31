@@ -125,8 +125,23 @@ class _TripEditModalState extends State<TripEditModal> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
-                    // ここで保存処理を実装する予定
-                    Navigator.of(context).pop();
+                    if (_formKey.currentState!.validate()) {
+                      final tripEntry = TripEntry(
+                        id: widget.tripEntry?.id ?? '',
+                        groupId: widget.groupId,
+                        tripName: _nameController.text.isEmpty
+                            ? null
+                            : _nameController.text,
+                        tripStartDate: _startDate ?? DateTime.now(),
+                        tripEndDate: _endDate ?? DateTime.now(),
+                        tripMemo: _memoController.text.isEmpty
+                            ? null
+                            : _memoController.text,
+                      );
+
+                      widget.onSave(tripEntry);
+                      Navigator.of(context).pop();
+                    }
                   },
                   child: Text(isEditing ? '更新' : '作成'),
                 ),
