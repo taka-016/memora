@@ -120,48 +120,6 @@ class _GroupManagementState extends State<GroupManagement> {
     }
   }
 
-  Future<void> _deleteGroup(Group group) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('グループ削除'),
-        content: Text('${group.name}を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        // グループを削除（グループメンバーも一緒に削除される）
-        await _deleteGroupUsecase.execute(group.id);
-        if (mounted) {
-          await _loadData();
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('グループを削除しました')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('削除に失敗しました: $e')),
-          );
-        }
-      }
-    }
-  }
-
   Future<void> _showGroupEditModal({Group? group}) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -241,7 +199,9 @@ class _GroupManagementState extends State<GroupManagement> {
             } catch (e) {
               if (mounted) {
                 scaffoldMessenger.showSnackBar(
-                  SnackBar(content: Text('操作に失敗しました: $e')),
+                  SnackBar(
+                    content: Text('${group == null ? '作成' : '更新'}に失敗しました: $e'),
+                  ),
                 );
               }
             }
@@ -252,6 +212,51 @@ class _GroupManagementState extends State<GroupManagement> {
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showDeleteConfirmDialog(Group group) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('グループ削除'),
+        content: Text('${group.name}を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _deleteGroup(group);
+    }
+  }
+
+  Future<void> _deleteGroup(Group group) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _deleteGroupUsecase.execute(group.id);
+      if (mounted) {
+        await _loadData();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('グループを削除しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
         );
       }
     }
@@ -345,7 +350,8 @@ class _GroupManagementState extends State<GroupManagement> {
                                       Icons.delete,
                                       color: Colors.red,
                                     ),
-                                    onPressed: () => _deleteGroup(group),
+                                    onPressed: () =>
+                                        _showDeleteConfirmDialog(group),
                                   ),
                                   onTap: () =>
                                       _showGroupEditModal(group: group),

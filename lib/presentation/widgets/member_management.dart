@@ -134,7 +134,9 @@ class _MemberManagementState extends State<MemberManagement> {
           } catch (e) {
             if (mounted) {
               scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('操作に失敗しました: $e')),
+                SnackBar(
+                  content: Text('${member == null ? '作成' : '更新'}に失敗しました: $e'),
+                ),
               );
             }
           }
@@ -143,9 +145,7 @@ class _MemberManagementState extends State<MemberManagement> {
     );
   }
 
-  Future<void> _deleteMember(Member member) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
+  Future<void> _showDeleteConfirmDialog(Member member) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -156,9 +156,9 @@ class _MemberManagementState extends State<MemberManagement> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('キャンセル'),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('削除'),
           ),
         ],
@@ -166,20 +166,26 @@ class _MemberManagementState extends State<MemberManagement> {
     );
 
     if (confirmed == true) {
-      try {
-        await _deleteMemberUsecase.execute(member.id);
-        if (mounted) {
-          await _loadData();
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('メンバーを削除しました')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('削除に失敗しました: $e')),
-          );
-        }
+      _deleteMember(member);
+    }
+  }
+
+  Future<void> _deleteMember(Member member) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _deleteMemberUsecase.execute(member.id);
+      if (mounted) {
+        await _loadData();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('メンバーを削除しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
       }
     }
   }
@@ -248,7 +254,8 @@ class _MemberManagementState extends State<MemberManagement> {
                                       Icons.delete,
                                       color: Colors.red,
                                     ),
-                                    onPressed: () => _deleteMember(member),
+                                    onPressed: () =>
+                                        _showDeleteConfirmDialog(member),
                                   )
                                 : null,
                           ),
