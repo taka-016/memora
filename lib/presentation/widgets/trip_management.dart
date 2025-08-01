@@ -36,7 +36,6 @@ class _TripManagementState extends State<TripManagement> {
 
   List<TripEntry> _tripEntries = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -55,26 +54,28 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   Future<void> _loadTripEntries() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+    setState(() {
+      _isLoading = true;
+    });
 
+    try {
       final tripEntries = await _getTripEntriesUsecase.execute(
         widget.groupId,
         widget.year,
       );
-
-      setState(() {
-        _tripEntries = tripEntries;
-        _isLoading = false;
-      });
+      _tripEntries = tripEntries;
     } catch (e) {
-      setState(() {
-        _errorMessage = '旅行一覧の読み込みに失敗しました: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('旅行一覧の読み込みに失敗しました: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -132,80 +133,65 @@ class _TripManagementState extends State<TripManagement> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(_errorMessage!),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadTripEntries,
-              child: const Text('再読み込み'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_tripEntries.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'この年の旅行はまだありません',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '旅行を追加してください',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _loadTripEntries,
-      child: ListView.builder(
-        itemCount: _tripEntries.length,
-        itemBuilder: (context, index) {
-          final tripEntry = _tripEntries[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: ListTile(
-              title: Text(tripEntry.tripName ?? '旅行名未設定'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      child: _tripEntries.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
+                  SizedBox(height: 16),
                   Text(
-                    '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
-                  ),
-                  if (tripEntry.tripMemo != null)
-                    Text(
-                      tripEntry.tripMemo!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    'この年の旅行はまだありません',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
                     ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '旅行を追加してください',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
                 ],
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _showDeleteConfirmDialog(tripEntry),
-              ),
-              onTap: () => _showEditTripDialog(tripEntry),
+            )
+          : ListView.builder(
+              itemCount: _tripEntries.length,
+              itemBuilder: (context, index) {
+                final tripEntry = _tripEntries[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: ListTile(
+                    title: Text(tripEntry.tripName ?? '旅行名未設定'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
+                        ),
+                        if (tripEntry.tripMemo != null)
+                          Text(
+                            tripEntry.tripMemo!,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _showDeleteConfirmDialog(tripEntry),
+                    ),
+                    onTap: () => _showEditTripDialog(tripEntry),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -213,10 +199,10 @@ class _TripManagementState extends State<TripManagement> {
     return '${date.year}/${date.month}/${date.day}';
   }
 
-  void _showAddTripDialog() {
+  Future<void> _showAddTripDialog() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
@@ -242,10 +228,10 @@ class _TripManagementState extends State<TripManagement> {
     );
   }
 
-  void _showEditTripDialog(TripEntry tripEntry) {
+  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
@@ -272,31 +258,32 @@ class _TripManagementState extends State<TripManagement> {
     );
   }
 
-  void _showDeleteConfirmDialog(TripEntry tripEntry) {
-    showDialog(
+  Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('確認'),
         content: Text('「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
             child: const Text('キャンセル'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteTripEntry(tripEntry);
-            },
+            onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('削除'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true) {
+      await _deleteTripEntry(tripEntry);
+    }
   }
 
-  void _deleteTripEntry(TripEntry tripEntry) async {
+  Future<void> _deleteTripEntry(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
