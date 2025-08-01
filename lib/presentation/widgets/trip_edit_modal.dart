@@ -292,7 +292,7 @@ class _TripEditModalState extends State<TripEditModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
+          border: Border.all(color: Colors.black54),
           borderRadius: BorderRadius.circular(4),
         ),
         child: Row(
@@ -302,12 +302,9 @@ class _TripEditModalState extends State<TripEditModal> {
               selectedDate != null
                   ? '${selectedDate.year}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.day.toString().padLeft(2, '0')}'
                   : labelText,
-              style: TextStyle(
-                color: selectedDate != null ? Colors.black : Colors.grey[600],
-                fontSize: 16,
-              ),
+              style: const TextStyle(color: Colors.black, fontSize: 16),
             ),
-            const Icon(Icons.calendar_today, color: Colors.grey),
+            const Icon(Icons.calendar_today, color: Colors.black54),
           ],
         ),
       ),
