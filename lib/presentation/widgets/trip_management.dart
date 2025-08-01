@@ -173,36 +173,39 @@ class _TripManagementState extends State<TripManagement> {
       );
     }
 
-    return ListView.builder(
-      itemCount: _tripEntries.length,
-      itemBuilder: (context, index) {
-        final tripEntry = _tripEntries[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            title: Text(tripEntry.tripName ?? '旅行名未設定'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
-                ),
-                if (tripEntry.tripMemo != null)
+    return RefreshIndicator(
+      onRefresh: _loadTripEntries,
+      child: ListView.builder(
+        itemCount: _tripEntries.length,
+        itemBuilder: (context, index) {
+          final tripEntry = _tripEntries[index];
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListTile(
+              title: Text(tripEntry.tripName ?? '旅行名未設定'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    tripEntry.tripMemo!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
                   ),
-              ],
+                  if (tripEntry.tripMemo != null)
+                    Text(
+                      tripEntry.tripMemo!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _showDeleteConfirmDialog(tripEntry),
+              ),
+              onTap: () => _showEditTripDialog(tripEntry),
             ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => _showDeleteConfirmDialog(tripEntry),
-            ),
-            onTap: () => _showEditTripDialog(tripEntry),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
