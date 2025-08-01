@@ -12,6 +12,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -37,6 +38,7 @@ void main() {
               groupId: 'test-group-id',
               tripEntry: tripEntry,
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -62,6 +64,7 @@ void main() {
               groupId: 'test-group-id',
               tripEntry: tripEntry,
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -80,6 +83,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -96,12 +100,163 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
       );
 
       expect(find.text('メモ'), findsOneWidget);
+    });
+
+    testWidgets('訪問場所の入力フィールドがメモの下に表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('訪問場所'), findsOneWidget);
+    });
+
+    testWidgets('訪問場所の入力フィールドの右に地図アイコンが配置されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.map), findsOneWidget);
+    });
+
+    testWidgets('地図アイコンをタップで地図が展開表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 初期状態では地図が表示されていないことを確認
+      expect(find.byKey(const Key('map_display')), findsNothing);
+
+      // 初期状態ではIconButton内にmapアイコンが表示されることを確認
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map_outlined),
+        ),
+        findsNothing,
+      );
+
+      // IconButtonのonPressedを直接呼び出してテスト
+      final iconButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.map),
+      );
+      iconButton.onPressed!();
+      await tester.pumpAndSettle();
+
+      // 地図が展開表示されることを確認
+      expect(find.byKey(const Key('map_display')), findsOneWidget);
+
+      // IconButton内のアイコンがmap_outlinedに変わることを確認
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map_outlined),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map),
+        ),
+        findsNothing,
+      );
+
+      // 地図展開時はアクションボタンが非表示になることを確認
+      expect(find.text('キャンセル'), findsNothing);
+      expect(find.text('作成'), findsNothing);
+      expect(find.text('更新'), findsNothing);
+    });
+
+    testWidgets('地図アイコンを再度タップで地図が閉じること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 地図アイコンボタンのonPressedを直接呼び出して地図を展開
+      final mapButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.map),
+      );
+      mapButton.onPressed!();
+      await tester.pumpAndSettle();
+
+      // 地図が表示されることを確認
+      expect(find.byKey(const Key('map_display')), findsOneWidget);
+
+      // 再度地図アイコンボタンのonPressedを直接呼び出し
+      final mapOutlinedButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.map_outlined),
+      );
+      mapOutlinedButton.onPressed!();
+      await tester.pumpAndSettle();
+
+      // 地図が閉じることを確認
+      expect(find.byKey(const Key('map_display')), findsNothing);
+
+      // IconButton内のアイコンが元のmapに戻ることを確認
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(IconButton),
+          matching: find.byIcon(Icons.map_outlined),
+        ),
+        findsNothing,
+      );
+
+      // 地図が閉じられた後はアクションボタンが再表示されることを確認
+      expect(find.text('キャンセル'), findsOneWidget);
+      expect(find.text('作成'), findsOneWidget);
     });
 
     testWidgets('新規作成時は「作成」ボタンが表示されること', (WidgetTester tester) async {
@@ -111,6 +266,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -136,6 +292,7 @@ void main() {
               groupId: 'test-group-id',
               tripEntry: tripEntry,
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -151,6 +308,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               onSave: (tripEntry) {},
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -170,6 +328,7 @@ void main() {
               onSave: (tripEntry) {
                 savedTripEntry = tripEntry;
               },
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -222,6 +381,7 @@ void main() {
               onSave: (tripEntry) {
                 updatedTripEntry = tripEntry;
               },
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -252,6 +412,7 @@ void main() {
               onSave: (tripEntry) {
                 savedTripEntry = tripEntry;
               },
+              isTestEnvironment: true,
             ),
           ),
         ),
@@ -289,6 +450,7 @@ void main() {
               onSave: (tripEntry) {
                 savedTripEntry = tripEntry;
               },
+              isTestEnvironment: true,
             ),
           ),
         ),
