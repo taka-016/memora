@@ -13,6 +13,7 @@ class TripManagement extends StatefulWidget {
   final int year;
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
+  final bool isTestEnvironment;
 
   const TripManagement({
     super.key,
@@ -20,6 +21,7 @@ class TripManagement extends StatefulWidget {
     required this.year,
     this.onBackPressed,
     this.tripEntryRepository,
+    this.isTestEnvironment = false,
   });
 
   @override
@@ -224,6 +226,7 @@ class _TripManagementState extends State<TripManagement> {
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
+        isTestEnvironment: widget.isTestEnvironment,
         onSave: (tripEntry) async {
           try {
             await _createTripEntryUsecase.execute(tripEntry);
@@ -253,6 +256,7 @@ class _TripManagementState extends State<TripManagement> {
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
         tripEntry: tripEntry,
+        isTestEnvironment: widget.isTestEnvironment,
         onSave: (updatedTripEntry) async {
           try {
             await _updateTripEntryUsecase.execute(updatedTripEntry);
