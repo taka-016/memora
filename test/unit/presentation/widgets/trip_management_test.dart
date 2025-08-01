@@ -190,6 +190,47 @@ void main() {
       );
     });
 
+    testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            onBackPressed: null,
+            tripEntryRepository: mockTripEntryRepository,
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // リフレッシュ実行
+      await tester.fling(
+        find.byType(RefreshIndicator),
+        const Offset(0, 300),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      verify(
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+        ),
+      ).called(2); // 初期ロード + リフレッシュ
+    });
+
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
       // Arrange
       when(
