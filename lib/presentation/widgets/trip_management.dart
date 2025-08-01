@@ -79,6 +79,95 @@ class _TripManagementState extends State<TripManagement> {
     }
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.year}/${date.month}/${date.day}';
+  }
+
+  Future<void> _showTripEditDialog({TripEntry? tripEntry}) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (context) => TripEditModal(
+        groupId: widget.groupId,
+        tripEntry: tripEntry,
+        isTestEnvironment: widget.isTestEnvironment,
+        onSave: (savedTripEntry) async {
+          try {
+            if (tripEntry == null) {
+              await _createTripEntryUsecase.execute(savedTripEntry);
+            } else {
+              await _updateTripEntryUsecase.execute(savedTripEntry);
+            }
+            if (mounted) {
+              await _loadTripEntries();
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(tripEntry == null ? '旅行を作成しました' : '旅行を更新しました'),
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    '${tripEntry == null ? '作成' : '更新'}に失敗しました: $e',
+                  ),
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('旅行削除'),
+        content: Text('「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('削除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteTripEntry(tripEntry);
+    }
+  }
+
+  Future<void> _deleteTripEntry(TripEntry tripEntry) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      await _deleteTripEntryUsecase.execute(tripEntry.id);
+      if (mounted) {
+        await _loadTripEntries();
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('${tripEntry.tripName}を削除しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('削除に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -112,7 +201,7 @@ class _TripManagementState extends State<TripManagement> {
                     ),
                     const Spacer(),
                     ElevatedButton.icon(
-                      onPressed: _showAddTripDialog,
+                      onPressed: () => _showTripEditDialog(),
                       icon: const Icon(Icons.add),
                       label: const Text('旅行追加'),
                     ),
@@ -187,119 +276,11 @@ class _TripManagementState extends State<TripManagement> {
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => _showDeleteConfirmDialog(tripEntry),
                     ),
-                    onTap: () => _showEditTripDialog(tripEntry),
+                    onTap: () => _showTripEditDialog(tripEntry: tripEntry),
                   ),
                 );
               },
             ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}/${date.month}/${date.day}';
-  }
-
-  Future<void> _showAddTripDialog() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    await showDialog(
-      context: context,
-      builder: (context) => TripEditModal(
-        groupId: widget.groupId,
-        isTestEnvironment: widget.isTestEnvironment,
-        onSave: (tripEntry) async {
-          try {
-            await _createTripEntryUsecase.execute(tripEntry);
-            if (mounted) {
-              await _loadTripEntries();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('旅行を作成しました')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('作成に失敗しました: $e')),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    await showDialog(
-      context: context,
-      builder: (context) => TripEditModal(
-        groupId: widget.groupId,
-        tripEntry: tripEntry,
-        isTestEnvironment: widget.isTestEnvironment,
-        onSave: (updatedTripEntry) async {
-          try {
-            await _updateTripEntryUsecase.execute(updatedTripEntry);
-            if (mounted) {
-              await _loadTripEntries();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('旅行を更新しました')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('更新に失敗しました: $e')),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
-
-  Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('確認'),
-        content: Text('「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await _deleteTripEntry(tripEntry);
-    }
-  }
-
-  Future<void> _deleteTripEntry(TripEntry tripEntry) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    try {
-      await _deleteTripEntryUsecase.execute(tripEntry.id);
-      if (mounted) {
-        await _loadTripEntries();
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('${tripEntry.tripName}を削除しました')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
-        );
-      }
-    }
   }
 }

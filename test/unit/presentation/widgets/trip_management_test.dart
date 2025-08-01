@@ -383,7 +383,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - 削除確認ダイアログが表示されることを確認
-      expect(find.text('確認'), findsOneWidget);
+      expect(find.text('旅行削除'), findsOneWidget);
       expect(find.text('「北海道旅行」を削除しますか？'), findsOneWidget);
       expect(find.text('キャンセル'), findsOneWidget);
       expect(find.text('削除'), findsOneWidget);
