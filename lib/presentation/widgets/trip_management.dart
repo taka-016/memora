@@ -195,18 +195,9 @@ class _TripManagementState extends State<TripManagement> {
                   ),
               ],
             ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () => _showEditTripDialog(tripEntry),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _showDeleteConfirmDialog(tripEntry),
-                ),
-              ],
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _showDeleteConfirmDialog(tripEntry),
             ),
             onTap: () => _showEditTripDialog(tripEntry),
           ),
