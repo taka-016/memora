@@ -9,7 +9,7 @@ import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/presentation/widgets/search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
-import 'package:memora/presentation/widgets/pin_detail_modal.dart';
+import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 
 class MapDisplay extends StatefulWidget {
   final List<Pin>? initialPins;
@@ -31,6 +31,8 @@ class _MapDisplayState extends State<MapDisplay> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   late final GoogleMapMarkerManager _pinManager;
   GoogleMapController? _mapController;
+  bool _isBottomSheetVisible = false;
+  MarkerId? _selectedMarkerId;
 
   CurrentLocationService get _locationService =>
       widget.locationService ?? GeolocatorCurrentLocationService();
@@ -63,59 +65,17 @@ class _MapDisplayState extends State<MapDisplay> {
     }
   }
 
-  Future<void> _showPinDetailModal(MarkerId markerId) async {
-    await showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return SafeArea(
-          child: Center(
-            child: FractionallySizedBox(
-              widthFactor: 0.9,
-              heightFactor: 0.6,
-              child: Material(
-                color: Colors.transparent,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: PinDetailModal(
-                    onSave: () {},
-                    onDelete: () async {
-                      await _removeMarker(markerId);
-                      if (context.mounted) Navigator.of(context).pop();
-                    },
-                    onClose: () => Navigator.of(context).pop(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final isReverse = animation.status == AnimationStatus.reverse;
-        final fadeCurve = isReverse ? Curves.easeInCubic : Curves.easeOut;
-        final scaleCurve = isReverse ? Curves.easeInCubic : Curves.easeOutBack;
+  void _showPinDetailBottomSheet(MarkerId markerId) {
+    setState(() {
+      _isBottomSheetVisible = true;
+      _selectedMarkerId = markerId;
+    });
+  }
 
-        return FadeTransition(
-          opacity: animation.drive(CurveTween(curve: fadeCurve)),
-          child: ScaleTransition(
-            scale: animation.drive(
-              Tween<double>(
-                begin: 0.8,
-                end: 1.0,
-              ).chain(CurveTween(curve: scaleCurve)),
-            ),
-            child: child,
-          ),
-        );
-      },
-    );
+  void _hidePinDetailBottomSheet() {
+    setState(() {
+      _isBottomSheetVisible = false;
+    });
   }
 
   Future<void> _moveToCurrentLocation() async {
@@ -199,11 +159,11 @@ class _MapDisplayState extends State<MapDisplay> {
         ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
       }
     }
-    await _showPinDetailModal(marker.markerId);
+    _showPinDetailBottomSheet(marker.markerId);
   }
 
-  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) async {
-    await _showPinDetailModal(markerId);
+  void _onMarkerTap(MarkerId markerId, LatLng position, int markerIndex) {
+    _showPinDetailBottomSheet(markerId);
   }
 
   @override
@@ -264,6 +224,17 @@ class _MapDisplayState extends State<MapDisplay> {
               child: const Icon(Icons.my_location),
             ),
           ),
+          if (_isBottomSheetVisible)
+            PinDetailBottomSheet(
+              onSave: () {},
+              onDelete: () async {
+                if (_selectedMarkerId != null) {
+                  await _removeMarker(_selectedMarkerId!);
+                }
+                _hidePinDetailBottomSheet();
+              },
+              onClose: _hidePinDetailBottomSheet,
+            ),
         ],
       ),
     );

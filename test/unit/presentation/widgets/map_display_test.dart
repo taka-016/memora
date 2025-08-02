@@ -181,7 +181,7 @@ void main() {
       verify(mockService.getCurrentLocation()).called(1);
     });
 
-    testWidgets('ピンをタップしたときにPinDetailModalが表示される', (WidgetTester tester) async {
+    testWidgets('ピンをタップしたときにボトムシートが表示される', (WidgetTester tester) async {
       final initialPins = [
         Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
       ];
@@ -204,8 +204,42 @@ void main() {
       await tester.tap(markerKey);
       await tester.pumpAndSettle();
 
-      // PinDetailModalが表示されていることを確認
-      expect(find.byType(PinDetailModal), findsOneWidget);
+      // ボトムシートが表示されていることを確認（DraggableScrollableSheetを使用）
+      expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+
+      // モーダルではなくボトムシートであることを確認
+      expect(find.byType(PinDetailModal), findsNothing);
+    });
+
+    testWidgets('ボトムシートをドラッグで拡張できる', (WidgetTester tester) async {
+      final initialPins = [
+        Pin(id: '1', pinId: '1', latitude: 10, longitude: 10),
+      ];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MapDisplay(
+              initialPins: initialPins,
+              locationService: mockLocationService,
+              pinRepository: mockPinRepository,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // マーカーをタップしてボトムシートを表示
+      final markerKey = find.byKey(const Key('map_marker_0'));
+      await tester.tap(markerKey);
+      await tester.pumpAndSettle();
+
+      // DraggableScrollableSheetが存在することを確認
+      expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+
+      // ドラッグ可能なハンドルまたはコンテンツが存在することを確認
+      expect(find.text('訪問開始日'), findsOneWidget);
+      expect(find.text('旅行終了日'), findsOneWidget);
+      expect(find.text('メモ'), findsOneWidget);
     });
   });
 }
