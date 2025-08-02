@@ -7,7 +7,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/presentation/widgets/pin_detail_modal.dart';
 import 'map_display_test.mocks.dart';
 
 @GenerateMocks([CurrentLocationService])
@@ -206,9 +205,6 @@ void main() {
 
       // ボトムシートが表示されていることを確認（DraggableScrollableSheetを使用）
       expect(find.byType(DraggableScrollableSheet), findsOneWidget);
-
-      // モーダルではなくボトムシートであることを確認
-      expect(find.byType(PinDetailModal), findsNothing);
     });
 
     testWidgets('ボトムシートをドラッグで拡張できる', (WidgetTester tester) async {
