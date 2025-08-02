@@ -64,32 +64,32 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
               topRight: Radius.circular(20),
             ),
           ),
-          child: Column(
-            children: [
-              // ドラッグハンドル
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              // 閉じるボタン
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8, right: 16),
-                  child: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: widget.onClose,
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
+              children: [
+                // ドラッグハンドル
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
+                // 閉じるボタン
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8, right: 16),
+                    child: IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: widget.onClose,
+                    ),
+                  ),
+                ),
+                Padding(
                   padding: EdgeInsets.fromLTRB(
                     32,
                     0,
@@ -181,8 +181,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                     ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
