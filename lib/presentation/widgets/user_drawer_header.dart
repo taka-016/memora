@@ -8,18 +8,26 @@ class UserDrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DrawerHeader(
-      decoration: const BoxDecoration(color: Colors.deepPurple),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'memora',
-            style: TextStyle(color: Colors.white, fontSize: 24),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+              fontSize: 24,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             email,
-            style: const TextStyle(color: Colors.white70, fontSize: 16),
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onPrimary.withValues(alpha: 0.7),
+              fontSize: 16,
+            ),
           ),
         ],
       ),
