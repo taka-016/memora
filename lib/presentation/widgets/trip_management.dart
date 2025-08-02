@@ -83,7 +83,36 @@ class _TripManagementState extends State<TripManagement> {
     return '${date.year}/${date.month}/${date.day}';
   }
 
-  Future<void> _showTripEditDialog({TripEntry? tripEntry}) async {
+  Future<void> _showAddTripDialog() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (context) => TripEditModal(
+        groupId: widget.groupId,
+        isTestEnvironment: widget.isTestEnvironment,
+        onSave: (tripEntry) async {
+          try {
+            await _createTripEntryUsecase.execute(tripEntry);
+            if (mounted) {
+              await _loadTripEntries();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('旅行を作成しました')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('作成に失敗しました: $e')),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await showDialog(
@@ -92,29 +121,19 @@ class _TripManagementState extends State<TripManagement> {
         groupId: widget.groupId,
         tripEntry: tripEntry,
         isTestEnvironment: widget.isTestEnvironment,
-        onSave: (savedTripEntry) async {
+        onSave: (updatedTripEntry) async {
           try {
-            if (tripEntry == null) {
-              await _createTripEntryUsecase.execute(savedTripEntry);
-            } else {
-              await _updateTripEntryUsecase.execute(savedTripEntry);
-            }
+            await _updateTripEntryUsecase.execute(updatedTripEntry);
             if (mounted) {
               await _loadTripEntries();
               scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text(tripEntry == null ? '旅行を作成しました' : '旅行を更新しました'),
-                ),
+                const SnackBar(content: Text('旅行を更新しました')),
               );
             }
           } catch (e) {
             if (mounted) {
               scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${tripEntry == null ? '作成' : '更新'}に失敗しました: $e',
-                  ),
-                ),
+                SnackBar(content: Text('更新に失敗しました: $e')),
               );
             }
           }
@@ -201,7 +220,7 @@ class _TripManagementState extends State<TripManagement> {
                     ),
                     const Spacer(),
                     ElevatedButton.icon(
-                      onPressed: () => _showTripEditDialog(),
+                      onPressed: _showAddTripDialog,
                       icon: const Icon(Icons.add),
                       label: const Text('旅行追加'),
                     ),
@@ -276,7 +295,7 @@ class _TripManagementState extends State<TripManagement> {
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => _showDeleteConfirmDialog(tripEntry),
                     ),
-                    onTap: () => _showTripEditDialog(tripEntry: tripEntry),
+                    onTap: () => _showEditTripDialog(tripEntry),
                   ),
                 );
               },
