@@ -69,13 +69,16 @@ class _TripEditModalState extends State<TripEditModal> {
         horizontal: 16.0,
         vertical: 24.0,
       ),
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.95,
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(24.0),
-        child: _isMapExpanded
-            ? _buildMapExpandedLayout()
-            : _buildNormalLayout(),
+      child: Material(
+        type: MaterialType.card,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(24.0),
+          child: _isMapExpanded
+              ? _buildMapExpandedLayout()
+              : _buildNormalLayout(),
+        ),
       ),
     );
   }
