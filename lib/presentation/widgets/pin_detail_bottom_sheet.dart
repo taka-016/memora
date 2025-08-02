@@ -1,0 +1,191 @@
+import 'package:flutter/material.dart';
+
+class PinDetailBottomSheet extends StatefulWidget {
+  final VoidCallback? onSave;
+  final VoidCallback? onDelete;
+  final VoidCallback? onClose;
+
+  const PinDetailBottomSheet({
+    super.key,
+    this.onSave,
+    this.onDelete,
+    this.onClose,
+  });
+
+  @override
+  State<PinDetailBottomSheet> createState() => _PinDetailBottomSheetState();
+}
+
+class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
+  DateTime? fromDate;
+  DateTime? toDate;
+  final TextEditingController memoController = TextEditingController();
+
+  Future<void> _selectFromDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: fromDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        fromDate = picked;
+      });
+    }
+  }
+
+  Future<void> _selectToDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: toDate ?? (fromDate ?? DateTime.now()),
+      firstDate: fromDate ?? DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+      setState(() {
+        toDate = picked;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.3,
+      minChildSize: 0.1,
+      maxChildSize: 0.8,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Column(
+            children: [
+              // ドラッグハンドル
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // 閉じるボタン
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8, right: 16),
+                  child: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: widget.onClose,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    32,
+                    0,
+                    32,
+                    16 + MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('訪問開始日'),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _selectFromDate(context),
+                        child: AbsorbPointer(
+                          child: TextFormField(
+                            key: const Key('visitStartDateField'),
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              hintText: '日付を選択',
+                              suffixIcon: Icon(Icons.calendar_today),
+                            ),
+                            controller: TextEditingController(
+                              text: fromDate != null
+                                  ? '${fromDate!.year}/${fromDate!.month}/${fromDate!.day}'
+                                  : '',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('旅行終了日'),
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _selectToDate(context),
+                        child: AbsorbPointer(
+                          child: TextFormField(
+                            key: const Key('visitEndDateField'),
+                            readOnly: true,
+                            decoration: const InputDecoration(
+                              hintText: '日付を選択',
+                              suffixIcon: Icon(Icons.calendar_today),
+                            ),
+                            controller: TextEditingController(
+                              text: toDate != null
+                                  ? '${toDate!.year}/${toDate!.month}/${toDate!.day}'
+                                  : '',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('メモ'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        key: const Key('visitMemoField'),
+                        minLines: 4,
+                        maxLines: null,
+                        controller: memoController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Divider(
+                        thickness: 1,
+                        height: 1,
+                        color:
+                            Theme.of(context)
+                                .inputDecorationTheme
+                                .enabledBorder
+                                ?.borderSide
+                                .color ??
+                            Colors.black45,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton(
+                            onPressed: widget.onDelete,
+                            child: const Text('削除'),
+                          ),
+                          ElevatedButton(
+                            onPressed: widget.onSave,
+                            child: const Text('保存'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
