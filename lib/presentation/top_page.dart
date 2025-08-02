@@ -273,11 +273,16 @@ class _TopPageState extends State<TopPage> {
                     email: authManager.state.user!.loginId,
                   );
                 } else {
-                  return const DrawerHeader(
-                    decoration: BoxDecoration(color: Colors.deepPurple),
+                  return DrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     child: Text(
                       'memora',
-                      style: TextStyle(color: Colors.white, fontSize: 24),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        fontSize: 24,
+                      ),
                     ),
                   );
                 }

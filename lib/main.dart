@@ -83,7 +83,7 @@ class _MyAppState extends State<MyApp> {
       child: MaterialApp(
         title: 'memora',
         theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
         ),
         locale: const Locale('ja'),
         supportedLocales: const [Locale('ja'), Locale('en')],
