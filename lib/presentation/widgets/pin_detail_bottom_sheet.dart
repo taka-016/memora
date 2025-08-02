@@ -56,13 +56,11 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       minChildSize: 0.1,
       maxChildSize: 0.8,
       builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
+        return Material(
+          type: MaterialType.card,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
           child: SingleChildScrollView(
             controller: scrollController,
