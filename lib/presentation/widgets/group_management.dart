@@ -120,26 +120,78 @@ class _GroupManagementState extends State<GroupManagement> {
     }
   }
 
-  Future<void> _showGroupEditModal({Group? group}) async {
+  Future<void> _showAddGroupDialog() async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      // 利用可能なメンバーを取得
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
 
-      // 既存のグループメンバーIDを取得（編集の場合）
-      List<String>? existingMemberIds;
-      if (group != null) {
-        // 既に_managedGroupsWithMembersにメンバー情報が含まれているので、それを使用
-        final groupWithMembers = _managedGroupsWithMembers.firstWhere(
-          (gwm) => gwm.group.id == group.id,
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (context) => GroupEditModal(
+          availableMembers: availableMembers,
+          selectedMemberIds: null,
+          onSave: (group, selectedMemberIds) async {
+            try {
+              final newGroup = Group(
+                id: '', // IDは自動採番されるため空文字列
+                administratorId: widget.member.id,
+                name: group.name,
+                memo: group.memo,
+              );
+              final newGroupId = await _createGroupUsecase.execute(newGroup);
+
+              for (final memberId in selectedMemberIds) {
+                final groupMember = GroupMember(
+                  id: const Uuid().v4(),
+                  groupId: newGroupId,
+                  memberId: memberId,
+                );
+                await _createGroupMemberUsecase.execute(groupMember);
+              }
+
+              if (mounted) {
+                await _loadData();
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(content: Text('グループを作成しました')),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('作成に失敗しました: $e')),
+                );
+              }
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')),
         );
-        existingMemberIds = groupWithMembers.members
-            .map((member) => member.id)
-            .toList();
       }
+    }
+  }
+
+  Future<void> _showEditGroupDialog(Group group) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      final availableMembers = await _getManagedMembersUsecase.execute(
+        widget.member,
+      );
+      final groupWithMembers = _managedGroupsWithMembers.firstWhere(
+        (gwm) => gwm.group.id == group.id,
+      );
+      final existingMemberIds = groupWithMembers.members
+          .map((member) => member.id)
+          .toList();
 
       if (!mounted) return;
 
@@ -151,57 +203,27 @@ class _GroupManagementState extends State<GroupManagement> {
           selectedMemberIds: existingMemberIds,
           onSave: (editedGroup, selectedMemberIds) async {
             try {
-              if (group == null) {
-                final newGroup = Group(
-                  id: '', // IDは自動採番されるため空文字列
-                  administratorId: widget.member.id,
-                  name: editedGroup.name,
-                  memo: editedGroup.memo,
+              await _updateGroupUsecase.execute(editedGroup);
+              await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
+              for (final memberId in selectedMemberIds) {
+                final groupMember = GroupMember(
+                  id: const Uuid().v4(),
+                  groupId: group.id,
+                  memberId: memberId,
                 );
-                final newGroupId = await _createGroupUsecase.execute(newGroup);
-
-                // 選択されたメンバーをGroupMemberとして登録
-                for (final memberId in selectedMemberIds) {
-                  final groupMember = GroupMember(
-                    id: const Uuid().v4(),
-                    groupId: newGroupId,
-                    memberId: memberId,
-                  );
-                  await _createGroupMemberUsecase.execute(groupMember);
-                }
-              } else {
-                // グループ情報を更新
-                await _updateGroupUsecase.execute(editedGroup);
-
-                // 既存のGroupMemberを一括削除
-                await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
-
-                // 新しいGroupMemberを作成
-                for (final memberId in selectedMemberIds) {
-                  final groupMember = GroupMember(
-                    id: const Uuid().v4(),
-                    groupId: group.id,
-                    memberId: memberId,
-                  );
-                  await _createGroupMemberUsecase.execute(groupMember);
-                }
+                await _createGroupMemberUsecase.execute(groupMember);
               }
+
               if (mounted) {
                 await _loadData();
                 scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      group == null ? 'グループを作成しました' : 'グループを更新しました',
-                    ),
-                  ),
+                  const SnackBar(content: Text('グループを更新しました')),
                 );
               }
             } catch (e) {
               if (mounted) {
                 scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Text('${group == null ? '作成' : '更新'}に失敗しました: $e'),
-                  ),
+                  SnackBar(content: Text('更新に失敗しました: $e')),
                 );
               }
             }
@@ -284,7 +306,7 @@ class _GroupManagementState extends State<GroupManagement> {
                       ),
                       const Spacer(),
                       ElevatedButton.icon(
-                        onPressed: () => _showGroupEditModal(),
+                        onPressed: _showAddGroupDialog,
                         icon: const Icon(Icons.add),
                         label: const Text('グループ追加'),
                       ),
@@ -353,8 +375,7 @@ class _GroupManagementState extends State<GroupManagement> {
                                     onPressed: () =>
                                         _showDeleteConfirmDialog(group),
                                   ),
-                                  onTap: () =>
-                                      _showGroupEditModal(group: group),
+                                  onTap: () => _showEditGroupDialog(group),
                                 ),
                               );
                             },

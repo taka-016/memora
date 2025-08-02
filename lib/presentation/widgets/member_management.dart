@@ -106,37 +106,53 @@ class _MemberManagementState extends State<MemberManagement> {
     }
   }
 
-  Future<void> _showMemberEditModal({Member? member}) async {
+  Future<void> _showAddMemberDialog() async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    await showDialog(
+      context: context,
+      builder: (context) => MemberEditModal(
+        onSave: (member) async {
+          try {
+            await _createMemberUsecase.execute(member, widget.member.id);
+            if (mounted) {
+              await _loadData();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('メンバーを作成しました')),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('作成に失敗しました: $e')),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _showEditMemberDialog(Member member) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await showDialog(
       context: context,
       builder: (context) => MemberEditModal(
         member: member,
-        onSave: (editedMember) async {
+        onSave: (updatedMember) async {
           try {
-            if (member == null) {
-              await _createMemberUsecase.execute(
-                editedMember,
-                widget.member.id,
-              );
-            } else {
-              await _updateMemberUsecase.execute(editedMember);
-            }
+            await _updateMemberUsecase.execute(updatedMember);
             if (mounted) {
               await _loadData();
               scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text(member == null ? 'メンバーを作成しました' : 'メンバーを更新しました'),
-                ),
+                const SnackBar(content: Text('メンバーを更新しました')),
               );
             }
           } catch (e) {
             if (mounted) {
               scaffoldMessenger.showSnackBar(
-                SnackBar(
-                  content: Text('${member == null ? '作成' : '更新'}に失敗しました: $e'),
-                ),
+                SnackBar(content: Text('更新に失敗しました: $e')),
               );
             }
           }
@@ -212,7 +228,7 @@ class _MemberManagementState extends State<MemberManagement> {
                       ),
                       const Spacer(),
                       ElevatedButton.icon(
-                        onPressed: () => _showMemberEditModal(),
+                        onPressed: _showAddMemberDialog,
                         icon: const Icon(Icons.add),
                         label: const Text('メンバー追加'),
                       ),
@@ -244,7 +260,7 @@ class _MemberManagementState extends State<MemberManagement> {
                                     member.phoneNumber != null
                                 ? Text(member.email ?? member.phoneNumber ?? '')
                                 : null,
-                            onTap: () => _showMemberEditModal(member: member),
+                            onTap: () => _showEditMemberDialog(member),
                             trailing:
                                 !isCurrentUser &&
                                     member.accountId ==
