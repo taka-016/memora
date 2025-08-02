@@ -250,9 +250,12 @@ class _GroupManagementState extends State<GroupManagement> {
             onPressed: () => Navigator.of(context).pop(false),
             child: const Text('キャンセル'),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
             child: const Text('削除'),
           ),
         ],
