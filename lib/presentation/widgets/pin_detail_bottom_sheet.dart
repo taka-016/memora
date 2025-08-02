@@ -101,70 +101,85 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                     children: [
                       const Text('訪問開始日'),
                       const SizedBox(height: 8),
-                      GestureDetector(
+                      InkWell(
+                        key: const Key('visitStartDateField'),
                         onTap: () => _selectFromDate(context),
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            key: const Key('visitStartDateField'),
-                            readOnly: true,
-                            decoration: const InputDecoration(
-                              hintText: '日付を選択',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            controller: TextEditingController(
-                              text: fromDate != null
-                                  ? '${fromDate!.year}/${fromDate!.month}/${fromDate!.day}'
-                                  : '',
-                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                fromDate != null
+                                    ? '${fromDate!.year}/${fromDate!.month.toString().padLeft(2, '0')}/${fromDate!.day.toString().padLeft(2, '0')}'
+                                    : '日付を選択',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.black54,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       const Text('旅行終了日'),
                       const SizedBox(height: 8),
-                      GestureDetector(
+                      InkWell(
+                        key: const Key('visitEndDateField'),
                         onTap: () => _selectToDate(context),
-                        child: AbsorbPointer(
-                          child: TextFormField(
-                            key: const Key('visitEndDateField'),
-                            readOnly: true,
-                            decoration: const InputDecoration(
-                              hintText: '日付を選択',
-                              suffixIcon: Icon(Icons.calendar_today),
-                            ),
-                            controller: TextEditingController(
-                              text: toDate != null
-                                  ? '${toDate!.year}/${toDate!.month}/${toDate!.day}'
-                                  : '',
-                            ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                toDate != null
+                                    ? '${toDate!.year}/${toDate!.month.toString().padLeft(2, '0')}/${toDate!.day.toString().padLeft(2, '0')}'
+                                    : '日付を選択',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.black54,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('メモ'),
-                      const SizedBox(height: 8),
                       TextFormField(
                         key: const Key('visitMemoField'),
                         minLines: 4,
                         maxLines: null,
                         controller: memoController,
                         decoration: const InputDecoration(
-                          border: InputBorder.none,
+                          labelText: 'メモ',
+                          border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Divider(
-                        thickness: 1,
-                        height: 1,
-                        color:
-                            Theme.of(context)
-                                .inputDecorationTheme
-                                .enabledBorder
-                                ?.borderSide
-                                .color ??
-                            Colors.black45,
-                      ),
-                      const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

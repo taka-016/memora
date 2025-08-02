@@ -38,5 +38,21 @@ void main() {
       // ドラッグハンドルの確認
       expect(find.byType(Container), findsWidgets);
     });
+
+    testWidgets('日付フィールドがカスタムContainerで表示される', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+      );
+
+      // 日付フィールドがInkWellでラップされている
+      expect(find.byType(InkWell), findsAtLeastNWidgets(2));
+
+      // 日付フィールドがOutlineBorderのContainerで表示される
+      final dateContainers = find.descendant(
+        of: find.byType(InkWell),
+        matching: find.byType(Container),
+      );
+      expect(dateContainers, findsAtLeastNWidgets(2));
+    });
   });
 }
