@@ -58,7 +58,31 @@ jobs:
           # assignee_trigger: "claude-bot"
 
           # Optional: Allow Claude to run specific commands
-          # allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
+          allowed_tools: |
+            Bash(find:*)
+            Bash(ls:*)
+            Bash(grep:*)
+            Bash(flutter:*)
+            Bash(npx:*)
+            Bash(dart run build_runner build:*)
+            Bash(chmod:*)
+            Bash(./check.sh)
+            Bash(mkdir:*)
+            Bash(tree:*)
+            Bash(git add:*)
+            Bash(git commit:*)
+            Bash(git checkout:*)
+            Bash(git push:*)
+            Bash(gh pr create:*)
+            Bash(rg:*)
+            Bash(git reset:*)
+            Bash(git revert:*)
+            Bash(git stash:*)
+            Bash(git pull:*)
+            Bash(git fetch:*)
+            Bash(git config:*)
+            Bash(git branch:*)
+            Bash(git rm:*)
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |
