@@ -26,18 +26,6 @@ RUN npm install -g npm@latest
 # 不要なパッケージの削除
 RUN rm -rf /var/lib/apt/lists/*
 
-# gemini-cliのインストール
-RUN npm install -g @google/gemini-cli
-
-# claude codeのインストール
-RUN npm install -g @anthropic-ai/claude-code
-
-# Firebase CLIのインストール
-RUN npm install -g firebase-tools
-
-# Install FlutterFire CLI
-RUN dart pub global activate flutterfire_cli
-
 # タイムゾーンをJSTに設定
 RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
   && echo "Asia/Tokyo" > /etc/timezone \
