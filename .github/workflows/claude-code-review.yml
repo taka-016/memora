@@ -25,7 +25,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
       issues: read
       id-token: write
