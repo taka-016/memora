@@ -497,12 +497,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // エラーメッセージが表示されることを確認
-      expect(find.text('開始日と終了日は2024年の日付を選択してください'), findsOneWidget);
+      expect(find.text('開始日は2024年の日付を選択してください'), findsOneWidget);
       // onSaveコールバックが呼ばれないことを確認
       expect(savedTripEntry, isNull);
     });
 
-    testWidgets('終了日がパラメータの年と異なる場合にエラーメッセージが表示されること', (WidgetTester tester) async {
+    testWidgets('終了日がパラメータの年と異なる場合でも正常に保存されること（年またぎ対応）', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
@@ -515,8 +515,8 @@ void main() {
                 id: 'test-id',
                 groupId: 'test-group-id',
                 tripName: 'テスト旅行',
-                tripStartDate: DateTime(2024, 6, 1),
-                tripEndDate: DateTime(2025, 6, 10), // 2024年以外
+                tripStartDate: DateTime(2024, 12, 30),
+                tripEndDate: DateTime(2025, 1, 3), // 年またぎ
                 tripMemo: 'テストメモ',
               ),
               onSave: (tripEntry) {
@@ -532,13 +532,15 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
-      // エラーメッセージが表示されることを確認
-      expect(find.text('開始日と終了日は2024年の日付を選択してください'), findsOneWidget);
-      // onSaveコールバックが呼ばれないことを確認
-      expect(savedTripEntry, isNull);
+      // エラーメッセージが表示されないことを確認
+      expect(find.text('開始日は2024年の日付を選択してください'), findsNothing);
+      // onSaveコールバックが呼ばれることを確認
+      expect(savedTripEntry, isNotNull);
+      expect(savedTripEntry!.tripStartDate, equals(DateTime(2024, 12, 30)));
+      expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
     });
 
-    testWidgets('開始日と終了日の両方がパラメータの年と同じ場合は正常に保存されること', (WidgetTester tester) async {
+    testWidgets('開始日がパラメータの年と同じ場合は正常に保存されること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
