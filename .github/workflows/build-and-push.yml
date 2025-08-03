@@ -23,6 +23,6 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/custom-env:latest
-          docker build -t $IMAGE_NAME -f .github/docker/Dockerfile .
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/memora:latest
+          docker build -t $IMAGE_NAME -f .
           docker push $IMAGE_NAME
