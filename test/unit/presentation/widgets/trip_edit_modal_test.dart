@@ -543,5 +543,36 @@ void main() {
       expect(savedTripEntry!.tripStartDate, equals(DateTime(2024, 12, 30)));
       expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
     });
+
+    testWidgets('パラメータの年と現在年が異なる場合、カレンダーの初期表示がパラメータの年の1月になること', (
+      WidgetTester tester,
+    ) async {
+      // 現在年と異なるyearパラメータを指定してウィジェットを構築
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              year: 2020, // 現在年とは異なる年
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 旅行期間Fromフィールドをタップしてカレンダーを開く
+      await tester.tap(find.text('旅行期間 From'));
+      await tester.pumpAndSettle();
+
+      // カレンダーの初期表示が2020年であることを確認
+      // 「2020」の文字列が含まれていることをチェック
+      expect(find.textContaining('2020'), findsAtLeastNWidgets(1));
+
+      // カレンダーを閉じる（キャンセルボタンを探してタップ）
+      final cancelButton = find.byType(TextButton).first;
+      await tester.tap(cancelButton);
+      await tester.pumpAndSettle();
+    });
   });
 }

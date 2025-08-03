@@ -291,9 +291,18 @@ class _TripEditModalState extends State<TripEditModal> {
   }) {
     return InkWell(
       onTap: () async {
+        DateTime initialDate;
+        if (selectedDate != null) {
+          initialDate = selectedDate;
+        } else if (widget.year != null && widget.year != DateTime.now().year) {
+          initialDate = DateTime(widget.year!, 1, 1);
+        } else {
+          initialDate = DateTime.now();
+        }
+
         final date = await showDatePicker(
           context: context,
-          initialDate: selectedDate ?? DateTime.now(),
+          initialDate: initialDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
         );
