@@ -30,6 +30,9 @@ jobs:
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
+      - name: Mark working directory as safe
+        run: git config --global --add safe.directory /__w/memora/memora
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
