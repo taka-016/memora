@@ -253,8 +253,7 @@ class _TripEditModalState extends State<TripEditModal> {
               return;
             }
 
-            if (widget.year != null &&
-                _startDate!.year != widget.year!) {
+            if (widget.year != null && _startDate!.year != widget.year!) {
               setState(() {
                 _dateErrorMessage = '開始日は${widget.year}年の日付を選択してください';
               });
