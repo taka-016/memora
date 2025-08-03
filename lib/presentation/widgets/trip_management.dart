@@ -90,6 +90,7 @@ class _TripManagementState extends State<TripManagement> {
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
+        year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
         onSave: (tripEntry) async {
           try {
@@ -120,6 +121,7 @@ class _TripManagementState extends State<TripManagement> {
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
         tripEntry: tripEntry,
+        year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
         onSave: (updatedTripEntry) async {
           try {

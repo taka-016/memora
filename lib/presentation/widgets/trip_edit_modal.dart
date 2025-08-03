@@ -8,6 +8,7 @@ class TripEditModal extends StatefulWidget {
   final TripEntry? tripEntry;
   final Function(TripEntry) onSave;
   final bool isTestEnvironment;
+  final int? year;
 
   const TripEditModal({
     super.key,
@@ -15,6 +16,7 @@ class TripEditModal extends StatefulWidget {
     this.tripEntry,
     required this.onSave,
     this.isTestEnvironment = false,
+    this.year,
   });
 
   @override
@@ -247,6 +249,15 @@ class _TripEditModalState extends State<TripEditModal> {
             if (_startDate!.isAfter(_endDate!)) {
               setState(() {
                 _dateErrorMessage = '開始日は終了日より前の日付を選択してください';
+              });
+              return;
+            }
+
+            if (widget.year != null &&
+                (_startDate!.year != widget.year! ||
+                    _endDate!.year != widget.year!)) {
+              setState(() {
+                _dateErrorMessage = '開始日と終了日は${widget.year}年の日付を選択してください';
               });
               return;
             }
