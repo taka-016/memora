@@ -77,7 +77,31 @@ jobs:
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
 
           # Optional: Add specific tools for running tests or linting
-          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
+          allowed_tools: |
+            Bash(find:*)
+            Bash(ls:*)
+            Bash(grep:*)
+            Bash(flutter:*)
+            Bash(npx:*)
+            Bash(dart run build_runner build:*)
+            Bash(chmod:*)
+            Bash(./check.sh)
+            Bash(mkdir:*)
+            Bash(tree:*)
+            Bash(git add:*)
+            Bash(git commit:*)
+            Bash(git checkout:*)
+            Bash(git push:*)
+            Bash(gh pr create:*)
+            Bash(rg:*)
+            Bash(git reset:*)
+            Bash(git revert:*)
+            Bash(git stash:*)
+            Bash(git pull:*)
+            Bash(git fetch:*)
+            Bash(git config:*)
+            Bash(git branch:*)
+            Bash(git rm:*)
 
           # Optional: Skip review for certain conditions
           # if: |
