@@ -466,7 +466,9 @@ void main() {
       expect(savedTripEntry, isNull);
     });
 
-    testWidgets('開始日がパラメータの年と異なる場合にエラーメッセージが表示されること', (WidgetTester tester) async {
+    testWidgets('開始日がパラメータの年と異なる場合にエラーメッセージが表示されること', (
+      WidgetTester tester,
+    ) async {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
@@ -502,7 +504,9 @@ void main() {
       expect(savedTripEntry, isNull);
     });
 
-    testWidgets('終了日がパラメータの年と異なる場合でも正常に保存されること（年またぎ対応）', (WidgetTester tester) async {
+    testWidgets('終了日がパラメータの年と異なる場合でも正常に保存されること（年またぎ対応）', (
+      WidgetTester tester,
+    ) async {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
@@ -539,6 +543,5 @@ void main() {
       expect(savedTripEntry!.tripStartDate, equals(DateTime(2024, 12, 30)));
       expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
     });
-
   });
 }
