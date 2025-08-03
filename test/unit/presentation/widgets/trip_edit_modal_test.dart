@@ -540,5 +540,38 @@ void main() {
       expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
     });
 
+    testWidgets('パラメータの年と現在年が異なる場合、カレンダーの初期表示はパラメータの年の1月になること', (WidgetTester tester) async {
+      const int testYear = 2030; // 現在年とは異なる年
+      
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              year: testYear,
+              onSave: (tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 日付フィールドをタップしてDatePickerを開く
+      await tester.tap(find.text('旅行期間 From'));
+      await tester.pumpAndSettle();
+
+      // DatePickerが開かれることを確認
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+
+      // DatePickerの初期表示がパラメータの年（2030年）の1月になっていることを確認
+      // DatePickerDialogの内部で"2030年 1月"が表示されていることを確認
+      expect(find.textContaining('2030'), findsOneWidget);
+      expect(find.textContaining('1月'), findsOneWidget);
+
+      // キャンセルして閉じる
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+    });
+
   });
 }
