@@ -465,5 +465,113 @@ void main() {
       // onSaveコールバックが呼ばれないことを確認
       expect(savedTripEntry, isNull);
     });
+
+    testWidgets('開始日がパラメータの年と異なる場合にエラーメッセージが表示されること', (WidgetTester tester) async {
+      TripEntry? savedTripEntry;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              year: 2024,
+              tripEntry: TripEntry(
+                id: 'test-id',
+                groupId: 'test-group-id',
+                tripName: 'テスト旅行',
+                tripStartDate: DateTime(2023, 12, 31),
+                tripEndDate: DateTime(2024, 1, 2),
+                tripMemo: 'テストメモ',
+              ),
+              onSave: (tripEntry) {
+                savedTripEntry = tripEntry;
+              },
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 更新ボタンをタップ
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されることを確認
+      expect(find.text('開始日と終了日は2024年の範囲内で選択してください'), findsOneWidget);
+      // onSaveコールバックが呼ばれないことを確認
+      expect(savedTripEntry, isNull);
+    });
+
+    testWidgets('終了日がパラメータの年と異なる場合にエラーメッセージが表示されること', (WidgetTester tester) async {
+      TripEntry? savedTripEntry;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              year: 2024,
+              tripEntry: TripEntry(
+                id: 'test-id',
+                groupId: 'test-group-id',
+                tripName: 'テスト旅行',
+                tripStartDate: DateTime(2024, 12, 30),
+                tripEndDate: DateTime(2025, 1, 2),
+                tripMemo: 'テストメモ',
+              ),
+              onSave: (tripEntry) {
+                savedTripEntry = tripEntry;
+              },
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 更新ボタンをタップ
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されることを確認
+      expect(find.text('開始日と終了日は2024年の範囲内で選択してください'), findsOneWidget);
+      // onSaveコールバックが呼ばれないことを確認
+      expect(savedTripEntry, isNull);
+    });
+
+    testWidgets('開始日と終了日が両方パラメータの年と異なる場合にエラーメッセージが表示されること', (WidgetTester tester) async {
+      TripEntry? savedTripEntry;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              year: 2024,
+              tripEntry: TripEntry(
+                id: 'test-id',
+                groupId: 'test-group-id',
+                tripName: 'テスト旅行',
+                tripStartDate: DateTime(2023, 12, 30),
+                tripEndDate: DateTime(2025, 1, 2),
+                tripMemo: 'テストメモ',
+              ),
+              onSave: (tripEntry) {
+                savedTripEntry = tripEntry;
+              },
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      // 更新ボタンをタップ
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されることを確認
+      expect(find.text('開始日と終了日は2024年の範囲内で選択してください'), findsOneWidget);
+      // onSaveコールバックが呼ばれないことを確認
+      expect(savedTripEntry, isNull);
+    });
   });
 }
