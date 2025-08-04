@@ -49,9 +49,6 @@ jobs:
           # Copy dummy .env file
           cp .env.example .env
 
-          # Copy dummy env.g.dart
-          cp ./tools/ci/env.g.dummy.dart ./lib/env/env.g.dart
-
           # Copy dummy firebase_options.dart
           cp ./tools/ci/firebase_options.dummy.dart ./lib/firebase_options.dart
 
