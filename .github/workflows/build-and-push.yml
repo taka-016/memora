@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "Dockerfile.actions"
+      - "Dockerfile.test"
 
 jobs:
   build-push:
@@ -26,6 +26,6 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/memora:latest
-          docker build -t $IMAGE_NAME -f Dockerfile.actions .
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/memora-test:latest
+          docker build -t $IMAGE_NAME -f Dockerfile.test .
           docker push $IMAGE_NAME
