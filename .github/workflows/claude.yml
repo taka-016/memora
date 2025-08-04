@@ -19,7 +19,7 @@ jobs:
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/${{ github.repository }}/memora:latest
+      image: ghcr.io/${{ github.repository }}/memora-test:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -78,18 +78,17 @@ jobs:
           allowed_tools: |
             Bash(find:*)
             Bash(ls:*)
+            Bash(tree:*)
+            Bash(mkdir:*)
             Bash(grep:*)
+            Bash(rg:*)
             Bash(flutter:*)
             Bash(dart run build_runner build:*)
             Bash(./check.sh)
-            Bash(mkdir:*)
-            Bash(tree:*)
             Bash(git add:*)
             Bash(git commit:*)
             Bash(git checkout:*)
             Bash(git push:*)
-            Bash(gh pr create:*)
-            Bash(rg:*)
             Bash(git reset:*)
             Bash(git revert:*)
             Bash(git stash:*)
@@ -98,6 +97,7 @@ jobs:
             Bash(git config:*)
             Bash(git branch:*)
             Bash(git rm:*)
+            Bash(gh pr create:*)
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |

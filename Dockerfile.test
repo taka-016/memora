@@ -1,0 +1,63 @@
+FROM debian:bookworm-slim
+
+# バージョン管理用の引数
+ARG FLUTTER_VERSION=3.32.2
+
+# 環境変数の設定
+ENV DEBIAN_FRONTEND=noninteractive
+ENV PATH=${PATH}:/opt/flutter/bin
+ENV TZ=Asia/Tokyo
+
+# 最小限のパッケージのみインストール
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    gh \
+    curl \
+    wget \
+    unzip \
+    tree \
+    ripgrep \
+    xz-utils \
+    ca-certificates \
+    tzdata \
+    nodejs \
+    npm && \
+    rm -rf /var/lib/apt/lists/*
+
+# タイムゾーンをJSTに設定
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
+# Flutterのダウンロードとインストール
+RUN cd /opt && \
+    wget -q https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz && \
+    tar xf flutter_linux_${FLUTTER_VERSION}-stable.tar.xz && \
+    rm flutter_linux_${FLUTTER_VERSION}-stable.tar.xz && \
+    rm -rf /opt/flutter/bin/cache/artifacts/engine/android* \
+           /opt/flutter/bin/cache/artifacts/engine/linux* \
+           /opt/flutter/bin/cache/artifacts/engine/windows* \
+           /opt/flutter/bin/cache/artifacts/engine/darwin* \
+           /opt/flutter/bin/cache/artifacts/engine/ios* \
+           /opt/flutter/bin/cache/artifacts/engine/web* \
+           /opt/flutter/bin/cache/flutter_web_sdk \
+           /opt/flutter/packages/*/example \
+           /opt/flutter/packages/*/snippets
+
+# gitの所有権エラーを回避
+RUN git config --global --add safe.directory /opt/flutter
+
+# Flutterの初期設定
+RUN flutter config --no-analytics \
+        --no-enable-android \
+        --no-enable-ios \
+        --no-enable-web \
+        --no-enable-linux-desktop \
+        --no-enable-macos-desktop \
+        --no-enable-windows-desktop
+
+# 作業ディレクトリの設定
+WORKDIR /workspace
+
+# Flutterのパスを永続化
+RUN echo 'export PATH="/opt/flutter/bin:$PATH"' >> ~/.bashrc && \
+    echo 'export PATH="$PATH:$HOME/.pub-cache/bin"' >> ~/.bashrc
