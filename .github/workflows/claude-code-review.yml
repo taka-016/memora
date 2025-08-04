@@ -19,11 +19,6 @@ jobs:
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}/memora:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
       pull-requests: write
@@ -31,33 +26,10 @@ jobs:
       id-token: write
 
     steps:
-      - name: Mark working directory as safe
-        run: |
-          git config --global --add safe.directory /__w/memora/memora
-          git config --global --add safe.directory /usr/local/flutter
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-
-      - name: Setup
-        run: |
-          # install dependencies
-          flutter pub get
-          dart pub global activate very_good_cli
-
-          # Copy dummy .env file
-          cp .env.example .env
-
-          # Copy dummy env.g.dart
-          cp ./tools/ci/env.g.dummy.dart ./lib/env/env.g.dart
-
-          # Copy dummy firebase_options.dart
-          cp ./tools/ci/firebase_options.dummy.dart ./lib/firebase_options.dart
-
-          # Run build_runner to generate necessary files
-          dart run build_runner build --delete-conflicting-outputs
 
       - name: Run Claude Code Review
         id: claude-review
@@ -97,29 +69,7 @@ jobs:
           #   'Please provide a thorough code review focusing on our coding standards and best practices.' }}
 
           # Optional: Add specific tools for running tests or linting
-          allowed_tools: |
-            Bash(find:*)
-            Bash(ls:*)
-            Bash(grep:*)
-            Bash(flutter:*)
-            Bash(dart run build_runner build:*)
-            Bash(./check.sh)
-            Bash(mkdir:*)
-            Bash(tree:*)
-            Bash(git add:*)
-            Bash(git commit:*)
-            Bash(git checkout:*)
-            Bash(git push:*)
-            Bash(gh pr create:*)
-            Bash(rg:*)
-            Bash(git reset:*)
-            Bash(git revert:*)
-            Bash(git stash:*)
-            Bash(git pull:*)
-            Bash(git fetch:*)
-            Bash(git config:*)
-            Bash(git branch:*)
-            Bash(git rm:*)
+          # allowed_tools: "Bash(npm run test),Bash(npm run lint),Bash(npm run typecheck)"
 
           # Optional: Skip review for certain conditions
           # if: |
