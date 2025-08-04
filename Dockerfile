@@ -21,9 +21,6 @@ RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
 RUN apt-get update && apt-get install -y nodejs=24.3.0-1nodesource*
 RUN npm install -g npm@latest
 
-# 不要なパッケージの削除
-RUN rm -rf /var/lib/apt/lists/*
-
 # claude codeのインストール
 RUN npm install -g @anthropic-ai/claude-code
 
