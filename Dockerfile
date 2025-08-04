@@ -12,11 +12,9 @@ RUN apt-get update && apt-get install -y \
   vim \
   emacs-nox \
   tree \
+  ripgrep \
   gnupg \
   ca-certificates
-
-# ADBのインストール
-RUN apt-get update && apt-get install -y android-tools-adb
 
 # Node.jsの最新版インストール
 RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash -
