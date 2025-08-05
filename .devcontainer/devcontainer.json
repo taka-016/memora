@@ -33,7 +33,8 @@
                 "DavidAnson.vscode-markdownlint",
                 "donjayamanne.githistory",
                 "eamodio.gitlens",
-                "yzhang.markdown-all-in-one"
+                "yzhang.markdown-all-in-one",
+                "ms-azuretools.vscode-containers"
             ],
             "settings": {
                 "dart.showInspectorNotificationsForWidgetErrors": false,
