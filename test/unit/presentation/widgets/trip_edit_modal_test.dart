@@ -578,8 +578,9 @@ void main() {
         // DatePickerが表示されることを確認（キャンセルボタンの存在で判定）
         expect(find.text('キャンセル'), findsOneWidget);
 
-        // キャンセルボタンでDatePickerを閉じる
-        await tester.tap(find.text('キャンセル'));
+        // DatePickerを閉じる
+        // DatePickerを閉じる（バックドロップをタップ）
+        await tester.tapAt(const Offset(50, 50));
         await tester.pumpAndSettle();
       });
 
@@ -611,8 +612,9 @@ void main() {
         // DatePickerが表示されることを確認
         expect(find.text('キャンセル'), findsOneWidget);
 
-        // キャンセルボタンでDatePickerを閉じる
-        await tester.tap(find.text('キャンセル'));
+        // DatePickerを閉じる
+        // DatePickerを閉じる（バックドロップをタップ）
+        await tester.tapAt(const Offset(50, 50));
         await tester.pumpAndSettle();
       });
 
@@ -652,8 +654,9 @@ void main() {
         // DatePickerが表示されることを確認
         expect(find.text('キャンセル'), findsOneWidget);
 
-        // キャンセルボタンでDatePickerを閉じる
-        await tester.tap(find.text('キャンセル'));
+        // DatePickerを閉じる
+        // DatePickerを閉じる（バックドロップをタップ）
+        await tester.tapAt(const Offset(50, 50));
         await tester.pumpAndSettle();
       });
     });
