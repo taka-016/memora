@@ -518,10 +518,9 @@ void main() {
       );
 
       // 2番目のメンバーをチェック
-      await tester.tap(
-        find.byType(CheckboxListTile).at(1),
-        warnIfMissed: false,
-      );
+      final secondCheckbox = find.byType(CheckboxListTile).at(1);
+      expect(secondCheckbox, findsOneWidget);
+      await tester.tap(secondCheckbox);
       await tester.pumpAndSettle();
 
       // 更新ボタンをタップ

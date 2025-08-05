@@ -225,11 +225,8 @@ void main() {
       // Act
       // 旅行行のリサイザーをドラッグ
       final resizerKey = find.byKey(const Key('row_resizer_icon_0'));
-      await tester.drag(
-        resizerKey,
-        const Offset(0, 20),
-        warnIfMissed: false,
-      ); // 下に20px移動
+      expect(resizerKey, findsOneWidget);
+      await tester.drag(resizerKey, const Offset(0, 20)); // 下に20px移動
       await tester.pumpAndSettle();
 
       // Assert
@@ -260,19 +257,15 @@ void main() {
 
       // Act
       // 旅行行のリサイザーをドラッグ
-      await tester.drag(
-        find.byKey(const Key('row_resizer_icon_0')),
-        const Offset(0, 10),
-        warnIfMissed: false,
-      );
+      final travelResizer = find.byKey(const Key('row_resizer_icon_0'));
+      expect(travelResizer, findsOneWidget);
+      await tester.drag(travelResizer, const Offset(0, 10));
       await tester.pumpAndSettle();
 
       // イベント行のリサイザーをドラッグ
-      await tester.drag(
-        find.byKey(const Key('row_resizer_icon_1')),
-        const Offset(0, 30),
-        warnIfMissed: false,
-      );
+      final eventResizer = find.byKey(const Key('row_resizer_icon_1'));
+      expect(eventResizer, findsOneWidget);
+      await tester.drag(eventResizer, const Offset(0, 30));
       await tester.pumpAndSettle();
 
       // Assert
@@ -388,7 +381,7 @@ void main() {
       expect(scrollableRow, findsOneWidget);
 
       // スクロール可能な行の中の年列セルをタップ
-      await tester.tap(scrollableRow, warnIfMissed: false);
+      await tester.tap(scrollableRow);
       await tester.pumpAndSettle();
 
       // Assert - onTripManagementSelectedが呼ばれる
