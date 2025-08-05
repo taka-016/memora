@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y \
 
 # Node.jsとnpmのインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
- apt-get update && \
- apt-get install -y nodejs && \
- npm install -g npm@11
+  apt-get update && \
+  apt-get install -y nodejs && \
+  npm install -g npm@11
 
 # claude codeのインストール
 RUN npm install -g @anthropic-ai/claude-code
@@ -30,6 +30,9 @@ RUN npm install -g firebase-tools
 
 # Install FlutterFire CLI
 RUN dart pub global activate flutterfire_cli
+
+# uvのインストール
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # タイムゾーンをJSTに設定
 RUN ln -snf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
