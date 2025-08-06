@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/member.dart';
+import '../utils/date_picker_utils.dart';
 
 class MemberEditModal extends StatefulWidget {
   final Member? member;
@@ -187,42 +188,13 @@ class _MemberEditModalState extends State<MemberEditModal> {
                         const SizedBox(height: 16),
                         InkWell(
                           onTap: () async {
-                            final selectedDate = await showDatePicker(
-                              context: context,
-                              initialDate: _birthday ?? DateTime.now(),
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime.now(),
-                              builder: (context, child) {
-                                return Theme(
-                                  data: Theme.of(context).copyWith(
-                                    datePickerTheme: DatePickerThemeData(
-                                      headerBackgroundColor: Theme.of(
-                                        context,
-                                      ).primaryColor,
-                                      headerForegroundColor: Colors.white,
-                                      dayStyle: const TextStyle(fontSize: 14),
-                                      yearStyle: const TextStyle(fontSize: 14),
-                                      cancelButtonStyle: ButtonStyle(
-                                        foregroundColor:
-                                            WidgetStateProperty.all(
-                                              Colors.transparent,
-                                            ),
-                                      ),
-                                      confirmButtonStyle: ButtonStyle(
-                                        foregroundColor:
-                                            WidgetStateProperty.all(
-                                              Colors.transparent,
-                                            ),
-                                      ),
-                                    ),
-                                    dialogTheme: const DialogThemeData(
-                                      actionsPadding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                  child: child!,
+                            final selectedDate =
+                                await DatePickerUtils.showCustomDatePicker(
+                                  context,
+                                  initialDate: _birthday ?? DateTime.now(),
+                                  firstDate: DateTime(1900),
+                                  lastDate: DateTime.now(),
                                 );
-                              },
-                            );
                             if (selectedDate != null) {
                               setState(() {
                                 _birthday = selectedDate;
