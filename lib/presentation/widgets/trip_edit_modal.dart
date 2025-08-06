@@ -309,6 +309,32 @@ class _TripEditModalState extends State<TripEditModal> {
           initialDate: initialDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                datePickerTheme: DatePickerThemeData(
+                  headerBackgroundColor: Theme.of(context).primaryColor,
+                  headerForegroundColor: Colors.white,
+                  dayStyle: const TextStyle(fontSize: 14),
+                  yearStyle: const TextStyle(fontSize: 14),
+                  cancelButtonStyle: ButtonStyle(
+                    foregroundColor: WidgetStateProperty.all(
+                      Colors.transparent,
+                    ),
+                  ),
+                  confirmButtonStyle: ButtonStyle(
+                    foregroundColor: WidgetStateProperty.all(
+                      Colors.transparent,
+                    ),
+                  ),
+                ),
+                dialogTheme: const DialogThemeData(
+                  actionsPadding: EdgeInsets.zero,
+                ),
+              ),
+              child: child!,
+            );
+          },
         );
         if (date != null) {
           onDateSelected(date);

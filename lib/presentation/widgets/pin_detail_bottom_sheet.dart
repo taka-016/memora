@@ -27,6 +27,26 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       initialDate: fromDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            datePickerTheme: DatePickerThemeData(
+              headerBackgroundColor: Theme.of(context).primaryColor,
+              headerForegroundColor: Colors.white,
+              dayStyle: const TextStyle(fontSize: 14),
+              yearStyle: const TextStyle(fontSize: 14),
+              cancelButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+              confirmButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+            ),
+            dialogTheme: const DialogThemeData(actionsPadding: EdgeInsets.zero),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -41,6 +61,26 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       initialDate: toDate ?? (fromDate ?? DateTime.now()),
       firstDate: fromDate ?? DateTime(2000),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            datePickerTheme: DatePickerThemeData(
+              headerBackgroundColor: Theme.of(context).primaryColor,
+              headerForegroundColor: Colors.white,
+              dayStyle: const TextStyle(fontSize: 14),
+              yearStyle: const TextStyle(fontSize: 14),
+              cancelButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+              confirmButtonStyle: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+            ),
+            dialogTheme: const DialogThemeData(actionsPadding: EdgeInsets.zero),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
