@@ -34,8 +34,8 @@ void main() {
       await tester.tap(find.byKey(const Key('date_picker_button')));
       await tester.pumpAndSettle();
 
-      // DatePickerが表示されることを確認
-      expect(find.byType(DatePickerDialog), findsOneWidget);
+      // CustomDatePickerDialogが表示されることを確認
+      expect(find.byType(Dialog), findsOneWidget);
     });
 
     testWidgets('showCustomDatePicker パラメータが正しく渡される', (tester) async {
@@ -67,7 +67,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // DatePickerが正常に表示されることを確認
-      expect(find.byType(DatePickerDialog), findsOneWidget);
+      expect(find.byType(Dialog), findsOneWidget);
 
       // 初期日付の15日が表示されることを確認
       expect(find.text('15'), findsOneWidget);
@@ -146,7 +146,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // DatePickerが表示され、初期日付が正しく表示されることを確認
-        expect(find.byType(DatePickerDialog), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
         expect(find.text('15'), findsOneWidget); // 初期日付の日が表示される
       },
     );

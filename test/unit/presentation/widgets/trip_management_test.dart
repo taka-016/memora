@@ -509,13 +509,15 @@ void main() {
       // 開始日を設定
       await tester.tap(find.text('旅行期間 From'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
+      // カレンダーで日付を選択（15日をタップ）
+      await tester.tap(find.text('15').last);
       await tester.pumpAndSettle();
 
       // 終了日を設定
       await tester.tap(find.text('旅行期間 To'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('OK'));
+      // カレンダーで日付を選択（20日をタップ）
+      await tester.tap(find.text('20').last);
       await tester.pumpAndSettle();
 
       // 作成ボタンをタップ
