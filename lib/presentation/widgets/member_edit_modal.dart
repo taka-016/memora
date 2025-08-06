@@ -192,6 +192,36 @@ class _MemberEditModalState extends State<MemberEditModal> {
                               initialDate: _birthday ?? DateTime.now(),
                               firstDate: DateTime(1900),
                               lastDate: DateTime.now(),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    datePickerTheme: DatePickerThemeData(
+                                      headerBackgroundColor: Theme.of(
+                                        context,
+                                      ).primaryColor,
+                                      headerForegroundColor: Colors.white,
+                                      dayStyle: const TextStyle(fontSize: 14),
+                                      yearStyle: const TextStyle(fontSize: 14),
+                                      cancelButtonStyle: ButtonStyle(
+                                        foregroundColor:
+                                            WidgetStateProperty.all(
+                                              Colors.transparent,
+                                            ),
+                                      ),
+                                      confirmButtonStyle: ButtonStyle(
+                                        foregroundColor:
+                                            WidgetStateProperty.all(
+                                              Colors.transparent,
+                                            ),
+                                      ),
+                                    ),
+                                    dialogTheme: const DialogThemeData(
+                                      actionsPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
                             );
                             if (selectedDate != null) {
                               setState(() {
