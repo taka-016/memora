@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/trip_entry.dart';
+import '../utils/date_picker_utils.dart';
 import 'map_display.dart';
 import 'map_display_placeholder.dart';
 
@@ -304,37 +305,11 @@ class _TripEditModalState extends State<TripEditModal> {
           initialDate = DateTime.now();
         }
 
-        final date = await showDatePicker(
-          context: context,
+        final date = await DatePickerUtils.showCustomDatePicker(
+          context,
           initialDate: initialDate,
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                datePickerTheme: DatePickerThemeData(
-                  headerBackgroundColor: Theme.of(context).primaryColor,
-                  headerForegroundColor: Colors.white,
-                  dayStyle: const TextStyle(fontSize: 14),
-                  yearStyle: const TextStyle(fontSize: 14),
-                  cancelButtonStyle: ButtonStyle(
-                    foregroundColor: WidgetStateProperty.all(
-                      Colors.transparent,
-                    ),
-                  ),
-                  confirmButtonStyle: ButtonStyle(
-                    foregroundColor: WidgetStateProperty.all(
-                      Colors.transparent,
-                    ),
-                  ),
-                ),
-                dialogTheme: const DialogThemeData(
-                  actionsPadding: EdgeInsets.zero,
-                ),
-              ),
-              child: child!,
-            );
-          },
         );
         if (date != null) {
           onDateSelected(date);
