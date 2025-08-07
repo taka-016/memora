@@ -1,5 +1,53 @@
 import 'package:flutter/material.dart';
 
+/// 日付から曜日文字列を取得する
+String _getWeekdayString(DateTime date) {
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  return weekdays[date.weekday % 7];
+}
+
+/// 日付を「YYYY年MM月DD日 (曜)」形式でフォーマットする
+String _formatDateWithWeekday(DateTime date) {
+  return '${date.year}年${date.month}月${date.day}日 (${_getWeekdayString(date)})';
+}
+
+/// 年月日の文字列から日付を解析し、バリデーションを行う
+class _DateValidator {
+  static DateTime? validateAndParse(
+    String yearText,
+    String monthText,
+    String dayText,
+    DateTime firstDate,
+    DateTime lastDate,
+  ) {
+    final year = int.tryParse(yearText);
+    final month = int.tryParse(monthText);
+    final day = int.tryParse(dayText);
+
+    if (year == null || month == null || day == null) {
+      return null;
+    }
+
+    try {
+      final date = DateTime(year, month, day);
+
+      // 入力値が有効な日付かチェック
+      if (date.year != year || date.month != month || date.day != day) {
+        return null;
+      }
+
+      // 範囲チェック
+      if (date.isBefore(firstDate) || date.isAfter(lastDate)) {
+        return null;
+      }
+
+      return date;
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
 /// 日付タップで直接確定するカスタムDatePickerDialog
 class CustomDatePickerDialog extends StatefulWidget {
   final DateTime initialDate;
@@ -20,11 +68,34 @@ class CustomDatePickerDialog extends StatefulWidget {
 class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
   late DateTime _selectedDate;
   bool _isMonthChanging = false;
+  bool _isInputMode = false; // 入力フィールドビューモード
+  late TextEditingController _yearController;
+  late TextEditingController _monthController;
+  late TextEditingController _dayController;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
+    _yearController = TextEditingController();
+    _monthController = TextEditingController();
+    _dayController = TextEditingController();
+    _updateControllers();
+  }
+
+  @override
+  void dispose() {
+    _yearController.dispose();
+    _monthController.dispose();
+    _dayController.dispose();
+    super.dispose();
+  }
+
+  void _updateControllers() {
+    _yearController.text = _selectedDate.year.toString();
+    _monthController.text = _selectedDate.month.toString();
+    _dayController.text = _selectedDate.day.toString();
   }
 
   void _onDisplayedMonthChanged(DateTime date) {
@@ -48,6 +119,52 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     });
   }
 
+  /// 入力フィールドビューに切り替える
+  void _switchToInputMode() {
+    setState(() {
+      _isInputMode = true;
+      _errorMessage = null;
+    });
+    _updateControllers();
+  }
+
+  /// カレンダービューに切り替える
+  void _switchToCalendarMode() {
+    setState(() {
+      _isInputMode = false;
+      _errorMessage = null;
+    });
+  }
+
+  /// 入力フィールドから日付を確定する
+  void _confirmInputDate() {
+    setState(() {
+      _errorMessage = null;
+    });
+
+    final date = _DateValidator.validateAndParse(
+      _yearController.text,
+      _monthController.text,
+      _dayController.text,
+      widget.firstDate,
+      widget.lastDate,
+    );
+
+    if (date == null) {
+      setState(() {
+        _errorMessage = '有効な日付を入力してください';
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedDate = date;
+    });
+
+    // 直接入力確定時にDatePickerを閉じる
+    Navigator.of(context).pop(_selectedDate);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -67,31 +184,111 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
                 ),
               ),
               child: Center(
-                child: Text(
-                  '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
+                child: GestureDetector(
+                  onTap: _switchToInputMode,
+                  child: Text(
+                    _formatDateWithWeekday(_selectedDate),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            // カレンダー
+            // ビューモードに応じてコンテンツを切り替え
             SizedBox(
               height: 300,
-              child: CalendarDatePicker(
-                initialDate: _selectedDate,
-                firstDate: widget.firstDate,
-                lastDate: widget.lastDate,
-                onDateChanged: _onDateSelected,
-                onDisplayedMonthChanged: _onDisplayedMonthChanged,
-              ),
+              child: _isInputMode ? _buildInputView() : _buildCalendarView(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// カレンダービューを構築
+  Widget _buildCalendarView() {
+    return CalendarDatePicker(
+      initialDate: _selectedDate,
+      firstDate: widget.firstDate,
+      lastDate: widget.lastDate,
+      onDateChanged: _onDateSelected,
+      onDisplayedMonthChanged: _onDisplayedMonthChanged,
+    );
+  }
+
+  /// 入力フィールドビューを構築
+  Widget _buildInputView() {
+    return Column(
+      children: [
+        const SizedBox(height: 32),
+        // 入力フィールド
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                key: const Key('year_field'),
+                controller: _yearController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '年',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                key: const Key('month_field'),
+                controller: _monthController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '月',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                key: const Key('day_field'),
+                controller: _dayController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: '日',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 16),
+          Text(
+            _errorMessage!,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 14,
+            ),
+          ),
+        ],
+        const Spacer(),
+        // ボタン
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: _switchToCalendarMode,
+              child: const Text('キャンセル'),
+            ),
+            const SizedBox(width: 8),
+            TextButton(onPressed: _confirmInputDate, child: const Text('確定')),
+          ],
+        ),
+      ],
     );
   }
 }
