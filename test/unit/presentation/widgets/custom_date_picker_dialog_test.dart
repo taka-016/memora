@@ -83,7 +83,7 @@ void main() {
 
         // 初期状態ではカレンダービューが表示される
         expect(find.byType(CalendarDatePicker), findsOneWidget);
-        expect(find.byKey(const Key('year_field')), findsNothing);
+        expect(find.byKey(const Key('date_field')), findsNothing);
 
         // 年月日表記のテキストをタップ
         await tester.tap(find.text('2024年1月15日 (月)'));
@@ -91,9 +91,7 @@ void main() {
 
         // 入力フィールドビューに切り替わることを期待
         expect(find.byType(CalendarDatePicker), findsNothing);
-        expect(find.byKey(const Key('year_field')), findsOneWidget);
-        expect(find.byKey(const Key('month_field')), findsOneWidget);
-        expect(find.byKey(const Key('day_field')), findsOneWidget);
+        expect(find.byKey(const Key('date_field')), findsOneWidget);
       });
 
       testWidgets('入力フィールドで年月日を変更して確定するとダイアログが閉じる', (tester) async {
@@ -127,14 +125,8 @@ void main() {
         await tester.tap(find.text('2024年1月15日 (月)'));
         await tester.pumpAndSettle();
 
-        // 年フィールドを変更
-        await tester.enterText(find.byKey(const Key('year_field')), '2025');
-
-        // 月フィールドを変更
-        await tester.enterText(find.byKey(const Key('month_field')), '12');
-
-        // 日フィールドを変更
-        await tester.enterText(find.byKey(const Key('day_field')), '25');
+        // 日付フィールドに新しい日付を入力（自動フォーマット）
+        await tester.enterText(find.byKey(const Key('date_field')), '20251225');
 
         // 確定ボタンをタップ
         await tester.tap(find.text('確定'));
@@ -162,7 +154,7 @@ void main() {
 
         // 入力フィールドビューが表示される
         expect(find.byType(CalendarDatePicker), findsNothing);
-        expect(find.byKey(const Key('year_field')), findsOneWidget);
+        expect(find.byKey(const Key('date_field')), findsOneWidget);
 
         // キャンセルボタンをタップ
         await tester.tap(find.text('キャンセル'));
@@ -170,7 +162,7 @@ void main() {
 
         // カレンダービューに戻り、元の日付が維持される
         expect(find.byType(CalendarDatePicker), findsOneWidget);
-        expect(find.byKey(const Key('year_field')), findsNothing);
+        expect(find.byKey(const Key('date_field')), findsNothing);
         expect(find.text('2024年1月15日 (月)'), findsOneWidget);
       });
 
@@ -190,8 +182,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // 無効な日付を入力
-        await tester.enterText(find.byKey(const Key('month_field')), '13');
-        await tester.enterText(find.byKey(const Key('day_field')), '32');
+        await tester.enterText(find.byKey(const Key('date_field')), '20241332');
 
         // 確定ボタンをタップ
         await tester.tap(find.text('確定'));
@@ -199,7 +190,7 @@ void main() {
 
         // エラーメッセージが表示され、入力フィールドビューのままであることを期待
         expect(find.text('有効な日付を入力してください'), findsOneWidget);
-        expect(find.byKey(const Key('year_field')), findsOneWidget);
+        expect(find.byKey(const Key('date_field')), findsOneWidget);
         expect(find.byType(CalendarDatePicker), findsNothing);
       });
     });

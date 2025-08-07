@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// 日付から曜日文字列を取得する
 String _getWeekdayString(DateTime date) {
@@ -11,24 +12,63 @@ String _formatDateWithWeekday(DateTime date) {
   return '${date.year}年${date.month}月${date.day}日 (${_getWeekdayString(date)})';
 }
 
-/// 年月日の文字列から日付を解析し、バリデーションを行う
+/// 年月日入力のフォーマット処理クラス
+class DateInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final newText = newValue.text;
+
+    // 数字以外の文字を除去
+    final numbersOnly = newText.replaceAll(RegExp(r'[^0-9]'), '');
+
+    // 8桁を超えた場合は切り詰める
+    final truncated = numbersOnly.length > 8
+        ? numbersOnly.substring(0, 8)
+        : numbersOnly;
+
+    // 自動フォーマット処理
+    String formatted = '';
+    if (truncated.isNotEmpty) {
+      if (truncated.length <= 4) {
+        formatted = truncated;
+      } else if (truncated.length <= 6) {
+        formatted = '${truncated.substring(0, 4)}/${truncated.substring(4)}';
+      } else {
+        formatted =
+            '${truncated.substring(0, 4)}/${truncated.substring(4, 6)}/${truncated.substring(6)}';
+      }
+    }
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+}
+
+/// フォーマットされた日付文字列から日付を解析し、バリデーションを行う
 class _DateValidator {
   static DateTime? validateAndParse(
-    String yearText,
-    String monthText,
-    String dayText,
+    String formattedDateText,
     DateTime firstDate,
     DateTime lastDate,
   ) {
-    final year = int.tryParse(yearText);
-    final month = int.tryParse(monthText);
-    final day = int.tryParse(dayText);
+    // スラッシュを除去して数字のみ取得
+    final numbersOnly = formattedDateText.replaceAll('/', '');
 
-    if (year == null || month == null || day == null) {
+    // 8桁でない場合は無効
+    if (numbersOnly.length != 8) {
       return null;
     }
 
     try {
+      final year = int.parse(numbersOnly.substring(0, 4));
+      final month = int.parse(numbersOnly.substring(4, 6));
+      final day = int.parse(numbersOnly.substring(6, 8));
+
       final date = DateTime(year, month, day);
 
       // 入力値が有効な日付かチェック
@@ -69,33 +109,28 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
   late DateTime _selectedDate;
   bool _isMonthChanging = false;
   bool _isInputMode = false; // 入力フィールドビューモード
-  late TextEditingController _yearController;
-  late TextEditingController _monthController;
-  late TextEditingController _dayController;
+  late TextEditingController _dateController;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
-    _yearController = TextEditingController();
-    _monthController = TextEditingController();
-    _dayController = TextEditingController();
-    _updateControllers();
+    _dateController = TextEditingController();
+    _updateController();
   }
 
   @override
   void dispose() {
-    _yearController.dispose();
-    _monthController.dispose();
-    _dayController.dispose();
+    _dateController.dispose();
     super.dispose();
   }
 
-  void _updateControllers() {
-    _yearController.text = _selectedDate.year.toString();
-    _monthController.text = _selectedDate.month.toString();
-    _dayController.text = _selectedDate.day.toString();
+  void _updateController() {
+    final year = _selectedDate.year.toString();
+    final month = _selectedDate.month.toString().padLeft(2, '0');
+    final day = _selectedDate.day.toString().padLeft(2, '0');
+    _dateController.text = '$year/$month/$day';
   }
 
   void _onDisplayedMonthChanged(DateTime date) {
@@ -125,7 +160,7 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
       _isInputMode = true;
       _errorMessage = null;
     });
-    _updateControllers();
+    _updateController();
   }
 
   /// カレンダービューに切り替える
@@ -143,9 +178,7 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     });
 
     final date = _DateValidator.validateAndParse(
-      _yearController.text,
-      _monthController.text,
-      _dayController.text,
+      _dateController.text,
       widget.firstDate,
       widget.lastDate,
     );
@@ -225,45 +258,17 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     return Column(
       children: [
         const SizedBox(height: 32),
-        // 入力フィールド
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                key: const Key('year_field'),
-                controller: _yearController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '年',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                key: const Key('month_field'),
-                controller: _monthController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '月',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                key: const Key('day_field'),
-                controller: _dayController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: '日',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ),
-          ],
+        // 入力フィールド（単一フィールドで自動フォーマット）
+        TextField(
+          key: const Key('date_field'),
+          controller: _dateController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [DateInputFormatter()],
+          decoration: const InputDecoration(
+            labelText: '日付 (YYYY/MM/DD)',
+            hintText: 'YYYY/MM/DD',
+            border: OutlineInputBorder(),
+          ),
         ),
         if (_errorMessage != null) ...[
           const SizedBox(height: 16),
