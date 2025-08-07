@@ -297,6 +297,9 @@ class _TripEditModalState extends State<TripEditModal> {
         if (selectedDate != null) {
           // 既に選択された日付がある場合はその日付を使用
           initialDate = selectedDate;
+        } else if (labelText == '旅行期間 To' && _startDate != null) {
+          // 終了日で開始日が設定済みの場合、開始日の年月を初期値とする
+          initialDate = DateTime(_startDate!.year, _startDate!.month, 1);
         } else if (widget.year != null && widget.year != DateTime.now().year) {
           // パラメータの年が現在年と異なる場合、パラメータの年の1月1日を使用
           initialDate = DateTime(widget.year!, 1, 1);
