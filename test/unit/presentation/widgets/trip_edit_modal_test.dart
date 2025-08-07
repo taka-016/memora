@@ -666,59 +666,59 @@ void main() {
     testWidgets('開始日が入力済みで終了日が未入力の場合、終了日タップ時に開始日の年月を初期値とすること', (
       WidgetTester tester,
     ) async {
-      // モックでDatePickerの初期値を検証するための仕組みが必要
-      // ここではロジックレベルでの検証を行う
       const groupId = 'test-group-id';
+      DateTime? capturedInitialDate;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: TripEditModal(
-              groupId: groupId,
-              onSave: (tripEntry) {},
-              isTestEnvironment: true,
+            body: Builder(
+              builder: (context) {
+                return TripEditModal(
+                  groupId: groupId,
+                  onSave: (tripEntry) {},
+                  isTestEnvironment: true,
+                );
+              },
             ),
           ),
         ),
       );
 
-      // 開始日を先に設定
+      // 開始日を設定（2024年3月15日）
       await tester.tap(find.text('旅行期間 From'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('15').last);
       await tester.pumpAndSettle();
 
-      // 開始日が表示されていることを確認
+      // 開始日が設定されていることを確認
       final now = DateTime.now();
       final expectedStartDate =
           '${now.year}/${now.month.toString().padLeft(2, '0')}/15';
       expect(find.text(expectedStartDate), findsOneWidget);
+
       // 終了日は未選択状態であることを確認
       expect(find.text('旅行期間 To'), findsOneWidget);
 
-      // 終了日フィールドをタップ
+      // 終了日フィールドをタップしてDatePickerを開く
       await tester.tap(find.text('旅行期間 To'));
       await tester.pumpAndSettle();
 
-      // カレンダーが表示されることを確認
-      expect(find.text('キャンセル'), findsOneWidget);
+      // DatePicker(CustomDatePickerDialog)が開かれていることを確認
+      expect(
+        find.byType(Dialog),
+        findsNWidgets(2),
+      ); // TripEditModalのDialog + CustomDatePickerDialog
 
-      // このテストで実際の要件を確認：
-      // 開始日が設定済みの場合、終了日のDatePickerは開始日の年月を初期値とするべき
-      // 現在は実装されていないため、この部分で失敗させる必要がある
+      // 開始日の年月（現在の年・月）に基づく初期値が表示されていることを確認
+      // CustomDatePickerDialogでは選択日が「2024年8月1日 (木)」のような形式で表示される
+      // 開始日が15日で、終了日の初期値は同年月の1日になる
+      final expectedDisplayDate = '${now.year}年${now.month}月1日';
+      expect(find.textContaining(expectedDisplayDate), findsOneWidget);
 
-      // DatePickerUtilsのshowCustomDatePickerが開始日の年月で呼ばれることを検証したいが、
-      // 現在のテスト環境では直接検証が困難。
-      // 代わりに、日付選択後の動作から推測する。
-
-      // 実装後は、開始日が${now.year}/${now.month}/15の場合、
-      // 終了日カレンダーは${now.year}/${now.month}/01を初期値として開くべき
-      // 実装が完了したため、この要件が満たされていることを確認
-      // 実際のDatePickerの初期値は直接検証できないが、
-      // ロジックが正しく実装されていることをコードレビューで確認できる
-
-      // テストはカレンダーが表示されることで十分
-      // （実装により、開始日の年月が初期値として使用される）
+      // DatePickerを閉じる（バックドロップをタップ）
+      await tester.tapAt(const Offset(50, 50));
+      await tester.pumpAndSettle();
     });
   });
 }
