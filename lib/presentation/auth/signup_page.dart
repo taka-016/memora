@@ -38,12 +38,37 @@ class _SignupPageState extends State<SignupPage> {
 
   void _authStateListener() {
     if (widget.authManager.state.isAuthenticated) {
-      // 認証成功時は AuthGuard がメインコンテンツを表示するが、
-      // SignupPage をナビゲーションスタックから削除する必要がある
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
+      // 認証成功時にメール確認案内を表示
+      _showEmailVerificationDialog();
     }
+  }
+
+  void _showEmailVerificationDialog() {
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('メール確認'),
+        content: const Text(
+          'アカウントが作成されました。\n'
+          '登録されたメールアドレスに確認メールを送信しました。\n'
+          'メール内のリンクをクリックしてアカウントを有効化してください。',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // ダイアログを閉じる
+              if (Navigator.canPop(context)) {
+                Navigator.of(context).pop(); // SignupPageを閉じる
+              }
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _signup() async {
