@@ -1,4 +1,7 @@
 class PasswordValidator {
+  static const String _specialCharacters = '!@#\$%^&*(),.?":{}|<>';
+  static const String _specialCharacterPattern = r'[!@#$%^&*(),.?":{}|<>]';
+
   static String? validate(String? password) {
     if (password == null || password.isEmpty) {
       return 'パスワードは8文字以上で入力してください';
@@ -20,7 +23,7 @@ class PasswordValidator {
       return 'パスワードには数字を含めてください';
     }
 
-    if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+    if (!RegExp(_specialCharacterPattern).hasMatch(password)) {
       return 'パスワードには特殊文字を含めてください';
     }
 
@@ -28,6 +31,12 @@ class PasswordValidator {
   }
 
   static List<String> getPasswordRequirements() {
-    return ['8文字以上', '大文字を含む', '小文字を含む', '数字を含む', '特殊文字を含む'];
+    return [
+      '8文字以上',
+      '大文字を含む',
+      '小文字を含む',
+      '数字を含む',
+      '特殊文字を含む ($_specialCharacters)',
+    ];
   }
 }

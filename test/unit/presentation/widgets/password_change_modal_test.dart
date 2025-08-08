@@ -168,7 +168,7 @@ void main() {
       expect(find.text('大文字を含む'), findsOneWidget);
       expect(find.text('小文字を含む'), findsOneWidget);
       expect(find.text('数字を含む'), findsOneWidget);
-      expect(find.text('特殊文字を含む'), findsOneWidget);
+      expect(find.text('特殊文字を含む (!@#\$%^&*(),.?":{}|<>)'), findsOneWidget);
     });
   });
 }
