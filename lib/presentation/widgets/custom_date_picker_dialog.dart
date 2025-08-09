@@ -107,8 +107,9 @@ class CustomDatePickerDialog extends StatefulWidget {
 
 class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
   late DateTime _selectedDate;
+  late DateTime _displayDate;
   bool _isMonthChanging = false;
-  bool _isInputMode = false; // 入力フィールドビューモード
+  bool _isInputMode = false;
   late TextEditingController _dateController;
   String? _errorMessage;
 
@@ -116,6 +117,7 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
   void initState() {
     super.initState();
     _selectedDate = widget.initialDate;
+    _displayDate = widget.initialDate;
     _dateController = TextEditingController();
     _updateController();
   }
@@ -135,7 +137,10 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
 
   void _onDisplayedMonthChanged(DateTime date) {
     setState(() {
-      _isMonthChanging = true;
+      if (_displayDate.month == date.month) {
+        _isMonthChanging = true;
+      }
+      _displayDate = date;
     });
   }
 
@@ -144,7 +149,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
       _selectedDate = date;
     });
 
-    // 年/月変更中でない場合かつ、初期日付と異なる場合のみ確定
     if (!_isMonthChanging && date != widget.initialDate) {
       Navigator.of(context).pop(_selectedDate);
     }
