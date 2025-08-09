@@ -55,6 +55,7 @@ class _AuthGuardState extends State<AuthGuard> {
             return widget.child;
           case AuthStatus.unauthenticated:
           case AuthStatus.error:
+          case AuthStatus.emailNotVerified:
             return LoginPage(authManager: widget.authManager);
         }
       },

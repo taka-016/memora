@@ -10,9 +10,17 @@ class SignupUsecase {
     required String email,
     required String password,
   }) async {
-    return await authService.createUserWithEmailAndPassword(
+    final user = await authService.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
+
+    try {
+      await authService.sendEmailVerification();
+    } catch (e) {
+      // メール確認送信に失敗してもユーザー作成は完了とする
+    }
+
+    return user;
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../application/managers/auth_manager.dart';
 import 'signup_page.dart';
+import 'email_verification_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.authManager});
@@ -42,6 +43,9 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }
+    } else if (widget.authManager.state.status == AuthStatus.emailNotVerified) {
+      // メール未確認の場合は確認画面に遷移
+      _navigateToEmailVerification();
     }
   }
 
@@ -62,6 +66,17 @@ class _LoginPageState extends State<LoginPage> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => SignupPage(authManager: widget.authManager),
+      ),
+    );
+  }
+
+  void _navigateToEmailVerification() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EmailVerificationPage(
+          authManager: widget.authManager,
+          email: _emailController.text.trim(),
+        ),
       ),
     );
   }
