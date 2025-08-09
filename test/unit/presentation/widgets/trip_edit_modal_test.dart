@@ -667,7 +667,6 @@ void main() {
       WidgetTester tester,
     ) async {
       const groupId = 'test-group-id';
-      DateTime? capturedInitialDate;
 
       await tester.pumpWidget(
         MaterialApp(
