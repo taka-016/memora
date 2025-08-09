@@ -1,7 +1,13 @@
 import 'package:equatable/equatable.dart';
 import 'user.dart';
 
-enum AuthStatus { loading, authenticated, unauthenticated, error }
+enum AuthStatus {
+  loading,
+  authenticated,
+  unauthenticated,
+  error,
+  emailNotVerified,
+}
 
 class AuthState extends Equatable {
   const AuthState._({required this.status, this.user, this.errorMessage});
@@ -16,6 +22,9 @@ class AuthState extends Equatable {
 
   const AuthState.error(String errorMessage)
     : this._(status: AuthStatus.error, errorMessage: errorMessage);
+
+  const AuthState.emailNotVerified()
+    : this._(status: AuthStatus.emailNotVerified);
 
   final AuthStatus status;
   final User? user;

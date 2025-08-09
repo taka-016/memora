@@ -1,4 +1,5 @@
 import '../../domain/entities/user.dart';
+import '../../domain/entities/email_not_verified_exception.dart';
 import '../../domain/services/auth_service.dart';
 
 class LoginUsecase {
@@ -10,9 +11,15 @@ class LoginUsecase {
     required String email,
     required String password,
   }) async {
-    return await authService.signInWithEmailAndPassword(
+    final user = await authService.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
+
+    if (!user.isVerified) {
+      throw EmailNotVerifiedException('メールアドレスが確認されていません');
+    }
+
+    return user;
   }
 }

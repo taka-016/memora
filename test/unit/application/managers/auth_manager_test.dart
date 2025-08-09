@@ -4,13 +4,15 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/email_not_verified_exception.dart';
 import 'package:memora/domain/services/auth_service.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/application/usecases/get_or_create_member_usecase.dart';
+import 'package:memora/application/usecases/login_usecase.dart';
 
 import 'auth_manager_test.mocks.dart';
 
-@GenerateMocks([AuthService, GetOrCreateMemberUseCase])
+@GenerateMocks([AuthService, GetOrCreateMemberUseCase, LoginUsecase])
 void main() {
   group('AuthManager', () {
     late AuthManager authManager;
@@ -239,6 +241,16 @@ void main() {
     });
 
     group('login', () {
+      late MockLoginUsecase mockLoginUsecase;
+
+      setUp(() {
+        mockLoginUsecase = MockLoginUsecase();
+        authManager = AuthManager(
+          authService: mockAuthService,
+          loginUsecase: mockLoginUsecase,
+        );
+      });
+
       test('正常にログインできる', () async {
         const user = User(
           id: 'user123',
@@ -248,7 +260,7 @@ void main() {
         );
 
         when(
-          mockAuthService.signInWithEmailAndPassword(
+          mockLoginUsecase.execute(
             email: 'test@example.com',
             password: 'password123',
           ),
@@ -260,16 +272,32 @@ void main() {
         );
 
         verify(
-          mockAuthService.signInWithEmailAndPassword(
+          mockLoginUsecase.execute(
             email: 'test@example.com',
             password: 'password123',
           ),
         ).called(1);
       });
 
+      test('メール未確認の場合、emailNotVerified状態になる', () async {
+        when(
+          mockLoginUsecase.execute(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenThrow(EmailNotVerifiedException());
+
+        await authManager.login(
+          email: 'test@example.com',
+          password: 'password123',
+        );
+
+        expect(authManager.state.status, AuthStatus.emailNotVerified);
+      });
+
       test('ログインに失敗した場合、error状態になる', () async {
         when(
-          mockAuthService.signInWithEmailAndPassword(
+          mockLoginUsecase.execute(
             email: 'test@example.com',
             password: 'wrongpassword',
           ),

@@ -34,5 +34,11 @@ abstract class AuthService {
 
   Future<void> sendEmailVerification();
 
+  Future<void> reloadUser();
+
+  Future<bool> checkEmailVerified();
+
+  Future<void> resendEmailVerification();
+
   Stream<User?> get authStateChanges;
 }

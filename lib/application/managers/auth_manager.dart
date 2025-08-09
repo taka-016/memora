@@ -2,15 +2,22 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../domain/entities/user.dart';
+import '../../domain/entities/email_not_verified_exception.dart';
 import '../../domain/services/auth_service.dart';
 import '../usecases/get_or_create_member_usecase.dart';
+import '../usecases/login_usecase.dart';
 
 class AuthManager extends ChangeNotifier {
-  AuthManager({required this.authService, this.getOrCreateMemberUseCase})
-    : _state = const AuthState.loading();
+  AuthManager({
+    required this.authService,
+    this.getOrCreateMemberUseCase,
+    LoginUsecase? loginUsecase,
+  }) : _state = const AuthState.loading(),
+       _loginUsecase = loginUsecase ?? LoginUsecase(authService: authService);
 
   final AuthService authService;
   final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
+  final LoginUsecase _loginUsecase;
   AuthState _state;
   StreamSubscription<User?>? _authStateSubscription;
 
@@ -49,11 +56,10 @@ class AuthManager extends ChangeNotifier {
   Future<void> login({required String email, required String password}) async {
     try {
       _updateState(const AuthState.loading());
-      await authService.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      await _loginUsecase.execute(email: email, password: password);
       // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
+    } on EmailNotVerifiedException {
+      _updateState(const AuthState.emailNotVerified());
     } catch (e) {
       _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
     }
@@ -85,6 +91,30 @@ class AuthManager extends ChangeNotifier {
   void clearError() {
     if (_state.status == AuthStatus.error) {
       _updateState(const AuthState.unauthenticated());
+    }
+  }
+
+  Future<void> resendEmailVerification() async {
+    try {
+      await authService.resendEmailVerification();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<bool> checkEmailVerified() async {
+    try {
+      return await authService.checkEmailVerified();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> reloadUser() async {
+    try {
+      await authService.reloadUser();
+    } catch (e) {
+      rethrow;
     }
   }
 

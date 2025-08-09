@@ -157,6 +157,34 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> reloadUser() async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('ユーザーがログインしていません');
+    }
+    await currentUser.reload();
+  }
+
+  @override
+  Future<bool> checkEmailVerified() async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('ユーザーがログインしていません');
+    }
+    await currentUser.reload();
+    return currentUser.emailVerified;
+  }
+
+  @override
+  Future<void> resendEmailVerification() async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('ユーザーがログインしていません');
+    }
+    await currentUser.sendEmailVerification();
+  }
+
+  @override
   Stream<domain.User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
       return firebaseUser != null
