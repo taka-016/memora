@@ -1,6 +1,5 @@
 class PasswordValidator {
   static const String _specialCharacters = '!@#\$%^&*(),.?":{}|<>';
-  static const String _specialCharacterPattern = r'[!@#$%^&*(),.?":{}|<>]';
 
   static String? validate(String? password) {
     if (password == null || password.isEmpty) {
@@ -23,8 +22,8 @@ class PasswordValidator {
       return 'パスワードには数字を含めてください';
     }
 
-    if (!RegExp(_specialCharacterPattern).hasMatch(password)) {
-      return 'パスワードには特殊文字を含めてください';
+    if (!RegExp('[${RegExp.escape(_specialCharacters)}]').hasMatch(password)) {
+      return 'パスワードには記号を含めてください';
     }
 
     return null;

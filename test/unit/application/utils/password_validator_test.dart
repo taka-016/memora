@@ -37,7 +37,7 @@ void main() {
       test('特殊文字が含まれていない場合、エラーメッセージを返す', () {
         const noSpecialCharPassword = 'Password123';
         final result = PasswordValidator.validate(noSpecialCharPassword);
-        expect(result, 'パスワードには特殊文字を含めてください');
+        expect(result, 'パスワードには記号を含めてください');
       });
 
       test('空文字の場合、最初のエラーメッセージを返す', () {
