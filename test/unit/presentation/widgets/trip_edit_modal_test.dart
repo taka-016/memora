@@ -662,5 +662,62 @@ void main() {
         await tester.pumpAndSettle();
       });
     });
+
+    testWidgets('開始日が入力済みで終了日が未入力の場合、終了日タップ時に開始日の年月を初期値とすること', (
+      WidgetTester tester,
+    ) async {
+      const groupId = 'test-group-id';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) {
+                return TripEditModal(
+                  groupId: groupId,
+                  onSave: (tripEntry) {},
+                  isTestEnvironment: true,
+                );
+              },
+            ),
+          ),
+        ),
+      );
+
+      // 開始日を設定（2024年3月15日）
+      await tester.tap(find.text('旅行期間 From'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('15').last);
+      await tester.pumpAndSettle();
+
+      // 開始日が設定されていることを確認
+      final now = DateTime.now();
+      final expectedStartDate =
+          '${now.year}/${now.month.toString().padLeft(2, '0')}/15';
+      expect(find.text(expectedStartDate), findsOneWidget);
+
+      // 終了日は未選択状態であることを確認
+      expect(find.text('旅行期間 To'), findsOneWidget);
+
+      // 終了日フィールドをタップしてDatePickerを開く
+      await tester.tap(find.text('旅行期間 To'));
+      await tester.pumpAndSettle();
+
+      // DatePicker(CustomDatePickerDialog)が開かれていることを確認
+      expect(
+        find.byType(Dialog),
+        findsNWidgets(2),
+      ); // TripEditModalのDialog + CustomDatePickerDialog
+
+      // 開始日の年月（現在の年・月）に基づく初期値が表示されていることを確認
+      // CustomDatePickerDialogでは選択日が「2024年8月1日 (木)」のような形式で表示される
+      // 開始日が15日で、終了日の初期値は同年月の1日になる
+      final expectedDisplayDate = '${now.year}年${now.month}月1日';
+      expect(find.textContaining(expectedDisplayDate), findsOneWidget);
+
+      // DatePickerを閉じる（バックドロップをタップ）
+      await tester.tapAt(const Offset(50, 50));
+      await tester.pumpAndSettle();
+    });
   });
 }
