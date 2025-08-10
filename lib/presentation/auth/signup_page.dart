@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../application/managers/auth_manager.dart';
-import '../../application/utils/password_validator.dart';
+import '../../domain/entities/password.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key, required this.authManager});
@@ -161,7 +161,12 @@ class _SignupPageState extends State<SignupPage> {
                           obscureText: _obscurePassword,
                           autofillHints: const [AutofillHints.password],
                           validator: (value) {
-                            return PasswordValidator.validate(value);
+                            try {
+                              Password(value);
+                              return null;
+                            } on ArgumentError catch (e) {
+                              return e.message;
+                            }
                           },
                         ),
                         const SizedBox(height: 8),
@@ -173,7 +178,7 @@ class _SignupPageState extends State<SignupPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        ...PasswordValidator.getPasswordRequirements().map(
+                        ...Password.getRequirements().map(
                           (requirement) => Padding(
                             padding: const EdgeInsets.only(
                               left: 8.0,

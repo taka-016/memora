@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../application/utils/password_validator.dart';
+import '../../domain/entities/password.dart';
 
 class PasswordChangeModal extends StatefulWidget {
   final Function(String) onPasswordChange;
@@ -80,7 +80,7 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
-                    ...PasswordValidator.getPasswordRequirements().map(
+                    ...Password.getRequirements().map(
                       (requirement) => Padding(
                         padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
                         child: Row(
@@ -116,7 +116,12 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
                         ),
                       ),
                       validator: (value) {
-                        return PasswordValidator.validate(value);
+                        try {
+                          Password(value);
+                          return null;
+                        } on ArgumentError catch (e) {
+                          return e.message;
+                        }
                       },
                     ),
                     const SizedBox(height: 16),
