@@ -36,7 +36,7 @@ class PasswordValidator {
       '大文字を含む',
       '小文字を含む',
       '数字を含む',
-      '特殊文字を含む ($_specialCharacters)',
+      '記号を含む ($_specialCharacters)',
     ];
   }
 }
