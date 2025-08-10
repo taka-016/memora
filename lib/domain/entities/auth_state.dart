@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'user.dart';
 
-enum AuthStatus { loading, authenticated, unauthenticated, error }
+enum AuthStatus { loading, authenticated, unauthenticated, error, success }
 
 class AuthState extends Equatable {
   const AuthState._({required this.status, this.user, this.errorMessage});
@@ -16,6 +16,9 @@ class AuthState extends Equatable {
 
   const AuthState.error(String errorMessage)
     : this._(status: AuthStatus.error, errorMessage: errorMessage);
+
+  const AuthState.success(String message)
+      : this._(status: AuthStatus.success, errorMessage: message);
 
   final AuthStatus status;
   final User? user;

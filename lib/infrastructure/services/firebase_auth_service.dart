@@ -148,6 +148,20 @@ class FirebaseAuthService implements AuthService {
   }
 
   @override
+  Future<void> sendEmailVerification() async {
+    final currentUser = _firebaseAuth.currentUser;
+    if (currentUser == null) {
+      throw Exception('現在のユーザーが存在しません');
+    }
+
+    try {
+      await currentUser.sendEmailVerification();
+    } catch (e) {
+      throw Exception('認証メールの送信に失敗しました: $e');
+    }
+  }
+
+  @override
   Stream<domain.User?> get authStateChanges {
     return _firebaseAuth.authStateChanges().map((firebaseUser) {
       return firebaseUser != null
