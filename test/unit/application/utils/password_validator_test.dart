@@ -60,7 +60,7 @@ void main() {
         expect(requirements, contains('大文字を含む'));
         expect(requirements, contains('小文字を含む'));
         expect(requirements, contains('数字を含む'));
-        expect(requirements, contains('特殊文字を含む (!@#\$%^&*(),.?":{}|<>)'));
+        expect(requirements, contains('記号を含む (!@#\$%^&*(),.?":{}|<>)'));
       });
     });
   });
