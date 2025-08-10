@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../domain/entities/user.dart';
@@ -13,12 +14,37 @@ class AuthManager extends ChangeNotifier {
   final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
   AuthState _state;
   StreamSubscription<User?>? _authStateSubscription;
+  bool _isEmailVerificationError = false;
 
   AuthState get state => _state;
 
   Future<void> initialize() async {
     _authStateSubscription = authService.authStateChanges.listen((user) async {
       if (user != null) {
+        // メール認証チェック
+        if (!user.isVerified) {
+          _isEmailVerificationError = true;
+
+          // メール認証が未完了の場合、認証メールを再送する
+          try {
+            await authService.sendEmailVerification();
+            await authService.signOut();
+            _updateState(
+              const AuthState.error(
+                'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
+              ),
+            );
+          } catch (e) {
+            await authService.signOut();
+            _updateState(
+              const AuthState.error(
+                'メールアドレスの認証が完了していません。認証メールの送信に失敗しました。再度ログインしてください。',
+              ),
+            );
+          }
+          return;
+        }
+
         // 認証状態変更時にメンバー取得・作成処理を実行
         if (getOrCreateMemberUseCase != null) {
           try {
@@ -41,6 +67,11 @@ class AuthManager extends ChangeNotifier {
           _updateState(AuthState.authenticated(user));
         }
       } else {
+        // メール認証エラーでログアウトした場合はエラー状態を保持
+        if (_isEmailVerificationError) {
+          // エラー状態は既にsetされているので、何もしない
+          return;
+        }
         _updateState(const AuthState.unauthenticated());
       }
     });
@@ -54,8 +85,8 @@ class AuthManager extends ChangeNotifier {
         password: password,
       );
       // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _updateState(AuthState.error(_getFirebaseErrorMessage(e)));
     }
   }
 
@@ -66,9 +97,25 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
+
+      // サインアップ後に認証メールを自動送信してからログアウト
+      try {
+        await authService.sendEmailVerification();
+        await authService.signOut();
+        _updateState(
+          const AuthState.success(
+            'アカウントを作成しました。確認メールを送信しましたので、メールを確認して認証を完了してください。',
+          ),
+        );
+      } catch (e) {
+        // メール送信エラーでもサインアップは成功したのでログアウトする
+        await authService.signOut();
+        _updateState(
+          const AuthState.error('アカウントを作成しました。確認メールの送信に失敗しました。再度ログインしてください。'),
+        );
+      }
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _updateState(AuthState.error(_getFirebaseErrorMessage(e)));
     }
   }
 
@@ -83,32 +130,60 @@ class AuthManager extends ChangeNotifier {
   }
 
   void clearError() {
-    if (_state.status == AuthStatus.error) {
+    if (_state.status == AuthStatus.error || _state.status == AuthStatus.success) {
       _updateState(const AuthState.unauthenticated());
     }
   }
 
-  String _getFirebaseErrorMessage(String error) {
-    if (error.contains('email-already-in-use')) {
-      return 'このメールアドレスは既に使用されています。別のメールアドレスを使用するか、ログインしてください。';
-    } else if (error.contains('weak-password')) {
-      return 'パスワードが弱すぎます。より強力なパスワードを設定してください。';
-    } else if (error.contains('invalid-email')) {
-      return '無効なメールアドレスです。正しいメールアドレスを入力してください。';
-    } else if (error.contains('user-not-found')) {
-      return 'ユーザーが見つかりません。メールアドレスを確認してください。';
-    } else if (error.contains('wrong-password')) {
-      return 'パスワードが間違っています。';
-    } else if (error.contains('user-disabled')) {
-      return 'このアカウントは無効になっています。';
-    } else if (error.contains('too-many-requests')) {
-      return 'リクエストが多すぎます。しばらく時間をおいてから再試行してください。';
-    } else {
-      return 'エラーが発生しました。しばらく時間をおいてから再試行してください。';
+  String _getFirebaseErrorMessage(firebase_auth.FirebaseAuthException error) {
+    switch (error.code) {
+      case 'email-already-in-use':
+        return 'このメールアドレスは既に使用されています。ログインするか別のメールを利用してください。';
+      case 'invalid-email':
+        return 'メールアドレスの形式が正しくありません。';
+      case 'operation-not-allowed':
+        return 'このサインイン方法は無効です。コンソールで有効化が必要です。';
+      case 'weak-password':
+        return 'パスワードが弱すぎます。より強力なパスワードを設定してください。';
+      case 'user-disabled':
+        return 'このアカウントは無効化されています。';
+      case 'user-not-found':
+        return 'ユーザーが見つかりません。メールアドレスを確認してください。';
+      case 'wrong-password':
+        return 'パスワードが間違っています。';
+      case 'too-many-requests':
+        return 'リクエストが多すぎます。しばらくしてから再試行してください。';
+      case 'network-request-failed':
+        return 'ネットワークエラーが発生しました。通信環境を確認してください。';
+      case 'requires-recent-login':
+        return 'この操作には再ログインが必要です。いったんログアウトして再度ログインしてください。';
+      case 'invalid-credential':
+        return '認証情報が無効または期限切れです。やり直してください。';
+      case 'account-exists-with-different-credential':
+        return 'このメールは別のログイン方法で登録済みです。連携サインインを試してください。';
+      case 'credential-already-in-use':
+        return 'その認証情報は既に他のアカウントで使用されています。';
+      case 'provider-already-linked':
+        return 'このプロバイダは既にリンク済みです。';
+      case 'no-such-provider':
+        return 'リンクされていないプロバイダです。';
+      case 'invalid-verification-code':
+        return '確認コードが正しくありません。';
+      case 'invalid-verification-id':
+        return '確認IDが正しくありません。';
+      case 'session-expired':
+        return '確認コードの有効期限が切れています。再送信してください。';
+      case 'missing-email':
+        return 'メールアドレスを入力してください。';
+      default:
+        return error.message ?? 'エラーが発生しました。時間をおいて再試行してください。';
     }
   }
 
   void _updateState(AuthState newState) {
+    if (newState.status == AuthStatus.loading) {
+      _isEmailVerificationError = false;
+    }
     _state = newState;
     notifyListeners();
   }

@@ -182,6 +182,95 @@ void main() {
         controller.close();
       });
 
+      test('メール認証が未完了の場合、強制ログアウトしてerror状態になる', () async {
+        // arrange
+        const unverifiedUser = User(
+          id: 'user123',
+          loginId: 'test@example.com',
+          displayName: 'テストユーザー',
+          isVerified: false,
+        );
+
+        // authStateChangesでユーザー状態変更をシミュレート
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+
+        await authManager.initialize();
+
+        // act - authStateChangesでメール未認証ユーザーをエミット
+        controller.add(unverifiedUser);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
+        verify(mockAuthService.sendEmailVerification()).called(1);
+        verify(mockAuthService.signOut()).called(1);
+        expect(authManager.state.status, AuthStatus.error);
+        expect(
+          authManager.state.errorMessage,
+          'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
+        );
+
+        // act - ログアウト後にnullユーザーをエミット（signOutの結果）
+        controller.add(null);
+        await Future(() {});
+
+        // assert - エラー状態が保持されることを確認
+        expect(authManager.state.status, AuthStatus.error);
+        expect(
+          authManager.state.errorMessage,
+          'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
+        );
+
+        controller.close();
+      });
+
+      test('メール認証が未完了でメール再送に失敗した場合、通常のエラーメッセージが表示される', () async {
+        // arrange
+        const unverifiedUser = User(
+          id: 'user123',
+          loginId: 'test@example.com',
+          displayName: 'テストユーザー',
+          isVerified: false,
+        );
+
+        // authStateChangesでユーザー状態変更をシミュレート
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+        when(
+          mockAuthService.sendEmailVerification(),
+        ).thenThrow(Exception('メール送信失敗'));
+
+        await authManager.initialize();
+
+        // act - authStateChangesでメール未認証ユーザーをエミット
+        controller.add(unverifiedUser);
+
+        // authStateChangesリスナー内の非同期処理完了を待つ
+        await Future(() {});
+
+        // assert
+        verify(mockAuthService.sendEmailVerification()).called(1);
+        verify(mockAuthService.signOut()).called(1);
+        expect(authManager.state.status, AuthStatus.error);
+        expect(
+          authManager.state.errorMessage,
+          'メールアドレスの認証が完了していません。認証メールの送信に失敗しました。再度ログインしてください。',
+        );
+
+        controller.close();
+      });
+
       test(
         'GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウトしてerror状態になる',
         () async {
@@ -300,6 +389,8 @@ void main() {
             password: 'password123',
           ),
         ).thenAnswer((_) async => user);
+        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
 
         await authManager.signup(
           email: 'test@example.com',
@@ -312,6 +403,52 @@ void main() {
             password: 'password123',
           ),
         ).called(1);
+        verify(mockAuthService.sendEmailVerification()).called(1);
+        verify(mockAuthService.signOut()).called(1);
+        expect(authManager.state.status, AuthStatus.success);
+        expect(
+          authManager.state.errorMessage,
+          'アカウントを作成しました。確認メールを送信しましたので、メールを確認して認証を完了してください。',
+        );
+      });
+
+      test('メール送信が失敗してもサインアップは継続される', () async {
+        const user = User(
+          id: 'user123',
+          loginId: 'test@example.com',
+          displayName: null,
+          isVerified: false,
+        );
+
+        when(
+          mockAuthService.createUserWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenAnswer((_) async => user);
+        when(
+          mockAuthService.sendEmailVerification(),
+        ).thenThrow(Exception('メール送信失敗'));
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+        await authManager.signup(
+          email: 'test@example.com',
+          password: 'password123',
+        );
+
+        verify(
+          mockAuthService.createUserWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).called(1);
+        verify(mockAuthService.sendEmailVerification()).called(1);
+        verify(mockAuthService.signOut()).called(1);
+        expect(authManager.state.status, AuthStatus.error);
+        expect(
+          authManager.state.errorMessage,
+          'アカウントを作成しました。確認メールの送信に失敗しました。再度ログインしてください。',
+        );
       });
 
       test('サインアップに失敗した場合、error状態になる', () async {
@@ -366,6 +503,37 @@ void main() {
         );
 
         expect(authManager.state.status, AuthStatus.error);
+
+        authManager.clearError();
+
+        expect(authManager.state.status, AuthStatus.unauthenticated);
+        expect(authManager.state.errorMessage, isNull);
+      });
+
+      test('成功状態をクリアできる', () async {
+        // サインアップ成功状態を作成
+        const user = User(
+          id: 'user123',
+          loginId: 'test@example.com',
+          displayName: null,
+          isVerified: false,
+        );
+
+        when(
+          mockAuthService.createUserWithEmailAndPassword(
+            email: 'test@example.com',
+            password: 'password123',
+          ),
+        ).thenAnswer((_) async => user);
+        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+        await authManager.signup(
+          email: 'test@example.com',
+          password: 'password123',
+        );
+
+        expect(authManager.state.status, AuthStatus.success);
 
         authManager.clearError();
 

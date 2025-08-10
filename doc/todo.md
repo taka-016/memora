@@ -137,6 +137,7 @@
 - [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
 - [x] accountIdを持っているメンバーは削除不可とする（削除ボタンを表示しない）
 - [x] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
+- [ ] メール認証の有効化
 
 ## グループ管理画面
 
