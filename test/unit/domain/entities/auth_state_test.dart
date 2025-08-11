@@ -26,18 +26,23 @@ void main() {
     });
 
     test('未認証状態を正常に作成できる', () {
-      const authState = AuthState.unauthenticated();
+      final authState = AuthState.unauthenticated('');
       expect(authState.status, AuthStatus.unauthenticated);
       expect(authState.user, isNull);
-      expect(authState.message, isNull);
+      expect(authState.message, isEmpty);
+      expect(authState.messageType, MessageType.info);
     });
 
     test('エラー状態を正常に作成できる', () {
       const message = 'ログインに失敗しました';
-      const authState = AuthState.error(message);
-      expect(authState.status, AuthStatus.error);
+      const authState = AuthState.unauthenticated(
+        message,
+        messageType: MessageType.error,
+      );
+      expect(authState.status, AuthStatus.unauthenticated);
       expect(authState.user, isNull);
       expect(authState.message, message);
+      expect(authState.messageType, MessageType.error);
     });
 
     test('isAuthenticated ゲッターが正しく動作する', () {
@@ -49,7 +54,7 @@ void main() {
       );
 
       const authenticatedState = AuthState.authenticated(user);
-      const unauthenticatedState = AuthState.unauthenticated();
+      final unauthenticatedState = AuthState.unauthenticated('');
       const loadingState = AuthState.loading();
 
       expect(authenticatedState.isAuthenticated, true);
@@ -67,7 +72,7 @@ void main() {
 
       const state1 = AuthState.authenticated(user);
       const state2 = AuthState.authenticated(user);
-      const state3 = AuthState.unauthenticated();
+      final state3 = AuthState.unauthenticated('');
 
       expect(state1, equals(state2));
       expect(state1, isNot(equals(state3)));

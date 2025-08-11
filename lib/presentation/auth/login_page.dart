@@ -91,15 +91,15 @@ class _LoginPageState extends State<LoginPage> {
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
                             color:
-                                widget.authManager.state.status ==
-                                    AuthStatus.success
+                                widget.authManager.state.messageType ==
+                                    MessageType.info
                                 ? Colors.green.shade100
                                 : Colors.red.shade100,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color:
-                                  widget.authManager.state.status ==
-                                      AuthStatus.success
+                                  widget.authManager.state.messageType ==
+                                      MessageType.info
                                   ? Colors.green.shade300
                                   : Colors.red.shade300,
                             ),
@@ -107,13 +107,13 @@ class _LoginPageState extends State<LoginPage> {
                           child: Row(
                             children: [
                               Icon(
-                                widget.authManager.state.status ==
-                                        AuthStatus.success
+                                widget.authManager.state.messageType ==
+                                        MessageType.info
                                     ? Icons.check_circle
                                     : Icons.error,
                                 color:
-                                    widget.authManager.state.status ==
-                                        AuthStatus.success
+                                    widget.authManager.state.messageType ==
+                                        MessageType.info
                                     ? Colors.green.shade700
                                     : Colors.red.shade700,
                               ),
@@ -124,8 +124,8 @@ class _LoginPageState extends State<LoginPage> {
                                       'エラーが発生しました',
                                   style: TextStyle(
                                     color:
-                                        widget.authManager.state.status ==
-                                            AuthStatus.success
+                                        widget.authManager.state.messageType ==
+                                            MessageType.info
                                         ? Colors.green.shade700
                                         : Colors.red.shade700,
                                   ),
@@ -135,8 +135,8 @@ class _LoginPageState extends State<LoginPage> {
                                 icon: Icon(
                                   Icons.close,
                                   color:
-                                      widget.authManager.state.status ==
-                                          AuthStatus.success
+                                      widget.authManager.state.messageType ==
+                                          MessageType.info
                                       ? Colors.green.shade700
                                       : Colors.red.shade700,
                                 ),

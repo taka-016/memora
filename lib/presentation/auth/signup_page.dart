@@ -82,24 +82,22 @@ class _SignupPageState extends State<SignupPage> {
                       if (widget.authManager.state.status == AuthStatus.loading)
                         const Center(child: CircularProgressIndicator())
                       else ...[
-                        if (widget.authManager.state.status ==
-                                AuthStatus.error ||
-                            widget.authManager.state.status ==
-                                AuthStatus.success)
+                        if (widget.authManager.state.message != null &&
+                            widget.authManager.state.message!.isNotEmpty)
                           Container(
                             padding: const EdgeInsets.all(12),
                             margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
                               color:
-                                  widget.authManager.state.status ==
-                                      AuthStatus.success
+                                  widget.authManager.state.messageType ==
+                                      MessageType.info
                                   ? Colors.green.shade100
                                   : Colors.red.shade100,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color:
-                                    widget.authManager.state.status ==
-                                        AuthStatus.success
+                                    widget.authManager.state.messageType ==
+                                        MessageType.info
                                     ? Colors.green.shade300
                                     : Colors.red.shade300,
                               ),
@@ -107,13 +105,13 @@ class _SignupPageState extends State<SignupPage> {
                             child: Row(
                               children: [
                                 Icon(
-                                  widget.authManager.state.status ==
-                                          AuthStatus.success
+                                  widget.authManager.state.messageType ==
+                                          MessageType.info
                                       ? Icons.check_circle
                                       : Icons.error,
                                   color:
-                                      widget.authManager.state.status ==
-                                          AuthStatus.success
+                                      widget.authManager.state.messageType ==
+                                          MessageType.info
                                       ? Colors.green.shade700
                                       : Colors.red.shade700,
                                 ),
@@ -124,8 +122,11 @@ class _SignupPageState extends State<SignupPage> {
                                         'エラーが発生しました',
                                     style: TextStyle(
                                       color:
-                                          widget.authManager.state.status ==
-                                              AuthStatus.success
+                                          widget
+                                                  .authManager
+                                                  .state
+                                                  .messageType ==
+                                              MessageType.info
                                           ? Colors.green.shade700
                                           : Colors.red.shade700,
                                     ),
@@ -135,8 +136,8 @@ class _SignupPageState extends State<SignupPage> {
                                   icon: Icon(
                                     Icons.close,
                                     color:
-                                        widget.authManager.state.status ==
-                                            AuthStatus.success
+                                        widget.authManager.state.messageType ==
+                                            MessageType.info
                                         ? Colors.green.shade700
                                         : Colors.red.shade700,
                                   ),
