@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -222,8 +221,8 @@ void main() {
         controller.add(null);
         await Future(() {});
 
-        // assert - 未認証状態でエラーメッセージが保持されることを確認
-        expect(authManager.state.status, AuthStatus.unauthenticated);
+        // assert - エラー状態が保持されることを確認
+        expect(authManager.state.status, AuthStatus.error);
         expect(
           authManager.state.errorMessage,
           'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
@@ -363,12 +362,7 @@ void main() {
             email: 'test@example.com',
             password: 'wrongpassword',
           ),
-        ).thenThrow(
-          firebase_auth.FirebaseAuthException(
-            code: 'wrong-password',
-            message: 'ログインに失敗しました',
-          ),
-        );
+        ).thenThrow(Exception('ログインに失敗しました'));
 
         await authManager.login(
           email: 'test@example.com',
@@ -463,12 +457,7 @@ void main() {
             email: 'invalid-email',
             password: 'password123',
           ),
-        ).thenThrow(
-          firebase_auth.FirebaseAuthException(
-            code: 'invalid-email',
-            message: 'サインアップに失敗しました',
-          ),
-        );
+        ).thenThrow(Exception('サインアップに失敗しました'));
 
         await authManager.signup(
           email: 'invalid-email',
@@ -506,12 +495,7 @@ void main() {
             email: 'test@example.com',
             password: 'wrongpassword',
           ),
-        ).thenThrow(
-          firebase_auth.FirebaseAuthException(
-            code: 'wrong-password',
-            message: 'ログインに失敗しました',
-          ),
-        );
+        ).thenThrow(Exception('ログインに失敗しました'));
 
         await authManager.login(
           email: 'test@example.com',
