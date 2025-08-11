@@ -8,7 +8,7 @@ void main() {
       const authState = AuthState.loading();
       expect(authState.status, AuthStatus.loading);
       expect(authState.user, isNull);
-      expect(authState.message, isNull);
+      expect(authState.message, isEmpty);
     });
 
     test('認証済み状態を正常に作成できる', () {
@@ -22,7 +22,7 @@ void main() {
       const authState = AuthState.authenticated(user);
       expect(authState.status, AuthStatus.authenticated);
       expect(authState.user, user);
-      expect(authState.message, isNull);
+      expect(authState.message, isEmpty);
     });
 
     test('未認証状態を正常に作成できる', () {
