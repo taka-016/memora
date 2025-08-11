@@ -8,7 +8,7 @@ void main() {
       const authState = AuthState.loading();
       expect(authState.status, AuthStatus.loading);
       expect(authState.user, isNull);
-      expect(authState.errorMessage, isNull);
+      expect(authState.message, isNull);
     });
 
     test('認証済み状態を正常に作成できる', () {
@@ -22,22 +22,22 @@ void main() {
       const authState = AuthState.authenticated(user);
       expect(authState.status, AuthStatus.authenticated);
       expect(authState.user, user);
-      expect(authState.errorMessage, isNull);
+      expect(authState.message, isNull);
     });
 
     test('未認証状態を正常に作成できる', () {
       const authState = AuthState.unauthenticated();
       expect(authState.status, AuthStatus.unauthenticated);
       expect(authState.user, isNull);
-      expect(authState.errorMessage, isNull);
+      expect(authState.message, isNull);
     });
 
     test('エラー状態を正常に作成できる', () {
-      const errorMessage = 'ログインに失敗しました';
-      const authState = AuthState.error(errorMessage);
+      const message = 'ログインに失敗しました';
+      const authState = AuthState.error(message);
       expect(authState.status, AuthStatus.error);
       expect(authState.user, isNull);
-      expect(authState.errorMessage, errorMessage);
+      expect(authState.message, message);
     });
 
     test('isAuthenticated ゲッターが正しく動作する', () {
