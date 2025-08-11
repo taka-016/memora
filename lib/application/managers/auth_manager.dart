@@ -153,7 +153,7 @@ class AuthManager extends ChangeNotifier {
 
   void _updateState(AuthState newState) {
     if (newState.status == AuthStatus.unauthenticated &&
-        (newState.message.isEmpty)) {
+        newState.message.isEmpty) {
       newState = newState.copyWith(message: _state.message);
     }
     _state = newState;
