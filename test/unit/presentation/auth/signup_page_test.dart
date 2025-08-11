@@ -24,7 +24,9 @@ void main() {
     }
 
     testWidgets('サインアップ画面の基本要素が表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -39,7 +41,9 @@ void main() {
     });
 
     testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -50,7 +54,9 @@ void main() {
     testWidgets('パスワード表示切り替えアイコンをタップするとパスワードが表示される', (
       WidgetTester tester,
     ) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -67,7 +73,9 @@ void main() {
     });
 
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -86,7 +94,9 @@ void main() {
     });
 
     testWidgets('登録ボタンをタップするとsignupメソッドが呼ばれる', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -111,7 +121,9 @@ void main() {
     });
 
     testWidgets('ログインリンクをタップすると画面が戻る', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -132,9 +144,12 @@ void main() {
     });
 
     testWidgets('error状態の時はエラーメッセージが表示される', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.error('サインアップに失敗しました'));
+      when(mockAuthManager.state).thenReturn(
+        const AuthState.unauthenticated(
+          'サインアップに失敗しました',
+          messageType: MessageType.error,
+        ),
+      );
 
       await tester.pumpWidget(createTestWidget());
 
@@ -143,7 +158,9 @@ void main() {
     });
 
     testWidgets('パスワード確認のバリデーションが機能する', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 
@@ -164,7 +181,9 @@ void main() {
     });
 
     testWidgets('バリデーションエラーが表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
 

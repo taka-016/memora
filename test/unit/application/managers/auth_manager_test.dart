@@ -176,7 +176,7 @@ void main() {
 
         // assert
         verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.error);
+        expect(authManager.state.status, AuthStatus.unauthenticated);
         expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
 
         controller.close();
@@ -211,22 +211,16 @@ void main() {
         // assert
         verify(mockAuthService.sendEmailVerification()).called(1);
         verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.error);
-        expect(
-          authManager.state.message,
-          'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
-        );
+        expect(authManager.state.status, AuthStatus.unauthenticated);
+        expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
 
         // act - ログアウト後にnullユーザーをエミット（signOutの結果）
         controller.add(null);
         await Future(() {});
 
         // assert - エラー状態が保持されることを確認
-        expect(authManager.state.status, AuthStatus.error);
-        expect(
-          authManager.state.message,
-          'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
-        );
+        expect(authManager.state.status, AuthStatus.unauthenticated);
+        expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
 
         controller.close();
       });
@@ -262,11 +256,8 @@ void main() {
         // assert
         verify(mockAuthService.sendEmailVerification()).called(1);
         verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.error);
-        expect(
-          authManager.state.message,
-          'メールアドレスの認証が完了していません。認証メールの送信に失敗しました。再度ログインしてください。',
-        );
+        expect(authManager.state.status, AuthStatus.unauthenticated);
+        expect(authManager.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
 
         controller.close();
       });
@@ -319,7 +310,7 @@ void main() {
           // assert
           verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
           verify(mockAuthService.signOut()).called(1);
-          expect(authManager.state.status, AuthStatus.error);
+          expect(authManager.state.status, AuthStatus.unauthenticated);
           expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
 
           controller.close();
@@ -369,7 +360,7 @@ void main() {
           password: 'wrongpassword',
         );
 
-        expect(authManager.state.status, AuthStatus.error);
+        expect(authManager.state.status, AuthStatus.unauthenticated);
         expect(authManager.state.message, isNotNull);
       });
     });
@@ -403,52 +394,7 @@ void main() {
             password: 'password123',
           ),
         ).called(1);
-        verify(mockAuthService.sendEmailVerification()).called(1);
         verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.success);
-        expect(
-          authManager.state.message,
-          'アカウントを作成しました。確認メールを送信しましたので、メールを確認して認証を完了してください。',
-        );
-      });
-
-      test('メール送信が失敗してもサインアップは継続される', () async {
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: null,
-          isVerified: false,
-        );
-
-        when(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => user);
-        when(
-          mockAuthService.sendEmailVerification(),
-        ).thenThrow(Exception('メール送信失敗'));
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
-
-        await authManager.signup(
-          email: 'test@example.com',
-          password: 'password123',
-        );
-
-        verify(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).called(1);
-        verify(mockAuthService.sendEmailVerification()).called(1);
-        verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.error);
-        expect(
-          authManager.state.message,
-          'アカウントを作成しました。確認メールの送信に失敗しました。再度ログインしてください。',
-        );
       });
 
       test('サインアップに失敗した場合、error状態になる', () async {
@@ -464,7 +410,7 @@ void main() {
           password: 'password123',
         );
 
-        expect(authManager.state.status, AuthStatus.error);
+        expect(authManager.state.status, AuthStatus.unauthenticated);
         expect(authManager.state.message, isNotNull);
       });
     });
@@ -483,7 +429,7 @@ void main() {
 
         await authManager.logout();
 
-        expect(authManager.state.status, AuthStatus.error);
+        expect(authManager.state.status, AuthStatus.unauthenticated);
         expect(authManager.state.message, isNotNull);
       });
     });
@@ -502,38 +448,7 @@ void main() {
           password: 'wrongpassword',
         );
 
-        expect(authManager.state.status, AuthStatus.error);
-
-        authManager.clearError();
-
         expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isNull);
-      });
-
-      test('成功状態をクリアできる', () async {
-        // サインアップ成功状態を作成
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: null,
-          isVerified: false,
-        );
-
-        when(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => user);
-        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
-
-        await authManager.signup(
-          email: 'test@example.com',
-          password: 'password123',
-        );
-
-        expect(authManager.state.status, AuthStatus.success);
 
         authManager.clearError();
 

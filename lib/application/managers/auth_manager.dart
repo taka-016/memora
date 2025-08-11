@@ -27,15 +27,17 @@ class AuthManager extends ChangeNotifier {
             await authService.sendEmailVerification();
             await authService.signOut();
             _updateState(
-              const AuthState.error(
-                'メールアドレスの認証が完了していません。認証メールを再送しました。メールを確認して認証を完了してください。',
+              const AuthState.unauthenticated(
+                '認証メールを再送しました。メールを確認して認証を完了してください。',
+                messageType: MessageType.info,
               ),
             );
           } catch (e) {
             await authService.signOut();
             _updateState(
-              const AuthState.error(
-                'メールアドレスの認証が完了していません。認証メールの送信に失敗しました。再度ログインしてください。',
+              const AuthState.unauthenticated(
+                '認証メールの送信に失敗しました。再度ログインしてください。',
+                messageType: MessageType.error,
               ),
             );
           }
@@ -53,18 +55,28 @@ class AuthManager extends ChangeNotifier {
             } else {
               // GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウト
               await authService.signOut();
-              _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+              _updateState(
+                const AuthState.unauthenticated(
+                  '認証が無効です。再度ログインしてください。',
+                  messageType: MessageType.error,
+                ),
+              );
             }
           } catch (e) {
             // エラーの場合、強制ログアウトして再認証を促す
             await authService.signOut();
-            _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+            _updateState(
+              const AuthState.unauthenticated(
+                '認証が無効です。再度ログインしてください。',
+                messageType: MessageType.error,
+              ),
+            );
           }
         } else {
           _updateState(AuthState.authenticated(user));
         }
       } else {
-        _updateState(const AuthState.unauthenticated());
+        _updateState(const AuthState.unauthenticated(''));
       }
     });
   }
@@ -78,7 +90,16 @@ class AuthManager extends ChangeNotifier {
       );
       // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e)));
+      _updateState(
+        AuthState.unauthenticated(
+          _getFirebaseErrorMessage(e),
+          messageType: MessageType.error,
+        ),
+      );
+    } catch (e) {
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      );
     }
   }
 
@@ -90,24 +111,18 @@ class AuthManager extends ChangeNotifier {
         password: password,
       );
 
-      // サインアップ後に認証メールを自動送信してからログアウト
-      try {
-        await authService.sendEmailVerification();
-        await authService.signOut();
-        _updateState(
-          const AuthState.success(
-            'アカウントを作成しました。確認メールを送信しましたので、メールを確認して認証を完了してください。',
-          ),
-        );
-      } catch (e) {
-        // メール送信エラーでもサインアップは成功したのでログアウトする
-        await authService.signOut();
-        _updateState(
-          const AuthState.error('アカウントを作成しました。確認メールの送信に失敗しました。再度ログインしてください。'),
-        );
-      }
+      await authService.signOut();
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e)));
+      _updateState(
+        AuthState.unauthenticated(
+          _getFirebaseErrorMessage(e),
+          messageType: MessageType.error,
+        ),
+      );
+    } catch (e) {
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      );
     }
   }
 
@@ -117,14 +132,12 @@ class AuthManager extends ChangeNotifier {
       await authService.signOut();
       // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
     } catch (e) {
-      _updateState(AuthState.error('ログアウトに失敗しました: ${e.toString()}'));
-    }
-  }
-
-  void clearError() {
-    if (_state.status == AuthStatus.error ||
-        _state.status == AuthStatus.success) {
-      _updateState(const AuthState.unauthenticated());
+      _updateState(
+        AuthState.unauthenticated(
+          'ログアウトに失敗しました: ${e.toString()}',
+          messageType: MessageType.error,
+        ),
+      );
     }
   }
 
@@ -173,9 +186,14 @@ class AuthManager extends ChangeNotifier {
     }
   }
 
+  void clearError() {
+    _state = _state.copyWith(message: '');
+    notifyListeners();
+  }
+
   void _updateState(AuthState newState) {
     if (newState.status != AuthStatus.authenticated &&
-        newState.message == null) {
+        (newState.message == null || newState.message!.isEmpty)) {
       newState = newState.copyWith(message: _state.message);
     }
     _state = newState;
