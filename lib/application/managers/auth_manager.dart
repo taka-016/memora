@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import '../utils/firebase_error_util.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/auth_state.dart';
 import '../../domain/entities/user.dart';
@@ -19,6 +21,30 @@ class AuthManager extends ChangeNotifier {
   Future<void> initialize() async {
     _authStateSubscription = authService.authStateChanges.listen((user) async {
       if (user != null) {
+        // メール認証チェック
+        if (!user.isVerified) {
+          // メール認証が未完了の場合、認証メールを再送する
+          try {
+            await authService.sendEmailVerification();
+            await authService.signOut();
+            _updateState(
+              const AuthState.unauthenticated(
+                '認証メールを再送しました。メールを確認して認証を完了してください。',
+                messageType: MessageType.info,
+              ),
+            );
+          } catch (e) {
+            await authService.signOut();
+            _updateState(
+              const AuthState.unauthenticated(
+                '認証メールの送信に失敗しました。再度ログインしてください。',
+                messageType: MessageType.error,
+              ),
+            );
+          }
+          return;
+        }
+
         // 認証状態変更時にメンバー取得・作成処理を実行
         if (getOrCreateMemberUseCase != null) {
           try {
@@ -30,18 +56,28 @@ class AuthManager extends ChangeNotifier {
             } else {
               // GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウト
               await authService.signOut();
-              _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+              _updateState(
+                const AuthState.unauthenticated(
+                  '認証が無効です。再度ログインしてください。',
+                  messageType: MessageType.error,
+                ),
+              );
             }
           } catch (e) {
             // エラーの場合、強制ログアウトして再認証を促す
             await authService.signOut();
-            _updateState(const AuthState.error('認証が無効です。再度ログインしてください。'));
+            _updateState(
+              const AuthState.unauthenticated(
+                '認証が無効です。再度ログインしてください。',
+                messageType: MessageType.error,
+              ),
+            );
           }
         } else {
           _updateState(AuthState.authenticated(user));
         }
       } else {
-        _updateState(const AuthState.unauthenticated());
+        _updateState(const AuthState.unauthenticated(''));
       }
     });
   }
@@ -53,9 +89,18 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _updateState(
+        AuthState.unauthenticated(
+          FirebaseErrorUtil.getFirebaseErrorMessage(e),
+          messageType: MessageType.error,
+        ),
+      );
     } catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      );
     }
   }
 
@@ -66,9 +111,19 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
+      await authService.signOut();
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _updateState(
+        AuthState.unauthenticated(
+          FirebaseErrorUtil.getFirebaseErrorMessage(e),
+          messageType: MessageType.error,
+        ),
+      );
     } catch (e) {
-      _updateState(AuthState.error(_getFirebaseErrorMessage(e.toString())));
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      );
     }
   }
 
@@ -76,39 +131,31 @@ class AuthManager extends ChangeNotifier {
     try {
       _updateState(const AuthState.loading());
       await authService.signOut();
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      _updateState(
+        AuthState.unauthenticated(
+          FirebaseErrorUtil.getFirebaseErrorMessage(e),
+          messageType: MessageType.error,
+        ),
+      );
     } catch (e) {
-      _updateState(AuthState.error('ログアウトに失敗しました: ${e.toString()}'));
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      );
     }
   }
 
   void clearError() {
-    if (_state.status == AuthStatus.error) {
-      _updateState(const AuthState.unauthenticated());
-    }
-  }
-
-  String _getFirebaseErrorMessage(String error) {
-    if (error.contains('email-already-in-use')) {
-      return 'このメールアドレスは既に使用されています。別のメールアドレスを使用するか、ログインしてください。';
-    } else if (error.contains('weak-password')) {
-      return 'パスワードが弱すぎます。より強力なパスワードを設定してください。';
-    } else if (error.contains('invalid-email')) {
-      return '無効なメールアドレスです。正しいメールアドレスを入力してください。';
-    } else if (error.contains('user-not-found')) {
-      return 'ユーザーが見つかりません。メールアドレスを確認してください。';
-    } else if (error.contains('wrong-password')) {
-      return 'パスワードが間違っています。';
-    } else if (error.contains('user-disabled')) {
-      return 'このアカウントは無効になっています。';
-    } else if (error.contains('too-many-requests')) {
-      return 'リクエストが多すぎます。しばらく時間をおいてから再試行してください。';
-    } else {
-      return 'エラーが発生しました。しばらく時間をおいてから再試行してください。';
-    }
+    _state = _state.copyWith(message: '');
+    notifyListeners();
   }
 
   void _updateState(AuthState newState) {
+    if (newState.status == AuthStatus.unauthenticated &&
+        newState.message.isEmpty) {
+      newState = newState.copyWith(message: _state.message);
+    }
     _state = newState;
     notifyListeners();
   }

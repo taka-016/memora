@@ -54,7 +54,6 @@ class _AuthGuardState extends State<AuthGuard> {
           case AuthStatus.authenticated:
             return widget.child;
           case AuthStatus.unauthenticated:
-          case AuthStatus.error:
             return LoginPage(authManager: widget.authManager);
         }
       },

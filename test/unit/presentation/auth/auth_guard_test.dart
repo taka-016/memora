@@ -52,7 +52,9 @@ void main() {
     });
 
     testWidgets('未認証の場合、ログイン画面が表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.unauthenticated());
+      when(
+        mockAuthManager.state,
+      ).thenReturn(const AuthState.unauthenticated(''));
 
       await tester.pumpWidget(createTestWidget());
       // すべての非同期処理とアニメーションの完了を待つ
@@ -77,7 +79,12 @@ void main() {
     });
 
     testWidgets('error状態の場合、ログイン画面が表示される', (WidgetTester tester) async {
-      when(mockAuthManager.state).thenReturn(const AuthState.error('認証エラー'));
+      when(mockAuthManager.state).thenReturn(
+        const AuthState.unauthenticated(
+          '認証エラー',
+          messageType: MessageType.error,
+        ),
+      );
 
       await tester.pumpWidget(createTestWidget());
       // すべての非同期処理とアニメーションの完了を待つ
