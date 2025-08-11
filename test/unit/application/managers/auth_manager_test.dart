@@ -453,7 +453,7 @@ void main() {
         authManager.clearError();
 
         expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isNull);
+        expect(authManager.state.message, isEmpty);
       });
     });
   });

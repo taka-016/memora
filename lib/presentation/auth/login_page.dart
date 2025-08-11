@@ -84,8 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (widget.authManager.state.status == AuthStatus.loading)
                       const Center(child: CircularProgressIndicator())
                     else ...[
-                      if (widget.authManager.state.message != null &&
-                          widget.authManager.state.message!.isNotEmpty)
+                      if (widget.authManager.state.message.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 16),
@@ -120,8 +119,7 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  widget.authManager.state.message ??
-                                      'エラーが発生しました',
+                                  widget.authManager.state.message,
                                   style: TextStyle(
                                     color:
                                         widget.authManager.state.messageType ==
