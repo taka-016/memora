@@ -89,7 +89,7 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
       _updateState(
         AuthState.unauthenticated(
@@ -111,8 +111,8 @@ class AuthManager extends ChangeNotifier {
         email: email,
         password: password,
       );
-
       await authService.signOut();
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
       _updateState(
         AuthState.unauthenticated(
@@ -131,13 +131,17 @@ class AuthManager extends ChangeNotifier {
     try {
       _updateState(const AuthState.loading());
       await authService.signOut();
-      // 認証成功時の状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e) {
+      // 状態更新はauthStateChangesリスナーで自動的に処理される
+    } on firebase_auth.FirebaseAuthException catch (e) {
       _updateState(
         AuthState.unauthenticated(
-          'ログアウトに失敗しました: ${e.toString()}',
+          FirebaseErrorUtil.getFirebaseErrorMessage(e),
           messageType: MessageType.error,
         ),
+      );
+    } catch (e) {
+      _updateState(
+        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
       );
     }
   }
