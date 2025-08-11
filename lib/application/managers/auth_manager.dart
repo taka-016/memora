@@ -14,7 +14,6 @@ class AuthManager extends ChangeNotifier {
   final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
   AuthState _state;
   StreamSubscription<User?>? _authStateSubscription;
-  bool _isEmailVerificationError = false;
 
   AuthState get state => _state;
 
@@ -23,8 +22,6 @@ class AuthManager extends ChangeNotifier {
       if (user != null) {
         // メール認証チェック
         if (!user.isVerified) {
-          _isEmailVerificationError = true;
-
           // メール認証が未完了の場合、認証メールを再送する
           try {
             await authService.sendEmailVerification();
@@ -67,11 +64,6 @@ class AuthManager extends ChangeNotifier {
           _updateState(AuthState.authenticated(user));
         }
       } else {
-        // メール認証エラーでログアウトした場合はエラー状態を保持
-        if (_isEmailVerificationError) {
-          // エラー状態は既にsetされているので、何もしない
-          return;
-        }
         _updateState(const AuthState.unauthenticated());
       }
     });
@@ -130,7 +122,8 @@ class AuthManager extends ChangeNotifier {
   }
 
   void clearError() {
-    if (_state.status == AuthStatus.error || _state.status == AuthStatus.success) {
+    if (_state.status == AuthStatus.error ||
+        _state.status == AuthStatus.success) {
       _updateState(const AuthState.unauthenticated());
     }
   }
@@ -181,8 +174,9 @@ class AuthManager extends ChangeNotifier {
   }
 
   void _updateState(AuthState newState) {
-    if (newState.status == AuthStatus.loading) {
-      _isEmailVerificationError = false;
+    if (newState.status != AuthStatus.authenticated &&
+        newState.message == null) {
+      newState = newState.copyWith(message: _state.message);
     }
     _state = newState;
     notifyListeners();

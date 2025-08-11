@@ -84,40 +84,49 @@ class _LoginPageState extends State<LoginPage> {
                     if (widget.authManager.state.status == AuthStatus.loading)
                       const Center(child: CircularProgressIndicator())
                     else ...[
-                      if (widget.authManager.state.status == AuthStatus.error ||
-                          widget.authManager.state.status == AuthStatus.success)
+                      if (widget.authManager.state.message != null &&
+                          widget.authManager.state.message!.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color: widget.authManager.state.status == AuthStatus.success 
-                                ? Colors.green.shade100 
+                            color:
+                                widget.authManager.state.status ==
+                                    AuthStatus.success
+                                ? Colors.green.shade100
                                 : Colors.red.shade100,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: widget.authManager.state.status == AuthStatus.success 
-                                  ? Colors.green.shade300 
+                              color:
+                                  widget.authManager.state.status ==
+                                      AuthStatus.success
+                                  ? Colors.green.shade300
                                   : Colors.red.shade300,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                widget.authManager.state.status == AuthStatus.success 
-                                    ? Icons.check_circle 
-                                    : Icons.error, 
-                                color: widget.authManager.state.status == AuthStatus.success 
-                                    ? Colors.green.shade700 
+                                widget.authManager.state.status ==
+                                        AuthStatus.success
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color:
+                                    widget.authManager.state.status ==
+                                        AuthStatus.success
+                                    ? Colors.green.shade700
                                     : Colors.red.shade700,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  widget.authManager.state.errorMessage ??
+                                  widget.authManager.state.message ??
                                       'エラーが発生しました',
                                   style: TextStyle(
-                                    color: widget.authManager.state.status == AuthStatus.success 
-                                        ? Colors.green.shade700 
+                                    color:
+                                        widget.authManager.state.status ==
+                                            AuthStatus.success
+                                        ? Colors.green.shade700
                                         : Colors.red.shade700,
                                   ),
                                 ),
@@ -125,8 +134,10 @@ class _LoginPageState extends State<LoginPage> {
                               IconButton(
                                 icon: Icon(
                                   Icons.close,
-                                  color: widget.authManager.state.status == AuthStatus.success 
-                                      ? Colors.green.shade700 
+                                  color:
+                                      widget.authManager.state.status ==
+                                          AuthStatus.success
+                                      ? Colors.green.shade700
                                       : Colors.red.shade700,
                                 ),
                                 onPressed: () {
