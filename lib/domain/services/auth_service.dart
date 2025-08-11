@@ -32,5 +32,7 @@ abstract class AuthService {
 
   Future<void> validateCurrentUserToken();
 
+  Future<void> sendEmailVerification();
+
   Stream<User?> get authStateChanges;
 }
