@@ -155,24 +155,12 @@ class _TripEditModalState extends State<TripEditModal> {
                     maxLines: 3,
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _visitLocationController,
-                          decoration: const InputDecoration(
-                            labelText: '訪問場所',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        key: _mapIconKey,
-                        onPressed: _toggleMapExpansion,
-                        icon: const Icon(Icons.map),
-                      ),
-                    ],
+                  ElevatedButton(
+                    onPressed: _toggleMapExpansion,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                    child: Text('訪問場所を地図で選択'),
                   ),
                 ],
               ),
@@ -200,7 +188,7 @@ class _TripEditModalState extends State<TripEditModal> {
             IconButton(
               key: _mapIconKey,
               onPressed: _toggleMapExpansion,
-              icon: const Icon(Icons.map_outlined),
+              icon: const Icon(Icons.close),
             ),
           ],
         ),
