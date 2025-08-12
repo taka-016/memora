@@ -226,6 +226,8 @@
 
 - [x] ピンタップ時にモーダルを表示するのを廃止しボトムシートに変更する
 - [x] 入力域やボタンの見た目がtrip_edit_modalと異なるので、trip_edit_modal側に合わせる
+- [x] GoogleMapMarkerManagerを廃止してMapDisplayをStatelessWidgetに変更する
+- [x] trip_edit_modal.dartでデータ読み書き責務を実装する
 
 ## デザイン
 

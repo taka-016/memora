@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../domain/entities/trip_entry.dart';
+import '../../domain/entities/pin.dart';
+import '../../domain/repositories/pin_repository.dart';
+import '../../infrastructure/repositories/firestore_pin_repository.dart';
+import '../../application/usecases/load_pins_usecase.dart';
+import '../../application/usecases/save_pin_usecase.dart';
+import '../../application/usecases/delete_pin_usecase.dart';
 import '../utils/date_picker_utils.dart';
 import 'map_display.dart';
 import 'map_display_placeholder.dart';
+import 'package:uuid/uuid.dart';
 
 class TripEditModal extends StatefulWidget {
   final String groupId;
@@ -36,9 +44,16 @@ class _TripEditModalState extends State<TripEditModal> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
 
+  // 地図とピン管理用の変数
+  late PinRepository _pinRepository;
+  List<Pin> _pins = [];
+
   @override
   void initState() {
     super.initState();
+    if (!widget.isTestEnvironment) {
+      _pinRepository = FirestorePinRepository();
+    }
     _nameController = TextEditingController(
       text: widget.tripEntry?.tripName ?? '',
     );
@@ -48,6 +63,90 @@ class _TripEditModalState extends State<TripEditModal> {
     _visitLocationController = TextEditingController();
     _startDate = widget.tripEntry?.tripStartDate;
     _endDate = widget.tripEntry?.tripEndDate;
+    if (!widget.isTestEnvironment) {
+      _loadPins();
+    }
+  }
+
+  Future<void> _loadPins() async {
+    try {
+      final loadPinsUseCase = LoadPinsUseCase(_pinRepository);
+      final pins = await loadPinsUseCase.execute();
+      setState(() {
+        _pins = pins;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('ピンの読み込みに失敗: $e')));
+      }
+    }
+  }
+
+  Future<void> _onMapTapped(LatLng position) async {
+    if (widget.isTestEnvironment) return;
+    final uuid = Uuid();
+    final pinId = uuid.v4();
+    final newPin = Pin(
+      id: pinId,
+      pinId: pinId,
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
+
+    try {
+      final savePinUseCase = SavePinUseCase(_pinRepository);
+      await savePinUseCase.execute(
+        newPin.pinId,
+        newPin.latitude,
+        newPin.longitude,
+      );
+
+      setState(() {
+        _pins.add(newPin);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
+      }
+    }
+  }
+
+  Future<void> _onMarkerDeleted(String pinId) async {
+    if (widget.isTestEnvironment) return;
+    try {
+      final deletePinUseCase = DeletePinUseCase(_pinRepository);
+      await deletePinUseCase.execute(pinId);
+
+      setState(() {
+        _pins.removeWhere((pin) => pin.pinId == pinId);
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
+      }
+    }
+  }
+
+  void _onPinTapped(Pin pin) {
+    // ピンタップ時の処理（必要に応じて実装）
   }
 
   @override
@@ -205,7 +304,12 @@ class _TripEditModalState extends State<TripEditModal> {
                     child: MapDisplayPlaceholder(),
                   ),
                 )
-              : const MapDisplay(),
+              : MapDisplay(
+                  pins: _pins,
+                  onMapLongTapped: _onMapTapped,
+                  onMarkerTapped: _onPinTapped,
+                  onMarkerDeleted: _onMarkerDeleted,
+                ),
         ),
       ],
     );
