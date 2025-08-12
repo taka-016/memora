@@ -179,7 +179,7 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
-            : const MapDisplay();
+            : const MapDisplay(pins: []);
       case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
