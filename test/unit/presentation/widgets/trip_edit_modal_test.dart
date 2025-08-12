@@ -109,7 +109,7 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
-    testWidgets('訪問場所の入力フィールドがメモの下に表示されること', (WidgetTester tester) async {
+    testWidgets('訪問場所を地図で選択ボタンがメモの下に表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -122,26 +122,10 @@ void main() {
         ),
       );
 
-      expect(find.text('訪問場所'), findsOneWidget);
+      expect(find.text('訪問場所を地図で選択'), findsOneWidget);
     });
 
-    testWidgets('訪問場所の入力フィールドの右に地図アイコンが配置されること', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (tripEntry) {},
-              isTestEnvironment: true,
-            ),
-          ),
-        ),
-      );
-
-      expect(find.byIcon(Icons.map), findsOneWidget);
-    });
-
-    testWidgets('地図アイコンをタップで地図が展開表示されること', (WidgetTester tester) async {
+    testWidgets('訪問場所を地図で選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -157,47 +141,37 @@ void main() {
       // 初期状態では地図が表示されていないことを確認
       expect(find.byKey(const Key('map_display')), findsNothing);
 
-      // 初期状態ではIconButton内にmapアイコンが表示されることを確認
+      // 初期状態では訪問場所を地図で選択ボタンが表示されることを確認
+      expect(find.text('訪問場所を地図で選択'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map_outlined),
+          matching: find.byIcon(Icons.close),
         ),
         findsNothing,
       );
 
-      // IconButtonのonPressedを直接呼び出してテスト
-      final iconButton = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.map),
+      // 訪問場所を地図で選択ボタンを直接呼び出してテスト
+      final mapSelectionButton = find.widgetWithText(
+        ElevatedButton,
+        '訪問場所を地図で選択',
       );
-      iconButton.onPressed!();
+      await tester.ensureVisible(mapSelectionButton);
+      await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
 
       // 地図が展開表示されることを確認
       expect(find.byKey(const Key('map_display')), findsOneWidget);
 
-      // IconButton内のアイコンがmap_outlinedに変わることを確認
+      // closeアイコンが表示されることを確認
       expect(
         find.descendant(
           of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map_outlined),
+          matching: find.byIcon(Icons.close),
         ),
         findsOneWidget,
       );
-      expect(
-        find.descendant(
-          of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map),
-        ),
-        findsNothing,
-      );
+      expect(find.text('訪問場所を地図で選択'), findsNothing);
 
       // 地図展開時はアクションボタンが非表示になることを確認
       expect(find.text('キャンセル'), findsNothing);
@@ -205,7 +179,7 @@ void main() {
       expect(find.text('更新'), findsNothing);
     });
 
-    testWidgets('地図アイコンを再度タップで地図が閉じること', (WidgetTester tester) async {
+    testWidgets('×アイコンをタップで地図が閉じること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -218,19 +192,21 @@ void main() {
         ),
       );
 
-      // 地図アイコンボタンのonPressedを直接呼び出して地図を展開
-      final mapButton = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.map),
+      // 訪問場所を地図で選択ボタンを直接呼び出して地図を展開
+      final mapSelectionButton = find.widgetWithText(
+        ElevatedButton,
+        '訪問場所を地図で選択',
       );
-      mapButton.onPressed!();
+      await tester.ensureVisible(mapSelectionButton);
+      await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
 
       // 地図が表示されることを確認
       expect(find.byKey(const Key('map_display')), findsOneWidget);
 
-      // 再度地図アイコンボタンのonPressedを直接呼び出し
+      // closeボタンのonPressedを直接呼び出し
       final mapOutlinedButton = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.map_outlined),
+        find.widgetWithIcon(IconButton, Icons.close),
       );
       mapOutlinedButton.onPressed!();
       await tester.pumpAndSettle();
@@ -238,18 +214,12 @@ void main() {
       // 地図が閉じることを確認
       expect(find.byKey(const Key('map_display')), findsNothing);
 
-      // IconButton内のアイコンが元のmapに戻ることを確認
+      // 地図画面が閉じることを確認
+      expect(find.text('訪問場所を地図で選択'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(IconButton),
-          matching: find.byIcon(Icons.map_outlined),
+          matching: find.byIcon(Icons.close),
         ),
         findsNothing,
       );
