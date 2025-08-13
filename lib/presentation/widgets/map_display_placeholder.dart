@@ -6,7 +6,7 @@ class MapDisplayPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      key: const Key('map_display'),
+      key: const Key('map_view'),
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

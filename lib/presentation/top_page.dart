@@ -4,7 +4,7 @@ import 'package:memora/application/usecases/get_groups_with_members_usecase.dart
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
-import 'package:memora/presentation/widgets/map_display.dart';
+import 'package:memora/presentation/widgets/google_map_view.dart';
 import 'package:memora/presentation/widgets/map_display_placeholder.dart';
 import 'package:memora/presentation/widgets/group_management.dart';
 import 'package:memora/presentation/widgets/member_management.dart';
@@ -179,7 +179,7 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? const MapDisplayPlaceholder()
-            : const MapDisplay(pins: []);
+            : const GoogleMapView(pins: []);
       case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());

@@ -8,14 +8,14 @@ import 'package:memora/presentation/widgets/search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 
-class MapDisplay extends StatelessWidget {
+class GoogleMapView extends StatelessWidget {
   final List<Pin> pins;
   final CurrentLocationService? locationService;
   final Function(LatLng)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
 
-  const MapDisplay({
+  const GoogleMapView({
     super.key,
     required this.pins,
     this.locationService,
@@ -26,7 +26,7 @@ class MapDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _MapDisplayWidget(
+    return _GoogleMapViewWidget(
       pins: pins,
       locationService: locationService,
       onMapLongTapped: onMapLongTapped,
@@ -36,14 +36,14 @@ class MapDisplay extends StatelessWidget {
   }
 }
 
-class _MapDisplayWidget extends StatefulWidget {
+class _GoogleMapViewWidget extends StatefulWidget {
   final List<Pin> pins;
   final CurrentLocationService? locationService;
   final Function(LatLng)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
 
-  const _MapDisplayWidget({
+  const _GoogleMapViewWidget({
     required this.pins,
     this.locationService,
     this.onMapLongTapped,
@@ -52,10 +52,10 @@ class _MapDisplayWidget extends StatefulWidget {
   });
 
   @override
-  State<_MapDisplayWidget> createState() => _MapDisplayWidgetState();
+  State<_GoogleMapViewWidget> createState() => _GoogleMapViewWidgetState();
 }
 
-class _MapDisplayWidgetState extends State<_MapDisplayWidget> {
+class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
   static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
   GoogleMapController? _mapController;
   bool _isBottomSheetVisible = false;
@@ -159,7 +159,7 @@ class _MapDisplayWidgetState extends State<_MapDisplayWidget> {
     );
 
     return Container(
-      key: const Key('map_display'),
+      key: const Key('map_view'),
       child: Stack(
         children: [
           GoogleMap(
