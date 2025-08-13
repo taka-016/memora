@@ -8,8 +8,8 @@ import '../../application/usecases/load_pins_usecase.dart';
 import '../../application/usecases/save_pin_usecase.dart';
 import '../../application/usecases/delete_pin_usecase.dart';
 import '../utils/date_picker_utils.dart';
-import 'google_map_view.dart';
-import 'map_display_placeholder.dart';
+import '../../infrastructure/factories/map_view_factory.dart';
+
 import 'package:uuid/uuid.dart';
 
 class TripEditModal extends StatefulWidget {
@@ -299,12 +299,14 @@ class _TripEditModalState extends State<TripEditModal> {
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const ClipRRect(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                    child: MapDisplayPlaceholder(),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    child: MapViewFactory.create(
+                      MapViewType.placeholder,
+                    ).createMapView(pins: []),
                   ),
                 )
-              : GoogleMapView(
+              : MapViewFactory.create(MapViewType.google).createMapView(
                   pins: _pins,
                   onMapLongTapped: _onMapTapped,
                   onMarkerTapped: _onPinTapped,
