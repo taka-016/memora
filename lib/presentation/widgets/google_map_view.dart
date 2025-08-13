@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -11,7 +12,7 @@ import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 class GoogleMapView extends StatelessWidget {
   final List<Pin> pins;
   final CurrentLocationService? locationService;
-  final Function(LatLng)? onMapLongTapped;
+  final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
 
@@ -39,7 +40,7 @@ class GoogleMapView extends StatelessWidget {
 class _GoogleMapViewWidget extends StatefulWidget {
   final List<Pin> pins;
   final CurrentLocationService? locationService;
-  final Function(LatLng)? onMapLongTapped;
+  final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
 
@@ -124,7 +125,9 @@ class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
 
   void _onMapLongTap(LatLng position) {
     if (widget.onMapLongTapped != null) {
-      widget.onMapLongTapped!(position);
+      widget.onMapLongTapped!(
+        Location(latitude: position.latitude, longitude: position.longitude),
+      );
     }
   }
 
@@ -182,8 +185,8 @@ class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
               locationSearchService: locationSearchService,
               onCandidateSelected: (candidate) async {
                 await _moveToSearchedLocation(
-                  candidate.latitude,
-                  candidate.longitude,
+                  candidate.location.latitude,
+                  candidate.location.longitude,
                 );
               },
             ),

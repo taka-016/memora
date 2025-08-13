@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/location_candidate.dart';
+import 'package:memora/domain/value-objects/location_candidate.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/domain/services/location_search_service.dart';
 import 'package:mockito/annotations.dart';
@@ -38,8 +38,8 @@ void main() {
       expect(results.length, 1);
       expect(results[0].name, '東京タワー');
       expect(results[0].address, '東京都港区芝公園４丁目２−８');
-      expect(results[0].latitude, 35.6586);
-      expect(results[0].longitude, 139.7454);
+      expect(results[0].location.latitude, 35.6586);
+      expect(results[0].location.longitude, 139.7454);
     });
   });
 }

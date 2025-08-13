@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/domain/value-objects/location.dart';
 import '../../domain/entities/trip_entry.dart';
 import '../../domain/entities/pin.dart';
 import '../../domain/repositories/pin_repository.dart';
@@ -84,15 +84,15 @@ class _TripEditModalState extends State<TripEditModal> {
     }
   }
 
-  Future<void> _onMapTapped(LatLng position) async {
+  Future<void> _onMapTapped(Location location) async {
     if (widget.isTestEnvironment) return;
     final uuid = Uuid();
     final pinId = uuid.v4();
     final newPin = Pin(
       id: pinId,
       pinId: pinId,
-      latitude: position.latitude,
-      longitude: position.longitude,
+      latitude: location.latitude,
+      longitude: location.longitude,
     );
 
     try {

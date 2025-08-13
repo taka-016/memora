@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/google_map_view.dart';
 import 'package:mockito/annotations.dart';
@@ -112,7 +113,7 @@ void main() {
             body: GoogleMapView(
               pins: const [testPin],
               locationService: mockLocationService,
-              onMapLongTapped: (LatLng position) {
+              onMapLongTapped: (Location location) {
                 mapTapped = true;
               },
               onMarkerTapped: (Pin pin) {

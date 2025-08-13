@@ -6,7 +6,7 @@ import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/entities/auth_state.dart';
+import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
