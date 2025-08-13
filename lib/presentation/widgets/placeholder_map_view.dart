@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-class MapDisplayPlaceholder extends StatelessWidget {
-  const MapDisplayPlaceholder({super.key});
+class PlaceholderMapView extends StatelessWidget {
+  const PlaceholderMapView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      key: const Key('map_display'),
+      key: const Key('map_view'),
       child: const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

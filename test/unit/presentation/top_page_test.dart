@@ -6,7 +6,7 @@ import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/entities/auth_state.dart';
+import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -164,7 +164,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
-      expect(find.byKey(const Key('map_display')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
     testWidgets('メニューから「グループ年表」を選択すると、グループ一覧画面が表示される', (
@@ -193,7 +193,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
-      expect(find.byKey(const Key('map_display')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
     testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
@@ -219,7 +219,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('map_display')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 

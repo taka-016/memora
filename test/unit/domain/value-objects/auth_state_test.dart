@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/auth_state.dart';
+import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 
 void main() {

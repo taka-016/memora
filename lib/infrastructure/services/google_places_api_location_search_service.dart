@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:memora/domain/services/location_search_service.dart';
-import 'package:memora/domain/entities/location_candidate.dart';
+import 'package:memora/domain/value-objects/location_candidate.dart';
+import 'package:memora/domain/value-objects/location.dart';
 
 /// Google Places APIのText Search APIを利用した位置検索サービス実装
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
@@ -35,10 +36,14 @@ class GooglePlacesApiLocationSearchService implements LocationSearchService {
       return LocationCandidate(
         name: item['name'] ?? '',
         address: item['formatted_address'] ?? '',
-        latitude:
-            (item['geometry']?['location']?['lat'] as num?)?.toDouble() ?? 0.0,
-        longitude:
-            (item['geometry']?['location']?['lng'] as num?)?.toDouble() ?? 0.0,
+        location: Location(
+          latitude:
+              (item['geometry']?['location']?['lat'] as num?)?.toDouble() ??
+              0.0,
+          longitude:
+              (item['geometry']?['location']?['lng'] as num?)?.toDouble() ??
+              0.0,
+        ),
       );
     }).toList();
   }
