@@ -4,8 +4,8 @@ import 'package:memora/application/usecases/get_groups_with_members_usecase.dart
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
-import 'package:memora/presentation/widgets/map_display.dart';
-import 'package:memora/presentation/widgets/map_display_placeholder.dart';
+import 'package:memora/infrastructure/factories/map_view_factory.dart';
+
 import 'package:memora/presentation/widgets/group_management.dart';
 import 'package:memora/presentation/widgets/member_management.dart';
 import 'package:memora/presentation/widgets/settings.dart';
@@ -14,7 +14,7 @@ import 'package:memora/presentation/widgets/account_settings.dart';
 import 'package:memora/presentation/widgets/trip_management.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/auth_state.dart';
+import 'package:memora/domain/value-objects/auth_state.dart';
 
 enum NavigationItem {
   groupTimeline, // グループ年表
@@ -178,8 +178,10 @@ class _TopPageState extends State<TopPage> {
         return _buildGroupTimelineStack();
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
-            ? const MapDisplayPlaceholder()
-            : const MapDisplay();
+            ? MapViewFactory.create(
+                MapViewType.placeholder,
+              ).createMapView(pins: [])
+            : MapViewFactory.create(MapViewType.google).createMapView(pins: []);
       case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());

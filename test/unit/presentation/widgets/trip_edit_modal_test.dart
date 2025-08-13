@@ -139,7 +139,7 @@ void main() {
       );
 
       // 初期状態では地図が表示されていないことを確認
-      expect(find.byKey(const Key('map_display')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsNothing);
 
       // 初期状態では訪問場所を地図で選択ボタンが表示されることを確認
       expect(find.text('訪問場所を地図で選択'), findsOneWidget);
@@ -161,7 +161,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 地図が展開表示されることを確認
-      expect(find.byKey(const Key('map_display')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
 
       // closeアイコンが表示されることを確認
       expect(
@@ -202,7 +202,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 地図が表示されることを確認
-      expect(find.byKey(const Key('map_display')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
 
       // closeボタンのonPressedを直接呼び出し
       final mapOutlinedButton = tester.widget<IconButton>(
@@ -212,7 +212,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 地図が閉じることを確認
-      expect(find.byKey(const Key('map_display')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsNothing);
 
       // 地図画面が閉じることを確認
       expect(find.text('訪問場所を地図で選択'), findsOneWidget);

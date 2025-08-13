@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../utils/firebase_error_util.dart';
 import 'package:flutter/foundation.dart';
-import '../../domain/entities/auth_state.dart';
+import '../../domain/value-objects/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/services/auth_service.dart';
 import '../usecases/get_or_create_member_usecase.dart';
