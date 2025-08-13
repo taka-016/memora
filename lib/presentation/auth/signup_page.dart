@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../domain/entities/auth_state.dart';
+import '../../domain/value-objects/auth_state.dart';
 import '../../application/managers/auth_manager.dart';
 import '../../application/utils/password_validator.dart';
 

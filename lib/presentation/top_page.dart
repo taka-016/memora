@@ -14,7 +14,7 @@ import 'package:memora/presentation/widgets/account_settings.dart';
 import 'package:memora/presentation/widgets/trip_management.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/auth_state.dart';
+import 'package:memora/domain/value-objects/auth_state.dart';
 
 enum NavigationItem {
   groupTimeline, // グループ年表

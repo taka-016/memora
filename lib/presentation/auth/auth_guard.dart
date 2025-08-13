@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../domain/entities/auth_state.dart';
+import '../../domain/value-objects/auth_state.dart';
 import '../../application/managers/auth_manager.dart';
 import 'login_page.dart';
 
