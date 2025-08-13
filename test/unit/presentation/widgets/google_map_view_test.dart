@@ -2,27 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/presentation/widgets/map_display.dart';
+import 'package:memora/presentation/widgets/google_map_view.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/domain/services/current_location_service.dart';
-import 'map_display_test.mocks.dart';
+import 'google_map_view_test.mocks.dart';
 
 @GenerateMocks([CurrentLocationService])
 void main() {
-  group('MapDisplay', () {
+  group('GoogleMapView', () {
     late MockCurrentLocationService mockLocationService;
 
     setUp(() {
       mockLocationService = MockCurrentLocationService();
     });
 
-    testWidgets('MapDisplayが正しく表示される', (WidgetTester tester) async {
+    testWidgets('GoogleMapViewが正しく表示される', (WidgetTester tester) async {
       const testPins = <Pin>[];
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: testPins,
               locationService: mockLocationService,
             ),
@@ -30,14 +30,14 @@ void main() {
         ),
       );
 
-      expect(find.byKey(const Key('map_display')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: const [],
               locationService: mockLocationService,
             ),
@@ -52,7 +52,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: const [],
               locationService: mockLocationService,
             ),
@@ -82,7 +82,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: testPins,
               locationService: mockLocationService,
             ),
@@ -109,7 +109,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: const [testPin],
               locationService: mockLocationService,
               onMapLongTapped: (LatLng position) {
@@ -145,7 +145,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: MapDisplay(
+            body: GoogleMapView(
               pins: const [testPin],
               locationService: mockLocationService,
             ),

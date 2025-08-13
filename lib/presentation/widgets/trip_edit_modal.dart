@@ -8,7 +8,7 @@ import '../../application/usecases/load_pins_usecase.dart';
 import '../../application/usecases/save_pin_usecase.dart';
 import '../../application/usecases/delete_pin_usecase.dart';
 import '../utils/date_picker_utils.dart';
-import 'map_display.dart';
+import 'google_map_view.dart';
 import 'map_display_placeholder.dart';
 import 'package:uuid/uuid.dart';
 
@@ -304,7 +304,7 @@ class _TripEditModalState extends State<TripEditModal> {
                     child: MapDisplayPlaceholder(),
                   ),
                 )
-              : MapDisplay(
+              : GoogleMapView(
                   pins: _pins,
                   onMapLongTapped: _onMapTapped,
                   onMarkerTapped: _onPinTapped,
