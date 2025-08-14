@@ -50,5 +50,60 @@ void main() {
       expect(result.isEmpty, true);
       verify(mockPinRepository.getPins()).called(1);
     });
+
+    test('tripIdが指定されたとき、getPinsByTripIdが呼ばれる', () async {
+      // Arrange
+      const tripId = 'trip123';
+      final pins = [
+        Pin(
+          id: '1',
+          pinId: '1',
+          tripId: tripId,
+          latitude: 35.681236,
+          longitude: 139.767125,
+        ),
+        Pin(
+          id: '2',
+          pinId: '2',
+          tripId: tripId,
+          latitude: 34.123456,
+          longitude: 135.123456,
+        ),
+      ];
+
+      when(
+        mockPinRepository.getPinsByTripId(tripId),
+      ).thenAnswer((_) async => pins);
+
+      // Act
+      final result = await loadPinsUseCase.execute(tripId);
+
+      // Assert
+      expect(result, isA<List<Pin>>());
+      expect(result.length, 2);
+      expect(result[0].tripId, tripId);
+      expect(result[1].tripId, tripId);
+      verify(mockPinRepository.getPinsByTripId(tripId)).called(1);
+      verifyNever(mockPinRepository.getPins());
+    });
+
+    test('tripIdがnullのとき、getPinsが呼ばれる', () async {
+      // Arrange
+      final pins = [
+        Pin(id: '1', pinId: '1', latitude: 35.681236, longitude: 139.767125),
+        Pin(id: '2', pinId: '2', latitude: 34.123456, longitude: 135.123456),
+      ];
+
+      when(mockPinRepository.getPins()).thenAnswer((_) async => pins);
+
+      // Act
+      final result = await loadPinsUseCase.execute(null);
+
+      // Assert
+      expect(result, isA<List<Pin>>());
+      expect(result.length, 2);
+      verify(mockPinRepository.getPins()).called(1);
+      verifyNever(mockPinRepository.getPinsByTripId(any));
+    });
   });
 }
