@@ -6,7 +6,10 @@ class LoadPinsUseCase {
 
   LoadPinsUseCase(this._pinRepository);
 
-  Future<List<Pin>> execute() async {
+  Future<List<Pin>> execute([String? tripId]) async {
+    if (tripId != null) {
+      return await _pinRepository.getPinsByTripId(tripId);
+    }
     return await _pinRepository.getPins();
   }
 }

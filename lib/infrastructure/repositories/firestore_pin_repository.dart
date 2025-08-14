@@ -41,4 +41,37 @@ class FirestorePinRepository implements PinRepository {
       await _firestore.collection('pins').doc(doc.id).delete();
     }
   }
+
+  @override
+  Future<List<Pin>> getPinsByTripId(String tripId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('pins')
+          .where('tripId', isEqualTo: tripId)
+          .get();
+      return snapshot.docs
+          .map((doc) => FirestorePinMapper.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<void> savePinWithTrip(Pin pin) async {
+    await _firestore
+        .collection('pins')
+        .add(FirestorePinMapper.toFirestore(pin));
+  }
+
+  @override
+  Future<void> deletePinsByTripId(String tripId) async {
+    final query = await _firestore
+        .collection('pins')
+        .where('tripId', isEqualTo: tripId)
+        .get();
+    for (final doc in query.docs) {
+      await _firestore.collection('pins').doc(doc.id).delete();
+    }
+  }
 }
