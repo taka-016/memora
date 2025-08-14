@@ -4,20 +4,17 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/presentation/widgets/trip_management.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, PinRepository])
+@GenerateMocks([TripEntryRepository])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
-  late MockPinRepository mockPinRepository;
   late List<TripEntry> testTripEntries;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
-    mockPinRepository = MockPinRepository();
     testTripEntries = [
       TripEntry(
         id: 'trip-1',
@@ -60,7 +57,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -112,7 +108,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -149,7 +144,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -181,7 +175,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -214,7 +207,6 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -256,7 +248,6 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -297,7 +288,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -341,7 +331,6 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -381,7 +370,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -422,7 +410,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -468,7 +455,6 @@ void main() {
                 backPressed = true;
               },
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -505,7 +491,6 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),

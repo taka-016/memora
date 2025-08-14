@@ -33,24 +33,26 @@ void main() {
       repository = FirestorePinRepository(firestore: mockFirestore);
     });
 
-    test('savePinがpins collectionにpinId, latitude, longitudeをaddする', () async {
-      const pinId = 'test-marker-id';
-      const latitude = 35.0;
-      const longitude = 139.0;
+    test('savePinがPinエンティティをFirestoreに保存する', () async {
+      final pin = Pin(
+        id: 'test-id',
+        pinId: 'test-marker-id',
+        latitude: 35.0,
+        longitude: 139.0,
+      );
       when(
         mockCollection.add(any),
       ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
 
-      await repository.savePin(pinId, latitude, longitude);
+      await repository.savePin(pin);
 
       verify(
         mockCollection.add(
           argThat(
             allOf(
-              containsPair('pinId', pinId),
-              containsPair('latitude', latitude),
-              containsPair('longitude', longitude),
-              contains('createdAt'),
+              containsPair('pinId', 'test-marker-id'),
+              containsPair('latitude', 35.0),
+              containsPair('longitude', 139.0),
             ),
           ),
         ),
