@@ -26,17 +26,18 @@ void main() {
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: 'テストメモ',
       );
+      const generatedId = 'generated-trip-id';
 
       when(
         mockTripEntryRepository.saveTripEntry(tripEntry),
-      ).thenAnswer((_) async {});
+      ).thenAnswer((_) async => generatedId);
 
       // act
-      await usecase.execute(tripEntry);
+      final result = await usecase.execute(tripEntry);
 
       // assert
+      expect(result, equals(generatedId));
       verify(mockTripEntryRepository.saveTripEntry(tripEntry));
     });
 
@@ -49,10 +50,11 @@ void main() {
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
       );
+      const generatedId = 'generated-trip-id';
 
       when(
         mockTripEntryRepository.saveTripEntry(tripEntry),
-      ).thenAnswer((_) async {});
+      ).thenAnswer((_) async => generatedId);
 
       // act & assert
       expect(() => usecase.execute(tripEntry), returnsNormally);

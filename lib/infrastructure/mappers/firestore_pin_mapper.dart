@@ -7,8 +7,33 @@ class FirestorePinMapper {
     return Pin(
       id: doc.id,
       pinId: data?['pinId'] as String? ?? '',
+      tripId: data?['tripId'] as String?,
       latitude: (data?['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (data?['longitude'] as num?)?.toDouble() ?? 0.0,
+      visitStartDate: data?['visitStartDate'] != null
+          ? (data!['visitStartDate'] as Timestamp).toDate()
+          : null,
+      visitEndDate: data?['visitEndDate'] != null
+          ? (data!['visitEndDate'] as Timestamp).toDate()
+          : null,
+      visitMemo: data?['visitMemo'] as String?,
     );
+  }
+
+  static Map<String, dynamic> toFirestore(Pin pin) {
+    return {
+      'pinId': pin.pinId,
+      'tripId': pin.tripId,
+      'latitude': pin.latitude,
+      'longitude': pin.longitude,
+      'visitStartDate': pin.visitStartDate != null
+          ? Timestamp.fromDate(pin.visitStartDate!)
+          : null,
+      'visitEndDate': pin.visitEndDate != null
+          ? Timestamp.fromDate(pin.visitEndDate!)
+          : null,
+      'visitMemo': pin.visitMemo,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
   }
 }

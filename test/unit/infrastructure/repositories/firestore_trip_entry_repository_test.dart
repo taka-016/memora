@@ -38,37 +38,41 @@ void main() {
       repository = FirestoreTripEntryRepository(firestore: mockFirestore);
     });
 
-    test('saveTripEntryがtrip_entries collectionに旅行情報をaddする', () async {
-      final tripEntry = TripEntry(
-        id: 'trip001',
-        groupId: 'group001',
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
-      );
+    test(
+      'saveTripEntryがtrip_entries collectionに旅行情報をaddし、ドキュメントIDを返す',
+      () async {
+        final tripEntry = TripEntry(
+          id: 'trip001',
+          groupId: 'group001',
+          tripName: 'テスト旅行',
+          tripStartDate: DateTime(2025, 6, 1),
+          tripEndDate: DateTime(2025, 6, 10),
+          tripMemo: 'テストメモ',
+        );
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+        when(mockDocRef.id).thenReturn('generated-doc-id');
+        when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
 
-      await repository.saveTripEntry(tripEntry);
+        final result = await repository.saveTripEntry(tripEntry);
 
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('groupId', 'group001'),
-              containsPair('tripName', 'テスト旅行'),
-              containsPair('tripMemo', 'テストメモ'),
-              contains('tripStartDate'),
-              contains('tripEndDate'),
-              contains('createdAt'),
-            ]),
+        expect(result, equals('generated-doc-id'));
+        verify(
+          mockCollection.add(
+            argThat(
+              allOf([
+                containsPair('groupId', 'group001'),
+                containsPair('tripName', 'テスト旅行'),
+                containsPair('tripMemo', 'テストメモ'),
+                contains('tripStartDate'),
+                contains('tripEndDate'),
+                contains('createdAt'),
+              ]),
+            ),
           ),
-        ),
-      ).called(1);
-    });
+        ).called(1);
+      },
+    );
 
     test('getTripEntriesがFirestoreからTripEntryのリストを返す', () async {
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);

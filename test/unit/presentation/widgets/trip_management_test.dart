@@ -481,7 +481,7 @@ void main() {
       ).thenAnswer((_) async => []);
       when(
         mockTripEntryRepository.saveTripEntry(any),
-      ).thenAnswer((_) async => {});
+      ).thenAnswer((_) async => 'generated-id');
 
       // Act
       await tester.pumpWidget(

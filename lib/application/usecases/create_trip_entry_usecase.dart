@@ -6,7 +6,7 @@ class CreateTripEntryUsecase {
 
   CreateTripEntryUsecase(this._tripEntryRepository);
 
-  Future<void> execute(TripEntry tripEntry) async {
-    await _tripEntryRepository.saveTripEntry(tripEntry);
+  Future<String> execute(TripEntry tripEntry) async {
+    return await _tripEntryRepository.saveTripEntry(tripEntry);
   }
 }
