@@ -5,9 +5,7 @@ import '../../application/usecases/update_trip_entry_usecase.dart';
 import '../../application/usecases/delete_trip_entry_usecase.dart';
 import '../../domain/entities/trip_entry.dart';
 import '../../domain/repositories/trip_entry_repository.dart';
-import '../../domain/repositories/pin_repository.dart';
 import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
-import '../../infrastructure/repositories/firestore_pin_repository.dart';
 import 'trip_edit_modal.dart';
 
 class TripManagement extends StatefulWidget {
@@ -15,7 +13,6 @@ class TripManagement extends StatefulWidget {
   final int year;
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
-  final PinRepository? pinRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -24,7 +21,6 @@ class TripManagement extends StatefulWidget {
     required this.year,
     this.onBackPressed,
     this.tripEntryRepository,
-    this.pinRepository,
     this.isTestEnvironment = false,
   });
 
@@ -48,18 +44,10 @@ class _TripManagementState extends State<TripManagement> {
     // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
-    // PinRepositoryは必須のため、テスト環境では注入されたものを使用
-    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
-    _createTripEntryUsecase = CreateTripEntryUsecase(
-      tripEntryRepository,
-      pinRepository,
-    );
-    _updateTripEntryUsecase = UpdateTripEntryUsecase(
-      tripEntryRepository,
-      pinRepository,
-    );
+    _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
+    _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
     _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
 
     _loadTripEntries();
@@ -106,7 +94,7 @@ class _TripManagementState extends State<TripManagement> {
         isTestEnvironment: widget.isTestEnvironment,
         onSave: (tripEntry) async {
           try {
-            await _createTripEntryUsecase.execute(tripEntry, []);
+            await _createTripEntryUsecase.execute(tripEntry);
             if (mounted) {
               await _loadTripEntries();
               scaffoldMessenger.showSnackBar(
@@ -137,7 +125,7 @@ class _TripManagementState extends State<TripManagement> {
         isTestEnvironment: widget.isTestEnvironment,
         onSave: (updatedTripEntry) async {
           try {
-            await _updateTripEntryUsecase.execute(updatedTripEntry, []);
+            await _updateTripEntryUsecase.execute(updatedTripEntry);
             if (mounted) {
               await _loadTripEntries();
               scaffoldMessenger.showSnackBar(

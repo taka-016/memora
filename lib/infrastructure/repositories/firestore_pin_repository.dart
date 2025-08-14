@@ -10,13 +10,10 @@ class FirestorePinRepository implements PinRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> savePin(String pinId, double latitude, double longitude) async {
-    await _firestore.collection('pins').add({
-      'pinId': pinId,
-      'latitude': latitude,
-      'longitude': longitude,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+  Future<void> savePin(Pin pin) async {
+    await _firestore
+        .collection('pins')
+        .add(FirestorePinMapper.toFirestore(pin));
   }
 
   @override
