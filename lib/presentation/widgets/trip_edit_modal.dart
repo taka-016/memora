@@ -4,8 +4,8 @@ import '../../domain/entities/trip_entry.dart';
 import '../../domain/entities/pin.dart';
 import '../../domain/repositories/pin_repository.dart';
 import '../../infrastructure/repositories/firestore_pin_repository.dart';
-import '../../application/usecases/load_pins_usecase.dart';
-import '../../application/usecases/save_pin_usecase.dart';
+import '../../application/usecases/get_pins_usecase.dart';
+import '../../application/usecases/create_pin_usecase.dart';
 import '../../application/usecases/delete_pin_usecase.dart';
 import '../utils/date_picker_utils.dart';
 import '../../infrastructure/factories/map_view_factory.dart';
@@ -70,8 +70,8 @@ class _TripEditModalState extends State<TripEditModal> {
 
   Future<void> _loadPins() async {
     try {
-      final loadPinsUseCase = LoadPinsUseCase(_pinRepository);
-      final pins = await loadPinsUseCase.execute();
+      final getPinsUseCase = GetPinsUseCase(_pinRepository);
+      final pins = await getPinsUseCase.execute();
       setState(() {
         _pins = pins;
       });
@@ -96,12 +96,8 @@ class _TripEditModalState extends State<TripEditModal> {
     );
 
     try {
-      final savePinUseCase = SavePinUseCase(_pinRepository);
-      await savePinUseCase.execute(
-        newPin.pinId,
-        newPin.latitude,
-        newPin.longitude,
-      );
+      final createPinUseCase = CreatePinUseCase(_pinRepository);
+      await createPinUseCase.execute(newPin);
 
       setState(() {
         _pins.add(newPin);

@@ -3,22 +3,22 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
-import 'package:memora/application/usecases/load_pins_usecase.dart';
+import 'package:memora/application/usecases/get_pins_usecase.dart';
 
 @GenerateMocks([FirestorePinRepository])
-import 'load_pins_usecase_test.mocks.dart';
+import 'get_pins_usecase_test.mocks.dart';
 
 void main() {
   late MockFirestorePinRepository mockPinRepository;
-  late LoadPinsUseCase loadPinsUseCase;
+  late GetPinsUseCase getPinsUseCase;
 
   setUp(() {
     mockPinRepository = MockFirestorePinRepository();
-    loadPinsUseCase = LoadPinsUseCase(mockPinRepository);
+    getPinsUseCase = GetPinsUseCase(mockPinRepository);
   });
 
-  group('LoadPinsUseCase', () {
-    test('getPinsが呼ばれたとき、LatLngのリストを返す', () async {
+  group('GetPinsUseCase', () {
+    test('getPinsが呼ばれたとき、Pinのリストを返す', () async {
       // Arrange
       final pins = [
         Pin(id: '1', pinId: '1', latitude: 35.681236, longitude: 139.767125),
@@ -28,7 +28,7 @@ void main() {
       when(mockPinRepository.getPins()).thenAnswer((_) async => pins);
 
       // Act
-      final result = await loadPinsUseCase.execute();
+      final result = await getPinsUseCase.execute();
 
       // Assert
       expect(result, isA<List<Pin>>());
@@ -38,12 +38,12 @@ void main() {
       verify(mockPinRepository.getPins()).called(1);
     });
 
-    test('getPinsが空のリストを返すとき、空のLatLngリストを返す', () async {
+    test('getPinsが空のリストを返すとき、空のPinリストを返す', () async {
       // Arrange
       when(mockPinRepository.getPins()).thenAnswer((_) async => []);
 
       // Act
-      final result = await loadPinsUseCase.execute();
+      final result = await getPinsUseCase.execute();
 
       // Assert
       expect(result, isA<List<Pin>>());
