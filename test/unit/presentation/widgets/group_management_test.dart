@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -10,6 +11,8 @@ import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/group_member_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/presentation/widgets/group_management.dart';
 
 import 'group_management_test.mocks.dart';
@@ -20,6 +23,8 @@ import 'group_management_test.mocks.dart';
   GroupMemberRepository,
   GroupEventRepository,
   TripEntryRepository,
+  PinRepository,
+  TripParticipantRepository,
 ])
 void main() {
   late MockGroupRepository mockGroupRepository;
@@ -27,6 +32,8 @@ void main() {
   late MockGroupMemberRepository mockGroupMemberRepository;
   late MockGroupEventRepository mockGroupEventRepository;
   late MockTripEntryRepository mockTripEntryRepository;
+  late MockPinRepository mockPinRepository;
+  late MockTripParticipantRepository mockTripParticipantRepository;
   late Member testMember;
 
   setUp(() {
@@ -35,6 +42,8 @@ void main() {
     mockGroupMemberRepository = MockGroupMemberRepository();
     mockGroupEventRepository = MockGroupEventRepository();
     mockTripEntryRepository = MockTripEntryRepository();
+    mockPinRepository = MockPinRepository();
+    mockTripParticipantRepository = MockTripParticipantRepository();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -99,6 +108,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -138,6 +149,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -168,6 +181,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -197,6 +212,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -242,6 +259,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -294,6 +313,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -341,6 +362,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -402,6 +425,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -496,6 +521,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -533,12 +560,23 @@ void main() {
 
     testWidgets('グループ削除時にグループメンバーも削除されること', (WidgetTester tester) async {
       // Arrange
+      final now = DateTime.now();
       final managedGroups = [
         Group(
           id: 'group-1',
           administratorId: testMember.id,
           name: 'Test Group 1',
           memo: 'Test memo 1',
+        ),
+      ];
+      final tripEntries = [
+        TripEntry(
+          id: 'trip1',
+          groupId: 'group-1',
+          tripName: 'テスト旅行1',
+          tripStartDate: now,
+          tripEndDate: now,
+          tripMemo: null,
         ),
       ];
 
@@ -555,6 +593,10 @@ void main() {
         mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
       ).thenAnswer((_) async {});
 
+      when(
+        mockTripEntryRepository.getTripEntries(),
+      ).thenAnswer((_) async => tripEntries);
+
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -566,6 +608,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -592,12 +636,23 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
+      final now = DateTime.now();
       final managedGroups = [
         Group(
           id: 'group-1',
           administratorId: testMember.id,
           name: 'Test Group 1',
           memo: 'Test memo 1',
+        ),
+      ];
+      final tripEntries = [
+        TripEntry(
+          id: 'trip1',
+          groupId: 'group-1',
+          tripName: 'テスト旅行1',
+          tripStartDate: now,
+          tripEndDate: now,
+          tripMemo: null,
         ),
       ];
 
@@ -617,6 +672,10 @@ void main() {
         mockGroupRepository.deleteGroup('group-1'),
       ).thenThrow(Exception('削除エラー'));
 
+      when(
+        mockTripEntryRepository.getTripEntries(),
+      ).thenAnswer((_) async => tripEntries);
+
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -628,6 +687,8 @@ void main() {
               groupMemberRepository: mockGroupMemberRepository,
               groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
