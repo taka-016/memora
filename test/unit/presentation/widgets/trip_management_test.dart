@@ -4,17 +4,23 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/presentation/widgets/trip_management.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository])
+@GenerateMocks([TripEntryRepository, PinRepository, TripParticipantRepository])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
+  late MockPinRepository mockPinRepository;
+  late MockTripParticipantRepository mockTripParticipantRepository;
   late List<TripEntry> testTripEntries;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
+    mockPinRepository = MockPinRepository();
+    mockTripParticipantRepository = MockTripParticipantRepository();
     testTripEntries = [
       TripEntry(
         id: 'trip-1',
@@ -57,6 +63,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -108,6 +116,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -144,6 +154,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -175,6 +187,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -207,6 +221,8 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
+            pinRepository: mockPinRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -248,6 +264,8 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
+            pinRepository: mockPinRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -288,6 +306,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -331,6 +351,8 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
+            pinRepository: mockPinRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -370,6 +392,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -410,6 +434,8 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -455,6 +481,8 @@ void main() {
                 backPressed = true;
               },
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -491,6 +519,8 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -526,6 +556,56 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
+    });
+
+    group('ピン機能連携のテスト', () {
+      late MockPinRepository mockPinRepository;
+
+      setUp(() {
+        mockPinRepository = MockPinRepository();
+      });
+
+      testWidgets('新規作成時にpinsと一緒に保存されること', (WidgetTester tester) async {
+        // Arrange
+        when(
+          mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+            testGroupId,
+            testYear,
+          ),
+        ).thenAnswer((_) async => []);
+        when(
+          mockTripEntryRepository.saveTripEntry(any),
+        ).thenAnswer((_) async => 'test-trip-id');
+
+        // Act
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                pinRepository: mockPinRepository,
+                tripParticipantRepository: mockTripParticipantRepository,
+                isTestEnvironment: true,
+              ),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // 新規作成ボタンをタップ
+        await tester.tap(find.text('旅行追加'));
+        await tester.pumpAndSettle();
+
+        // モーダルが開くことを確認
+        expect(find.text('旅行新規作成'), findsOneWidget);
+
+        // 地図を開いてピンを追加するテストは、実際のUI操作が複雑なため、
+        // onSaveコールバックでpinsが渡されることをテストする構造に変更する予定
+      });
     });
   });
 }

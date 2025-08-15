@@ -64,4 +64,16 @@ class FirestoreTripParticipantRepository implements TripParticipantRepository {
       await doc.reference.delete();
     }
   }
+
+  @override
+  Future<void> deleteTripParticipantsByTripId(String tripId) async {
+    final snapshot = await _firestore
+        .collection('trip_participants')
+        .where('tripId', isEqualTo: tripId)
+        .get();
+
+    for (final doc in snapshot.docs) {
+      await doc.reference.delete();
+    }
+  }
 }
