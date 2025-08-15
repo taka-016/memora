@@ -3,9 +3,17 @@ import '../../application/usecases/create_trip_entry_usecase.dart';
 import '../../application/usecases/get_trip_entries_usecase.dart';
 import '../../application/usecases/update_trip_entry_usecase.dart';
 import '../../application/usecases/delete_trip_entry_usecase.dart';
+import '../../application/usecases/create_pin_usecase.dart';
+import '../../application/usecases/get_pins_by_trip_id_usecase.dart';
+import '../../application/usecases/delete_pins_by_trip_id_usecase.dart';
 import '../../domain/entities/trip_entry.dart';
+import '../../domain/entities/pin.dart';
 import '../../domain/repositories/trip_entry_repository.dart';
+import '../../domain/repositories/pin_repository.dart';
+import '../../domain/repositories/trip_participant_repository.dart';
 import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
+import '../../infrastructure/repositories/firestore_pin_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'trip_edit_modal.dart';
 
 class TripManagement extends StatefulWidget {
@@ -13,6 +21,8 @@ class TripManagement extends StatefulWidget {
   final int year;
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
+  final PinRepository? pinRepository;
+  final TripParticipantRepository? tripParticipantRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -21,6 +31,8 @@ class TripManagement extends StatefulWidget {
     required this.year,
     this.onBackPressed,
     this.tripEntryRepository,
+    this.pinRepository,
+    this.tripParticipantRepository,
     this.isTestEnvironment = false,
   });
 
@@ -33,6 +45,9 @@ class _TripManagementState extends State<TripManagement> {
   late final CreateTripEntryUsecase _createTripEntryUsecase;
   late final UpdateTripEntryUsecase _updateTripEntryUsecase;
   late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
+  CreatePinUseCase? _createPinUseCase;
+  GetPinsByTripIdUseCase? _getPinsByTripIdUseCase;
+  DeletePinsByTripIdUseCase? _deletePinsByTripIdUseCase;
 
   List<TripEntry> _tripEntries = [];
   bool _isLoading = true;
@@ -44,11 +59,22 @@ class _TripManagementState extends State<TripManagement> {
     // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
+    final tripParticipantRepository =
+        widget.tripParticipantRepository ??
+        FirestoreTripParticipantRepository();
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
-    _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
+    _deleteTripEntryUsecase = DeleteTripEntryUsecase(
+      tripEntryRepository,
+      pinRepository,
+      tripParticipantRepository,
+    );
+    _createPinUseCase = CreatePinUseCase(pinRepository);
+    _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);
+    _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
 
     _loadTripEntries();
   }
@@ -92,9 +118,18 @@ class _TripManagementState extends State<TripManagement> {
         groupId: widget.groupId,
         year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
-        onSave: (tripEntry) async {
+        onSave: (tripEntry, {List<Pin>? pins}) async {
           try {
-            await _createTripEntryUsecase.execute(tripEntry);
+            final tripId = await _createTripEntryUsecase.execute(tripEntry);
+
+            // pinsが渡されている場合、tripIdを設定して保存
+            if (pins != null && pins.isNotEmpty && _createPinUseCase != null) {
+              for (final pin in pins) {
+                final pinWithTripId = pin.copyWith(tripId: tripId);
+                await _createPinUseCase!.execute(pinWithTripId);
+              }
+            }
+
             if (mounted) {
               await _loadTripEntries();
               scaffoldMessenger.showSnackBar(
@@ -116,16 +151,43 @@ class _TripManagementState extends State<TripManagement> {
   Future<void> _showEditTripDialog(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
+    // 編集時は既存のpinsを取得
+    List<Pin>? existingPins;
+    if (_getPinsByTripIdUseCase != null) {
+      try {
+        existingPins = await _getPinsByTripIdUseCase!.execute(tripEntry.id);
+      } catch (e) {
+        // エラーの場合は空のリストとして処理
+        existingPins = [];
+      }
+    } else {
+      existingPins = [];
+    }
+
+    if (!mounted) return;
+
     await showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
         tripEntry: tripEntry,
+        pins: existingPins,
         year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
-        onSave: (updatedTripEntry) async {
+        onSave: (updatedTripEntry, {List<Pin>? pins}) async {
           try {
             await _updateTripEntryUsecase.execute(updatedTripEntry);
+
+            if (pins != null &&
+                _deletePinsByTripIdUseCase != null &&
+                _createPinUseCase != null) {
+              await _deletePinsByTripIdUseCase!.execute(updatedTripEntry.id);
+              for (final pin in pins) {
+                final pinWithTripId = pin.copyWith(tripId: updatedTripEntry.id);
+                await _createPinUseCase!.execute(pinWithTripId);
+              }
+            }
+
             if (mounted) {
               await _loadTripEntries();
               scaffoldMessenger.showSnackBar(

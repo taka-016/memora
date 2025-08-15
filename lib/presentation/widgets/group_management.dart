@@ -15,11 +15,15 @@ import '../../domain/repositories/member_repository.dart';
 import '../../domain/repositories/group_member_repository.dart';
 import '../../domain/repositories/group_event_repository.dart';
 import '../../domain/repositories/trip_entry_repository.dart';
+import '../../domain/repositories/pin_repository.dart';
+import '../../domain/repositories/trip_participant_repository.dart';
 import '../../infrastructure/repositories/firestore_group_repository.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../infrastructure/repositories/firestore_group_member_repository.dart';
 import '../../infrastructure/repositories/firestore_group_event_repository.dart';
 import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
+import '../../infrastructure/repositories/firestore_pin_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'group_edit_modal.dart';
 
 class GroupManagement extends StatefulWidget {
@@ -29,6 +33,8 @@ class GroupManagement extends StatefulWidget {
   final GroupMemberRepository? groupMemberRepository;
   final GroupEventRepository? groupEventRepository;
   final TripEntryRepository? tripEntryRepository;
+  final PinRepository? pinRepository;
+  final TripParticipantRepository? tripParticipantRepository;
 
   const GroupManagement({
     super.key,
@@ -38,6 +44,8 @@ class GroupManagement extends StatefulWidget {
     this.groupMemberRepository,
     this.groupEventRepository,
     this.tripEntryRepository,
+    this.pinRepository,
+    this.tripParticipantRepository,
   });
 
   @override
@@ -73,6 +81,10 @@ class _GroupManagementState extends State<GroupManagement> {
         widget.groupEventRepository ?? FirestoreGroupEventRepository();
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
+    final tripParticipantRepository =
+        widget.tripParticipantRepository ??
+        FirestoreTripParticipantRepository();
 
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
       groupRepository,
@@ -84,6 +96,8 @@ class _GroupManagementState extends State<GroupManagement> {
       groupMemberRepository,
       groupEventRepository,
       tripEntryRepository,
+      pinRepository,
+      tripParticipantRepository,
     );
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);

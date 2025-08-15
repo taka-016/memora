@@ -178,7 +178,7 @@
 - [x] グループ新規作成時にグループメンバーを作成した場合、group_membersのgroupIdにグループのidが入っていない不具合を修正（idを統一する必要がある）
 - [x] グループに紐づくグループメンバーの削除は_deleteGroupUsecase.executeの責務とする
 - [x] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
-- [ ] グループ削除時は、groupIdで紐づくtrip_entriesが削除されるため、tripIdで紐づくpinsとtrip_participantsも削除する（delete_group_usecaseで対応）
+- [x] グループ削除時は、groupIdで紐づくtrip_entriesが削除されるため、tripIdで紐づくpinsとtrip_participantsも削除する（delete_group_usecaseで対応）
 
 ## グループ年表画面
 
@@ -222,9 +222,15 @@
 - [x] 年またぎ旅行への対応（終了日の年チェックを削除）
 - [x] パラメータの年と現在年が異なる場合、カレンダーの初期表示はパラメータの年の1月にする
 - [x] 開始日が入力されている場合かつ終了日が未入力の場合、終了日タップで開くカレンダーは開始日の年月を初期値とする
-- [ ] 新規作成時は、初期はpinsは空の状態で、登録時に採番されるtrip_entriesのidをtripIdとして使用し、pinsを作成する
-- [ ] 編集時は、trip_entriesのidでpinsのtripIdを紐づけて取得、更新時にtripIdをキーにpinsをDelete&insertする
-- [ ] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
+- [x] 新規作成時のマップピン操作
+  - [x] pinsは初期値状態（空のデータ）
+  - [x] マップ上のマーカーとpinsを同期する（このタイミングはDBに書き込まない）
+  - [x] 登録ボタン実行時に、旅行管理画面でtrip_entriesの登録と合わせてtripIdをキーとしてpinsを登録する
+- [x] 編集時のマップピン操作
+  - [x] 旅行管理画面でtrip_entriesのidでpinsのtripIdを紐づけて取得し、旅行編集画面に渡し、pinsにセットする
+  - [x] マップ上のマーカーとpinsを同期する（このタイミングはDBに書き込まない）
+  - [x] 更新ボタン実行時に、旅行管理画面でtrip_entriesの更新と合わせてtripIdをキーにpinsをDelete&insertする
+- [x] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
 
 ## 地図画面
 

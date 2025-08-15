@@ -6,4 +6,5 @@ abstract class TripParticipantRepository {
   Future<void> deleteTripParticipant(String tripParticipantId);
   Future<List<TripParticipant>> getTripParticipantsByTripId(String tripId);
   Future<void> deleteTripParticipantsByMemberId(String memberId);
+  Future<void> deleteTripParticipantsByTripId(String tripId);
 }
