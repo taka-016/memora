@@ -2,11 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import '../../domain/entities/trip_entry.dart';
 import '../../domain/entities/pin.dart';
-import '../../domain/repositories/pin_repository.dart';
-import '../../infrastructure/repositories/firestore_pin_repository.dart';
-import '../../application/usecases/get_pins_usecase.dart';
-import '../../application/usecases/create_pin_usecase.dart';
-import '../../application/usecases/delete_pin_usecase.dart';
 import '../utils/date_picker_utils.dart';
 import '../../infrastructure/factories/map_view_factory.dart';
 
@@ -15,7 +10,8 @@ import 'package:uuid/uuid.dart';
 class TripEditModal extends StatefulWidget {
   final String groupId;
   final TripEntry? tripEntry;
-  final Function(TripEntry) onSave;
+  final List<Pin>? pins;
+  final Function(TripEntry, {List<Pin>? pins}) onSave;
   final bool isTestEnvironment;
   final int? year;
 
@@ -23,6 +19,7 @@ class TripEditModal extends StatefulWidget {
     super.key,
     required this.groupId,
     this.tripEntry,
+    this.pins,
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
@@ -45,15 +42,11 @@ class _TripEditModalState extends State<TripEditModal> {
   final GlobalKey _mapIconKey = GlobalKey();
 
   // 地図とピン管理用の変数
-  late PinRepository _pinRepository;
   List<Pin> _pins = [];
 
   @override
   void initState() {
     super.initState();
-    if (!widget.isTestEnvironment) {
-      _pinRepository = FirestorePinRepository();
-    }
     _nameController = TextEditingController(
       text: widget.tripEntry?.tripName ?? '',
     );
@@ -63,29 +56,13 @@ class _TripEditModalState extends State<TripEditModal> {
     _visitLocationController = TextEditingController();
     _startDate = widget.tripEntry?.tripStartDate;
     _endDate = widget.tripEntry?.tripEndDate;
-    if (!widget.isTestEnvironment) {
-      _loadPins();
+
+    if (widget.pins != null) {
+      _pins = List.from(widget.pins!);
     }
   }
 
-  Future<void> _loadPins() async {
-    try {
-      final getPinsUseCase = GetPinsUseCase(_pinRepository);
-      final pins = await getPinsUseCase.execute();
-      setState(() {
-        _pins = pins;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('ピンの読み込みに失敗: $e')));
-      }
-    }
-  }
-
-  Future<void> _onMapTapped(Location location) async {
-    if (widget.isTestEnvironment) return;
+  Future<void> _onMapLongTapped(Location location) async {
     final uuid = Uuid();
     final pinId = uuid.v4();
     final newPin = Pin(
@@ -95,50 +72,15 @@ class _TripEditModalState extends State<TripEditModal> {
       longitude: location.longitude,
     );
 
-    try {
-      final createPinUseCase = CreatePinUseCase(_pinRepository);
-      await createPinUseCase.execute(newPin);
-
-      setState(() {
-        _pins.add(newPin);
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('マーカーを保存しました')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('マーカー保存に失敗: $e')));
-      }
-    }
+    setState(() {
+      _pins.add(newPin);
+    });
   }
 
   Future<void> _onMarkerDeleted(String pinId) async {
-    if (widget.isTestEnvironment) return;
-    try {
-      final deletePinUseCase = DeletePinUseCase(_pinRepository);
-      await deletePinUseCase.execute(pinId);
-
-      setState(() {
-        _pins.removeWhere((pin) => pin.pinId == pinId);
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('マーカーを削除しました')));
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('マーカー削除に失敗: $e')));
-      }
-    }
+    setState(() {
+      _pins.removeWhere((pin) => pin.pinId == pinId);
+    });
   }
 
   void _onPinTapped(Pin pin) {
@@ -304,7 +246,7 @@ class _TripEditModalState extends State<TripEditModal> {
                 )
               : MapViewFactory.create(MapViewType.google).createMapView(
                   pins: _pins,
-                  onMapLongTapped: _onMapTapped,
+                  onMapLongTapped: _onMapLongTapped,
                   onMarkerTapped: _onPinTapped,
                   onMarkerDeleted: _onMarkerDeleted,
                 ),
@@ -365,7 +307,7 @@ class _TripEditModalState extends State<TripEditModal> {
                     : _memoController.text,
               );
 
-              widget.onSave(tripEntry);
+              widget.onSave(tripEntry, pins: _pins);
               Navigator.of(context).pop();
             }
           },
