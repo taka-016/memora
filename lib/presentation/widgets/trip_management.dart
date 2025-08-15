@@ -10,8 +10,10 @@ import '../../domain/entities/trip_entry.dart';
 import '../../domain/entities/pin.dart';
 import '../../domain/repositories/trip_entry_repository.dart';
 import '../../domain/repositories/pin_repository.dart';
+import '../../domain/repositories/trip_participant_repository.dart';
 import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 import '../../infrastructure/repositories/firestore_pin_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'trip_edit_modal.dart';
 
 class TripManagement extends StatefulWidget {
@@ -20,6 +22,7 @@ class TripManagement extends StatefulWidget {
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
   final PinRepository? pinRepository;
+  final TripParticipantRepository? tripParticipantRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -29,6 +32,7 @@ class TripManagement extends StatefulWidget {
     this.onBackPressed,
     this.tripEntryRepository,
     this.pinRepository,
+    this.tripParticipantRepository,
     this.isTestEnvironment = false,
   });
 
@@ -55,19 +59,22 @@ class _TripManagementState extends State<TripManagement> {
     // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
+    final tripParticipantRepository =
+        widget.tripParticipantRepository ??
+        FirestoreTripParticipantRepository();
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
-    _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
-
-    // pin関連は注入されたリポジトリがある場合またはテスト環境でない場合のみ初期化
-    if (widget.pinRepository != null || !widget.isTestEnvironment) {
-      final pinRepository = widget.pinRepository ?? FirestorePinRepository();
-      _createPinUseCase = CreatePinUseCase(pinRepository);
-      _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);
-      _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
-    }
+    _deleteTripEntryUsecase = DeleteTripEntryUsecase(
+      tripEntryRepository,
+      pinRepository,
+      tripParticipantRepository,
+    );
+    _createPinUseCase = CreatePinUseCase(pinRepository);
+    _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);
+    _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
 
     _loadTripEntries();
   }
