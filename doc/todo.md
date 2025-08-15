@@ -230,7 +230,7 @@
   - [x] 旅行管理画面でtrip_entriesのidでpinsのtripIdを紐づけて取得し、旅行編集画面に渡し、pinsにセットする
   - [x] マップ上のマーカーとpinsを同期する（このタイミングはDBに書き込まない）
   - [x] 更新ボタン実行時に、旅行管理画面でtrip_entriesの更新と合わせてtripIdをキーにpinsをDelete&insertする
-- [ ] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
+- [x] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
 
 ## 地図画面
 
