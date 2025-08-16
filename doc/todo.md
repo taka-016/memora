@@ -238,6 +238,7 @@
 - [x] 入力域やボタンの見た目がtrip_edit_modalと異なるので、trip_edit_modal側に合わせる
 - [x] GoogleMapMarkerManagerを廃止してMapDisplayをStatelessWidgetに変更する
 - [x] 親ウィジェットがデータ読み書き責務を持つ
+- [x] 取得した現在地情報を保持しておき、地図ウィジェットを再度生成した時の初期値とする
 
 ## デザイン
 
