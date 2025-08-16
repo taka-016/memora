@@ -18,6 +18,9 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: false
     permissions:
       contents: write
       pull-requests: write
@@ -27,6 +30,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -51,11 +57,10 @@ jobs:
       - name: Run Claude Code
         env:
           TZ: Asia/Tokyo
-        id: claude
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -94,6 +99,19 @@ jobs:
             Bash(git branch:*)
             Bash(git rm:*)
             Bash(gh pr create:*)
+            Write,
+            Edit,
+            MultiEdit,
+            Read,
+            LS,
+            Glob,
+            Grep,
+            mcp__github__get_issue,
+            mcp__github__create_branch,
+            mcp__github__create_pull_request,
+            mcp__github__update_issue
+
+          mcp_config: .github/mcp-servers.json
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
           custom_instructions: |
