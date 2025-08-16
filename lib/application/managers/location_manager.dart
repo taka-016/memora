@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/location_state.dart';
+import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value-objects/location_state.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
 
@@ -16,26 +17,17 @@ class LocationManager extends StateNotifier<LocationState> {
 
   Future<void> getCurrentLocation() async {
     try {
-      final currentLocation = await _currentLocationService
-          .getCurrentLocation();
-      if (currentLocation != null) {
-        state = state.copyWith(
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          lastUpdated: DateTime.now(),
-        );
+      final location = await _currentLocationService.getCurrentLocation();
+      if (location != null) {
+        state = state.copyWith(location: location, lastUpdated: DateTime.now());
       }
     } catch (e) {
       rethrow;
     }
   }
 
-  void setLocation(double latitude, double longitude) {
-    state = state.copyWith(
-      latitude: latitude,
-      longitude: longitude,
-      lastUpdated: DateTime.now(),
-    );
+  void setLocation(Location location) {
+    state = state.copyWith(location: location, lastUpdated: DateTime.now());
   }
 
   void clearLocation() {

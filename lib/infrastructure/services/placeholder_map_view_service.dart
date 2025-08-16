@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:memora/domain/services/map_view_service.dart';
-import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/placeholder_map_view.dart';
 
 /// テスト用のプレースホルダー地図ビューサービスの実装
 class PlaceholderMapViewService implements MapViewService {
-  const PlaceholderMapViewService({CurrentLocationService? locationService});
+  const PlaceholderMapViewService();
 
   @override
   Widget createMapView({
