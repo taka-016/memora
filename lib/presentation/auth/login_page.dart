@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/value-objects/auth_state.dart';
-import '../../application/managers/auth_manager.dart';
+import '../../application/providers/auth_provider.dart';
 import 'signup_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.authManager});
-
-  final AuthManager authManager;
+class LoginPage extends ConsumerStatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -21,49 +20,33 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
 
   @override
-  void initState() {
-    super.initState();
-    widget.authManager.addListener(_authStateListener);
-  }
-
-  @override
   void dispose() {
-    widget.authManager.removeListener(_authStateListener);
     _emailController.dispose();
     _passwordController.dispose();
     _passwordlessEmailController.dispose();
     super.dispose();
   }
 
-  void _authStateListener() {
-    if (widget.authManager.state.isAuthenticated) {
-      // 認証成功時は AuthGuard がメインコンテンツを表示するが、
-      // LoginPage をナビゲーションスタックから削除する必要がある
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-    }
-  }
-
   Future<void> _login() async {
     if (_formKey.currentState?.validate() ?? false) {
-      await widget.authManager.login(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      );
+      await ref
+          .read(authManagerProvider.notifier)
+          .login(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
       // ログイン成功時に自動入力データを保存
-      if (widget.authManager.state.isAuthenticated) {
+      final authState = ref.read(authManagerProvider);
+      if (authState.isAuthenticated) {
         TextInput.finishAutofillContext();
       }
     }
   }
 
   void _navigateToSignup() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => SignupPage(authManager: widget.authManager),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => const SignupPage()));
   }
 
   @override
@@ -72,33 +55,30 @@ class _LoginPageState extends State<LoginPage> {
       appBar: AppBar(title: const Text('ログイン')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListenableBuilder(
-          listenable: widget.authManager,
-          builder: (context, child) {
+        child: Consumer(
+          builder: (context, ref, child) {
+            final authState = ref.watch(authManagerProvider);
+
             return AutofillGroup(
               child: Form(
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (widget.authManager.state.status == AuthStatus.loading)
+                    if (authState.status == AuthStatus.loading)
                       const Center(child: CircularProgressIndicator())
                     else ...[
-                      if (widget.authManager.state.message.isNotEmpty)
+                      if (authState.message.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.all(12),
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                            color:
-                                widget.authManager.state.messageType ==
-                                    MessageType.info
+                            color: authState.messageType == MessageType.info
                                 ? Colors.green.shade100
                                 : Colors.red.shade100,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color:
-                                  widget.authManager.state.messageType ==
-                                      MessageType.info
+                              color: authState.messageType == MessageType.info
                                   ? Colors.green.shade300
                                   : Colors.red.shade300,
                             ),
@@ -106,23 +86,20 @@ class _LoginPageState extends State<LoginPage> {
                           child: Row(
                             children: [
                               Icon(
-                                widget.authManager.state.messageType ==
-                                        MessageType.info
+                                authState.messageType == MessageType.info
                                     ? Icons.check_circle
                                     : Icons.error,
-                                color:
-                                    widget.authManager.state.messageType ==
-                                        MessageType.info
+                                color: authState.messageType == MessageType.info
                                     ? Colors.green.shade700
                                     : Colors.red.shade700,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  widget.authManager.state.message,
+                                  authState.message,
                                   style: TextStyle(
                                     color:
-                                        widget.authManager.state.messageType ==
+                                        authState.messageType ==
                                             MessageType.info
                                         ? Colors.green.shade700
                                         : Colors.red.shade700,
@@ -133,13 +110,14 @@ class _LoginPageState extends State<LoginPage> {
                                 icon: Icon(
                                   Icons.close,
                                   color:
-                                      widget.authManager.state.messageType ==
-                                          MessageType.info
+                                      authState.messageType == MessageType.info
                                       ? Colors.green.shade700
                                       : Colors.red.shade700,
                                 ),
                                 onPressed: () {
-                                  widget.authManager.clearError();
+                                  ref
+                                      .read(authManagerProvider.notifier)
+                                      .clearError();
                                 },
                                 tooltip: 'エラーを閉じる',
                               ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/application/providers/auth_provider.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/infrastructure/factories/map_view_factory.dart';
@@ -268,12 +268,11 @@ class _TopPageState extends State<TopPage> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            Consumer<AuthManager>(
-              builder: (context, authManager, child) {
-                if (authManager.state.status == AuthStatus.authenticated) {
-                  return UserDrawerHeader(
-                    email: authManager.state.user!.loginId,
-                  );
+            Consumer(
+              builder: (context, ref, child) {
+                final authState = ref.watch(authManagerProvider);
+                if (authState.status == AuthStatus.authenticated) {
+                  return UserDrawerHeader(email: authState.user!.loginId);
                 } else {
                   return DrawerHeader(
                     decoration: BoxDecoration(
@@ -331,16 +330,14 @@ class _TopPageState extends State<TopPage> {
                   _onNavigationItemSelected(NavigationItem.accountSettings),
             ),
             const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('ログアウト'),
-              onTap: () {
-                final authManager = Provider.of<AuthManager>(
-                  context,
-                  listen: false,
-                );
-                authManager.logout();
-              },
+            Consumer(
+              builder: (context, ref, child) => ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('ログアウト'),
+                onTap: () {
+                  ref.read(authManagerProvider.notifier).logout();
+                },
+              ),
             ),
           ],
         ),

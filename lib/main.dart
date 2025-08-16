@@ -7,11 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 import 'presentation/top_page.dart';
 import 'presentation/auth/auth_guard.dart';
-import 'application/managers/auth_manager.dart';
-import 'infrastructure/services/firebase_auth_service.dart';
 import 'domain/services/auth_service.dart';
+import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
-import 'application/usecases/get_or_create_member_usecase.dart';
 import 'application/usecases/get_current_member_usecase.dart';
 import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
@@ -42,8 +40,6 @@ class _MyAppState extends State<MyApp> {
   // 依存性注入を一度だけ初期化
   late final AuthService authService;
   late final FirestoreMemberRepository memberRepository;
-  late final GetOrCreateMemberUseCase getOrCreateMemberUseCase;
-  late final AuthManager authManager;
   late final FirestoreGroupRepository groupRepository;
   late final FirestoreGroupMemberRepository groupMemberRepository;
   late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
@@ -54,11 +50,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     authService = FirebaseAuthService();
     memberRepository = FirestoreMemberRepository();
-    getOrCreateMemberUseCase = GetOrCreateMemberUseCase(memberRepository);
-    authManager = AuthManager(
-      authService: authService,
-      getOrCreateMemberUseCase: getOrCreateMemberUseCase,
-    );
 
     groupRepository = FirestoreGroupRepository();
     groupMemberRepository = FirestoreGroupMemberRepository();
@@ -78,10 +69,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return ProviderScope(
       child: provider.MultiProvider(
-        providers: [
-          provider.Provider<AuthService>.value(value: authService),
-          provider.ChangeNotifierProvider.value(value: authManager),
-        ],
+        providers: [provider.Provider<AuthService>.value(value: authService)],
         child: MaterialApp(
           title: 'memora',
           theme: ThemeData(
@@ -94,10 +82,9 @@ class _MyAppState extends State<MyApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: provider.Consumer<AuthManager>(
-            builder: (context, authManager, child) {
+          home: Consumer(
+            builder: (context, ref, child) {
               return AuthGuard(
-                authManager: authManager,
                 child: TopPage(
                   getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
                   getCurrentMemberUseCase: getCurrentMemberUseCase,
