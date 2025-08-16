@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
+import 'package:memora/application/managers/location_manager.dart';
 import 'package:memora/presentation/widgets/search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 
-class GoogleMapView extends StatelessWidget {
+class GoogleMapView extends ConsumerWidget {
   final List<Pin> pins;
-  final CurrentLocationService? locationService;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
@@ -19,17 +18,15 @@ class GoogleMapView extends StatelessWidget {
   const GoogleMapView({
     super.key,
     required this.pins,
-    this.locationService,
     this.onMapLongTapped,
     this.onMarkerTapped,
     this.onMarkerDeleted,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return _GoogleMapViewWidget(
       pins: pins,
-      locationService: locationService,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
       onMarkerDeleted: onMarkerDeleted,
@@ -37,33 +34,30 @@ class GoogleMapView extends StatelessWidget {
   }
 }
 
-class _GoogleMapViewWidget extends StatefulWidget {
+class _GoogleMapViewWidget extends ConsumerStatefulWidget {
   final List<Pin> pins;
-  final CurrentLocationService? locationService;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
 
   const _GoogleMapViewWidget({
     required this.pins,
-    this.locationService,
     this.onMapLongTapped,
     this.onMarkerTapped,
     this.onMarkerDeleted,
   });
 
   @override
-  State<_GoogleMapViewWidget> createState() => _GoogleMapViewWidgetState();
+  ConsumerState<_GoogleMapViewWidget> createState() =>
+      _GoogleMapViewWidgetState();
 }
 
-class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
-  static const LatLng _defaultPosition = LatLng(35.681236, 139.767125);
+class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
+  static const LatLng _fallbackPosition = LatLng(35.681236, 139.767125); // 東京駅
+
   GoogleMapController? _mapController;
   bool _isBottomSheetVisible = false;
   Pin? _selectedPin;
-
-  CurrentLocationService get _locationService =>
-      widget.locationService ?? GeolocatorCurrentLocationService();
 
   Set<Marker> get _markers {
     return widget.pins.map((pin) {
@@ -83,40 +77,47 @@ class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
     });
   }
 
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _animateToPosition(LatLng position) {
+    _mapController?.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: position, zoom: 15),
+      ),
+    );
+  }
+
+  LatLng _getCurrentOrFallbackPosition() {
+    final location = ref.read(locationProvider).location;
+    return location != null
+        ? LatLng(location.latitude, location.longitude)
+        : _fallbackPosition;
+  }
+
   Future<void> _moveToCurrentLocation() async {
     try {
-      final loc = await _locationService.getCurrentLocation();
-      if (loc == null) {
+      await ref.read(locationProvider.notifier).getCurrentLocation();
+      final location = ref.read(locationProvider).location;
+
+      if (location == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('現在地が取得できませんでした')));
+        _showErrorSnackBar('現在地が取得できませんでした');
         return;
       }
-      final location = LatLng(loc.latitude, loc.longitude);
-      _mapController?.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: 15),
-        ),
-      );
+
+      _animateToPosition(LatLng(location.latitude, location.longitude));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('現在地取得に失敗: $e')));
+      _showErrorSnackBar('現在地取得に失敗: $e');
     }
   }
 
-  Future<void> _moveToSearchedLocation(
-    double latitude,
-    double longitude,
-  ) async {
-    final location = LatLng(latitude, longitude);
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: location, zoom: 15),
-      ),
-    );
+  Future<void> _moveToSearchedLocation(Location location) async {
+    _animateToPosition(LatLng(location.latitude, location.longitude));
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -168,7 +169,7 @@ class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
           GoogleMap(
             onMapCreated: _onMapCreated,
             initialCameraPosition: CameraPosition(
-              target: _defaultPosition,
+              target: _getCurrentOrFallbackPosition(),
               zoom: 15,
             ),
             markers: _markers,
@@ -184,10 +185,7 @@ class _GoogleMapViewWidgetState extends State<_GoogleMapViewWidget> {
               hintText: '場所を検索',
               locationSearchService: locationSearchService,
               onCandidateSelected: (candidate) async {
-                await _moveToSearchedLocation(
-                  candidate.location.latitude,
-                  candidate.location.longitude,
-                );
+                await _moveToSearchedLocation(candidate.location);
               },
             ),
           ),

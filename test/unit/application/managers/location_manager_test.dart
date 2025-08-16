@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/value-objects/location.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/managers/location_manager.dart';
@@ -20,34 +21,29 @@ void main() {
     });
 
     test('初期状態では位置情報がnullである', () {
-      expect(locationManager.state.latitude, isNull);
-      expect(locationManager.state.longitude, isNull);
+      expect(locationManager.state.location, isNull);
       expect(locationManager.state.lastUpdated, isNull);
     });
 
     test('現在地取得成功時に状態が更新される', () async {
-      final completer = Completer<CurrentLocation?>();
+      final completer = Completer<Location?>();
       when(
         mockCurrentLocationService.getCurrentLocation(),
       ).thenAnswer((_) => completer.future);
 
       final future = locationManager.getCurrentLocation();
 
-      const expectedLocation = CurrentLocation(
-        latitude: 35.6812,
-        longitude: 139.7671,
-      );
+      const expectedLocation = Location(latitude: 35.6812, longitude: 139.7671);
       completer.complete(expectedLocation);
 
       await future;
 
-      expect(locationManager.state.latitude, 35.6812);
-      expect(locationManager.state.longitude, 139.7671);
+      expect(locationManager.state.location, expectedLocation);
       expect(locationManager.state.lastUpdated, isNotNull);
     });
 
     test('現在地取得失敗時でも状態が変更されない', () async {
-      final completer = Completer<CurrentLocation?>();
+      final completer = Completer<Location?>();
       when(
         mockCurrentLocationService.getCurrentLocation(),
       ).thenAnswer((_) => completer.future);
@@ -58,25 +54,29 @@ void main() {
 
       await expectLater(future, throwsException);
 
-      expect(locationManager.state.latitude, isNull);
-      expect(locationManager.state.longitude, isNull);
+      expect(locationManager.state.location, isNull);
       expect(locationManager.state.lastUpdated, isNull);
     });
 
     test('手動で位置情報を設定できる', () {
-      locationManager.setLocation(35.6812, 139.7671);
+      locationManager.setLocation(
+        Location(latitude: 35.6812, longitude: 139.7671),
+      );
 
-      expect(locationManager.state.latitude, 35.6812);
-      expect(locationManager.state.longitude, 139.7671);
+      expect(
+        locationManager.state.location,
+        Location(latitude: 35.6812, longitude: 139.7671),
+      );
       expect(locationManager.state.lastUpdated, isNotNull);
     });
 
     test('位置情報をクリアできる', () {
-      locationManager.setLocation(35.6812, 139.7671);
+      locationManager.setLocation(
+        Location(latitude: 35.6812, longitude: 139.7671),
+      );
       locationManager.clearLocation();
 
-      expect(locationManager.state.latitude, isNull);
-      expect(locationManager.state.longitude, isNull);
+      expect(locationManager.state.location, isNull);
       expect(locationManager.state.lastUpdated, isNull);
     });
   });
