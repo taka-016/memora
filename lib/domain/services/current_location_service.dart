@@ -1,9 +1,5 @@
-abstract class CurrentLocationService {
-  Future<CurrentLocation?> getCurrentLocation();
-}
+import 'package:memora/domain/value-objects/location.dart';
 
-class CurrentLocation {
-  final double latitude;
-  final double longitude;
-  const CurrentLocation({required this.latitude, required this.longitude});
+abstract class CurrentLocationService {
+  Future<Location?> getCurrentLocation();
 }

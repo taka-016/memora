@@ -1,32 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/google_map_view.dart';
-import 'package:mockito/annotations.dart';
-import 'package:memora/domain/services/current_location_service.dart';
-import 'google_map_view_test.mocks.dart';
 
-@GenerateMocks([CurrentLocationService])
 void main() {
   group('GoogleMapView', () {
-    late MockCurrentLocationService mockLocationService;
-
-    setUp(() {
-      mockLocationService = MockCurrentLocationService();
-    });
-
     testWidgets('GoogleMapViewが正しく表示される', (WidgetTester tester) async {
       const testPins = <Pin>[];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: testPins,
-              locationService: mockLocationService,
-            ),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: testPins)),
           ),
         ),
       );
@@ -36,12 +24,9 @@ void main() {
 
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: const [],
-              locationService: mockLocationService,
-            ),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
           ),
         ),
       );
@@ -51,12 +36,9 @@ void main() {
 
     testWidgets('現在地ボタンが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: const [],
-              locationService: mockLocationService,
-            ),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
           ),
         ),
       );
@@ -81,12 +63,9 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: testPins,
-              locationService: mockLocationService,
-            ),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: testPins)),
           ),
         ),
       );
@@ -108,20 +87,21 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: const [testPin],
-              locationService: mockLocationService,
-              onMapLongTapped: (Location location) {
-                mapTapped = true;
-              },
-              onMarkerTapped: (Pin pin) {
-                pinTapped = true;
-              },
-              onMarkerDeleted: (String pinId) {
-                pinDeleted = true;
-              },
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [testPin],
+                onMapLongTapped: (Location location) {
+                  mapTapped = true;
+                },
+                onMarkerTapped: (Pin pin) {
+                  pinTapped = true;
+                },
+                onMarkerDeleted: (String pinId) {
+                  pinDeleted = true;
+                },
+              ),
             ),
           ),
         ),
@@ -144,12 +124,9 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GoogleMapView(
-              pins: const [testPin],
-              locationService: mockLocationService,
-            ),
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [testPin])),
           ),
         ),
       );
