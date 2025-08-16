@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:memora/domain/value-objects/location.dart';
 
-class LocationState {
+class LocationState extends Equatable {
   final Location? location;
   final DateTime? lastUpdated;
 
@@ -12,4 +13,7 @@ class LocationState {
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
+
+  @override
+  List<Object?> get props => [location, lastUpdated];
 }

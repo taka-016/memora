@@ -49,5 +49,60 @@ void main() {
       expect(locationState.location, isNull);
       expect(locationState.lastUpdated, isNull);
     });
+
+    test('同じlocationとlastUpdatedを持つLocationStateは等しい', () {
+      const location = Location(latitude: 35.6812, longitude: 139.7671);
+      final lastUpdated = DateTime(2025, 1, 1);
+
+      final locationState1 = LocationState(
+        location: location,
+        lastUpdated: lastUpdated,
+      );
+      final locationState2 = LocationState(
+        location: location,
+        lastUpdated: lastUpdated,
+      );
+
+      expect(locationState1, equals(locationState2));
+      expect(locationState1.hashCode, equals(locationState2.hashCode));
+    });
+
+    test('異なるlocationを持つLocationStateは等しくない', () {
+      final lastUpdated = DateTime(2025, 1, 1);
+
+      final locationState1 = LocationState(
+        location: Location(latitude: 35.6812, longitude: 139.7671),
+        lastUpdated: lastUpdated,
+      );
+      final locationState2 = LocationState(
+        location: Location(latitude: 35.6813, longitude: 139.7671),
+        lastUpdated: lastUpdated,
+      );
+
+      expect(locationState1, isNot(equals(locationState2)));
+    });
+
+    test('異なるlastUpdatedを持つLocationStateは等しくない', () {
+      const location = Location(latitude: 35.6812, longitude: 139.7671);
+
+      final locationState1 = LocationState(
+        location: location,
+        lastUpdated: DateTime(2025, 1, 1),
+      );
+      final locationState2 = LocationState(
+        location: location,
+        lastUpdated: DateTime(2025, 1, 2),
+      );
+
+      expect(locationState1, isNot(equals(locationState2)));
+    });
+
+    test('nullフィールドを持つLocationStateの等価性', () {
+      const locationState1 = LocationState();
+      const locationState2 = LocationState();
+
+      expect(locationState1, equals(locationState2));
+      expect(locationState1.hashCode, equals(locationState2.hashCode));
+    });
   });
 }
