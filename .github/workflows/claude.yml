@@ -18,6 +18,7 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
       cancel-in-progress: false
@@ -55,6 +56,7 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
 
       - name: Run Claude Code
+        id: claude
         env:
           TZ: Asia/Tokyo
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,13 +90,14 @@ jobs:
             mcp__github__get_issue,
             mcp__github__create_branch,
             mcp__github__create_pull_request,
-            mcp__github__update_issue
+            mcp__github__update_issue,
+            mcp__context7__resolve-library-id,
+            mcp__context7__get-library-docs
 
           mcp_config: .github/mcp-servers.json
 
           # Optional: Add custom instructions for Claude to customize its behavior for your project
-          custom_instructions: |
-            CLAUDE.md記載の**実装作業の進め方**に従い、進めること。
+          # custom_instructions: |
 
           # Optional: Custom environment variables for Claude
           # claude_env: |

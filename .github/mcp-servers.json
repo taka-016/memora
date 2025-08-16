@@ -13,6 +13,10 @@
             "env": {
                 "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
             }
+        },
+        "context7": {
+            "type": "sse",
+            "url": "https://mcp.context7.com/sse"
         }
     }
 }
