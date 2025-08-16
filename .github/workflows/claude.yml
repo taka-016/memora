@@ -77,28 +77,7 @@ jobs:
 
           # Optional: Allow Claude to run specific commands
           allowed_tools: |
-            Bash(find:*)
-            Bash(ls:*)
-            Bash(tree:*)
-            Bash(mkdir:*)
-            Bash(grep:*)
-            Bash(rg:*)
-            Bash(flutter:*)
-            Bash(dart run build_runner build:*)
-            Bash(./check.sh)
-            Bash(git add:*)
-            Bash(git commit:*)
-            Bash(git checkout:*)
-            Bash(git push:*)
-            Bash(git reset:*)
-            Bash(git revert:*)
-            Bash(git stash:*)
-            Bash(git pull:*)
-            Bash(git fetch:*)
-            Bash(git config:*)
-            Bash(git branch:*)
-            Bash(git rm:*)
-            Bash(gh pr create:*)
+            Bash,
             Write,
             Edit,
             MultiEdit,
