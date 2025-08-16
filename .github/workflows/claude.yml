@@ -18,11 +18,6 @@ jobs:
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/${{ github.repository }}/memora-test:latest
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     permissions:
       contents: write
       pull-requests: write
@@ -30,15 +25,13 @@ jobs:
       id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
-      - name: Mark working directory as safe
-        run: |
-          git config --global --add safe.directory /__w/memora/memora
-          git config --global --add safe.directory /opt/flutter
-
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          fetch-depth: 1
+          flutter-version: "3.32.2"
 
       - name: Setup
         run: |
