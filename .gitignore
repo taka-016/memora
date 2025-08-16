@@ -54,3 +54,4 @@ repomix-output.xml
 **/*.mocks.dart
 .firebaserc
 .serena
+.mcp.json
