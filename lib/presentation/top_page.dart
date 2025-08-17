@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/providers/auth_provider.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/widgets/group_list.dart';
 import 'package:memora/presentation/widgets/group_timeline.dart';
 import 'package:memora/infrastructure/factories/map_view_factory.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/value-objects/auth_state.dart';
-import '../../application/providers/auth_provider.dart';
+import '../../application/managers/auth_manager.dart';
 import 'login_page.dart';
 
 class AuthGuard extends ConsumerWidget {
