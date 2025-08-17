@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/usecases/update_email_usecase.dart';
 import '../../application/usecases/update_password_usecase.dart';
 import '../../application/usecases/delete_user_usecase.dart';
 import '../../application/usecases/reauthenticate_usecase.dart';
-import '../../domain/services/auth_service.dart';
+import '../../application/managers/auth_manager.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';
 import 'reauthenticate_modal.dart';
 
-class AccountSettings extends StatelessWidget {
+class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});
 
-  Future<void> _showEmailChangeModal(BuildContext context) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+  Future<void> _showEmailChangeModal(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final authService = ref.read(authServiceProvider);
     final updateEmailUseCase = UpdateEmailUseCase(authService: authService);
     final reauthenticateUseCase = ReauthenticateUseCase(
       authService: authService,
@@ -69,8 +72,11 @@ class AccountSettings extends StatelessWidget {
     );
   }
 
-  Future<void> _showPasswordChangeModal(BuildContext context) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+  Future<void> _showPasswordChangeModal(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final authService = ref.read(authServiceProvider);
     final updatePasswordUseCase = UpdatePasswordUseCase(
       authService: authService,
     );
@@ -121,8 +127,11 @@ class AccountSettings extends StatelessWidget {
     );
   }
 
-  Future<void> _showAccountDeleteModal(BuildContext context) async {
-    final authService = Provider.of<AuthService>(context, listen: false);
+  Future<void> _showAccountDeleteModal(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final authService = ref.read(authServiceProvider);
     final deleteUserUseCase = DeleteUserUseCase(authService: authService);
     final reauthenticateUseCase = ReauthenticateUseCase(
       authService: authService,
@@ -138,7 +147,7 @@ class AccountSettings extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: const Text('アカウント設定')),
       body: Padding(
@@ -152,7 +161,7 @@ class AccountSettings extends StatelessWidget {
                 title: const Text('メールアドレス変更'),
                 subtitle: const Text('現在のメールアドレスを変更'),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showEmailChangeModal(context),
+                onTap: () => _showEmailChangeModal(context, ref),
               ),
             ),
             const SizedBox(height: 16),
@@ -162,7 +171,7 @@ class AccountSettings extends StatelessWidget {
                 title: const Text('パスワード変更'),
                 subtitle: const Text('現在のパスワードを変更'),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showPasswordChangeModal(context),
+                onTap: () => _showPasswordChangeModal(context, ref),
               ),
             ),
             const SizedBox(height: 16),
@@ -175,7 +184,7 @@ class AccountSettings extends StatelessWidget {
                 ),
                 subtitle: const Text('アカウントを完全に削除'),
                 trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showAccountDeleteModal(context),
+                onTap: () => _showAccountDeleteModal(context, ref),
               ),
             ),
           ],

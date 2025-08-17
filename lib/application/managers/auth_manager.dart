@@ -1,22 +1,54 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../utils/firebase_error_util.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/value-objects/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/services/auth_service.dart';
+import '../../domain/repositories/member_repository.dart';
+import '../../infrastructure/services/firebase_auth_service.dart';
+import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../usecases/get_or_create_member_usecase.dart';
 
-class AuthManager extends ChangeNotifier {
+final authServiceProvider = Provider<AuthService>((ref) {
+  return FirebaseAuthService();
+});
+
+final memberRepositoryProvider = Provider<MemberRepository>((ref) {
+  return FirestoreMemberRepository();
+});
+
+final getOrCreateMemberUseCaseProvider = Provider<GetOrCreateMemberUseCase>((
+  ref,
+) {
+  final memberRepository = ref.watch(memberRepositoryProvider);
+  return GetOrCreateMemberUseCase(memberRepository);
+});
+
+final authManagerProvider = StateNotifierProvider<AuthManager, AuthState>((
+  ref,
+) {
+  final authService = ref.watch(authServiceProvider);
+  final getOrCreateMemberUseCase = ref.watch(getOrCreateMemberUseCaseProvider);
+
+  final authManager = AuthManager(
+    authService: authService,
+    getOrCreateMemberUseCase: getOrCreateMemberUseCase,
+  );
+
+  // 初期化を実行
+  authManager.initialize();
+
+  return authManager;
+});
+
+class AuthManager extends StateNotifier<AuthState> {
   AuthManager({required this.authService, this.getOrCreateMemberUseCase})
-    : _state = const AuthState.loading();
+    : super(const AuthState.loading());
 
   final AuthService authService;
   final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
-  AuthState _state;
   StreamSubscription<User?>? _authStateSubscription;
-
-  AuthState get state => _state;
 
   Future<void> initialize() async {
     _authStateSubscription = authService.authStateChanges.listen((user) async {
@@ -27,19 +59,15 @@ class AuthManager extends ChangeNotifier {
           try {
             await authService.sendEmailVerification();
             await authService.signOut();
-            _updateState(
-              const AuthState.unauthenticated(
-                '認証メールを再送しました。メールを確認して認証を完了してください。',
-                messageType: MessageType.info,
-              ),
+            state = const AuthState.unauthenticated(
+              '認証メールを再送しました。メールを確認して認証を完了してください。',
+              messageType: MessageType.info,
             );
           } catch (e) {
             await authService.signOut();
-            _updateState(
-              const AuthState.unauthenticated(
-                '認証メールの送信に失敗しました。再度ログインしてください。',
-                messageType: MessageType.error,
-              ),
+            state = const AuthState.unauthenticated(
+              '認証メールの送信に失敗しました。再度ログインしてください。',
+              messageType: MessageType.error,
             );
           }
           return;
@@ -52,61 +80,61 @@ class AuthManager extends ChangeNotifier {
             await authService.validateCurrentUserToken();
             final result = await getOrCreateMemberUseCase!.execute(user);
             if (result) {
-              _updateState(AuthState.authenticated(user));
+              state = AuthState.authenticated(user);
             } else {
               // GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウト
               await authService.signOut();
-              _updateState(
-                const AuthState.unauthenticated(
-                  '認証が無効です。再度ログインしてください。',
-                  messageType: MessageType.error,
-                ),
+              state = const AuthState.unauthenticated(
+                '認証が無効です。再度ログインしてください。',
+                messageType: MessageType.error,
               );
             }
           } catch (e) {
             // エラーの場合、強制ログアウトして再認証を促す
             await authService.signOut();
-            _updateState(
-              const AuthState.unauthenticated(
-                '認証が無効です。再度ログインしてください。',
-                messageType: MessageType.error,
-              ),
+            state = const AuthState.unauthenticated(
+              '認証が無効です。再度ログインしてください。',
+              messageType: MessageType.error,
             );
           }
         } else {
-          _updateState(AuthState.authenticated(user));
+          state = AuthState.authenticated(user);
         }
       } else {
-        _updateState(const AuthState.unauthenticated(''));
+        // 現在の状態がメッセージ付きのunauthenticatedの場合はメッセージを保持
+        if (state.status == AuthStatus.unauthenticated &&
+            state.message.isNotEmpty) {
+          return;
+        }
+        state = const AuthState.unauthenticated('');
       }
     });
   }
 
   Future<void> login({required String email, required String password}) async {
     try {
-      _updateState(const AuthState.loading());
+      state = const AuthState.loading();
       await authService.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
       // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _updateState(
-        AuthState.unauthenticated(
-          FirebaseErrorUtil.getFirebaseErrorMessage(e),
-          messageType: MessageType.error,
-        ),
+      state = AuthState.unauthenticated(
+        FirebaseErrorUtil.getFirebaseErrorMessage(e),
+        messageType: MessageType.error,
       );
     } catch (e) {
-      _updateState(
-        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      state = AuthState.unauthenticated(
+        e.toString(),
+        messageType: MessageType.error,
       );
     }
   }
 
   Future<void> signup({required String email, required String password}) async {
     try {
-      _updateState(const AuthState.loading());
+      state = const AuthState.loading();
       await authService.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -114,50 +142,38 @@ class AuthManager extends ChangeNotifier {
       await authService.signOut();
       // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _updateState(
-        AuthState.unauthenticated(
-          FirebaseErrorUtil.getFirebaseErrorMessage(e),
-          messageType: MessageType.error,
-        ),
+      state = AuthState.unauthenticated(
+        FirebaseErrorUtil.getFirebaseErrorMessage(e),
+        messageType: MessageType.error,
       );
     } catch (e) {
-      _updateState(
-        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      state = AuthState.unauthenticated(
+        e.toString(),
+        messageType: MessageType.error,
       );
     }
   }
 
   Future<void> logout() async {
     try {
-      _updateState(const AuthState.loading());
+      state = const AuthState.loading();
       await authService.signOut();
       // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
-      _updateState(
-        AuthState.unauthenticated(
-          FirebaseErrorUtil.getFirebaseErrorMessage(e),
-          messageType: MessageType.error,
-        ),
+      state = AuthState.unauthenticated(
+        FirebaseErrorUtil.getFirebaseErrorMessage(e),
+        messageType: MessageType.error,
       );
     } catch (e) {
-      _updateState(
-        AuthState.unauthenticated(e.toString(), messageType: MessageType.error),
+      state = AuthState.unauthenticated(
+        e.toString(),
+        messageType: MessageType.error,
       );
     }
   }
 
   void clearError() {
-    _state = _state.copyWith(message: '');
-    notifyListeners();
-  }
-
-  void _updateState(AuthState newState) {
-    if (newState.status == AuthStatus.unauthenticated &&
-        newState.message.isEmpty) {
-      newState = newState.copyWith(message: _state.message);
-    }
-    _state = newState;
-    notifyListeners();
+    state = state.copyWith(message: '');
   }
 
   @override
