@@ -66,6 +66,11 @@ class AuthManager extends StateNotifier<AuthState> {
           state = AuthState.authenticated(user);
         }
       } else {
+        // 現在の状態がメッセージ付きのunauthenticatedの場合はメッセージを保持
+        if (state.status == AuthStatus.unauthenticated &&
+            state.message.isNotEmpty) {
+          return;
+        }
         state = const AuthState.unauthenticated('');
       }
     });
