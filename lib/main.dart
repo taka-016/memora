@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 import 'presentation/top_page.dart';
@@ -68,29 +67,22 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: provider.MultiProvider(
-        providers: [provider.Provider<AuthService>.value(value: authService)],
-        child: MaterialApp(
-          title: 'memora',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-          ),
-          locale: const Locale('ja'),
-          supportedLocales: const [Locale('ja'), Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: Consumer(
-            builder: (context, ref, child) {
-              return AuthGuard(
-                child: TopPage(
-                  getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
-                  getCurrentMemberUseCase: getCurrentMemberUseCase,
-                ),
-              );
-            },
+      child: MaterialApp(
+        title: 'memora',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
+        ),
+        locale: const Locale('ja'),
+        supportedLocales: const [Locale('ja'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: AuthGuard(
+          child: TopPage(
+            getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
+            getCurrentMemberUseCase: getCurrentMemberUseCase,
           ),
         ),
       ),
