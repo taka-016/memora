@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/application/providers/auth_provider.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
@@ -10,7 +12,6 @@ import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'top_page_test.mocks.dart';
 
@@ -79,12 +80,37 @@ void main() {
         ),
       ),
     );
+    // StateNotifierのaddListenerメソッドのスタブを設定
+    when(
+      defaultMockAuthManager.addListener(
+        any,
+        fireImmediately: anyNamed('fireImmediately'),
+      ),
+    ).thenReturn(() {});
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AuthManager>.value(
-          value: authManager ?? defaultMockAuthManager,
+    if (authManager != null) {
+      when(
+        authManager.addListener(
+          any,
+          fireImmediately: anyNamed('fireImmediately'),
         ),
+      ).thenReturn(() {});
+    }
+
+    return ProviderScope(
+      overrides: [
+        authManagerProvider.overrideWith((ref) {
+          when((authManager ?? defaultMockAuthManager).state).thenReturn(
+            AuthState.authenticated(
+              const User(
+                id: 'test_user_id',
+                loginId: 'test@example.com',
+                isVerified: true,
+              ),
+            ),
+          );
+          return authManager ?? defaultMockAuthManager;
+        }),
       ],
       child: MaterialApp(
         home: TopPage(
