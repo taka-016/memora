@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'main_test.mocks.dart';
+import '../helpers/fake_auth_manager.dart';
 
 @GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
 void main() {
@@ -31,16 +34,23 @@ void main() {
   });
 
   Widget createTestApp() {
-    return MaterialApp(
-      title: 'memora',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      locale: const Locale('ja'),
-      home: TopPage(
-        getGroupsWithMembersUsecase: mockUsecase,
-        isTestEnvironment: true,
-        getCurrentMemberUseCase: mockGetCurrentMemberUseCase,
+    return ProviderScope(
+      overrides: [
+        authManagerProvider.overrideWith((ref) {
+          return FakeAuthManager.authenticated();
+        }),
+      ],
+      child: MaterialApp(
+        title: 'memora',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        ),
+        locale: const Locale('ja'),
+        home: TopPage(
+          getGroupsWithMembersUsecase: mockUsecase,
+          isTestEnvironment: true,
+          getCurrentMemberUseCase: mockGetCurrentMemberUseCase,
+        ),
       ),
     );
   }
