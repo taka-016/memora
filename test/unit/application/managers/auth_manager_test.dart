@@ -218,9 +218,9 @@ void main() {
         controller.add(null);
         await Future(() {});
 
-        // assert - ログアウト後はメッセージがクリアされることを確認
+        // assert - エラー状態が保持されることを確認
         expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, '');
+        expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
 
         controller.close();
       });
