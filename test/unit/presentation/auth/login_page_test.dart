@@ -90,8 +90,17 @@ void main() {
     });
 
     testWidgets('ログインボタンをタップするとloginメソッドが呼ばれる', (WidgetTester tester) async {
+      final fakeAuthManager = FakeAuthManager(
+        const AuthState.unauthenticated(''),
+      );
+
       await tester.pumpWidget(
-        createTestWidget(authState: const AuthState.unauthenticated('')),
+        ProviderScope(
+          overrides: [
+            authManagerProvider.overrideWith((ref) => fakeAuthManager),
+          ],
+          child: const MaterialApp(home: LoginPage()),
+        ),
       );
 
       final emailField = find.byKey(const Key('email_field'));
@@ -101,9 +110,10 @@ void main() {
       await tester.enterText(emailField, 'test@example.com');
       await tester.enterText(passwordField, 'password123');
       await tester.tap(loginButton);
-
-      // FakeAuthManagerではverifyができないため、UIの動作確認のみ
       await tester.pumpAndSettle();
+
+      // loginメソッドが呼ばれたことを確認
+      expect(fakeAuthManager.loginCalled, isTrue);
     });
   });
 }

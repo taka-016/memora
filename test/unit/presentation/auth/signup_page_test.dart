@@ -84,8 +84,17 @@ void main() {
     });
 
     testWidgets('登録ボタンをタップするとsignupメソッドが呼ばれる', (WidgetTester tester) async {
+      final fakeAuthManager = FakeAuthManager(
+        const AuthState.unauthenticated(''),
+      );
+
       await tester.pumpWidget(
-        createTestWidget(authState: const AuthState.unauthenticated('')),
+        ProviderScope(
+          overrides: [
+            authManagerProvider.overrideWith((ref) => fakeAuthManager),
+          ],
+          child: const MaterialApp(home: SignupPage()),
+        ),
       );
 
       final emailField = find.byKey(const Key('email_field'));
@@ -99,9 +108,10 @@ void main() {
       await tester.enterText(passwordField, 'ValidPass123!');
       await tester.enterText(confirmPasswordField, 'ValidPass123!');
       await tester.tap(signupButton);
-
-      // FakeAuthManagerではverifyができないため、UIの動作確認のみ
       await tester.pumpAndSettle();
+
+      // signupメソッドが呼ばれたことを確認
+      expect(fakeAuthManager.signupCalled, isTrue);
     });
 
     testWidgets('ログインリンクをタップすると画面が戻る', (WidgetTester tester) async {
