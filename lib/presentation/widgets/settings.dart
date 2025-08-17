@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/managers/auth_manager.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends ConsumerWidget {
   const Settings({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       key: const Key('settings'),
       child: Center(
@@ -31,11 +31,7 @@ class Settings extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                final authManager = Provider.of<AuthManager>(
-                  context,
-                  listen: false,
-                );
-                authManager.logout();
+                ref.read(authManagerProvider.notifier).logout();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

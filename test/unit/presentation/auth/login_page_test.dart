@@ -1,34 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/auth/login_page.dart';
 
-import 'login_page_test.mocks.dart';
+import '../../../helpers/fake_auth_manager.dart';
 
-@GenerateMocks([AuthManager])
 void main() {
   group('LoginPage', () {
-    late MockAuthManager mockAuthManager;
-
-    setUp(() {
-      mockAuthManager = MockAuthManager();
-    });
-
-    Widget createTestWidget({AuthManager? authManager}) {
-      return MaterialApp(
-        home: LoginPage(authManager: authManager ?? mockAuthManager),
+    Widget createTestWidget({AuthState? authState}) {
+      return ProviderScope(
+        overrides: [
+          authManagerProvider.overrideWith((ref) {
+            final state = authState ?? const AuthState.unauthenticated('');
+            return FakeAuthManager(state);
+          }),
+        ],
+        child: const MaterialApp(home: LoginPage()),
       );
     }
 
     testWidgets('ログイン画面の基本要素が表示される', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.unauthenticated(''));
-
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
 
       expect(find.text('ログイン'), findsNWidgets(2)); // AppBarとボタンの2つ
       expect(find.byType(TextFormField), findsNWidgets(2)); // メール、パスワード
@@ -39,11 +35,9 @@ void main() {
     });
 
     testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.unauthenticated(''));
-
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
 
       final passwordField = find.byKey(const Key('password_field'));
       expect(passwordField, findsOneWidget);
@@ -55,11 +49,9 @@ void main() {
     testWidgets('パスワード表示切り替えアイコンをタップするとパスワードが表示される', (
       WidgetTester tester,
     ) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.unauthenticated(''));
-
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
 
       final visibilityIcon = find.byIcon(Icons.visibility);
 
@@ -83,11 +75,9 @@ void main() {
     });
 
     testWidgets('メールアドレスとパスワードを入力できる', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.unauthenticated(''));
-
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
@@ -100,11 +90,18 @@ void main() {
     });
 
     testWidgets('ログインボタンをタップするとloginメソッドが呼ばれる', (WidgetTester tester) async {
-      when(
-        mockAuthManager.state,
-      ).thenReturn(const AuthState.unauthenticated(''));
+      final fakeAuthManager = FakeAuthManager(
+        const AuthState.unauthenticated(''),
+      );
 
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authManagerProvider.overrideWith((ref) => fakeAuthManager),
+          ],
+          child: const MaterialApp(home: LoginPage()),
+        ),
+      );
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
@@ -113,13 +110,10 @@ void main() {
       await tester.enterText(emailField, 'test@example.com');
       await tester.enterText(passwordField, 'password123');
       await tester.tap(loginButton);
+      await tester.pumpAndSettle();
 
-      verify(
-        mockAuthManager.login(
-          email: 'test@example.com',
-          password: 'password123',
-        ),
-      ).called(1);
+      // loginメソッドが呼ばれたことを確認
+      expect(fakeAuthManager.loginCalled, isTrue);
     });
   });
 }

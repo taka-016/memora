@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/presentation/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'top_page_test.mocks.dart';
+import '../../helpers/fake_auth_manager.dart';
 
 @GenerateMocks([
   GetGroupsWithMembersUsecase,
@@ -69,22 +68,11 @@ void main() {
       ),
     );
 
-    final defaultMockAuthManager = MockAuthManager();
-    when(defaultMockAuthManager.state).thenReturn(
-      AuthState.authenticated(
-        const User(
-          id: 'test_user_id',
-          loginId: 'test@example.com',
-          isVerified: true,
-        ),
-      ),
-    );
-
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<AuthManager>.value(
-          value: authManager ?? defaultMockAuthManager,
-        ),
+    return ProviderScope(
+      overrides: [
+        authManagerProvider.overrideWith((ref) {
+          return FakeAuthManager.authenticated();
+        }),
       ],
       child: MaterialApp(
         home: TopPage(
