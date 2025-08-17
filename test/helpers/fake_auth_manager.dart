@@ -6,14 +6,18 @@ import 'package:memora/domain/value-objects/auth_state.dart';
 /// テスト用のFakeAuthManager
 ///
 /// StateNotifierとして正常に動作するテスト専用のAuthManager実装
-/// 他のテストファイルからも利用可能
 class FakeAuthManager extends AuthManager {
+  bool _signupCalled = false;
+  bool _loginCalled = false;
+
+  bool get signupCalled => _signupCalled;
+  bool get loginCalled => _loginCalled;
+
   FakeAuthManager(AuthState initialState)
     : super(authService: _FakeAuthService(), getOrCreateMemberUseCase: null) {
     state = initialState;
   }
 
-  /// 認証済み状態のFakeAuthManagerを作成するファクトリーメソッド
   factory FakeAuthManager.authenticated({
     String userId = 'test_user_id',
     String loginId = 'test@example.com',
@@ -26,14 +30,22 @@ class FakeAuthManager extends AuthManager {
     );
   }
 
-  /// 未認証状態のFakeAuthManagerを作成するファクトリーメソッド
   factory FakeAuthManager.unauthenticated([String message = '']) {
     return FakeAuthManager(AuthState.unauthenticated(message));
   }
 
-  /// ローディング状態のFakeAuthManagerを作成するファクトリーメソッド
   factory FakeAuthManager.loading() {
     return FakeAuthManager(const AuthState.loading());
+  }
+
+  @override
+  Future<void> signup({required String email, required String password}) async {
+    _signupCalled = true;
+  }
+
+  @override
+  Future<void> login({required String email, required String password}) async {
+    _loginCalled = true;
   }
 }
 
