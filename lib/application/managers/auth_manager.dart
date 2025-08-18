@@ -148,13 +148,15 @@ class AuthManager extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> signup({required String email, required String password}) async {
+  Future<bool> signup({required String email, required String password}) async {
+    bool isSuccess = false;
     try {
       state = const AuthState.loading();
       await authService.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+      isSuccess = true;
       // 状態更新はauthStateChangesリスナーで自動的に処理される
     } on firebase_auth.FirebaseAuthException catch (e) {
       state = AuthState.unauthenticated(
@@ -167,6 +169,7 @@ class AuthManager extends StateNotifier<AuthState> {
         messageType: MessageType.error,
       );
     }
+    return isSuccess;
   }
 
   Future<void> logout() async {
