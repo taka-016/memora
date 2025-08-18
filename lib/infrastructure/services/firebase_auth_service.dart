@@ -47,45 +47,15 @@ class FirebaseAuthService implements AuthService {
       throw Exception('ユーザー作成に失敗しました');
     }
 
+    // メールアドレスの確認が必要なため、サインアウト
+    await _firebaseAuth.signOut();
+
     return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
   @override
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
-  }
-
-  @override
-  Future<void> sendSignInLinkToEmail({required String email}) async {
-    final actionCodeSettings = ActionCodeSettings(
-      url: 'https://memora.page.link/signIn',
-      handleCodeInApp: true,
-      androidPackageName: 'com.example.memora',
-      androidInstallApp: true,
-      androidMinimumVersion: '21',
-    );
-
-    await _firebaseAuth.sendSignInLinkToEmail(
-      email: email,
-      actionCodeSettings: actionCodeSettings,
-    );
-  }
-
-  @override
-  Future<domain.User> signInWithEmailLink({
-    required String email,
-    required String emailLink,
-  }) async {
-    final userCredential = await _firebaseAuth.signInWithEmailLink(
-      email: email,
-      emailLink: emailLink,
-    );
-
-    if (userCredential.user == null) {
-      throw Exception('メールリンクでのサインインに失敗しました');
-    }
-
-    return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
   @override

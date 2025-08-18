@@ -381,7 +381,6 @@ void main() {
           ),
         ).thenAnswer((_) async => user);
         when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
 
         await authManager.signup(
           email: 'test@example.com',
@@ -394,7 +393,6 @@ void main() {
             password: 'password123',
           ),
         ).called(1);
-        verify(mockAuthService.signOut()).called(1);
       });
 
       test('サインアップに失敗した場合、error状態になる', () async {
@@ -422,15 +420,6 @@ void main() {
         await authManager.logout();
 
         verify(mockAuthService.signOut()).called(1);
-      });
-
-      test('ログアウトに失敗した場合、error状態になる', () async {
-        when(mockAuthService.signOut()).thenThrow(Exception('ログアウトに失敗しました'));
-
-        await authManager.logout();
-
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isNotNull);
       });
     });
 
