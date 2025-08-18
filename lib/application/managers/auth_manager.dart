@@ -37,7 +37,6 @@ final authManagerProvider = StateNotifierProvider<AuthManager, AuthState>((
     getOrCreateMemberUseCase: getOrCreateMemberUseCase,
   );
 
-  // 初期化を実行
   authManager.initialize();
 
   return authManager;
