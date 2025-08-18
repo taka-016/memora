@@ -36,7 +36,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             password: _passwordController.text,
           );
       if (!mounted) return;
-      // ログイン成功時に自動入力データを保存
       final authState = ref.read(authManagerProvider);
       if (authState.isAuthenticated) {
         TextInput.finishAutofillContext();
