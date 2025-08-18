@@ -104,6 +104,7 @@ void main() {
         when(mockFirebaseUser.email).thenReturn('test@example.com');
         when(mockFirebaseUser.displayName).thenReturn(null);
         when(mockFirebaseUser.emailVerified).thenReturn(false);
+        when(mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
 
         final result = await firebaseAuthService.createUserWithEmailAndPassword(
           email: 'test@example.com',
@@ -114,6 +115,8 @@ void main() {
         expect(result.loginId, 'test@example.com');
         expect(result.displayName, isNull);
         expect(result.isVerified, false);
+
+        verify(mockFirebaseAuth.signOut()).called(1);
       });
     });
 
@@ -124,54 +127,6 @@ void main() {
         await firebaseAuthService.signOut();
 
         verify(mockFirebaseAuth.signOut()).called(1);
-      });
-    });
-
-    group('sendSignInLinkToEmail', () {
-      test('正常にメールリンクを送信できる', () async {
-        when(
-          mockFirebaseAuth.sendSignInLinkToEmail(
-            email: 'test@example.com',
-            actionCodeSettings: anyNamed('actionCodeSettings'),
-          ),
-        ).thenAnswer((_) async => {});
-
-        await firebaseAuthService.sendSignInLinkToEmail(
-          email: 'test@example.com',
-        );
-
-        verify(
-          mockFirebaseAuth.sendSignInLinkToEmail(
-            email: 'test@example.com',
-            actionCodeSettings: anyNamed('actionCodeSettings'),
-          ),
-        ).called(1);
-      });
-    });
-
-    group('signInWithEmailLink', () {
-      test('正常にメールリンクでサインインできる', () async {
-        when(
-          mockFirebaseAuth.signInWithEmailLink(
-            email: 'test@example.com',
-            emailLink: 'https://example.com/link',
-          ),
-        ).thenAnswer((_) async => mockUserCredential);
-        when(mockUserCredential.user).thenReturn(mockFirebaseUser);
-        when(mockFirebaseUser.uid).thenReturn('user123');
-        when(mockFirebaseUser.email).thenReturn('test@example.com');
-        when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
-        when(mockFirebaseUser.emailVerified).thenReturn(true);
-
-        final result = await firebaseAuthService.signInWithEmailLink(
-          email: 'test@example.com',
-          emailLink: 'https://example.com/link',
-        );
-
-        expect(result.id, 'user123');
-        expect(result.loginId, 'test@example.com');
-        expect(result.displayName, 'テストユーザー');
-        expect(result.isVerified, true);
       });
     });
 

@@ -84,22 +84,9 @@ class _FakeAuthService implements AuthService {
   }
 
   @override
-  Future<void> sendSignInLinkToEmail({required String email}) {
-    throw UnimplementedError();
-  }
-
-  @override
   Future<User> signInWithEmailAndPassword({
     required String email,
     required String password,
-  }) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<User> signInWithEmailLink({
-    required String email,
-    required String emailLink,
   }) {
     throw UnimplementedError();
   }
