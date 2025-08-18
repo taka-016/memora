@@ -30,16 +30,17 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   Future<void> _signup() async {
     if (_formKey.currentState?.validate() ?? false) {
-      await ref
+      final isSuccess = await ref
           .read(authManagerProvider.notifier)
           .signup(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
-      // サインアップ成功時に自動入力データを保存
-      final authState = ref.read(authManagerProvider);
-      if (authState.isAuthenticated) {
+      if (isSuccess) {
         TextInput.finishAutofillContext();
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     }
   }

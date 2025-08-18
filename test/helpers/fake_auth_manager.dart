@@ -39,8 +39,9 @@ class FakeAuthManager extends AuthManager {
   }
 
   @override
-  Future<void> signup({required String email, required String password}) async {
+  Future<bool> signup({required String email, required String password}) async {
     _signupCalled = true;
+    return true;
   }
 
   @override
