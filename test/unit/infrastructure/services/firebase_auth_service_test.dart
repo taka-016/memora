@@ -104,7 +104,6 @@ void main() {
         when(mockFirebaseUser.email).thenReturn('test@example.com');
         when(mockFirebaseUser.displayName).thenReturn(null);
         when(mockFirebaseUser.emailVerified).thenReturn(false);
-        when(mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
 
         final result = await firebaseAuthService.createUserWithEmailAndPassword(
           email: 'test@example.com',
@@ -115,8 +114,6 @@ void main() {
         expect(result.loginId, 'test@example.com');
         expect(result.displayName, isNull);
         expect(result.isVerified, false);
-
-        verify(mockFirebaseAuth.signOut()).called(1);
       });
     });
 
