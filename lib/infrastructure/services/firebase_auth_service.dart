@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:memora/application/utils/firebase_error_util.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../domain/services/auth_service.dart';
 
@@ -21,16 +22,20 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
-    final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    if (userCredential.user == null) {
-      throw Exception('ログインに失敗しました');
+      if (userCredential.user == null) {
+        throw Exception('ログインに失敗しました');
+      }
+
+      return _mapFirebaseUserToDomainUser(userCredential.user!);
+    } on FirebaseAuthException catch (e) {
+      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
     }
-
-    return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
   @override
@@ -38,21 +43,29 @@ class FirebaseAuthService implements AuthService {
     required String email,
     required String password,
   }) async {
-    final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    if (userCredential.user == null) {
-      throw Exception('ユーザー作成に失敗しました');
+      if (userCredential.user == null) {
+        throw Exception('ユーザー作成に失敗しました');
+      }
+
+      return _mapFirebaseUserToDomainUser(userCredential.user!);
+    } on FirebaseAuthException catch (e) {
+      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
     }
-
-    return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
   @override
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+    try {
+      await _firebaseAuth.signOut();
+    } on FirebaseAuthException catch (e) {
+      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
+    }
   }
 
   @override
