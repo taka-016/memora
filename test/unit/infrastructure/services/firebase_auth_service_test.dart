@@ -86,7 +86,7 @@ void main() {
             email: 'test@example.com',
             password: 'wrongpassword',
           ),
-          throwsA(isA<FirebaseAuthException>()),
+          throwsA(isA<String>()),
         );
       });
     });

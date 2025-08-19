@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import '../utils/firebase_error_util.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/value-objects/auth_state.dart';
@@ -134,11 +132,6 @@ class AuthManager extends StateNotifier<AuthState> {
         password: password,
       );
       // 状態更新はauthStateChangesリスナーで自動的に処理される
-    } on firebase_auth.FirebaseAuthException catch (e) {
-      state = AuthState.unauthenticated(
-        FirebaseErrorUtil.getFirebaseErrorMessage(e),
-        messageType: MessageType.error,
-      );
     } catch (e) {
       state = AuthState.unauthenticated(
         e.toString(),
@@ -157,11 +150,6 @@ class AuthManager extends StateNotifier<AuthState> {
       );
       isSuccess = true;
       // 状態更新はauthStateChangesリスナーで自動的に処理される
-    } on firebase_auth.FirebaseAuthException catch (e) {
-      state = AuthState.unauthenticated(
-        FirebaseErrorUtil.getFirebaseErrorMessage(e),
-        messageType: MessageType.error,
-      );
     } catch (e) {
       state = AuthState.unauthenticated(
         e.toString(),
