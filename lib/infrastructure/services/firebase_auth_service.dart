@@ -47,9 +47,6 @@ class FirebaseAuthService implements AuthService {
       throw Exception('ユーザー作成に失敗しました');
     }
 
-    // メールアドレスの確認が必要なため、サインアウト
-    await _firebaseAuth.signOut();
-
     return _mapFirebaseUserToDomainUser(userCredential.user!);
   }
 
