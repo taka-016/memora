@@ -1,7 +1,13 @@
 {
     "name": "memora",
     "build": {
-        "dockerfile": "../Dockerfile"
+        "dockerfile": "Dockerfile",
+        "args": {
+            "TZ": "${localEnv:TZ:Asia/Tokyo}",
+            "CLAUDE_CODE_VERSION": "latest",
+            "GIT_DELTA_VERSION": "0.18.2",
+            "ZSH_IN_DOCKER_VERSION": "1.2.0"
+        }
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -13,7 +19,6 @@
     ],
     "initializeCommand": "[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true",
     "runArgs": [
-        "--privileged",
         "--env-file",
         ".devcontainer/.env"
     ],
@@ -37,6 +42,21 @@
                 "ms-azuretools.vscode-containers"
             ],
             "settings": {
+                "editor.formatOnSave": true,
+                "editor.defaultFormatter": "Dart-Code.dart-code",
+                "editor.codeActionsOnSave": {
+                    "source.fixAll.eslint": "explicit"
+                },
+                "terminal.integrated.defaultProfile.linux": "zsh",
+                "terminal.integrated.profiles.linux": {
+                    "bash": {
+                        "path": "bash",
+                        "icon": "terminal-bash"
+                    },
+                    "zsh": {
+                        "path": "zsh"
+                    }
+                },
                 "dart.showInspectorNotificationsForWidgetErrors": false,
                 "dart.previewFlutterUiGuides": true,
                 "dart.previewFlutterUiGuidesCustomTracking": true,
@@ -45,6 +65,9 @@
                 }
             }
         }
+    },
+    "containerEnv": {
+        "POWERLEVEL9K_DISABLE_GITSTATUS": "true"
     },
     "postCreateCommand": "bash .devcontainer/setup.sh",
     "forwardPorts": [

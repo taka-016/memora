@@ -18,15 +18,6 @@
             "command": "echo \"[$(date +\"%Y-%m-%d %H:%M:%S\")] $USER: $(jq -r '.tool_input.command')\" >> \".claude/command_history/$(date +%Y-%m-%d).log\""
           }
         ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "jq -r 'if .tool_input.command | test(\"rm -rf|dd if=|:(){ :|:& };:\") then {\"decision\": \"block\", \"reason\": \"危険なコマンドは実行できません。別の方法を検討してください。\"} else empty end'"
-          }
-        ]
       }
     ]
   }
