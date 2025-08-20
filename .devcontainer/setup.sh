@@ -12,9 +12,4 @@ flutter pub get
 dart pub global activate very_good_cli
 
 # Serena MCPのセットアップ
-claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena-mcp-server --context ide-assistant --project $(pwd) --enable-web-dashboard false
-
-# Flutterビルドをバックグラウンドで実行
-nohup bash .devcontainer/flutter_build.sh > /tmp/flutter_build.log 2>&1 &
-
-sleep 10
+claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena-mcp-server --context ide-assistant --project $(pwd) --enable-web-dashboard false || true
