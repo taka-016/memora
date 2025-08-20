@@ -18,23 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   tree \
   ripgrep \
   gnupg \
-  ca-certificates \
-  less \
-  git \
-  procps \
-  sudo \
-  fzf \
-  zsh \
-  man-db \
-  unzip \
-  gnupg2 \
-  gh \
-  iptables \
-  ipset \
-  iproute2 \
-  dnsutils \
-  aggregate \
-  jq && \
+  ca-certificates && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Node.jsとnpmのインストール
@@ -45,34 +29,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   npm install -g npm@11
 
 # bashの履歴を永続化
-RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  && mkdir /commandhistory \
-  && touch /commandhistory/.bash_history
-
-# Git Delta のインストール
-ARG GIT_DELTA_VERSION=0.18.2
-RUN ARCH=$(dpkg --print-architecture) && \
-  wget "https://github.com/dandavison/delta/releases/download/${GIT_DELTA_VERSION}/git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
-  rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
-
-# zsh設定
-ENV SHELL=/bin/zsh
-ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN git clone --depth 1 https://github.com/junegunn/fzf.git /tmp/fzf && \
-    mkdir -p /usr/share/doc/fzf/examples && \
-    cp /tmp/fzf/shell/* /usr/share/doc/fzf/examples/ && \
-    rm -rf /tmp/fzf
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -x
-
-# /root/.local/binをPATHに追加
-ENV PATH="/root/.local/bin:$PATH"
+RUN mkdir -p /commandhistory && \
+  touch /commandhistory/.bash_history && \
+  echo "export HISTFILE=/commandhistory/.bash_history" >> /etc/bash.bashrc && \
+  echo "export PROMPT_COMMAND='history -a'" >> /etc/bash.bashrc
 
 # claude codeのインストール
 ARG CLAUDE_CODE_VERSION=latest
