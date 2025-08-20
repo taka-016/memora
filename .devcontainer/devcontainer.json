@@ -7,9 +7,9 @@
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "mounts": [
         "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
-        "source=claude-global,target=/root/.claude,type=volume",
-        "source=android-config,target=/root/.android,type=volume",
-        "source=android-sdk,target=/opt/android-sdk-linux,type=volume"
+        "source=claude-global-memora,target=/root/.claude,type=volume",
+        "source=android-config-memora,target=/root/.android,type=volume",
+        "source=android-sdk-memora,target=/opt/android-sdk-linux,type=volume"
     ],
     "initializeCommand": "[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true",
     "runArgs": [
