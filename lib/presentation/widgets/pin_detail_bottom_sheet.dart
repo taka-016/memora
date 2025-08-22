@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../domain/entities/pin.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
-  final Function(DateTime? fromDateTime, DateTime? toDateTime, String memo)?
-  onSave;
+  final Function(Pin pin)? onSave;
   final VoidCallback? onDelete;
   final VoidCallback? onClose;
+  final Pin? pin;
 
   const PinDetailBottomSheet({
     super.key,
+    this.pin,
     this.onSave,
     this.onDelete,
     this.onClose,
@@ -25,6 +27,46 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   TimeOfDay? toTime;
   final TextEditingController memoController = TextEditingController();
   String? _dateErrorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFromPin();
+  }
+
+  void _initializeFromPin() {
+    if (widget.pin != null) {
+      final pin = widget.pin!;
+
+      if (pin.visitStartDate != null) {
+        fromDate = DateTime(
+          pin.visitStartDate!.year,
+          pin.visitStartDate!.month,
+          pin.visitStartDate!.day,
+        );
+        fromTime = TimeOfDay(
+          hour: pin.visitStartDate!.hour,
+          minute: pin.visitStartDate!.minute,
+        );
+      }
+
+      if (pin.visitEndDate != null) {
+        toDate = DateTime(
+          pin.visitEndDate!.year,
+          pin.visitEndDate!.month,
+          pin.visitEndDate!.day,
+        );
+        toTime = TimeOfDay(
+          hour: pin.visitEndDate!.hour,
+          minute: pin.visitEndDate!.minute,
+        );
+      }
+
+      if (pin.visitMemo != null) {
+        memoController.text = pin.visitMemo!;
+      }
+    }
+  }
 
   Future<void> _selectFromDate(BuildContext context) async {
     final picked = await DatePickerUtils.showCustomDatePicker(
@@ -335,11 +377,17 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                               }
 
                               if (widget.onSave != null) {
-                                widget.onSave!(
-                                  fromDateTime,
-                                  toDateTime,
-                                  memoController.text,
+                                final pin = Pin(
+                                  id: widget.pin?.id ?? '',
+                                  pinId: widget.pin?.pinId ?? '',
+                                  tripId: widget.pin?.tripId,
+                                  latitude: widget.pin?.latitude ?? 0.0,
+                                  longitude: widget.pin?.longitude ?? 0.0,
+                                  visitStartDate: fromDateTime,
+                                  visitEndDate: toDateTime,
+                                  visitMemo: memoController.text,
                                 );
+                                widget.onSave!(pin);
                               }
                             },
                             child: const Text('保存'),

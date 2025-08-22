@@ -156,11 +156,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     _hidePinDetailBottomSheet();
   }
 
-  void _onMarkerSave(
-    DateTime? fromDateTime,
-    DateTime? toDateTime,
-    String memo,
-  ) {
+  void _onMarkerSave(Pin pin) {
     // TODO: ピンの詳細情報を保存する処理を実装
     // 現在は仮実装として、ボトムシートを閉じるのみ
     _hidePinDetailBottomSheet();
@@ -210,6 +206,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
           ),
           if (_isBottomSheetVisible && _selectedPin != null)
             PinDetailBottomSheet(
+              pin: _selectedPin,
               onSave: _onMarkerSave,
               onDelete: _onMarkerDelete,
               onClose: _hidePinDetailBottomSheet,
