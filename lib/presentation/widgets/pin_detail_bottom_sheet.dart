@@ -19,36 +19,86 @@ class PinDetailBottomSheet extends StatefulWidget {
 }
 
 class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
-  DateTime? fromDateTime;
-  DateTime? toDateTime;
+  DateTime? fromDate;
+  TimeOfDay? fromTime;
+  DateTime? toDate;
+  TimeOfDay? toTime;
   final TextEditingController memoController = TextEditingController();
 
-  Future<void> _selectFromDateTime(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDateTimePicker(
+  Future<void> _selectFromDate(BuildContext context) async {
+    final picked = await DatePickerUtils.showCustomDatePicker(
       context,
-      initialDateTime: fromDateTime ?? DateTime.now(),
+      initialDate: fromDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        fromDateTime = picked;
+        fromDate = picked;
       });
     }
   }
 
-  Future<void> _selectToDateTime(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDateTimePicker(
+  Future<void> _selectFromTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: fromTime ?? TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        fromTime = picked;
+      });
+    }
+  }
+
+  Future<void> _selectToDate(BuildContext context) async {
+    final picked = await DatePickerUtils.showCustomDatePicker(
       context,
-      initialDateTime: toDateTime ?? (fromDateTime ?? DateTime.now()),
-      firstDate: fromDateTime ?? DateTime(2000),
+      initialDate: toDate ?? (fromDate ?? DateTime.now()),
+      firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        toDateTime = picked;
+        toDate = picked;
       });
     }
+  }
+
+  Future<void> _selectToTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: toTime ?? (fromTime ?? TimeOfDay.now()),
+    );
+    if (picked != null) {
+      setState(() {
+        toTime = picked;
+      });
+    }
+  }
+
+  DateTime? get fromDateTime {
+    if (fromDate == null) return null;
+    final time = fromTime ?? const TimeOfDay(hour: 0, minute: 0);
+    return DateTime(
+      fromDate!.year,
+      fromDate!.month,
+      fromDate!.day,
+      time.hour,
+      time.minute,
+    );
+  }
+
+  DateTime? get toDateTime {
+    if (toDate == null) return null;
+    final time = toTime ?? const TimeOfDay(hour: 0, minute: 0);
+    return DateTime(
+      toDate!.year,
+      toDate!.month,
+      toDate!.day,
+      time.hour,
+      time.minute,
+    );
   }
 
   @override
@@ -103,7 +153,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                       const SizedBox(height: 8),
                       InkWell(
                         key: const Key('visitStartDateField'),
-                        onTap: () => _selectFromDateTime(context),
+                        onTap: () => _selectFromDate(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -117,9 +167,42 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                fromDateTime != null
-                                    ? '${fromDateTime!.year}/${fromDateTime!.month.toString().padLeft(2, '0')}/${fromDateTime!.day.toString().padLeft(2, '0')} ${fromDateTime!.hour.toString().padLeft(2, '0')}:${fromDateTime!.minute.toString().padLeft(2, '0')}'
-                                    : '日時を選択',
+                                fromDate != null
+                                    ? '${fromDate!.year}/${fromDate!.month.toString().padLeft(2, '0')}/${fromDate!.day.toString().padLeft(2, '0')}'
+                                    : '日付を選択',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        key: const Key('visitStartTimeField'),
+                        onTap: () => _selectFromTime(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                fromTime != null
+                                    ? '${fromTime!.hour.toString().padLeft(2, '0')}:${fromTime!.minute.toString().padLeft(2, '0')}'
+                                    : '時間を選択',
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
@@ -138,7 +221,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                       const SizedBox(height: 8),
                       InkWell(
                         key: const Key('visitEndDateField'),
-                        onTap: () => _selectToDateTime(context),
+                        onTap: () => _selectToDate(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -152,9 +235,42 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                toDateTime != null
-                                    ? '${toDateTime!.year}/${toDateTime!.month.toString().padLeft(2, '0')}/${toDateTime!.day.toString().padLeft(2, '0')} ${toDateTime!.hour.toString().padLeft(2, '0')}:${toDateTime!.minute.toString().padLeft(2, '0')}'
-                                    : '日時を選択',
+                                toDate != null
+                                    ? '${toDate!.year}/${toDate!.month.toString().padLeft(2, '0')}/${toDate!.day.toString().padLeft(2, '0')}'
+                                    : '日付を選択',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const Icon(
+                                Icons.calendar_today,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        key: const Key('visitEndTimeField'),
+                        onTap: () => _selectToTime(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                toTime != null
+                                    ? '${toTime!.hour.toString().padLeft(2, '0')}:${toTime!.minute.toString().padLeft(2, '0')}'
+                                    : '時間を選択',
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,

@@ -25,7 +25,9 @@ void main() {
 
       // 入力フィールドの確認
       expect(find.byKey(const Key('visitStartDateField')), findsOneWidget);
+      expect(find.byKey(const Key('visitStartTimeField')), findsOneWidget);
       expect(find.byKey(const Key('visitEndDateField')), findsOneWidget);
+      expect(find.byKey(const Key('visitEndTimeField')), findsOneWidget);
       expect(find.byKey(const Key('visitMemoField')), findsOneWidget);
 
       // ボタンの確認
@@ -39,26 +41,64 @@ void main() {
       expect(find.byType(Container), findsWidgets);
     });
 
-    testWidgets('日時フィールドがカスタムContainerで表示される', (WidgetTester tester) async {
+    testWidgets('日付・時間フィールドが縦並びで表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
       );
 
-      // 日時フィールドがInkWellでラップされている
-      expect(find.byType(InkWell), findsAtLeastNWidgets(2));
+      // 日付・時間フィールドがInkWellでラップされている（4つのフィールド）
+      expect(find.byType(InkWell), findsAtLeastNWidgets(4));
 
-      // 日時フィールドがOutlineBorderのContainerで表示される
+      // 日付・時間フィールドがOutlineBorderのContainerで表示される
       final dateContainers = find.descendant(
         of: find.byType(InkWell),
         matching: find.byType(Container),
       );
-      expect(dateContainers, findsAtLeastNWidgets(2));
+      expect(dateContainers, findsAtLeastNWidgets(4));
 
-      // 日時選択のプレースホルダーテキストが表示される
-      expect(find.text('日時を選択'), findsNWidgets(2));
+      // 日付選択のプレースホルダーテキストが表示される
+      expect(find.text('日付を選択'), findsNWidgets(2));
+
+      // 時間選択のプレースホルダーテキストが表示される
+      expect(find.text('時間を選択'), findsNWidgets(2));
+
+      // カレンダーアイコンが表示される
+      expect(find.byIcon(Icons.calendar_today), findsNWidgets(2));
 
       // 時計アイコンが表示される
       expect(find.byIcon(Icons.access_time), findsNWidgets(2));
+    });
+
+    testWidgets('日付選択タップでCustomDatePickerDialogが表示される', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+      );
+
+      // 開始日の日付フィールドをタップ
+      await tester.tap(find.byKey(const Key('visitStartDateField')));
+      await tester.pumpAndSettle();
+
+      // CustomDatePickerDialogが表示されることを確認
+      expect(find.text('日付を選択'), findsWidgets);
+    });
+
+    testWidgets('時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+      );
+
+      // 開始時間の時間フィールドが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.byKey(const Key('visitStartTimeField')));
+      await tester.pumpAndSettle();
+
+      // 開始時間の時間フィールドをタップ
+      await tester.tap(find.byKey(const Key('visitStartTimeField')));
+      await tester.pumpAndSettle();
+
+      // TimePicker関連のUI要素が表示されることを確認
+      expect(find.text('時間を選択'), findsWidgets);
     });
 
     testWidgets('保存コールバックが正しく設定される', (WidgetTester tester) async {
