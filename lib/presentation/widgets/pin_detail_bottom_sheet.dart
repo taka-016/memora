@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
-  final VoidCallback? onSave;
+  final Function(DateTime? fromDateTime, DateTime? toDateTime, String memo)?
+  onSave;
   final VoidCallback? onDelete;
   final VoidCallback? onClose;
 
@@ -18,34 +19,34 @@ class PinDetailBottomSheet extends StatefulWidget {
 }
 
 class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
-  DateTime? fromDate;
-  DateTime? toDate;
+  DateTime? fromDateTime;
+  DateTime? toDateTime;
   final TextEditingController memoController = TextEditingController();
 
-  Future<void> _selectFromDate(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDatePicker(
+  Future<void> _selectFromDateTime(BuildContext context) async {
+    final picked = await DatePickerUtils.showCustomDateTimePicker(
       context,
-      initialDate: fromDate ?? DateTime.now(),
+      initialDateTime: fromDateTime ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        fromDate = picked;
+        fromDateTime = picked;
       });
     }
   }
 
-  Future<void> _selectToDate(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDatePicker(
+  Future<void> _selectToDateTime(BuildContext context) async {
+    final picked = await DatePickerUtils.showCustomDateTimePicker(
       context,
-      initialDate: toDate ?? (fromDate ?? DateTime.now()),
-      firstDate: fromDate ?? DateTime(2000),
+      initialDateTime: toDateTime ?? (fromDateTime ?? DateTime.now()),
+      firstDate: fromDateTime ?? DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
       setState(() {
-        toDate = picked;
+        toDateTime = picked;
       });
     }
   }
@@ -102,7 +103,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                       const SizedBox(height: 8),
                       InkWell(
                         key: const Key('visitStartDateField'),
-                        onTap: () => _selectFromDate(context),
+                        onTap: () => _selectFromDateTime(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -116,16 +117,16 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                fromDate != null
-                                    ? '${fromDate!.year}/${fromDate!.month.toString().padLeft(2, '0')}/${fromDate!.day.toString().padLeft(2, '0')}'
-                                    : '日付を選択',
+                                fromDateTime != null
+                                    ? '${fromDateTime!.year}/${fromDateTime!.month.toString().padLeft(2, '0')}/${fromDateTime!.day.toString().padLeft(2, '0')} ${fromDateTime!.hour.toString().padLeft(2, '0')}:${fromDateTime!.minute.toString().padLeft(2, '0')}'
+                                    : '日時を選択',
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                 ),
                               ),
                               const Icon(
-                                Icons.calendar_today,
+                                Icons.access_time,
                                 color: Colors.black54,
                               ),
                             ],
@@ -137,7 +138,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                       const SizedBox(height: 8),
                       InkWell(
                         key: const Key('visitEndDateField'),
-                        onTap: () => _selectToDate(context),
+                        onTap: () => _selectToDateTime(context),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -151,16 +152,16 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                toDate != null
-                                    ? '${toDate!.year}/${toDate!.month.toString().padLeft(2, '0')}/${toDate!.day.toString().padLeft(2, '0')}'
-                                    : '日付を選択',
+                                toDateTime != null
+                                    ? '${toDateTime!.year}/${toDateTime!.month.toString().padLeft(2, '0')}/${toDateTime!.day.toString().padLeft(2, '0')} ${toDateTime!.hour.toString().padLeft(2, '0')}:${toDateTime!.minute.toString().padLeft(2, '0')}'
+                                    : '日時を選択',
                                 style: const TextStyle(
                                   color: Colors.black,
                                   fontSize: 16,
                                 ),
                               ),
                               const Icon(
-                                Icons.calendar_today,
+                                Icons.access_time,
                                 color: Colors.black54,
                               ),
                             ],
@@ -187,7 +188,15 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                             child: const Text('削除'),
                           ),
                           ElevatedButton(
-                            onPressed: widget.onSave,
+                            onPressed: () {
+                              if (widget.onSave != null) {
+                                widget.onSave!(
+                                  fromDateTime,
+                                  toDateTime,
+                                  memoController.text,
+                                );
+                              }
+                            },
                             child: const Text('保存'),
                           ),
                         ],

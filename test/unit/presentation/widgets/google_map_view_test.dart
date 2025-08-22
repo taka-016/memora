@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/google_map_view.dart';
+import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 
 void main() {
   group('GoogleMapView', () {
@@ -146,6 +147,35 @@ void main() {
 
       // ボトムシートが表示されることを確認
       expect(find.text('削除'), findsOneWidget);
+      expect(find.text('保存'), findsOneWidget);
+    });
+
+    testWidgets('ボトムシートが表示されて保存ボタンが存在する', (WidgetTester tester) async {
+      const testPin = Pin(
+        id: 'pin1',
+        pinId: 'pin1',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [testPin])),
+          ),
+        ),
+      );
+
+      // マーカーをタップしてボトムシートを表示
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final marker = googleMap.markers.first;
+      marker.onTap!();
+      await tester.pumpAndSettle();
+
+      // ボトムシートが表示されて保存ボタンが存在することを確認
+      expect(find.text('保存'), findsOneWidget);
+      expect(find.text('削除'), findsOneWidget);
+      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
     });
   });
 }
