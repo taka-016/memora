@@ -69,7 +69,7 @@ void main() {
       expect(find.byIcon(Icons.access_time), findsNWidgets(2));
     });
 
-    testWidgets('日付選択タップでCustomDatePickerDialogが表示される', (
+    testWidgets('訪問開始日の日付選択タップでCustomDatePickerDialogが表示される', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
@@ -84,7 +84,7 @@ void main() {
       expect(find.text('日付を選択'), findsWidgets);
     });
 
-    testWidgets('時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
+    testWidgets('訪問開始日の時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
       );
@@ -101,25 +101,68 @@ void main() {
       expect(find.text('時間を選択'), findsWidgets);
     });
 
-    testWidgets('保存コールバックが正しく設定される', (WidgetTester tester) async {
-      // コールバック関数が設定されていることを確認
-      void testCallback(
-        DateTime? fromDateTime,
-        DateTime? toDateTime,
-        String memo,
-      ) {
-        // テスト用のコールバック
-      }
+    testWidgets('訪問終了日の日付選択タップでCustomDatePickerDialogが表示される', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+      );
+
+      // 終了日の日付フィールドが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.byKey(const Key('visitEndDateField')));
+      await tester.pumpAndSettle();
+
+      // 終了日の日付フィールドをタップ
+      await tester.tap(find.byKey(const Key('visitEndDateField')));
+      await tester.pumpAndSettle();
+
+      // CustomDatePickerDialogが表示されることを確認
+      expect(find.text('日付を選択'), findsWidgets);
+    });
+
+    testWidgets('訪問終了日の時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+      );
+
+      // 終了時間の時間フィールドが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.byKey(const Key('visitEndTimeField')));
+      await tester.pumpAndSettle();
+
+      // 終了時間の時間フィールドをタップ
+      await tester.tap(find.byKey(const Key('visitEndTimeField')));
+      await tester.pumpAndSettle();
+
+      // TimePicker関連のUI要素が表示されることを確認
+      expect(find.text('時間を選択'), findsWidgets);
+    });
+
+    testWidgets('保存ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
+      bool onSaveCalled = false;
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(body: PinDetailBottomSheet(onSave: testCallback)),
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              onSave:
+                  (DateTime? fromDateTime, DateTime? toDateTime, String memo) {
+                    onSaveCalled = true;
+                  },
+            ),
+          ),
         ),
       );
 
-      // PinDetailBottomSheetが正しく表示されることを確認
-      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
-      expect(find.text('保存'), findsOneWidget);
+      // 保存ボタンが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // 保存ボタンをタップ
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // onSaveコールバックが呼ばれたことを確認
+      expect(onSaveCalled, isTrue);
     });
   });
 }
