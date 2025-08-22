@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 void main() {
   group('PinDetailBottomSheet', () {
@@ -144,10 +145,9 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: PinDetailBottomSheet(
-              onSave:
-                  (DateTime? fromDateTime, DateTime? toDateTime, String memo) {
-                    onSaveCalled = true;
-                  },
+              onSave: (Pin pin) {
+                onSaveCalled = true;
+              },
             ),
           ),
         ),
@@ -163,6 +163,82 @@ void main() {
 
       // onSaveコールバックが呼ばれたことを確認
       expect(onSaveCalled, isTrue);
+    });
+
+    testWidgets('Pinデータを受け取って初期値が正しくセットされること', (WidgetTester tester) async {
+      final pin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 10, 30),
+        visitEndDate: DateTime(2025, 1, 15, 15, 45),
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: PinDetailBottomSheet(pin: pin)),
+        ),
+      );
+
+      // 開始日が初期セットされていることを確認（2個の2025/01/15が見つかることを期待）
+      expect(find.text('2025/01/15'), findsNWidgets(2));
+      expect(find.text('10:30'), findsOneWidget);
+
+      // 終了日が初期セットされていることを確認
+      expect(find.text('15:45'), findsOneWidget);
+
+      // メモが初期セットされていることを確認
+      final memoField = find.byKey(const Key('visitMemoField'));
+      expect(memoField, findsOneWidget);
+      final textField = tester.widget<TextFormField>(memoField);
+      expect(textField.controller?.text, equals('テストメモ'));
+    });
+
+    testWidgets('Pinデータがnullの場合は空の状態で表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: PinDetailBottomSheet(pin: null))),
+      );
+
+      // プレースホルダーテキストが表示されることを確認
+      expect(find.text('日付を選択'), findsNWidgets(2));
+      expect(find.text('時間を選択'), findsNWidgets(2));
+
+      // メモフィールドが空であることを確認
+      final memoField = find.byKey(const Key('visitMemoField'));
+      expect(memoField, findsOneWidget);
+      final textField = tester.widget<TextFormField>(memoField);
+      expect(textField.controller?.text, equals(''));
+    });
+
+    testWidgets('保存ボタンタップ時にPinデータを作成してコールバックすること', (WidgetTester tester) async {
+      Pin? callbackPin;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              onSave: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      // メモを入力
+      await tester.ensureVisible(find.byKey(const Key('visitMemoField')));
+      await tester.enterText(find.byKey(const Key('visitMemoField')), 'テストメモ');
+
+      // 保存ボタンをタップ
+      await tester.ensureVisible(find.text('保存'));
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // Pinデータがコールバックされることを確認
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.visitMemo, equals('テストメモ'));
     });
   });
 }
