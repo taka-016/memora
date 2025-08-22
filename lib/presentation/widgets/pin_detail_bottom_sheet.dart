@@ -24,6 +24,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   DateTime? toDate;
   TimeOfDay? toTime;
   final TextEditingController memoController = TextEditingController();
+  String? _dateErrorMessage;
 
   Future<void> _selectFromDate(BuildContext context) async {
     final picked = await DatePickerUtils.showCustomDatePicker(
@@ -35,6 +36,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     if (picked != null) {
       setState(() {
         fromDate = picked;
+        _dateErrorMessage = null;
       });
     }
   }
@@ -47,6 +49,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     if (picked != null) {
       setState(() {
         fromTime = picked;
+        _dateErrorMessage = null;
       });
     }
   }
@@ -61,6 +64,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     if (picked != null) {
       setState(() {
         toDate = picked;
+        _dateErrorMessage = null;
       });
     }
   }
@@ -73,6 +77,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     if (picked != null) {
       setState(() {
         toTime = picked;
+        _dateErrorMessage = null;
       });
     }
   }
@@ -284,6 +289,16 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                           ),
                         ),
                       ),
+                      if (_dateErrorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _dateErrorMessage!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       TextFormField(
                         key: const Key('visitMemoField'),
@@ -305,6 +320,20 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                           ),
                           ElevatedButton(
                             onPressed: () {
+                              setState(() {
+                                _dateErrorMessage = null;
+                              });
+
+                              if (fromDateTime != null && toDateTime != null) {
+                                if (fromDateTime!.isAfter(toDateTime!)) {
+                                  setState(() {
+                                    _dateErrorMessage =
+                                        '訪問開始日時は訪問終了日時より前の日時を選択してください';
+                                  });
+                                  return;
+                                }
+                              }
+
                               if (widget.onSave != null) {
                                 widget.onSave!(
                                   fromDateTime,
