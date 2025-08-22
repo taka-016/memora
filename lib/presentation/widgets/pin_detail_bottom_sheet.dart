@@ -133,7 +133,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      const Text('旅行終了日'),
+                      const Text('訪問終了日'),
                       const SizedBox(height: 8),
                       InkWell(
                         key: const Key('visitEndDateField'),
