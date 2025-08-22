@@ -240,5 +240,133 @@ void main() {
       expect(callbackPin, isNotNull);
       expect(callbackPin!.visitMemo, equals('テストメモ'));
     });
+
+    testWidgets('訪問開始日時が訪問終了日時より後の場合にエラーメッセージが表示されること', (
+      WidgetTester tester,
+    ) async {
+      Pin? callbackPin;
+
+      // 既存のPinデータを設定（開始日時 > 終了日時）
+      final invalidPin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 16, 0), // 後の時間
+        visitEndDate: DateTime(2025, 1, 15, 10, 0), // 前の時間
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: invalidPin,
+              onSave: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      // 保存ボタンをタップ
+      await tester.ensureVisible(find.text('保存'));
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されることを確認
+      expect(find.text('訪問開始日時は訪問終了日時より前の日時を選択してください'), findsOneWidget);
+
+      // コールバックが呼ばれないことを確認
+      expect(callbackPin, isNull);
+    });
+
+    testWidgets('訪問開始日時が訪問終了日時より前の場合は正常に保存されること', (WidgetTester tester) async {
+      Pin? callbackPin;
+
+      // 既存のPinデータを設定（開始日時 < 終了日時）
+      final validPin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 10, 0), // 前の時間
+        visitEndDate: DateTime(2025, 1, 15, 16, 0), // 後の時間
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: validPin,
+              onSave: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      // 保存ボタンをタップ
+      await tester.ensureVisible(find.text('保存'));
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されないことを確認
+      expect(find.text('訪問開始日時は訪問終了日時より前の日時を選択してください'), findsNothing);
+
+      // コールバックが呼ばれることを確認
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.visitStartDate, equals(DateTime(2025, 1, 15, 10, 0)));
+      expect(callbackPin!.visitEndDate, equals(DateTime(2025, 1, 15, 16, 0)));
+    });
+
+    testWidgets('エラーメッセージが表示された状態でもUI要素が正常に動作すること', (
+      WidgetTester tester,
+    ) async {
+      Pin? callbackPin;
+
+      // 無効な日時を持つPinデータ
+      final invalidPin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 16, 0), // 後の時間
+        visitEndDate: DateTime(2025, 1, 15, 10, 0), // 前の時間
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: invalidPin,
+              onSave: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      // 保存ボタンをタップしてエラーを表示
+      await tester.ensureVisible(find.text('保存'));
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // エラーメッセージが表示されることを確認
+      expect(find.text('訪問開始日時は訪問終了日時より前の日時を選択してください'), findsOneWidget);
+
+      // エラー表示後でもフィールドが存在することを確認
+      expect(find.byKey(const Key('visitStartDateField')), findsOneWidget);
+      expect(find.byKey(const Key('visitEndDateField')), findsOneWidget);
+      expect(find.byKey(const Key('visitMemoField')), findsOneWidget);
+
+      // エラー表示後でも保存ボタンが存在することを確認
+      expect(find.text('保存'), findsOneWidget);
+    });
   });
 }
