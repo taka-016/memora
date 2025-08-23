@@ -50,93 +50,110 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextField(
-            controller: _controller,
-            decoration: InputDecoration(
-              hintText: widget.hintText,
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: const BorderSide(width: 1, color: Colors.grey),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: const BorderSide(width: 1, color: Colors.grey),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: const BorderSide(width: 2, color: Colors.blue),
-              ),
-              suffixIcon: _controller.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        setState(() {
-                          _controller.clear();
-                          _candidates = [];
-                        });
-                        widget.onChanged?.call('');
-                      },
-                    )
-                  : null,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 10,
-                horizontal: 12,
-              ),
-            ),
-            onChanged: (value) {
-              setState(() {});
-              widget.onChanged?.call(value);
-            },
-            onSubmitted: (_) => _onSearch(),
-          ),
-        ),
-        if (_isLoading)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: LinearProgressIndicator(),
-          ),
-        if (_candidates.isNotEmpty)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: SizedBox(
-              // 最大高さを設定し、超えた分はスクロール
-              height: _candidates.length > 5 ? 400 : null,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _candidates.length,
-                itemBuilder: (context, index) {
-                  final candidate = _candidates[index];
-                  return ListTile(
-                    title: Text(candidate.name),
-                    subtitle: Text(candidate.address),
-                    onTap: () {
-                      widget.onCandidateSelected?.call(candidate);
-                      setState(() {
-                        _candidates = [];
-                      });
-                    },
-                  );
-                },
-              ),
-            ),
-          ),
+        _buildSearchField(),
+        _buildLoadingIndicator(),
+        _buildCandidatesList(),
       ],
     );
+  }
+
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: TextField(
+        controller: _controller,
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: const BorderSide(width: 1, color: Colors.grey),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: const BorderSide(width: 1, color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: const BorderSide(width: 2, color: Colors.blue),
+          ),
+          suffixIcon: _buildClearButton(),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 10,
+            horizontal: 12,
+          ),
+        ),
+        onChanged: _onFieldChanged,
+        onSubmitted: (_) => _onSearch(),
+      ),
+    );
+  }
+
+  Widget? _buildClearButton() {
+    if (_controller.text.isEmpty) return null;
+
+    return IconButton(
+      icon: const Icon(Icons.clear),
+      onPressed: () {
+        setState(() {
+          _controller.clear();
+          _candidates = [];
+        });
+        widget.onChanged?.call('');
+      },
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    if (!_isLoading) return const SizedBox.shrink();
+
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.0),
+      child: LinearProgressIndicator(),
+    );
+  }
+
+  Widget _buildCandidatesList() {
+    if (_candidates.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: SizedBox(
+        height: _candidates.length > 5 ? 400 : null,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: _candidates.length,
+          itemBuilder: _buildCandidateItem,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCandidateItem(BuildContext context, int index) {
+    final candidate = _candidates[index];
+    return ListTile(
+      title: Text(candidate.name),
+      subtitle: Text(candidate.address),
+      onTap: () {
+        widget.onCandidateSelected?.call(candidate);
+        setState(() {
+          _candidates = [];
+        });
+      },
+    );
+  }
+
+  void _onFieldChanged(String value) {
+    setState(() {});
+    widget.onChanged?.call(value);
   }
 }
