@@ -8,5 +8,6 @@ abstract class MapViewService {
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
     Function(String)? onMarkerDeleted,
+    Pin? selectedPin,
   });
 }

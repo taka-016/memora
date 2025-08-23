@@ -14,6 +14,7 @@ class GoogleMapView extends ConsumerWidget {
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
+  final Pin? selectedPin; // 新たに追加されたピンを自動選択するためのプロパティ
 
   const GoogleMapView({
     super.key,
@@ -21,6 +22,7 @@ class GoogleMapView extends ConsumerWidget {
     this.onMapLongTapped,
     this.onMarkerTapped,
     this.onMarkerDeleted,
+    this.selectedPin, // 新規追加
   });
 
   @override
@@ -30,6 +32,7 @@ class GoogleMapView extends ConsumerWidget {
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
       onMarkerDeleted: onMarkerDeleted,
+      selectedPin: selectedPin, // 新規追加
     );
   }
 }
@@ -39,12 +42,14 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
+  final Pin? selectedPin;
 
   const _GoogleMapViewWidget({
     required this.pins,
     this.onMapLongTapped,
     this.onMarkerTapped,
     this.onMarkerDeleted,
+    this.selectedPin,
   });
 
   @override
@@ -75,6 +80,18 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _moveToCurrentLocation();
     });
+  }
+
+  @override
+  void didUpdateWidget(_GoogleMapViewWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 新しいピンが選択された場合、自動的にマーカータップを実行
+    if (widget.selectedPin != null &&
+        widget.selectedPin != oldWidget.selectedPin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _onMarkerTap(widget.selectedPin!);
+      });
+    }
   }
 
   void _showErrorSnackBar(String message) {
