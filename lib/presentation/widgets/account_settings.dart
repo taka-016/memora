@@ -150,45 +150,58 @@ class AccountSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: const Text('アカウント設定')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.email),
-                title: const Text('メールアドレス変更'),
-                subtitle: const Text('現在のメールアドレスを変更'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showEmailChangeModal(context, ref),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.lock),
-                title: const Text('パスワード変更'),
-                subtitle: const Text('現在のパスワードを変更'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showPasswordChangeModal(context, ref),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text(
-                  'アカウント削除',
-                  style: TextStyle(color: Colors.red),
-                ),
-                subtitle: const Text('アカウントを完全に削除'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () => _showAccountDeleteModal(context, ref),
-              ),
-            ),
-          ],
-        ),
+      body: _buildBody(context, ref),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildEmailChangeCard(context, ref),
+          const SizedBox(height: 16),
+          _buildPasswordChangeCard(context, ref),
+          const SizedBox(height: 16),
+          _buildAccountDeleteCard(context, ref),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmailChangeCard(BuildContext context, WidgetRef ref) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.email),
+        title: const Text('メールアドレス変更'),
+        subtitle: const Text('現在のメールアドレスを変更'),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () => _showEmailChangeModal(context, ref),
+      ),
+    );
+  }
+
+  Widget _buildPasswordChangeCard(BuildContext context, WidgetRef ref) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.lock),
+        title: const Text('パスワード変更'),
+        subtitle: const Text('現在のパスワードを変更'),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () => _showPasswordChangeModal(context, ref),
+      ),
+    );
+  }
+
+  Widget _buildAccountDeleteCard(BuildContext context, WidgetRef ref) {
+    return Card(
+      child: ListTile(
+        leading: const Icon(Icons.delete_forever, color: Colors.red),
+        title: const Text('アカウント削除', style: TextStyle(color: Colors.red)),
+        subtitle: const Text('アカウントを完全に削除'),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () => _showAccountDeleteModal(context, ref),
       ),
     );
   }
