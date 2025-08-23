@@ -130,89 +130,114 @@ class _TripEditModalState extends State<TripEditModal> {
   }
 
   Widget _buildNormalLayout() {
-    final isEditing = widget.tripEntry != null;
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          isEditing ? '旅行編集' : '旅行新規作成',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        ),
+        _buildHeader(),
         const SizedBox(height: 20),
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: '旅行名',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDatePickerField(
-                    labelText: '旅行期間 From',
-                    selectedDate: _startDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _startDate = date;
-                        _dateErrorMessage = null;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDatePickerField(
-                    labelText: '旅行期間 To',
-                    selectedDate: _endDate,
-                    onDateSelected: (date) {
-                      setState(() {
-                        _endDate = date;
-                        _dateErrorMessage = null;
-                      });
-                    },
-                  ),
-                  if (_dateErrorMessage != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _dateErrorMessage!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _memoController,
-                    decoration: const InputDecoration(
-                      labelText: 'メモ',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: _toggleMapExpansion,
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: Text('訪問場所を地図で選択'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        Expanded(child: _buildForm()),
         const SizedBox(height: 24),
         _buildActionButtons(),
       ],
+    );
+  }
+
+  Widget _buildHeader() {
+    final isEditing = widget.tripEntry != null;
+    return Text(
+      isEditing ? '旅行編集' : '旅行新規作成',
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    );
+  }
+
+  Widget _buildForm() {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildTripNameField(),
+            const SizedBox(height: 16),
+            _buildDateSection(),
+            const SizedBox(height: 16),
+            _buildMemoField(),
+            const SizedBox(height: 16),
+            _buildMapSelectionButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTripNameField() {
+    return TextFormField(
+      controller: _nameController,
+      decoration: const InputDecoration(
+        labelText: '旅行名',
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildDateSection() {
+    return Column(
+      children: [
+        _buildDatePickerField(
+          labelText: '旅行期間 From',
+          selectedDate: _startDate,
+          onDateSelected: (date) {
+            setState(() {
+              _startDate = date;
+              _dateErrorMessage = null;
+            });
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildDatePickerField(
+          labelText: '旅行期間 To',
+          selectedDate: _endDate,
+          onDateSelected: (date) {
+            setState(() {
+              _endDate = date;
+              _dateErrorMessage = null;
+            });
+          },
+        ),
+        if (_dateErrorMessage != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _dateErrorMessage!,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildMemoField() {
+    return TextFormField(
+      controller: _memoController,
+      decoration: const InputDecoration(
+        labelText: 'メモ',
+        border: OutlineInputBorder(),
+      ),
+      maxLines: 3,
+    );
+  }
+
+  Widget _buildMapSelectionButton() {
+    return ElevatedButton(
+      onPressed: _toggleMapExpansion,
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(double.infinity, 48),
+      ),
+      child: const Text('訪問場所を地図で選択'),
     );
   }
 
@@ -221,44 +246,58 @@ class _TripEditModalState extends State<TripEditModal> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text(
-              '地図で場所を選択',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-            ),
-            const Spacer(),
-            IconButton(
-              key: _mapIconKey,
-              onPressed: _toggleMapExpansion,
-              icon: const Icon(Icons.close),
-            ),
-          ],
-        ),
+        _buildMapHeader(),
         const SizedBox(height: 20),
-        Expanded(
-          child: widget.isTestEnvironment
-              ? Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.all(Radius.circular(8)),
-                    child: MapViewFactory.create(
-                      MapViewType.placeholder,
-                    ).createMapView(pins: []),
-                  ),
-                )
-              : MapViewFactory.create(MapViewType.google).createMapView(
-                  pins: _pins,
-                  onMapLongTapped: _onMapLongTapped,
-                  onMarkerTapped: _onPinTapped,
-                  onMarkerDeleted: _onMarkerDeleted,
-                  selectedPin: _selectedPin,
-                ),
+        Expanded(child: _buildMapView()),
+      ],
+    );
+  }
+
+  Widget _buildMapHeader() {
+    return Row(
+      children: [
+        const Text(
+          '地図で場所を選択',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+        ),
+        const Spacer(),
+        IconButton(
+          key: _mapIconKey,
+          onPressed: _toggleMapExpansion,
+          icon: const Icon(Icons.close),
         ),
       ],
+    );
+  }
+
+  Widget _buildMapView() {
+    return widget.isTestEnvironment
+        ? _buildTestMapView()
+        : _buildProductionMapView();
+  }
+
+  Widget _buildTestMapView() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(8)),
+        child: MapViewFactory.create(
+          MapViewType.placeholder,
+        ).createMapView(pins: []),
+      ),
+    );
+  }
+
+  Widget _buildProductionMapView() {
+    return MapViewFactory.create(MapViewType.google).createMapView(
+      pins: _pins,
+      onMapLongTapped: _onMapLongTapped,
+      onMarkerTapped: _onPinTapped,
+      onMarkerDeleted: _onMarkerDeleted,
+      selectedPin: _selectedPin,
     );
   }
 
