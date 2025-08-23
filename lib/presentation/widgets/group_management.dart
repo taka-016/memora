@@ -305,102 +305,110 @@ class _GroupManagementState extends State<GroupManagement> {
   Widget build(BuildContext context) {
     return Container(
       key: const Key('group_settings'),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 16),
-                      const Text(
-                        'グループ管理',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        onPressed: _showAddGroupDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text('グループ追加'),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(),
-                Expanded(
-                  child: _managedGroupsWithMembers.isEmpty
-                      ? const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.group_work,
-                                size: 100,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                '管理しているグループがありません',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'グループを追加してください',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : RefreshIndicator(
-                          onRefresh: _loadData,
-                          child: ListView.builder(
-                            itemCount: _managedGroupsWithMembers.length,
-                            itemBuilder: (context, index) {
-                              final groupWithMembers =
-                                  _managedGroupsWithMembers[index];
-                              final group = groupWithMembers.group;
+      child: _isLoading ? _buildLoadingState() : _buildGroupManagementContent(),
+    );
+  }
 
-                              return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 4,
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(group.name.substring(0, 1)),
-                                  ),
-                                  title: Text(group.name),
-                                  subtitle: group.memo != null
-                                      ? Text(group.memo!)
-                                      : null,
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () =>
-                                        _showDeleteConfirmDialog(group),
-                                  ),
-                                  onTap: () => _showEditGroupDialog(group),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                ),
-              ],
+  Widget _buildLoadingState() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildGroupManagementContent() {
+    return Column(
+      children: [
+        _buildHeader(),
+        const Divider(),
+        Expanded(child: _buildGroupListContent()),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const SizedBox(width: 16),
+          const Text(
+            'グループ管理',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const Spacer(),
+          _buildAddGroupButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddGroupButton() {
+    return ElevatedButton.icon(
+      onPressed: _showAddGroupDialog,
+      icon: const Icon(Icons.add),
+      label: const Text('グループ追加'),
+    );
+  }
+
+  Widget _buildGroupListContent() {
+    return _managedGroupsWithMembers.isEmpty
+        ? _buildEmptyState()
+        : _buildGroupList();
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.group_work, size: 100, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            '管理しているグループがありません',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'グループを追加してください',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupList() {
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: ListView.builder(
+        itemCount: _managedGroupsWithMembers.length,
+        itemBuilder: (context, index) => _buildGroupCard(index),
+      ),
+    );
+  }
+
+  Widget _buildGroupCard(int index) {
+    final groupWithMembers = _managedGroupsWithMembers[index];
+    final group = groupWithMembers.group;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(child: Text(group.name.substring(0, 1))),
+        title: Text(group.name),
+        subtitle: group.memo != null ? Text(group.memo!) : null,
+        trailing: _buildDeleteButton(group),
+        onTap: () => _showEditGroupDialog(group),
+      ),
+    );
+  }
+
+  Widget _buildDeleteButton(Group group) {
+    return IconButton(
+      icon: const Icon(Icons.delete, color: Colors.red),
+      onPressed: () => _showDeleteConfirmDialog(group),
     );
   }
 }
