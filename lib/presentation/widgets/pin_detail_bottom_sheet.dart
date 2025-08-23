@@ -165,27 +165,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
             controller: scrollController,
             child: Column(
               children: [
-                // ドラッグハンドル
-                Container(
-                  margin: const EdgeInsets.only(top: 8),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                // 閉じるボタン
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8, right: 16),
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: widget.onClose,
-                    ),
-                  ),
-                ),
+                const _DragHandle(),
+                _CloseButton(onClose: widget.onClose),
                 Padding(
                   padding: EdgeInsets.fromLTRB(
                     32,
@@ -196,203 +177,23 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('訪問開始日'),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        key: const Key('visitStartDateField'),
-                        onTap: () => _selectFromDate(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                fromDate != null
-                                    ? '${fromDate!.year}/${fromDate!.month.toString().padLeft(2, '0')}/${fromDate!.day.toString().padLeft(2, '0')}'
-                                    : '日付を選択',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        key: const Key('visitStartTimeField'),
-                        onTap: () => _selectFromTime(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                fromTime != null
-                                    ? '${fromTime!.hour.toString().padLeft(2, '0')}:${fromTime!.minute.toString().padLeft(2, '0')}'
-                                    : '時間を選択',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.access_time,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        ),
+                      _DateTimeSection(
+                        fromDate: fromDate,
+                        fromTime: fromTime,
+                        toDate: toDate,
+                        toTime: toTime,
+                        onSelectFromDate: () => _selectFromDate(context),
+                        onSelectFromTime: () => _selectFromTime(context),
+                        onSelectToDate: () => _selectToDate(context),
+                        onSelectToTime: () => _selectToTime(context),
+                        dateErrorMessage: _dateErrorMessage,
                       ),
                       const SizedBox(height: 16),
-                      const Text('訪問終了日'),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        key: const Key('visitEndDateField'),
-                        onTap: () => _selectToDate(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                toDate != null
-                                    ? '${toDate!.year}/${toDate!.month.toString().padLeft(2, '0')}/${toDate!.day.toString().padLeft(2, '0')}'
-                                    : '日付を選択',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.calendar_today,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        key: const Key('visitEndTimeField'),
-                        onTap: () => _selectToTime(context),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.black54),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                toTime != null
-                                    ? '${toTime!.hour.toString().padLeft(2, '0')}:${toTime!.minute.toString().padLeft(2, '0')}'
-                                    : '時間を選択',
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const Icon(
-                                Icons.access_time,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (_dateErrorMessage != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          _dateErrorMessage!,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        key: const Key('visitMemoField'),
-                        minLines: 4,
-                        maxLines: null,
-                        controller: memoController,
-                        decoration: const InputDecoration(
-                          labelText: 'メモ',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
+                      _MemoField(controller: memoController),
                       const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton(
-                            onPressed: widget.onDelete,
-                            child: const Text('削除'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _dateErrorMessage = null;
-                              });
-
-                              if (fromDateTime != null && toDateTime != null) {
-                                if (fromDateTime!.isAfter(toDateTime!)) {
-                                  setState(() {
-                                    _dateErrorMessage =
-                                        '訪問開始日時は訪問終了日時より前の日時を選択してください';
-                                  });
-                                  return;
-                                }
-                              }
-
-                              if (widget.onSave != null) {
-                                final pin = Pin(
-                                  id: widget.pin?.id ?? '',
-                                  pinId: widget.pin?.pinId ?? '',
-                                  tripId: widget.pin?.tripId,
-                                  latitude: widget.pin?.latitude ?? 0.0,
-                                  longitude: widget.pin?.longitude ?? 0.0,
-                                  visitStartDate: fromDateTime,
-                                  visitEndDate: toDateTime,
-                                  visitMemo: memoController.text,
-                                );
-                                widget.onSave!(pin);
-                              }
-                            },
-                            child: const Text('保存'),
-                          ),
-                        ],
+                      _ActionButtons(
+                        onDelete: widget.onDelete,
+                        onSave: _handleSave,
                       ),
                     ],
                   ),
@@ -402,6 +203,230 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
           ),
         );
       },
+    );
+  }
+
+  void _handleSave() {
+    setState(() {
+      _dateErrorMessage = null;
+    });
+
+    if (fromDateTime != null && toDateTime != null) {
+      if (fromDateTime!.isAfter(toDateTime!)) {
+        setState(() {
+          _dateErrorMessage = '訪問開始日時は訪問終了日時より前の日時を選択してください';
+        });
+        return;
+      }
+    }
+
+    if (widget.onSave != null) {
+      final pin = Pin(
+        id: widget.pin?.id ?? '',
+        pinId: widget.pin?.pinId ?? '',
+        tripId: widget.pin?.tripId,
+        latitude: widget.pin?.latitude ?? 0.0,
+        longitude: widget.pin?.longitude ?? 0.0,
+        visitStartDate: fromDateTime,
+        visitEndDate: toDateTime,
+        visitMemo: memoController.text,
+      );
+      widget.onSave!(pin);
+    }
+  }
+}
+
+class _DragHandle extends StatelessWidget {
+  const _DragHandle();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _CloseButton extends StatelessWidget {
+  const _CloseButton({required this.onClose});
+
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topRight,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8, right: 16),
+        child: IconButton(icon: const Icon(Icons.close), onPressed: onClose),
+      ),
+    );
+  }
+}
+
+class _DateTimeField extends StatelessWidget {
+  const _DateTimeField({
+    required this.value,
+    required this.onTap,
+    required this.icon,
+    this.testKey,
+  });
+
+  final String value;
+  final VoidCallback onTap;
+  final IconData icon;
+  final Key? testKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      key: testKey,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.black54),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              value,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            ),
+            Icon(icon, color: Colors.black54),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DateTimeSection extends StatelessWidget {
+  const _DateTimeSection({
+    required this.fromDate,
+    required this.fromTime,
+    required this.toDate,
+    required this.toTime,
+    required this.onSelectFromDate,
+    required this.onSelectFromTime,
+    required this.onSelectToDate,
+    required this.onSelectToTime,
+    this.dateErrorMessage,
+  });
+
+  final DateTime? fromDate;
+  final TimeOfDay? fromTime;
+  final DateTime? toDate;
+  final TimeOfDay? toTime;
+  final VoidCallback onSelectFromDate;
+  final VoidCallback onSelectFromTime;
+  final VoidCallback onSelectToDate;
+  final VoidCallback onSelectToTime;
+  final String? dateErrorMessage;
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '日付を選択';
+    return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatTime(TimeOfDay? time) {
+    if (time == null) return '時間を選択';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('訪問開始日'),
+        const SizedBox(height: 8),
+        _DateTimeField(
+          testKey: const Key('visitStartDateField'),
+          value: _formatDate(fromDate),
+          onTap: onSelectFromDate,
+          icon: Icons.calendar_today,
+        ),
+        const SizedBox(height: 8),
+        _DateTimeField(
+          testKey: const Key('visitStartTimeField'),
+          value: _formatTime(fromTime),
+          onTap: onSelectFromTime,
+          icon: Icons.access_time,
+        ),
+        const SizedBox(height: 16),
+        const Text('訪問終了日'),
+        const SizedBox(height: 8),
+        _DateTimeField(
+          testKey: const Key('visitEndDateField'),
+          value: _formatDate(toDate),
+          onTap: onSelectToDate,
+          icon: Icons.calendar_today,
+        ),
+        const SizedBox(height: 8),
+        _DateTimeField(
+          testKey: const Key('visitEndTimeField'),
+          value: _formatTime(toTime),
+          onTap: onSelectToTime,
+          icon: Icons.access_time,
+        ),
+        if (dateErrorMessage != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            dateErrorMessage!,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _MemoField extends StatelessWidget {
+  const _MemoField({required this.controller});
+
+  final TextEditingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      key: const Key('visitMemoField'),
+      minLines: 4,
+      maxLines: null,
+      controller: controller,
+      decoration: const InputDecoration(
+        labelText: 'メモ',
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+}
+
+class _ActionButtons extends StatelessWidget {
+  const _ActionButtons({required this.onDelete, required this.onSave});
+
+  final VoidCallback? onDelete;
+  final VoidCallback onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(onPressed: onDelete, child: const Text('削除')),
+        ElevatedButton(onPressed: onSave, child: const Text('保存')),
+      ],
     );
   }
 }
