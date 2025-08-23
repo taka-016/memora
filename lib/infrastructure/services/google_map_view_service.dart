@@ -14,12 +14,14 @@ class GoogleMapViewService implements MapViewService {
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
     Function(String)? onMarkerDeleted,
+    Pin? selectedPin,
   }) {
     return GoogleMapView(
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
       onMarkerDeleted: onMarkerDeleted,
+      selectedPin: selectedPin,
     );
   }
 }

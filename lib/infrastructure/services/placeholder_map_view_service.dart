@@ -14,6 +14,7 @@ class PlaceholderMapViewService implements MapViewService {
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
     Function(String)? onMarkerDeleted,
+    Pin? selectedPin,
   }) {
     return const PlaceholderMapView();
   }
