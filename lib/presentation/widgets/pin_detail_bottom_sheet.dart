@@ -154,55 +154,59 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       initialChildSize: 0.3,
       minChildSize: 0.1,
       maxChildSize: 0.8,
-      builder: (context, scrollController) {
-        return Material(
-          type: MaterialType.card,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      builder: (context, scrollController) =>
+          _buildBottomSheetContent(scrollController),
+    );
+  }
+
+  Widget _buildBottomSheetContent(ScrollController scrollController) {
+    return Material(
+      type: MaterialType.card,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      ),
+      child: SingleChildScrollView(
+        controller: scrollController,
+        child: Column(
+          children: [
+            const _DragHandle(),
+            _CloseButton(onClose: widget.onClose),
+            _buildMainContent(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        32,
+        0,
+        32,
+        16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DateTimeSection(
+            fromDate: fromDate,
+            fromTime: fromTime,
+            toDate: toDate,
+            toTime: toTime,
+            onSelectFromDate: () => _selectFromDate(context),
+            onSelectFromTime: () => _selectFromTime(context),
+            onSelectToDate: () => _selectToDate(context),
+            onSelectToTime: () => _selectToTime(context),
+            dateErrorMessage: _dateErrorMessage,
           ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Column(
-              children: [
-                const _DragHandle(),
-                _CloseButton(onClose: widget.onClose),
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    32,
-                    0,
-                    32,
-                    16 + MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _DateTimeSection(
-                        fromDate: fromDate,
-                        fromTime: fromTime,
-                        toDate: toDate,
-                        toTime: toTime,
-                        onSelectFromDate: () => _selectFromDate(context),
-                        onSelectFromTime: () => _selectFromTime(context),
-                        onSelectToDate: () => _selectToDate(context),
-                        onSelectToTime: () => _selectToTime(context),
-                        dateErrorMessage: _dateErrorMessage,
-                      ),
-                      const SizedBox(height: 16),
-                      _MemoField(controller: memoController),
-                      const SizedBox(height: 24),
-                      _ActionButtons(
-                        onDelete: widget.onDelete,
-                        onSave: _handleSave,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+          const SizedBox(height: 16),
+          _MemoField(controller: memoController),
+          const SizedBox(height: 24),
+          _ActionButtons(onDelete: widget.onDelete, onSave: _handleSave),
+        ],
+      ),
     );
   }
 
