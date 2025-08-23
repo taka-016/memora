@@ -312,7 +312,7 @@ Future<DateTime?> showCustomDatePickerDialog(
   return showDialog<DateTime>(
     context: context,
     builder: (context) => CustomDatePickerDialog(
-      initialDate: initialDate,
+      initialDate: initialDate.add(const Duration(minutes: 1)),
       firstDate: firstDate,
       lastDate: lastDate,
     ),

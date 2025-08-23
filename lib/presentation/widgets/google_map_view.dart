@@ -156,6 +156,12 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     _hidePinDetailBottomSheet();
   }
 
+  void _onMarkerSave(Pin pin) {
+    // TODO: ピンの詳細情報を保存する処理を実装
+    // 現在は仮実装として、ボトムシートを閉じるのみ
+    _hidePinDetailBottomSheet();
+  }
+
   @override
   Widget build(BuildContext context) {
     final locationSearchService = GooglePlacesApiLocationSearchService(
@@ -200,7 +206,8 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
           ),
           if (_isBottomSheetVisible && _selectedPin != null)
             PinDetailBottomSheet(
-              onSave: () {},
+              pin: _selectedPin,
+              onSave: _onMarkerSave,
               onDelete: _onMarkerDelete,
               onClose: _hidePinDetailBottomSheet,
             ),
