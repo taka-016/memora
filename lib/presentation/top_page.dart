@@ -254,95 +254,103 @@ class _TopPageState extends State<TopPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('memora'),
-        leading: Builder(
-          builder: (context) => IconButton(
-            key: const Key('hamburger_menu'),
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Consumer(
-              builder: (context, ref, child) {
-                final authState = ref.watch(authManagerProvider);
-                if (authState.status == AuthStatus.authenticated) {
-                  return UserDrawerHeader(email: authState.user!.loginId);
-                } else {
-                  return DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    child: Text(
-                      'memora',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        fontSize: 24,
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.timeline),
-              title: const Text('グループ年表'),
-              selected: _selectedItem == NavigationItem.groupTimeline,
-              onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.groupTimeline),
-            ),
-            ListTile(
-              leading: const Icon(Icons.map),
-              title: const Text('地図表示'),
-              selected: _selectedItem == NavigationItem.mapDisplay,
-              onTap: () => _onNavigationItemSelected(NavigationItem.mapDisplay),
-            ),
-            ListTile(
-              leading: const Icon(Icons.people),
-              title: const Text('メンバー管理'),
-              selected: _selectedItem == NavigationItem.memberManagement,
-              onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.memberManagement),
-            ),
-            ListTile(
-              leading: const Icon(Icons.group_work),
-              title: const Text('グループ管理'),
-              selected: _selectedItem == NavigationItem.groupManagement,
-              onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.groupManagement),
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('設定'),
-              selected: _selectedItem == NavigationItem.settings,
-              onTap: () => _onNavigationItemSelected(NavigationItem.settings),
-            ),
-            ListTile(
-              leading: const Icon(Icons.account_circle),
-              title: const Text('アカウント設定'),
-              selected: _selectedItem == NavigationItem.accountSettings,
-              onTap: () =>
-                  _onNavigationItemSelected(NavigationItem.accountSettings),
-            ),
-            const Divider(),
-            Consumer(
-              builder: (context, ref, child) => ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('ログアウト'),
-                onTap: () {
-                  ref.read(authManagerProvider.notifier).logout();
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+      appBar: _buildAppBar(),
+      drawer: _buildDrawer(context),
       body: _buildBody(),
+    );
+  }
+
+  AppBar _buildAppBar() {
+    return AppBar(title: const Text('memora'), leading: _buildMenuButton());
+  }
+
+  Widget _buildMenuButton() {
+    return Builder(
+      builder: (context) => IconButton(
+        key: const Key('hamburger_menu'),
+        icon: const Icon(Icons.menu),
+        onPressed: () => Scaffold.of(context).openDrawer(),
+      ),
+    );
+  }
+
+  Drawer _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _buildDrawerHeader(context),
+          ..._buildDrawerItems(),
+          const Divider(),
+          _buildLogoutItem(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final authState = ref.watch(authManagerProvider);
+        if (authState.status == AuthStatus.authenticated) {
+          return UserDrawerHeader(email: authState.user!.loginId);
+        } else {
+          return _buildDefaultHeader(context);
+        }
+      },
+    );
+  }
+
+  Widget _buildDefaultHeader(BuildContext context) {
+    return DrawerHeader(
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+      child: Text(
+        'memora',
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimary,
+          fontSize: 24,
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildDrawerItems() {
+    return [
+      _buildDrawerItem(Icons.timeline, 'グループ年表', NavigationItem.groupTimeline),
+      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay),
+      _buildDrawerItem(Icons.people, 'メンバー管理', NavigationItem.memberManagement),
+      _buildDrawerItem(
+        Icons.group_work,
+        'グループ管理',
+        NavigationItem.groupManagement,
+      ),
+      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings),
+      _buildDrawerItem(
+        Icons.account_circle,
+        'アカウント設定',
+        NavigationItem.accountSettings,
+      ),
+    ];
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, NavigationItem item) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      selected: _selectedItem == item,
+      onTap: () => _onNavigationItemSelected(item),
+    );
+  }
+
+  Widget _buildLogoutItem() {
+    return Consumer(
+      builder: (context, ref, child) => ListTile(
+        leading: const Icon(Icons.logout),
+        title: const Text('ログアウト'),
+        onTap: () {
+          ref.read(authManagerProvider.notifier).logout();
+        },
+      ),
     );
   }
 }

@@ -96,35 +96,51 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('アカウント削除'),
-      content: const Text(
-        'アカウントを削除すると、すべてのデータが完全に削除されます。\n'
-        'この操作は取り消すことができません。\n\n'
-        '本当にアカウントを削除しますか？',
+      title: _buildTitle(),
+      content: _buildContent(),
+      actions: _buildActions(context),
+    );
+  }
+
+  Widget _buildTitle() {
+    return const Text('アカウント削除');
+  }
+
+  Widget _buildContent() {
+    return const Text(
+      'アカウントを削除すると、すべてのデータが完全に削除されます。\n'
+      'この操作は取り消すことができません。\n\n'
+      '本当にアカウントを削除しますか？',
+    );
+  }
+
+  List<Widget> _buildActions(BuildContext context) {
+    return [_buildCancelButton(context), _buildDeleteButton()];
+  }
+
+  Widget _buildCancelButton(BuildContext context) {
+    return TextButton(
+      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+      child: const Text('キャンセル'),
+    );
+  }
+
+  Widget _buildDeleteButton() {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _deleteAccount,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
       ),
-      actions: [
-        TextButton(
-          onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _deleteAccount,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
-            foregroundColor: Colors.white,
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('削除'),
-        ),
-      ],
+      child: _isLoading ? _buildLoadingIndicator() : const Text('削除'),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const SizedBox(
+      width: 20,
+      height: 20,
+      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
     );
   }
 }
