@@ -5,7 +5,7 @@ import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/managers/location_manager.dart';
-import 'package:memora/presentation/widgets/search_bar.dart';
+import 'package:memora/presentation/widgets/custom_search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 
@@ -181,55 +181,74 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final locationSearchService = GooglePlacesApiLocationSearchService(
-      apiKey: Env.googlePlacesApiKey,
-    );
-
     return Container(
       key: const Key('map_view'),
       child: Stack(
         children: [
-          GoogleMap(
-            onMapCreated: _onMapCreated,
-            initialCameraPosition: CameraPosition(
-              target: _getCurrentOrFallbackPosition(),
-              zoom: 15,
-            ),
-            markers: _markers,
-            onLongPress: _onMapLongTap,
-            myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-          ),
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: CustomSearchBar(
-              hintText: '場所を検索',
-              locationSearchService: locationSearchService,
-              onCandidateSelected: (candidate) async {
-                await _moveToSearchedLocation(candidate.location);
-              },
-            ),
-          ),
-          Positioned(
-            bottom: 180,
-            right: 4,
-            child: FloatingActionButton(
-              heroTag: 'my_location_fab',
-              onPressed: _moveToCurrentLocation,
-              child: const Icon(Icons.my_location),
-            ),
-          ),
-          if (_isBottomSheetVisible && _selectedPin != null)
-            PinDetailBottomSheet(
-              pin: _selectedPin,
-              onSave: _onMarkerSave,
-              onDelete: _onMarkerDelete,
-              onClose: _hidePinDetailBottomSheet,
-            ),
+          _buildGoogleMap(),
+          _buildSearchBar(),
+          _buildLocationButton(),
+          _buildBottomSheet(),
         ],
       ),
+    );
+  }
+
+  Widget _buildGoogleMap() {
+    return GoogleMap(
+      onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        target: _getCurrentOrFallbackPosition(),
+        zoom: 15,
+      ),
+      markers: _markers,
+      onLongPress: _onMapLongTap,
+      myLocationEnabled: true,
+      myLocationButtonEnabled: false,
+    );
+  }
+
+  Widget _buildSearchBar() {
+    final locationSearchService = GooglePlacesApiLocationSearchService(
+      apiKey: Env.googlePlacesApiKey,
+    );
+
+    return Positioned(
+      top: 16,
+      left: 16,
+      right: 16,
+      child: CustomSearchBar(
+        hintText: '場所を検索',
+        locationSearchService: locationSearchService,
+        onCandidateSelected: (candidate) async {
+          await _moveToSearchedLocation(candidate.location);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLocationButton() {
+    return Positioned(
+      bottom: 180,
+      right: 4,
+      child: FloatingActionButton(
+        heroTag: 'my_location_fab',
+        onPressed: _moveToCurrentLocation,
+        child: const Icon(Icons.my_location),
+      ),
+    );
+  }
+
+  Widget _buildBottomSheet() {
+    if (!_isBottomSheetVisible || _selectedPin == null) {
+      return const SizedBox.shrink();
+    }
+
+    return PinDetailBottomSheet(
+      pin: _selectedPin,
+      onSave: _onMarkerSave,
+      onDelete: _onMarkerDelete,
+      onClose: _hidePinDetailBottomSheet,
     );
   }
 }
