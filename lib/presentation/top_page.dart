@@ -187,30 +187,11 @@ class _TopPageState extends State<TopPage> {
           return const Center(child: CircularProgressIndicator());
         }
         return widget.isTestEnvironment
-            ? Container(
-                key: const Key('group_settings'),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.group_work, size: 100, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'グループ管理',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'グループ管理画面',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+            ? _buildTestPlaceholder(
+                key: 'group_settings',
+                icon: Icons.group_work,
+                title: 'グループ管理',
+                subtitle: 'グループ管理画面',
               )
             : GroupManagement(member: _currentMember!);
       case NavigationItem.memberManagement:
@@ -218,30 +199,11 @@ class _TopPageState extends State<TopPage> {
           return const Center(child: CircularProgressIndicator());
         }
         return widget.isTestEnvironment
-            ? Container(
-                key: const Key('member_settings'),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.people, size: 100, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        'メンバー管理',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'メンバー管理画面',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+            ? _buildTestPlaceholder(
+                key: 'member_settings',
+                icon: Icons.people,
+                title: 'メンバー管理',
+                subtitle: 'メンバー管理画面',
               )
             : MemberManagement(member: _currentMember!);
       case NavigationItem.settings:
@@ -249,6 +211,39 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.accountSettings:
         return const AccountSettings();
     }
+  }
+
+  Widget _buildTestPlaceholder({
+    required String key,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      key: Key(key),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 100, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
