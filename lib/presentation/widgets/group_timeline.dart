@@ -105,38 +105,42 @@ class _GroupTimelineState extends State<GroupTimeline> {
       key: const Key('group_timeline'),
       child: Column(
         children: [
-          // ヘッダー
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Stack(
-              children: [
-                // 戻るボタン（左上）
-                if (widget.onBackPressed != null)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    child: IconButton(
-                      key: const Key('back_button'),
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: widget.onBackPressed,
-                    ),
-                  ),
-                // グループ名（中央）
-                Center(
-                  child: Text(
-                    widget.groupWithMembers.group.name,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 年表のテーブル
+          _buildHeader(),
           Expanded(child: _buildTimelineTable()),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Stack(
+        children: [
+          if (widget.onBackPressed != null) _buildBackButton(),
+          _buildGroupTitle(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Positioned(
+      left: 0,
+      top: 0,
+      child: IconButton(
+        key: const Key('back_button'),
+        icon: const Icon(Icons.arrow_back),
+        onPressed: widget.onBackPressed,
+      ),
+    );
+  }
+
+  Widget _buildGroupTitle() {
+    return Center(
+      child: Text(
+        widget.groupWithMembers.group.name,
+        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
   }

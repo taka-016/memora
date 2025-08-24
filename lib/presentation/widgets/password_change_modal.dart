@@ -55,131 +55,159 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
         horizontal: 16.0,
         vertical: 24.0,
       ),
-      child: Material(
-        type: MaterialType.card,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.95,
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'パスワード変更',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'パスワード要件:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ...PasswordValidator.getPasswordRequirements().map(
-                      (requirement) => Padding(
-                        padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.check_circle_outline, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              requirement,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _newPasswordController,
-                      obscureText: _obscureNewPassword,
-                      decoration: InputDecoration(
-                        labelText: '新しいパスワード',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureNewPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureNewPassword = !_obscureNewPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        return PasswordValidator.validate(value);
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: _obscureConfirmPassword,
-                      decoration: InputDecoration(
-                        labelText: 'パスワード確認',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscureConfirmPassword
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _obscureConfirmPassword =
-                                  !_obscureConfirmPassword;
-                            });
-                          },
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'パスワード確認を入力してください';
-                        }
-                        if (value != _newPasswordController.text) {
-                          return 'パスワードが一致しません';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => Navigator.of(context).pop(),
-                    child: const Text('キャンセル'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _updatePassword,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('更新'),
-                  ),
-                ],
-              ),
-            ],
-          ),
+      child: _buildDialogContent(),
+    );
+  }
+
+  Widget _buildDialogContent() {
+    return Material(
+      type: MaterialType.card,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.95,
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildTitle(),
+            const SizedBox(height: 20),
+            _buildPasswordForm(),
+            const SizedBox(height: 24),
+            _buildActionButtons(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTitle() {
+    return const Text(
+      'パスワード変更',
+      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    );
+  }
+
+  Widget _buildPasswordForm() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildPasswordRequirements(),
+          const SizedBox(height: 16),
+          _buildNewPasswordField(),
+          const SizedBox(height: 16),
+          _buildConfirmPasswordField(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordRequirements() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('パスワード要件:', style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        ...PasswordValidator.getPasswordRequirements().map(
+          (requirement) => Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, size: 16),
+                const SizedBox(width: 4),
+                Text(requirement, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewPasswordField() {
+    return TextFormField(
+      controller: _newPasswordController,
+      obscureText: _obscureNewPassword,
+      decoration: InputDecoration(
+        labelText: '新しいパスワード',
+        border: const OutlineInputBorder(),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureNewPassword ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureNewPassword = !_obscureNewPassword;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        return PasswordValidator.validate(value);
+      },
+    );
+  }
+
+  Widget _buildConfirmPasswordField() {
+    return TextFormField(
+      controller: _confirmPasswordController,
+      obscureText: _obscureConfirmPassword,
+      decoration: InputDecoration(
+        labelText: 'パスワード確認',
+        border: const OutlineInputBorder(),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureConfirmPassword = !_obscureConfirmPassword;
+            });
+          },
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'パスワード確認を入力してください';
+        }
+        if (value != _newPasswordController.text) {
+          return 'パスワードが一致しません';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        _buildCancelButton(),
+        const SizedBox(width: 8),
+        _buildUpdateButton(),
+      ],
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return TextButton(
+      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+      child: const Text('キャンセル'),
+    );
+  }
+
+  Widget _buildUpdateButton() {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _updatePassword,
+      child: _isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('更新'),
     );
   }
 }

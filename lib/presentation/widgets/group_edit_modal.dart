@@ -64,118 +64,154 @@ class _GroupEditModalState extends State<GroupEditModal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                isEditing ? 'グループ編集' : 'グループ新規作成',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              _buildTitle(isEditing),
               const SizedBox(height: 20),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'グループ名',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'グループ名を入力してください';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _memoController,
-                          decoration: const InputDecoration(
-                            labelText: 'メモ',
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 16),
-                        if (widget.availableMembers.isNotEmpty) ...[
-                          const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'メンバー選択',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            key: const Key('member_list_container'),
-                            height: 350,
-                            child: ListView.builder(
-                              itemCount: widget.availableMembers.length,
-                              itemBuilder: (context, index) {
-                                final member = widget.availableMembers[index];
-                                return CheckboxListTile(
-                                  title: Text(member.displayName),
-                                  value: _selectedMemberIds.contains(member.id),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      if (value == true) {
-                                        _selectedMemberIds.add(member.id);
-                                      } else {
-                                        _selectedMemberIds.remove(member.id);
-                                      }
-                                    });
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              Expanded(child: _buildScrollableContent()),
               const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('キャンセル'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final group = Group(
-                          id: widget.group?.id ?? '',
-                          administratorId: widget.group?.administratorId ?? '',
-                          name: _nameController.text,
-                          memo: _memoController.text.isEmpty
-                              ? null
-                              : _memoController.text,
-                        );
-
-                        widget.onSave(group, _selectedMemberIds.toList());
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: Text(isEditing ? '更新' : '作成'),
-                  ),
-                ],
-              ),
+              _buildActionButtons(isEditing),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildTitle(bool isEditing) {
+    return Text(
+      isEditing ? 'グループ編集' : 'グループ新規作成',
+      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    );
+  }
+
+  Widget _buildScrollableContent() {
+    return SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildGroupNameField(),
+            const SizedBox(height: 16),
+            _buildMemoField(),
+            const SizedBox(height: 16),
+            if (widget.availableMembers.isNotEmpty) _buildMemberSelection(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupNameField() {
+    return TextFormField(
+      controller: _nameController,
+      decoration: const InputDecoration(
+        labelText: 'グループ名',
+        border: OutlineInputBorder(),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'グループ名を入力してください';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildMemoField() {
+    return TextFormField(
+      controller: _memoController,
+      decoration: const InputDecoration(
+        labelText: 'メモ',
+        border: OutlineInputBorder(),
+      ),
+      maxLines: 3,
+    );
+  }
+
+  Widget _buildMemberSelection() {
+    return Column(
+      children: [
+        _buildMemberSelectionHeader(),
+        const SizedBox(height: 8),
+        _buildMemberList(),
+      ],
+    );
+  }
+
+  Widget _buildMemberSelectionHeader() {
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        'メンバー選択',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  Widget _buildMemberList() {
+    return SizedBox(
+      key: const Key('member_list_container'),
+      height: 350,
+      child: ListView.builder(
+        itemCount: widget.availableMembers.length,
+        itemBuilder: (context, index) => _buildMemberCheckbox(index),
+      ),
+    );
+  }
+
+  Widget _buildMemberCheckbox(int index) {
+    final member = widget.availableMembers[index];
+    return CheckboxListTile(
+      title: Text(member.displayName),
+      value: _selectedMemberIds.contains(member.id),
+      onChanged: (value) {
+        setState(() {
+          if (value == true) {
+            _selectedMemberIds.add(member.id);
+          } else {
+            _selectedMemberIds.remove(member.id);
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildActionButtons(bool isEditing) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        _buildCancelButton(),
+        const SizedBox(width: 8),
+        _buildSaveButton(isEditing),
+      ],
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return TextButton(
+      onPressed: () => Navigator.of(context).pop(),
+      child: const Text('キャンセル'),
+    );
+  }
+
+  Widget _buildSaveButton(bool isEditing) {
+    return ElevatedButton(
+      onPressed: _handleSave,
+      child: Text(isEditing ? '更新' : '作成'),
+    );
+  }
+
+  void _handleSave() {
+    if (_formKey.currentState!.validate()) {
+      final group = Group(
+        id: widget.group?.id ?? '',
+        administratorId: widget.group?.administratorId ?? '',
+        name: _nameController.text,
+        memo: _memoController.text.isEmpty ? null : _memoController.text,
+      );
+
+      widget.onSave(group, _selectedMemberIds.toList());
+      Navigator.of(context).pop();
+    }
   }
 }

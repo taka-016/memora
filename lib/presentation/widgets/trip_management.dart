@@ -260,46 +260,56 @@ class _TripManagementState extends State<TripManagement> {
       key: const Key('trip_management'),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    if (widget.onBackPressed != null)
-                      IconButton(
-                        key: const Key('back_button'),
-                        icon: const Icon(Icons.arrow_back),
-                        onPressed: widget.onBackPressed,
-                      ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const SizedBox(width: 16),
-                    Text(
-                      '${widget.year}年の旅行管理',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Spacer(),
-                    ElevatedButton.icon(
-                      onPressed: _showAddTripDialog,
-                      icon: const Icon(Icons.add),
-                      label: const Text('旅行追加'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          _buildHeader(),
           const Divider(),
           Expanded(child: _buildBody()),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_buildBackButton(), _buildTitleSection()],
+      ),
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Row(
+      children: [
+        if (widget.onBackPressed != null)
+          IconButton(
+            key: const Key('back_button'),
+            icon: const Icon(Icons.arrow_back),
+            onPressed: widget.onBackPressed,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTitleSection() {
+    return Row(
+      children: [
+        const SizedBox(width: 16),
+        Text(
+          '${widget.year}年の旅行管理',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        const Spacer(),
+        _buildAddTripButton(),
+      ],
+    );
+  }
+
+  Widget _buildAddTripButton() {
+    return ElevatedButton.icon(
+      onPressed: _showAddTripDialog,
+      icon: const Icon(Icons.add),
+      label: const Text('旅行追加'),
     );
   }
 

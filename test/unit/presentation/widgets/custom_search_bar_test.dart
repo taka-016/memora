@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/widgets/search_bar.dart';
+import 'package:memora/presentation/widgets/custom_search_bar.dart';
 import 'package:memora/domain/services/location_search_service.dart';
 import 'package:memora/domain/value-objects/location_candidate.dart';
 import 'package:memora/domain/value-objects/location.dart';

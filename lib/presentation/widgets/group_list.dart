@@ -62,23 +62,27 @@ class _GroupListState extends State<GroupList> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(key: const Key('group_list'), child: _buildBody());
+    return Container(
+      key: const Key('group_list'),
+      child: _buildContentByState(),
+    );
   }
 
-  Widget _buildBody() {
+  Widget _buildContentByState() {
     switch (_state) {
       case GroupListState.loading:
-        return const Center(child: CircularProgressIndicator());
-
+        return _buildLoadingState();
       case GroupListState.empty:
         return _buildEmptyState();
-
       case GroupListState.groupList:
-        return _buildGroupList();
-
+        return _buildGroupListContent();
       case GroupListState.error:
         return _buildErrorState();
     }
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(child: CircularProgressIndicator());
   }
 
   Widget _buildEmptyState() {
@@ -87,33 +91,39 @@ class _GroupListState extends State<GroupList> {
     );
   }
 
-  Widget _buildGroupList() {
+  Widget _buildGroupListContent() {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-            'グループ一覧',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: _groupsWithMembers.length,
-            itemBuilder: (context, index) {
-              final groupWithMembers = _groupsWithMembers[index];
-              return ListTile(
-                title: Text(groupWithMembers.group.name),
-                subtitle: Text('${groupWithMembers.members.length}人のメンバー'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  widget.onGroupSelected?.call(groupWithMembers);
-                },
-              );
-            },
-          ),
-        ),
+        _buildHeader(),
+        Expanded(child: _buildGroupListView()),
       ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return const Padding(
+      padding: EdgeInsets.all(16),
+      child: Text(
+        'グループ一覧',
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildGroupListView() {
+    return ListView.builder(
+      itemCount: _groupsWithMembers.length,
+      itemBuilder: (context, index) => _buildGroupListItem(index),
+    );
+  }
+
+  Widget _buildGroupListItem(int index) {
+    final groupWithMembers = _groupsWithMembers[index];
+    return ListTile(
+      title: Text(groupWithMembers.group.name),
+      subtitle: Text('${groupWithMembers.members.length}人のメンバー'),
+      trailing: const Icon(Icons.arrow_forward_ios),
+      onTap: () => widget.onGroupSelected?.call(groupWithMembers),
     );
   }
 
@@ -122,11 +132,19 @@ class _GroupListState extends State<GroupList> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(_errorMessage, style: const TextStyle(fontSize: 18)),
+          _buildErrorMessage(),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: _loadData, child: const Text('再読み込み')),
+          _buildRetryButton(),
         ],
       ),
     );
+  }
+
+  Widget _buildErrorMessage() {
+    return Text(_errorMessage, style: const TextStyle(fontSize: 18));
+  }
+
+  Widget _buildRetryButton() {
+    return ElevatedButton(onPressed: _loadData, child: const Text('再読み込み'));
   }
 }

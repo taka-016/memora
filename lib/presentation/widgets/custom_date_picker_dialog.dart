@@ -204,45 +204,58 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    return _buildDialog(context);
+  }
+
+  /// ダイアログ全体を構築
+  Widget _buildDialog(BuildContext context) {
     return Dialog(
       child: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ヘッダー
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(4),
-                  topRight: Radius.circular(4),
-                ),
-              ),
-              child: Center(
-                child: GestureDetector(
-                  onTap: _switchToInputMode,
-                  child: Text(
-                    _formatDateWithWeekday(_selectedDate),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            _buildHeader(context),
             const SizedBox(height: 16),
-            // ビューモードに応じてコンテンツを切り替え
-            SizedBox(
-              height: 300,
-              child: _isInputMode ? _buildInputView() : _buildCalendarView(),
-            ),
+            _buildContent(),
           ],
         ),
       ),
+    );
+  }
+
+  /// ヘッダー部分を構築
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).primaryColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(4),
+          topRight: Radius.circular(4),
+        ),
+      ),
+      child: Center(
+        child: GestureDetector(
+          onTap: _switchToInputMode,
+          child: Text(
+            _formatDateWithWeekday(_selectedDate),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// コンテンツ部分を構築
+  Widget _buildContent() {
+    return SizedBox(
+      height: 300,
+      child: _isInputMode ? _buildInputView() : _buildCalendarView(),
     );
   }
 
@@ -262,41 +275,58 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     return Column(
       children: [
         const SizedBox(height: 32),
-        // 入力フィールド（単一フィールドで自動フォーマット）
-        TextField(
-          key: const Key('date_field'),
-          controller: _dateController,
-          keyboardType: TextInputType.number,
-          inputFormatters: [DateInputFormatter()],
-          decoration: const InputDecoration(
-            labelText: '日付 (YYYY/MM/DD)',
-            hintText: 'YYYY/MM/DD',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        if (_errorMessage != null) ...[
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage!,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-              fontSize: 14,
-            ),
-          ),
-        ],
+        _buildDateInputField(),
+        _buildErrorMessage(),
         const Spacer(),
-        // ボタン
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-              onPressed: _switchToCalendarMode,
-              child: const Text('キャンセル'),
-            ),
-            const SizedBox(width: 8),
-            TextButton(onPressed: _confirmInputDate, child: const Text('確定')),
-          ],
+        _buildInputViewButtons(),
+      ],
+    );
+  }
+
+  /// 日付入力フィールドを構築
+  Widget _buildDateInputField() {
+    return TextField(
+      key: const Key('date_field'),
+      controller: _dateController,
+      keyboardType: TextInputType.number,
+      inputFormatters: [DateInputFormatter()],
+      decoration: const InputDecoration(
+        labelText: '日付 (YYYY/MM/DD)',
+        hintText: 'YYYY/MM/DD',
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  /// エラーメッセージを構築
+  Widget _buildErrorMessage() {
+    if (_errorMessage == null) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          _errorMessage!,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.error,
+            fontSize: 14,
+          ),
         ),
+      ],
+    );
+  }
+
+  /// 入力ビューのボタン群を構築
+  Widget _buildInputViewButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton(
+          onPressed: _switchToCalendarMode,
+          child: const Text('キャンセル'),
+        ),
+        const SizedBox(width: 8),
+        TextButton(onPressed: _confirmInputDate, child: const Text('確定')),
       ],
     );
   }

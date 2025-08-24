@@ -216,75 +216,77 @@ class _MemberManagementState extends State<MemberManagement> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 16),
-                      const Text(
-                        'メンバー管理',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const Spacer(),
-                      ElevatedButton.icon(
-                        onPressed: _showAddMemberDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text('メンバー追加'),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _loadData,
-                    child: ListView.builder(
-                      itemCount: _managedMembers.length,
-                      itemBuilder: (context, index) {
-                        final member = _managedMembers[index];
-                        final isCurrentUser = index == 0; // 1行目はログインユーザー
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              child: Text(member.displayName.substring(0, 1)),
-                            ),
-                            title: Text(member.displayName),
-                            subtitle:
-                                member.email != null ||
-                                    member.phoneNumber != null
-                                ? Text(member.email ?? member.phoneNumber ?? '')
-                                : null,
-                            onTap: () => _showEditMemberDialog(member),
-                            trailing:
-                                !isCurrentUser &&
-                                    member.accountId ==
-                                        null // ログインユーザーでなく、かつaccountIdを持たない場合のみ削除ボタンを表示
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () =>
-                                        _showDeleteConfirmDialog(member),
-                                  )
-                                : null,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              ],
+              children: [_buildHeader(), const Divider(), _buildMemberList()],
             ),
     );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          const SizedBox(width: 16),
+          const Text(
+            'メンバー管理',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          const Spacer(),
+          ElevatedButton.icon(
+            onPressed: _showAddMemberDialog,
+            icon: const Icon(Icons.add),
+            label: const Text('メンバー追加'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberList() {
+    return Expanded(
+      child: RefreshIndicator(
+        onRefresh: _loadData,
+        child: ListView.builder(
+          itemCount: _managedMembers.length,
+          itemBuilder: (context, index) {
+            final member = _managedMembers[index];
+            return _buildMemberItem(member, index);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberItem(Member member, int index) {
+    final isCurrentUser = index == 0; // 1行目はログインユーザー
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: CircleAvatar(child: Text(member.displayName.substring(0, 1))),
+        title: Text(member.displayName),
+        subtitle: _buildMemberSubtitle(member),
+        onTap: () => _showEditMemberDialog(member),
+        trailing: _buildMemberTrailing(member, isCurrentUser),
+      ),
+    );
+  }
+
+  Widget? _buildMemberSubtitle(Member member) {
+    if (member.email != null || member.phoneNumber != null) {
+      return Text(member.email ?? member.phoneNumber ?? '');
+    }
+    return null;
+  }
+
+  Widget? _buildMemberTrailing(Member member, bool isCurrentUser) {
+    if (!isCurrentUser && member.accountId == null) {
+      // ログインユーザーでなく、かつaccountIdを持たない場合のみ削除ボタンを表示
+      return IconButton(
+        icon: const Icon(Icons.delete, color: Colors.red),
+        onPressed: () => _showDeleteConfirmDialog(member),
+      );
+    }
+    return null;
   }
 }
