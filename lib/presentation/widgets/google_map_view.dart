@@ -251,7 +251,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     }
 
     return PinDetailBottomSheet(
-      pin: _selectedPin,
+      pin: _selectedPin!,
       onUpdate: _onMarkerUpdate,
       onDelete: _onMarkerDelete,
       onClose: _hidePinDetailBottomSheet,

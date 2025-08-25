@@ -5,9 +5,21 @@ import 'package:memora/domain/entities/pin.dart';
 
 void main() {
   group('PinDetailBottomSheet', () {
+    // デフォルトのPinオブジェクト
+    final defaultPin = Pin(
+      id: 'default-id',
+      pinId: 'default-pin-id',
+      latitude: 35.681236,
+      longitude: 139.767125,
+    );
+
     testWidgets('PinDetailBottomSheetが正しく表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       expect(find.byType(PinDetailBottomSheet), findsOneWidget);
@@ -16,7 +28,11 @@ void main() {
 
     testWidgets('詳細入力画面のUI要素が表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // テキストラベルの確認
@@ -44,7 +60,11 @@ void main() {
 
     testWidgets('日付・時間フィールドが縦並びで表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // 日付・時間フィールドがInkWellでラップされている（4つのフィールド）
@@ -74,7 +94,11 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // 開始日の日付フィールドをタップ
@@ -87,7 +111,11 @@ void main() {
 
     testWidgets('訪問開始日の時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // 開始時間の時間フィールドが画面内に表示されるようにスクロール
@@ -106,7 +134,11 @@ void main() {
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // 終了日の日付フィールドが画面内に表示されるようにスクロール
@@ -123,7 +155,11 @@ void main() {
 
     testWidgets('訪問終了日の時間選択タップでTimePickerが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet())),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+          ),
+        ),
       );
 
       // 終了時間の時間フィールドが画面内に表示されるようにスクロール
@@ -156,6 +192,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: pin,
+              onClose: () {},
               onUpdate: (Pin pin) {
                 onUpdateCalled = true;
               },
@@ -189,7 +226,9 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(body: PinDetailBottomSheet(pin: pin)),
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: pin, onClose: () {}),
+          ),
         ),
       );
 
@@ -207,9 +246,22 @@ void main() {
       expect(textField.controller?.text, equals('テストメモ'));
     });
 
-    testWidgets('Pinデータがnullの場合は空の状態で表示されること', (WidgetTester tester) async {
+    testWidgets('Pinデータにvisitデータがない場合は空の状態で表示されること', (
+      WidgetTester tester,
+    ) async {
+      final emptyPin = Pin(
+        id: 'empty-id',
+        pinId: 'empty-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
       await tester.pumpWidget(
-        MaterialApp(home: Scaffold(body: PinDetailBottomSheet(pin: null))),
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(pin: emptyPin, onClose: () {}),
+          ),
+        ),
       );
 
       // プレースホルダーテキストが表示されることを確認
@@ -241,6 +293,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: pin,
+              onClose: () {},
               onUpdate: (pin) {
                 callbackPin = pin;
               },
@@ -284,6 +337,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: invalidPin,
+              onClose: () {},
               onUpdate: (pin) {
                 callbackPin = pin;
               },
@@ -323,6 +377,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: validPin,
+              onClose: () {},
               onUpdate: (pin) {
                 callbackPin = pin;
               },
