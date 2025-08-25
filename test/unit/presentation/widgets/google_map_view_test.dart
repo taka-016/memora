@@ -75,17 +75,57 @@ void main() {
       expect(find.byType(GoogleMap), findsOneWidget);
     });
 
-    testWidgets('コールバック関数が正しく設定される', (WidgetTester tester) async {
+    testWidgets('マップの長押しでコールバック関数が呼ばれる', (WidgetTester tester) async {
       bool mapTapped = false;
-      bool pinTapped = false;
-      bool pinDeleted = false;
+      Location? tappedLocation;
 
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [],
+                onMapLongTapped: (Location location) {
+                  mapTapped = true;
+                  tappedLocation = location;
+                },
+                onMarkerTapped: (Pin pin) {},
+                onMarkerSaved: (Pin pin) {},
+                onMarkerDeleted: (String pinId) {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // GoogleMapウィジェットを取得
+      final googleMapFinder = find.byType(GoogleMap);
+      expect(googleMapFinder, findsOneWidget);
+
+      // GoogleMapウィジェットからonLongPressを実行
+      final googleMap = tester.widget<GoogleMap>(googleMapFinder);
+      const testLatLng = LatLng(35.681236, 139.767125);
+
+      // onLongPressコールバックを直接呼び出してテスト
+      googleMap.onLongPress!(testLatLng);
+
+      // コールバック関数が正しく呼ばれたことを確認
+      expect(mapTapped, true);
+      expect(tappedLocation?.latitude, 35.681236);
+      expect(tappedLocation?.longitude, 139.767125);
+    });
+    testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
+      WidgetTester tester,
+    ) async {
       const testPin = Pin(
         id: 'pin1',
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
       );
+
+      bool markerTapped = false;
+      Pin? tappedPin;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -93,41 +133,12 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMapLongTapped: (Location location) {
-                  mapTapped = true;
-                },
                 onMarkerTapped: (Pin pin) {
-                  pinTapped = true;
-                },
-                onMarkerDeleted: (String pinId) {
-                  pinDeleted = true;
+                  markerTapped = true;
+                  tappedPin = pin;
                 },
               ),
             ),
-          ),
-        ),
-      );
-
-      // GoogleMapウィジェットが表示されていることを確認
-      expect(find.byType(GoogleMap), findsOneWidget);
-
-      // コールバック関数の初期状態を確認
-      expect(mapTapped, false);
-      expect(pinTapped, false);
-      expect(pinDeleted, false);
-    });
-    testWidgets('マーカーをタップするとボトムシートが表示される', (WidgetTester tester) async {
-      const testPin = Pin(
-        id: 'pin1',
-        pinId: 'pin1',
-        latitude: 35.681236,
-        longitude: 139.767125,
-      );
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: GoogleMapView(pins: const [testPin])),
           ),
         ),
       );
@@ -148,6 +159,102 @@ void main() {
       // ボトムシートが表示されることを確認
       expect(find.text('削除'), findsOneWidget);
       expect(find.text('保存'), findsOneWidget);
+
+      // コールバック関数が正しく呼ばれたことを確認
+      expect(markerTapped, true);
+      expect(tappedPin, testPin);
+    });
+
+    testWidgets('保存ボタンをタップするとonMarkerSavedコールバックが呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      const testPin = Pin(
+        id: 'pin1',
+        pinId: 'pin1',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
+      bool markerSaved = false;
+      Pin? savedPin;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [testPin],
+                onMarkerSaved: (Pin pin) {
+                  markerSaved = true;
+                  savedPin = pin;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // マーカーをタップしてボトムシートを表示
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final marker = googleMap.markers.first;
+      marker.onTap!();
+      await tester.pumpAndSettle();
+
+      // 保存ボタンを画面内に表示させてからタップ
+      await tester.ensureVisible(find.text('保存'));
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      // コールバック関数が正しく呼ばれたことを確認
+      expect(markerSaved, true);
+      expect(savedPin?.pinId, testPin.pinId);
+      expect(savedPin?.latitude, testPin.latitude);
+      expect(savedPin?.longitude, testPin.longitude);
+    });
+
+    testWidgets('削除ボタンをタップするとonMarkerDeletedコールバックが呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      const testPin = Pin(
+        id: 'pin1',
+        pinId: 'pin1',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
+      bool markerDeleted = false;
+      String? deletedPinId;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [testPin],
+                onMarkerDeleted: (String pinId) {
+                  markerDeleted = true;
+                  deletedPinId = pinId;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // マーカーをタップしてボトムシートを表示
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final marker = googleMap.markers.first;
+      marker.onTap!();
+      await tester.pumpAndSettle();
+
+      // 削除ボタンを画面内に表示させてからタップ
+      await tester.ensureVisible(find.text('削除'));
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      // コールバック関数が正しく呼ばれたことを確認
+      expect(markerDeleted, true);
+      expect(deletedPinId, testPin.pinId);
     });
 
     testWidgets('ボトムシートが表示されて保存ボタンが存在する', (WidgetTester tester) async {

@@ -13,6 +13,7 @@ class GoogleMapView extends ConsumerWidget {
   final List<Pin> pins;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
+  final Function(Pin)? onMarkerSaved;
   final Function(String)? onMarkerDeleted;
   final Pin? selectedPin;
 
@@ -21,6 +22,7 @@ class GoogleMapView extends ConsumerWidget {
     required this.pins,
     this.onMapLongTapped,
     this.onMarkerTapped,
+    this.onMarkerSaved,
     this.onMarkerDeleted,
     this.selectedPin,
   });
@@ -31,6 +33,7 @@ class GoogleMapView extends ConsumerWidget {
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
+      onMarkerSaved: onMarkerSaved,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
     );
@@ -41,6 +44,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
   final List<Pin> pins;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
+  final Function(Pin)? onMarkerSaved;
   final Function(String)? onMarkerDeleted;
   final Pin? selectedPin;
 
@@ -48,6 +52,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
     required this.pins,
     this.onMapLongTapped,
     this.onMarkerTapped,
+    this.onMarkerSaved,
     this.onMarkerDeleted,
     this.selectedPin,
   });
@@ -166,16 +171,17 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     });
   }
 
-  void _onMarkerDelete() async {
-    if (_selectedPin != null && widget.onMarkerDeleted != null) {
-      widget.onMarkerDeleted!(_selectedPin!.pinId);
+  void _onMarkerDelete(pinId) async {
+    if (widget.onMarkerDeleted != null) {
+      widget.onMarkerDeleted!(pinId);
     }
     _hidePinDetailBottomSheet();
   }
 
   void _onMarkerSave(Pin pin) {
-    // TODO: ピンの詳細情報を保存する処理を実装
-    // 現在は仮実装として、ボトムシートを閉じるのみ
+    if (widget.onMarkerSaved != null) {
+      widget.onMarkerSaved!(pin);
+    }
     _hidePinDetailBottomSheet();
   }
 
