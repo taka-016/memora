@@ -33,7 +33,7 @@ void main() {
 
       // ボタンの確認
       expect(find.text('削除'), findsOneWidget);
-      expect(find.text('保存'), findsOneWidget);
+      expect(find.text('更新'), findsOneWidget);
 
       // 閉じるボタンの確認
       expect(find.byIcon(Icons.close), findsOneWidget);
@@ -138,31 +138,42 @@ void main() {
       expect(find.text('時間を選択'), findsWidgets);
     });
 
-    testWidgets('保存ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
-      bool onSaveCalled = false;
+    testWidgets('更新ボタンタップ時にonUpdateコールバックが呼ばれること', (WidgetTester tester) async {
+      final pin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 10, 30),
+        visitEndDate: DateTime(2025, 1, 15, 15, 45),
+        visitMemo: 'テストメモ',
+      );
+
+      bool onUpdateCalled = false;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: PinDetailBottomSheet(
-              onSave: (Pin pin) {
-                onSaveCalled = true;
+              pin: pin,
+              onUpdate: (Pin pin) {
+                onUpdateCalled = true;
               },
             ),
           ),
         ),
       );
 
-      // 保存ボタンが画面内に表示されるようにスクロール
-      await tester.ensureVisible(find.text('保存'));
+      // 更新ボタンが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.text('更新'));
       await tester.pumpAndSettle();
 
-      // 保存ボタンをタップ
-      await tester.tap(find.text('保存'));
+      // 更新ボタンをタップ
+      await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
-      // onSaveコールバックが呼ばれたことを確認
-      expect(onSaveCalled, isTrue);
+      // onUpdateコールバックが呼ばれたことを確認
+      expect(onUpdateCalled, isTrue);
     });
 
     testWidgets('Pinデータを受け取って初期値が正しくセットされること', (WidgetTester tester) async {
@@ -212,14 +223,25 @@ void main() {
       expect(textField.controller?.text, equals(''));
     });
 
-    testWidgets('保存ボタンタップ時にPinデータを作成してコールバックすること', (WidgetTester tester) async {
+    testWidgets('更新ボタンタップ時にPinデータを作成してコールバックすること', (WidgetTester tester) async {
+      final pin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDate: DateTime(2025, 1, 15, 10, 30),
+        visitEndDate: DateTime(2025, 1, 15, 15, 45),
+        visitMemo: 'テストメモ',
+      );
+
       Pin? callbackPin;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: PinDetailBottomSheet(
-              onSave: (pin) {
+              pin: pin,
+              onUpdate: (pin) {
                 callbackPin = pin;
               },
             ),
@@ -231,9 +253,9 @@ void main() {
       await tester.ensureVisible(find.byKey(const Key('visitMemoField')));
       await tester.enterText(find.byKey(const Key('visitMemoField')), 'テストメモ');
 
-      // 保存ボタンをタップ
-      await tester.ensureVisible(find.text('保存'));
-      await tester.tap(find.text('保存'));
+      // 更新ボタンをタップ
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
       // Pinデータがコールバックされることを確認
@@ -262,7 +284,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: invalidPin,
-              onSave: (pin) {
+              onUpdate: (pin) {
                 callbackPin = pin;
               },
             ),
@@ -270,9 +292,9 @@ void main() {
         ),
       );
 
-      // 保存ボタンをタップ
-      await tester.ensureVisible(find.text('保存'));
-      await tester.tap(find.text('保存'));
+      // 更新ボタンをタップ
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
       // エラーメッセージが表示されることを確認
@@ -282,7 +304,7 @@ void main() {
       expect(callbackPin, isNull);
     });
 
-    testWidgets('訪問開始日時が訪問終了日時より前の場合は正常に保存されること', (WidgetTester tester) async {
+    testWidgets('訪問開始日時が訪問終了日時より前の場合は正常に更新されること', (WidgetTester tester) async {
       Pin? callbackPin;
 
       // 既存のPinデータを設定（開始日時 < 終了日時）
@@ -301,7 +323,7 @@ void main() {
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: validPin,
-              onSave: (pin) {
+              onUpdate: (pin) {
                 callbackPin = pin;
               },
             ),
@@ -309,9 +331,9 @@ void main() {
         ),
       );
 
-      // 保存ボタンをタップ
-      await tester.ensureVisible(find.text('保存'));
-      await tester.tap(find.text('保存'));
+      // 更新ボタンをタップ
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
       // エラーメッセージが表示されないことを確認

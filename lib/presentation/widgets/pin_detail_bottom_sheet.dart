@@ -3,7 +3,7 @@ import '../../domain/entities/pin.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
-  final Function(Pin pin)? onSave;
+  final Function(Pin pin)? onUpdate;
   final Function(String)? onDelete;
   final VoidCallback? onClose;
   final Pin? pin;
@@ -11,7 +11,7 @@ class PinDetailBottomSheet extends StatefulWidget {
   const PinDetailBottomSheet({
     super.key,
     this.pin,
-    this.onSave,
+    this.onUpdate,
     this.onDelete,
     this.onClose,
   });
@@ -331,7 +331,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         ElevatedButton(onPressed: _handleDelete, child: const Text('削除')),
-        ElevatedButton(onPressed: _handleSave, child: const Text('保存')),
+        ElevatedButton(onPressed: _handleUpdate, child: const Text('更新')),
       ],
     );
   }
@@ -342,7 +342,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     }
   }
 
-  void _handleSave() {
+  void _handleUpdate() {
     setState(() {
       _dateErrorMessage = null;
     });
@@ -356,18 +356,13 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       }
     }
 
-    if (widget.onSave != null) {
-      final pin = Pin(
-        id: widget.pin?.id ?? '',
-        pinId: widget.pin?.pinId ?? '',
-        tripId: widget.pin?.tripId,
-        latitude: widget.pin?.latitude ?? 0.0,
-        longitude: widget.pin?.longitude ?? 0.0,
+    if (widget.onUpdate != null && widget.pin != null) {
+      final pin = widget.pin!.copyWith(
         visitStartDate: fromDateTime,
         visitEndDate: toDateTime,
         visitMemo: memoController.text,
       );
-      widget.onSave!(pin);
+      widget.onUpdate!(pin);
     }
   }
 }
