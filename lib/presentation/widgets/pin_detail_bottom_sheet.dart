@@ -3,17 +3,17 @@ import '../../domain/entities/pin.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
-  final Function(Pin pin)? onSave;
+  final Pin pin;
+  final VoidCallback onClose;
+  final Function(Pin pin)? onUpdate;
   final Function(String)? onDelete;
-  final VoidCallback? onClose;
-  final Pin? pin;
 
   const PinDetailBottomSheet({
     super.key,
-    this.pin,
-    this.onSave,
+    required this.pin,
+    required this.onClose,
+    this.onUpdate,
     this.onDelete,
-    this.onClose,
   });
 
   @override
@@ -35,36 +35,34 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }
 
   void _initializeFromPin() {
-    if (widget.pin != null) {
-      final pin = widget.pin!;
+    final pin = widget.pin;
 
-      if (pin.visitStartDate != null) {
-        fromDate = DateTime(
-          pin.visitStartDate!.year,
-          pin.visitStartDate!.month,
-          pin.visitStartDate!.day,
-        );
-        fromTime = TimeOfDay(
-          hour: pin.visitStartDate!.hour,
-          minute: pin.visitStartDate!.minute,
-        );
-      }
+    if (pin.visitStartDate != null) {
+      fromDate = DateTime(
+        pin.visitStartDate!.year,
+        pin.visitStartDate!.month,
+        pin.visitStartDate!.day,
+      );
+      fromTime = TimeOfDay(
+        hour: pin.visitStartDate!.hour,
+        minute: pin.visitStartDate!.minute,
+      );
+    }
 
-      if (pin.visitEndDate != null) {
-        toDate = DateTime(
-          pin.visitEndDate!.year,
-          pin.visitEndDate!.month,
-          pin.visitEndDate!.day,
-        );
-        toTime = TimeOfDay(
-          hour: pin.visitEndDate!.hour,
-          minute: pin.visitEndDate!.minute,
-        );
-      }
+    if (pin.visitEndDate != null) {
+      toDate = DateTime(
+        pin.visitEndDate!.year,
+        pin.visitEndDate!.month,
+        pin.visitEndDate!.day,
+      );
+      toTime = TimeOfDay(
+        hour: pin.visitEndDate!.hour,
+        minute: pin.visitEndDate!.minute,
+      );
+    }
 
-      if (pin.visitMemo != null) {
-        memoController.text = pin.visitMemo!;
-      }
+    if (pin.visitMemo != null) {
+      memoController.text = pin.visitMemo!;
     }
   }
 
@@ -331,18 +329,18 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         ElevatedButton(onPressed: _handleDelete, child: const Text('削除')),
-        ElevatedButton(onPressed: _handleSave, child: const Text('保存')),
+        ElevatedButton(onPressed: _handleUpdate, child: const Text('更新')),
       ],
     );
   }
 
   void _handleDelete() {
-    if (widget.onDelete != null && widget.pin != null) {
-      widget.onDelete!(widget.pin!.pinId);
+    if (widget.onDelete != null) {
+      widget.onDelete!(widget.pin.pinId);
     }
   }
 
-  void _handleSave() {
+  void _handleUpdate() {
     setState(() {
       _dateErrorMessage = null;
     });
@@ -356,18 +354,13 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       }
     }
 
-    if (widget.onSave != null) {
-      final pin = Pin(
-        id: widget.pin?.id ?? '',
-        pinId: widget.pin?.pinId ?? '',
-        tripId: widget.pin?.tripId,
-        latitude: widget.pin?.latitude ?? 0.0,
-        longitude: widget.pin?.longitude ?? 0.0,
+    if (widget.onUpdate != null) {
+      final pin = widget.pin.copyWith(
         visitStartDate: fromDateTime,
         visitEndDate: toDateTime,
         visitMemo: memoController.text,
       );
-      widget.onSave!(pin);
+      widget.onUpdate!(pin);
     }
   }
 }

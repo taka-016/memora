@@ -13,7 +13,7 @@ class GoogleMapView extends ConsumerWidget {
   final List<Pin> pins;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
-  final Function(Pin)? onMarkerSaved;
+  final Function(Pin)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
   final Pin? selectedPin;
 
@@ -22,7 +22,7 @@ class GoogleMapView extends ConsumerWidget {
     required this.pins,
     this.onMapLongTapped,
     this.onMarkerTapped,
-    this.onMarkerSaved,
+    this.onMarkerUpdated,
     this.onMarkerDeleted,
     this.selectedPin,
   });
@@ -33,7 +33,7 @@ class GoogleMapView extends ConsumerWidget {
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
-      onMarkerSaved: onMarkerSaved,
+      onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
     );
@@ -44,7 +44,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
   final List<Pin> pins;
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
-  final Function(Pin)? onMarkerSaved;
+  final Function(Pin)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
   final Pin? selectedPin;
 
@@ -52,7 +52,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
     required this.pins,
     this.onMapLongTapped,
     this.onMarkerTapped,
-    this.onMarkerSaved,
+    this.onMarkerUpdated,
     this.onMarkerDeleted,
     this.selectedPin,
   });
@@ -178,9 +178,9 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     _hidePinDetailBottomSheet();
   }
 
-  void _onMarkerSave(Pin pin) {
-    if (widget.onMarkerSaved != null) {
-      widget.onMarkerSaved!(pin);
+  void _onMarkerUpdate(Pin pin) {
+    if (widget.onMarkerUpdated != null) {
+      widget.onMarkerUpdated!(pin);
     }
     _hidePinDetailBottomSheet();
   }
@@ -251,8 +251,8 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     }
 
     return PinDetailBottomSheet(
-      pin: _selectedPin,
-      onSave: _onMarkerSave,
+      pin: _selectedPin!,
+      onUpdate: _onMarkerUpdate,
       onDelete: _onMarkerDelete,
       onClose: _hidePinDetailBottomSheet,
     );
