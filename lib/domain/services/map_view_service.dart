@@ -7,6 +7,7 @@ abstract class MapViewService {
     required List<Pin> pins,
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
+    Function(Pin)? onMarkerSaved,
     Function(String)? onMarkerDeleted,
     Pin? selectedPin,
   });

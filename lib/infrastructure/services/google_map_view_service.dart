@@ -13,6 +13,7 @@ class GoogleMapViewService implements MapViewService {
     required List<Pin> pins,
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
+    Function(Pin)? onMarkerSaved,
     Function(String)? onMarkerDeleted,
     Pin? selectedPin,
   }) {
@@ -20,6 +21,7 @@ class GoogleMapViewService implements MapViewService {
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
+      onMarkerSaved: onMarkerSaved,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
     );
