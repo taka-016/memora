@@ -43,7 +43,7 @@ class _TripEditModalState extends State<TripEditModal> {
 
   // 地図とピン管理用の変数
   List<Pin> _pins = [];
-  Pin? _selectedPin; // 新しく追加されたピンを自動選択するための変数
+  Pin? _selectedPin;
 
   @override
   void initState() {
@@ -75,14 +75,13 @@ class _TripEditModalState extends State<TripEditModal> {
 
     setState(() {
       _pins.add(newPin);
-      _selectedPin = newPin; // 新しく追加されたピンを選択状態にする
+      _selectedPin = newPin;
     });
   }
 
   Future<void> _onPinDeleted(String pinId) async {
     setState(() {
       _pins.removeWhere((pin) => pin.pinId == pinId);
-      // 削除されたピンが選択されていた場合、選択を解除
       if (_selectedPin?.pinId == pinId) {
         _selectedPin = null;
       }
@@ -95,13 +94,9 @@ class _TripEditModalState extends State<TripEditModal> {
 
   void _onPinSaved(Pin pin) {
     setState(() {
-      // _pinsから同じpinIdのデータを抽出して更新する
       final index = _pins.indexWhere((p) => p.pinId == pin.pinId);
       if (index != -1) {
         _pins[index] = pin;
-      } else {
-        // 新しいピンの場合は追加
-        _pins.add(pin);
       }
     });
   }
