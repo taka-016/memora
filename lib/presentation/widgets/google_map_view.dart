@@ -14,7 +14,7 @@ class GoogleMapView extends ConsumerWidget {
   final Function(Location)? onMapLongTapped;
   final Function(Pin)? onMarkerTapped;
   final Function(String)? onMarkerDeleted;
-  final Pin? selectedPin; // 新たに追加されたピンを自動選択するためのプロパティ
+  final Pin? selectedPin;
 
   const GoogleMapView({
     super.key,
@@ -22,7 +22,7 @@ class GoogleMapView extends ConsumerWidget {
     this.onMapLongTapped,
     this.onMarkerTapped,
     this.onMarkerDeleted,
-    this.selectedPin, // 新規追加
+    this.selectedPin,
   });
 
   @override
@@ -32,7 +32,7 @@ class GoogleMapView extends ConsumerWidget {
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
       onMarkerDeleted: onMarkerDeleted,
-      selectedPin: selectedPin, // 新規追加
+      selectedPin: selectedPin,
     );
   }
 }
