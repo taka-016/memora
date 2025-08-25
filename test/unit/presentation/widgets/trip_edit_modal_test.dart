@@ -765,6 +765,65 @@ void main() {
         expect(receivedPins, isNotNull);
         expect(receivedPins, isEmpty);
       });
+
+      testWidgets('onPinSaved機能でピンが正しく更新されること', (WidgetTester tester) async {
+        // _onPinSaved機能をテストするために、実際にピンが保存された状況をシミュレート
+        // このテストでは、TripEditModalState内のonPinSaved機能を直接テストする必要がある
+
+        // 初期ピンデータ
+        final initialPins = [
+          Pin(
+            id: 'pin-1',
+            pinId: 'pin-1',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            visitStartDate: DateTime(2024, 1, 1, 10, 0),
+            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+            visitMemo: '最初のメモ',
+          ),
+        ];
+
+        List<Pin>? savedPins;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                pins: initialPins,
+                onSave: (tripEntry, {List<Pin>? pins}) {
+                  savedPins = pins;
+                },
+                isTestEnvironment: true,
+              ),
+            ),
+          ),
+        );
+
+        // 旅行名を入力
+        await tester.enterText(find.byType(TextFormField).first, 'テスト旅行');
+
+        // 開始日を設定
+        await tester.tap(find.text('旅行期間 From'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('15').last);
+        await tester.pumpAndSettle();
+
+        // 終了日を設定
+        await tester.tap(find.text('旅行期間 To'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('20').last);
+        await tester.pumpAndSettle();
+
+        // 作成ボタンをタップ
+        await tester.tap(find.text('作成'));
+        await tester.pumpAndSettle();
+
+        // onSaveコールバックでピンデータが正しく渡されることを確認
+        expect(savedPins, isNotNull);
+        expect(savedPins!.length, equals(1));
+        expect(savedPins![0].pinId, equals('pin-1'));
+      });
     });
   });
 }

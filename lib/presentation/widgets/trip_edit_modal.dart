@@ -93,6 +93,19 @@ class _TripEditModalState extends State<TripEditModal> {
     // ピンタップ時の処理（必要に応じて実装）
   }
 
+  void _onPinSaved(Pin pin) {
+    setState(() {
+      // _pinsから同じpinIdのデータを抽出して更新する
+      final index = _pins.indexWhere((p) => p.pinId == pin.pinId);
+      if (index != -1) {
+        _pins[index] = pin;
+      } else {
+        // 新しいピンの場合は追加
+        _pins.add(pin);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -296,6 +309,7 @@ class _TripEditModalState extends State<TripEditModal> {
       pins: _pins,
       onMapLongTapped: _onMapLongTapped,
       onMarkerTapped: _onPinTapped,
+      onMarkerSaved: _onPinSaved,
       onMarkerDeleted: _onPinDeleted,
       selectedPin: _selectedPin,
     );
