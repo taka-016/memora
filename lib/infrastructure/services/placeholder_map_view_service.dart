@@ -4,7 +4,6 @@ import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/placeholder_map_view.dart';
 
-/// テスト用のプレースホルダー地図ビューサービスの実装
 class PlaceholderMapViewService implements MapViewService {
   const PlaceholderMapViewService();
 
@@ -13,6 +12,7 @@ class PlaceholderMapViewService implements MapViewService {
     required List<Pin> pins,
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
+    Function(Pin)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
     Pin? selectedPin,
   }) {

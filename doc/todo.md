@@ -231,9 +231,9 @@
   - [x] マップ上のマーカーとpinsを同期する（このタイミングはDBに書き込まない）
   - [x] 更新ボタン実行時に、旅行管理画面でtrip_entriesの更新と合わせてtripIdをキーにpinsをDelete&insertする
 - [x] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
-- [ ] onPinSavedを作成する
-  - [ ] 地図画面のonMarkerSavedに渡す
-  - [ ] pinを受け取り、_pinsから同じpinIdのデータを抽出して更新する
+- [x] onPinSavedを作成する
+  - [x] 地図画面のonMarkerSavedに渡す
+  - [x] pinを受け取り、_pinsから同じpinIdのデータを抽出して更新する
 
 ## 地図画面
 
