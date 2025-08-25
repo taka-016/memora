@@ -79,7 +79,7 @@ class _TripEditModalState extends State<TripEditModal> {
     });
   }
 
-  Future<void> _onMarkerDeleted(String pinId) async {
+  Future<void> _onPinDeleted(String pinId) async {
     setState(() {
       _pins.removeWhere((pin) => pin.pinId == pinId);
       // 削除されたピンが選択されていた場合、選択を解除
@@ -296,7 +296,7 @@ class _TripEditModalState extends State<TripEditModal> {
       pins: _pins,
       onMapLongTapped: _onMapLongTapped,
       onMarkerTapped: _onPinTapped,
-      onMarkerDeleted: _onMarkerDeleted,
+      onMarkerDeleted: _onPinDeleted,
       selectedPin: _selectedPin,
     );
   }
