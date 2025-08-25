@@ -231,6 +231,9 @@
   - [x] マップ上のマーカーとpinsを同期する（このタイミングはDBに書き込まない）
   - [x] 更新ボタン実行時に、旅行管理画面でtrip_entriesの更新と合わせてtripIdをキーにpinsをDelete&insertする
 - [x] trip_entries削除時は、tripIdで紐づくpinsとtrip_participantsを削除する（delete_trip_usecaseで対応）
+- [ ] onPinSavedを作成する
+  - [ ] 地図画面のonMarkerSavedに渡す
+  - [ ] pinを受け取り、_pinsから同じpinIdのデータを抽出して更新する
 
 ## 地図画面
 
@@ -239,6 +242,7 @@
 - [x] GoogleMapMarkerManagerを廃止してMapDisplayをStatelessWidgetに変更する
 - [x] 親ウィジェットがデータ読み書き責務を持つ
 - [x] 取得した現在地情報を保持しておき、地図ウィジェットを再度生成した時の初期値とする
+- [x] onMarkerSaveからonMarkerSavedをpinをパラメータとして呼び出す
 
 ## マップピンボトムシート
 

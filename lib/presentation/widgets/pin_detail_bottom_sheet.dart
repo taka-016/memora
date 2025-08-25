@@ -4,7 +4,7 @@ import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
   final Function(Pin pin)? onSave;
-  final VoidCallback? onDelete;
+  final Function(String)? onDelete;
   final VoidCallback? onClose;
   final Pin? pin;
 
@@ -330,10 +330,16 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        ElevatedButton(onPressed: widget.onDelete, child: const Text('削除')),
+        ElevatedButton(onPressed: _handleDelete, child: const Text('削除')),
         ElevatedButton(onPressed: _handleSave, child: const Text('保存')),
       ],
     );
+  }
+
+  void _handleDelete() {
+    if (widget.onDelete != null && widget.pin != null) {
+      widget.onDelete!(widget.pin!.pinId);
+    }
   }
 
   void _handleSave() {
