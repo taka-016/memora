@@ -4,7 +4,6 @@ import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/google_map_view.dart';
 
-/// Google Maps を使用した地図ビューサービスの実装
 class GoogleMapViewService implements MapViewService {
   const GoogleMapViewService();
 
@@ -13,7 +12,7 @@ class GoogleMapViewService implements MapViewService {
     required List<Pin> pins,
     Function(Location)? onMapLongTapped,
     Function(Pin)? onMarkerTapped,
-    Function(Pin)? onMarkerSaved,
+    Function(Pin)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
     Pin? selectedPin,
   }) {
@@ -21,7 +20,7 @@ class GoogleMapViewService implements MapViewService {
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onMarkerTapped: onMarkerTapped,
-      onMarkerSaved: onMarkerSaved,
+      onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
     );

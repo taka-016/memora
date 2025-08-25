@@ -92,7 +92,7 @@ class _TripEditModalState extends State<TripEditModal> {
     // ピンタップ時の処理（必要に応じて実装）
   }
 
-  void _onPinSaved(Pin pin) {
+  void _onPinUpdated(Pin pin) {
     setState(() {
       final index = _pins.indexWhere((p) => p.pinId == pin.pinId);
       if (index != -1) {
@@ -304,7 +304,7 @@ class _TripEditModalState extends State<TripEditModal> {
       pins: _pins,
       onMapLongTapped: _onMapLongTapped,
       onMarkerTapped: _onPinTapped,
-      onMarkerSaved: _onPinSaved,
+      onMarkerUpdated: _onPinUpdated,
       onMarkerDeleted: _onPinDeleted,
       selectedPin: _selectedPin,
     );

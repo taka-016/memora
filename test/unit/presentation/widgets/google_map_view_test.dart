@@ -90,7 +90,7 @@ void main() {
                   tappedLocation = location;
                 },
                 onMarkerTapped: (Pin pin) {},
-                onMarkerSaved: (Pin pin) {},
+                onMarkerUpdated: (Pin pin) {},
                 onMarkerDeleted: (String pinId) {},
               ),
             ),
@@ -158,14 +158,14 @@ void main() {
 
       // ボトムシートが表示されることを確認
       expect(find.text('削除'), findsOneWidget);
-      expect(find.text('保存'), findsOneWidget);
+      expect(find.text('更新'), findsOneWidget);
 
       // コールバック関数が正しく呼ばれたことを確認
       expect(markerTapped, true);
       expect(tappedPin, testPin);
     });
 
-    testWidgets('保存ボタンをタップするとonMarkerSavedコールバックが呼ばれる', (
+    testWidgets('更新ボタンをタップするとonMarkerUpdatedコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
       const testPin = Pin(
@@ -175,8 +175,8 @@ void main() {
         longitude: 139.767125,
       );
 
-      bool markerSaved = false;
-      Pin? savedPin;
+      bool markerUpdated = false;
+      Pin? updatedPin;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -184,9 +184,9 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerSaved: (Pin pin) {
-                  markerSaved = true;
-                  savedPin = pin;
+                onMarkerUpdated: (Pin pin) {
+                  markerUpdated = true;
+                  updatedPin = pin;
                 },
               ),
             ),
@@ -200,16 +200,16 @@ void main() {
       marker.onTap!();
       await tester.pumpAndSettle();
 
-      // 保存ボタンを画面内に表示させてからタップ
-      await tester.ensureVisible(find.text('保存'));
-      await tester.tap(find.text('保存'));
+      // 更新ボタンを画面内に表示させてからタップ
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
       // コールバック関数が正しく呼ばれたことを確認
-      expect(markerSaved, true);
-      expect(savedPin?.pinId, testPin.pinId);
-      expect(savedPin?.latitude, testPin.latitude);
-      expect(savedPin?.longitude, testPin.longitude);
+      expect(markerUpdated, true);
+      expect(updatedPin?.pinId, testPin.pinId);
+      expect(updatedPin?.latitude, testPin.latitude);
+      expect(updatedPin?.longitude, testPin.longitude);
     });
 
     testWidgets('削除ボタンをタップするとonMarkerDeletedコールバックが呼ばれる', (
@@ -257,7 +257,7 @@ void main() {
       expect(deletedPinId, testPin.pinId);
     });
 
-    testWidgets('ボトムシートが表示されて保存ボタンが存在する', (WidgetTester tester) async {
+    testWidgets('ボトムシートが表示されて更新ボタンが存在する', (WidgetTester tester) async {
       const testPin = Pin(
         id: 'pin1',
         pinId: 'pin1',
@@ -279,8 +279,8 @@ void main() {
       marker.onTap!();
       await tester.pumpAndSettle();
 
-      // ボトムシートが表示されて保存ボタンが存在することを確認
-      expect(find.text('保存'), findsOneWidget);
+      // ボトムシートが表示されて更新ボタンが存在することを確認
+      expect(find.text('更新'), findsOneWidget);
       expect(find.text('削除'), findsOneWidget);
       expect(find.byType(PinDetailBottomSheet), findsOneWidget);
     });
