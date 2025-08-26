@@ -4,18 +4,15 @@ import 'package:memora/domain/services/location_search_service.dart';
 import 'package:memora/domain/value-objects/location_candidate.dart';
 import 'package:memora/domain/value-objects/location.dart';
 
-/// Google Places APIのText Search APIを利用した位置検索サービス実装
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
   final String apiKey;
   final http.Client httpClient;
 
-  /// [apiKey] Google Places APIキー
   GooglePlacesApiLocationSearchService({
     required this.apiKey,
     http.Client? httpClient,
   }) : httpClient = httpClient ?? http.Client();
 
-  /// キーワードで位置候補を検索
   @override
   Future<List<LocationCandidate>> searchByKeyword(String keyword) async {
     final url = Uri.https(
