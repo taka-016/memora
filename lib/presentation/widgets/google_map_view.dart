@@ -82,9 +82,6 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _moveToCurrentLocation();
-    });
   }
 
   @override
@@ -114,6 +111,10 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
   }
 
   LatLng _getCurrentOrFallbackPosition() {
+    if (widget.pins.isNotEmpty) {
+      final firstPin = widget.pins.first;
+      return LatLng(firstPin.latitude, firstPin.longitude);
+    }
     final location = ref.read(locationProvider).location;
     return location != null
         ? LatLng(location.latitude, location.longitude)
