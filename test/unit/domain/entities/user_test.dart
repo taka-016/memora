@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/user.dart';
 
 void main() {
-  group('User エンティティ', () {
+  group('User', () {
     test('正常にUserエンティティを作成できる', () {
       const user = User(
         id: 'user123',
