@@ -3,7 +3,7 @@ import 'package:memora/domain/value-objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 
 void main() {
-  group('AuthState エンティティ', () {
+  group('AuthState', () {
     test('初期状態はloading', () {
       const authState = AuthState.loading();
       expect(authState.status, AuthStatus.loading);
