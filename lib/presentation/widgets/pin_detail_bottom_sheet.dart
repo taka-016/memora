@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/pin.dart';
-import '../../domain/services/reverse_geocoding_service.dart';
+import '../../domain/services/nearby_location_service.dart';
 import '../../domain/value-objects/location.dart';
-import '../../infrastructure/services/geocoding_reverse_geocoding_service.dart';
+import '../../infrastructure/services/google_places_api_nearby_location_service.dart';
+import '../../env/env.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
@@ -33,8 +34,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
 
   String? _locationName;
   bool _isLoadingLocation = false;
-  final ReverseGeocodingService _reverseGeocodingService =
-      const GeocodingReverseGeocodingService();
+  final NearbyLocationService _reverseGeocodingService =
+      GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey);
 
   @override
   void initState() {

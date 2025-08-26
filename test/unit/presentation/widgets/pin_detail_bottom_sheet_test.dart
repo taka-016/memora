@@ -101,6 +101,10 @@ void main() {
         ),
       );
 
+      // 開始日の日付フィールドが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.byKey(const Key('visitStartDateField')));
+      await tester.pumpAndSettle();
+
       // 開始日の日付フィールドをタップ
       await tester.tap(find.byKey(const Key('visitStartDateField')));
       await tester.pumpAndSettle();

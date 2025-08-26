@@ -1,19 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value-objects/location.dart' as domain;
-import 'package:memora/infrastructure/services/geocoding_reverse_geocoding_service.dart';
+import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 
 void main() {
-  group('GeocodingReverseGeocodingService', () {
-    late GeocodingReverseGeocodingService service;
+  group('GooglePlacesApiNearbyLocationService', () {
+    late GooglePlacesApiNearbyLocationService service;
 
     setUp(() {
-      service = const GeocodingReverseGeocodingService();
+      service = GooglePlacesApiNearbyLocationService(apiKey: 'test-api-key');
     });
 
     group('getLocationName', () {
       test('serviceが正しく初期化される', () {
         expect(service, isNotNull);
-        expect(service, isA<GeocodingReverseGeocodingService>());
+        expect(service, isA<GooglePlacesApiNearbyLocationService>());
       });
 
       test('有効なLocationオブジェクトを受け取れる', () {
