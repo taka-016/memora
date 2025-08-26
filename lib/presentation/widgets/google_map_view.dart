@@ -141,6 +141,11 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
 
   Future<void> _moveToSearchedLocation(Location location) async {
     _animateToPosition(LatLng(location.latitude, location.longitude));
+    if (widget.onMapLongTapped != null) {
+      widget.onMapLongTapped!(
+        Location(latitude: location.latitude, longitude: location.longitude),
+      );
+    }
   }
 
   void _onMapCreated(GoogleMapController controller) {

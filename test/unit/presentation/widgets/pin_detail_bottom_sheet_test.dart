@@ -101,6 +101,10 @@ void main() {
         ),
       );
 
+      // 開始日の日付フィールドが画面内に表示されるようにスクロール
+      await tester.ensureVisible(find.byKey(const Key('visitStartDateField')));
+      await tester.pumpAndSettle();
+
       // 開始日の日付フィールドをタップ
       await tester.tap(find.byKey(const Key('visitStartDateField')));
       await tester.pumpAndSettle();
@@ -398,6 +402,46 @@ void main() {
       expect(callbackPin, isNotNull);
       expect(callbackPin!.visitStartDate, equals(DateTime(2025, 1, 15, 10, 0)));
       expect(callbackPin!.visitEndDate, equals(DateTime(2025, 1, 15, 16, 0)));
+    });
+
+    group('逆ジオコーディング機能', () {
+      testWidgets('位置情報セクションが表示される', (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+            ),
+          ),
+        );
+
+        // 位置情報アイコンの確認
+        expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+        // 位置情報セクションが表示される（テキストは非同期で変わる可能性があるため、何かしらのテキストが表示されることを確認）
+        await tester.pump(); // 非同期処理の完了を待つ
+
+        // 位置情報セクションのコンテナとアイコンは常に表示される
+        expect(find.byIcon(Icons.location_on), findsOneWidget);
+      });
+
+      testWidgets('位置情報セクションの基本構造が表示される', (WidgetTester tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+            ),
+          ),
+        );
+
+        // 初期状態でコンテナが表示される
+        await tester.pump(Duration.zero);
+
+        // 位置情報アイコンは常に表示される
+        expect(find.byIcon(Icons.location_on), findsOneWidget);
+
+        // コンテナの確認（位置情報セクション）
+        expect(find.byType(Container), findsWidgets);
+      });
     });
   });
 }

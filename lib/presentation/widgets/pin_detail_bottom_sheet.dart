@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/pin.dart';
+import '../../domain/services/nearby_location_service.dart';
+import '../../domain/value-objects/location.dart';
+import '../../infrastructure/services/google_places_api_nearby_location_service.dart';
+import '../../env/env.dart';
 import '../utils/date_picker_utils.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
@@ -28,10 +32,16 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   final TextEditingController memoController = TextEditingController();
   String? _dateErrorMessage;
 
+  String? _locationName;
+  bool _isLoadingLocation = false;
+  final NearbyLocationService _reverseGeocodingService =
+      GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey);
+
   @override
   void initState() {
     super.initState();
     _initializeFromPin();
+    _loadLocationName();
   }
 
   void _initializeFromPin() {
@@ -63,6 +73,31 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
 
     if (pin.visitMemo != null) {
       memoController.text = pin.visitMemo!;
+    }
+  }
+
+  Future<void> _loadLocationName() async {
+    setState(() {
+      _isLoadingLocation = true;
+    });
+
+    try {
+      final location = Location(
+        latitude: widget.pin.latitude,
+        longitude: widget.pin.longitude,
+      );
+      final locationName = await _reverseGeocodingService.getLocationName(
+        location,
+      );
+      setState(() {
+        _locationName = locationName;
+        _isLoadingLocation = false;
+      });
+    } catch (e) {
+      setState(() {
+        _locationName = null;
+        _isLoadingLocation = false;
+      });
     }
   }
 
@@ -188,6 +223,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildLocationSection(),
+          const SizedBox(height: 16),
           _buildDateTimeSection(),
           const SizedBox(height: 16),
           _buildMemoField(),
@@ -308,6 +345,46 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
           ),
         ],
       ],
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.location_on, color: Colors.blue[600]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _isLoadingLocation
+                ? const Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('場所を取得中...'),
+                    ],
+                  )
+                : Text(
+                    _locationName ?? '場所情報を取得できませんでした',
+                    style: TextStyle(
+                      color: _locationName != null
+                          ? Colors.black87
+                          : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
