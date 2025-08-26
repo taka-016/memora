@@ -2,10 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/managers/location_manager.dart';
+import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/widgets/google_map_view.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
+
+class MockLocationService implements CurrentLocationService {
+  final Location? _location;
+
+  MockLocationService([this._location]);
+
+  @override
+  Future<Location?> getCurrentLocation() async {
+    return _location;
+  }
+}
 
 void main() {
   group('GoogleMapView', () {
@@ -45,6 +58,114 @@ void main() {
       );
 
       expect(find.byIcon(Icons.my_location), findsOneWidget);
+    });
+
+    testWidgets('ピンもlocationProviderもない場合、デフォルト位置（東京駅）を使用する', (
+      WidgetTester tester,
+    ) async {
+      // locationProviderにnullを設定
+      final container = ProviderContainer(
+        overrides: [
+          locationProvider.overrideWith(
+            (ref) => LocationManager(MockLocationService()),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      // GoogleMapウィジェットを取得してinitialCameraPositionを確認
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      // デフォルト位置（東京駅）を確認
+      expect(initialPosition.target.latitude, 35.681236);
+      expect(initialPosition.target.longitude, 139.767125);
+    });
+
+    testWidgets('ピンがない場合、locationProviderの位置を使用する', (
+      WidgetTester tester,
+    ) async {
+      // locationProviderに大阪の位置を設定
+      final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
+      final locationManager = LocationManager(MockLocationService());
+      // setLocationで位置を設定
+      locationManager.setLocation(testLocation);
+
+      final container = ProviderContainer(
+        overrides: [locationProvider.overrideWith((ref) => locationManager)],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      // GoogleMapウィジェットを取得してinitialCameraPositionを確認
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      // locationProviderの位置を確認
+      expect(initialPosition.target.latitude, 34.693738);
+      expect(initialPosition.target.longitude, 135.502165);
+    });
+
+    testWidgets('ピンがある場合、1件目のピンの位置を使用する', (WidgetTester tester) async {
+      // 名古屋と京都のピンを作成（名古屋が1件目）
+      final testPins = [
+        const Pin(
+          id: 'pin1',
+          pinId: 'pin1',
+          latitude: 35.170915, // 名古屋
+          longitude: 136.881537,
+        ),
+        const Pin(
+          id: 'pin2',
+          pinId: 'pin2',
+          latitude: 35.011635, // 京都
+          longitude: 135.768029,
+        ),
+      ];
+
+      // locationProviderにも位置を設定（こちらは使われない）
+      final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
+      final locationManager = LocationManager(MockLocationService());
+      locationManager.setLocation(testLocation);
+
+      final container = ProviderContainer(
+        overrides: [locationProvider.overrideWith((ref) => locationManager)],
+      );
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: testPins)),
+          ),
+        ),
+      );
+
+      // GoogleMapウィジェットを取得してinitialCameraPositionを確認
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      // 1件目のピン（名古屋）の位置を確認
+      expect(initialPosition.target.latitude, 35.170915);
+      expect(initialPosition.target.longitude, 136.881537);
     });
 
     testWidgets('ピンがマーカーとして表示される', (WidgetTester tester) async {
