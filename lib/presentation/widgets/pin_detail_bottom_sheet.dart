@@ -62,6 +62,9 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     toTime = null;
     memoController.clear();
 
+    // 初期化時は既存の場所名を設定
+    _locationName = pin.locationName;
+
     if (pin.visitStartDate != null) {
       fromDate = DateTime(
         pin.visitStartDate!.year,
@@ -91,7 +94,12 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     }
   }
 
-  Future<void> _loadLocationName() async {
+  Future<void> _loadLocationName({bool forceRefresh = false}) async {
+    // 場所名が既にある場合は、強制更新でない限り何もしない
+    if (_locationName != null && _locationName!.isNotEmpty && !forceRefresh) {
+      return;
+    }
+
     setState(() {
       _isLoadingLocation = true;
     });
@@ -398,6 +406,14 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                     ),
                   ),
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoadingLocation
+                ? null
+                : () => _loadLocationName(forceRefresh: true),
+            color: Colors.grey[600],
+            iconSize: 20,
+          ),
         ],
       ),
     );
@@ -451,6 +467,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
         visitStartDate: fromDateTime,
         visitEndDate: toDateTime,
         visitMemo: memoController.text,
+        locationName: _locationName,
       );
       widget.onUpdate!(pin);
     }
