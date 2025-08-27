@@ -21,6 +21,7 @@ erDiagram
         string tripId FK
         number latitude "NOT NULL"
         number longitude "NOT NULL"
+        string locationName
         timestamp visitStartDate
         timestamp visitEndDate
         string visitMemo
