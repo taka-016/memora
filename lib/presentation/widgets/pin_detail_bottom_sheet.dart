@@ -56,7 +56,6 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   void _initializeFromPin() {
     final pin = widget.pin;
 
-    // 既存の値をクリア
     fromDate = null;
     fromTime = null;
     toDate = null;
