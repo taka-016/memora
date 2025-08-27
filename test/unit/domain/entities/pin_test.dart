@@ -10,6 +10,7 @@ void main() {
         tripId: 'trip001',
         latitude: 35.0,
         longitude: 139.0,
+        locationName: '東京駅',
         visitStartDate: DateTime(2025, 6, 1),
         visitEndDate: DateTime(2025, 6, 2),
         visitMemo: 'テストメモ',
@@ -19,6 +20,7 @@ void main() {
       expect(pin.tripId, 'trip001');
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
+      expect(pin.locationName, '東京駅');
       expect(pin.visitStartDate, DateTime(2025, 6, 1));
       expect(pin.visitEndDate, DateTime(2025, 6, 2));
       expect(pin.visitMemo, 'テストメモ');
@@ -36,6 +38,7 @@ void main() {
       expect(pin.tripId, null);
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
+      expect(pin.locationName, null);
       expect(pin.visitStartDate, null);
       expect(pin.visitEndDate, null);
       expect(pin.visitMemo, null);
@@ -48,6 +51,7 @@ void main() {
         tripId: 'trip001',
         latitude: 35.0,
         longitude: 139.0,
+        locationName: '東京駅',
         visitStartDate: DateTime(2025, 6, 1),
         visitEndDate: DateTime(2025, 6, 2),
         visitMemo: 'テストメモ',
@@ -58,6 +62,7 @@ void main() {
         tripId: 'trip001',
         latitude: 35.0,
         longitude: 139.0,
+        locationName: '東京駅',
         visitStartDate: DateTime(2025, 6, 1),
         visitEndDate: DateTime(2025, 6, 2),
         visitMemo: 'テストメモ',
@@ -72,16 +77,22 @@ void main() {
         tripId: 'trip001',
         latitude: 35.0,
         longitude: 139.0,
+        locationName: '東京駅',
         visitStartDate: DateTime(2025, 6, 1),
         visitEndDate: DateTime(2025, 6, 2),
         visitMemo: 'テストメモ',
       );
-      final updatedPin = pin.copyWith(latitude: 36.0, visitMemo: '新しいメモ');
+      final updatedPin = pin.copyWith(
+        latitude: 36.0,
+        locationName: '新宿駅',
+        visitMemo: '新しいメモ',
+      );
       expect(updatedPin.id, 'id001');
       expect(updatedPin.pinId, 'pin001');
       expect(updatedPin.tripId, 'trip001');
       expect(updatedPin.latitude, 36.0);
       expect(updatedPin.longitude, 139.0);
+      expect(updatedPin.locationName, '新宿駅');
       expect(updatedPin.visitStartDate, DateTime(2025, 6, 1));
       expect(updatedPin.visitEndDate, DateTime(2025, 6, 2));
       expect(updatedPin.visitMemo, '新しいメモ');

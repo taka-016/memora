@@ -10,6 +10,7 @@ class FirestorePinMapper {
       tripId: data?['tripId'] as String?,
       latitude: (data?['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (data?['longitude'] as num?)?.toDouble() ?? 0.0,
+      locationName: data?['locationName'] as String?,
       visitStartDate: data?['visitStartDate'] != null
           ? (data!['visitStartDate'] as Timestamp).toDate()
           : null,
@@ -26,6 +27,7 @@ class FirestorePinMapper {
       'tripId': pin.tripId,
       'latitude': pin.latitude,
       'longitude': pin.longitude,
+      'locationName': pin.locationName,
       'visitStartDate': pin.visitStartDate != null
           ? Timestamp.fromDate(pin.visitStartDate!)
           : null,
