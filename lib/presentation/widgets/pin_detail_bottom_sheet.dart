@@ -11,6 +11,7 @@ class PinDetailBottomSheet extends StatefulWidget {
   final VoidCallback onClose;
   final Function(Pin pin)? onUpdate;
   final Function(String)? onDelete;
+  final NearbyLocationService? reverseGeocodingService;
 
   const PinDetailBottomSheet({
     super.key,
@@ -18,6 +19,7 @@ class PinDetailBottomSheet extends StatefulWidget {
     required this.onClose,
     this.onUpdate,
     this.onDelete,
+    this.reverseGeocodingService,
   });
 
   @override
@@ -34,12 +36,14 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
 
   String? _locationName;
   bool _isLoadingLocation = false;
-  final NearbyLocationService _reverseGeocodingService =
-      GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey);
+  late final NearbyLocationService _reverseGeocodingService;
 
   @override
   void initState() {
     super.initState();
+    _reverseGeocodingService =
+        widget.reverseGeocodingService ??
+        GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey);
     _initializeFromPin();
     _loadLocationName();
   }
@@ -61,6 +65,9 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     toDate = null;
     toTime = null;
     memoController.clear();
+
+    // 初期化時は既存の場所名を設定
+    _locationName = pin.locationName;
 
     if (pin.visitStartDate != null) {
       fromDate = DateTime(
@@ -91,7 +98,12 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     }
   }
 
-  Future<void> _loadLocationName() async {
+  Future<void> _loadLocationName({bool forceRefresh = false}) async {
+    // 場所名が既にある場合は、強制更新でない限り何もしない
+    if (_locationName != null && _locationName!.isNotEmpty && !forceRefresh) {
+      return;
+    }
+
     setState(() {
       _isLoadingLocation = true;
     });
@@ -365,6 +377,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
 
   Widget _buildLocationSection() {
     return Container(
+      key: const Key('locationNameField'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[50],
@@ -372,6 +385,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(Icons.location_on, color: Colors.blue[600]),
           const SizedBox(width: 8),
@@ -397,6 +411,20 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+          ),
+          SizedBox(
+            height: 24,
+            width: 24,
+            child: IconButton(
+              constraints: const BoxConstraints(),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.refresh),
+              onPressed: _isLoadingLocation
+                  ? null
+                  : () => _loadLocationName(forceRefresh: true),
+              color: Colors.grey[600],
+              iconSize: 20,
+            ),
           ),
         ],
       ),
@@ -451,6 +479,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
         visitStartDate: fromDateTime,
         visitEndDate: toDateTime,
         visitMemo: memoController.text,
+        locationName: _locationName,
       );
       widget.onUpdate!(pin);
     }
