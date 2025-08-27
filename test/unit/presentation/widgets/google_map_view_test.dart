@@ -405,5 +405,57 @@ void main() {
       expect(find.text('削除'), findsOneWidget);
       expect(find.byType(PinDetailBottomSheet), findsOneWidget);
     });
+
+    testWidgets('ボトムシートが開いている状態で別のピンをタップすると、ボトムシートの内容が更新される', (
+      WidgetTester tester,
+    ) async {
+      // 異なるメモを持つ2つのピンを準備
+      const pin1 = Pin(
+        id: 'pin1',
+        pinId: 'pin1',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitMemo: 'ピン1のメモ',
+      );
+      const pin2 = Pin(
+        id: 'pin2',
+        pinId: 'pin2',
+        latitude: 35.690000,
+        longitude: 139.770000,
+        visitMemo: 'ピン2のメモ',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [pin1, pin2])),
+          ),
+        ),
+      );
+
+      // GoogleMapからマーカーを取得
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final markers = googleMap.markers.toList();
+      expect(markers.length, 2);
+
+      // 最初のピンをタップしてボトムシートを表示
+      final marker1 = markers[0];
+      marker1.onTap!();
+      await tester.pumpAndSettle();
+
+      // ボトムシートが表示され、1つ目のピンの内容が表示されていることを確認
+      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
+      expect(find.text('ピン1のメモ'), findsOneWidget);
+
+      // 2つ目のピンをタップ
+      final marker2 = markers[1];
+      marker2.onTap!();
+      await tester.pumpAndSettle();
+
+      // ボトムシートの内容が2つ目のピンに更新されていることを確認
+      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
+      expect(find.text('ピン1のメモ'), findsNothing);
+      expect(find.text('ピン2のメモ'), findsOneWidget);
+    });
   });
 }
