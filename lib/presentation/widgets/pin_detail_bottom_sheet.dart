@@ -44,8 +44,23 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     _loadLocationName();
   }
 
+  @override
+  void didUpdateWidget(PinDetailBottomSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.pin != oldWidget.pin) {
+      _initializeFromPin();
+      _loadLocationName();
+    }
+  }
+
   void _initializeFromPin() {
     final pin = widget.pin;
+
+    fromDate = null;
+    fromTime = null;
+    toDate = null;
+    toTime = null;
+    memoController.clear();
 
     if (pin.visitStartDate != null) {
       fromDate = DateTime(
