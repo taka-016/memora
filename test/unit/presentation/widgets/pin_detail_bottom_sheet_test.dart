@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/widgets/pin_detail_bottom_sheet.dart';
 import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
 
+import 'pin_detail_bottom_sheet_test.mocks.dart';
+
+@GenerateMocks([NearbyLocationService])
 void main() {
   group('PinDetailBottomSheet', () {
     // デフォルトのPinオブジェクト
@@ -46,6 +52,9 @@ void main() {
       expect(find.byKey(const Key('visitEndDateField')), findsOneWidget);
       expect(find.byKey(const Key('visitEndTimeField')), findsOneWidget);
       expect(find.byKey(const Key('visitMemoField')), findsOneWidget);
+
+      // 場所名の確認
+      expect(find.byKey(const Key('locationNameField')), findsOneWidget);
 
       // ボタンの確認
       expect(find.text('削除'), findsOneWidget);
@@ -404,199 +413,188 @@ void main() {
       expect(callbackPin!.visitEndDate, equals(DateTime(2025, 1, 15, 16, 0)));
     });
 
-    group('逆ジオコーディング機能', () {
-      testWidgets('位置情報セクションが表示される', (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+    testWidgets('場所名がブランクの場合のみGoogle Places APIで場所名を取得する', (
+      WidgetTester tester,
+    ) async {
+      final mockNearbyLocationService = MockNearbyLocationService();
+
+      // 場所名がnullのPin
+      final pinWithoutLocationName = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: null,
+      );
+
+      // モックの設定: getLocationNameが呼ばれたら場所名を返す
+      when(
+        mockNearbyLocationService.getLocationName(any),
+      ).thenAnswer((_) async => '取得した場所名');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithoutLocationName,
+              onClose: () {},
+              reverseGeocodingService: mockNearbyLocationService,
             ),
           ),
-        );
+        ),
+      );
 
-        // 位置情報アイコンの確認
-        expect(find.byIcon(Icons.location_on), findsOneWidget);
+      // 非同期処理の完了を待つ
+      await tester.pumpAndSettle();
 
-        // 位置情報セクションが表示される（テキストは非同期で変わる可能性があるため、何かしらのテキストが表示されることを確認）
-        await tester.pump(); // 非同期処理の完了を待つ
+      // 位置取得処理が呼ばれたことを検証
+      verify(mockNearbyLocationService.getLocationName(any)).called(1);
 
-        // 位置情報セクションのコンテナとアイコンは常に表示される
-        expect(find.byIcon(Icons.location_on), findsOneWidget);
-      });
+      // 取得した場所名が表示されることを確認
+      expect(find.text('取得した場所名'), findsOneWidget);
+    });
 
-      testWidgets('位置情報セクションの基本構造が表示される', (WidgetTester tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+    testWidgets('場所名が既にある場合はGoogle Places APIを呼び出さない', (
+      WidgetTester tester,
+    ) async {
+      final mockNearbyLocationService = MockNearbyLocationService();
+
+      // 場所名が既にあるPin
+      final pinWithLocationName = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
+              reverseGeocodingService: mockNearbyLocationService,
             ),
           ),
-        );
+        ),
+      );
 
-        // 初期状態でコンテナが表示される
-        await tester.pump(Duration.zero);
+      // 非同期処理の完了を待つ
+      await tester.pumpAndSettle();
 
-        // 位置情報アイコンは常に表示される
-        expect(find.byIcon(Icons.location_on), findsOneWidget);
+      // 位置取得処理が呼ばれていないことを検証
+      verifyNever(mockNearbyLocationService.getLocationName(any));
 
-        // コンテナの確認（位置情報セクション）
-        expect(find.byType(Container), findsWidgets);
-      });
+      // 既存の場所名が表示されることを確認
+      expect(find.text('東京駅'), findsOneWidget);
+    });
 
-      testWidgets('場所名がブランクの場合のみGoogle Places APIで場所名を取得する', (
-        WidgetTester tester,
-      ) async {
-        // 場所名がnullのPin
-        final pinWithoutLocationName = Pin(
-          id: 'test-id',
-          pinId: 'test-pin-id',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: null,
-        );
+    testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
+      final pinWithLocationName = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(
-                pin: pinWithoutLocationName,
-                onClose: () {},
-              ),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
             ),
           ),
-        );
+        ),
+      );
 
-        // ローディング表示の確認
-        expect(find.text('場所を取得中...'), findsOneWidget);
-        expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      });
+      // 更新アイコンが表示される
+      expect(find.byIcon(Icons.refresh), findsOneWidget);
+    });
 
-      testWidgets('場所名が既にある場合はGoogle Places APIを呼び出さない', (
-        WidgetTester tester,
-      ) async {
-        // 場所名が既にあるPin
-        final pinWithLocationName = Pin(
-          id: 'test-id',
-          pinId: 'test-pin-id',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: '東京駅',
-        );
+    testWidgets('更新アイコンをタップすると位置取得処理が呼ばれる', (WidgetTester tester) async {
+      final mockNearbyLocationService = MockNearbyLocationService();
+      final pinWithLocationName = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(
-                pin: pinWithLocationName,
-                onClose: () {},
-              ),
+      // モックの設定: getLocationNameが呼ばれたら'新しい場所名'を返す
+      when(
+        mockNearbyLocationService.getLocationName(any),
+      ).thenAnswer((_) async => '新しい場所名');
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
+              reverseGeocodingService: mockNearbyLocationService,
             ),
           ),
-        );
+        ),
+      );
 
-        // すぐに場所名が表示される（ローディングが表示されない）
-        expect(find.text('東京駅'), findsOneWidget);
-        expect(find.text('場所を取得中...'), findsNothing);
-        expect(find.byType(CircularProgressIndicator), findsNothing);
-      });
+      // 初期状態では既存の場所名が表示されている
+      expect(find.text('東京駅'), findsOneWidget);
 
-      testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
-        final pinWithLocationName = Pin(
-          id: 'test-id',
-          pinId: 'test-pin-id',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: '東京駅',
-        );
+      // 更新アイコンをタップ
+      final refreshIconFinder = find.byIcon(Icons.refresh);
+      await tester.tap(refreshIconFinder);
+      await tester.pump();
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(
-                pin: pinWithLocationName,
-                onClose: () {},
-              ),
+      // 位置取得処理が呼ばれることを検証
+      verify(mockNearbyLocationService.getLocationName(any)).called(1);
+
+      // ローディング状態の確認
+      await tester.pump();
+      expect(find.text('新しい場所名'), findsOneWidget);
+    });
+
+    testWidgets('更新ボタンタップ時に取得した場所名もPinに含まれる', (WidgetTester tester) async {
+      Pin? callbackPin;
+
+      // 既に場所名があるPinで、場所名が保存されることを確認
+      final pin = Pin(
+        id: 'test-id',
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅', // 場所名が既にある
+        visitStartDate: DateTime(2025, 1, 15, 10, 30),
+        visitEndDate: DateTime(2025, 1, 15, 15, 45),
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pin,
+              onClose: () {},
+              onUpdate: (pin) {
+                callbackPin = pin;
+              },
             ),
           ),
-        );
+        ),
+      );
 
-        // 更新アイコンが表示される
-        expect(find.byIcon(Icons.refresh), findsOneWidget);
-      });
+      // 更新ボタンをタップ
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
 
-      testWidgets('更新アイコンをタップするとGoogle Places APIで場所名を再取得する', (
-        WidgetTester tester,
-      ) async {
-        final pinWithLocationName = Pin(
-          id: 'test-id',
-          pinId: 'test-pin-id',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: '東京駅',
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(
-                pin: pinWithLocationName,
-                onClose: () {},
-              ),
-            ),
-          ),
-        );
-
-        // 更新アイコンをタップ
-        await tester.tap(find.byIcon(Icons.refresh));
-        await tester.pump();
-
-        // 更新アイコンボタンが動作することを確認（タップできることを確認）
-        final iconButton = find.ancestor(
-          of: find.byIcon(Icons.refresh),
-          matching: find.byType(IconButton),
-        );
-        expect(tester.widget<IconButton>(iconButton).onPressed, isNotNull);
-      });
-
-      testWidgets('更新ボタンタップ時に取得した場所名もPinに含まれる', (WidgetTester tester) async {
-        Pin? callbackPin;
-
-        // 既に場所名があるPinで、場所名が保存されることを確認
-        final pin = Pin(
-          id: 'test-id',
-          pinId: 'test-pin-id',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: '東京駅', // 場所名が既にある
-          visitStartDate: DateTime(2025, 1, 15, 10, 30),
-          visitEndDate: DateTime(2025, 1, 15, 15, 45),
-          visitMemo: 'テストメモ',
-        );
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: PinDetailBottomSheet(
-                pin: pin,
-                onClose: () {},
-                onUpdate: (pin) {
-                  callbackPin = pin;
-                },
-              ),
-            ),
-          ),
-        );
-
-        // 更新ボタンをタップ
-        await tester.ensureVisible(find.text('更新'));
-        await tester.tap(find.text('更新'));
-        await tester.pumpAndSettle();
-
-        // Pinデータがコールバックされることを確認
-        expect(callbackPin, isNotNull);
-        // 場所名がPinに含まれることを確認
-        expect(callbackPin!.locationName, equals('東京駅'));
-      });
+      // Pinデータがコールバックされることを確認
+      expect(callbackPin, isNotNull);
+      // 場所名がPinに含まれることを確認
+      expect(callbackPin!.locationName, equals('東京駅'));
     });
   });
 }
