@@ -1,37 +1,86 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value-objects/location.dart' as domain;
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
+import 'package:mockito/annotations.dart';
+import 'package:http/http.dart' as http;
+import 'google_places_api_nearby_location_service_test.mocks.dart';
+import 'package:mockito/mockito.dart';
 
+@GenerateMocks([http.Client])
 void main() {
   group('GooglePlacesApiNearbyLocationService', () {
-    late GooglePlacesApiNearbyLocationService service;
+    late NearbyLocationService service;
+    late MockClient mockClient;
 
     setUp(() {
-      service = GooglePlacesApiNearbyLocationService(apiKey: 'test-api-key');
+      mockClient = MockClient();
+      service = GooglePlacesApiNearbyLocationService(
+        apiKey: 'dummy',
+        httpClient: mockClient,
+      );
     });
 
-    group('getLocationName', () {
-      test('serviceが正しく初期化される', () {
-        expect(service, isNotNull);
-        expect(service, isA<GooglePlacesApiNearbyLocationService>());
-      });
+    test('serviceが正しく初期化される', () {
+      expect(service, isNotNull);
+      expect(service, isA<GooglePlacesApiNearbyLocationService>());
+    });
 
-      test('有効なLocationオブジェクトを受け取れる', () {
-        const location = domain.Location(
-          latitude: 35.6762,
-          longitude: 139.6503,
-        );
+    test('位置情報から場所名を取得できる', () async {
+      when(
+        mockClient.post(
+          any,
+          headers: anyNamed('headers'),
+          body: anyNamed('body'),
+        ),
+      ).thenAnswer(
+        (_) async => http.Response(
+          '{"places":[{"displayName":{"text":"東京タワー"}}]}',
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      );
 
-        expect(location.latitude, equals(35.6762));
-        expect(location.longitude, equals(139.6503));
-      });
+      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
 
-      test('メソッドが定義されている', () {
-        const location = domain.Location(latitude: 35.0, longitude: 139.0);
+      final result = await service.getLocationName(location);
+      expect(result, '東京タワー');
+    });
 
-        final result = service.getLocationName(location);
-        expect(result, isA<Future<String?>>());
-      });
+    test('API呼び出しが失敗した場合はnullを返す', () async {
+      when(
+        mockClient.post(
+          any,
+          headers: anyNamed('headers'),
+          body: anyNamed('body'),
+        ),
+      ).thenAnswer((_) async => http.Response('Error', 500));
+
+      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+
+      final result = await service.getLocationName(location);
+      expect(result, isNull);
+    });
+
+    test('場所が見つからない場合はnullを返す', () async {
+      when(
+        mockClient.post(
+          any,
+          headers: anyNamed('headers'),
+          body: anyNamed('body'),
+        ),
+      ).thenAnswer(
+        (_) async => http.Response(
+          '{"places":[]}',
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      );
+
+      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+
+      final result = await service.getLocationName(location);
+      expect(result, isNull);
     });
   });
 }
