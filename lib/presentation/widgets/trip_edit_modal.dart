@@ -4,7 +4,7 @@ import '../../domain/entities/trip_entry.dart';
 import '../../domain/entities/pin.dart';
 import '../utils/date_picker_utils.dart';
 import '../../infrastructure/factories/map_view_factory.dart';
-
+import 'pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 class TripEditModal extends StatefulWidget {
@@ -174,6 +174,8 @@ class _TripEditModalState extends State<TripEditModal> {
             _buildMemoField(),
             const SizedBox(height: 16),
             _buildMapSelectionButton(),
+            const SizedBox(height: 16),
+            _buildPinsList(),
           ],
         ),
       ),
@@ -246,6 +248,104 @@ class _TripEditModalState extends State<TripEditModal> {
         minimumSize: const Size(double.infinity, 48),
       ),
       child: const Text('訪問場所を地図で選択'),
+    );
+  }
+
+  Widget _buildPinsList() {
+    if (_pins.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '訪問場所',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 200),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _pins.length,
+            itemBuilder: (context, index) {
+              final pin = _pins[index];
+              return _buildPinListItem(pin, index);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPinListItem(Pin pin, int index) {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: ListTile(
+        dense: true,
+        title: Text(
+          pin.locationName?.isNotEmpty == true ? pin.locationName! : '',
+          style: const TextStyle(fontSize: 14),
+        ),
+        subtitle: _buildPinSubtitle(pin),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+          onPressed: () => _onPinDeleted(pin.pinId),
+        ),
+        onTap: () => _showPinEditBottomSheet(pin),
+      ),
+    );
+  }
+
+  Widget? _buildPinSubtitle(Pin pin) {
+    final List<String> subtitleParts = [];
+
+    if (pin.visitStartDate != null && pin.visitEndDate != null) {
+      subtitleParts.add(
+        '${_formatDateTime(pin.visitStartDate!)} - ${_formatDateTime(pin.visitEndDate!)}',
+      );
+    } else if (pin.visitStartDate != null) {
+      subtitleParts.add('開始: ${_formatDateTime(pin.visitStartDate!)}');
+    } else if (pin.visitEndDate != null) {
+      subtitleParts.add('終了: ${_formatDateTime(pin.visitEndDate!)}');
+    }
+
+    if (subtitleParts.isEmpty) {
+      return null;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: subtitleParts
+          .map((text) => Text(text, style: const TextStyle(fontSize: 12)))
+          .toList(),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showPinEditBottomSheet(Pin pin) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => PinDetailBottomSheet(
+        pin: pin,
+        onClose: () {
+          Navigator.of(context).pop();
+        },
+        onUpdate: (updatedPin) {
+          _onPinUpdated(updatedPin);
+          Navigator.of(context).pop();
+        },
+        onDelete: (pinId) {
+          _onPinDeleted(pinId);
+          Navigator.of(context).pop();
+        },
+      ),
     );
   }
 
