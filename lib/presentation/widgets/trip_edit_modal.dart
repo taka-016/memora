@@ -41,9 +41,9 @@ class _TripEditModalState extends State<TripEditModal> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
 
-  // 地図とピン管理用の変数
   List<Pin> _pins = [];
   Pin? _selectedPin;
+  bool _isBottomSheetVisible = false;
 
   @override
   void initState() {
@@ -79,6 +79,19 @@ class _TripEditModalState extends State<TripEditModal> {
     });
   }
 
+  void _onPinTapped(Pin pin) {
+    setState(() {
+      _selectedPin = pin;
+    });
+  }
+
+  void _hidePinDetailBottomSheet() {
+    setState(() {
+      _isBottomSheetVisible = false;
+      _selectedPin = null;
+    });
+  }
+
   Future<void> _onPinDeleted(String pinId) async {
     setState(() {
       _pins.removeWhere((pin) => pin.pinId == pinId);
@@ -86,10 +99,7 @@ class _TripEditModalState extends State<TripEditModal> {
         _selectedPin = null;
       }
     });
-  }
-
-  void _onPinTapped(Pin pin) {
-    // ピンタップ時の処理（必要に応じて実装）
+    _hidePinDetailBottomSheet();
   }
 
   void _onPinUpdated(Pin pin) {
@@ -99,6 +109,7 @@ class _TripEditModalState extends State<TripEditModal> {
         _pins[index] = pin;
       }
     });
+    _hidePinDetailBottomSheet();
   }
 
   @override
@@ -138,15 +149,20 @@ class _TripEditModalState extends State<TripEditModal> {
   }
 
   Widget _buildNormalLayout() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        _buildHeader(),
-        const SizedBox(height: 20),
-        Expanded(child: _buildForm()),
-        const SizedBox(height: 24),
-        _buildActionButtons(),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 20),
+            Expanded(child: _buildForm()),
+            const SizedBox(height: 24),
+            _buildActionButtons(),
+          ],
+        ),
+        _buildBottomSheet(),
       ],
     );
   }
@@ -167,15 +183,19 @@ class _TripEditModalState extends State<TripEditModal> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const SizedBox(height: 8),
             _buildTripNameField(),
             const SizedBox(height: 16),
             _buildDateSection(),
             const SizedBox(height: 16),
             _buildMemoField(),
             const SizedBox(height: 16),
-            _buildMapSelectionButton(),
+            _buildPinsTitle(),
+            const SizedBox(height: 8),
+            _buildMapButton(),
             const SizedBox(height: 16),
             _buildPinsList(),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -241,13 +261,26 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
-  Widget _buildMapSelectionButton() {
-    return ElevatedButton(
-      onPressed: _toggleMapExpansion,
-      style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 48),
+  Widget _buildPinsTitle() {
+    return const Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        '訪問場所',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       ),
-      child: const Text('訪問場所を地図で選択'),
+    );
+  }
+
+  Widget _buildMapButton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: _toggleMapExpansion,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+        ),
+        child: const Text('地図で選択'),
+      ),
     );
   }
 
@@ -259,30 +292,19 @@ class _TripEditModalState extends State<TripEditModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          '訪問場所',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          constraints: const BoxConstraints(maxHeight: 200),
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _pins.length,
-            itemBuilder: (context, index) {
-              final pin = _pins[index];
-              return _buildPinListItem(pin, index);
-            },
-          ),
-        ),
+        ...List.generate(_pins.length, (index) {
+          final pin = _pins[index];
+          return _buildPinListItem(pin, index);
+        }),
       ],
     );
   }
 
   Widget _buildPinListItem(Pin pin, int index) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: ListTile(
+        key: Key('pinListItem_${pin.pinId}'),
         dense: true,
         title: Text(
           pin.locationName?.isNotEmpty == true ? pin.locationName! : '',
@@ -293,7 +315,12 @@ class _TripEditModalState extends State<TripEditModal> {
           icon: const Icon(Icons.delete, color: Colors.red, size: 20),
           onPressed: () => _onPinDeleted(pin.pinId),
         ),
-        onTap: () => _showPinEditBottomSheet(pin),
+        onTap: () {
+          _onPinTapped(pin);
+          setState(() {
+            _isBottomSheetVisible = true;
+          });
+        },
       ),
     );
   }
@@ -327,25 +354,16 @@ class _TripEditModalState extends State<TripEditModal> {
     return '${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  void _showPinEditBottomSheet(Pin pin) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => PinDetailBottomSheet(
-        pin: pin,
-        onClose: () {
-          Navigator.of(context).pop();
-        },
-        onUpdate: (updatedPin) {
-          _onPinUpdated(updatedPin);
-          Navigator.of(context).pop();
-        },
-        onDelete: (pinId) {
-          _onPinDeleted(pinId);
-          Navigator.of(context).pop();
-        },
-      ),
+  Widget _buildBottomSheet() {
+    if (!_isBottomSheetVisible || _selectedPin == null) {
+      return const SizedBox.shrink();
+    }
+
+    return PinDetailBottomSheet(
+      pin: _selectedPin!,
+      onUpdate: _onPinUpdated,
+      onDelete: _onPinDeleted,
+      onClose: _hidePinDetailBottomSheet,
     );
   }
 
@@ -356,7 +374,9 @@ class _TripEditModalState extends State<TripEditModal> {
       children: [
         _buildMapHeader(),
         const SizedBox(height: 20),
-        Expanded(child: _buildMapView()),
+        Expanded(
+          child: Stack(children: [_buildMapView(), _buildBottomSheet()]),
+        ),
       ],
     );
   }
