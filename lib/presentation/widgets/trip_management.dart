@@ -56,7 +56,6 @@ class _TripManagementState extends State<TripManagement> {
   void initState() {
     super.initState();
 
-    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
     final pinRepository = widget.pinRepository ?? FirestorePinRepository();
@@ -109,55 +108,89 @@ class _TripManagementState extends State<TripManagement> {
     return '${date.year}/${date.month}/${date.day}';
   }
 
-  Future<void> _showAddTripDialog() async {
+  Future<void> _handleAddTripSave(
+    TripEntry tripEntry, {
+    List<Pin>? pins,
+  }) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
+    try {
+      final tripId = await _createTripEntryUsecase.execute(tripEntry);
+
+      if (pins != null && pins.isNotEmpty && _createPinUseCase != null) {
+        for (final pin in pins) {
+          final pinWithTripId = pin.copyWith(tripId: tripId);
+          await _createPinUseCase!.execute(pinWithTripId);
+        }
+      }
+
+      if (mounted) {
+        await _loadTripEntries();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('旅行を作成しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('作成に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showAddTripDialog() async {
     await showDialog(
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
         year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
-        onSave: (tripEntry, {List<Pin>? pins}) async {
-          try {
-            final tripId = await _createTripEntryUsecase.execute(tripEntry);
-
-            // pinsが渡されている場合、tripIdを設定して保存
-            if (pins != null && pins.isNotEmpty && _createPinUseCase != null) {
-              for (final pin in pins) {
-                final pinWithTripId = pin.copyWith(tripId: tripId);
-                await _createPinUseCase!.execute(pinWithTripId);
-              }
-            }
-
-            if (mounted) {
-              await _loadTripEntries();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('旅行を作成しました')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('作成に失敗しました: $e')),
-              );
-            }
-          }
-        },
+        onSave: _handleAddTripSave,
       ),
     );
   }
 
-  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
+  Future<void> _handleEditTripSave(
+    TripEntry tripEntry, {
+    List<Pin>? pins,
+  }) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    // 編集時は既存のpinsを取得
+    try {
+      await _updateTripEntryUsecase.execute(tripEntry);
+
+      if (pins != null &&
+          _deletePinsByTripIdUseCase != null &&
+          _createPinUseCase != null) {
+        await _deletePinsByTripIdUseCase!.execute(tripEntry.id);
+        for (final pin in pins) {
+          final pinWithTripId = pin.copyWith(tripId: tripEntry.id);
+          await _createPinUseCase!.execute(pinWithTripId);
+        }
+      }
+
+      if (mounted) {
+        await _loadTripEntries();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('旅行を更新しました')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('更新に失敗しました: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
     List<Pin>? existingPins;
     if (_getPinsByTripIdUseCase != null) {
       try {
         existingPins = await _getPinsByTripIdUseCase!.execute(tripEntry.id);
       } catch (e) {
-        // エラーの場合は空のリストとして処理
         existingPins = [];
       }
     } else {
@@ -174,34 +207,7 @@ class _TripManagementState extends State<TripManagement> {
         pins: existingPins,
         year: widget.year,
         isTestEnvironment: widget.isTestEnvironment,
-        onSave: (updatedTripEntry, {List<Pin>? pins}) async {
-          try {
-            await _updateTripEntryUsecase.execute(updatedTripEntry);
-
-            if (pins != null &&
-                _deletePinsByTripIdUseCase != null &&
-                _createPinUseCase != null) {
-              await _deletePinsByTripIdUseCase!.execute(updatedTripEntry.id);
-              for (final pin in pins) {
-                final pinWithTripId = pin.copyWith(tripId: updatedTripEntry.id);
-                await _createPinUseCase!.execute(pinWithTripId);
-              }
-            }
-
-            if (mounted) {
-              await _loadTripEntries();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('旅行を更新しました')),
-              );
-            }
-          } catch (e) {
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('更新に失敗しました: $e')),
-              );
-            }
-          }
-        },
+        onSave: _handleEditTripSave,
       ),
     );
   }
@@ -315,68 +321,75 @@ class _TripManagementState extends State<TripManagement> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return _buildLoadingState();
     }
 
     return RefreshIndicator(
       onRefresh: _loadTripEntries,
-      child: _tripEntries.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'この年の旅行はまだありません',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    '旅行を追加してください',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: _tripEntries.length,
-              itemBuilder: (context, index) {
-                final tripEntry = _tripEntries[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: ListTile(
-                    title: Text(tripEntry.tripName ?? '旅行名未設定'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
-                        ),
-                        if (tripEntry.tripMemo != null)
-                          Text(
-                            tripEntry.tripMemo!,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _showDeleteConfirmDialog(tripEntry),
-                    ),
-                    onTap: () => _showEditTripDialog(tripEntry),
-                  ),
-                );
-              },
+      child: _tripEntries.isEmpty ? _buildEmptyState() : _buildTripList(),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.flight_takeoff, size: 100, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'この年の旅行はまだありません',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            '旅行を追加してください',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripList() {
+    return ListView.builder(
+      itemCount: _tripEntries.length,
+      itemBuilder: (context, index) {
+        final tripEntry = _tripEntries[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: ListTile(
+            title: Text(tripEntry.tripName ?? '旅行名未設定'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
+                ),
+                if (tripEntry.tripMemo != null)
+                  Text(
+                    tripEntry.tripMemo!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () => _showDeleteConfirmDialog(tripEntry),
+            ),
+            onTap: () => _showEditTripDialog(tripEntry),
+          ),
+        );
+      },
     );
   }
 }
