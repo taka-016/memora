@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
+import 'delete_confirm_dialog.dart';
 import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
 import '../../application/usecases/delete_member_usecase.dart';
@@ -162,31 +163,12 @@ class _MemberManagementState extends State<MemberManagement> {
   }
 
   Future<void> _showDeleteConfirmDialog(Member member) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('メンバー削除'),
-        content: Text('${member.displayName}を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
+    await DeleteConfirmDialog.show(
+      context,
+      title: 'メンバー削除',
+      content: '${member.displayName}を削除しますか？',
+      onConfirm: () => _deleteMember(member),
     );
-
-    if (confirmed == true) {
-      _deleteMember(member);
-    }
   }
 
   Future<void> _deleteMember(Member member) async {

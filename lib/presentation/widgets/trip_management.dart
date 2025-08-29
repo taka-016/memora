@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/create_trip_entry_usecase.dart';
+import 'delete_confirm_dialog.dart';
 import '../../application/usecases/get_trip_entries_usecase.dart';
 import '../../application/usecases/update_trip_entry_usecase.dart';
 import '../../application/usecases/delete_trip_entry_usecase.dart';
@@ -213,31 +214,12 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('旅行削除'),
-        content: Text('「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
+    await DeleteConfirmDialog.show(
+      context,
+      title: '旅行削除',
+      content: '「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？',
+      onConfirm: () async => await _deleteTripEntry(tripEntry),
     );
-
-    if (confirmed == true) {
-      await _deleteTripEntry(tripEntry);
-    }
   }
 
   Future<void> _deleteTripEntry(TripEntry tripEntry) async {
@@ -368,20 +350,7 @@ class _TripManagementState extends State<TripManagement> {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: ListTile(
             title: Text(tripEntry.tripName ?? '旅行名未設定'),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
-                ),
-                if (tripEntry.tripMemo != null)
-                  Text(
-                    tripEntry.tripMemo!,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
+            subtitle: _buildTripSubtitle(tripEntry),
             trailing: IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () => _showDeleteConfirmDialog(tripEntry),
@@ -390,6 +359,23 @@ class _TripManagementState extends State<TripManagement> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTripSubtitle(TripEntry tripEntry) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${_formatDate(tripEntry.tripStartDate)} - ${_formatDate(tripEntry.tripEndDate)}',
+        ),
+        if (tripEntry.tripMemo != null)
+          Text(
+            tripEntry.tripMemo!,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
     );
   }
 }
