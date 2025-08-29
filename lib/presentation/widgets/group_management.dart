@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
-import 'delete_confirm_dialog.dart';
+import 'components/delete_confirm_dialog.dart';
 import '../../application/usecases/get_managed_groups_with_members_usecase.dart';
 import '../../application/usecases/delete_group_usecase.dart';
 import '../../application/usecases/create_group_usecase.dart';

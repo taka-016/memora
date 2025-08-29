@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/get_managed_members_usecase.dart';
-import 'delete_confirm_dialog.dart';
+import 'components/delete_confirm_dialog.dart';
 import '../../application/usecases/create_member_usecase.dart';
 import '../../application/usecases/update_member_usecase.dart';
 import '../../application/usecases/delete_member_usecase.dart';

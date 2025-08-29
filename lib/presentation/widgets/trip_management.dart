@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../application/usecases/create_trip_entry_usecase.dart';
-import 'delete_confirm_dialog.dart';
+import 'components/delete_confirm_dialog.dart';
 import '../../application/usecases/get_trip_entries_usecase.dart';
 import '../../application/usecases/update_trip_entry_usecase.dart';
 import '../../application/usecases/delete_trip_entry_usecase.dart';
