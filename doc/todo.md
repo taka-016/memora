@@ -283,3 +283,4 @@
 - [x] DatePickerの操作性改善（日付タップで直接確定）
   - [x] DatePickerダイアログ上部の年月日表記に曜日も表示する
   - [x] DatePickerダイアログ上部の年月日表記タップで直接入力で年月日を変更できるようにする
+- [x] _showDeleteConfirmDialog（削除ダイアログ）の共通ウィジェット化
