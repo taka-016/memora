@@ -313,7 +313,7 @@ class _TripEditModalState extends State<TripEditModal> {
         ),
         subtitle: _buildPinSubtitle(pin),
         trailing: IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+          icon: const Icon(Icons.delete, color: Colors.red),
           onPressed: () => _onPinDeleted(pin.pinId),
         ),
         onTap: () {
@@ -352,7 +352,11 @@ class _TripEditModalState extends State<TripEditModal> {
   }
 
   String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final month = dateTime.month.toString().padLeft(2, '0');
+    final day = dateTime.day.toString().padLeft(2, '0');
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$month/$day $hour:$minute';
   }
 
   Widget _buildBottomSheet() {
