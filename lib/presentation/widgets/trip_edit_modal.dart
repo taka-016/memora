@@ -306,6 +306,7 @@ class _TripEditModalState extends State<TripEditModal> {
       child: ListTile(
         key: Key('pinListItem_${pin.pinId}'),
         dense: true,
+        contentPadding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
         title: Text(
           pin.locationName?.isNotEmpty == true ? pin.locationName! : '',
           style: const TextStyle(fontSize: 14),
