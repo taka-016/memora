@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
+import 'components/delete_confirm_dialog.dart';
 import '../../application/usecases/get_managed_groups_with_members_usecase.dart';
 import '../../application/usecases/delete_group_usecase.dart';
 import '../../application/usecases/create_group_usecase.dart';
@@ -254,31 +255,12 @@ class _GroupManagementState extends State<GroupManagement> {
   }
 
   Future<void> _showDeleteConfirmDialog(Group group) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('グループ削除'),
-        content: Text('${group.name}を削除しますか？'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('キャンセル'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('削除'),
-          ),
-        ],
-      ),
+    await DeleteConfirmDialog.show(
+      context,
+      title: 'グループ削除',
+      content: '${group.name}を削除しますか？',
+      onConfirm: () => _deleteGroup(group),
     );
-
-    if (confirmed == true) {
-      _deleteGroup(group);
-    }
   }
 
   Future<void> _deleteGroup(Group group) async {
