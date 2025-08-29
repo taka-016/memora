@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/services/placeholder_map_view_service.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/value-objects/location.dart';
-import 'package:memora/presentation/widgets/placeholder_map_view.dart';
+import 'package:memora/presentation/shared/maps/placeholder_map_view.dart';
 
 void main() {
   group('PlaceholderMapViewService', () {

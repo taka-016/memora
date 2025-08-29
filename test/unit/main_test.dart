@@ -6,7 +6,7 @@ import 'package:memora/application/usecases/get_groups_with_members_usecase.dart
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/presentation/top_page.dart';
+import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 

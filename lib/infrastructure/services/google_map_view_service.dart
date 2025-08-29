@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:memora/domain/services/map_view_service.dart';
 import 'package:memora/domain/value-objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/presentation/widgets/google_map_view.dart';
+import 'package:memora/presentation/shared/maps/google_map_view.dart';
 
 class GoogleMapViewService implements MapViewService {
   const GoogleMapViewService();
