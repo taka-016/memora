@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/infrastructure/factories/map_view_factory.dart';
+import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -57,6 +59,8 @@ class _TopPageState extends State<TopPage> {
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
 
+  GetTripEntriesUsecase? _getTripEntriesUsecase;
+
   // テスト用メソッド
   @visibleForTesting
   GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
@@ -68,6 +72,14 @@ class _TopPageState extends State<TopPage> {
   void initState() {
     super.initState();
     _initializeGetCurrentMemberUseCase();
+    _initializeUseCases();
+  }
+
+  void _initializeUseCases() {
+    if (!widget.isTestEnvironment) {
+      final tripEntryRepository = FirestoreTripEntryRepository();
+      _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
+    }
   }
 
   void _initializeGetCurrentMemberUseCase() async {
@@ -115,6 +127,9 @@ class _TopPageState extends State<TopPage> {
           });
         },
         onTripManagementSelected: _onTripManagementSelected,
+        getTripEntriesUsecase: widget.isTestEnvironment
+            ? null
+            : _getTripEntriesUsecase,
       );
     });
   }

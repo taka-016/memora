@@ -1,7 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -14,12 +16,14 @@ class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
+  final GetTripEntriesUsecase? getTripEntriesUsecase;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
     this.onBackPressed,
     this.onTripManagementSelected,
+    this.getTripEntriesUsecase,
   });
 
   @override
@@ -63,6 +67,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   // 行の高さを管理するList
   late List<double> _rowHeights;
+
+  // 各年の旅行データをキャッシュ
+  final Map<int, List<TripEntry>> _tripEntriesCache = {};
 
   @override
   void initState() {
@@ -340,7 +347,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
                     ? Colors.blue.shade50
                     : Colors.transparent,
               ),
-              child: const Text(''),
+              child: _buildCellContent(rowIndex, columnIndex),
             ),
           ),
         );
@@ -489,6 +496,128 @@ class _GroupTimelineState extends State<GroupTimeline> {
         widget.groupWithMembers.group.id,
         selectedYear,
       );
+    }
+  }
+
+  Widget _buildCellContent(int rowIndex, int columnIndex) {
+    // 旅行行（rowIndex == 0）かつ年の列の場合のみ旅行情報を表示
+    if (rowIndex == 0 &&
+        columnIndex != 0 &&
+        columnIndex != (2 + (_endYearOffset - _startYearOffset + 1)) - 1) {
+      final yearIndex = columnIndex - 1;
+      final currentYear = DateTime.now().year;
+      final year = currentYear + _startYearOffset + yearIndex;
+
+      return _buildTripContent(year);
+    }
+
+    return const Text('');
+  }
+
+  Widget _buildTripContent(int year) {
+    return FutureBuilder<List<TripEntry>>(
+      future: _getTripEntriesForYear(year),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Text('');
+        }
+
+        final tripEntries = snapshot.data!;
+        return _buildTripDisplay(tripEntries);
+      },
+    );
+  }
+
+  Future<List<TripEntry>> _getTripEntriesForYear(int year) async {
+    if (_tripEntriesCache.containsKey(year)) {
+      return _tripEntriesCache[year]!;
+    }
+
+    if (widget.getTripEntriesUsecase != null) {
+      try {
+        final tripEntries = await widget.getTripEntriesUsecase!.execute(
+          widget.groupWithMembers.group.id,
+          year,
+        );
+        _tripEntriesCache[year] = tripEntries;
+        return tripEntries;
+      } catch (e) {
+        _tripEntriesCache[year] = [];
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  Widget _buildTripDisplay(List<TripEntry> tripEntries) {
+    if (tripEntries.isEmpty) {
+      return const Text('');
+    }
+
+    // 旅行開始日でソート
+    final sortedTrips = List<TripEntry>.from(tripEntries)
+      ..sort((a, b) => a.tripStartDate.compareTo(b.tripStartDate));
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // 利用可能な高さに基づいて表示する旅行数を計算
+        final availableHeight = constraints.maxHeight - 16; // パディング分を引く
+        final lineHeight = 20.0; // 1行あたりの高さ
+        final maxLines = (availableHeight / lineHeight).floor().clamp(
+          1,
+          sortedTrips.length,
+        );
+
+        final displayTrips = sortedTrips.take(maxLines).toList();
+        final hasMoreTrips = sortedTrips.length > maxLines;
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...displayTrips.map(
+                (trip) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1.0),
+                  child: Text(
+                    _formatTripText(trip),
+                    style: const TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ),
+              if (hasMoreTrips)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 1.0),
+                  child: Text(
+                    '…',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatTripText(TripEntry trip) {
+    final dateFormat =
+        '${trip.tripStartDate.year}/${trip.tripStartDate.month.toString().padLeft(2, '0')}';
+
+    if (trip.tripName != null && trip.tripName!.isNotEmpty) {
+      return '${trip.tripName} $dateFormat';
+    } else {
+      return dateFormat;
     }
   }
 }
