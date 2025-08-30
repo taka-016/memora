@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
-import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -14,20 +13,14 @@ import 'package:mockito/mockito.dart';
 import 'main_test.mocks.dart';
 import '../helpers/fake_auth_manager.dart';
 
-@GenerateMocks([
-  GetGroupsWithMembersUsecase,
-  GetCurrentMemberUseCase,
-  GetTripEntriesUsecase,
-])
+@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
   late MockGetCurrentMemberUseCase mockGetCurrentMemberUseCase;
-  late MockGetTripEntriesUsecase mockGetTripEntriesUsecase;
 
   setUp(() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
     mockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-    mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
 
     when(mockUsecase.execute(any)).thenAnswer((_) async => []);
     when(mockGetCurrentMemberUseCase.execute()).thenAnswer(
@@ -55,7 +48,6 @@ void main() {
         locale: const Locale('ja'),
         home: TopPage(
           getGroupsWithMembersUsecase: mockUsecase,
-          getTripEntriesUsecase: mockGetTripEntriesUsecase,
           isTestEnvironment: true,
           getCurrentMemberUseCase: mockGetCurrentMemberUseCase,
         ),

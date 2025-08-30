@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/application/utils/japanese_era.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/widgets/trip_display_widget.dart';
@@ -17,12 +19,12 @@ class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
-  final GetTripEntriesUsecase getTripEntriesUsecase;
+  final TripEntryRepository? tripEntryRepository;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
-    required this.getTripEntriesUsecase,
+    this.tripEntryRepository,
     this.onBackPressed,
     this.onTripManagementSelected,
   });
@@ -32,6 +34,7 @@ class GroupTimeline extends StatefulWidget {
 }
 
 class _GroupTimelineState extends State<GroupTimeline> {
+  late final GetTripEntriesUsecase _getTripEntriesUsecase;
   // 現在の年を中央として前後何年分を表示するかの定数
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
@@ -75,6 +78,13 @@ class _GroupTimelineState extends State<GroupTimeline> {
   @override
   void initState() {
     super.initState();
+
+    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
+    final tripEntryRepository =
+        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+
+    // ユースケースを初期化
+    _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     // 行の高さを初期化（ヘッダー行を除く）
     final totalDataRows =
         2 + widget.groupWithMembers.members.length; // 旅行 + イベント + メンバー数
@@ -115,7 +125,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
     }
 
     try {
-      final trips = await widget.getTripEntriesUsecase.execute(
+      final trips = await _getTripEntriesUsecase.execute(
         widget.groupWithMembers.group.id,
         year,
       );

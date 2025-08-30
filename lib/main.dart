@@ -10,11 +10,9 @@ import 'domain/services/auth_service.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'application/usecases/get_current_member_usecase.dart';
-import 'application/usecases/get_trip_entries_usecase.dart';
 import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
-import 'infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
@@ -43,10 +41,8 @@ class _MyAppState extends State<MyApp> {
   late final FirestoreMemberRepository memberRepository;
   late final FirestoreGroupRepository groupRepository;
   late final FirestoreGroupMemberRepository groupMemberRepository;
-  late final FirestoreTripEntryRepository tripEntryRepository;
   late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   late final GetCurrentMemberUseCase getCurrentMemberUseCase;
-  late final GetTripEntriesUsecase getTripEntriesUsecase;
 
   @override
   void initState() {
@@ -66,9 +62,6 @@ class _MyAppState extends State<MyApp> {
       memberRepository,
       authService,
     );
-
-    tripEntryRepository = FirestoreTripEntryRepository();
-    getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
   }
 
   @override
@@ -90,7 +83,6 @@ class _MyAppState extends State<MyApp> {
           child: TopPage(
             getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
             getCurrentMemberUseCase: getCurrentMemberUseCase,
-            getTripEntriesUsecase: getTripEntriesUsecase,
           ),
         ),
       ),

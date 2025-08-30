@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
@@ -34,14 +33,12 @@ enum GroupTimelineScreenState {
 
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
-  final GetTripEntriesUsecase getTripEntriesUsecase;
   final bool isTestEnvironment;
   final GetCurrentMemberUseCase? getCurrentMemberUseCase;
 
   const TopPage({
     super.key,
     required this.getGroupsWithMembersUsecase,
-    required this.getTripEntriesUsecase,
     this.isTestEnvironment = false,
     this.getCurrentMemberUseCase,
   });
@@ -111,7 +108,6 @@ class _TopPageState extends State<TopPage> {
       // グループ一覧からの遷移は毎回新しいインスタンスを作成
       _groupTimelineInstance = GroupTimeline(
         groupWithMembers: groupWithMembers,
-        getTripEntriesUsecase: widget.getTripEntriesUsecase,
         onBackPressed: () {
           setState(() {
             _groupTimelineState = GroupTimelineScreenState.groupList;
@@ -157,7 +153,9 @@ class _TopPageState extends State<TopPage> {
           onGroupSelected: _onGroupSelected,
         ),
         // 1: グループ年表
-        _groupTimelineInstance ?? Container(),
+        widget.isTestEnvironment
+            ? _buildTestGroupTimeline()
+            : _groupTimelineInstance ?? Container(),
         // 2: 旅行管理
         _selectedGroupId != null && _selectedYear != null
             ? TripManagement(
@@ -173,6 +171,37 @@ class _TopPageState extends State<TopPage> {
               )
             : Container(),
       ],
+    );
+  }
+
+  Widget _buildTestGroupTimeline() {
+    return Container(
+      key: const Key('group_timeline'),
+      child: Column(
+        children: [
+          AppBar(
+            leading: IconButton(
+              key: const Key('back_button'),
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                setState(() {
+                  _groupTimelineState = GroupTimelineScreenState.groupList;
+                  _groupTimelineInstance = null;
+                });
+              },
+            ),
+            title: const Text('テストグループ'),
+          ),
+          Expanded(
+            child: _buildTestPlaceholder(
+              key: 'group_timeline_content',
+              icon: Icons.timeline,
+              title: 'グループ年表テスト',
+              subtitle: 'テスト環境',
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
@@ -11,11 +11,11 @@ import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 import 'group_timeline_test.mocks.dart';
 
-@GenerateMocks([GetTripEntriesUsecase])
+@GenerateMocks([TripEntryRepository])
 void main() {
   late Member testMember;
   late GroupWithMembers testGroupWithMembers;
-  late MockGetTripEntriesUsecase mockGetTripEntriesUsecase;
+  late MockTripEntryRepository mockTripEntryRepository;
 
   setUp(() {
     testMember = Member(
@@ -37,10 +37,15 @@ void main() {
       members: [testMember],
     );
 
-    mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
+    mockTripEntryRepository = MockTripEntryRepository();
+
+    // デフォルトの挙動を設定
+    when(
+      mockTripEntryRepository.getTripEntriesByGroupIdAndYear(any, any),
+    ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget({GetTripEntriesUsecase? tripEntriesUsecase}) {
+  Widget createTestWidget({TripEntryRepository? tripEntryRepository}) {
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
@@ -48,8 +53,7 @@ void main() {
           height: 800,
           child: GroupTimeline(
             groupWithMembers: testGroupWithMembers,
-            getTripEntriesUsecase:
-                tripEntriesUsecase ?? mockGetTripEntriesUsecase,
+            tripEntryRepository: tripEntryRepository ?? mockTripEntryRepository,
           ),
         ),
       ),
@@ -306,7 +310,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
-              getTripEntriesUsecase: mockGetTripEntriesUsecase,
+              tripEntryRepository: mockTripEntryRepository,
               onBackPressed: () {},
             ),
           ),
@@ -345,7 +349,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
-              getTripEntriesUsecase: mockGetTripEntriesUsecase,
+              tripEntryRepository: mockTripEntryRepository,
               onBackPressed: () {
                 callbackCalled = true;
               },
@@ -379,7 +383,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
-              getTripEntriesUsecase: mockGetTripEntriesUsecase,
+              tripEntryRepository: mockTripEntryRepository,
               onTripManagementSelected: (groupId, year) {
                 selectedGroupId = groupId;
                 selectedYear = year;
@@ -408,25 +412,29 @@ void main() {
 
     testWidgets('旅行行に対象年の旅行一覧が表示される', (WidgetTester tester) async {
       // Arrange
+      final currentYear = DateTime.now().year;
       final testTrips = [
         TripEntry(
           id: '1',
           groupId: '1',
           tripName: '北海道旅行',
-          tripStartDate: DateTime(2023, 8, 15),
-          tripEndDate: DateTime(2023, 8, 18),
+          tripStartDate: DateTime(currentYear, 8, 15),
+          tripEndDate: DateTime(currentYear, 8, 18),
         ),
         TripEntry(
           id: '2',
           groupId: '1',
           tripName: null,
-          tripStartDate: DateTime(2023, 12, 25),
-          tripEndDate: DateTime(2023, 12, 27),
+          tripStartDate: DateTime(currentYear, 12, 25),
+          tripEndDate: DateTime(currentYear, 12, 27),
         ),
       ];
 
       when(
-        mockGetTripEntriesUsecase.execute(any, any),
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          '1',
+          currentYear,
+        ),
       ).thenAnswer((_) async => testTrips);
 
       // Act
@@ -435,8 +443,8 @@ void main() {
 
       // Assert
       expect(find.textContaining('北海道旅行'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('2023/08'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('2023/12'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('$currentYear/08'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('$currentYear/12'), findsAtLeastNWidgets(1));
     });
   });
 }
