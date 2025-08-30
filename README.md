@@ -19,11 +19,11 @@ Memora is a Flutter mobile application designed for groups such as families and 
 
 Please refer to the following for detailed design documentation:
 
-- [Application Specification](./doc/app_spec.md) - Functional requirements and UI structure
-- [User Stories](./doc/user_stories.md) - User scenarios and acceptance criteria
-- [ER Diagram](./doc/er_diagram.md) - Database design
-- [Use Case Diagram](./doc/usecase_diagram.md) - System usage scenarios
-- [TODO List](./doc/todo.md) - Development progress status
+- [Application Specification](./docs/app_spec.md) - Functional requirements and UI structure
+- [User Stories](./docs/user_stories.md) - User scenarios and acceptance criteria
+- [ER Diagram](./docs/er_diagram.md) - Database design
+- [Use Case Diagram](./docs/usecase_diagram.md) - System usage scenarios
+- [TODO List](./docs/todo.md) - Development progress status
 
 ## Development Environment
 
