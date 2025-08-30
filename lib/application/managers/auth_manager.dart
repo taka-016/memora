@@ -8,6 +8,9 @@ import '../../domain/repositories/member_repository.dart';
 import '../../infrastructure/services/firebase_auth_service.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../usecases/get_or_create_member_usecase.dart';
+import '../usecases/get_trip_entries_usecase.dart';
+import '../../domain/repositories/trip_entry_repository.dart';
+import '../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService();
@@ -22,6 +25,15 @@ final getOrCreateMemberUseCaseProvider = Provider<GetOrCreateMemberUseCase>((
 ) {
   final memberRepository = ref.watch(memberRepositoryProvider);
   return GetOrCreateMemberUseCase(memberRepository);
+});
+
+final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
+  return FirestoreTripEntryRepository();
+});
+
+final getTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
+  final tripEntryRepository = ref.watch(tripEntryRepositoryProvider);
+  return GetTripEntriesUsecase(tripEntryRepository);
 });
 
 final authManagerProvider = StateNotifierProvider<AuthManager, AuthState>((

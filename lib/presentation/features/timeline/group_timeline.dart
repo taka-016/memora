@@ -1,8 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
@@ -12,25 +13,23 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   }
 }
 
-class GroupTimeline extends StatefulWidget {
+class GroupTimeline extends ConsumerStatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
-  final GetTripEntriesUsecase? getTripEntriesUsecase;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
     this.onBackPressed,
     this.onTripManagementSelected,
-    this.getTripEntriesUsecase,
   });
 
   @override
-  State<GroupTimeline> createState() => _GroupTimelineState();
+  ConsumerState<GroupTimeline> createState() => _GroupTimelineState();
 }
 
-class _GroupTimelineState extends State<GroupTimeline> {
+class _GroupTimelineState extends ConsumerState<GroupTimeline> {
   // 現在の年を中央として前後何年分を表示するかの定数
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
@@ -541,21 +540,18 @@ class _GroupTimelineState extends State<GroupTimeline> {
       return _tripEntriesCache[year]!;
     }
 
-    if (widget.getTripEntriesUsecase != null) {
-      try {
-        final tripEntries = await widget.getTripEntriesUsecase!.execute(
-          widget.groupWithMembers.group.id,
-          year,
-        );
-        _tripEntriesCache[year] = tripEntries;
-        return tripEntries;
-      } catch (e) {
-        _tripEntriesCache[year] = [];
-        return [];
-      }
+    try {
+      final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
+      final tripEntries = await getTripEntriesUsecase.execute(
+        widget.groupWithMembers.group.id,
+        year,
+      );
+      _tripEntriesCache[year] = tripEntries;
+      return tripEntries;
+    } catch (e) {
+      _tripEntriesCache[year] = [];
+      return [];
     }
-
-    return [];
   }
 
   Widget _buildTripDisplay(List<TripEntry> tripEntries) {
