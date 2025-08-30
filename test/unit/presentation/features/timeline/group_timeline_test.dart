@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
+import 'group_timeline_test.mocks.dart';
+
+@GenerateMocks([GetTripEntriesUsecase])
 void main() {
   late Member testMember;
   late GroupWithMembers testGroupWithMembers;
+  late MockGetTripEntriesUsecase mockGetTripEntriesUsecase;
 
   setUp(() {
     testMember = Member(
@@ -28,15 +36,21 @@ void main() {
       group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
       members: [testMember],
     );
+
+    mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
   });
 
-  Widget createTestWidget() {
+  Widget createTestWidget({GetTripEntriesUsecase? tripEntriesUsecase}) {
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
           width: 1200, // より広い画面サイズを設定
           height: 800,
-          child: GroupTimeline(groupWithMembers: testGroupWithMembers),
+          child: GroupTimeline(
+            groupWithMembers: testGroupWithMembers,
+            getTripEntriesUsecase:
+                tripEntriesUsecase ?? mockGetTripEntriesUsecase,
+          ),
         ),
       ),
     );
@@ -292,6 +306,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              getTripEntriesUsecase: mockGetTripEntriesUsecase,
               onBackPressed: () {},
             ),
           ),
@@ -330,6 +345,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              getTripEntriesUsecase: mockGetTripEntriesUsecase,
               onBackPressed: () {
                 callbackCalled = true;
               },
@@ -363,6 +379,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              getTripEntriesUsecase: mockGetTripEntriesUsecase,
               onTripManagementSelected: (groupId, year) {
                 selectedGroupId = groupId;
                 selectedYear = year;
@@ -387,6 +404,39 @@ void main() {
       // Assert - onTripManagementSelectedが呼ばれる
       expect(selectedGroupId, equals(testGroupWithMembers.group.id));
       expect(selectedYear, isNotNull);
+    });
+
+    testWidgets('旅行行に対象年の旅行一覧が表示される', (WidgetTester tester) async {
+      // Arrange
+      final testTrips = [
+        TripEntry(
+          id: '1',
+          groupId: '1',
+          tripName: '北海道旅行',
+          tripStartDate: DateTime(2023, 8, 15),
+          tripEndDate: DateTime(2023, 8, 18),
+        ),
+        TripEntry(
+          id: '2',
+          groupId: '1',
+          tripName: null,
+          tripStartDate: DateTime(2023, 12, 25),
+          tripEndDate: DateTime(2023, 12, 27),
+        ),
+      ];
+
+      when(
+        mockGetTripEntriesUsecase.execute(any, any),
+      ).thenAnswer((_) async => testTrips);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.textContaining('北海道旅行'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('2023/08'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('2023/12'), findsAtLeastNWidgets(1));
     });
   });
 }
