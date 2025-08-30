@@ -17,7 +17,7 @@
 
 ## データ構造
 
-[doc/er_diagram.md](./er_diagram.md)を参照
+[er_diagram.md](./er_diagram.md)を参照
 
 ## 機能要件
 
