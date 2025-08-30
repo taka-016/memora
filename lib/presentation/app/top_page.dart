@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
@@ -33,12 +34,14 @@ enum GroupTimelineScreenState {
 
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
+  final GetTripEntriesUsecase getTripEntriesUsecase;
   final bool isTestEnvironment;
   final GetCurrentMemberUseCase? getCurrentMemberUseCase;
 
   const TopPage({
     super.key,
     required this.getGroupsWithMembersUsecase,
+    required this.getTripEntriesUsecase,
     this.isTestEnvironment = false,
     this.getCurrentMemberUseCase,
   });
@@ -108,6 +111,7 @@ class _TopPageState extends State<TopPage> {
       // グループ一覧からの遷移は毎回新しいインスタンスを作成
       _groupTimelineInstance = GroupTimeline(
         groupWithMembers: groupWithMembers,
+        getTripEntriesUsecase: widget.getTripEntriesUsecase,
         onBackPressed: () {
           setState(() {
             _groupTimelineState = GroupTimelineScreenState.groupList;

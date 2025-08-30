@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -16,10 +17,12 @@ import '../../../helpers/fake_auth_manager.dart';
 @GenerateMocks([
   GetGroupsWithMembersUsecase,
   GetCurrentMemberUseCase,
+  GetTripEntriesUsecase,
   AuthManager,
 ])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
+  late MockGetTripEntriesUsecase mockGetTripEntriesUsecase;
 
   final testMembers = [
     Member(
@@ -52,6 +55,7 @@ void main() {
 
   setUp(() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
+    mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
   });
 
   Widget createTestWidget({
@@ -77,6 +81,7 @@ void main() {
       child: MaterialApp(
         home: TopPage(
           getGroupsWithMembersUsecase: mockUsecase,
+          getTripEntriesUsecase: mockGetTripEntriesUsecase,
           isTestEnvironment: true,
           getCurrentMemberUseCase:
               getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
