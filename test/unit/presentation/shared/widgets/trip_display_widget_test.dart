@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/presentation/shared/widgets/trip_display_widget.dart';
+import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
 void main() {
-  group('TripDisplayWidget', () {
+  group('TripCell', () {
     testWidgets('旅行データが空の場合、空のContainerを表示する', (WidgetTester tester) async {
       // Arrange
-      final widget = TripDisplayWidget(
+      final widget = TripCell(
         trips: [],
         availableHeight: 100.0,
         availableWidth: 200.0,
@@ -35,7 +35,7 @@ void main() {
         ),
       ];
 
-      final widget = TripDisplayWidget(
+      final widget = TripCell(
         trips: trips,
         availableHeight: 100.0,
         availableWidth: 200.0,
@@ -60,7 +60,7 @@ void main() {
         ),
       ];
 
-      final widget = TripDisplayWidget(
+      final widget = TripCell(
         trips: trips,
         availableHeight: 100.0,
         availableWidth: 200.0,
@@ -92,7 +92,7 @@ void main() {
         ),
       ];
 
-      final widget = TripDisplayWidget(
+      final widget = TripCell(
         trips: trips,
         availableHeight: 200.0,
         availableWidth: 200.0,
@@ -119,7 +119,7 @@ void main() {
         ),
       );
 
-      final widget = TripDisplayWidget(
+      final widget = TripCell(
         trips: trips,
         availableHeight: 50.0, // 小さい高さ
         availableWidth: 200.0,

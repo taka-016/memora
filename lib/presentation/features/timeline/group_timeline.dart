@@ -6,7 +6,7 @@ import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/application/utils/japanese_era.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/presentation/shared/widgets/trip_display_widget.dart';
+import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -379,7 +379,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
                 : null,
             child: Container(
               alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: _borderColor, width: _borderWidth),
@@ -409,10 +408,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
     // この年の旅行データを取得
     final trips = _tripsByYear[selectedYear] ?? [];
 
-    return TripDisplayWidget(
+    return TripCell(
       trips: trips,
       availableHeight: _rowHeights[0], // 旅行行の高さ
-      availableWidth: _yearColumnWidth - 16.0, // パディング考慮
+      availableWidth: _yearColumnWidth,
     );
   }
 

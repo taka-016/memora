@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 
-class TripDisplayWidget extends StatelessWidget {
+class TripCell extends StatelessWidget {
   final List<TripEntry> trips;
   final double availableHeight;
   final double availableWidth;
 
-  const TripDisplayWidget({
+  const TripCell({
     super.key,
     required this.trips,
     required this.availableHeight,
@@ -29,26 +29,21 @@ class TripDisplayWidget extends StatelessWidget {
 
   Widget _buildTripList() {
     final textStyle = const TextStyle(fontSize: 12.0);
-    const itemHeight = 16.0; // 1行の高さ
-    const spacing = 2.0; // 行間
+    const itemHeight = 32.0;
 
-    // 表示可能な行数を計算
-    final availableLines = ((availableHeight - 4.0) / (itemHeight + spacing))
-        .floor();
+    final availableLines = ((availableHeight) / (itemHeight)).floor();
 
     if (availableLines <= 0) {
       return Container();
     }
 
-    if (trips.length <= availableLines) {
-      // すべて表示可能
+    if (trips.length < availableLines) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: trips.map((trip) => _buildTripItem(trip, textStyle)).toList(),
       );
     } else {
-      // 省略表示が必要
-      final displayCount = availableLines - 1; // 省略表示用の行を確保
+      final displayCount = availableLines - 1;
       final remainingCount = trips.length - displayCount;
 
       final displayTrips = trips.take(displayCount).toList();
@@ -66,17 +61,38 @@ class TripDisplayWidget extends StatelessWidget {
   }
 
   Widget _buildTripItem(TripEntry trip, TextStyle style) {
-    final formattedDate =
-        '${trip.tripStartDate.year}/${trip.tripStartDate.month.toString().padLeft(2, '0')}';
-    final displayText = trip.tripName != null
-        ? '${trip.tripName} $formattedDate'
-        : formattedDate;
+    final year = trip.tripStartDate.year;
+    final month = trip.tripStartDate.month.toString().padLeft(2, '0');
+    final day = trip.tripStartDate.day.toString().padLeft(2, '0');
+    final formattedDate = '$year/$month/$day';
 
-    return Text(
-      displayText,
-      style: style,
-      overflow: TextOverflow.ellipsis,
-      maxLines: 1,
+    return SizedBox(
+      height: 32.0,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Flexible(
+            child: Text(
+              formattedDate,
+              style: style.copyWith(fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Text(
+                trip.tripName ?? '旅行名未設定',
+                style: style,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
