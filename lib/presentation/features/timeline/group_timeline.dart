@@ -1,7 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/application/utils/japanese_era.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -14,10 +19,12 @@ class GroupTimeline extends StatefulWidget {
   final GroupWithMembers groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
+  final TripEntryRepository? tripEntryRepository;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
+    this.tripEntryRepository,
     this.onBackPressed,
     this.onTripManagementSelected,
   });
@@ -27,6 +34,7 @@ class GroupTimeline extends StatefulWidget {
 }
 
 class _GroupTimelineState extends State<GroupTimeline> {
+  late final GetTripEntriesUsecase _getTripEntriesUsecase;
   // 現在の年を中央として前後何年分を表示するかの定数
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
@@ -64,9 +72,19 @@ class _GroupTimelineState extends State<GroupTimeline> {
   // 行の高さを管理するList
   late List<double> _rowHeights;
 
+  // 旅行データをキャッシュするMap（年 -> 旅行リスト）
+  final Map<int, List<TripEntry>> _tripsByYear = {};
+
   @override
   void initState() {
     super.initState();
+
+    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
+    final tripEntryRepository =
+        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+
+    // ユースケースを初期化
+    _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     // 行の高さを初期化（ヘッダー行を除く）
     final totalDataRows =
         2 + widget.groupWithMembers.members.length; // 旅行 + イベント + メンバー数
@@ -88,6 +106,38 @@ class _GroupTimelineState extends State<GroupTimeline> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentYear();
     });
+
+    // 初期表示される年の旅行データを取得
+    _loadTripDataForVisibleYears();
+  }
+
+  Future<void> _loadTripDataForVisibleYears() async {
+    final currentYear = DateTime.now().year;
+    for (int offset = _startYearOffset; offset <= _endYearOffset; offset++) {
+      final year = currentYear + offset;
+      await _loadTripDataForYear(year);
+    }
+  }
+
+  Future<void> _loadTripDataForYear(int year) async {
+    if (_tripsByYear.containsKey(year)) {
+      return; // 既に読み込み済み
+    }
+
+    try {
+      final trips = await _getTripEntriesUsecase.execute(
+        widget.groupWithMembers.group.id,
+        year,
+      );
+      setState(() {
+        _tripsByYear[year] = trips;
+      });
+    } catch (e) {
+      // エラーハンドリング（空のリストを設定）
+      setState(() {
+        _tripsByYear[year] = [];
+      });
+    }
   }
 
   @override
@@ -329,7 +379,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
                 : null,
             child: Container(
               alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: _borderColor, width: _borderWidth),
@@ -340,11 +389,29 @@ class _GroupTimelineState extends State<GroupTimeline> {
                     ? Colors.blue.shade50
                     : Colors.transparent,
               ),
-              child: const Text(''),
+              child: isTripRow && isYearColumn
+                  ? _buildTripCellContent(columnIndex)
+                  : const Text(''),
             ),
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildTripCellContent(int columnIndex) {
+    // 年を特定する
+    final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
+    final currentYear = DateTime.now().year;
+    final selectedYear = currentYear + _startYearOffset + yearIndex;
+
+    // この年の旅行データを取得
+    final trips = _tripsByYear[selectedYear] ?? [];
+
+    return TripCell(
+      trips: trips,
+      availableHeight: _rowHeights[0], // 旅行行の高さ
+      availableWidth: _yearColumnWidth,
     );
   }
 
@@ -423,12 +490,14 @@ class _GroupTimelineState extends State<GroupTimeline> {
     setState(() {
       _startYearOffset -= _yearRangeIncrement;
     });
+    _loadTripDataForVisibleYears();
   }
 
   void _showMoreFuture() {
     setState(() {
       _endYearOffset += _yearRangeIncrement;
     });
+    _loadTripDataForVisibleYears();
   }
 
   void _syncScrollControllers(int sourceIndex) {

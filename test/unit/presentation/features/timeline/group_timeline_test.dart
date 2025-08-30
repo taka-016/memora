@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
+import 'group_timeline_test.mocks.dart';
+
+@GenerateMocks([TripEntryRepository])
 void main() {
   late Member testMember;
   late GroupWithMembers testGroupWithMembers;
+  late MockTripEntryRepository mockTripEntryRepository;
 
   setUp(() {
     testMember = Member(
@@ -28,15 +36,25 @@ void main() {
       group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
       members: [testMember],
     );
+
+    mockTripEntryRepository = MockTripEntryRepository();
+
+    // デフォルトの挙動を設定
+    when(
+      mockTripEntryRepository.getTripEntriesByGroupIdAndYear(any, any),
+    ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget() {
+  Widget createTestWidget({TripEntryRepository? tripEntryRepository}) {
     return MaterialApp(
       home: Scaffold(
         body: SizedBox(
           width: 1200, // より広い画面サイズを設定
           height: 800,
-          child: GroupTimeline(groupWithMembers: testGroupWithMembers),
+          child: GroupTimeline(
+            groupWithMembers: testGroupWithMembers,
+            tripEntryRepository: tripEntryRepository ?? mockTripEntryRepository,
+          ),
         ),
       ),
     );
@@ -292,6 +310,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              tripEntryRepository: mockTripEntryRepository,
               onBackPressed: () {},
             ),
           ),
@@ -330,6 +349,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              tripEntryRepository: mockTripEntryRepository,
               onBackPressed: () {
                 callbackCalled = true;
               },
@@ -363,6 +383,7 @@ void main() {
             height: 800,
             child: GroupTimeline(
               groupWithMembers: testGroupWithMembers,
+              tripEntryRepository: mockTripEntryRepository,
               onTripManagementSelected: (groupId, year) {
                 selectedGroupId = groupId;
                 selectedYear = year;
@@ -387,6 +408,43 @@ void main() {
       // Assert - onTripManagementSelectedが呼ばれる
       expect(selectedGroupId, equals(testGroupWithMembers.group.id));
       expect(selectedYear, isNotNull);
+    });
+
+    testWidgets('旅行行に対象年の旅行一覧が表示される', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final testTrips = [
+        TripEntry(
+          id: '1',
+          groupId: '1',
+          tripName: '北海道旅行',
+          tripStartDate: DateTime(currentYear, 8, 15),
+          tripEndDate: DateTime(currentYear, 8, 18),
+        ),
+        TripEntry(
+          id: '2',
+          groupId: '1',
+          tripName: null,
+          tripStartDate: DateTime(currentYear, 12, 25),
+          tripEndDate: DateTime(currentYear, 12, 27),
+        ),
+      ];
+
+      when(
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          '1',
+          currentYear,
+        ),
+      ).thenAnswer((_) async => testTrips);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.textContaining('北海道旅行'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('$currentYear/08'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('$currentYear/12'), findsAtLeastNWidgets(1));
     });
   });
 }

@@ -153,7 +153,9 @@ class _TopPageState extends State<TopPage> {
           onGroupSelected: _onGroupSelected,
         ),
         // 1: グループ年表
-        _groupTimelineInstance ?? Container(),
+        widget.isTestEnvironment
+            ? _buildTestGroupTimeline()
+            : _groupTimelineInstance ?? Container(),
         // 2: 旅行管理
         _selectedGroupId != null && _selectedYear != null
             ? TripManagement(
@@ -169,6 +171,37 @@ class _TopPageState extends State<TopPage> {
               )
             : Container(),
       ],
+    );
+  }
+
+  Widget _buildTestGroupTimeline() {
+    return Container(
+      key: const Key('group_timeline'),
+      child: Column(
+        children: [
+          AppBar(
+            leading: IconButton(
+              key: const Key('back_button'),
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () {
+                setState(() {
+                  _groupTimelineState = GroupTimelineScreenState.groupList;
+                  _groupTimelineInstance = null;
+                });
+              },
+            ),
+            title: const Text('テストグループ'),
+          ),
+          Expanded(
+            child: _buildTestPlaceholder(
+              key: 'group_timeline_content',
+              icon: Icons.timeline,
+              title: 'グループ年表テスト',
+              subtitle: 'テスト環境',
+            ),
+          ),
+        ],
+      ),
     );
   }
 
