@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
@@ -68,6 +69,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   // スクロール同期中かどうかを追跡
   bool _isSyncing = false;
+
+  // 固定行でドラッグ中かどうかを追跡（スクロール無効化用）
+  bool _isDraggingOnFixedRow = false;
 
   // 行の高さを管理するList
   late List<double> _rowHeights;
@@ -219,6 +223,11 @@ class _GroupTimelineState extends State<GroupTimeline> {
           // データ行
           Expanded(
             child: SingleChildScrollView(
+              physics: () {
+                return _isDraggingOnFixedRow
+                    ? const NeverScrollableScrollPhysics()
+                    : null;
+              }(),
               child: Column(
                 children: [
                   ..._buildDataRowsWithResizers(),
@@ -318,36 +327,46 @@ class _GroupTimelineState extends State<GroupTimeline> {
           Positioned(
             left: 0, // 固定列の中央（100px / 2 - アイコン幅の半分）
             bottom: -19, // 境界線の中央に配置
-            child: RawGestureDetector(
-              key: Key('row_resizer_icon_$rowIndex'),
-              gestures: {
-                _VerticalDragGestureRecognizer:
-                    GestureRecognizerFactoryWithHandlers<
-                      _VerticalDragGestureRecognizer
-                    >(() => _VerticalDragGestureRecognizer(), (
-                      _VerticalDragGestureRecognizer instance,
-                    ) {
-                      instance.onUpdate = (details) {
-                        setState(() {
-                          _rowHeights[rowIndex] =
-                              (_rowHeights[rowIndex] + details.delta.dy).clamp(
-                                _rowMinHeight,
-                                _rowMaxHeight,
-                              );
-                        });
-                      };
-                    }),
+            child: Listener(
+              onPointerDown: (_) {
+                setState(() {
+                  _isDraggingOnFixedRow = true;
+                });
               },
-              child: MouseRegion(
-                cursor: SystemMouseCursors.resizeUpDown,
-                child: Container(
-                  width: _fixedColumnWidth,
-                  height: 50,
-                  decoration: const BoxDecoration(color: Colors.transparent),
-                  child: const Icon(
-                    Icons.drag_handle,
-                    size: 40,
-                    color: Colors.grey,
+              onPointerUp: (_) {
+                setState(() {
+                  _isDraggingOnFixedRow = false;
+                });
+              },
+              child: RawGestureDetector(
+                key: Key('row_resizer_icon_$rowIndex'),
+                gestures: {
+                  _VerticalDragGestureRecognizer:
+                      GestureRecognizerFactoryWithHandlers<
+                        _VerticalDragGestureRecognizer
+                      >(() => _VerticalDragGestureRecognizer(), (
+                        _VerticalDragGestureRecognizer instance,
+                      ) {
+                        instance.onUpdate = (details) {
+                          setState(() {
+                            _rowHeights[rowIndex] =
+                                (_rowHeights[rowIndex] + details.delta.dy)
+                                    .clamp(_rowMinHeight, _rowMaxHeight);
+                          });
+                        };
+                      }),
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.resizeUpDown,
+                  child: Container(
+                    width: _fixedColumnWidth,
+                    height: 50,
+                    decoration: const BoxDecoration(color: Colors.transparent),
+                    child: const Icon(
+                      Icons.drag_handle,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
                   ),
                 ),
               ),
