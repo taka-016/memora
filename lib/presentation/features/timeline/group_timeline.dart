@@ -36,82 +36,63 @@ class GroupTimeline extends StatefulWidget {
 
 class _GroupTimelineState extends State<GroupTimeline> {
   late final GetTripEntriesUsecase _getTripEntriesUsecase;
-  // 現在の年を中央として前後何年分を表示するかの定数
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
 
-  // テーブルスタイル定数
-  static const double _dataRowHeight = 100.0; // DataTableのデフォルト行高さ
-  static const double _headerRowHeight = 56.0; // DataTableのデフォルトヘッダー高さ
+  static const double _dataRowHeight = 100.0;
+  static const double _headerRowHeight = 56.0;
   static const Color _borderColor = Colors.grey;
   static const double _borderWidth = 1.0;
 
-  // 列幅定数
-  static const double _fixedColumnWidth = 100.0; // 固定列の幅
-  static const double _buttonColumnWidth = 100.0; // ボタン列の幅
-  static const double _yearColumnWidth = 120.0; // 年列の幅
+  static const double _fixedColumnWidth = 100.0;
+  static const double _buttonColumnWidth = 100.0;
+  static const double _yearColumnWidth = 120.0;
 
-  // リサイズ関連定数
-  static const double _resizeBottomMargin = 100.0; // 最終行のリサイズ操作のための余白
-  static const double _rowMinHeight = 100.0; // 行の最小高さ
-  static const double _rowMaxHeight = 500.0; // 行の最大高さ
+  static const double _resizeBottomMargin = 100.0;
+  static const double _rowMinHeight = 100.0;
+  static const double _rowMaxHeight = 500.0;
 
-  // 表示する年の範囲を管理
   int _startYearOffset = -_initialYearRange;
   int _endYearOffset = _initialYearRange;
 
-  // 水平スクロール制御用
   final ScrollController _horizontalScrollController = ScrollController();
   final GlobalKey _dataTableKey = GlobalKey();
 
-  // 各行のScrollControllerを管理
   late List<ScrollController> _rowScrollControllers;
 
-  // スクロール同期中かどうかを追跡
   bool _isSyncing = false;
 
-  // 固定行でドラッグ中かどうかを追跡（スクロール無効化用）
   bool _isDraggingOnFixedRow = false;
 
-  // 行の高さを管理するList
   late List<double> _rowHeights;
 
-  // 旅行データをキャッシュするMap（年 -> 旅行リスト）
   final Map<int, List<TripEntry>> _tripsByYear = {};
 
   @override
   void initState() {
     super.initState();
 
-    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
 
-    // ユースケースを初期化
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
-    // 行の高さを初期化（ヘッダー行を除く）
-    final totalDataRows =
-        2 + widget.groupWithMembers.members.length; // 旅行 + イベント + メンバー数
+    final totalDataRows = 2 + widget.groupWithMembers.members.length;
     _rowHeights = List.filled(totalDataRows, _dataRowHeight);
 
-    // 各行用のScrollControllerを初期化（ヘッダー用1つ + データ行数）
     _rowScrollControllers = List.generate(
       totalDataRows + 1,
       (index) => ScrollController(),
     );
 
-    // スクロール同期のリスナーを設定
     for (int i = 0; i < _rowScrollControllers.length; i++) {
       final controller = _rowScrollControllers[i];
       controller.addListener(() => _syncScrollControllers(i));
     }
 
-    // 初期表示時に現在の年が中央に表示されるようにスクロール位置を調整
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentYear();
     });
 
-    // 初期表示される年の旅行データを取得
     _loadTripDataForVisibleYears();
   }
 
@@ -125,7 +106,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Future<void> _loadTripDataForYear(int year) async {
     if (_tripsByYear.containsKey(year)) {
-      return; // 既に読み込み済み
+      return;
     }
 
     try {
@@ -137,7 +118,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
         _tripsByYear[year] = trips;
       });
     } catch (e) {
-      // エラーハンドリング（空のリストを設定）
       setState(() {
         _tripsByYear[year] = [];
       });
@@ -204,23 +184,18 @@ class _GroupTimelineState extends State<GroupTimeline> {
       key: const Key('unified_border_table'),
       child: Column(
         children: [
-          // ヘッダー行
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 固定ヘッダー列
               _buildFixedHeaderCell(),
-              // 列の区切り線
               Container(
                 width: _borderWidth,
                 height: _headerRowHeight,
                 color: _borderColor,
               ),
-              // スクロール可能なヘッダー列
               Expanded(child: _buildScrollableHeaderRow()),
             ],
           ),
-          // データ行
           Expanded(
             child: SingleChildScrollView(
               physics: () {
@@ -231,7 +206,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
               child: Column(
                 children: [
                   ..._buildDataRowsWithResizers(),
-                  // 最終行のリサイズ操作のための余白
                   SizedBox(height: _resizeBottomMargin),
                 ],
               ),
@@ -259,7 +233,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   Widget _buildScrollableHeaderRow() {
     return SingleChildScrollView(
-      controller: _rowScrollControllers[0], // ヘッダー行用
+      controller: _rowScrollControllers[0],
       scrollDirection: Axis.horizontal,
       child: Container(key: _dataTableKey, child: _buildHeaderRow()),
     );
@@ -272,7 +246,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
     List<Widget> widgets = [];
 
     for (int i = 0; i < dataRowLabels.length; i++) {
-      // データ行
       widgets.add(_buildDataRow(i, dataRowLabels[i]));
     }
 
@@ -282,11 +255,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
   Widget _buildDataRow(int rowIndex, String label) {
     return Stack(
       children: [
-        // メインの行
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 固定列のデータセル
             Container(
               key: Key('fixed_row_$rowIndex'),
               width: _fixedColumnWidth,
@@ -301,17 +272,14 @@ class _GroupTimelineState extends State<GroupTimeline> {
               ),
               child: Text(label),
             ),
-            // 列の区切り線
             Container(
               width: _borderWidth,
               height: _rowHeights[rowIndex],
               color: _borderColor,
             ),
-            // スクロール可能な列
             Expanded(
               child: SingleChildScrollView(
-                controller:
-                    _rowScrollControllers[rowIndex + 1], // データ行用（ヘッダー行の次から）
+                controller: _rowScrollControllers[rowIndex + 1],
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   key: Key('scrollable_row_$rowIndex'),
@@ -322,11 +290,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
             ),
           ],
         ),
-        // リサイザーアイコン
         if (rowIndex < _rowHeights.length)
           Positioned(
-            left: 0, // 固定列の中央（100px / 2 - アイコン幅の半分）
-            bottom: -19, // 境界線の中央に配置
+            left: 0,
+            bottom: -19,
             child: Listener(
               onPointerDown: (_) {
                 setState(() {
@@ -385,7 +352,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
             ? _buttonColumnWidth
             : _yearColumnWidth;
 
-        // 旅行行（rowIndex == 0）の場合のみタップ可能にする
         final isTripRow = rowIndex == 0;
         final isYearColumn = columnIndex != 0 && columnIndex != columnCount - 1;
 
@@ -403,7 +369,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
                   bottom: BorderSide(color: _borderColor, width: _borderWidth),
                   right: BorderSide(color: _borderColor, width: _borderWidth),
                 ),
-                // 旅行セルの場合、ホバー効果を追加
                 color: isTripRow && isYearColumn
                     ? Colors.blue.shade50
                     : Colors.transparent,
@@ -419,17 +384,15 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   Widget _buildTripCellContent(int columnIndex) {
-    // 年を特定する
-    final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
+    final yearIndex = columnIndex - 1;
     final currentYear = DateTime.now().year;
     final selectedYear = currentYear + _startYearOffset + yearIndex;
 
-    // この年の旅行データを取得
     final trips = _tripsByYear[selectedYear] ?? [];
 
     return TripCell(
       trips: trips,
-      availableHeight: _rowHeights[0], // 旅行行の高さ
+      availableHeight: _rowHeights[0],
       availableWidth: _yearColumnWidth,
     );
   }
@@ -438,7 +401,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
     final currentYear = DateTime.now().year;
     List<Widget> cells = [];
 
-    // 「さらに表示」ボタンを先頭に追加
     cells.add(
       Container(
         width: _buttonColumnWidth,
@@ -459,7 +421,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
       ),
     );
 
-    // 年の列を追加
     for (int i = _startYearOffset; i <= _endYearOffset; i++) {
       final year = currentYear + i;
       final eraFormatted = JapaneseEra.formatJapaneseEraYear(year);
@@ -481,7 +442,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
       );
     }
 
-    // 「さらに表示」ボタンを末尾に追加
     cells.add(
       Container(
         width: _buttonColumnWidth,
@@ -520,7 +480,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   void _syncScrollControllers(int sourceIndex) {
-    if (_isSyncing) return; // 無限ループを防ぐ
+    if (_isSyncing) return;
 
     final sourceController = _rowScrollControllers[sourceIndex];
     if (!sourceController.hasClients) return;
@@ -538,7 +498,6 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   void _scrollToCurrentYear() {
-    // 最初のScrollController（ヘッダー行）のみを使用
     final primaryController = _rowScrollControllers[0];
     if (!primaryController.hasClients) return;
 
@@ -547,12 +506,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     final viewportWidth = scrollViewRenderBox.size.width;
 
-    // 1項目あたりの平均幅を計算（ボタン列、年列）
     final yearColumnsCount = _endYearOffset - _startYearOffset + 2;
     final totalWidth =
         2 * _buttonColumnWidth + yearColumnsCount * _yearColumnWidth;
 
-    // 現在の年が中央に来るようにスクロール位置を計算
     final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
 
     final maxScrollExtent = primaryController.position.maxScrollExtent;
@@ -566,12 +523,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   void _onTripCellTapped(int columnIndex) {
-    // 年を特定する
-    final yearIndex = columnIndex - 1; // 最初の列はボタン列なので-1
+    final yearIndex = columnIndex - 1;
     final currentYear = DateTime.now().year;
     final selectedYear = currentYear + _startYearOffset + yearIndex;
 
-    // 旅行管理ウィジェットに遷移
     if (widget.onTripManagementSelected != null) {
       widget.onTripManagementSelected!(
         widget.groupWithMembers.group.id,
