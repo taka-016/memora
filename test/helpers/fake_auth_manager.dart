@@ -1,7 +1,7 @@
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/services/auth_service.dart';
-import 'package:memora/domain/value-objects/auth_state.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
 
 /// テスト用のFakeAuthManager
 ///

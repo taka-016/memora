@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:memora/domain/services/location_search_service.dart';
-import 'package:memora/domain/value-objects/location_candidate.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location_candidate.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
   final String apiKey;

@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 class LocationState extends Equatable {
   final Location? location;

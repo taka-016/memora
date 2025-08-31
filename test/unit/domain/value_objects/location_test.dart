@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 void main() {
   group('Location', () {
