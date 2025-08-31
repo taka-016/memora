@@ -50,7 +50,6 @@ class _MemberManagementState extends State<MemberManagement> {
   void initState() {
     super.initState();
 
-    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final memberRepository =
         widget.memberRepository ?? FirestoreMemberRepository();
     final tripParticipantRepository =
@@ -84,7 +83,6 @@ class _MemberManagementState extends State<MemberManagement> {
       final managedMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
-      // 1行目にログインユーザーのメンバーを表示するため、DBから最新情報を取得
       final currentMember = await _getMemberByIdUseCase.execute(
         widget.member.id,
       );
@@ -240,7 +238,7 @@ class _MemberManagementState extends State<MemberManagement> {
   }
 
   Widget _buildMemberItem(Member member, int index) {
-    final isCurrentUser = index == 0; // 1行目はログインユーザー
+    final isCurrentUser = index == 0;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -263,7 +261,6 @@ class _MemberManagementState extends State<MemberManagement> {
 
   Widget? _buildMemberTrailing(Member member, bool isCurrentUser) {
     if (!isCurrentUser && member.accountId == null) {
-      // ログインユーザーでなく、かつaccountIdを持たない場合のみ削除ボタンを表示
       return IconButton(
         icon: const Icon(Icons.delete, color: Colors.red),
         onPressed: () => _showDeleteConfirmDialog(member),

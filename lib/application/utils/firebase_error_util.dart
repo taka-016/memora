@@ -1,8 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
-/// Firebaseの認証エラーを日本語メッセージに変換するユーティリティクラス
 class FirebaseErrorUtil {
-  /// FirebaseAuthExceptionから適切な日本語エラーメッセージを取得する
   static String getFirebaseErrorMessage(
     firebase_auth.FirebaseAuthException error,
   ) {

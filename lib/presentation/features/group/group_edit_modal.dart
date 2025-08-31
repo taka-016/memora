@@ -32,7 +32,6 @@ class _GroupEditModalState extends State<GroupEditModal> {
     _nameController = TextEditingController(text: widget.group?.name ?? '');
     _memoController = TextEditingController(text: widget.group?.memo ?? '');
 
-    // 既存の選択されたメンバーIDを設定
     if (widget.selectedMemberIds != null) {
       _selectedMemberIds.addAll(widget.selectedMemberIds!);
     }

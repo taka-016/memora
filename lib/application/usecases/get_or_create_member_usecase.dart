@@ -9,7 +9,6 @@ class GetOrCreateMemberUseCase {
 
   Future<bool> execute(User user) async {
     try {
-      // 既存のメンバーをaccountIdで検索
       final existingMember = await _memberRepository.getMemberByAccountId(
         user.id,
       );
@@ -18,7 +17,6 @@ class GetOrCreateMemberUseCase {
         return true;
       }
 
-      // メンバーが見つからない場合、新規作成
       final newMember = Member(
         id: '', // Firestoreで自動生成されるID
         displayName: user.loginId,

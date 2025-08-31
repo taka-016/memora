@@ -19,7 +19,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Firestoreのローカルキャッシュを無効化
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: false,
   );
@@ -36,7 +35,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // 依存性注入を一度だけ初期化
   late final AuthService authService;
   late final FirestoreMemberRepository memberRepository;
   late final FirestoreGroupRepository groupRepository;

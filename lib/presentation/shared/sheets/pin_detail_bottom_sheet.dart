@@ -66,7 +66,6 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     toTime = null;
     memoController.clear();
 
-    // 初期化時は既存の場所名を設定
     _locationName = pin.locationName;
 
     if (pin.visitStartDate != null) {
@@ -99,7 +98,6 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }
 
   Future<void> _loadLocationName({bool forceRefresh = false}) async {
-    // 場所名が既にある場合は、強制更新でない限り何もしない
     if (_locationName != null && _locationName!.isNotEmpty && !forceRefresh) {
       return;
     }
