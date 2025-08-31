@@ -14,7 +14,7 @@ import 'package:memora/presentation/features/account_setting/account_settings.da
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/value-objects/auth_state.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
 
 enum NavigationItem {
   groupTimeline,

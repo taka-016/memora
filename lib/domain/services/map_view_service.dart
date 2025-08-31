@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 
 abstract class MapViewService {

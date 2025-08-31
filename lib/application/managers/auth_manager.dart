@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import '../../domain/value-objects/auth_state.dart';
+import '../../domain/value_objects/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/services/auth_service.dart';
 import '../../domain/repositories/member_repository.dart';

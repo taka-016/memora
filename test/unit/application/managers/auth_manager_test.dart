@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/value-objects/auth_state.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/services/auth_service.dart';
 import 'package:memora/application/managers/auth_manager.dart';

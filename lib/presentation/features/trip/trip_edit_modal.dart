@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location.dart';
 import '../../../domain/entities/trip_entry.dart';
 import '../../../domain/entities/pin.dart';
 import '../../utils/date_picker_utils.dart';

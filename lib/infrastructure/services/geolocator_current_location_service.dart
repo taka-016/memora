@@ -1,6 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/domain/value-objects/location.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 class GeolocatorCurrentLocationService implements CurrentLocationService {
   @override
