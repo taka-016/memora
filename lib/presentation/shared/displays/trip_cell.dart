@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 
 class TripCell extends StatelessWidget {
+  static const double _itemHeight = 32.0;
+
   final List<TripEntry> trips;
   final double availableHeight;
   final double availableWidth;
@@ -29,9 +31,8 @@ class TripCell extends StatelessWidget {
 
   Widget _buildTripList() {
     final textStyle = const TextStyle(fontSize: 12.0);
-    const itemHeight = 32.0;
 
-    final availableLines = ((availableHeight) / (itemHeight)).floor();
+    final availableLines = ((availableHeight) / (_itemHeight)).floor();
 
     if (availableLines <= 0) {
       return Container();
@@ -67,7 +68,7 @@ class TripCell extends StatelessWidget {
     final formattedDate = '$year/$month/$day';
 
     return SizedBox(
-      height: 32.0,
+      height: _itemHeight,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
