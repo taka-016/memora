@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// 日付から曜日文字列を取得する
 String _getWeekdayString(DateTime date) {
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
   return weekdays[date.weekday % 7];
 }
 
-/// 日付を「YYYY年MM月DD日 (曜)」形式でフォーマットする
 String _formatDateWithWeekday(DateTime date) {
   return '${date.year}年${date.month}月${date.day}日 (${_getWeekdayString(date)})';
 }
 
-/// 年月日入力のフォーマット処理クラス
 class DateInputFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -21,15 +18,12 @@ class DateInputFormatter extends TextInputFormatter {
   ) {
     final newText = newValue.text;
 
-    // 数字以外の文字を除去
     final numbersOnly = newText.replaceAll(RegExp(r'[^0-9]'), '');
 
-    // 8桁を超えた場合は切り詰める
     final truncated = numbersOnly.length > 8
         ? numbersOnly.substring(0, 8)
         : numbersOnly;
 
-    // 自動フォーマット処理
     String formatted = '';
     if (truncated.isNotEmpty) {
       if (truncated.length <= 4) {
@@ -49,17 +43,14 @@ class DateInputFormatter extends TextInputFormatter {
   }
 }
 
-/// フォーマットされた日付文字列から日付を解析し、バリデーションを行う
 class _DateValidator {
   static DateTime? validateAndParse(
     String formattedDateText,
     DateTime firstDate,
     DateTime lastDate,
   ) {
-    // スラッシュを除去して数字のみ取得
     final numbersOnly = formattedDateText.replaceAll('/', '');
 
-    // 8桁でない場合は無効
     if (numbersOnly.length != 8) {
       return null;
     }
@@ -71,12 +62,10 @@ class _DateValidator {
 
       final date = DateTime(year, month, day);
 
-      // 入力値が有効な日付かチェック
       if (date.year != year || date.month != month || date.day != day) {
         return null;
       }
 
-      // 範囲チェック
       if (date.isBefore(firstDate) || date.isAfter(lastDate)) {
         return null;
       }
@@ -88,7 +77,6 @@ class _DateValidator {
   }
 }
 
-/// 日付タップで直接確定するカスタムDatePickerDialog
 class CustomDatePickerDialog extends StatefulWidget {
   final DateTime initialDate;
   final DateTime firstDate;
@@ -158,7 +146,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     });
   }
 
-  /// 入力フィールドビューに切り替える
   void _switchToInputMode() {
     setState(() {
       _isInputMode = true;
@@ -167,7 +154,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     _updateController();
   }
 
-  /// カレンダービューに切り替える
   void _switchToCalendarMode() {
     setState(() {
       _isInputMode = false;
@@ -175,7 +161,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     });
   }
 
-  /// 入力フィールドから日付を確定する
   void _confirmInputDate() {
     setState(() {
       _errorMessage = null;
@@ -198,7 +183,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
       _selectedDate = date;
     });
 
-    // 直接入力確定時にDatePickerを閉じる
     Navigator.of(context).pop(_selectedDate);
   }
 
@@ -207,7 +191,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     return _buildDialog(context);
   }
 
-  /// ダイアログ全体を構築
   Widget _buildDialog(BuildContext context) {
     return Dialog(
       child: Container(
@@ -224,7 +207,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// ヘッダー部分を構築
   Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -251,7 +233,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// コンテンツ部分を構築
   Widget _buildContent() {
     return SizedBox(
       height: 300,
@@ -259,7 +240,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// カレンダービューを構築
   Widget _buildCalendarView() {
     return CalendarDatePicker(
       initialDate: _selectedDate,
@@ -270,7 +250,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// 入力フィールドビューを構築
   Widget _buildInputView() {
     return Column(
       children: [
@@ -283,7 +262,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// 日付入力フィールドを構築
   Widget _buildDateInputField() {
     return TextField(
       key: const Key('date_field'),
@@ -298,7 +276,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// エラーメッセージを構築
   Widget _buildErrorMessage() {
     if (_errorMessage == null) return const SizedBox.shrink();
 
@@ -316,7 +293,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
     );
   }
 
-  /// 入力ビューのボタン群を構築
   Widget _buildInputViewButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -332,7 +308,6 @@ class _CustomDatePickerDialogState extends State<CustomDatePickerDialog> {
   }
 }
 
-/// CustomDatePickerDialogを表示するヘルパー関数
 Future<DateTime?> showCustomDatePickerDialog(
   BuildContext context, {
   required DateTime initialDate,

@@ -71,7 +71,6 @@ class _GroupManagementState extends State<GroupManagement> {
   void initState() {
     super.initState();
 
-    // 注入されたリポジトリまたはデフォルトのFirestoreリポジトリを使用
     final groupRepository =
         widget.groupRepository ?? FirestoreGroupRepository();
     final memberRepository =

@@ -87,7 +87,6 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
   @override
   void didUpdateWidget(_GoogleMapViewWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 新しいピンが選択された場合、自動的にマーカータップを実行
     if (widget.selectedPin != null &&
         widget.selectedPin != oldWidget.selectedPin) {
       WidgetsBinding.instance.addPostFrameCallback((_) {

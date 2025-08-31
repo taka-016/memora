@@ -49,7 +49,7 @@ class AccountSettings extends ConsumerWidget {
               if (result == true && context.mounted) {
                 await updateEmailUseCase.execute(newEmail: newEmail);
                 if (context.mounted) {
-                  Navigator.of(context).pop(); // 元のダイアログを閉じる
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
@@ -107,7 +107,7 @@ class AccountSettings extends ConsumerWidget {
               if (result == true && context.mounted) {
                 await updatePasswordUseCase.execute(newPassword: newPassword);
                 if (context.mounted) {
-                  Navigator.of(context).pop(); // 元のダイアログを閉じる
+                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));

@@ -17,19 +17,15 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/value-objects/auth_state.dart';
 
 enum NavigationItem {
-  groupTimeline, // グループ年表
-  mapDisplay, // マップ表示
-  groupManagement, // グループ設定
-  memberManagement, // メンバー設定
-  settings, // 設定
-  accountSettings, // アカウント設定
+  groupTimeline,
+  mapDisplay,
+  groupManagement,
+  memberManagement,
+  settings,
+  accountSettings,
 }
 
-enum GroupTimelineScreenState {
-  groupList, // グループ一覧を表示
-  timeline, // 年表を表示
-  tripManagement, // 旅行管理を表示
-}
+enum GroupTimelineScreenState { groupList, timeline, tripManagement }
 
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
@@ -57,7 +53,6 @@ class _TopPageState extends State<TopPage> {
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
 
-  // テスト用メソッド
   @visibleForTesting
   GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
 
@@ -93,7 +88,6 @@ class _TopPageState extends State<TopPage> {
   void _onNavigationItemSelected(NavigationItem item) {
     setState(() {
       _selectedItem = item;
-      // グループ年表以外を選択した場合は状態をリセット
       if (item != NavigationItem.groupTimeline) {
         _groupTimelineState = GroupTimelineScreenState.groupList;
         _groupTimelineInstance = null;
@@ -105,7 +99,6 @@ class _TopPageState extends State<TopPage> {
   void _onGroupSelected(GroupWithMembers groupWithMembers) {
     setState(() {
       _groupTimelineState = GroupTimelineScreenState.timeline;
-      // グループ一覧からの遷移は毎回新しいインスタンスを作成
       _groupTimelineInstance = GroupTimeline(
         groupWithMembers: groupWithMembers,
         onBackPressed: () {
@@ -146,17 +139,14 @@ class _TopPageState extends State<TopPage> {
     return IndexedStack(
       index: _getGroupTimelineIndex(),
       children: [
-        // 0: グループ一覧
         GroupList(
           getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
           member: _currentMember!,
           onGroupSelected: _onGroupSelected,
         ),
-        // 1: グループ年表
         widget.isTestEnvironment
             ? _buildTestGroupTimeline()
             : _groupTimelineInstance ?? Container(),
-        // 2: 旅行管理
         _selectedGroupId != null && _selectedYear != null
             ? TripManagement(
                 groupId: _selectedGroupId!,

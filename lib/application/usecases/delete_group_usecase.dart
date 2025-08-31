@@ -23,13 +23,11 @@ class DeleteGroupUsecase {
   );
 
   Future<void> execute(String groupId) async {
-    // groupIdで紐づくtrip_entriesを取得
     final tripEntries = await _tripEntryRepository.getTripEntries();
     final targetTripEntries = tripEntries.where(
       (entry) => entry.groupId == groupId,
     );
 
-    // 各tripIdで紐づくpinsとtrip_participantsを削除
     await Future.wait([
       for (final entry in targetTripEntries) ...[
         _pinRepository.deletePinsByTripId(entry.id),

@@ -1,6 +1,4 @@
-/// 日本の和暦計算を行うユーティリティクラス
 class JapaneseEra {
-  /// 和暦の元号と開始日の定義
   static final List<Map<String, dynamic>> _eras = [
     {'name': '令和', 'start': DateTime(2019, 5, 1)},
     {'name': '平成', 'start': DateTime(1989, 1, 8)},
@@ -9,10 +7,6 @@ class JapaneseEra {
     {'name': '明治', 'start': DateTime(1868, 1, 25)},
   ];
 
-  /// 指定された日付を和暦フォーマットで返す
-  ///
-  /// [date] フォーマットする日付
-  /// 戻り値: "令和6年7月21日" のような形式の文字列
   static String formatJapaneseEra(DateTime date) {
     for (var era in _eras) {
       final start = era['start'] as DateTime;
@@ -23,16 +17,10 @@ class JapaneseEra {
       }
     }
 
-    // 明治以前の場合は西暦で表示
     return '${date.year}年${date.month}月${date.day}日';
   }
 
-  /// 指定された西暦年を和暦年形式でフォーマットする
-  ///
-  /// [year] 西暦年
-  /// 戻り値: "令和6年" のような和暦年の文字列（明治以前は西暦年）
   static String formatJapaneseEraYear(int year) {
-    // 年の中間の日付（7月1日）で判定することで、その年の主要な和暦を使用
     final date = DateTime(year, 7, 1);
 
     for (var era in _eras) {
@@ -44,7 +32,6 @@ class JapaneseEra {
       }
     }
 
-    // 明治以前の場合は西暦のみ
     return '$year年';
   }
 }

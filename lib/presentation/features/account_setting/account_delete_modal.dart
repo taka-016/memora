@@ -36,7 +36,6 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
       }
     } catch (e) {
       if (mounted) {
-        // requires-recent-loginエラーの場合は再認証ダイアログを表示
         if (e.toString().contains('requires-recent-login')) {
           await _showReauthenticateDialog();
         } else {
