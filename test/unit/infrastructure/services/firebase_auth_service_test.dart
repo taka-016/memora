@@ -22,194 +22,182 @@ void main() {
       firebaseAuthService = FirebaseAuthService(firebaseAuth: mockFirebaseAuth);
     });
 
-    group('getCurrentUser', () {
-      test('Firebase Userが存在する場合、domain Userを返す', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-        when(mockFirebaseUser.uid).thenReturn('user123');
-        when(mockFirebaseUser.email).thenReturn('test@example.com');
-        when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
-        when(mockFirebaseUser.emailVerified).thenReturn(true);
+    test('Firebase Userが存在する場合、domain Userを返す', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(mockFirebaseUser.uid).thenReturn('user123');
+      when(mockFirebaseUser.email).thenReturn('test@example.com');
+      when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
+      when(mockFirebaseUser.emailVerified).thenReturn(true);
 
-        final result = await firebaseAuthService.getCurrentUser();
+      final result = await firebaseAuthService.getCurrentUser();
 
-        expect(result, isNotNull);
-        expect(result!.id, 'user123');
-        expect(result.loginId, 'test@example.com');
-        expect(result.displayName, 'テストユーザー');
-        expect(result.isVerified, true);
-      });
-
-      test('Firebase Userが存在しない場合、nullを返す', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(null);
-
-        final result = await firebaseAuthService.getCurrentUser();
-
-        expect(result, isNull);
-      });
+      expect(result, isNotNull);
+      expect(result!.id, 'user123');
+      expect(result.loginId, 'test@example.com');
+      expect(result.displayName, 'テストユーザー');
+      expect(result.isVerified, true);
     });
 
-    group('signInWithEmailAndPassword', () {
-      test('正常にログインできる', () async {
-        when(
-          mockFirebaseAuth.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => mockUserCredential);
-        when(mockUserCredential.user).thenReturn(mockFirebaseUser);
-        when(mockFirebaseUser.uid).thenReturn('user123');
-        when(mockFirebaseUser.email).thenReturn('test@example.com');
-        when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
-        when(mockFirebaseUser.emailVerified).thenReturn(true);
+    test('Firebase Userが存在しない場合、nullを返す', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(null);
 
-        final result = await firebaseAuthService.signInWithEmailAndPassword(
+      final result = await firebaseAuthService.getCurrentUser();
+
+      expect(result, isNull);
+    });
+
+    test('正常にログインできる', () async {
+      when(
+        mockFirebaseAuth.signInWithEmailAndPassword(
           email: 'test@example.com',
           password: 'password123',
-        );
+        ),
+      ).thenAnswer((_) async => mockUserCredential);
+      when(mockUserCredential.user).thenReturn(mockFirebaseUser);
+      when(mockFirebaseUser.uid).thenReturn('user123');
+      when(mockFirebaseUser.email).thenReturn('test@example.com');
+      when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
+      when(mockFirebaseUser.emailVerified).thenReturn(true);
 
-        expect(result.id, 'user123');
-        expect(result.loginId, 'test@example.com');
-        expect(result.displayName, 'テストユーザー');
-        expect(result.isVerified, true);
-      });
+      final result = await firebaseAuthService.signInWithEmailAndPassword(
+        email: 'test@example.com',
+        password: 'password123',
+      );
 
-      test('ログインに失敗した場合、例外をスローする', () async {
-        when(
-          mockFirebaseAuth.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'wrongpassword',
-          ),
-        ).thenThrow(FirebaseAuthException(code: 'wrong-password'));
-
-        expect(
-          () => firebaseAuthService.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'wrongpassword',
-          ),
-          throwsA(isA<String>()),
-        );
-      });
+      expect(result.id, 'user123');
+      expect(result.loginId, 'test@example.com');
+      expect(result.displayName, 'テストユーザー');
+      expect(result.isVerified, true);
     });
 
-    group('createUserWithEmailAndPassword', () {
-      test('正常にユーザーを作成できる', () async {
-        when(
-          mockFirebaseAuth.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => mockUserCredential);
-        when(mockUserCredential.user).thenReturn(mockFirebaseUser);
-        when(mockFirebaseUser.uid).thenReturn('user123');
-        when(mockFirebaseUser.email).thenReturn('test@example.com');
-        when(mockFirebaseUser.displayName).thenReturn(null);
-        when(mockFirebaseUser.emailVerified).thenReturn(false);
+    test('ログインに失敗した場合、例外をスローする', () async {
+      when(
+        mockFirebaseAuth.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'wrongpassword',
+        ),
+      ).thenThrow(FirebaseAuthException(code: 'wrong-password'));
 
-        final result = await firebaseAuthService.createUserWithEmailAndPassword(
+      expect(
+        () => firebaseAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'wrongpassword',
+        ),
+        throwsA(isA<String>()),
+      );
+    });
+
+    test('正常にユーザーを作成できる', () async {
+      when(
+        mockFirebaseAuth.createUserWithEmailAndPassword(
           email: 'test@example.com',
           password: 'password123',
-        );
+        ),
+      ).thenAnswer((_) async => mockUserCredential);
+      when(mockUserCredential.user).thenReturn(mockFirebaseUser);
+      when(mockFirebaseUser.uid).thenReturn('user123');
+      when(mockFirebaseUser.email).thenReturn('test@example.com');
+      when(mockFirebaseUser.displayName).thenReturn(null);
+      when(mockFirebaseUser.emailVerified).thenReturn(false);
 
-        expect(result.id, 'user123');
-        expect(result.loginId, 'test@example.com');
-        expect(result.displayName, isNull);
-        expect(result.isVerified, false);
-      });
+      final result = await firebaseAuthService.createUserWithEmailAndPassword(
+        email: 'test@example.com',
+        password: 'password123',
+      );
+
+      expect(result.id, 'user123');
+      expect(result.loginId, 'test@example.com');
+      expect(result.displayName, isNull);
+      expect(result.isVerified, false);
     });
 
-    group('signOut', () {
-      test('正常にサインアウトできる', () async {
-        when(mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
+    test('正常にサインアウトできる', () async {
+      when(mockFirebaseAuth.signOut()).thenAnswer((_) async => {});
 
-        await firebaseAuthService.signOut();
+      await firebaseAuthService.signOut();
 
-        verify(mockFirebaseAuth.signOut()).called(1);
-      });
+      verify(mockFirebaseAuth.signOut()).called(1);
     });
 
-    group('validateCurrentUserToken', () {
-      test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-        when(
-          mockFirebaseUser.getIdToken(true),
-        ).thenAnswer((_) async => 'valid-token');
+    test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.getIdToken(true),
+      ).thenAnswer((_) async => 'valid-token');
 
-        await firebaseAuthService.validateCurrentUserToken();
+      await firebaseAuthService.validateCurrentUserToken();
 
-        verify(mockFirebaseUser.getIdToken(true)).called(1);
-      });
-
-      test('現在のユーザーが存在しない場合は例外をスロー', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(null);
-
-        expect(
-          () => firebaseAuthService.validateCurrentUserToken(),
-          throwsA(
-            isA<Exception>().having(
-              (e) => e.toString(),
-              'message',
-              contains('ユーザーがログインしていません'),
-            ),
-          ),
-        );
-      });
-
-      test('トークンの取得に失敗した場合は例外をスロー', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-        when(
-          mockFirebaseUser.getIdToken(true),
-        ).thenThrow(FirebaseAuthException(code: 'network-request-failed'));
-
-        expect(
-          () => firebaseAuthService.validateCurrentUserToken(),
-          throwsA(
-            isA<Exception>().having(
-              (e) => e.toString(),
-              'message',
-              contains('認証トークンが無効です'),
-            ),
-          ),
-        );
-      });
-
-      test('トークンが期限切れの場合は例外をスロー', () async {
-        when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-        when(
-          mockFirebaseUser.getIdToken(true),
-        ).thenThrow(FirebaseAuthException(code: 'user-token-expired'));
-
-        expect(
-          () => firebaseAuthService.validateCurrentUserToken(),
-          throwsA(
-            isA<Exception>().having(
-              (e) => e.toString(),
-              'message',
-              contains('認証トークンが無効です'),
-            ),
-          ),
-        );
-      });
+      verify(mockFirebaseUser.getIdToken(true)).called(1);
     });
 
-    group('authStateChanges', () {
-      test('認証状態の変更を監視できる', () {
-        when(
-          mockFirebaseAuth.authStateChanges(),
-        ).thenAnswer((_) => Stream.value(mockFirebaseUser));
-        when(mockFirebaseUser.uid).thenReturn('user123');
-        when(mockFirebaseUser.email).thenReturn('test@example.com');
-        when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
-        when(mockFirebaseUser.emailVerified).thenReturn(true);
+    test('現在のユーザーが存在しない場合は例外をスロー', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(null);
 
-        final stream = firebaseAuthService.authStateChanges;
+      expect(
+        () => firebaseAuthService.validateCurrentUserToken(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('ユーザーがログインしていません'),
+          ),
+        ),
+      );
+    });
 
-        expect(stream, isA<Stream<domain.User?>>());
+    test('トークンの取得に失敗した場合は例外をスロー', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.getIdToken(true),
+      ).thenThrow(FirebaseAuthException(code: 'network-request-failed'));
 
-        stream.listen((user) {
-          expect(user, isNotNull);
-          expect(user!.id, 'user123');
-          expect(user.loginId, 'test@example.com');
-        });
+      expect(
+        () => firebaseAuthService.validateCurrentUserToken(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('認証トークンが無効です'),
+          ),
+        ),
+      );
+    });
+
+    test('トークンが期限切れの場合は例外をスロー', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.getIdToken(true),
+      ).thenThrow(FirebaseAuthException(code: 'user-token-expired'));
+
+      expect(
+        () => firebaseAuthService.validateCurrentUserToken(),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('認証トークンが無効です'),
+          ),
+        ),
+      );
+    });
+
+    test('認証状態の変更を監視できる', () {
+      when(
+        mockFirebaseAuth.authStateChanges(),
+      ).thenAnswer((_) => Stream.value(mockFirebaseUser));
+      when(mockFirebaseUser.uid).thenReturn('user123');
+      when(mockFirebaseUser.email).thenReturn('test@example.com');
+      when(mockFirebaseUser.displayName).thenReturn('テストユーザー');
+      when(mockFirebaseUser.emailVerified).thenReturn(true);
+
+      final stream = firebaseAuthService.authStateChanges;
+
+      expect(stream, isA<Stream<domain.User?>>());
+
+      stream.listen((user) {
+        expect(user, isNotNull);
+        expect(user!.id, 'user123');
+        expect(user.loginId, 'test@example.com');
       });
     });
   });
