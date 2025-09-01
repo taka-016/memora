@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 
 import 'get_trip_entries_usecase_test.mocks.dart';
 
@@ -40,7 +41,11 @@ void main() {
       ];
 
       when(
-        mockRepository.getTripEntriesByGroupIdAndYear(groupId, year),
+        mockRepository.getTripEntriesByGroupIdAndYear(
+          groupId,
+          year,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
       ).thenAnswer((_) async => expectedTripEntries);
 
       // Act
@@ -49,7 +54,47 @@ void main() {
       // Assert
       expect(result, equals(expectedTripEntries));
       verify(
-        mockRepository.getTripEntriesByGroupIdAndYear(groupId, year),
+        mockRepository.getTripEntriesByGroupIdAndYear(
+          groupId,
+          year,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
+      ).called(1);
+    });
+
+    test('Usecaseが正しいソート条件でRepositoryを呼び出すこと', () async {
+      // Arrange
+      const groupId = 'group-id';
+      const year = 2024;
+      final expectedTripEntries = [
+        TripEntry(
+          id: 'trip-1',
+          groupId: groupId,
+          tripName: '旅行1',
+          tripStartDate: DateTime(2024, 1, 1),
+          tripEndDate: DateTime(2024, 1, 3),
+        ),
+      ];
+
+      when(
+        mockRepository.getTripEntriesByGroupIdAndYear(
+          groupId,
+          year,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
+      ).thenAnswer((_) async => expectedTripEntries);
+
+      // Act
+      final result = await usecase.execute(groupId, year);
+
+      // Assert
+      expect(result, equals(expectedTripEntries));
+      verify(
+        mockRepository.getTripEntriesByGroupIdAndYear(
+          groupId,
+          year,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
       ).called(1);
     });
   });

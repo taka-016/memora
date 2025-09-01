@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -189,6 +190,98 @@ void main() {
       verify(mockBatch.delete(mockDocRef1)).called(1);
       verify(mockBatch.delete(mockDocRef2)).called(1);
       verify(mockBatch.commit()).called(1);
+    });
+
+    test('getTripEntriesByGroupIdAndYearがソート条件なしで呼び出される', () async {
+      const groupId = 'group001';
+      const year = 2024;
+      final startOfYear = DateTime(year, 1, 1);
+      final endOfYear = DateTime(year + 1, 1, 1);
+
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isLessThan: Timestamp.fromDate(endOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+
+      final result = await repository.getTripEntriesByGroupIdAndYear(
+        groupId,
+        year,
+      );
+
+      expect(result, isEmpty);
+      verify(mockCollection.where('groupId', isEqualTo: groupId)).called(1);
+      verify(
+        mockQuery.where(
+          'tripStartDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
+        ),
+      ).called(1);
+      verify(
+        mockQuery.where(
+          'tripStartDate',
+          isLessThan: Timestamp.fromDate(endOfYear),
+        ),
+      ).called(1);
+      verify(mockQuery.get()).called(1);
+      verifyNever(mockQuery.orderBy(any, descending: anyNamed('descending')));
+    });
+
+    test('getTripEntriesByGroupIdAndYearがソート条件ありで呼び出される', () async {
+      const groupId = 'group001';
+      const year = 2024;
+      final startOfYear = DateTime(year, 1, 1);
+      final endOfYear = DateTime(year + 1, 1, 1);
+      final orderBy = [
+        const OrderBy('tripStartDate', descending: false),
+        const OrderBy('tripName', descending: true),
+      ];
+
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isLessThan: Timestamp.fromDate(endOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.orderBy('tripStartDate', descending: false),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.orderBy('tripName', descending: true),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+
+      final result = await repository.getTripEntriesByGroupIdAndYear(
+        groupId,
+        year,
+        orderBy: orderBy,
+      );
+
+      expect(result, isEmpty);
+      verify(mockQuery.orderBy('tripStartDate', descending: false)).called(1);
+      verify(mockQuery.orderBy('tripName', descending: true)).called(1);
     });
   });
 }

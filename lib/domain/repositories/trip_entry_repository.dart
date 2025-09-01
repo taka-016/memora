@@ -1,4 +1,5 @@
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 
 abstract class TripEntryRepository {
   Future<List<TripEntry>> getTripEntries();
@@ -8,7 +9,8 @@ abstract class TripEntryRepository {
   Future<TripEntry?> getTripEntryById(String tripId);
   Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
     String groupId,
-    int year,
-  );
+    int year, {
+    List<OrderBy>? orderBy,
+  });
   Future<void> deleteTripEntriesByGroupId(String groupId);
 }

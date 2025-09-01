@@ -6,6 +6,7 @@ import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 
 import 'trip_management_test.mocks.dart';
@@ -51,6 +52,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
 
@@ -82,6 +84,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).called(1);
 
@@ -104,6 +107,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => []);
 
@@ -142,6 +146,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => []);
 
@@ -175,6 +180,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenThrow(Exception('Network error'));
 
@@ -210,6 +216,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
 
@@ -243,6 +250,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).called(2); // 初期ロード + リフレッシュ
     });
@@ -253,6 +261,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
 
@@ -291,6 +300,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
@@ -340,6 +350,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
 
@@ -380,6 +391,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
 
@@ -419,6 +431,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
@@ -467,6 +480,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => []);
 
@@ -505,6 +519,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => []);
       when(
@@ -571,6 +586,7 @@ void main() {
           mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
             testGroupId,
             testYear,
+            orderBy: [const OrderBy('tripStartDate', descending: false)],
           ),
         ).thenAnswer((_) async => []);
         when(
