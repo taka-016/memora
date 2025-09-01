@@ -7,6 +7,7 @@ import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -41,7 +42,11 @@ void main() {
 
     // デフォルトの挙動を設定
     when(
-      mockTripEntryRepository.getTripEntriesByGroupIdAndYear(any, any),
+      mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        any,
+        any,
+        orderBy: [const OrderBy('tripStartDate', descending: false)],
+      ),
     ).thenAnswer((_) async => []);
   });
 
@@ -434,6 +439,7 @@ void main() {
         mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
           '1',
           currentYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTrips);
 
