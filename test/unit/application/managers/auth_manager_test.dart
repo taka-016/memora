@@ -25,425 +25,405 @@ void main() {
       expect(authManager.state.status, AuthStatus.loading);
     });
 
-    group('initialize', () {
-      test('initializeでauthStateChangesのリスナーが登録される', () async {
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
+    test('initializeでauthStateChangesのリスナーが登録される', () async {
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
 
-        await authManager.initialize();
+      await authManager.initialize();
 
-        expect(authManager.state.status, AuthStatus.loading);
-        verify(mockAuthService.authStateChanges).called(1);
+      expect(authManager.state.status, AuthStatus.loading);
+      verify(mockAuthService.authStateChanges).called(1);
 
-        controller.close();
-      });
-
-      test('ユーザーログイン時にauthenticated状態になる', () async {
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: true,
-        );
-
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        await authManager.initialize();
-
-        // act
-        controller.add(user);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        expect(authManager.state.status, AuthStatus.authenticated);
-        expect(authManager.state.user, user);
-
-        controller.close();
-      });
-
-      test('ユーザーログアウト時にunauthenticated状態になる', () async {
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        await authManager.initialize();
-
-        // act
-        controller.add(null);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.user, isNull);
-
-        controller.close();
-      });
-
-      test('authStateChanges経由でメンバー取得・作成処理が実行される', () async {
-        // arrange
-        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
-        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
-
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: true,
-        );
-
-        // authStateChangesでユーザー状態変更をシミュレート
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
-        when(
-          mockAuthService.validateCurrentUserToken(),
-        ).thenAnswer((_) async {});
-
-        when(
-          mockGetOrCreateMemberUseCase.execute(user),
-        ).thenAnswer((_) async => true);
-
-        // AuthManagerにUseCaseを依存注入
-        authManager = AuthManager(
-          authService: mockAuthService,
-          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
-        );
-
-        await authManager.initialize();
-
-        // act - authStateChangesでユーザー変更をエミット
-        controller.add(user);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
-
-        controller.close();
-      });
-
-      test('認証エラー時に強制ログアウトしてerror状態になる', () async {
-        // arrange
-        late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
-        mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
-
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: true,
-        );
-
-        // authStateChangesでユーザー状態変更をシミュレート
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        // validateCurrentUserToken()で認証エラーをシミュレート
-        when(
-          mockAuthService.validateCurrentUserToken(),
-        ).thenThrow(Exception('認証トークンが無効です'));
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
-
-        // AuthManagerにUseCaseを依存注入
-        authManager = AuthManager(
-          authService: mockAuthService,
-          getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
-        );
-
-        await authManager.initialize();
-
-        // act - authStateChangesでユーザー変更をエミット
-        controller.add(user);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
-
-        controller.close();
-      });
-
-      test('メール認証が未完了の場合、強制ログアウトしてerror状態になる', () async {
-        // arrange
-        const unverifiedUser = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: false,
-        );
-
-        // authStateChangesでユーザー状態変更をシミュレート
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
-        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
-
-        await authManager.initialize();
-
-        // act - authStateChangesでメール未認証ユーザーをエミット
-        controller.add(unverifiedUser);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        verify(mockAuthService.sendEmailVerification()).called(1);
-        verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
-
-        // act - ログアウト後にnullユーザーをエミット（signOutの結果）
-        controller.add(null);
-        await Future(() {});
-
-        // assert - エラー状態が保持されることを確認
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
-
-        controller.close();
-      });
-
-      test('メール認証が未完了でメール再送に失敗した場合、通常のエラーメッセージが表示される', () async {
-        // arrange
-        const unverifiedUser = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: false,
-        );
-
-        // authStateChangesでユーザー状態変更をシミュレート
-        final controller = StreamController<User?>();
-        when(
-          mockAuthService.authStateChanges,
-        ).thenAnswer((_) => controller.stream);
-
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
-        when(
-          mockAuthService.sendEmailVerification(),
-        ).thenThrow(Exception('メール送信失敗'));
-
-        await authManager.initialize();
-
-        // act - authStateChangesでメール未認証ユーザーをエミット
-        controller.add(unverifiedUser);
-
-        // authStateChangesリスナー内の非同期処理完了を待つ
-        await Future(() {});
-
-        // assert
-        verify(mockAuthService.sendEmailVerification()).called(1);
-        verify(mockAuthService.signOut()).called(1);
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
-
-        controller.close();
-      });
-
-      test(
-        'GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウトしてerror状態になる',
-        () async {
-          // arrange
-          late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
-          mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
-
-          const user = User(
-            id: 'user123',
-            loginId: 'test@example.com',
-            displayName: 'テストユーザー',
-            isVerified: true,
-          );
-
-          // authStateChangesでユーザー状態変更をシミュレート
-          final controller = StreamController<User?>();
-          when(
-            mockAuthService.authStateChanges,
-          ).thenAnswer((_) => controller.stream);
-
-          when(
-            mockAuthService.validateCurrentUserToken(),
-          ).thenAnswer((_) async {});
-
-          // GetOrCreateMemberUseCaseがfalseを返すようにモック
-          when(
-            mockGetOrCreateMemberUseCase.execute(user),
-          ).thenAnswer((_) async => false);
-
-          when(mockAuthService.signOut()).thenAnswer((_) async {});
-
-          // AuthManagerにUseCaseを依存注入
-          authManager = AuthManager(
-            authService: mockAuthService,
-            getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
-          );
-
-          await authManager.initialize();
-
-          // act - authStateChangesでユーザー変更をエミット
-          controller.add(user);
-
-          // authStateChangesリスナー内の非同期処理完了を待つ
-          await Future(() {});
-
-          // assert
-          verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
-          verify(mockAuthService.signOut()).called(1);
-          expect(authManager.state.status, AuthStatus.unauthenticated);
-          expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
-
-          controller.close();
-        },
-      );
+      controller.close();
     });
 
-    group('login', () {
-      test('正常にログインできる', () async {
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: 'テストユーザー',
-          isVerified: true,
-        );
+    test('ユーザーログイン時にauthenticated状態になる', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
 
-        when(
-          mockAuthService.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => user);
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
 
-        await authManager.login(
+      await authManager.initialize();
+
+      // act
+      controller.add(user);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      expect(authManager.state.status, AuthStatus.authenticated);
+      expect(authManager.state.user, user);
+
+      controller.close();
+    });
+
+    test('ユーザーログアウト時にunauthenticated状態になる', () async {
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      await authManager.initialize();
+
+      // act
+      controller.add(null);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.user, isNull);
+
+      controller.close();
+    });
+
+    test('authStateChanges経由でメンバー取得・作成処理が実行される', () async {
+      // arrange
+      late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+      mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+
+      // authStateChangesでユーザー状態変更をシミュレート
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
+      when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
+
+      when(
+        mockGetOrCreateMemberUseCase.execute(user),
+      ).thenAnswer((_) async => true);
+
+      // AuthManagerにUseCaseを依存注入
+      authManager = AuthManager(
+        authService: mockAuthService,
+        getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+      );
+
+      await authManager.initialize();
+
+      // act - authStateChangesでユーザー変更をエミット
+      controller.add(user);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+
+      controller.close();
+    });
+
+    test('認証エラー時に強制ログアウトしてerror状態になる', () async {
+      // arrange
+      late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+      mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+
+      // authStateChangesでユーザー状態変更をシミュレート
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      // validateCurrentUserToken()で認証エラーをシミュレート
+      when(
+        mockAuthService.validateCurrentUserToken(),
+      ).thenThrow(Exception('認証トークンが無効です'));
+      when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+      // AuthManagerにUseCaseを依存注入
+      authManager = AuthManager(
+        authService: mockAuthService,
+        getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+      );
+
+      await authManager.initialize();
+
+      // act - authStateChangesでユーザー変更をエミット
+      controller.add(user);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      verify(mockAuthService.signOut()).called(1);
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
+
+      controller.close();
+    });
+
+    test('メール認証が未完了の場合、強制ログアウトしてerror状態になる', () async {
+      // arrange
+      const unverifiedUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: false,
+      );
+
+      // authStateChangesでユーザー状態変更をシミュレート
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      when(mockAuthService.signOut()).thenAnswer((_) async {});
+      when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+
+      await authManager.initialize();
+
+      // act - authStateChangesでメール未認証ユーザーをエミット
+      controller.add(unverifiedUser);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      verify(mockAuthService.sendEmailVerification()).called(1);
+      verify(mockAuthService.signOut()).called(1);
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+
+      // act - ログアウト後にnullユーザーをエミット（signOutの結果）
+      controller.add(null);
+      await Future(() {});
+
+      // assert - エラー状態が保持されることを確認
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+
+      controller.close();
+    });
+
+    test('メール認証が未完了でメール再送に失敗した場合、通常のエラーメッセージが表示される', () async {
+      // arrange
+      const unverifiedUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: false,
+      );
+
+      // authStateChangesでユーザー状態変更をシミュレート
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      when(mockAuthService.signOut()).thenAnswer((_) async {});
+      when(
+        mockAuthService.sendEmailVerification(),
+      ).thenThrow(Exception('メール送信失敗'));
+
+      await authManager.initialize();
+
+      // act - authStateChangesでメール未認証ユーザーをエミット
+      controller.add(unverifiedUser);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      verify(mockAuthService.sendEmailVerification()).called(1);
+      verify(mockAuthService.signOut()).called(1);
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
+
+      controller.close();
+    });
+
+    test('GetOrCreateMemberUseCaseがfalseを返した場合、強制ログアウトしてerror状態になる', () async {
+      // arrange
+      late MockGetOrCreateMemberUseCase mockGetOrCreateMemberUseCase;
+      mockGetOrCreateMemberUseCase = MockGetOrCreateMemberUseCase();
+
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+
+      // authStateChangesでユーザー状態変更をシミュレート
+      final controller = StreamController<User?>();
+      when(
+        mockAuthService.authStateChanges,
+      ).thenAnswer((_) => controller.stream);
+
+      when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
+
+      // GetOrCreateMemberUseCaseがfalseを返すようにモック
+      when(
+        mockGetOrCreateMemberUseCase.execute(user),
+      ).thenAnswer((_) async => false);
+
+      when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+      // AuthManagerにUseCaseを依存注入
+      authManager = AuthManager(
+        authService: mockAuthService,
+        getOrCreateMemberUseCase: mockGetOrCreateMemberUseCase,
+      );
+
+      await authManager.initialize();
+
+      // act - authStateChangesでユーザー変更をエミット
+      controller.add(user);
+
+      // authStateChangesリスナー内の非同期処理完了を待つ
+      await Future(() {});
+
+      // assert
+      verify(mockGetOrCreateMemberUseCase.execute(user)).called(1);
+      verify(mockAuthService.signOut()).called(1);
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, '認証が無効です。再度ログインしてください。');
+
+      controller.close();
+    });
+
+    test('正常にログインできる', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+
+      when(
+        mockAuthService.signInWithEmailAndPassword(
           email: 'test@example.com',
           password: 'password123',
-        );
+        ),
+      ).thenAnswer((_) async => user);
 
-        verify(
-          mockAuthService.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).called(1);
-      });
+      await authManager.login(
+        email: 'test@example.com',
+        password: 'password123',
+      );
 
-      test('ログインに失敗した場合、error状態になる', () async {
-        when(
-          mockAuthService.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'wrongpassword',
-          ),
-        ).thenThrow(Exception('ログインに失敗しました'));
+      verify(
+        mockAuthService.signInWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
+    });
 
-        await authManager.login(
+    test('ログインに失敗した場合、error状態になる', () async {
+      when(
+        mockAuthService.signInWithEmailAndPassword(
           email: 'test@example.com',
           password: 'wrongpassword',
-        );
+        ),
+      ).thenThrow(Exception('ログインに失敗しました'));
 
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isNotNull);
-      });
+      await authManager.login(
+        email: 'test@example.com',
+        password: 'wrongpassword',
+      );
+
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, isNotNull);
     });
 
-    group('signup', () {
-      test('正常にサインアップできる', () async {
-        const user = User(
-          id: 'user123',
-          loginId: 'test@example.com',
-          displayName: null,
-          isVerified: false,
-        );
+    test('正常にサインアップできる', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: null,
+        isVerified: false,
+      );
 
-        when(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).thenAnswer((_) async => user);
-        when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
-
-        await authManager.signup(
+      when(
+        mockAuthService.createUserWithEmailAndPassword(
           email: 'test@example.com',
           password: 'password123',
-        );
+        ),
+      ).thenAnswer((_) async => user);
+      when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
 
-        verify(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'password123',
-          ),
-        ).called(1);
-      });
+      await authManager.signup(
+        email: 'test@example.com',
+        password: 'password123',
+      );
 
-      test('サインアップに失敗した場合、error状態になる', () async {
-        when(
-          mockAuthService.createUserWithEmailAndPassword(
-            email: 'invalid-email',
-            password: 'password123',
-          ),
-        ).thenThrow(Exception('サインアップに失敗しました'));
+      verify(
+        mockAuthService.createUserWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'password123',
+        ),
+      ).called(1);
+    });
 
-        await authManager.signup(
+    test('サインアップに失敗した場合、error状態になる', () async {
+      when(
+        mockAuthService.createUserWithEmailAndPassword(
           email: 'invalid-email',
           password: 'password123',
-        );
+        ),
+      ).thenThrow(Exception('サインアップに失敗しました'));
 
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isNotNull);
-      });
+      await authManager.signup(email: 'invalid-email', password: 'password123');
+
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, isNotNull);
     });
 
-    group('logout', () {
-      test('正常にログアウトできる', () async {
-        when(mockAuthService.signOut()).thenAnswer((_) async => {});
+    test('正常にログアウトできる', () async {
+      when(mockAuthService.signOut()).thenAnswer((_) async => {});
 
-        await authManager.logout();
+      await authManager.logout();
 
-        verify(mockAuthService.signOut()).called(1);
-      });
+      verify(mockAuthService.signOut()).called(1);
     });
 
-    group('clearError', () {
-      test('エラー状態をクリアできる', () async {
-        when(
-          mockAuthService.signInWithEmailAndPassword(
-            email: 'test@example.com',
-            password: 'wrongpassword',
-          ),
-        ).thenThrow(Exception('ログインに失敗しました'));
-
-        await authManager.login(
+    test('エラー状態をクリアできる', () async {
+      when(
+        mockAuthService.signInWithEmailAndPassword(
           email: 'test@example.com',
           password: 'wrongpassword',
-        );
+        ),
+      ).thenThrow(Exception('ログインに失敗しました'));
 
-        expect(authManager.state.status, AuthStatus.unauthenticated);
+      await authManager.login(
+        email: 'test@example.com',
+        password: 'wrongpassword',
+      );
 
-        authManager.clearError();
+      expect(authManager.state.status, AuthStatus.unauthenticated);
 
-        expect(authManager.state.status, AuthStatus.unauthenticated);
-        expect(authManager.state.message, isEmpty);
-      });
+      authManager.clearError();
+
+      expect(authManager.state.status, AuthStatus.unauthenticated);
+      expect(authManager.state.message, isEmpty);
     });
   });
 }
