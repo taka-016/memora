@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/trip_entry_repository.dart';
 import '../../domain/entities/trip_entry.dart';
+import '../../domain/value_objects/order_by.dart';
 import '../mappers/firestore_trip_entry_mapper.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
@@ -58,21 +59,30 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   @override
   Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
     String groupId,
-    int year,
-  ) async {
+    int year, {
+    List<OrderBy>? orderBy,
+  }) async {
     try {
       final startOfYear = DateTime(year, 1, 1);
       final endOfYear = DateTime(year + 1, 1, 1);
 
-      final snapshot = await _firestore
+      Query<Map<String, dynamic>> query = _firestore
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
           .where(
             'tripStartDate',
             isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
           )
-          .where('tripStartDate', isLessThan: Timestamp.fromDate(endOfYear))
-          .get();
+          .where('tripStartDate', isLessThan: Timestamp.fromDate(endOfYear));
+
+      // ソート条件が指定されている場合のみ適用
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
+          query = query.orderBy(order.field, descending: order.descending);
+        }
+      }
+
+      final snapshot = await query.get();
 
       return snapshot.docs
           .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
