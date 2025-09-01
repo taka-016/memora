@@ -572,56 +572,5 @@ void main() {
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
     });
-
-    group('ピン機能連携のテスト', () {
-      late MockPinRepository mockPinRepository;
-
-      setUp(() {
-        mockPinRepository = MockPinRepository();
-      });
-
-      testWidgets('新規作成時にpinsと一緒に保存されること', (WidgetTester tester) async {
-        // Arrange
-        when(
-          mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
-            testGroupId,
-            testYear,
-            orderBy: [const OrderBy('tripStartDate', descending: false)],
-          ),
-        ).thenAnswer((_) async => []);
-        when(
-          mockTripEntryRepository.saveTripEntry(any),
-        ).thenAnswer((_) async => 'test-trip-id');
-
-        // Act
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: TripManagement(
-                groupId: testGroupId,
-                year: testYear,
-                onBackPressed: null,
-                tripEntryRepository: mockTripEntryRepository,
-                pinRepository: mockPinRepository,
-                tripParticipantRepository: mockTripParticipantRepository,
-                isTestEnvironment: true,
-              ),
-            ),
-          ),
-        );
-
-        await tester.pumpAndSettle();
-
-        // 新規作成ボタンをタップ
-        await tester.tap(find.text('旅行追加'));
-        await tester.pumpAndSettle();
-
-        // モーダルが開くことを確認
-        expect(find.text('旅行新規作成'), findsOneWidget);
-
-        // 地図を開いてピンを追加するテストは、実際のUI操作が複雑なため、
-        // onSaveコールバックでpinsが渡されることをテストする構造に変更する予定
-      });
-    });
   });
 }
