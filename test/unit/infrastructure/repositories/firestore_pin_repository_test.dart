@@ -119,6 +119,7 @@ void main() {
       when(
         mockCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockCollection);
+      when(mockCollection.orderBy('visitStartDate')).thenReturn(mockCollection);
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
       when(mockDoc1.id).thenReturn('abc123');
@@ -147,6 +148,102 @@ void main() {
       expect(result[1].tripId, tripId);
 
       verify(mockCollection.where('tripId', isEqualTo: tripId)).called(1);
+    });
+
+    test('getPinsByTripIdがvisitStartDateの昇順でソートして返す', () async {
+      const tripId = 'trip123';
+      final mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockCollection);
+      when(mockCollection.orderBy('visitStartDate')).thenReturn(mockCollection);
+      when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+
+      // より早い日付のピン
+      when(mockDoc1.id).thenReturn('abc123');
+      when(mockDoc1.data()).thenReturn({
+        'pinId': 'pin123',
+        'tripId': tripId,
+        'latitude': 35.0,
+        'longitude': 139.0,
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+      });
+
+      // より遅い日付のピン
+      when(mockDoc2.id).thenReturn('abc456');
+      when(mockDoc2.data()).thenReturn({
+        'pinId': 'pin456',
+        'tripId': tripId,
+        'latitude': 36.0,
+        'longitude': 140.0,
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 3)),
+      });
+
+      final result = await repository.getPinsByTripId(tripId);
+
+      expect(result.length, 2);
+      expect(result[0].visitStartDate, DateTime(2024, 1, 1));
+      expect(result[1].visitStartDate, DateTime(2024, 1, 3));
+
+      verify(mockCollection.where('tripId', isEqualTo: tripId)).called(1);
+      verify(mockCollection.orderBy('visitStartDate')).called(1);
+    });
+
+    test('getPinsByTripIdがvisitStartDateがnullのピンも含めて昇順でソートして返す', () async {
+      const tripId = 'trip123';
+      final mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDoc3 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockCollection);
+      when(mockCollection.orderBy('visitStartDate')).thenReturn(mockCollection);
+      when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2, mockDoc3]);
+
+      // nullの日付のピン（最初に配置される）
+      when(mockDoc1.id).thenReturn('abc111');
+      when(mockDoc1.data()).thenReturn({
+        'pinId': 'pin111',
+        'tripId': tripId,
+        'latitude': 35.0,
+        'longitude': 139.0,
+        'visitStartDate': null,
+      });
+
+      // より早い日付のピン
+      when(mockDoc2.id).thenReturn('abc123');
+      when(mockDoc2.data()).thenReturn({
+        'pinId': 'pin123',
+        'tripId': tripId,
+        'latitude': 35.0,
+        'longitude': 139.0,
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+      });
+
+      // より遅い日付のピン
+      when(mockDoc3.id).thenReturn('abc456');
+      when(mockDoc3.data()).thenReturn({
+        'pinId': 'pin456',
+        'tripId': tripId,
+        'latitude': 36.0,
+        'longitude': 140.0,
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 3)),
+      });
+
+      final result = await repository.getPinsByTripId(tripId);
+
+      expect(result.length, 3);
+      expect(result[0].visitStartDate, null);
+      expect(result[1].visitStartDate, DateTime(2024, 1, 1));
+      expect(result[2].visitStartDate, DateTime(2024, 1, 3));
+
+      verify(mockCollection.where('tripId', isEqualTo: tripId)).called(1);
+      verify(mockCollection.orderBy('visitStartDate')).called(1);
     });
 
     test('getPinsByTripIdがエラー時に空のリストを返す', () async {
