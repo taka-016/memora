@@ -60,5 +60,8 @@ firebase use --add || { echo "プロジェクト設定に失敗しました"; ex
 echo "Firestoreインデックスをデプロイしています..."
 firebase deploy --only firestore:indexes || { echo "インデックスデプロイに失敗しました"; exit 1; }
 
+echo "Firestore インデックスを同期しています..."
+firebase firestore:indexes > "firestore.indexes.json" || { echo "インデックス同期に失敗しました"; exit 1; }
+
 echo ""
 echo "セットアップ完了！"
