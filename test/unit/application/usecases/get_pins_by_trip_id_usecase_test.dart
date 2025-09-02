@@ -4,6 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/application/usecases/get_pins_by_trip_id_usecase.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 
 @GenerateMocks([FirestorePinRepository])
 import 'get_pins_by_trip_id_usecase_test.mocks.dart';
@@ -39,7 +40,10 @@ void main() {
       ];
 
       when(
-        mockPinRepository.getPinsByTripId(tripId),
+        mockPinRepository.getPinsByTripId(
+          tripId,
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
       ).thenAnswer((_) async => pins);
 
       // Act
@@ -50,14 +54,22 @@ void main() {
       expect(result.length, 2);
       expect(result[0].tripId, tripId);
       expect(result[1].tripId, tripId);
-      verify(mockPinRepository.getPinsByTripId(tripId)).called(1);
+      verify(
+        mockPinRepository.getPinsByTripId(
+          tripId,
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
+      ).called(1);
     });
 
     test('指定したtripIdのピンが存在しないとき、空のリストを返す', () async {
       // Arrange
       const tripId = 'nonexistent_trip';
       when(
-        mockPinRepository.getPinsByTripId(tripId),
+        mockPinRepository.getPinsByTripId(
+          tripId,
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -66,7 +78,12 @@ void main() {
       // Assert
       expect(result, isA<List<Pin>>());
       expect(result.isEmpty, true);
-      verify(mockPinRepository.getPinsByTripId(tripId)).called(1);
+      verify(
+        mockPinRepository.getPinsByTripId(
+          tripId,
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
+      ).called(1);
     });
   });
 }
