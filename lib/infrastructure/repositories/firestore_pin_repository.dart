@@ -45,6 +45,7 @@ class FirestorePinRepository implements PinRepository {
       final snapshot = await _firestore
           .collection('pins')
           .where('tripId', isEqualTo: tripId)
+          .orderBy('visitStartDate')
           .get();
       return snapshot.docs
           .map((doc) => FirestorePinMapper.fromFirestore(doc))
