@@ -1,6 +1,21 @@
 {
   "indexes": [
     {
+      "collectionGroup": "pins",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tripId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "visitStartDate",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "trip_entries",
       "queryScope": "COLLECTION",
       "fields": [
@@ -12,7 +27,8 @@
           "fieldPath": "tripStartDate",
           "order": "ASCENDING"
         }
-      ]
+      ],
+      "density": "SPARSE_ALL"
     }
   ],
   "fieldOverrides": []

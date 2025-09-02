@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
+import '../../domain/value_objects/order_by.dart';
 import '../mappers/firestore_pin_mapper.dart';
 
 class FirestorePinRepository implements PinRepository {
@@ -40,12 +41,23 @@ class FirestorePinRepository implements PinRepository {
   }
 
   @override
-  Future<List<Pin>> getPinsByTripId(String tripId) async {
+  Future<List<Pin>> getPinsByTripId(
+    String tripId, {
+    List<OrderBy>? orderBy,
+  }) async {
     try {
-      final snapshot = await _firestore
+      Query<Map<String, dynamic>> query = _firestore
           .collection('pins')
-          .where('tripId', isEqualTo: tripId)
-          .get();
+          .where('tripId', isEqualTo: tripId);
+
+      // ソート条件が指定されている場合のみ適用
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
+          query = query.orderBy(order.field, descending: order.descending);
+        }
+      }
+
+      final snapshot = await query.get();
       return snapshot.docs
           .map((doc) => FirestorePinMapper.fromFirestore(doc))
           .toList();
