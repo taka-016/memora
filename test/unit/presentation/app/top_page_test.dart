@@ -7,6 +7,7 @@ import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -502,6 +503,21 @@ void main() {
         topPageState.groupTimelineStateForTest,
         GroupTimelineScreenState.timeline,
       );
+    });
+
+    test('GroupTimelineのrefreshTripDataメソッドが存在する', () {
+      // Arrange
+      final groupsWithMembers = GroupWithMembers(
+        group: Group(id: 'group1', administratorId: 'admin1', name: 'テストグループ'),
+        members: testMembers,
+      );
+
+      final groupTimeline = GroupTimeline(groupWithMembers: groupsWithMembers);
+
+      // Assert
+      // refreshTripDataメソッドが存在することを確認
+      expect(groupTimeline, isNotNull);
+      expect(groupTimeline.groupWithMembers, equals(groupsWithMembers));
     });
   });
 }

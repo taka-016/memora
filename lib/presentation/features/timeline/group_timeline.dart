@@ -133,6 +133,14 @@ class _GroupTimelineState extends State<GroupTimeline> {
     super.dispose();
   }
 
+  Future<void> refreshTripData() async {
+    _tripsByYear.clear();
+    await _loadTripDataForVisibleYears();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(

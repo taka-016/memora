@@ -52,6 +52,8 @@ class _TopPageState extends State<TopPage> {
   String? _selectedGroupId;
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
+  final GlobalKey<State<GroupTimeline>> _groupTimelineKey =
+      GlobalKey<State<GroupTimeline>>();
 
   @visibleForTesting
   GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
@@ -100,6 +102,7 @@ class _TopPageState extends State<TopPage> {
     setState(() {
       _groupTimelineState = GroupTimelineScreenState.timeline;
       _groupTimelineInstance = GroupTimeline(
+        key: _groupTimelineKey,
         groupWithMembers: groupWithMembers,
         onBackPressed: () {
           setState(() {
@@ -118,6 +121,22 @@ class _TopPageState extends State<TopPage> {
       _selectedGroupId = groupId;
       _selectedYear = year;
     });
+  }
+
+  void _onBackFromTripManagement() {
+    setState(() {
+      _groupTimelineState = GroupTimelineScreenState.timeline;
+      _selectedGroupId = null;
+      _selectedYear = null;
+    });
+
+    // GroupTimelineのrefreshTripDataメソッドを直接呼び出す
+    if (_groupTimelineKey.currentState != null) {
+      final groupTimelineState = _groupTimelineKey.currentState as dynamic;
+      if (groupTimelineState.mounted) {
+        groupTimelineState.refreshTripData();
+      }
+    }
   }
 
   int _getGroupTimelineIndex() {
@@ -151,13 +170,7 @@ class _TopPageState extends State<TopPage> {
             ? TripManagement(
                 groupId: _selectedGroupId!,
                 year: _selectedYear!,
-                onBackPressed: () {
-                  setState(() {
-                    _groupTimelineState = GroupTimelineScreenState.timeline;
-                    _selectedGroupId = null;
-                    _selectedYear = null;
-                  });
-                },
+                onBackPressed: _onBackFromTripManagement,
               )
             : Container(),
       ],
