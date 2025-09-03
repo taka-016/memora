@@ -7,7 +7,6 @@ import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/app/top_page.dart';
-import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -505,19 +504,41 @@ void main() {
       );
     });
 
-    test('GroupTimelineのrefreshTripDataメソッドが存在する', () {
+    testWidgets('旅行管理から戻った時にリフレッシュコールバックが呼び出される', (tester) async {
       // Arrange
-      final groupsWithMembers = GroupWithMembers(
-        group: Group(id: 'group1', administratorId: 'admin1', name: 'テストグループ'),
-        members: testMembers,
-      );
+      bool refreshCallbackCalled = false;
 
-      final groupTimeline = GroupTimeline(groupWithMembers: groupsWithMembers);
+      final groupsWithMembers = [
+        GroupWithMembers(
+          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+          members: testMembers,
+        ),
+      ];
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
-      // Assert
-      // refreshTripDataメソッドが存在することを確認
-      expect(groupTimeline, isNotNull);
-      expect(groupTimeline.groupWithMembers, equals(groupsWithMembers));
+      final widget = createTestWidget();
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // TopPageの状態を取得
+      final topPageFinder = find.byType(TopPage);
+      final topPageState = tester.state(topPageFinder) as dynamic;
+
+      // グループを選択してタイムライン表示
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // モック用のリフレッシュ関数を設定
+      void mockRefreshFunction() => refreshCallbackCalled = true;
+      topPageState.refreshGroupTimelineForTest = mockRefreshFunction;
+
+      // Act - 旅行管理から戻る動作をシミュレート
+      topPageState.onBackFromTripManagementForTest();
+      await tester.pumpAndSettle();
+
+      // Assert - リフレッシュコールバックが呼び出されたことを確認
+      expect(refreshCallbackCalled, isTrue);
     });
   });
 }

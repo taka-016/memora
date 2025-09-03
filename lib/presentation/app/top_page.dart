@@ -52,14 +52,27 @@ class _TopPageState extends State<TopPage> {
   String? _selectedGroupId;
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
-  final GlobalKey<State<GroupTimeline>> _groupTimelineKey =
-      GlobalKey<State<GroupTimeline>>();
+  VoidCallback? _refreshGroupTimeline;
 
   @visibleForTesting
   GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
 
   @visibleForTesting
   GroupTimelineScreenState get groupTimelineStateForTest => _groupTimelineState;
+
+  @visibleForTesting
+  set groupTimelineStateForTest(GroupTimelineScreenState state) =>
+      _groupTimelineState = state;
+
+  @visibleForTesting
+  VoidCallback? get refreshGroupTimelineForTest => _refreshGroupTimeline;
+
+  @visibleForTesting
+  set refreshGroupTimelineForTest(VoidCallback? callback) =>
+      _refreshGroupTimeline = callback;
+
+  @visibleForTesting
+  void onBackFromTripManagementForTest() => _onBackFromTripManagement();
 
   @override
   void initState() {
@@ -102,7 +115,6 @@ class _TopPageState extends State<TopPage> {
     setState(() {
       _groupTimelineState = GroupTimelineScreenState.timeline;
       _groupTimelineInstance = GroupTimeline(
-        key: _groupTimelineKey,
         groupWithMembers: groupWithMembers,
         onBackPressed: () {
           setState(() {
@@ -111,6 +123,7 @@ class _TopPageState extends State<TopPage> {
           });
         },
         onTripManagementSelected: _onTripManagementSelected,
+        onSetRefreshCallback: (callback) => _refreshGroupTimeline = callback,
       );
     });
   }
@@ -130,12 +143,7 @@ class _TopPageState extends State<TopPage> {
       _selectedYear = null;
     });
 
-    if (_groupTimelineKey.currentState != null) {
-      final groupTimelineState = _groupTimelineKey.currentState as dynamic;
-      if (groupTimelineState.mounted) {
-        groupTimelineState.refreshTripData();
-      }
-    }
+    _refreshGroupTimeline?.call();
   }
 
   int _getGroupTimelineIndex() {
