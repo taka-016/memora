@@ -61,13 +61,6 @@ class _TopPageState extends State<TopPage> {
   GroupTimelineScreenState get groupTimelineStateForTest => _groupTimelineState;
 
   @visibleForTesting
-  set groupTimelineStateForTest(GroupTimelineScreenState state) =>
-      _groupTimelineState = state;
-
-  @visibleForTesting
-  VoidCallback? get refreshGroupTimelineForTest => _refreshGroupTimeline;
-
-  @visibleForTesting
   set refreshGroupTimelineForTest(VoidCallback? callback) =>
       _refreshGroupTimeline = callback;
 
