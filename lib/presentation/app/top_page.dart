@@ -52,12 +52,27 @@ class _TopPageState extends State<TopPage> {
   String? _selectedGroupId;
   int? _selectedYear;
   GroupTimeline? _groupTimelineInstance;
+  VoidCallback? _refreshGroupTimeline;
 
   @visibleForTesting
   GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
 
   @visibleForTesting
   GroupTimelineScreenState get groupTimelineStateForTest => _groupTimelineState;
+
+  @visibleForTesting
+  set groupTimelineStateForTest(GroupTimelineScreenState state) =>
+      _groupTimelineState = state;
+
+  @visibleForTesting
+  VoidCallback? get refreshGroupTimelineForTest => _refreshGroupTimeline;
+
+  @visibleForTesting
+  set refreshGroupTimelineForTest(VoidCallback? callback) =>
+      _refreshGroupTimeline = callback;
+
+  @visibleForTesting
+  void onBackFromTripManagementForTest() => _onBackFromTripManagement();
 
   @override
   void initState() {
@@ -108,6 +123,7 @@ class _TopPageState extends State<TopPage> {
           });
         },
         onTripManagementSelected: _onTripManagementSelected,
+        onSetRefreshCallback: (callback) => _refreshGroupTimeline = callback,
       );
     });
   }
@@ -118,6 +134,16 @@ class _TopPageState extends State<TopPage> {
       _selectedGroupId = groupId;
       _selectedYear = year;
     });
+  }
+
+  void _onBackFromTripManagement() {
+    setState(() {
+      _groupTimelineState = GroupTimelineScreenState.timeline;
+      _selectedGroupId = null;
+      _selectedYear = null;
+    });
+
+    _refreshGroupTimeline?.call();
   }
 
   int _getGroupTimelineIndex() {
@@ -151,13 +177,7 @@ class _TopPageState extends State<TopPage> {
             ? TripManagement(
                 groupId: _selectedGroupId!,
                 year: _selectedYear!,
-                onBackPressed: () {
-                  setState(() {
-                    _groupTimelineState = GroupTimelineScreenState.timeline;
-                    _selectedGroupId = null;
-                    _selectedYear = null;
-                  });
-                },
+                onBackPressed: _onBackFromTripManagement,
               )
             : Container(),
       ],

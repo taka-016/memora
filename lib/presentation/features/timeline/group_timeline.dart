@@ -21,6 +21,7 @@ class GroupTimeline extends StatefulWidget {
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
   final TripEntryRepository? tripEntryRepository;
+  final Function(VoidCallback)? onSetRefreshCallback;
 
   const GroupTimeline({
     super.key,
@@ -28,6 +29,7 @@ class GroupTimeline extends StatefulWidget {
     this.tripEntryRepository,
     this.onBackPressed,
     this.onTripManagementSelected,
+    this.onSetRefreshCallback,
   });
 
   @override
@@ -94,6 +96,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
     });
 
     _loadTripDataForVisibleYears();
+
+    widget.onSetRefreshCallback?.call(refreshTripData);
   }
 
   Future<void> _loadTripDataForVisibleYears() async {
@@ -131,6 +135,14 @@ class _GroupTimelineState extends State<GroupTimeline> {
       controller.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> refreshTripData() async {
+    _tripsByYear.clear();
+    await _loadTripDataForVisibleYears();
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
