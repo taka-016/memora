@@ -130,7 +130,6 @@ class _TopPageState extends State<TopPage> {
       _selectedYear = null;
     });
 
-    // GroupTimelineのrefreshTripDataメソッドを直接呼び出す
     if (_groupTimelineKey.currentState != null) {
       final groupTimelineState = _groupTimelineKey.currentState as dynamic;
       if (groupTimelineState.mounted) {
