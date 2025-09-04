@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/application/controllers/navigation_controller.dart';
+import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
-import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/infrastructure/factories/map_view_factory.dart';
 
 import 'package:memora/presentation/features/group/group_management.dart';
@@ -15,17 +16,6 @@ import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-
-enum NavigationItem {
-  groupTimeline,
-  mapDisplay,
-  groupManagement,
-  memberManagement,
-  settings,
-  accountSettings,
-}
-
-enum GroupTimelineScreenState { groupList, timeline, tripManagement }
 
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
@@ -44,28 +34,8 @@ class TopPage extends StatefulWidget {
 }
 
 class _TopPageState extends State<TopPage> {
-  NavigationItem _selectedItem = NavigationItem.groupTimeline;
-  GroupTimelineScreenState _groupTimelineState =
-      GroupTimelineScreenState.groupList;
   GetCurrentMemberUseCase? _getCurrentMemberUseCase;
   Member? _currentMember;
-  String? _selectedGroupId;
-  int? _selectedYear;
-  GroupTimeline? _groupTimelineInstance;
-  VoidCallback? _refreshGroupTimeline;
-
-  @visibleForTesting
-  GroupTimeline? get groupTimelineInstanceForTest => _groupTimelineInstance;
-
-  @visibleForTesting
-  GroupTimelineScreenState get groupTimelineStateForTest => _groupTimelineState;
-
-  @visibleForTesting
-  set refreshGroupTimelineForTest(VoidCallback? callback) =>
-      _refreshGroupTimeline = callback;
-
-  @visibleForTesting
-  void onBackFromTripManagementForTest() => _onBackFromTripManagement();
 
   @override
   void initState() {
@@ -93,91 +63,57 @@ class _TopPageState extends State<TopPage> {
     }
   }
 
-  void _onNavigationItemSelected(NavigationItem item) {
-    setState(() {
-      _selectedItem = item;
-      if (item != NavigationItem.groupTimeline) {
-        _groupTimelineState = GroupTimelineScreenState.groupList;
-        _groupTimelineInstance = null;
-      }
-    });
+  void _onNavigationItemSelected(NavigationItem item, WidgetRef ref) {
+    ref.read(navigationControllerProvider.notifier).selectItem(item);
+    if (item != NavigationItem.groupTimeline) {
+      ref
+          .read(groupTimelineNavigationControllerProvider.notifier)
+          .resetToGroupList();
+    }
     Navigator.of(context).pop();
   }
 
-  void _onGroupSelected(GroupWithMembers groupWithMembers) {
-    setState(() {
-      _groupTimelineState = GroupTimelineScreenState.timeline;
-      _groupTimelineInstance = GroupTimeline(
-        groupWithMembers: groupWithMembers,
-        onBackPressed: () {
-          setState(() {
-            _groupTimelineState = GroupTimelineScreenState.groupList;
-            _groupTimelineInstance = null;
-          });
-        },
-        onTripManagementSelected: _onTripManagementSelected,
-        onSetRefreshCallback: (callback) => _refreshGroupTimeline = callback,
-      );
-    });
+  void _onGroupSelected(GroupWithMembers groupWithMembers, WidgetRef ref) {
+    ref
+        .read(groupTimelineNavigationControllerProvider.notifier)
+        .showGroupTimeline(groupWithMembers);
   }
 
-  void _onTripManagementSelected(String groupId, int year) {
-    setState(() {
-      _groupTimelineState = GroupTimelineScreenState.tripManagement;
-      _selectedGroupId = groupId;
-      _selectedYear = year;
-    });
-  }
-
-  void _onBackFromTripManagement() {
-    setState(() {
-      _groupTimelineState = GroupTimelineScreenState.timeline;
-      _selectedGroupId = null;
-      _selectedYear = null;
-    });
-
-    _refreshGroupTimeline?.call();
-  }
-
-  int _getGroupTimelineIndex() {
-    switch (_groupTimelineState) {
-      case GroupTimelineScreenState.groupList:
-        return 0;
-      case GroupTimelineScreenState.timeline:
-        return 1;
-      case GroupTimelineScreenState.tripManagement:
-        return 2;
-    }
-  }
-
-  Widget _buildGroupTimelineStack() {
+  Widget _buildGroupTimelineStack(WidgetRef ref) {
     if (_currentMember == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final timelineState = ref.watch(groupTimelineNavigationControllerProvider);
+
     return IndexedStack(
-      index: _getGroupTimelineIndex(),
+      index: ref
+          .read(groupTimelineNavigationControllerProvider.notifier)
+          .getStackIndex(),
       children: [
         GroupList(
           getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
           member: _currentMember!,
-          onGroupSelected: _onGroupSelected,
+          onGroupSelected: (group) => _onGroupSelected(group, ref),
         ),
         widget.isTestEnvironment
-            ? _buildTestGroupTimeline()
-            : _groupTimelineInstance ?? Container(),
-        _selectedGroupId != null && _selectedYear != null
+            ? _buildTestGroupTimeline(ref)
+            : timelineState.groupTimelineInstance ?? Container(),
+        timelineState.selectedGroupId != null &&
+                timelineState.selectedYear != null
             ? TripManagement(
-                groupId: _selectedGroupId!,
-                year: _selectedYear!,
-                onBackPressed: _onBackFromTripManagement,
+                groupId: timelineState.selectedGroupId!,
+                year: timelineState.selectedYear!,
+                onBackPressed: () => ref
+                    .read(groupTimelineNavigationControllerProvider.notifier)
+                    .backFromTripManagement(),
               )
             : Container(),
       ],
     );
   }
 
-  Widget _buildTestGroupTimeline() {
+  Widget _buildTestGroupTimeline(WidgetRef ref) {
     return Container(
       key: const Key('group_timeline'),
       child: Column(
@@ -187,10 +123,9 @@ class _TopPageState extends State<TopPage> {
               key: const Key('back_button'),
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
-                setState(() {
-                  _groupTimelineState = GroupTimelineScreenState.groupList;
-                  _groupTimelineInstance = null;
-                });
+                ref
+                    .read(groupTimelineNavigationControllerProvider.notifier)
+                    .showGroupList();
               },
             ),
             title: const Text('テストグループ'),
@@ -208,10 +143,12 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Widget _buildBody() {
-    switch (_selectedItem) {
+  Widget _buildBody(WidgetRef ref) {
+    final selectedItem = ref.watch(navigationControllerProvider).selectedItem;
+
+    switch (selectedItem) {
       case NavigationItem.groupTimeline:
-        return _buildGroupTimelineStack();
+        return _buildGroupTimelineStack(ref);
       case NavigationItem.mapDisplay:
         return widget.isTestEnvironment
             ? MapViewFactory.create(
@@ -284,10 +221,14 @@ class _TopPageState extends State<TopPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(),
-      drawer: _buildDrawer(context),
-      body: _buildBody(),
+    return Consumer(
+      builder: (context, ref, child) {
+        return Scaffold(
+          appBar: _buildAppBar(),
+          drawer: _buildDrawer(context, ref),
+          body: _buildBody(ref),
+        );
+      },
     );
   }
 
@@ -305,13 +246,13 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
+  Drawer _buildDrawer(BuildContext context, WidgetRef ref) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           _buildDrawerHeader(context),
-          ..._buildDrawerItems(),
+          ..._buildDrawerItems(ref),
           const Divider(),
           _buildLogoutItem(),
         ],
@@ -345,31 +286,50 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  List<Widget> _buildDrawerItems() {
+  List<Widget> _buildDrawerItems(WidgetRef ref) {
     return [
-      _buildDrawerItem(Icons.timeline, 'グループ年表', NavigationItem.groupTimeline),
-      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay),
-      _buildDrawerItem(Icons.people, 'メンバー管理', NavigationItem.memberManagement),
+      _buildDrawerItem(
+        Icons.timeline,
+        'グループ年表',
+        NavigationItem.groupTimeline,
+        ref,
+      ),
+      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay, ref),
+      _buildDrawerItem(
+        Icons.people,
+        'メンバー管理',
+        NavigationItem.memberManagement,
+        ref,
+      ),
       _buildDrawerItem(
         Icons.group_work,
         'グループ管理',
         NavigationItem.groupManagement,
+        ref,
       ),
-      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings),
+      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings, ref),
       _buildDrawerItem(
         Icons.account_circle,
         'アカウント設定',
         NavigationItem.accountSettings,
+        ref,
       ),
     ];
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, NavigationItem item) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    NavigationItem item,
+    WidgetRef ref,
+  ) {
+    final selectedItem = ref.watch(navigationControllerProvider).selectedItem;
+
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
-      selected: _selectedItem == item,
-      onTap: () => _onNavigationItemSelected(item),
+      selected: selectedItem == item,
+      onTap: () => _onNavigationItemSelected(item, ref),
     );
   }
 

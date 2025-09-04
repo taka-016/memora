@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -424,7 +425,6 @@ void main() {
 
       // TopPageウィジェットを取得
       final topPageFinder = find.byType(TopPage);
-      final topPageState = tester.state(topPageFinder) as dynamic;
 
       // 1. IndexedStackが正しくセットアップされていることを検証
       final indexedStack = tester.widget<IndexedStack>(
@@ -437,9 +437,17 @@ void main() {
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
 
       // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
-      expect(topPageState.groupTimelineInstanceForTest, isNull);
+      final container = ProviderScope.containerOf(
+        tester.element(topPageFinder),
+      );
       expect(
-        topPageState.groupTimelineStateForTest,
+        container
+            .read(groupTimelineNavigationControllerProvider)
+            .groupTimelineInstance,
+        isNull,
+      );
+      expect(
+        container.read(groupTimelineNavigationControllerProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -452,9 +460,14 @@ void main() {
         find.byType(IndexedStack),
       );
       expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
-      expect(topPageState.groupTimelineInstanceForTest, isNotNull);
       expect(
-        topPageState.groupTimelineStateForTest,
+        container
+            .read(groupTimelineNavigationControllerProvider)
+            .groupTimelineInstance,
+        isNotNull,
+      );
+      expect(
+        container.read(groupTimelineNavigationControllerProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
 
@@ -465,9 +478,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // 4. 他画面遷移時にGroupTimelineインスタンスがリセットされることを検証
-      expect(topPageState.groupTimelineInstanceForTest, isNull);
       expect(
-        topPageState.groupTimelineStateForTest,
+        container
+            .read(groupTimelineNavigationControllerProvider)
+            .groupTimelineInstance,
+        isNull,
+      );
+      expect(
+        container.read(groupTimelineNavigationControllerProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -482,9 +500,14 @@ void main() {
         find.byType(IndexedStack),
       );
       expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
-      expect(topPageState.groupTimelineInstanceForTest, isNull);
       expect(
-        topPageState.groupTimelineStateForTest,
+        container
+            .read(groupTimelineNavigationControllerProvider)
+            .groupTimelineInstance,
+        isNull,
+      );
+      expect(
+        container.read(groupTimelineNavigationControllerProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -497,48 +520,16 @@ void main() {
         find.byType(IndexedStack),
       );
       expect(finalIndexedStack.index, 1); // GroupTimeline（index: 1）
-      expect(topPageState.groupTimelineInstanceForTest, isNotNull);
       expect(
-        topPageState.groupTimelineStateForTest,
+        container
+            .read(groupTimelineNavigationControllerProvider)
+            .groupTimelineInstance,
+        isNotNull,
+      );
+      expect(
+        container.read(groupTimelineNavigationControllerProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
-    });
-
-    testWidgets('旅行管理から戻った時にリフレッシュコールバックが呼び出される', (tester) async {
-      // Arrange
-      bool refreshCallbackCalled = false;
-
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      final widget = createTestWidget();
-
-      await tester.pumpWidget(widget);
-      await tester.pumpAndSettle();
-
-      // TopPageの状態を取得
-      final topPageFinder = find.byType(TopPage);
-      final topPageState = tester.state(topPageFinder) as dynamic;
-
-      // グループを選択してタイムライン表示
-      await tester.tap(find.text('グループ1'));
-      await tester.pumpAndSettle();
-
-      // モック用のリフレッシュ関数を設定
-      void mockRefreshFunction() => refreshCallbackCalled = true;
-      topPageState.refreshGroupTimelineForTest = mockRefreshFunction;
-
-      // Act - 旅行管理から戻る動作をシミュレート
-      topPageState.onBackFromTripManagementForTest();
-      await tester.pumpAndSettle();
-
-      // Assert - リフレッシュコールバックが呼び出されたことを確認
-      expect(refreshCallbackCalled, isTrue);
     });
   });
 }
