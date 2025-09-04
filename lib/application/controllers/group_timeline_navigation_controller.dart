@@ -64,10 +64,6 @@ class GroupTimelineNavigationController
   }
 
   void showGroupTimeline(GroupWithMembers groupWithMembers) {
-    void refreshCallback() {
-      // リフレッシュ用のコールバック（必要に応じて実装）
-    }
-
     final groupTimeline = GroupTimeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
@@ -82,7 +78,6 @@ class GroupTimelineNavigationController
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
       groupTimelineInstance: groupTimeline,
-      refreshGroupTimeline: refreshCallback,
     );
   }
 
