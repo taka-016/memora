@@ -66,6 +66,10 @@
   - [x] 変更：グループが存在しない場合は、グループ作成ボタンが表示される→「グループがありません」のラベル表示のみ
   - [x] 変更：トップページというメニューは廃止し、グループ年表のメニューからGroupMemberに遷移する
 - [x] 並び替え：メニューの並びを「メンバー設定」と「グループ設定」の順番を入れ替える
+- [x] 画面遷移制御をコントローラーに分離する
+  - [x] NavigationControllerクラスを作成する（lib/application/controllers/navigation_controller.dart）
+  - [x] GroupTimelineNavigationControllerクラスを作成する（lib/application/controllers/group_timeline_navigation_controller.dart）
+  - [x] TopPageをリファクタリングしてコントローラーを使用する形に変更する
 
 ## アカウント管理
 
