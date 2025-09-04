@@ -9,6 +9,11 @@ enum NavigationItem {
   accountSettings,
 }
 
+final navigationControllerProvider =
+    StateNotifierProvider<NavigationController, NavigationState>((ref) {
+      return NavigationController();
+    });
+
 class NavigationState {
   final NavigationItem selectedItem;
 
@@ -27,8 +32,3 @@ class NavigationController extends StateNotifier<NavigationState> {
     state = state.copyWith(selectedItem: item);
   }
 }
-
-final navigationControllerProvider =
-    StateNotifierProvider<NavigationController, NavigationState>((ref) {
-      return NavigationController();
-    });

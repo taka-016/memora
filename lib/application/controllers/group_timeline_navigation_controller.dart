@@ -5,6 +5,14 @@ import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 enum GroupTimelineScreenState { groupList, timeline, tripManagement }
 
+final groupTimelineNavigationControllerProvider =
+    StateNotifierProvider<
+      GroupTimelineNavigationController,
+      GroupTimelineNavigationState
+    >((ref) {
+      return GroupTimelineNavigationController();
+    });
+
 class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
   final String? selectedGroupId;
@@ -120,11 +128,3 @@ class GroupTimelineNavigationController
     }
   }
 }
-
-final groupTimelineNavigationControllerProvider =
-    StateNotifierProvider<
-      GroupTimelineNavigationController,
-      GroupTimelineNavigationState
-    >((ref) {
-      return GroupTimelineNavigationController();
-    });
