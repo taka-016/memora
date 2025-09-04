@@ -118,13 +118,17 @@ class _GroupTimelineState extends State<GroupTimeline> {
         widget.groupWithMembers.group.id,
         year,
       );
-      setState(() {
-        _tripsByYear[year] = trips;
-      });
+      if (mounted) {
+        setState(() {
+          _tripsByYear[year] = trips;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _tripsByYear[year] = [];
-      });
+      if (mounted) {
+        setState(() {
+          _tripsByYear[year] = [];
+        });
+      }
     }
   }
 
@@ -308,14 +312,18 @@ class _GroupTimelineState extends State<GroupTimeline> {
             bottom: -19,
             child: Listener(
               onPointerDown: (_) {
-                setState(() {
-                  _isDraggingOnFixedRow = true;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isDraggingOnFixedRow = true;
+                  });
+                }
               },
               onPointerUp: (_) {
-                setState(() {
-                  _isDraggingOnFixedRow = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    _isDraggingOnFixedRow = false;
+                  });
+                }
               },
               child: RawGestureDetector(
                 key: Key('row_resizer_icon_$rowIndex'),
@@ -327,11 +335,13 @@ class _GroupTimelineState extends State<GroupTimeline> {
                         _VerticalDragGestureRecognizer instance,
                       ) {
                         instance.onUpdate = (details) {
-                          setState(() {
-                            _rowHeights[rowIndex] =
-                                (_rowHeights[rowIndex] + details.delta.dy)
-                                    .clamp(_rowMinHeight, _rowMaxHeight);
-                          });
+                          if (mounted) {
+                            setState(() {
+                              _rowHeights[rowIndex] =
+                                  (_rowHeights[rowIndex] + details.delta.dy)
+                                      .clamp(_rowMinHeight, _rowMaxHeight);
+                            });
+                          }
                         };
                       }),
                 },
@@ -478,17 +488,21 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   void _showMorePast() {
-    setState(() {
-      _startYearOffset -= _yearRangeIncrement;
-    });
-    _loadTripDataForVisibleYears();
+    if (mounted) {
+      setState(() {
+        _startYearOffset -= _yearRangeIncrement;
+      });
+      _loadTripDataForVisibleYears();
+    }
   }
 
   void _showMoreFuture() {
-    setState(() {
-      _endYearOffset += _yearRangeIncrement;
-    });
-    _loadTripDataForVisibleYears();
+    if (mounted) {
+      setState(() {
+        _endYearOffset += _yearRangeIncrement;
+      });
+      _loadTripDataForVisibleYears();
+    }
   }
 
   void _syncScrollControllers(int sourceIndex) {

@@ -452,5 +452,31 @@ void main() {
       expect(find.textContaining('$currentYear/08'), findsAtLeastNWidgets(1));
       expect(find.textContaining('$currentYear/12'), findsAtLeastNWidgets(1));
     });
+
+    testWidgets('onSetRefreshCallbackが設定された場合、リフレッシュコールバックが呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      VoidCallback? capturedCallback;
+
+      Widget widget = MaterialApp(
+        home: Scaffold(
+          body: GroupTimeline(
+            groupWithMembers: testGroupWithMembers,
+            tripEntryRepository: mockTripEntryRepository,
+            onSetRefreshCallback: (callback) {
+              capturedCallback = callback;
+            },
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Assert - コールバックが設定されることを確認
+      expect(capturedCallback, isNotNull);
+    });
   });
 }

@@ -155,7 +155,7 @@ void main() {
       expect(notifier.getStackIndex(), 2);
     });
 
-    test('年表表示時にリフレッシュコールバックが自動設定される', () {
+    test('年表表示時にGroupTimelineインスタンスが作成される', () {
       // Arrange
       final notifier = container.read(
         groupTimelineNavigationControllerProvider.notifier,
@@ -166,7 +166,8 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationControllerProvider);
-      expect(state.refreshGroupTimeline, isNotNull);
+      expect(state.groupTimelineInstance, isNotNull);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
     });
 
     test('状態の変更が通知される', () {
