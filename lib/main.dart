@@ -52,8 +52,6 @@ class _MyAppState extends State<MyApp> {
     groupMemberRepository = FirestoreGroupMemberRepository();
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupRepository: groupRepository,
-      groupMemberRepository: groupMemberRepository,
-      memberRepository: memberRepository,
     );
 
     getCurrentMemberUseCase = GetCurrentMemberUseCase(

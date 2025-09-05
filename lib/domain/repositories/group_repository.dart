@@ -1,4 +1,5 @@
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 
 abstract class GroupRepository {
   Future<List<Group>> getGroups();
@@ -7,4 +8,7 @@ abstract class GroupRepository {
   Future<void> deleteGroup(String groupId);
   Future<Group?> getGroupById(String groupId);
   Future<List<Group>> getGroupsByAdministratorId(String administratorId);
+  Future<List<GroupWithMembers>> getGroupsWithMembersByMemberId(
+    String memberId,
+  );
 }

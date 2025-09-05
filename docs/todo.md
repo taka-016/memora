@@ -4,6 +4,11 @@
 
 - [x] pinsテーブルにlocationNameカラムを追加する
 
+## リポジトリ
+
+- [x] GroupRepositoryにgetGroupsWithMembersByMemberIdメソッドを追加する
+- [x] GetGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
+
 ## マップの表示
 
 - [x] 起動時に現在地に移動

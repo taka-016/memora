@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';

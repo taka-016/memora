@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/entities/group.dart';
+import '../../domain/entities/group_with_members.dart';
+import '../../domain/entities/member.dart';
 import '../mappers/firestore_group_mapper.dart';
+import '../mappers/firestore_member_mapper.dart';
 
 class FirestoreGroupRepository implements GroupRepository {
   final FirebaseFirestore _firestore;
@@ -65,6 +68,81 @@ class FirestoreGroupRepository implements GroupRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  @override
+  Future<List<GroupWithMembers>> getGroupsWithMembersByMemberId(
+    String memberId,
+  ) async {
+    try {
+      // 管理者として所属するグループを取得
+      final adminGroupsSnapshot = await _firestore
+          .collection('groups')
+          .where('administratorId', isEqualTo: memberId)
+          .get();
+
+      // メンバーとして所属するグループを取得
+      final memberGroupsSnapshot = await _firestore
+          .collection('group_members')
+          .where('memberId', isEqualTo: memberId)
+          .get();
+
+      final Set<String> groupIds = {};
+      final List<Group> allGroups = [];
+
+      // 管理者グループを追加
+      for (final doc in adminGroupsSnapshot.docs) {
+        final group = FirestoreGroupMapper.fromFirestore(doc);
+        if (!groupIds.contains(group.id)) {
+          groupIds.add(group.id);
+          allGroups.add(group);
+        }
+      }
+
+      // メンバーグループを取得・追加
+      for (final doc in memberGroupsSnapshot.docs) {
+        final groupId = doc.data()['groupId'] as String;
+        if (!groupIds.contains(groupId)) {
+          final groupDoc = await _firestore
+              .collection('groups')
+              .doc(groupId)
+              .get();
+          if (groupDoc.exists) {
+            final group = FirestoreGroupMapper.fromFirestore(groupDoc);
+            groupIds.add(group.id);
+            allGroups.add(group);
+          }
+        }
+      }
+
+      // 各グループのメンバーを取得
+      final List<GroupWithMembers> result = [];
+      for (final group in allGroups) {
+        final groupMembersSnapshot = await _firestore
+            .collection('group_members')
+            .where('groupId', isEqualTo: group.id)
+            .get();
+
+        final List<Member> members = [];
+        for (final doc in groupMembersSnapshot.docs) {
+          final memberId = doc.data()['memberId'] as String;
+          final memberDoc = await _firestore
+              .collection('members')
+              .doc(memberId)
+              .get();
+          if (memberDoc.exists) {
+            final member = FirestoreMemberMapper.fromFirestore(memberDoc);
+            members.add(member);
+          }
+        }
+
+        result.add(GroupWithMembers(group: group, members: members));
+      }
+
+      return result;
     } catch (e) {
       return [];
     }
