@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 enum GroupTimelineScreenState { groupList, timeline, tripManagement }

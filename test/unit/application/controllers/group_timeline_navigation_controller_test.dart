@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 
