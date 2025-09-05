@@ -78,13 +78,11 @@ class FirestoreGroupRepository implements GroupRepository {
     String memberId,
   ) async {
     try {
-      // 管理者として所属するグループを取得
       final adminGroupsSnapshot = await _firestore
           .collection('groups')
           .where('administratorId', isEqualTo: memberId)
           .get();
 
-      // メンバーとして所属するグループを取得
       final memberGroupsSnapshot = await _firestore
           .collection('group_members')
           .where('memberId', isEqualTo: memberId)
@@ -93,7 +91,6 @@ class FirestoreGroupRepository implements GroupRepository {
       final Set<String> groupIds = {};
       final List<Group> allGroups = [];
 
-      // 管理者グループを追加
       for (final doc in adminGroupsSnapshot.docs) {
         final group = FirestoreGroupMapper.fromFirestore(doc);
         if (!groupIds.contains(group.id)) {
@@ -102,7 +99,6 @@ class FirestoreGroupRepository implements GroupRepository {
         }
       }
 
-      // メンバーグループを取得・追加
       for (final doc in memberGroupsSnapshot.docs) {
         final groupId = doc.data()['groupId'] as String;
         if (!groupIds.contains(groupId)) {
@@ -118,7 +114,6 @@ class FirestoreGroupRepository implements GroupRepository {
         }
       }
 
-      // 各グループのメンバーを取得
       final List<GroupWithMembers> result = [];
       for (final group in allGroups) {
         final groupMembersSnapshot = await _firestore
