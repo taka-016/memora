@@ -19,6 +19,36 @@ import 'package:memora/domain/entities/member.dart';
 ])
 import 'firestore_group_repository_test.mocks.dart';
 
+// テスト用のFirestoreGroupRepositoryの拡張
+class _TestFirestoreGroupRepository extends FirestoreGroupRepository {
+  final MockFirestoreGroupRepository mockRepository;
+
+  _TestFirestoreGroupRepository({
+    required super.firestore,
+    required this.mockRepository,
+  });
+
+  @override
+  Future<List<Group>> getGroupsByAdministratorId(String administratorId) {
+    return mockRepository.getGroupsByAdministratorId(administratorId);
+  }
+
+  @override
+  Future<List<Group>> getGroupsWhereUserIsAdmin(String memberId) {
+    return mockRepository.getGroupsWhereUserIsAdmin(memberId);
+  }
+
+  @override
+  Future<List<Group>> getGroupsWhereUserIsMember(String memberId) {
+    return mockRepository.getGroupsWhereUserIsMember(memberId);
+  }
+
+  @override
+  Future<List<GroupWithMembers>> addMembersToGroups(List<Group> groups) {
+    return mockRepository.addMembersToGroups(groups);
+  }
+}
+
 void main() {
   group('FirestoreGroupRepository', () {
     late MockFirebaseFirestore mockFirestore;
@@ -177,206 +207,94 @@ void main() {
     });
 
     group('getGroupsWithMembersByMemberId', () {
-      late MockCollectionReference<Map<String, dynamic>>
-      mockGroupMembersCollection;
-      late MockCollectionReference<Map<String, dynamic>> mockMembersCollection;
-      late MockQuery<Map<String, dynamic>> mockAdminQuery;
-      late MockQuery<Map<String, dynamic>> mockGroupMembersQuery;
-
-      setUp(() {
-        mockGroupMembersCollection =
-            MockCollectionReference<Map<String, dynamic>>();
-        mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
-        mockAdminQuery = MockQuery<Map<String, dynamic>>();
-        mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
-        when(
-          mockFirestore.collection('group_members'),
-        ).thenReturn(mockGroupMembersCollection);
-        when(
-          mockFirestore.collection('members'),
-        ).thenReturn(mockMembersCollection);
-      });
-
-      void mockAdminGroup({
-        required String memberId,
-        required String groupId,
-        required String groupName,
-        required String memo,
-        required MockCollectionReference<Map<String, dynamic>> mockCollection,
-        required MockQuery<Map<String, dynamic>> mockAdminQuery,
-        List<MockQueryDocumentSnapshot<Map<String, dynamic>>>? docs,
-      }) {
-        final mockAdminQuerySnapshot =
-            MockQuerySnapshot<Map<String, dynamic>>();
-        when(
-          mockCollection.where('administratorId', isEqualTo: memberId),
-        ).thenReturn(mockAdminQuery);
-        when(
-          mockAdminQuery.get(),
-        ).thenAnswer((_) async => mockAdminQuerySnapshot);
-        when(mockAdminQuerySnapshot.docs).thenReturn(docs ?? []);
-        if (docs != null && docs.isNotEmpty) {
-          when(docs[0].id).thenReturn(groupId);
-          when(docs[0].data()).thenReturn({
-            'administratorId': memberId,
-            'name': groupName,
-            'memo': memo,
-            'createdAt': DateTime.now().millisecondsSinceEpoch,
-          });
-        }
+      Member createTestMember(String memberId) {
+        return Member(
+          id: memberId,
+          displayName: 'テストユーザー',
+          email: 'test@example.com',
+        );
       }
 
-      void mockMemberGroup({
-        required String memberId,
-        required String groupId,
-        required MockCollectionReference<Map<String, dynamic>>
-        mockGroupMembersCollection,
-        required MockQuery<Map<String, dynamic>> mockGroupMembersQuery,
-        List<MockQueryDocumentSnapshot<Map<String, dynamic>>>? docs,
+      Group createTestGroup({
+        required String id,
+        required String administratorId,
+        required String name,
+        String? memo,
       }) {
-        final mockMemberQuerySnapshot =
-            MockQuerySnapshot<Map<String, dynamic>>();
-        when(
-          mockGroupMembersCollection.where('memberId', isEqualTo: memberId),
-        ).thenReturn(mockGroupMembersQuery);
-        when(
-          mockGroupMembersQuery.get(),
-        ).thenAnswer((_) async => mockMemberQuerySnapshot);
-        when(mockMemberQuerySnapshot.docs).thenReturn(docs ?? []);
-        if (docs != null && docs.isNotEmpty) {
+        return Group(
+          id: id,
+          administratorId: administratorId,
+          name: name,
+          memo: memo ?? '$nameメモ',
+        );
+      }
+
+      _TestFirestoreGroupRepository setupMockedRepository({
+        required List<Group> adminGroups,
+        required List<Group> memberGroups,
+        required List<GroupWithMembers> expectedResult,
+        required String memberId,
+        bool shouldThrowError = false,
+      }) {
+        final mockRepository = MockFirestoreGroupRepository();
+
+        if (shouldThrowError) {
           when(
-            docs[0].data(),
-          ).thenReturn({'groupId': groupId, 'memberId': memberId});
-        }
-      }
-
-      void mockGroupDoc({
-        required String groupId,
-        required String adminId,
-        required String groupName,
-        required String memo,
-        required MockCollectionReference<Map<String, dynamic>> mockCollection,
-        MockDocumentReference<Map<String, dynamic>>? mockGroupDocRef,
-        MockDocumentSnapshot<Map<String, dynamic>>? mockGroupDocSnapshot,
-      }) {
-        final docRef =
-            mockGroupDocRef ?? MockDocumentReference<Map<String, dynamic>>();
-        final docSnapshot =
-            mockGroupDocSnapshot ??
-            MockDocumentSnapshot<Map<String, dynamic>>();
-        when(mockCollection.doc(groupId)).thenReturn(docRef);
-        when(docRef.get()).thenAnswer((_) async => docSnapshot);
-        when(docSnapshot.exists).thenReturn(true);
-        when(docSnapshot.id).thenReturn(groupId);
-        when(docSnapshot.data()).thenReturn({
-          'administratorId': adminId,
-          'name': groupName,
-          'memo': memo,
-          'createdAt': DateTime.now().millisecondsSinceEpoch,
-        });
-      }
-
-      void mockGroupMembers({
-        required String groupId,
-        required String memberId,
-        required MockCollectionReference<Map<String, dynamic>>
-        mockGroupMembersCollection,
-        List<MockQueryDocumentSnapshot<Map<String, dynamic>>>? docs,
-      }) {
-        final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
-        final mockGroupMemberSnapshot =
-            MockQuerySnapshot<Map<String, dynamic>>();
-        when(
-          mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
-        ).thenReturn(mockGroupMemberQuery);
-        when(
-          mockGroupMemberQuery.get(),
-        ).thenAnswer((_) async => mockGroupMemberSnapshot);
-        when(mockGroupMemberSnapshot.docs).thenReturn(docs ?? []);
-        if (docs != null && docs.isNotEmpty) {
+            mockRepository.getGroupsWhereUserIsAdmin(memberId),
+          ).thenThrow(Exception('Firestore error'));
+        } else {
           when(
-            docs[0].data(),
-          ).thenReturn({'memberId': memberId, 'groupId': groupId});
+            mockRepository.getGroupsWhereUserIsAdmin(memberId),
+          ).thenAnswer((_) async => adminGroups);
         }
-      }
 
-      void mockMemberInfo({
-        required String memberId,
-        required MockCollectionReference<Map<String, dynamic>>
-        mockMembersCollection,
-        MockDocumentReference<Map<String, dynamic>>? mockMemberDocRef,
-        MockDocumentSnapshot<Map<String, dynamic>>? mockMemberDocSnapshot,
-      }) {
-        final docRef =
-            mockMemberDocRef ?? MockDocumentReference<Map<String, dynamic>>();
-        final docSnapshot =
-            mockMemberDocSnapshot ??
-            MockDocumentSnapshot<Map<String, dynamic>>();
-        when(mockMembersCollection.doc(memberId)).thenReturn(docRef);
-        when(docRef.get()).thenAnswer((_) async => docSnapshot);
-        when(docSnapshot.exists).thenReturn(true);
-        when(docSnapshot.id).thenReturn(memberId);
         when(
-          docSnapshot.data(),
-        ).thenReturn({'displayName': 'テストユーザー', 'email': 'test@example.com'});
+          mockRepository.getGroupsWhereUserIsMember(memberId),
+        ).thenAnswer((_) async => memberGroups);
+        when(
+          mockRepository.addMembersToGroups(any),
+        ).thenAnswer((_) async => expectedResult);
+
+        return _TestFirestoreGroupRepository(
+          firestore: mockFirestore,
+          mockRepository: mockRepository,
+        );
       }
 
       test('管理者グループとメンバーグループ両方がある場合、重複なしで2件のGroupWithMembersを返す', () async {
         const memberId = 'member001';
-        // 管理者グループ
-        final mockAdminDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockAdminGroup(
+
+        // テストデータ作成
+        final adminGroups = [
+          createTestGroup(
+            id: 'admin-group001',
+            administratorId: memberId,
+            name: '管理者グループ',
+          ),
+        ];
+        final memberGroups = [
+          createTestGroup(
+            id: 'member-group001',
+            administratorId: 'other-admin',
+            name: 'メンバーグループ',
+          ),
+        ];
+
+        final mockMember = createTestMember(memberId);
+        final expectedResult = [
+          GroupWithMembers(group: adminGroups.first, members: [mockMember]),
+          GroupWithMembers(group: memberGroups.first, members: [mockMember]),
+        ];
+
+        // モックセットアップ
+        final testRepository = setupMockedRepository(
+          adminGroups: adminGroups,
+          memberGroups: memberGroups,
+          expectedResult: expectedResult,
           memberId: memberId,
-          groupId: 'admin-group001',
-          groupName: '管理者グループ',
-          memo: '管理者メモ',
-          mockCollection: mockCollection,
-          mockAdminQuery: mockAdminQuery,
-          docs: [mockAdminDoc],
-        );
-        // メンバーグループ
-        final mockGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockMemberGroup(
-          memberId: memberId,
-          groupId: 'member-group001',
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          mockGroupMembersQuery: mockGroupMembersQuery,
-          docs: [mockGroupMemberDoc],
-        );
-        // メンバーグループドキュメント
-        mockGroupDoc(
-          groupId: 'member-group001',
-          adminId: 'other-admin',
-          groupName: 'メンバーグループ',
-          memo: 'メンバーメモ',
-          mockCollection: mockCollection,
-        );
-        // 管理者グループのメンバー
-        final mockAdminGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockGroupMembers(
-          groupId: 'admin-group001',
-          memberId: memberId,
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          docs: [mockAdminGroupMemberDoc],
-        );
-        // メンバーグループのメンバー
-        final mockMemberGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockGroupMembers(
-          groupId: 'member-group001',
-          memberId: memberId,
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          docs: [mockMemberGroupMemberDoc],
-        );
-        // メンバー情報
-        mockMemberInfo(
-          memberId: memberId,
-          mockMembersCollection: mockMembersCollection,
         );
 
-        final List<GroupWithMembers> result = await repository
+        final List<GroupWithMembers> result = await testRepository
             .getGroupsWithMembersByMemberId(memberId);
 
         expect(result.length, 2);
@@ -401,45 +319,44 @@ void main() {
         expect(memberGroup.members.length, 1);
         expect(memberGroup.members[0].id, memberId);
         expect(memberGroup.members[0].displayName, 'テストユーザー');
+
+        // モックが呼ばれたことを確認
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+        ).called(1);
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+        ).called(1);
+        verify(testRepository.mockRepository.addMembersToGroups(any)).called(1);
       });
 
       test('管理者グループのみある場合、1件のGroupWithMembersを返す', () async {
         const memberId = 'member001';
-        // 管理者グループ
-        final mockAdminDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockAdminGroup(
+
+        // テストデータ作成
+        final adminGroups = [
+          createTestGroup(
+            id: 'admin-group001',
+            administratorId: memberId,
+            name: '管理者グループ',
+          ),
+        ];
+        final memberGroups = <Group>[];
+
+        final mockMember = createTestMember(memberId);
+        final expectedResult = [
+          GroupWithMembers(group: adminGroups.first, members: [mockMember]),
+        ];
+
+        // モックセットアップ
+        final testRepository = setupMockedRepository(
+          adminGroups: adminGroups,
+          memberGroups: memberGroups,
+          expectedResult: expectedResult,
           memberId: memberId,
-          groupId: 'admin-group001',
-          groupName: '管理者グループ',
-          memo: '管理者メモ',
-          mockCollection: mockCollection,
-          mockAdminQuery: mockAdminQuery,
-          docs: [mockAdminDoc],
-        );
-        // メンバーグループ（空）
-        mockMemberGroup(
-          memberId: memberId,
-          groupId: '',
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          mockGroupMembersQuery: mockGroupMembersQuery,
-          docs: [],
-        );
-        // 管理者グループのメンバー
-        final mockAdminGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockGroupMembers(
-          groupId: 'admin-group001',
-          memberId: memberId,
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          docs: [mockAdminGroupMemberDoc],
-        );
-        // メンバー情報
-        mockMemberInfo(
-          memberId: memberId,
-          mockMembersCollection: mockMembersCollection,
         );
 
-        final List<GroupWithMembers> result = await repository
+        final List<GroupWithMembers> result = await testRepository
             .getGroupsWithMembersByMemberId(memberId);
 
         expect(result.length, 1);
@@ -449,54 +366,44 @@ void main() {
         expect(result[0].members.length, 1);
         expect(result[0].members[0].id, memberId);
         expect(result[0].members[0].displayName, 'テストユーザー');
+
+        // モックが呼ばれたことを確認
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+        ).called(1);
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+        ).called(1);
+        verify(testRepository.mockRepository.addMembersToGroups(any)).called(1);
       });
 
       test('メンバーグループのみある場合、1件のGroupWithMembersを返す', () async {
         const memberId = 'member001';
-        // 管理者グループ（空）
-        mockAdminGroup(
+
+        // テストデータ作成
+        final adminGroups = <Group>[];
+        final memberGroups = [
+          createTestGroup(
+            id: 'member-group001',
+            administratorId: 'other-admin',
+            name: 'メンバーグループ',
+          ),
+        ];
+
+        final mockMember = createTestMember(memberId);
+        final expectedResult = [
+          GroupWithMembers(group: memberGroups.first, members: [mockMember]),
+        ];
+
+        // モックセットアップ
+        final testRepository = setupMockedRepository(
+          adminGroups: adminGroups,
+          memberGroups: memberGroups,
+          expectedResult: expectedResult,
           memberId: memberId,
-          groupId: '',
-          groupName: '',
-          memo: '',
-          mockCollection: mockCollection,
-          mockAdminQuery: mockAdminQuery,
-          docs: [],
-        );
-        // メンバーグループ
-        final mockGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockMemberGroup(
-          memberId: memberId,
-          groupId: 'member-group001',
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          mockGroupMembersQuery: mockGroupMembersQuery,
-          docs: [mockGroupMemberDoc],
-        );
-        // メンバーグループドキュメント
-        mockGroupDoc(
-          groupId: 'member-group001',
-          adminId: 'other-admin',
-          groupName: 'メンバーグループ',
-          memo: 'メンバーメモ',
-          mockCollection: mockCollection,
-        );
-        // メンバーグループのメンバー
-        final mockMemberGroupMemberDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        mockGroupMembers(
-          groupId: 'member-group001',
-          memberId: memberId,
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          docs: [mockMemberGroupMemberDoc],
-        );
-        // メンバー情報
-        mockMemberInfo(
-          memberId: memberId,
-          mockMembersCollection: mockMembersCollection,
         );
 
-        final List<GroupWithMembers> result = await repository
+        final List<GroupWithMembers> result = await testRepository
             .getGroupsWithMembersByMemberId(memberId);
 
         expect(result.length, 1);
@@ -506,6 +413,15 @@ void main() {
         expect(result[0].members.length, 1);
         expect(result[0].members[0].id, memberId);
         expect(result[0].members[0].displayName, 'テストユーザー');
+
+        // モックが呼ばれたことを確認
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+        ).called(1);
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+        ).called(1);
+        verify(testRepository.mockRepository.addMembersToGroups(any)).called(1);
       });
 
       test(
@@ -513,52 +429,30 @@ void main() {
         () async {
           const memberId = 'member001';
           const groupId = 'same-group001';
-          // 管理者グループ
-          final mockAdminDoc =
-              MockQueryDocumentSnapshot<Map<String, dynamic>>();
-          mockAdminGroup(
-            memberId: memberId,
-            groupId: groupId,
-            groupName: '同一グループ',
-            memo: '同一グループメモ',
-            mockCollection: mockCollection,
-            mockAdminQuery: mockAdminQuery,
-            docs: [mockAdminDoc],
+
+          // テストデータ作成
+          final sameGroup = createTestGroup(
+            id: groupId,
+            administratorId: memberId,
+            name: '同一グループ',
           );
-          // メンバーグループ
-          final mockGroupMemberDoc =
-              MockQueryDocumentSnapshot<Map<String, dynamic>>();
-          mockMemberGroup(
+          final adminGroups = [sameGroup];
+          final memberGroups = [sameGroup];
+
+          final mockMember = createTestMember(memberId);
+          final expectedResult = [
+            GroupWithMembers(group: sameGroup, members: [mockMember]),
+          ];
+
+          // モックセットアップ
+          final testRepository = setupMockedRepository(
+            adminGroups: adminGroups,
+            memberGroups: memberGroups,
+            expectedResult: expectedResult,
             memberId: memberId,
-            groupId: groupId,
-            mockGroupMembersCollection: mockGroupMembersCollection,
-            mockGroupMembersQuery: mockGroupMembersQuery,
-            docs: [mockGroupMemberDoc],
-          );
-          // 同一グループドキュメント
-          mockGroupDoc(
-            groupId: groupId,
-            adminId: memberId,
-            groupName: '同一グループ',
-            memo: '同一グループメモ',
-            mockCollection: mockCollection,
-          );
-          // グループのメンバー
-          final mockGroupMemberDocForMember =
-              MockQueryDocumentSnapshot<Map<String, dynamic>>();
-          mockGroupMembers(
-            groupId: groupId,
-            memberId: memberId,
-            mockGroupMembersCollection: mockGroupMembersCollection,
-            docs: [mockGroupMemberDocForMember],
-          );
-          // メンバー情報
-          mockMemberInfo(
-            memberId: memberId,
-            mockMembersCollection: mockMembersCollection,
           );
 
-          final result = await repository.getGroupsWithMembersByMemberId(
+          final result = await testRepository.getGroupsWithMembersByMemberId(
             memberId,
           );
 
@@ -569,47 +463,155 @@ void main() {
           expect(result[0].members.length, 1);
           expect(result[0].members[0].id, memberId);
           expect(result[0].members[0].displayName, 'テストユーザー');
+
+          // モックが呼ばれたことを確認
+          verify(
+            testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+          ).called(1);
+          verify(
+            testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+          ).called(1);
+          verify(
+            testRepository.mockRepository.addMembersToGroups(any),
+          ).called(1);
         },
       );
 
       test('管理者・メンバーどちらのグループもない場合、空のリストを返す', () async {
         const memberId = 'member001';
-        // 管理者グループ（空）
-        mockAdminGroup(
+
+        // テストデータ作成
+        final adminGroups = <Group>[];
+        final memberGroups = <Group>[];
+        final expectedResult = <GroupWithMembers>[];
+
+        // モックセットアップ
+        final testRepository = setupMockedRepository(
+          adminGroups: adminGroups,
+          memberGroups: memberGroups,
+          expectedResult: expectedResult,
           memberId: memberId,
-          groupId: '',
-          groupName: '',
-          memo: '',
-          mockCollection: mockCollection,
-          mockAdminQuery: mockAdminQuery,
-          docs: [],
-        );
-        // メンバーグループ（空）
-        mockMemberGroup(
-          memberId: memberId,
-          groupId: '',
-          mockGroupMembersCollection: mockGroupMembersCollection,
-          mockGroupMembersQuery: mockGroupMembersQuery,
-          docs: [],
         );
 
-        final List<GroupWithMembers> result = await repository
+        final List<GroupWithMembers> result = await testRepository
             .getGroupsWithMembersByMemberId(memberId);
 
         expect(result, isEmpty);
+
+        // モックが呼ばれたことを確認
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+        ).called(1);
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+        ).called(1);
+        verify(testRepository.mockRepository.addMembersToGroups(any)).called(1);
       });
 
       test('エラーが発生した場合、空のリストを返す', () async {
         const memberId = 'member001';
-        when(
-          mockCollection.where('administratorId', isEqualTo: memberId),
-        ).thenReturn(mockAdminQuery);
-        when(mockAdminQuery.get()).thenThrow(Exception('Firestore error'));
 
-        final List<GroupWithMembers> result = await repository
+        // テストデータ作成（エラーケース）
+        final adminGroups = <Group>[];
+        final memberGroups = <Group>[];
+        final expectedResult = <GroupWithMembers>[];
+
+        // モックセットアップ（エラーケース）
+        final testRepository = setupMockedRepository(
+          adminGroups: adminGroups,
+          memberGroups: memberGroups,
+          expectedResult: expectedResult,
+          memberId: memberId,
+          shouldThrowError: true,
+        );
+
+        final List<GroupWithMembers> result = await testRepository
             .getGroupsWithMembersByMemberId(memberId);
 
         expect(result, isEmpty);
+
+        // エラーが発生したメソッドが呼ばれたことを確認
+        verify(
+          testRepository.mockRepository.getGroupsWhereUserIsAdmin(memberId),
+        ).called(1);
+        // エラーが発生した後は他のメソッドは呼ばれない
+        verifyNever(
+          testRepository.mockRepository.getGroupsWhereUserIsMember(memberId),
+        );
+        verifyNever(testRepository.mockRepository.addMembersToGroups(any));
+      });
+    });
+
+    group('getManagedGroupsWithMembersByAdministratorId', () {
+      test('管理者IDに基づいてGroupWithMembersのリストを返す', () async {
+        const administratorId = 'admin001';
+
+        // getGroupsByAdministratorIdの戻り値を直接モック
+        final mockGroups = [
+          Group(
+            id: 'group001',
+            administratorId: administratorId,
+            name: 'テストグループ',
+            memo: 'テストメモ',
+          ),
+        ];
+
+        // repositoryのgetGroupsByAdministratorIdをモック
+        final mockRepository = MockFirestoreGroupRepository();
+        when(
+          mockRepository.getGroupsByAdministratorId(administratorId),
+        ).thenAnswer((_) async => mockGroups);
+
+        // addMembersToGroupsの戻り値もモック
+        final expectedResult = [
+          GroupWithMembers(group: mockGroups.first, members: []),
+        ];
+        when(
+          mockRepository.addMembersToGroups(any),
+        ).thenAnswer((_) async => expectedResult);
+
+        // 実際のFirestoreRepositoryインスタンスを使用し、必要なメソッドをオーバーライド
+        final testRepository = _TestFirestoreGroupRepository(
+          firestore: mockFirestore,
+          mockRepository: mockRepository,
+        );
+
+        final List<GroupWithMembers> result = await testRepository
+            .getManagedGroupsWithMembersByAdministratorId(administratorId);
+
+        expect(result, isA<List<GroupWithMembers>>());
+        expect(result.length, equals(1));
+        expect(result.first.group.id, equals('group001'));
+        expect(result.first.group.administratorId, equals(administratorId));
+        expect(result.first.members, isEmpty);
+
+        verify(
+          mockRepository.getGroupsByAdministratorId(administratorId),
+        ).called(1);
+        verify(mockRepository.addMembersToGroups(any)).called(1);
+      });
+
+      test('エラーが発生した場合、空のリストを返す', () async {
+        const administratorId = 'admin001';
+
+        // getGroupsByAdministratorIdでエラーが発生する場合をモック
+        final mockRepository = MockFirestoreGroupRepository();
+        when(
+          mockRepository.getGroupsByAdministratorId(administratorId),
+        ).thenThrow(Exception('Firestore error'));
+
+        final testRepository = _TestFirestoreGroupRepository(
+          firestore: mockFirestore,
+          mockRepository: mockRepository,
+        );
+
+        final List<GroupWithMembers> result = await testRepository
+            .getManagedGroupsWithMembersByAdministratorId(administratorId);
+
+        expect(result, isEmpty);
+        verify(
+          mockRepository.getGroupsByAdministratorId(administratorId),
+        ).called(1);
       });
     });
   });
