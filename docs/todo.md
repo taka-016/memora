@@ -8,6 +8,7 @@
 
 - [x] GroupRepositoryにgetGroupsWithMembersByMemberIdメソッドを追加する
 - [x] GetGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
+- [x] GetManagedGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
 
 ## マップの表示
 

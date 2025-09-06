@@ -3,30 +3,20 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/domain/repositories/group_member_repository.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 
 import 'get_managed_groups_with_members_usecase_test.mocks.dart';
 
-@GenerateMocks([GroupRepository, GroupMemberRepository, MemberRepository])
+@GenerateMocks([GroupRepository])
 void main() {
   late GetManagedGroupsWithMembersUsecase usecase;
   late MockGroupRepository mockGroupRepository;
-  late MockGroupMemberRepository mockGroupMemberRepository;
-  late MockMemberRepository mockMemberRepository;
 
   setUp(() {
     mockGroupRepository = MockGroupRepository();
-    mockGroupMemberRepository = MockGroupMemberRepository();
-    mockMemberRepository = MockMemberRepository();
-    usecase = GetManagedGroupsWithMembersUsecase(
-      mockGroupRepository,
-      mockGroupMemberRepository,
-      mockMemberRepository,
-    );
+    usecase = GetManagedGroupsWithMembersUsecase(mockGroupRepository);
   });
 
   group('GetManagedGroupsWithMembersUsecase', () {
@@ -41,18 +31,16 @@ void main() {
         administratorId: '',
       );
 
-      final groups = [
-        Group(id: 'group1', name: 'Group 1', administratorId: administratorId),
-        Group(id: 'group2', name: 'Group 2', administratorId: administratorId),
-      ];
-
-      final groupMembers1 = [
-        GroupMember(id: 'gm1', groupId: 'group1', memberId: 'member1'),
-      ];
-
-      final groupMembers2 = [
-        GroupMember(id: 'gm2', groupId: 'group2', memberId: 'member2'),
-      ];
+      final group1 = Group(
+        id: 'group1',
+        name: 'Group 1',
+        administratorId: administratorId,
+      );
+      final group2 = Group(
+        id: 'group2',
+        name: 'Group 2',
+        administratorId: administratorId,
+      );
 
       final member1 = Member(
         id: 'member1',
@@ -70,36 +58,31 @@ void main() {
         administratorId: administratorId,
       );
 
+      final expectedResult = [
+        GroupWithMembers(group: group1, members: [member1]),
+        GroupWithMembers(group: group2, members: [member2]),
+      ];
+
       when(
-        mockGroupRepository.getGroupsByAdministratorId(administratorId),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group1'),
-      ).thenAnswer((_) async => groupMembers1);
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group2'),
-      ).thenAnswer((_) async => groupMembers2);
-      when(
-        mockMemberRepository.getMemberById('member1'),
-      ).thenAnswer((_) async => member1);
-      when(
-        mockMemberRepository.getMemberById('member2'),
-      ).thenAnswer((_) async => member2);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          administratorId,
+        ),
+      ).thenAnswer((_) async => expectedResult);
 
       // act
       final result = await usecase.execute(administratorMember);
 
       // assert
       expect(result.length, equals(2));
-      expect(result[0].group, equals(groups[0]));
+      expect(result[0].group, equals(group1));
       expect(result[0].members, equals([member1]));
-      expect(result[1].group, equals(groups[1]));
+      expect(result[1].group, equals(group2));
       expect(result[1].members, equals([member2]));
-      verify(mockGroupRepository.getGroupsByAdministratorId(administratorId));
-      verify(mockGroupMemberRepository.getGroupMembersByGroupId('group1'));
-      verify(mockGroupMemberRepository.getGroupMembersByGroupId('group2'));
-      verify(mockMemberRepository.getMemberById('member1'));
-      verify(mockMemberRepository.getMemberById('member2'));
+      verify(
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          administratorId,
+        ),
+      );
     });
 
     test('グループが見つからない場合に空のリストを返すこと', () async {
@@ -114,7 +97,9 @@ void main() {
       );
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(administratorId),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          administratorId,
+        ),
       ).thenAnswer((_) async => []);
 
       // act
@@ -122,7 +107,11 @@ void main() {
 
       // assert
       expect(result, isEmpty);
-      verify(mockGroupRepository.getGroupsByAdministratorId(administratorId));
+      verify(
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          administratorId,
+        ),
+      );
     });
   });
 }

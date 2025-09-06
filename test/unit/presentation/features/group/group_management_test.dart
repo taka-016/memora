@@ -6,6 +6,7 @@ import 'package:mockito/mockito.dart';
 
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/group_member_repository.dart';
@@ -70,32 +71,29 @@ void main() {
   group('GroupManagement', () {
     testWidgets('初期化時にグループリストが読み込まれること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
-        Group(
-          id: 'group-2',
-          administratorId: testMember.id,
-          name: 'Test Group 2',
-          memo: 'Test memo 2',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+      final group2 = Group(
+        id: 'group-2',
+        administratorId: testMember.id,
+        name: 'Test Group 2',
+        memo: 'Test memo 2',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
+        GroupWithMembers(group: group2, members: []),
       ];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
-
-      // グループメンバー取得のモック
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-2'),
-      ).thenAnswer((_) async => []);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
       await tester.pumpWidget(
@@ -123,7 +121,9 @@ void main() {
 
       // Assert
       verify(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
       ).called(1);
       expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('Test Group 1'), findsOneWidget);
@@ -135,7 +135,9 @@ void main() {
     testWidgets('管理しているグループがない場合、空状態が表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -167,7 +169,9 @@ void main() {
     testWidgets('グループ追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -198,7 +202,9 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
       ).thenThrow(Exception('Network error'));
 
       // Act
@@ -230,23 +236,22 @@ void main() {
 
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
-
-      // グループメンバー取得のモック
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
       await tester.pumpWidget(
@@ -278,29 +283,30 @@ void main() {
 
       // Assert
       verify(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
       ).called(2);
     });
 
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
-
-      // グループメンバー取得のモック
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
       await tester.pumpWidget(
@@ -328,28 +334,28 @@ void main() {
 
     testWidgets('グループ一覧の行をタップして編集画面が開けること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
 
       final availableMembers = [testMember];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
       ).thenAnswer((_) async => availableMembers);
-
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
 
       // Act
       await tester.pumpWidget(
@@ -381,20 +387,24 @@ void main() {
 
     testWidgets('グループ情報の更新ができること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
 
       final availableMembers = [testMember];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
@@ -454,43 +464,46 @@ void main() {
 
     testWidgets('グループメンバーの追加削除ができること', (WidgetTester tester) async {
       // Arrange
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final member2 = Member(
+        id: 'member-2',
+        accountId: 'account-2',
+        administratorId: testMember.id,
+        displayName: 'Member 2',
+        kanjiLastName: '田中',
+        kanjiFirstName: '花子',
+        hiraganaLastName: 'たなか',
+        hiraganaFirstName: 'はなこ',
+        firstName: 'Hanako',
+        lastName: 'Tanaka',
+        gender: '女性',
+        birthday: DateTime(1992, 5, 15),
+        email: 'hanako@example.com',
+        phoneNumber: '090-8765-4321',
+        type: 'member',
+        passportNumber: null,
+        passportExpiration: null,
+        anaMileageNumber: null,
+        jalMileageNumber: null,
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
 
-      final availableMembers = [
-        testMember,
-        Member(
-          id: 'member-2',
-          accountId: 'account-2',
-          administratorId: testMember.id,
-          displayName: 'Member 2',
-          kanjiLastName: '田中',
-          kanjiFirstName: '花子',
-          hiraganaLastName: 'たなか',
-          hiraganaFirstName: 'はなこ',
-          firstName: 'Hanako',
-          lastName: 'Tanaka',
-          gender: '女性',
-          birthday: DateTime(1992, 5, 15),
-          email: 'hanako@example.com',
-          phoneNumber: '090-8765-4321',
-          type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
-        ),
-      ];
+      final availableMembers = [testMember, member2];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
@@ -561,14 +574,17 @@ void main() {
     testWidgets('グループ削除時にグループメンバーも削除されること', (WidgetTester tester) async {
       // Arrange
       final now = DateTime.now();
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
+
       final tripEntries = [
         TripEntry(
           id: 'trip1',
@@ -581,8 +597,10 @@ void main() {
       ];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
         mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
@@ -637,14 +655,17 @@ void main() {
     ) async {
       // Arrange
       final now = DateTime.now();
-      final managedGroups = [
-        Group(
-          id: 'group-1',
-          administratorId: testMember.id,
-          name: 'Test Group 1',
-          memo: 'Test memo 1',
-        ),
+      final group1 = Group(
+        id: 'group-1',
+        administratorId: testMember.id,
+        name: 'Test Group 1',
+        memo: 'Test memo 1',
+      );
+
+      final managedGroupsWithMembers = [
+        GroupWithMembers(group: group1, members: []),
       ];
+
       final tripEntries = [
         TripEntry(
           id: 'trip1',
@@ -657,8 +678,10 @@ void main() {
       ];
 
       when(
-        mockGroupRepository.getGroupsByAdministratorId(testMember.id),
-      ).thenAnswer((_) async => managedGroups);
+        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+          testMember.id,
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
         mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
