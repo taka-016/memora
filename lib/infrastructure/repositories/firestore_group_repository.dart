@@ -105,18 +105,6 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<GroupWithMembers>> addMembersToGroups(List<Group> groups) async {
-    final List<GroupWithMembers> result = [];
-
-    for (final group in groups) {
-      final members = await _getMembersForGroup(group.id);
-      result.add(GroupWithMembers(group: group, members: members));
-    }
-
-    return result;
-  }
-
-  @override
   Future<List<GroupWithMembers>> getGroupsWithMembersByMemberId(
     String memberId,
   ) async {
@@ -125,7 +113,7 @@ class FirestoreGroupRepository implements GroupRepository {
       final memberGroups = await getGroupsWhereUserIsMember(memberId);
       final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
 
-      return await addMembersToGroups(allGroups);
+      return await _addMembersToGroups(allGroups);
     } catch (e) {
       return [];
     }
@@ -137,7 +125,7 @@ class FirestoreGroupRepository implements GroupRepository {
   ) async {
     try {
       final managedGroups = await getGroupsByAdministratorId(administratorId);
-      return await addMembersToGroups(managedGroups);
+      return await _addMembersToGroups(managedGroups);
     } catch (e) {
       return [];
     }
@@ -165,6 +153,17 @@ class FirestoreGroupRepository implements GroupRepository {
     }
 
     return uniqueGroups;
+  }
+
+  Future<List<GroupWithMembers>> _addMembersToGroups(List<Group> groups) async {
+    final List<GroupWithMembers> result = [];
+
+    for (final group in groups) {
+      final members = await _getMembersForGroup(group.id);
+      result.add(GroupWithMembers(group: group, members: members));
+    }
+
+    return result;
   }
 
   Future<List<Member>> _getMembersForGroup(String groupId) async {
