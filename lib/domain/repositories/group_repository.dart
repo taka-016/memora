@@ -11,4 +11,7 @@ abstract class GroupRepository {
   Future<List<GroupWithMembers>> getGroupsWithMembersByMemberId(
     String memberId,
   );
+  Future<List<GroupWithMembers>> getManagedGroupsWithMembersByAdministratorId(
+    String administratorId,
+  );
 }

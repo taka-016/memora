@@ -11,6 +11,7 @@ import '../../../application/usecases/delete_group_members_by_group_id_usecase.d
 import '../../../domain/entities/member.dart';
 import '../../../domain/entities/group.dart';
 import '../../../domain/entities/group_member.dart';
+import '../../../domain/entities/group_with_members.dart';
 import '../../../domain/repositories/group_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/group_member_repository.dart';
@@ -64,7 +65,7 @@ class _GroupManagementState extends State<GroupManagement> {
   late final DeleteGroupMembersByGroupIdUsecase
   _deleteGroupMembersByGroupIdUsecase;
 
-  List<ManagedGroupWithMembers> _managedGroupsWithMembers = [];
+  List<GroupWithMembers> _managedGroupsWithMembers = [];
   bool _isLoading = true;
 
   @override
@@ -88,8 +89,6 @@ class _GroupManagementState extends State<GroupManagement> {
 
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
       groupRepository,
-      groupMemberRepository,
-      memberRepository,
     );
     _deleteGroupUsecase = DeleteGroupUsecase(
       groupRepository,
@@ -200,9 +199,10 @@ class _GroupManagementState extends State<GroupManagement> {
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
-      final groupWithMembers = _managedGroupsWithMembers.firstWhere(
-        (gwm) => gwm.group.id == group.id,
-      );
+      final groupWithMembers = _managedGroupsWithMembers
+          .where((gwm) => gwm.group.id == group.id)
+          .firstOrNull;
+      if (groupWithMembers == null) return;
       final existingMemberIds = groupWithMembers.members
           .map((member) => member.id)
           .toList();

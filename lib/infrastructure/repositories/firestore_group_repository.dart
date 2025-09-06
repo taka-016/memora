@@ -172,4 +172,16 @@ class FirestoreGroupRepository implements GroupRepository {
     }
     return members;
   }
+
+  @override
+  Future<List<GroupWithMembers>> getManagedGroupsWithMembersByAdministratorId(
+    String administratorId,
+  ) async {
+    try {
+      final managedGroups = await getGroupsByAdministratorId(administratorId);
+      return await _addMembersToGroups(managedGroups);
+    } catch (e) {
+      return [];
+    }
+  }
 }
