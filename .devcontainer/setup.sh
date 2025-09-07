@@ -10,6 +10,3 @@ flutter doctor
 flutter --version
 flutter pub get
 dart pub global activate very_good_cli
-
-# Serena MCPのセットアップ
-claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena-mcp-server --context ide-assistant --project $(pwd) --enable-web-dashboard false || true
