@@ -12,5 +12,4 @@ flutter pub get
 dart pub global activate very_good_cli
 
 # Claude Code UIの起動
-cd /app/claudecodeui
-pm2 start npm --name claudecodeui -- start
+(cd /app/claudecodeui && pm2 start npm --name claudecodeui -- start)
