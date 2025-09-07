@@ -45,7 +45,17 @@ RUN npm install -g firebase-tools
 RUN dart pub global activate flutterfire_cli
 
 # UVのインストール
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
+
+# PM2のインストール
+RUN npm install -g pm2@6.0.10
+
+# Claude Code UIのインストール
+RUN mkdir /app && cd /app && \
+  git clone https://github.com/siteboon/claudecodeui.git && \
+  cd claudecodeui && \
+  npm install && \
+  npm run build
 
 # /root/.gitconfig を削除
 RUN rm -f /root/.gitconfig
