@@ -9,6 +9,7 @@
 - [x] GroupRepositoryにgetGroupsWithMembersByMemberIdメソッドを追加する
 - [x] GetGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
 - [x] GetManagedGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
+- [ ] GroupをルートエンティティとしてGroupMemberとGroupEventを内部エンティティに加える
 
 ## マップの表示
 

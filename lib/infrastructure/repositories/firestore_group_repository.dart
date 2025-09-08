@@ -5,6 +5,8 @@ import '../../domain/entities/group_with_members.dart';
 import '../../domain/entities/member.dart';
 import '../mappers/firestore_group_mapper.dart';
 import '../mappers/firestore_member_mapper.dart';
+import '../mappers/firestore_group_member_mapper.dart';
+import '../mappers/firestore_group_event_mapper.dart';
 
 class FirestoreGroupRepository implements GroupRepository {
   final FirebaseFirestore _firestore;
@@ -32,9 +34,40 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<List<Group>> getGroups() async {
     try {
       final snapshot = await _firestore.collection('groups').get();
-      return snapshot.docs
+      final groups = snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
+
+      final List<Group> completeGroups = [];
+
+      for (final group in groups) {
+        final groupMembersSnapshot = await _firestore
+            .collection('group_members')
+            .where('groupId', isEqualTo: group.id)
+            .get();
+
+        final groupMembers = groupMembersSnapshot.docs
+            .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
+            .toList();
+
+        final eventsSnapshot = await _firestore
+            .collection('group_events')
+            .where('groupId', isEqualTo: group.id)
+            .get();
+
+        final groupEvents = eventsSnapshot.docs
+            .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
+            .toList();
+
+        final completeGroup = group.copyWith(
+          members: groupMembers,
+          events: groupEvents,
+        );
+
+        completeGroups.add(completeGroup);
+      }
+
+      return completeGroups;
     } catch (e) {
       return [];
     }

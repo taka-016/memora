@@ -129,10 +129,63 @@ void main() {
     });
 
     test('getGroupsがFirestoreからGroupのリストを返す', () async {
+      // groupsコレクションのモック
       when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('group001');
       when(mockDoc1.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
+
+      // group_membersコレクションのモック
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+      final mockGroupMemberDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: 'group001'),
+      ).thenReturn(mockGroupMembersQuery);
+      when(
+        mockGroupMembersQuery.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([mockGroupMemberDoc]);
+      when(mockGroupMemberDoc.id).thenReturn('group_member001');
+      when(
+        mockGroupMemberDoc.data(),
+      ).thenReturn({'groupId': 'group001', 'memberId': 'member001'});
+
+      // group_eventsコレクションのモック
+      final mockGroupEventsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupEventsQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupEventsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockGroupEventDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockFirestore.collection('group_events'),
+      ).thenReturn(mockGroupEventsCollection);
+      when(
+        mockGroupEventsCollection.where('groupId', isEqualTo: 'group001'),
+      ).thenReturn(mockGroupEventsQuery);
+      when(
+        mockGroupEventsQuery.get(),
+      ).thenAnswer((_) async => mockGroupEventsSnapshot);
+      when(mockGroupEventsSnapshot.docs).thenReturn([mockGroupEventDoc]);
+      when(mockGroupEventDoc.id).thenReturn('group_event001');
+      when(mockGroupEventDoc.data()).thenReturn({
+        'groupId': 'group001',
+        'type': 'meeting',
+        'name': 'テストイベント',
+        'startDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2)),
+        'memo': 'テストメモ',
+      });
 
       final result = await repository.getGroups();
 
@@ -140,6 +193,12 @@ void main() {
       expect(result[0].id, 'group001');
       expect(result[0].name, 'テストグループ');
       expect(result[0].memo, 'テストメモ');
+      expect(result[0].members?.length, 1);
+      expect(result[0].members?[0].id, 'group_member001');
+      expect(result[0].members?[0].memberId, 'member001');
+      expect(result[0].events?.length, 1);
+      expect(result[0].events?[0].id, 'group_event001');
+      expect(result[0].events?[0].name, 'テストイベント');
     });
 
     test('getGroupsがエラー時に空のリストを返す', () async {
