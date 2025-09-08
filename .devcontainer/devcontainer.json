@@ -17,7 +17,6 @@
         "source=gradle-memora,target=/root/.gradle,type=volume",
         "source=bashhistory-memora,target=/commandhistory,type=volume"
     ],
-    "initializeCommand": "[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true",
     "runArgs": [
         "--env-file",
         ".devcontainer/.env",
@@ -53,5 +52,7 @@
             }
         }
     },
-    "postCreateCommand": "bash .devcontainer/setup.sh"
+    "initializeCommand": "bash .devcontainer/initialize.sh",
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/start.sh"
 }
