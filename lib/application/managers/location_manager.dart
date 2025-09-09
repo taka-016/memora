@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/location_state.dart';
-import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
+import 'package:memora/domain/services/location/current_location_service.dart';
+import 'package:memora/infrastructure/services/location/geolocator_current_location_service.dart';
 
 final locationProvider = StateNotifierProvider<LocationManager, LocationState>((
   ref,

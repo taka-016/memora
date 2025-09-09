@@ -5,7 +5,7 @@ import 'package:memora/domain/value_objects/location.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/managers/location_manager.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/domain/services/location/current_location_service.dart';
 
 import 'location_manager_test.mocks.dart';
 

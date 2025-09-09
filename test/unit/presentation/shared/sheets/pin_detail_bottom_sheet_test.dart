@@ -4,7 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/domain/services/nearby_location_service.dart';
+import 'package:memora/domain/services/location/nearby_location_service.dart';
 
 import 'pin_detail_bottom_sheet_test.mocks.dart';
 

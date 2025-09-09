@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/domain/services/query/group_query_service.dart';
 import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
 import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:mockito/annotations.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/infrastructure/services/placeholder_map_view_service.dart';
+import 'package:memora/infrastructure/services/map/placeholder_map_view_service.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/shared/maps/placeholder_map_view.dart';

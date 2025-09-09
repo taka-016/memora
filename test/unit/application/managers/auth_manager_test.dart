@@ -4,7 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/services/auth_service.dart';
+import 'package:memora/domain/services/auth/auth_service.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/application/usecases/get_or_create_member_usecase.dart';
 

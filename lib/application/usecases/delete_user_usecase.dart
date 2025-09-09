@@ -1,4 +1,4 @@
-import '../../domain/services/auth_service.dart';
+import '../../domain/services/auth/auth_service.dart';
 
 class DeleteUserUseCase {
   const DeleteUserUseCase({required this.authService});

@@ -1,4 +1,4 @@
-import '../../domain/services/auth_service.dart';
+import '../../domain/services/auth/auth_service.dart';
 
 class UpdateEmailUseCase {
   const UpdateEmailUseCase({required this.authService});

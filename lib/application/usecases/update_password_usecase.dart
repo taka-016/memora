@@ -1,4 +1,4 @@
-import '../../domain/services/auth_service.dart';
+import '../../domain/services/auth/auth_service.dart';
 
 class UpdatePasswordUseCase {
   const UpdatePasswordUseCase({required this.authService});

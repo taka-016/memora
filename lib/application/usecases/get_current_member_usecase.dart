@@ -1,6 +1,6 @@
 import '../../domain/entities/member.dart';
 import '../../domain/repositories/member_repository.dart';
-import '../../domain/services/auth_service.dart';
+import '../../domain/services/auth/auth_service.dart';
 
 class GetCurrentMemberUseCase {
   final MemberRepository _memberRepository;

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/managers/location_manager.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/domain/services/location/current_location_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/shared/maps/google_map_view.dart';

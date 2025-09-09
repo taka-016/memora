@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/value_objects/auth_state.dart';
 import '../../domain/entities/user.dart';
-import '../../domain/services/auth_service.dart';
+import '../../domain/services/auth/auth_service.dart';
 import '../../domain/repositories/member_repository.dart';
-import '../../infrastructure/services/firebase_auth_service.dart';
+import '../../infrastructure/services/auth/firebase_auth_service.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
 import '../usecases/get_or_create_member_usecase.dart';
 
