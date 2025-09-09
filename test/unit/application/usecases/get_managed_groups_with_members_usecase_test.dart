@@ -1,22 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
 
 import 'get_managed_groups_with_members_usecase_test.mocks.dart';
 
-@GenerateMocks([GroupRepository])
+@GenerateMocks([GroupQueryService])
 void main() {
   late GetManagedGroupsWithMembersUsecase usecase;
-  late MockGroupRepository mockGroupRepository;
+  late MockGroupQueryService mockGroupQueryService;
 
   setUp(() {
-    mockGroupRepository = MockGroupRepository();
-    usecase = GetManagedGroupsWithMembersUsecase(mockGroupRepository);
+    mockGroupQueryService = MockGroupQueryService();
+    usecase = GetManagedGroupsWithMembersUsecase(mockGroupQueryService);
   });
 
   group('GetManagedGroupsWithMembersUsecase', () {
@@ -31,40 +31,33 @@ void main() {
         administratorId: '',
       );
 
-      final group1 = Group(
-        id: 'group1',
-        name: 'Group 1',
-        administratorId: administratorId,
-      );
-      final group2 = Group(
-        id: 'group2',
-        name: 'Group 2',
-        administratorId: administratorId,
-      );
-
-      final member1 = Member(
+      final member1 = MemberDto(
         id: 'member1',
         displayName: 'Member 1',
         email: 'member1@example.com',
-        accountId: 'account1',
-        administratorId: administratorId,
       );
 
-      final member2 = Member(
+      final member2 = MemberDto(
         id: 'member2',
         displayName: 'Member 2',
         email: 'member2@example.com',
-        accountId: 'account2',
-        administratorId: administratorId,
       );
 
       final expectedResult = [
-        GroupWithMembers(group: group1, members: [member1]),
-        GroupWithMembers(group: group2, members: [member2]),
+        GroupWithMembersDto(
+          groupId: '1',
+          groupName: 'Group 1',
+          members: [member1],
+        ),
+        GroupWithMembersDto(
+          groupId: '2',
+          groupName: 'Group 2',
+          members: [member2],
+        ),
       ];
 
       when(
-        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
           administratorId,
         ),
       ).thenAnswer((_) async => expectedResult);
@@ -74,12 +67,12 @@ void main() {
 
       // assert
       expect(result.length, equals(2));
-      expect(result[0].group, equals(group1));
+      expect(result[0].groupId, equals('group1'));
       expect(result[0].members, equals([member1]));
-      expect(result[1].group, equals(group2));
+      expect(result[1].groupId, equals('group2'));
       expect(result[1].members, equals([member2]));
       verify(
-        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
           administratorId,
         ),
       );
@@ -97,7 +90,7 @@ void main() {
       );
 
       when(
-        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
           administratorId,
         ),
       ).thenAnswer((_) async => []);
@@ -108,7 +101,7 @@ void main() {
       // assert
       expect(result, isEmpty);
       verify(
-        mockGroupRepository.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
           administratorId,
         ),
       );

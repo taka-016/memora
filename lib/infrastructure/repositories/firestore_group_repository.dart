@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/entities/group.dart';
-import '../../domain/entities/group_with_members.dart';
-import '../../domain/entities/member.dart';
 import '../mappers/firestore_group_mapper.dart';
-import '../mappers/firestore_member_mapper.dart';
 import '../mappers/firestore_group_member_mapper.dart';
 import '../mappers/firestore_group_event_mapper.dart';
 
@@ -135,88 +132,5 @@ class FirestoreGroupRepository implements GroupRepository {
       }
     }
     return groups;
-  }
-
-  @override
-  Future<List<GroupWithMembers>> getGroupsWithMembersByMemberId(
-    String memberId,
-  ) async {
-    try {
-      final adminGroups = await getGroupsWhereUserIsAdmin(memberId);
-      final memberGroups = await getGroupsWhereUserIsMember(memberId);
-      final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
-
-      return await _addMembersToGroups(allGroups);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  @override
-  Future<List<GroupWithMembers>> getManagedGroupsWithMembersByAdministratorId(
-    String administratorId,
-  ) async {
-    try {
-      final managedGroups = await getGroupsByAdministratorId(administratorId);
-      return await _addMembersToGroups(managedGroups);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  List<Group> _mergeUniqueGroups(
-    List<Group> adminGroups,
-    List<Group> memberGroups,
-  ) {
-    final Set<String> groupIds = {};
-    final List<Group> uniqueGroups = [];
-
-    for (final group in adminGroups) {
-      if (!groupIds.contains(group.id)) {
-        groupIds.add(group.id);
-        uniqueGroups.add(group);
-      }
-    }
-
-    for (final group in memberGroups) {
-      if (!groupIds.contains(group.id)) {
-        groupIds.add(group.id);
-        uniqueGroups.add(group);
-      }
-    }
-
-    return uniqueGroups;
-  }
-
-  Future<List<GroupWithMembers>> _addMembersToGroups(List<Group> groups) async {
-    final List<GroupWithMembers> result = [];
-
-    for (final group in groups) {
-      final members = await _getMembersForGroup(group.id);
-      result.add(GroupWithMembers(group: group, members: members));
-    }
-
-    return result;
-  }
-
-  Future<List<Member>> _getMembersForGroup(String groupId) async {
-    final groupMembersSnapshot = await _firestore
-        .collection('group_members')
-        .where('groupId', isEqualTo: groupId)
-        .get();
-
-    final List<Member> members = [];
-    for (final doc in groupMembersSnapshot.docs) {
-      final memberId = doc.data()['memberId'] as String;
-      final memberDoc = await _firestore
-          .collection('members')
-          .doc(memberId)
-          .get();
-      if (memberDoc.exists) {
-        final member = FirestoreMemberMapper.fromFirestore(memberDoc);
-        members.add(member);
-      }
-    }
-    return members;
   }
 }

@@ -3,6 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/domain/repositories/group_member_repository.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
@@ -10,7 +14,6 @@ import 'domain/services/auth_service.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/get_groups_with_members_usecase.dart';
 import 'application/usecases/get_current_member_usecase.dart';
-import 'infrastructure/repositories/firestore_group_repository.dart';
 import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -36,9 +39,9 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final AuthService authService;
-  late final FirestoreMemberRepository memberRepository;
-  late final FirestoreGroupRepository groupRepository;
-  late final FirestoreGroupMemberRepository groupMemberRepository;
+  late final MemberRepository memberRepository;
+  late final GroupQueryService groupQueryService;
+  late final GroupMemberRepository groupMemberRepository;
   late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   late final GetCurrentMemberUseCase getCurrentMemberUseCase;
 
@@ -48,10 +51,10 @@ class _MyAppState extends State<MyApp> {
     authService = FirebaseAuthService();
     memberRepository = FirestoreMemberRepository();
 
-    groupRepository = FirestoreGroupRepository();
+    groupQueryService = FirestoreGroupQueryService();
     groupMemberRepository = FirestoreGroupMemberRepository();
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
-      groupRepository: groupRepository,
+      groupQueryService,
     );
 
     getCurrentMemberUseCase = GetCurrentMemberUseCase(

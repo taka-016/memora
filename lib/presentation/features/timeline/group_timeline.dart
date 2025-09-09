@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/application/utils/japanese_era.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
@@ -17,7 +17,7 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
 }
 
 class GroupTimeline extends StatefulWidget {
-  final GroupWithMembers groupWithMembers;
+  final GroupWithMembersDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
   final TripEntryRepository? tripEntryRepository;
@@ -115,7 +115,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     try {
       final trips = await _getTripEntriesUsecase.execute(
-        widget.groupWithMembers.group.id,
+        widget.groupWithMembers.groupId,
         year,
       );
       if (mounted) {
@@ -189,7 +189,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
   Widget _buildGroupTitle() {
     return Center(
       child: Text(
-        widget.groupWithMembers.group.name,
+        widget.groupWithMembers.groupName,
         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
@@ -555,7 +555,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     if (widget.onTripManagementSelected != null) {
       widget.onTripManagementSelected!(
-        widget.groupWithMembers.group.id,
+        widget.groupWithMembers.groupId,
         selectedYear,
       );
     }

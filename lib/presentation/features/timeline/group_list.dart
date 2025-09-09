@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
 class GroupList extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final Member member;
-  final void Function(GroupWithMembers)? onGroupSelected;
+  final void Function(GroupWithMembersDto)? onGroupSelected;
 
   const GroupList({
     super.key,
@@ -23,7 +23,7 @@ class GroupList extends StatefulWidget {
 
 class _GroupListState extends State<GroupList> {
   GroupListState _state = GroupListState.loading;
-  List<GroupWithMembers> _groupsWithMembers = [];
+  List<GroupWithMembersDto> _groupsWithMembers = [];
   String _errorMessage = '';
 
   @override
@@ -121,7 +121,7 @@ class _GroupListState extends State<GroupList> {
   Widget _buildGroupListItem(int index) {
     final groupWithMembers = _groupsWithMembers[index];
     return ListTile(
-      title: Text(groupWithMembers.group.name),
+      title: Text(groupWithMembers.groupName),
       subtitle: Text('${groupWithMembers.members.length}人のメンバー'),
       trailing: const Icon(Icons.arrow_forward_ios),
       onTap: () => widget.onGroupSelected?.call(groupWithMembers),

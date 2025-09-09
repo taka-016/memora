@@ -1,36 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 
 void main() {
   group('GroupTimelineNavigationController', () {
     late ProviderContainer container;
-
-    final testGroup = Group(
-      id: 'test-group',
-      administratorId: 'admin1',
-      name: 'テストグループ',
-    );
-
-    final testMembers = [
-      Member(
-        id: 'member1',
-        displayName: '山田太郎',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '山田',
-      ),
-    ];
-
-    final testGroupWithMembers = GroupWithMembers(
-      group: testGroup,
-      members: testMembers,
-    );
+    late GroupWithMembersDto testGroupWithMembers;
 
     setUp(() {
       container = ProviderContainer();
+      testGroupWithMembers = GroupWithMembersDto(
+        groupId: '1',
+        groupName: 'テストグループ',
+        members: [
+          MemberDto(
+            id: 'member2',
+            displayName: '花子',
+            email: 'hanako@example.com',
+          ),
+        ],
+      );
     });
 
     tearDown(() {

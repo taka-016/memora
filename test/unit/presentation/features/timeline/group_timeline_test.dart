@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
@@ -14,28 +13,20 @@ import 'group_timeline_test.mocks.dart';
 
 @GenerateMocks([TripEntryRepository])
 void main() {
-  late Member testMember;
-  late GroupWithMembers testGroupWithMembers;
+  late GroupWithMembersDto testGroupWithMembers;
   late MockTripEntryRepository mockTripEntryRepository;
 
   setUp(() {
-    testMember = Member(
-      id: 'member1',
-      hiraganaFirstName: 'たろう',
-      hiraganaLastName: 'やまだ',
-      kanjiFirstName: '太郎',
-      kanjiLastName: '山田',
-      firstName: 'Taro',
-      lastName: 'Yamada',
-      displayName: 'タロちゃん',
-      type: 'family',
-      birthday: DateTime(1990, 1, 1),
-      gender: 'male',
-    );
-
-    testGroupWithMembers = GroupWithMembers(
-      group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
-      members: [testMember],
+    testGroupWithMembers = GroupWithMembersDto(
+      groupId: '1',
+      groupName: 'テストグループ',
+      members: [
+        MemberDto(
+          id: 'member1',
+          displayName: 'タロちゃん',
+          email: 'taro@example.com',
+        ),
+      ],
     );
 
     mockTripEntryRepository = MockTripEntryRepository();
@@ -411,7 +402,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - onTripManagementSelectedが呼ばれる
-      expect(selectedGroupId, equals(testGroupWithMembers.group.id));
+      expect(selectedGroupId, equals(testGroupWithMembers.groupId));
       expect(selectedYear, isNotNull);
     });
 

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -22,38 +22,44 @@ import '../../../helpers/fake_auth_manager.dart';
 ])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
+  late List<GroupWithMembersDto> groupsWithMembers;
+  late Member testMember;
 
-  final testMembers = [
-    Member(
-      id: 'member1',
+  setUp(() {
+    mockUsecase = MockGetGroupsWithMembersUsecase();
+
+    testMember = Member(
+      id: 'admin1',
       hiraganaFirstName: 'たろう',
       hiraganaLastName: 'やまだ',
       kanjiFirstName: '太郎',
       kanjiLastName: '山田',
       firstName: 'Taro',
       lastName: 'Yamada',
-      displayName: '太郎',
+      displayName: 'タロちゃん',
       type: 'family',
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
-    ),
-    Member(
-      id: 'member2',
-      hiraganaFirstName: 'はなこ',
-      hiraganaLastName: 'やまだ',
-      kanjiFirstName: '花子',
-      kanjiLastName: '山田',
-      firstName: 'Hanako',
-      lastName: 'Yamada',
-      displayName: '花子',
-      type: 'family',
-      birthday: DateTime(1985, 5, 10),
-      gender: 'female',
-    ),
-  ];
+    );
 
-  setUp(() {
-    mockUsecase = MockGetGroupsWithMembersUsecase();
+    groupsWithMembers = [
+      GroupWithMembersDto(
+        groupId: '1',
+        groupName: 'グループ1',
+        members: [
+          MemberDto(
+            id: 'member1',
+            displayName: '太郎',
+            email: 'taro@example.com',
+          ),
+          MemberDto(
+            id: 'member2',
+            displayName: '花子',
+            email: 'hanako@example.com',
+          ),
+        ],
+      ),
+    ];
   });
 
   Widget createTestWidget({
@@ -90,12 +96,6 @@ void main() {
   group('TopPage', () {
     testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -109,12 +109,6 @@ void main() {
 
     testWidgets('メニューが表示される', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -140,12 +134,6 @@ void main() {
 
     testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -161,12 +149,6 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -188,12 +170,6 @@ void main() {
 
     testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -217,12 +193,6 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -246,12 +216,6 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -273,12 +237,6 @@ void main() {
 
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -300,12 +258,6 @@ void main() {
 
     testWidgets('メニュー選択後にメニューが自動的に閉じる', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -338,12 +290,6 @@ void main() {
         testGetCurrentMemberUseCase.execute(),
       ).thenAnswer((_) async => currentMember);
 
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       final widget = createTestWidget(
@@ -365,18 +311,12 @@ void main() {
 
     testWidgets('グループ年表から戻るボタンでグループ一覧に戻ることができる', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       when(
         testGetCurrentMemberUseCase.execute(),
-      ).thenAnswer((_) async => testMembers.first);
+      ).thenAnswer((_) async => testMember);
 
       final widget = createTestWidget(
         getCurrentMemberUseCase: testGetCurrentMemberUseCase,
@@ -404,18 +344,12 @@ void main() {
 
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
-      final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
-          members: testMembers,
-        ),
-      ];
       when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
 
       final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       when(
         testGetCurrentMemberUseCase.execute(),
-      ).thenAnswer((_) async => testMembers.first);
+      ).thenAnswer((_) async => testMember);
 
       final widget = createTestWidget(
         getCurrentMemberUseCase: testGetCurrentMemberUseCase,
