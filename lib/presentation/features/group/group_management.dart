@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/usecases/get_group_by_id_usecase.dart';
+import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'package:uuid/uuid.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
 import '../../../application/usecases/get_managed_groups_with_members_usecase.dart';
@@ -11,7 +15,6 @@ import '../../../application/usecases/delete_group_members_by_group_id_usecase.d
 import '../../../domain/entities/member.dart';
 import '../../../domain/entities/group.dart';
 import '../../../domain/entities/group_member.dart';
-import '../../../domain/entities/group_with_members.dart';
 import '../../../domain/repositories/group_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/group_member_repository.dart';
@@ -31,6 +34,7 @@ import 'group_edit_modal.dart';
 class GroupManagement extends StatefulWidget {
   final Member member;
   final GroupRepository? groupRepository;
+  final GroupQueryService? groupQueryService;
   final MemberRepository? memberRepository;
   final GroupMemberRepository? groupMemberRepository;
   final GroupEventRepository? groupEventRepository;
@@ -42,6 +46,7 @@ class GroupManagement extends StatefulWidget {
     super.key,
     required this.member,
     this.groupRepository,
+    this.groupQueryService,
     this.memberRepository,
     this.groupMemberRepository,
     this.groupEventRepository,
@@ -55,6 +60,7 @@ class GroupManagement extends StatefulWidget {
 }
 
 class _GroupManagementState extends State<GroupManagement> {
+  late final GetGroupByIdUsecase _getGroupByIdUsecase;
   late final GetManagedGroupsWithMembersUsecase
   _getManagedGroupsWithMembersUsecase;
   late final DeleteGroupUsecase _deleteGroupUsecase;
@@ -65,7 +71,7 @@ class _GroupManagementState extends State<GroupManagement> {
   late final DeleteGroupMembersByGroupIdUsecase
   _deleteGroupMembersByGroupIdUsecase;
 
-  List<GroupWithMembers> _managedGroupsWithMembers = [];
+  List<GroupWithMembersDto> _managedGroupsWithMembers = [];
   bool _isLoading = true;
 
   @override
@@ -74,6 +80,8 @@ class _GroupManagementState extends State<GroupManagement> {
 
     final groupRepository =
         widget.groupRepository ?? FirestoreGroupRepository();
+    final groupQueryService =
+        widget.groupQueryService ?? FirestoreGroupQueryService();
     final memberRepository =
         widget.memberRepository ?? FirestoreMemberRepository();
     final groupMemberRepository =
@@ -87,8 +95,9 @@ class _GroupManagementState extends State<GroupManagement> {
         widget.tripParticipantRepository ??
         FirestoreTripParticipantRepository();
 
+    _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
-      groupRepository,
+      groupQueryService,
     );
     _deleteGroupUsecase = DeleteGroupUsecase(
       groupRepository,
@@ -192,17 +201,18 @@ class _GroupManagementState extends State<GroupManagement> {
     }
   }
 
-  Future<void> _showEditGroupDialog(Group group) async {
+  Future<void> _showEditGroupDialog(
+    GroupWithMembersDto groupWithMembers,
+  ) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
+      final group = await _getGroupByIdUsecase.execute(
+        groupWithMembers.groupId,
+      );
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
-      final groupWithMembers = _managedGroupsWithMembers
-          .where((gwm) => gwm.group.id == group.id)
-          .firstOrNull;
-      if (groupWithMembers == null) return;
       final existingMemberIds = groupWithMembers.members
           .map((member) => member.id)
           .toList();
@@ -218,7 +228,7 @@ class _GroupManagementState extends State<GroupManagement> {
           onSave: (editedGroup, selectedMemberIds) async {
             try {
               await _updateGroupUsecase.execute(editedGroup);
-              await _deleteGroupMembersByGroupIdUsecase.execute(group.id);
+              await _deleteGroupMembersByGroupIdUsecase.execute(group!.id);
               for (final memberId in selectedMemberIds) {
                 final groupMember = GroupMember(
                   id: const Uuid().v4(),
@@ -253,20 +263,22 @@ class _GroupManagementState extends State<GroupManagement> {
     }
   }
 
-  Future<void> _showDeleteConfirmDialog(Group group) async {
+  Future<void> _showDeleteConfirmDialog(
+    GroupWithMembersDto groupWithMembers,
+  ) async {
     await DeleteConfirmDialog.show(
       context,
       title: 'グループ削除',
-      content: '${group.name}を削除しますか？',
-      onConfirm: () => _deleteGroup(group),
+      content: '${groupWithMembers.groupName}を削除しますか？',
+      onConfirm: () => _deleteGroup(groupWithMembers),
     );
   }
 
-  Future<void> _deleteGroup(Group group) async {
+  Future<void> _deleteGroup(GroupWithMembersDto groupWithMembers) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      await _deleteGroupUsecase.execute(group.id);
+      await _deleteGroupUsecase.execute(groupWithMembers.groupId);
       if (mounted) {
         await _loadData();
         scaffoldMessenger.showSnackBar(
@@ -372,24 +384,24 @@ class _GroupManagementState extends State<GroupManagement> {
 
   Widget _buildGroupCard(int index) {
     final groupWithMembers = _managedGroupsWithMembers[index];
-    final group = groupWithMembers.group;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
-        leading: CircleAvatar(child: Text(group.name.substring(0, 1))),
-        title: Text(group.name),
-        subtitle: group.memo != null ? Text(group.memo!) : null,
-        trailing: _buildDeleteButton(group),
-        onTap: () => _showEditGroupDialog(group),
+        leading: CircleAvatar(
+          child: Text(groupWithMembers.groupName.substring(0, 1)),
+        ),
+        title: Text(groupWithMembers.groupName),
+        trailing: _buildDeleteButton(groupWithMembers),
+        onTap: () => _showEditGroupDialog(groupWithMembers),
       ),
     );
   }
 
-  Widget _buildDeleteButton(Group group) {
+  Widget _buildDeleteButton(GroupWithMembersDto groupWithMembers) {
     return IconButton(
       icon: const Icon(Icons.delete, color: Colors.red),
-      onPressed: () => _showDeleteConfirmDialog(group),
+      onPressed: () => _showDeleteConfirmDialog(groupWithMembers),
     );
   }
 }

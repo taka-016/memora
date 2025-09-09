@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
-import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 
@@ -14,6 +14,7 @@ import 'group_list_test.mocks.dart';
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
   late Member testMember;
+  late MemberDto testMemberDto;
 
   setUp(() {
     mockUsecase = MockGetGroupsWithMembersUsecase();
@@ -29,6 +30,11 @@ void main() {
       type: 'family',
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
+    );
+    testMemberDto = MemberDto(
+      id: 'admin1',
+      displayName: 'タロちゃん',
+      email: 'taro@example.com',
     );
   });
 
@@ -46,25 +52,25 @@ void main() {
   group('GroupList', () {
     testWidgets('グループ一覧が表示される', (WidgetTester tester) async {
       // Arrange
-      final member1 = Member(
+      final member1 = MemberDto(
         id: 'member1',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '田中',
         displayName: '田中',
+        email: 'tanaka@example.com',
       );
-      final member2 = Member(
+      final member2 = MemberDto(
         id: 'member2',
-        kanjiFirstName: '花子',
-        kanjiLastName: '佐藤',
         displayName: '佐藤',
+        email: 'sato@example.com',
       );
       final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'グループ1'),
+        GroupWithMembersDto(
+          groupId: '1',
+          groupName: 'グループ1',
           members: [member1],
         ),
-        GroupWithMembers(
-          group: Group(id: '2', administratorId: 'admin1', name: 'グループ2'),
+        GroupWithMembersDto(
+          groupId: '2',
+          groupName: 'グループ2',
           members: [member1, member2],
         ),
       ];
@@ -123,9 +129,10 @@ void main() {
 
       // 正常なデータを返すように変更
       final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
-          members: [testMember],
+        GroupWithMembersDto(
+          groupId: '1',
+          groupName: 'テストグループ',
+          members: [testMemberDto],
         ),
       ];
       when(
@@ -145,11 +152,12 @@ void main() {
 
     testWidgets('グループ行をタップしたときにコールバック関数が呼ばれる', (WidgetTester tester) async {
       // Arrange
-      GroupWithMembers? selectedGroup;
+      GroupWithMembersDto? selectedGroup;
       final groupsWithMembers = [
-        GroupWithMembers(
-          group: Group(id: '1', administratorId: 'admin1', name: 'テストグループ'),
-          members: [testMember],
+        GroupWithMembersDto(
+          groupId: '1',
+          groupName: 'テストグループ',
+          members: [testMemberDto],
         ),
       ];
       when(
@@ -178,8 +186,8 @@ void main() {
 
       // Assert
       expect(selectedGroup, isNotNull);
-      expect(selectedGroup!.group.id, '1');
-      expect(selectedGroup!.group.name, 'テストグループ');
+      expect(selectedGroup!.groupId, '1');
+      expect(selectedGroup!.groupName, 'テストグループ');
     });
   });
 }

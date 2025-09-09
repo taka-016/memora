@@ -1,22 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_with_members.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
+import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/infrastructure/dtos/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'get_groups_with_members_usecase_test.mocks.dart';
 
-@GenerateMocks([GroupRepository])
+@GenerateMocks([GroupQueryService])
 void main() {
   late GetGroupsWithMembersUsecase usecase;
-  late MockGroupRepository mockGroupRepository;
+  late MockGroupQueryService mockGroupQueryService;
 
   setUp(() {
-    mockGroupRepository = MockGroupRepository();
-    usecase = GetGroupsWithMembersUsecase(groupRepository: mockGroupRepository);
+    mockGroupQueryService = MockGroupQueryService();
+    usecase = GetGroupsWithMembersUsecase(mockGroupQueryService);
   });
 
   group('GetGroupsWithMembersUsecase', () {
@@ -36,44 +36,33 @@ void main() {
         gender: 'male',
       );
 
-      final group1 = Group(id: '1', administratorId: 'admin1', name: 'グループ1');
-      final group2 = Group(id: '2', administratorId: 'admin2', name: 'グループ2');
-
-      final member1 = Member(
+      final member1 = MemberDto(
         id: 'member1',
-        hiraganaFirstName: 'はなこ',
-        hiraganaLastName: 'やまだ',
-        kanjiFirstName: '花子',
-        kanjiLastName: '山田',
-        firstName: 'Hanako',
-        lastName: 'Yamada',
         displayName: '表示名',
-        type: 'family',
-        birthday: DateTime(1985, 5, 10),
-        gender: 'female',
+        email: 'hanako@example.com',
       );
 
-      final member2 = Member(
+      final member2 = MemberDto(
         id: 'member2',
-        hiraganaFirstName: 'じろう',
-        hiraganaLastName: 'やまだ',
-        kanjiFirstName: '次郎',
-        kanjiLastName: '山田',
-        firstName: 'Jiro',
-        lastName: 'Yamada',
         displayName: '表示名',
-        type: 'family',
-        birthday: DateTime(1992, 8, 15),
-        gender: 'male',
+        email: 'jiro@example.com',
       );
 
       final expectedResults = [
-        GroupWithMembers(group: group1, members: [member1]),
-        GroupWithMembers(group: group2, members: [member2]),
+        GroupWithMembersDto(
+          groupId: '1',
+          groupName: 'グループ1',
+          members: [member1],
+        ),
+        GroupWithMembersDto(
+          groupId: '2',
+          groupName: 'グループ2',
+          members: [member2],
+        ),
       ];
 
       when(
-        mockGroupRepository.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).thenAnswer((_) async => expectedResults);
 
       // Act
@@ -82,7 +71,7 @@ void main() {
       // Assert
       expect(result, expectedResults);
       verify(
-        mockGroupRepository.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).called(1);
     });
 
@@ -103,7 +92,7 @@ void main() {
       );
 
       when(
-        mockGroupRepository.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -112,7 +101,7 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(
-        mockGroupRepository.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).called(1);
     });
 
@@ -134,7 +123,7 @@ void main() {
 
       final exception = Exception('Database error');
       when(
-        mockGroupRepository.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).thenThrow(exception);
 
       // Act & Assert

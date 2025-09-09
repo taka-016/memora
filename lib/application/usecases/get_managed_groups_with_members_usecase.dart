@@ -1,15 +1,14 @@
-import '../../domain/entities/group_with_members.dart';
-import '../../domain/entities/member.dart';
-import '../../domain/repositories/group_repository.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/services/group_query_service.dart';
+import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
 
 class GetManagedGroupsWithMembersUsecase {
-  final GroupRepository _groupRepository;
+  final GroupQueryService _groupQueryService;
 
-  GetManagedGroupsWithMembersUsecase(this._groupRepository);
+  GetManagedGroupsWithMembersUsecase(this._groupQueryService);
 
-  Future<List<GroupWithMembers>> execute(Member administratorMember) async {
-    return await _groupRepository.getManagedGroupsWithMembersByAdministratorId(
-      administratorMember.id,
-    );
+  Future<List<GroupWithMembersDto>> execute(Member member) async {
+    return await _groupQueryService
+        .getManagedGroupsWithMembersByAdministratorId(member.id);
   }
 }
