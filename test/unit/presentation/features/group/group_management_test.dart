@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/services/group_query_service.dart';
 import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
@@ -37,6 +38,7 @@ void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockPinRepository mockPinRepository;
   late MockTripParticipantRepository mockTripParticipantRepository;
+  late Group group1;
   late Member testMember;
   late GroupWithMembersDto groupWithMembers1;
   late GroupWithMembersDto groupWithMembers2;
@@ -80,6 +82,12 @@ void main() {
       groupId: 'group-2',
       groupName: 'Test Group 2',
       members: [],
+    );
+    group1 = Group(
+      id: 'group-1',
+      administratorId: testMember.id,
+      name: 'Test Group 1',
+      memo: 'Test memo 1',
     );
   });
 
@@ -128,8 +136,6 @@ void main() {
       expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('Test Group 1'), findsOneWidget);
       expect(find.text('Test Group 2'), findsOneWidget);
-      expect(find.text('Test memo 1'), findsOneWidget);
-      expect(find.text('Test memo 2'), findsOneWidget);
     });
 
     testWidgets('管理しているグループがない場合、空状態が表示されること', (WidgetTester tester) async {
@@ -322,7 +328,6 @@ void main() {
     testWidgets('グループ一覧の行をタップして編集画面が開けること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
-
       final availableMembers = [testMember];
 
       when(
@@ -330,6 +335,10 @@ void main() {
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
+
+      when(
+        mockGroupRepository.getGroupById(group1.id),
+      ).thenAnswer((_) async => group1);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
@@ -375,6 +384,10 @@ void main() {
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
+
+      when(
+        mockGroupRepository.getGroupById(group1.id),
+      ).thenAnswer((_) async => group1);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),
@@ -466,6 +479,10 @@ void main() {
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
+
+      when(
+        mockGroupRepository.getGroupById(group1.id),
+      ).thenAnswer((_) async => group1);
 
       when(
         mockMemberRepository.getMembersByAdministratorId(testMember.id),

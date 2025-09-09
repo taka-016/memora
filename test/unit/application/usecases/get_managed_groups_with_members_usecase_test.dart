@@ -67,9 +67,9 @@ void main() {
 
       // assert
       expect(result.length, equals(2));
-      expect(result[0].groupId, equals('group1'));
+      expect(result[0].groupId, equals('1'));
       expect(result[0].members, equals([member1]));
-      expect(result[1].groupId, equals('group2'));
+      expect(result[1].groupId, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(

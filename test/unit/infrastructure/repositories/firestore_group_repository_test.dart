@@ -17,31 +17,6 @@ import 'package:memora/domain/entities/group.dart';
 ])
 import 'firestore_group_repository_test.mocks.dart';
 
-// テスト用のFirestoreGroupRepositoryの拡張
-class _TestFirestoreGroupRepository extends FirestoreGroupRepository {
-  final MockFirestoreGroupRepository mockRepository;
-
-  _TestFirestoreGroupRepository({
-    required super.firestore,
-    required this.mockRepository,
-  });
-
-  @override
-  Future<List<Group>> getGroupsByAdministratorId(String administratorId) {
-    return mockRepository.getGroupsByAdministratorId(administratorId);
-  }
-
-  @override
-  Future<List<Group>> getGroupsWhereUserIsAdmin(String memberId) {
-    return mockRepository.getGroupsWhereUserIsAdmin(memberId);
-  }
-
-  @override
-  Future<List<Group>> getGroupsWhereUserIsMember(String memberId) {
-    return mockRepository.getGroupsWhereUserIsMember(memberId);
-  }
-}
-
 void main() {
   group('FirestoreGroupRepository', () {
     late MockFirebaseFirestore mockFirestore;
@@ -58,45 +33,6 @@ void main() {
       when(mockFirestore.collection('groups')).thenReturn(mockCollection);
       repository = FirestoreGroupRepository(firestore: mockFirestore);
     });
-
-    void setupMembersForGroupMocks(String memberId, List<Group> allGroups) {
-      final mockGroupMembersCollection =
-          MockCollectionReference<Map<String, dynamic>>();
-      final mockMembersCollection =
-          MockCollectionReference<Map<String, dynamic>>();
-      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMembersSnapshot =
-          MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMembersDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockMemberDoc = MockDocumentReference<Map<String, dynamic>>();
-      final mockMemberSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
-
-      when(
-        mockFirestore.collection('group_members'),
-      ).thenReturn(mockGroupMembersCollection);
-      when(
-        mockFirestore.collection('members'),
-      ).thenReturn(mockMembersCollection);
-
-      for (final group in allGroups) {
-        when(
-          mockGroupMembersCollection.where('groupId', isEqualTo: group.id),
-        ).thenReturn(mockGroupMembersQuery);
-        when(
-          mockGroupMembersQuery.get(),
-        ).thenAnswer((_) async => mockGroupMembersSnapshot);
-        when(mockGroupMembersSnapshot.docs).thenReturn([mockGroupMembersDoc]);
-        when(mockGroupMembersDoc.data()).thenReturn({'memberId': memberId});
-        when(mockMembersCollection.doc(memberId)).thenReturn(mockMemberDoc);
-        when(mockMemberDoc.get()).thenAnswer((_) async => mockMemberSnapshot);
-        when(mockMemberSnapshot.exists).thenReturn(true);
-        when(mockMemberSnapshot.id).thenReturn(memberId);
-        when(
-          mockMemberSnapshot.data(),
-        ).thenReturn({'displayName': 'テストユーザー', 'email': 'test@example.com'});
-      }
-    }
 
     test('saveGroupがgroups collectionにグループ情報を追加し、自動採番IDを返す', () async {
       final group = Group(
