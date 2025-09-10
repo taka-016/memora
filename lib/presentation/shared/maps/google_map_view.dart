@@ -6,7 +6,7 @@ import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/managers/location_manager.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/infrastructure/services/location/google_places_api_location_search_service.dart';
+import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class GoogleMapView extends ConsumerWidget {

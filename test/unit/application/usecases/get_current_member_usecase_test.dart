@@ -5,7 +5,7 @@ import 'package:memora/application/usecases/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/services/auth/auth_service.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
 
 import 'get_current_member_usecase_test.mocks.dart';
 

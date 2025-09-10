@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:memora/application/utils/firebase_error_util.dart';
-import '../../../domain/entities/user.dart' as domain;
-import '../../../domain/services/auth/auth_service.dart';
+import '../../domain/entities/user.dart' as domain;
+import '../../application/interfaces/auth_service.dart';
 
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? firebaseAuth})

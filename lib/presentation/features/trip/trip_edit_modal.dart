@@ -3,7 +3,7 @@ import 'package:memora/domain/value_objects/location.dart';
 import '../../../domain/entities/trip_entry.dart';
 import '../../../domain/entities/pin.dart';
 import '../../utils/date_picker_utils.dart';
-import '../../../infrastructure/factories/map_view_factory.dart';
+import '../../../application/factories/map_view_factory.dart';
 import '../../shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 

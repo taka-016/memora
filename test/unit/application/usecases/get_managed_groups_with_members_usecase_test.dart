@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/services/query/group_query_service.dart';
-import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
-import 'package:memora/infrastructure/dtos/member_dto.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/get_managed_groups_with_members_usecase.dart';

@@ -1,4 +1,4 @@
-import 'package:memora/infrastructure/dtos/member_dto.dart';
+import 'package:memora/application/dtos/member_dto.dart';
 
 class GroupWithMembersDto {
   final String groupId;

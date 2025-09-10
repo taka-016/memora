@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
-import 'package:memora/infrastructure/dtos/member_dto.dart';
+import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/member_dto.dart';
 
 void main() {
   group('GroupTimelineNavigationController', () {

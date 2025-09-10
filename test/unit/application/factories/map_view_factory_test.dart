@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/infrastructure/factories/map_view_factory.dart';
-import 'package:memora/infrastructure/services/map/google_map_view_service.dart';
-import 'package:memora/infrastructure/services/map/placeholder_map_view_service.dart';
+import 'package:memora/application/factories/map_view_factory.dart';
+import 'package:memora/infrastructure/services/google_map_view_service.dart';
+import 'package:memora/infrastructure/services/placeholder_map_view_service.dart';
 
 void main() {
   group('MapViewFactory', () {

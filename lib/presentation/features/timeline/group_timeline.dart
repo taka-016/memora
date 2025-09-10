@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group_with_members_dto.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/application/utils/japanese_era.dart';
 import 'package:memora/domain/entities/trip_entry.dart';

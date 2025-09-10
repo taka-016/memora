@@ -4,9 +4,9 @@ import 'package:memora/application/usecases/get_groups_with_members_usecase.dart
 import 'package:memora/application/managers/auth_manager.dart';
 import 'package:memora/application/controllers/navigation_controller.dart';
 import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/infrastructure/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group_with_members_dto.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
-import 'package:memora/infrastructure/factories/map_view_factory.dart';
+import 'package:memora/application/factories/map_view_factory.dart';
 
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';

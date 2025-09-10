@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/services/map/map_view_service.dart';
+import 'package:memora/domain/services/map_view_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/shared/maps/google_map_view.dart';

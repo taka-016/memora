@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/pin.dart';
-import '../../../domain/services/location/nearby_location_service.dart';
+import '../../../domain/services/nearby_location_service.dart';
 import '../../../domain/value_objects/location.dart';
-import '../../../infrastructure/services/location/google_places_api_nearby_location_service.dart';
+import '../../../infrastructure/services/google_places_api_nearby_location_service.dart';
 import '../../../env/env.dart';
 import '../../utils/date_picker_utils.dart';
 
