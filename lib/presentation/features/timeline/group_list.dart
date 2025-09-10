@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 

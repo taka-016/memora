@@ -7,7 +7,7 @@ import '../../application/interfaces/auth_service.dart';
 import '../../domain/repositories/member_repository.dart';
 import '../../infrastructure/services/firebase_auth_service.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
-import '../../application/usecases/get_or_create_member_usecase.dart';
+import '../../application/usecases/member/get_or_create_member_usecase.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService();

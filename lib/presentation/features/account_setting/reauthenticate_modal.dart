@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../application/usecases/reauthenticate_usecase.dart';
+import '../../../application/usecases/account/reauthenticate_usecase.dart';
 
 class ReauthenticateModal extends StatefulWidget {
   const ReauthenticateModal({

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../application/utils/password_validator.dart';
+import '../../../core/validators/password_validator.dart';
 
 class PasswordChangeModal extends StatefulWidget {
   final Function(String) onPasswordChange;

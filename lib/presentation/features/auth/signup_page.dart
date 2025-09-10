@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/value_objects/auth_state.dart';
 import '../../notifiers/auth_notifier.dart';
-import '../../../application/utils/password_validator.dart';
+import '../../../core/validators/password_validator.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});

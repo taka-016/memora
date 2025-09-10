@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
-import 'package:memora/application/usecases/delete_user_usecase.dart';
-import 'package:memora/application/usecases/reauthenticate_usecase.dart';
+import 'package:memora/application/usecases/account/delete_user_usecase.dart';
+import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 
 import 'account_delete_modal_test.mocks.dart';
 

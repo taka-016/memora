@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:memora/application/utils/firebase_error_mapper.dart';
+import 'package:memora/infrastructure/errors/firebase_error_mapper.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../application/interfaces/auth_service.dart';
 

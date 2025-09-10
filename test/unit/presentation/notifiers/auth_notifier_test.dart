@@ -6,7 +6,7 @@ import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'package:memora/application/usecases/get_or_create_member_usecase.dart';
+import 'package:memora/application/usecases/member/get_or_create_member_usecase.dart';
 
 import 'auth_notifier_test.mocks.dart';
 

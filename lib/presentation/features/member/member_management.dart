@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../application/usecases/get_managed_members_usecase.dart';
+import '../../../application/usecases/member/get_managed_members_usecase.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
-import '../../../application/usecases/create_member_usecase.dart';
-import '../../../application/usecases/update_member_usecase.dart';
-import '../../../application/usecases/delete_member_usecase.dart';
-import '../../../application/usecases/get_member_by_id_usecase.dart';
+import '../../../application/usecases/member/create_member_usecase.dart';
+import '../../../application/usecases/member/update_member_usecase.dart';
+import '../../../application/usecases/member/delete_member_usecase.dart';
+import '../../../application/usecases/member/get_member_by_id_usecase.dart';
 import '../../../domain/entities/member.dart';
 import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';

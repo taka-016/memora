@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';
-import 'package:memora/application/usecases/update_email_usecase.dart';
-import 'package:memora/application/usecases/reauthenticate_usecase.dart';
+import 'package:memora/application/usecases/account/update_email_usecase.dart';
+import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 
 import 'email_change_modal_test.mocks.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../application/usecases/update_email_usecase.dart';
-import '../../../application/usecases/update_password_usecase.dart';
-import '../../../application/usecases/delete_user_usecase.dart';
-import '../../../application/usecases/reauthenticate_usecase.dart';
+import '../../../application/usecases/account/update_email_usecase.dart';
+import '../../../application/usecases/account/update_password_usecase.dart';
+import '../../../application/usecases/account/delete_user_usecase.dart';
+import '../../../application/usecases/account/reauthenticate_usecase.dart';
 import '../../notifiers/auth_notifier.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';

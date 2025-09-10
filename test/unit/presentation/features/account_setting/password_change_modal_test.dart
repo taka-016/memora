@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/password_change_modal.dart';
-import 'package:memora/application/usecases/update_password_usecase.dart';
-import 'package:memora/application/usecases/reauthenticate_usecase.dart';
+import 'package:memora/application/usecases/account/update_password_usecase.dart';
+import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 
 import 'password_change_modal_test.mocks.dart';
 

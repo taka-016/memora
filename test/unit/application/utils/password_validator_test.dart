@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/utils/password_validator.dart';
+import 'package:memora/core/validators/password_validator.dart';
 
 void main() {
   group('PasswordValidator', () {

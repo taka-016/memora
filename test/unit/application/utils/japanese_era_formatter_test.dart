@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/utils/japanese_era_formatter.dart';
+import 'package:memora/core/formatters/japanese_era_formatter.dart';
 
 void main() {
   group('JapaneseEraFormatter', () {
