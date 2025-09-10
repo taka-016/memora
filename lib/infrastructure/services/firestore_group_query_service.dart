@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member_dto.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

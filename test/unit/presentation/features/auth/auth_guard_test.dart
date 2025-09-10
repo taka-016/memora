@@ -3,20 +3,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
 
-import '../../../../helpers/fake_auth_manager.dart';
+import '../../../../helpers/fake_auth_notifier.dart';
 
 void main() {
   group('AuthGuard', () {
     Widget createTestWidget({AuthState? authState, Widget? child}) {
       return ProviderScope(
         overrides: [
-          authManagerProvider.overrideWith((ref) {
+          authNotifierProvider.overrideWith((ref) {
             final state = authState ?? const AuthState.unauthenticated('');
-            return FakeAuthManager(state);
+            return FakeAuthNotifier(state);
           }),
         ],
         child: MaterialApp(

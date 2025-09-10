@@ -3,22 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
-import 'package:memora/application/managers/auth_manager.dart';
-import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member_dto.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'top_page_test.mocks.dart';
-import '../../../helpers/fake_auth_manager.dart';
+import '../../../helpers/fake_auth_notifier.dart';
 
 @GenerateMocks([
   GetGroupsWithMembersUsecase,
   GetCurrentMemberUseCase,
-  AuthManager,
+  AuthNotifier,
 ])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
@@ -64,7 +64,7 @@ void main() {
 
   Widget createTestWidget({
     MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
-    MockAuthManager? authManager,
+    MockAuthNotifier? authNotifier,
   }) {
     final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
     when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
@@ -78,8 +78,8 @@ void main() {
 
     return ProviderScope(
       overrides: [
-        authManagerProvider.overrideWith((ref) {
-          return FakeAuthManager.authenticated();
+        authNotifierProvider.overrideWith((ref) {
+          return FakeAuthNotifier.authenticated();
         }),
       ],
       child: MaterialApp(
@@ -377,12 +377,12 @@ void main() {
       );
       expect(
         container
-            .read(groupTimelineNavigationControllerProvider)
+            .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
         isNull,
       );
       expect(
-        container.read(groupTimelineNavigationControllerProvider).currentScreen,
+        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -397,12 +397,12 @@ void main() {
       expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
       expect(
         container
-            .read(groupTimelineNavigationControllerProvider)
+            .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
         isNotNull,
       );
       expect(
-        container.read(groupTimelineNavigationControllerProvider).currentScreen,
+        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
 
@@ -415,12 +415,12 @@ void main() {
       // 4. 他画面遷移時にGroupTimelineインスタンスがリセットされることを検証
       expect(
         container
-            .read(groupTimelineNavigationControllerProvider)
+            .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
         isNull,
       );
       expect(
-        container.read(groupTimelineNavigationControllerProvider).currentScreen,
+        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -437,12 +437,12 @@ void main() {
       expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
       expect(
         container
-            .read(groupTimelineNavigationControllerProvider)
+            .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
         isNull,
       );
       expect(
-        container.read(groupTimelineNavigationControllerProvider).currentScreen,
+        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.groupList,
       );
 
@@ -457,12 +457,12 @@ void main() {
       expect(finalIndexedStack.index, 1); // GroupTimeline（index: 1）
       expect(
         container
-            .read(groupTimelineNavigationControllerProvider)
+            .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
         isNotNull,
       );
       expect(
-        container.read(groupTimelineNavigationControllerProvider).currentScreen,
+        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
     });

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/value_objects/auth_state.dart';
-import '../../../application/managers/auth_manager.dart';
+import '../../notifiers/auth_notifier.dart';
 import '../../../application/utils/password_validator.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
@@ -31,7 +31,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   Future<void> _signup() async {
     if (_formKey.currentState?.validate() ?? false) {
       final isSuccess = await ref
-          .read(authManagerProvider.notifier)
+          .read(authNotifierProvider.notifier)
           .signup(
             email: _emailController.text.trim(),
             password: _passwordController.text,
@@ -63,7 +63,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       padding: const EdgeInsets.all(16.0),
       child: Consumer(
         builder: (context, ref, child) {
-          final authState = ref.watch(authManagerProvider);
+          final authState = ref.watch(authNotifierProvider);
           return _buildForm(authState, ref);
         },
       ),
@@ -138,7 +138,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
           IconButton(
             icon: Icon(Icons.close, color: color.shade700),
             onPressed: () {
-              ref.read(authManagerProvider.notifier).clearError();
+              ref.read(authNotifierProvider.notifier).clearError();
             },
             tooltip: 'エラーを閉じる',
           ),

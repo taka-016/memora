@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/value_objects/auth_state.dart';
-import '../../../application/managers/auth_manager.dart';
+import '../../notifiers/auth_notifier.dart';
 import 'signup_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -30,13 +30,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Future<void> _login() async {
     if (_formKey.currentState?.validate() ?? false) {
       await ref
-          .read(authManagerProvider.notifier)
+          .read(authNotifierProvider.notifier)
           .login(
             email: _emailController.text.trim(),
             password: _passwordController.text,
           );
       if (!mounted) return;
-      final authState = ref.read(authManagerProvider);
+      final authState = ref.read(authNotifierProvider);
       if (authState.isAuthenticated) {
         TextInput.finishAutofillContext();
       }
@@ -63,7 +63,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       padding: const EdgeInsets.all(16.0),
       child: Consumer(
         builder: (context, ref, child) {
-          final authState = ref.watch(authManagerProvider);
+          final authState = ref.watch(authNotifierProvider);
           return _buildForm(authState, ref);
         },
       ),
@@ -132,7 +132,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           IconButton(
             icon: Icon(Icons.close, color: color.shade700),
             onPressed: () {
-              ref.read(authManagerProvider.notifier).clearError();
+              ref.read(authNotifierProvider.notifier).clearError();
             },
             tooltip: 'エラーを閉じる',
           ),

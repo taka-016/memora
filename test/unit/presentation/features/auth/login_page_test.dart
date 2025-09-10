@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
 
-import '../../../../helpers/fake_auth_manager.dart';
+import '../../../../helpers/fake_auth_notifier.dart';
 
 void main() {
   group('LoginPage', () {
     Widget createTestWidget({AuthState? authState}) {
       return ProviderScope(
         overrides: [
-          authManagerProvider.overrideWith((ref) {
+          authNotifierProvider.overrideWith((ref) {
             final state = authState ?? const AuthState.unauthenticated('');
-            return FakeAuthManager(state);
+            return FakeAuthNotifier(state);
           }),
         ],
         child: const MaterialApp(home: LoginPage()),
@@ -90,14 +90,14 @@ void main() {
     });
 
     testWidgets('ログインボタンをタップするとloginメソッドが呼ばれる', (WidgetTester tester) async {
-      final fakeAuthManager = FakeAuthManager(
+      final fakeAuthNotifier = FakeAuthNotifier(
         const AuthState.unauthenticated(''),
       );
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authManagerProvider.overrideWith((ref) => fakeAuthManager),
+            authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
           ],
           child: const MaterialApp(home: LoginPage()),
         ),
@@ -113,7 +113,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // loginメソッドが呼ばれたことを確認
-      expect(fakeAuthManager.loginCalled, isTrue);
+      expect(fakeAuthNotifier.loginCalled, isTrue);
     });
   });
 }

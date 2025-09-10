@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../domain/value_objects/auth_state.dart';
-import '../../../application/managers/auth_manager.dart';
+import '../../notifiers/auth_notifier.dart';
 import 'login_page.dart';
 
 class AuthGuard extends ConsumerWidget {
@@ -11,7 +11,7 @@ class AuthGuard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authManagerProvider);
+    final authState = ref.watch(authNotifierProvider);
 
     switch (authState.status) {
       case AuthStatus.loading:

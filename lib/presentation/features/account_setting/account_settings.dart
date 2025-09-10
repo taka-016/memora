@@ -4,7 +4,7 @@ import '../../../application/usecases/update_email_usecase.dart';
 import '../../../application/usecases/update_password_usecase.dart';
 import '../../../application/usecases/delete_user_usecase.dart';
 import '../../../application/usecases/reauthenticate_usecase.dart';
-import '../../../application/managers/auth_manager.dart';
+import '../../notifiers/auth_notifier.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/member.dart';
-import '../../utils/date_picker_utils.dart';
+import '../../helpers/date_picker_helper.dart';
 
 class MemberEditModal extends StatefulWidget {
   final Member? member;
@@ -243,7 +243,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
   Widget _buildBirthdayField() {
     return InkWell(
       onTap: () async {
-        final selectedDate = await DatePickerUtils.showCustomDatePicker(
+        final selectedDate = await DatePickerHelper.showCustomDatePicker(
           context,
           initialDate: _birthday ?? DateTime.now(),
           firstDate: DateTime(1900),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
-import 'package:memora/application/managers/auth_manager.dart';
-import 'package:memora/application/controllers/navigation_controller.dart';
-import 'package:memora/application/controllers/group_timeline_navigation_controller.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/navigation_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
-import 'package:memora/application/factories/map_view_factory.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -65,10 +65,10 @@ class _TopPageState extends State<TopPage> {
   }
 
   void _onNavigationItemSelected(NavigationItem item, WidgetRef ref) {
-    ref.read(navigationControllerProvider.notifier).selectItem(item);
+    ref.read(navigationNotifierProvider.notifier).selectItem(item);
     if (item != NavigationItem.groupTimeline) {
       ref
-          .read(groupTimelineNavigationControllerProvider.notifier)
+          .read(groupTimelineNavigationNotifierProvider.notifier)
           .resetToGroupList();
     }
     Navigator.of(context).pop();
@@ -76,7 +76,7 @@ class _TopPageState extends State<TopPage> {
 
   void _onGroupSelected(GroupWithMembersDto groupWithMembers, WidgetRef ref) {
     ref
-        .read(groupTimelineNavigationControllerProvider.notifier)
+        .read(groupTimelineNavigationNotifierProvider.notifier)
         .showGroupTimeline(groupWithMembers);
   }
 
@@ -85,11 +85,11 @@ class _TopPageState extends State<TopPage> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final timelineState = ref.watch(groupTimelineNavigationControllerProvider);
+    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
 
     return IndexedStack(
       index: ref
-          .read(groupTimelineNavigationControllerProvider.notifier)
+          .read(groupTimelineNavigationNotifierProvider.notifier)
           .getStackIndex(),
       children: [
         GroupList(
@@ -106,7 +106,7 @@ class _TopPageState extends State<TopPage> {
                 groupId: timelineState.selectedGroupId!,
                 year: timelineState.selectedYear!,
                 onBackPressed: () => ref
-                    .read(groupTimelineNavigationControllerProvider.notifier)
+                    .read(groupTimelineNavigationNotifierProvider.notifier)
                     .backFromTripManagement(),
               )
             : Container(),
@@ -125,7 +125,7 @@ class _TopPageState extends State<TopPage> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () {
                 ref
-                    .read(groupTimelineNavigationControllerProvider.notifier)
+                    .read(groupTimelineNavigationNotifierProvider.notifier)
                     .showGroupList();
               },
             ),
@@ -145,7 +145,7 @@ class _TopPageState extends State<TopPage> {
   }
 
   Widget _buildBody(WidgetRef ref) {
-    final selectedItem = ref.watch(navigationControllerProvider).selectedItem;
+    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
@@ -264,7 +264,7 @@ class _TopPageState extends State<TopPage> {
   Widget _buildDrawerHeader(BuildContext context) {
     return Consumer(
       builder: (context, ref, child) {
-        final authState = ref.watch(authManagerProvider);
+        final authState = ref.watch(authNotifierProvider);
         if (authState.status == AuthStatus.authenticated) {
           return UserDrawerHeader(email: authState.user!.loginId);
         } else {
@@ -324,7 +324,7 @@ class _TopPageState extends State<TopPage> {
     NavigationItem item,
     WidgetRef ref,
   ) {
-    final selectedItem = ref.watch(navigationControllerProvider).selectedItem;
+    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     return ListTile(
       leading: Icon(icon),
@@ -340,7 +340,7 @@ class _TopPageState extends State<TopPage> {
         leading: const Icon(Icons.logout),
         title: const Text('ログアウト'),
         onTap: () {
-          ref.read(authManagerProvider.notifier).logout();
+          ref.read(authNotifierProvider.notifier).logout();
         },
       ),
     );

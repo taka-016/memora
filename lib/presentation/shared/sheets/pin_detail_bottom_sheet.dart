@@ -4,7 +4,7 @@ import '../../../domain/services/nearby_location_service.dart';
 import '../../../domain/value_objects/location.dart';
 import '../../../infrastructure/services/google_places_api_nearby_location_service.dart';
 import '../../../env/env.dart';
-import '../../utils/date_picker_utils.dart';
+import '../../helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
   final Pin pin;
@@ -127,7 +127,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }
 
   Future<void> _selectFromDate(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDatePicker(
+    final picked = await DatePickerHelper.showCustomDatePicker(
       context,
       initialDate: fromDate ?? DateTime.now(),
       firstDate: DateTime(2000),
@@ -155,7 +155,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }
 
   Future<void> _selectToDate(BuildContext context) async {
-    final picked = await DatePickerUtils.showCustomDatePicker(
+    final picked = await DatePickerHelper.showCustomDatePicker(
       context,
       initialDate: toDate ?? (fromDate ?? DateTime.now()),
       firstDate: DateTime(2000),

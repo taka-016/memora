@@ -3,9 +3,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_trip_entries_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
-import 'package:memora/application/utils/japanese_era.dart';
+import 'package:memora/application/utils/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
@@ -445,7 +445,9 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
     for (int i = _startYearOffset; i <= _endYearOffset; i++) {
       final year = currentYear + i;
-      final eraFormatted = JapaneseEra.formatJapaneseEraYear(year);
+      final eraFormatted = JapaneseEraFormatter.formatJapaneseEraFormatterYear(
+        year,
+      );
       final combinedYearFormat = '$year年($eraFormatted)';
       cells.add(
         Container(

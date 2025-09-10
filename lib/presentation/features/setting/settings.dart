@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../application/managers/auth_manager.dart';
+import '../../notifiers/auth_notifier.dart';
 
 class Settings extends ConsumerWidget {
   const Settings({super.key});
@@ -31,7 +31,7 @@ class Settings extends ConsumerWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
-                ref.read(authManagerProvider.notifier).logout();
+                ref.read(authNotifierProvider.notifier).logout();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

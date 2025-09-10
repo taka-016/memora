@@ -4,14 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/get_current_member_usecase.dart';
-import 'package:memora/application/managers/auth_manager.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'main_test.mocks.dart';
-import '../helpers/fake_auth_manager.dart';
+import '../helpers/fake_auth_notifier.dart';
 
 @GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
 void main() {
@@ -36,8 +36,8 @@ void main() {
   Widget createTestApp() {
     return ProviderScope(
       overrides: [
-        authManagerProvider.overrideWith((ref) {
-          return FakeAuthManager.authenticated();
+        authNotifierProvider.overrideWith((ref) {
+          return FakeAuthNotifier.authenticated();
         }),
       ],
       child: MaterialApp(

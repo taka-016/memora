@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import '../../../domain/entities/trip_entry.dart';
 import '../../../domain/entities/pin.dart';
-import '../../utils/date_picker_utils.dart';
-import '../../../application/factories/map_view_factory.dart';
+import '../../helpers/date_picker_helper.dart';
+import '../../shared/map_views/map_view_factory.dart';
 import '../../shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
@@ -524,7 +524,7 @@ class _TripEditModalState extends State<TripEditModal> {
 
         initialDate = _determineInitialDate(selectedDate, labelText);
 
-        final date = await DatePickerUtils.showCustomDatePicker(
+        final date = await DatePickerHelper.showCustomDatePicker(
           context,
           initialDate: initialDate,
           firstDate: DateTime(2000),

@@ -1,5 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:memora/application/utils/firebase_error_util.dart';
+import 'package:memora/application/utils/firebase_error_mapper.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../application/interfaces/auth_service.dart';
 
@@ -34,7 +34,7 @@ class FirebaseAuthService implements AuthService {
 
       return _mapFirebaseUserToDomainUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
+      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
     }
   }
 
@@ -55,7 +55,7 @@ class FirebaseAuthService implements AuthService {
 
       return _mapFirebaseUserToDomainUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
+      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
     }
   }
 
@@ -64,7 +64,7 @@ class FirebaseAuthService implements AuthService {
     try {
       await _firebaseAuth.signOut();
     } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorUtil.getFirebaseErrorMessage(e);
+      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
     }
   }
 

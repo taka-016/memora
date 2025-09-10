@@ -1,6 +1,6 @@
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 
 class GetManagedGroupsWithMembersUsecase {
   final GroupQueryService _groupQueryService;

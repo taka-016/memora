@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/get_group_by_id_usecase.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/dtos/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'package:uuid/uuid.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
