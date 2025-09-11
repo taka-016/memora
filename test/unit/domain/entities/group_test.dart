@@ -21,7 +21,7 @@ void main() {
 
       final group = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
         members: [testMember],
@@ -29,7 +29,7 @@ void main() {
       );
 
       expect(group.id, 'group001');
-      expect(group.administratorId, 'admin001');
+      expect(group.ownerId, 'admin001');
       expect(group.name, 'グループ名');
       expect(group.memo, 'メモ');
       expect(group.members, [testMember]);
@@ -37,13 +37,9 @@ void main() {
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
-      final group = Group(
-        id: 'group001',
-        administratorId: 'admin001',
-        name: 'グループ名',
-      );
+      final group = Group(id: 'group001', ownerId: 'admin001', name: 'グループ名');
       expect(group.id, 'group001');
-      expect(group.administratorId, 'admin001');
+      expect(group.ownerId, 'admin001');
       expect(group.name, 'グループ名');
       expect(group.memo, null);
       expect(group.members, const []);
@@ -53,13 +49,13 @@ void main() {
     test('同じプロパティを持つインスタンス同士は等価である', () {
       final group1 = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
       );
       final group2 = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
       );
@@ -69,13 +65,13 @@ void main() {
     test('異なるプロパティを持つインスタンス同士は等価でない', () {
       final group1 = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
       );
       final group2 = Group(
         id: 'group002',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
       );
@@ -110,7 +106,7 @@ void main() {
 
       final group = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
         members: [originalMember],
@@ -125,7 +121,7 @@ void main() {
       );
 
       expect(updatedGroup.id, 'group001');
-      expect(updatedGroup.administratorId, 'admin001');
+      expect(updatedGroup.ownerId, 'admin001');
       expect(updatedGroup.name, '新しいグループ名');
       expect(updatedGroup.memo, '新しいメモ');
       expect(updatedGroup.members, [newMember]);
@@ -148,7 +144,7 @@ void main() {
 
       final group = Group(
         id: 'group001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'グループ名',
         memo: 'メモ',
         members: [testMember],
@@ -158,7 +154,7 @@ void main() {
       final updatedGroup = group.copyWith(name: '新しいグループ名');
 
       expect(updatedGroup.id, 'group001');
-      expect(updatedGroup.administratorId, 'admin001');
+      expect(updatedGroup.ownerId, 'admin001');
       expect(updatedGroup.name, '新しいグループ名');
       expect(updatedGroup.memo, 'メモ');
       expect(updatedGroup.members, [testMember]);

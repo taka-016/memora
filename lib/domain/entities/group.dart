@@ -5,7 +5,7 @@ import 'package:memora/domain/entities/group_member.dart';
 class Group extends Equatable {
   const Group({
     required this.id,
-    required this.administratorId,
+    required this.ownerId,
     required this.name,
     this.memo,
     this.members = const [],
@@ -13,7 +13,7 @@ class Group extends Equatable {
   });
 
   final String id;
-  final String administratorId;
+  final String ownerId;
   final String name;
   final String? memo;
   final List<GroupMember>? members;
@@ -21,7 +21,7 @@ class Group extends Equatable {
 
   Group copyWith({
     String? id,
-    String? administratorId,
+    String? ownerId,
     String? name,
     String? memo,
     List<GroupMember>? members,
@@ -29,7 +29,7 @@ class Group extends Equatable {
   }) {
     return Group(
       id: id ?? this.id,
-      administratorId: administratorId ?? this.administratorId,
+      ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
       memo: memo ?? this.memo,
       members: members ?? this.members,
@@ -38,5 +38,5 @@ class Group extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, administratorId, name, memo, members, events];
+  List<Object?> get props => [id, ownerId, name, memo, members, events];
 }

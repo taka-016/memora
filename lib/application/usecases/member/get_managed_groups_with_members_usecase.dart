@@ -8,7 +8,8 @@ class GetManagedGroupsWithMembersUsecase {
   GetManagedGroupsWithMembersUsecase(this._groupQueryService);
 
   Future<List<GroupWithMembersDto>> execute(Member member) async {
-    return await _groupQueryService
-        .getManagedGroupsWithMembersByAdministratorId(member.id);
+    return await _groupQueryService.getManagedGroupsWithMembersByOwnerId(
+      member.id,
+    );
   }
 }

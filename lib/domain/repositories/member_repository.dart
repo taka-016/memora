@@ -7,5 +7,5 @@ abstract class MemberRepository {
   Future<void> deleteMember(String memberId);
   Future<Member?> getMemberById(String memberId);
   Future<Member?> getMemberByAccountId(String accountId);
-  Future<List<Member>> getMembersByAdministratorId(String administratorId);
+  Future<List<Member>> getMembersByOwnerId(String ownerId);
 }

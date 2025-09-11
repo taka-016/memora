@@ -161,7 +161,7 @@ class _GroupManagementState extends State<GroupManagement> {
             try {
               final newGroup = Group(
                 id: '', // IDは自動採番されるため空文字列
-                administratorId: widget.member.id,
+                ownerId: widget.member.id,
                 name: group.name,
                 memo: group.memo,
               );

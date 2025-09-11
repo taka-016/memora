@@ -23,7 +23,7 @@ void main() {
       final updatedMember = Member(
         id: 'member-id',
         accountId: null,
-        administratorId: 'admin-member-id',
+        ownerId: 'admin-member-id',
         displayName: '更新後メンバー',
         kanjiLastName: '更新',
         kanjiFirstName: '太郎',

@@ -6,7 +6,7 @@ class FirestoreGroupMapper {
     final data = doc.data();
     return Group(
       id: doc.id,
-      administratorId: data?['administratorId'] as String? ?? '',
+      ownerId: data?['ownerId'] as String? ?? '',
       name: data?['name'] as String? ?? '',
       memo: data?['memo'] as String?,
     );
@@ -14,7 +14,7 @@ class FirestoreGroupMapper {
 
   static Map<String, dynamic> toFirestore(Group group) {
     return {
-      'administratorId': group.administratorId,
+      'ownerId': group.ownerId,
       'name': group.name,
       'memo': group.memo,
       'createdAt': FieldValue.serverTimestamp(),

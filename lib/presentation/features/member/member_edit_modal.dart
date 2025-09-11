@@ -315,7 +315,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
       final member = Member(
         id: widget.member?.id ?? '',
         accountId: widget.member?.accountId,
-        administratorId: widget.member?.administratorId,
+        ownerId: widget.member?.ownerId,
         displayName: _displayNameController.text,
         kanjiLastName: _kanjiLastNameController.text.isEmpty
             ? null

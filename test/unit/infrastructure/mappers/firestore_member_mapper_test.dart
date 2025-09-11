@@ -12,7 +12,7 @@ void main() {
       when(mockDoc.id).thenReturn('member001');
       when(mockDoc.data()).thenReturn({
         'accountId': 'account001',
-        'administratorId': 'admin001',
+        'ownerId': 'admin001',
         'hiraganaFirstName': 'たろう',
         'hiraganaLastName': 'やまだ',
         'kanjiFirstName': '太郎',
@@ -35,7 +35,7 @@ void main() {
 
       expect(member.id, 'member001');
       expect(member.accountId, 'account001');
-      expect(member.administratorId, 'admin001');
+      expect(member.ownerId, 'admin001');
       expect(member.hiraganaFirstName, 'たろう');
       expect(member.hiraganaLastName, 'やまだ');
       expect(member.kanjiFirstName, '太郎');
@@ -63,7 +63,7 @@ void main() {
 
       expect(member.id, 'member002');
       expect(member.accountId, null);
-      expect(member.administratorId, null);
+      expect(member.ownerId, null);
       expect(member.hiraganaFirstName, null);
       expect(member.hiraganaLastName, null);
       expect(member.kanjiFirstName, null);
@@ -86,7 +86,7 @@ void main() {
       final member = Member(
         id: 'member001',
         accountId: 'account001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
@@ -103,7 +103,7 @@ void main() {
       final data = FirestoreMemberMapper.toFirestore(member);
 
       expect(data['accountId'], 'account001');
-      expect(data['administratorId'], 'admin001');
+      expect(data['ownerId'], 'admin001');
       expect(data['hiraganaFirstName'], 'たろう');
       expect(data['hiraganaLastName'], 'やまだ');
       expect(data['kanjiFirstName'], '太郎');
@@ -124,7 +124,7 @@ void main() {
       final data = FirestoreMemberMapper.toFirestore(member);
 
       expect(data['accountId'], null);
-      expect(data['administratorId'], null);
+      expect(data['ownerId'], null);
       expect(data['hiraganaFirstName'], null);
       expect(data['hiraganaLastName'], null);
       expect(data['kanjiFirstName'], null);

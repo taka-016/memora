@@ -4,7 +4,7 @@ class Member extends Equatable {
   const Member({
     required this.id,
     this.accountId,
-    this.administratorId,
+    this.ownerId,
     this.hiraganaFirstName,
     this.hiraganaLastName,
     this.kanjiFirstName,
@@ -25,7 +25,7 @@ class Member extends Equatable {
 
   final String id;
   final String? accountId;
-  final String? administratorId;
+  final String? ownerId;
   final String? hiraganaFirstName;
   final String? hiraganaLastName;
   final String? kanjiFirstName;
@@ -46,7 +46,7 @@ class Member extends Equatable {
   Member copyWith({
     String? id,
     String? accountId,
-    String? administratorId,
+    String? ownerId,
     String? hiraganaFirstName,
     String? hiraganaLastName,
     String? kanjiFirstName,
@@ -67,7 +67,7 @@ class Member extends Equatable {
     return Member(
       id: id ?? this.id,
       accountId: accountId ?? this.accountId,
-      administratorId: administratorId ?? this.administratorId,
+      ownerId: ownerId ?? this.ownerId,
       hiraganaFirstName: hiraganaFirstName ?? this.hiraganaFirstName,
       hiraganaLastName: hiraganaLastName ?? this.hiraganaLastName,
       kanjiFirstName: kanjiFirstName ?? this.kanjiFirstName,
@@ -91,7 +91,7 @@ class Member extends Equatable {
   List<Object?> get props => [
     id,
     accountId,
-    administratorId,
+    ownerId,
     hiraganaFirstName,
     hiraganaLastName,
     kanjiFirstName,

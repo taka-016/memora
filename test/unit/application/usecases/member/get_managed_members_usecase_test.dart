@@ -18,12 +18,12 @@ void main() {
   });
 
   group('GetManagedMembersUsecase', () {
-    test('管理者メンバーが提供された時に管理されるメンバーのリストを返すこと', () async {
+    test('所有者メンバーが提供された時に管理されるメンバーのリストを返すこと', () async {
       // Arrange
-      final administratorMember = Member(
+      final ownerMember = Member(
         id: 'admin-member-id',
         accountId: 'admin-account-id',
-        administratorId: 'admin-administrator-id',
+        ownerId: 'admin-owner-id',
         displayName: 'Admin',
         kanjiLastName: '管理',
         kanjiFirstName: '太郎',
@@ -37,7 +37,7 @@ void main() {
         Member(
           id: 'member-1',
           accountId: null,
-          administratorId: 'admin-member-id',
+          ownerId: 'admin-member-id',
           displayName: 'メンバー1',
           kanjiLastName: '田中',
           kanjiFirstName: '花子',
@@ -49,7 +49,7 @@ void main() {
         Member(
           id: 'member-2',
           accountId: null,
-          administratorId: 'admin-member-id',
+          ownerId: 'admin-member-id',
           displayName: 'メンバー2',
           kanjiLastName: '佐藤',
           kanjiFirstName: '次郎',
@@ -61,25 +61,25 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
       ).thenAnswer((_) async => expectedMembers);
 
       // Act
-      final result = await usecase.execute(administratorMember);
+      final result = await usecase.execute(ownerMember);
 
       // Assert
       expect(result, equals(expectedMembers));
       verify(
-        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
       ).called(1);
     });
 
     test('管理されるメンバーが存在しない場合に空のリストを返すこと', () async {
       // Arrange
-      final administratorMember = Member(
+      final ownerMember = Member(
         id: 'admin-member-id',
         accountId: 'admin-account-id',
-        administratorId: 'admin-administrator-id',
+        ownerId: 'admin-owner-id',
         displayName: 'Admin',
         kanjiLastName: '管理',
         kanjiFirstName: '太郎',
@@ -90,16 +90,16 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
       ).thenAnswer((_) async => []);
 
       // Act
-      final result = await usecase.execute(administratorMember);
+      final result = await usecase.execute(ownerMember);
 
       // Assert
       expect(result, isEmpty);
       verify(
-        mockMemberRepository.getMembersByAdministratorId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
       ).called(1);
     });
   });

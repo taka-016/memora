@@ -20,11 +20,7 @@ void main() {
   group('CreateGroupUsecase', () {
     test('グループをリポジトリに保存し、生成されたIDを返すこと', () async {
       // arrange
-      final group = Group(
-        id: '',
-        name: 'Test Group',
-        administratorId: 'admin123',
-      );
+      final group = Group(id: '', name: 'Test Group', ownerId: 'admin123');
 
       when(
         mockGroupRepository.saveGroup(group),
@@ -40,11 +36,7 @@ void main() {
 
     test('有効なグループに対してエラーなく完了すること', () async {
       // arrange
-      final group = Group(
-        id: '',
-        name: 'Test Group',
-        administratorId: 'admin123',
-      );
+      final group = Group(id: '', name: 'Test Group', ownerId: 'admin123');
 
       when(
         mockGroupRepository.saveGroup(group),

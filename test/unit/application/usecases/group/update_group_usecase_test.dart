@@ -23,7 +23,7 @@ void main() {
       final group = Group(
         id: 'group123',
         name: 'Updated Group',
-        administratorId: 'admin123',
+        ownerId: 'admin123',
       );
 
       when(mockGroupRepository.updateGroup(group)).thenAnswer((_) async => {});
@@ -40,7 +40,7 @@ void main() {
       final group = Group(
         id: 'group123',
         name: 'Updated Group',
-        administratorId: 'admin123',
+        ownerId: 'admin123',
       );
 
       when(mockGroupRepository.updateGroup(group)).thenAnswer((_) async => {});

@@ -30,19 +30,19 @@ void main() {
         gender: 'male',
         birthday: DateTime(2005, 3, 15),
       );
-      const administratorId = 'admin-member-id';
+      const ownerId = 'admin-member-id';
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
 
       // Act
-      await usecase.execute(editedMember, administratorId);
+      await usecase.execute(editedMember, ownerId);
 
       // Assert
       final captured = verify(
         mockMemberRepository.saveMember(captureAny),
       ).captured;
       final savedMember = captured[0] as Member;
-      expect(savedMember.administratorId, administratorId);
+      expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
       expect(savedMember.kanjiLastName, editedMember.kanjiLastName);
       expect(savedMember.kanjiFirstName, editedMember.kanjiFirstName);
@@ -56,19 +56,19 @@ void main() {
     test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
       final editedMember = Member(id: 'edited-member-id', displayName: 'ミニマル');
-      const administratorId = 'admin-member-id';
+      const ownerId = 'admin-member-id';
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
 
       // Act
-      await usecase.execute(editedMember, administratorId);
+      await usecase.execute(editedMember, ownerId);
 
       // Assert
       final captured = verify(
         mockMemberRepository.saveMember(captureAny),
       ).captured;
       final savedMember = captured[0] as Member;
-      expect(savedMember.administratorId, administratorId);
+      expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
       expect(savedMember.id, isNot(editedMember.id)); // 新しいIDが生成されること
     });

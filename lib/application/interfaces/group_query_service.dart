@@ -5,6 +5,7 @@ abstract class GroupQueryService {
     String memberId,
   );
 
-  Future<List<GroupWithMembersDto>>
-  getManagedGroupsWithMembersByAdministratorId(String administratorId);
+  Future<List<GroupWithMembersDto>> getManagedGroupsWithMembersByOwnerId(
+    String ownerId,
+  );
 }

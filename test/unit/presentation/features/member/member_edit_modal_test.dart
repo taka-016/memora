@@ -26,7 +26,7 @@ void main() {
       final existingMember = Member(
         id: 'test-id',
         accountId: 'test-account',
-        administratorId: null,
+        ownerId: null,
         displayName: 'テストユーザー',
         kanjiLastName: '山田',
         kanjiFirstName: '太郎',
@@ -64,7 +64,7 @@ void main() {
       final existingMember = Member(
         id: 'test-id',
         accountId: 'test-account',
-        administratorId: null,
+        ownerId: null,
         displayName: 'テストユーザー',
         kanjiLastName: '山田',
         kanjiFirstName: '太郎',

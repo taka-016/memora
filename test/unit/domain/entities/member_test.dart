@@ -8,7 +8,7 @@ void main() {
       final member = Member(
         id: 'member001',
         accountId: 'account001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
@@ -28,7 +28,7 @@ void main() {
       );
       expect(member.id, 'member001');
       expect(member.accountId, 'account001');
-      expect(member.administratorId, 'admin001');
+      expect(member.ownerId, 'admin001');
       expect(member.hiraganaFirstName, 'たろう');
       expect(member.hiraganaLastName, 'やまだ');
       expect(member.kanjiFirstName, '太郎');
@@ -51,7 +51,7 @@ void main() {
       final member = Member(id: 'member002', displayName: 'たろちゃん');
       expect(member.id, 'member002');
       expect(member.accountId, null);
-      expect(member.administratorId, null);
+      expect(member.ownerId, null);
       expect(member.hiraganaFirstName, null);
       expect(member.hiraganaLastName, null);
       expect(member.kanjiFirstName, null);
@@ -75,7 +75,7 @@ void main() {
       final member1 = Member(
         id: 'member001',
         accountId: 'account001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         displayName: 'たろちゃん',
         birthday: now,
         email: 'taro@example.com',
@@ -83,7 +83,7 @@ void main() {
       final member2 = Member(
         id: 'member001',
         accountId: 'account001',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         displayName: 'たろちゃん',
         birthday: now,
         email: 'taro@example.com',

@@ -37,7 +37,7 @@ void main() {
     test('saveGroupがgroups collectionにグループ情報を追加し、自動採番IDを返す', () async {
       final group = Group(
         id: '',
-        administratorId: 'admin001',
+        ownerId: 'admin001',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
@@ -190,86 +190,78 @@ void main() {
       expect(result, isNull);
     });
 
-    test('getGroupsByAdministratorIdが指定したadministratorIdのグループ一覧を返す', () async {
-      const administratorId = 'admin001';
+    test('getGroupsByOwnerIdが指定したownerIdのグループ一覧を返す', () async {
+      const ownerId = 'admin001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('administratorId', isEqualTo: administratorId),
+        mockCollection.where('ownerId', isEqualTo: ownerId),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('group001');
-      when(mockDoc1.data()).thenReturn({
-        'administratorId': administratorId,
-        'name': 'テストグループ',
-        'memo': 'テストメモ',
-      });
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'ownerId': ownerId, 'name': 'テストグループ', 'memo': 'テストメモ'});
 
-      final result = await repository.getGroupsByAdministratorId(
-        administratorId,
-      );
+      final result = await repository.getGroupsByOwnerId(ownerId);
 
       expect(result.length, 1);
       expect(result[0].id, 'group001');
-      expect(result[0].administratorId, administratorId);
+      expect(result[0].ownerId, ownerId);
       expect(result[0].name, 'テストグループ');
       expect(result[0].memo, 'テストメモ');
     });
 
-    test('getGroupsByAdministratorIdがエラー時に空のリストを返す', () async {
-      const administratorId = 'admin001';
+    test('getGroupsByOwnerIdがエラー時に空のリストを返す', () async {
+      const ownerId = 'admin001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('administratorId', isEqualTo: administratorId),
+        mockCollection.where('ownerId', isEqualTo: ownerId),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenThrow(Exception('Firestore error'));
 
-      final result = await repository.getGroupsByAdministratorId(
-        administratorId,
-      );
+      final result = await repository.getGroupsByOwnerId(ownerId);
 
       expect(result, isEmpty);
     });
 
-    test('指定したmemberIdが管理者のグループ一覧を返す', () async {
+    test('指定したmemberIdが所有者のグループ一覧を返す', () async {
       const memberId = 'member001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('administratorId', isEqualTo: memberId),
+        mockCollection.where('ownerId', isEqualTo: memberId),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('group001');
       when(mockDoc1.data()).thenReturn({
-        'administratorId': memberId,
-        'name': '管理者グループ',
-        'memo': '管理者のテストグループ',
+        'ownerId': memberId,
+        'name': '所有者グループ',
+        'memo': '所有者のテストグループ',
       });
 
       final result = await repository.getGroupsWhereUserIsAdmin(memberId);
 
       expect(result.length, 1);
       expect(result[0].id, 'group001');
-      expect(result[0].administratorId, memberId);
-      expect(result[0].name, '管理者グループ');
-      expect(result[0].memo, '管理者のテストグループ');
+      expect(result[0].ownerId, memberId);
+      expect(result[0].name, '所有者グループ');
+      expect(result[0].memo, '所有者のテストグループ');
 
-      verify(
-        mockCollection.where('administratorId', isEqualTo: memberId),
-      ).called(1);
+      verify(mockCollection.where('ownerId', isEqualTo: memberId)).called(1);
       verify(mockQuery.get()).called(1);
     });
 
-    test('管理者のグループが存在しない場合、空のリストを返す', () async {
+    test('所有者のグループが存在しない場合、空のリストを返す', () async {
       const memberId = 'member001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
       final mockEmptySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('administratorId', isEqualTo: memberId),
+        mockCollection.where('ownerId', isEqualTo: memberId),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockEmptySnapshot);
       when(mockEmptySnapshot.docs).thenReturn([]);
@@ -277,48 +269,44 @@ void main() {
       final result = await repository.getGroupsWhereUserIsAdmin(memberId);
 
       expect(result, isEmpty);
-      verify(
-        mockCollection.where('administratorId', isEqualTo: memberId),
-      ).called(1);
+      verify(mockCollection.where('ownerId', isEqualTo: memberId)).called(1);
       verify(mockQuery.get()).called(1);
     });
 
-    test('複数の管理者グループがある場合、全てのグループを返す', () async {
+    test('複数の所有者グループがある場合、全てのグループを返す', () async {
       const memberId = 'member001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
       final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('administratorId', isEqualTo: memberId),
+        mockCollection.where('ownerId', isEqualTo: memberId),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
 
       when(mockDoc1.id).thenReturn('group001');
       when(mockDoc1.data()).thenReturn({
-        'administratorId': memberId,
-        'name': '管理者グループ1',
-        'memo': '最初の管理者グループ',
+        'ownerId': memberId,
+        'name': '所有者グループ1',
+        'memo': '最初の所有者グループ',
       });
 
       when(mockDoc2.id).thenReturn('group002');
       when(mockDoc2.data()).thenReturn({
-        'administratorId': memberId,
-        'name': '管理者グループ2',
-        'memo': '2番目の管理者グループ',
+        'ownerId': memberId,
+        'name': '所有者グループ2',
+        'memo': '2番目の所有者グループ',
       });
 
       final result = await repository.getGroupsWhereUserIsAdmin(memberId);
 
       expect(result.length, 2);
       expect(result[0].id, 'group001');
-      expect(result[0].name, '管理者グループ1');
+      expect(result[0].name, '所有者グループ1');
       expect(result[1].id, 'group002');
-      expect(result[1].name, '管理者グループ2');
+      expect(result[1].name, '所有者グループ2');
 
-      verify(
-        mockCollection.where('administratorId', isEqualTo: memberId),
-      ).called(1);
+      verify(mockCollection.where('ownerId', isEqualTo: memberId)).called(1);
       verify(mockQuery.get()).called(1);
     });
 
@@ -356,7 +344,7 @@ void main() {
       when(mockGroupSnapshot.exists).thenReturn(true);
       when(mockGroupSnapshot.id).thenReturn(groupId);
       when(mockGroupSnapshot.data()).thenReturn({
-        'administratorId': 'other-admin',
+        'ownerId': 'other-admin',
         'name': 'メンバーグループ',
         'memo': 'メンバーのテストグループ',
       });
@@ -365,7 +353,7 @@ void main() {
 
       expect(result.length, 1);
       expect(result[0].id, groupId);
-      expect(result[0].administratorId, 'other-admin');
+      expect(result[0].ownerId, 'other-admin');
       expect(result[0].name, 'メンバーグループ');
       expect(result[0].memo, 'メンバーのテストグループ');
 
@@ -450,7 +438,7 @@ void main() {
       when(mockGroupSnapshot1.exists).thenReturn(true);
       when(mockGroupSnapshot1.id).thenReturn(groupId1);
       when(mockGroupSnapshot1.data()).thenReturn({
-        'administratorId': 'admin001',
+        'ownerId': 'admin001',
         'name': 'メンバーグループ1',
         'memo': '1つ目のメンバーグループ',
       });
@@ -461,7 +449,7 @@ void main() {
       when(mockGroupSnapshot2.exists).thenReturn(true);
       when(mockGroupSnapshot2.id).thenReturn(groupId2);
       when(mockGroupSnapshot2.data()).thenReturn({
-        'administratorId': 'admin002',
+        'ownerId': 'admin002',
         'name': 'メンバーグループ2',
         'memo': '2つ目のメンバーグループ',
       });
@@ -535,7 +523,7 @@ void main() {
       when(mockExistingGroupSnapshot.exists).thenReturn(true);
       when(mockExistingGroupSnapshot.id).thenReturn(existingGroupId);
       when(mockExistingGroupSnapshot.data()).thenReturn({
-        'administratorId': 'admin001',
+        'ownerId': 'admin001',
         'name': '存在するグループ',
         'memo': '存在するメンバーグループ',
       });

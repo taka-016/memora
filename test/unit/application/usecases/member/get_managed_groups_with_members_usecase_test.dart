@@ -22,13 +22,13 @@ void main() {
   group('GetManagedGroupsWithMembersUsecase', () {
     test('管理するグループとそのメンバーの一覧を返すこと', () async {
       // arrange
-      const administratorId = 'admin123';
-      final administratorMember = Member(
-        id: administratorId,
+      const ownerId = 'admin123';
+      final ownerMember = Member(
+        id: ownerId,
         displayName: 'Admin User',
         email: 'admin@example.com',
         accountId: 'account123',
-        administratorId: '',
+        ownerId: '',
       );
 
       final member1 = MemberDto(
@@ -57,13 +57,11 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
-          administratorId,
-        ),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
       ).thenAnswer((_) async => expectedResult);
 
       // act
-      final result = await usecase.execute(administratorMember);
+      final result = await usecase.execute(ownerMember);
 
       // assert
       expect(result.length, equals(2));
@@ -72,38 +70,32 @@ void main() {
       expect(result[1].groupId, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
-          administratorId,
-        ),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
       );
     });
 
     test('グループが見つからない場合に空のリストを返すこと', () async {
       // arrange
-      const administratorId = 'admin123';
-      final administratorMember = Member(
-        id: administratorId,
+      const ownerId = 'admin123';
+      final ownerMember = Member(
+        id: ownerId,
         displayName: 'Admin User',
         email: 'admin@example.com',
         accountId: 'account123',
-        administratorId: '',
+        ownerId: '',
       );
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
-          administratorId,
-        ),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
       ).thenAnswer((_) async => []);
 
       // act
-      final result = await usecase.execute(administratorMember);
+      final result = await usecase.execute(ownerMember);
 
       // assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
-          administratorId,
-        ),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
       );
     });
   });

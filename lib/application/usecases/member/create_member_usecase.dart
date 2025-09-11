@@ -7,11 +7,11 @@ class CreateMemberUsecase {
 
   CreateMemberUsecase(this._memberRepository);
 
-  Future<void> execute(Member editedMember, String administratorId) async {
+  Future<void> execute(Member editedMember, String ownerId) async {
     final newMember = Member(
       id: const Uuid().v4(),
       accountId: editedMember.accountId,
-      administratorId: administratorId,
+      ownerId: ownerId,
       displayName: editedMember.displayName,
       kanjiLastName: editedMember.kanjiLastName,
       kanjiFirstName: editedMember.kanjiFirstName,

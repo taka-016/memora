@@ -33,7 +33,7 @@ void main() {
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
-      administratorId: null,
+      ownerId: null,
       displayName: 'Test User',
       kanjiLastName: '山田',
       kanjiFirstName: '太郎',
@@ -65,7 +65,7 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
@@ -86,7 +86,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -109,9 +109,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - データ取得の確認
-      verify(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).called(1);
+      verify(mockMemberRepository.getMembersByOwnerId(testMember.id)).called(1);
       expect(find.text('メンバー管理'), findsOneWidget);
 
       // メンバー表示の確認
@@ -157,7 +155,7 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -184,7 +182,7 @@ void main() {
     testWidgets('メンバー追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -210,7 +208,7 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenThrow(Exception('Network error'));
 
       // Act
@@ -243,7 +241,7 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
@@ -264,7 +262,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -291,9 +289,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      verify(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
-      ).called(2);
+      verify(mockMemberRepository.getMembersByOwnerId(testMember.id)).called(2);
     });
 
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
@@ -302,7 +298,7 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
@@ -323,7 +319,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -358,7 +354,7 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
@@ -379,7 +375,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
@@ -422,7 +418,7 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => []);
 
       when(
@@ -460,20 +456,20 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: 'account-id-1',
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Account Linked Member',
         ),
         // accountIdを持たないメンバー（削除ボタンが表示される）
         Member(
           id: 'managed-member-2',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Regular Member',
         ),
       ];
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -536,7 +532,7 @@ void main() {
         Member(
           id: 'managed-member-1',
           accountId: null,
-          administratorId: testMember.id,
+          ownerId: testMember.id,
           displayName: 'Managed User 1',
           kanjiLastName: '佐藤',
           kanjiFirstName: '花子',
@@ -560,7 +556,7 @@ void main() {
       final updatedTestMember = Member(
         id: testMember.id,
         accountId: testMember.accountId,
-        administratorId: testMember.administratorId,
+        ownerId: testMember.ownerId,
         displayName: '更新されたユーザー',
         kanjiLastName: '更新',
         kanjiFirstName: '太郎',
@@ -580,7 +576,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => managedMembers);
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});

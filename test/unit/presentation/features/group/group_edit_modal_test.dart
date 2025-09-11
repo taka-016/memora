@@ -23,7 +23,7 @@ void main() {
     testWidgets('編集時にタイトルが正しく表示される', (WidgetTester tester) async {
       const group = Group(
         id: 'test-id',
-        administratorId: 'admin-id',
+        ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
@@ -92,7 +92,7 @@ void main() {
         Member(
           id: 'member1',
           accountId: 'account1',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー1',
           kanjiLastName: '田中',
           kanjiFirstName: '太郎',
@@ -113,7 +113,7 @@ void main() {
         Member(
           id: 'member2',
           accountId: 'account2',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー2',
           kanjiLastName: '鈴木',
           kanjiFirstName: '花子',
@@ -151,7 +151,7 @@ void main() {
         Member(
           id: 'member1',
           accountId: 'account1',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー1',
           kanjiLastName: '田中',
           kanjiFirstName: '太郎',
@@ -241,7 +241,7 @@ void main() {
         (index) => Member(
           id: 'member$index',
           accountId: 'account$index',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー$index',
           kanjiLastName: '田中',
           kanjiFirstName: '太郎',
@@ -280,7 +280,7 @@ void main() {
     testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
       const group = Group(
         id: 'test-id',
-        administratorId: 'admin-id',
+        ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
@@ -289,7 +289,7 @@ void main() {
         Member(
           id: 'member1',
           accountId: 'account1',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー1',
           kanjiLastName: '田中',
           kanjiFirstName: '太郎',
@@ -310,7 +310,7 @@ void main() {
         Member(
           id: 'member2',
           accountId: 'account2',
-          administratorId: 'admin-id',
+          ownerId: 'admin-id',
           displayName: 'メンバー2',
           kanjiLastName: '鈴木',
           kanjiFirstName: '花子',
@@ -359,7 +359,7 @@ void main() {
     testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {
       const group = Group(
         id: 'test-id',
-        administratorId: 'admin-id',
+        ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
       );

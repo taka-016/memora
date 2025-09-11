@@ -6,9 +6,7 @@ class GetManagedMembersUsecase {
 
   GetManagedMembersUsecase(this._memberRepository);
 
-  Future<List<Member>> execute(Member administratorMember) async {
-    return await _memberRepository.getMembersByAdministratorId(
-      administratorMember.id,
-    );
+  Future<List<Member>> execute(Member ownerMember) async {
+    return await _memberRepository.getMembersByOwnerId(ownerMember.id);
   }
 }

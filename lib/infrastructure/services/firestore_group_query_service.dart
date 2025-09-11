@@ -22,10 +22,11 @@ class FirestoreGroupQueryService implements GroupQueryService {
   }
 
   @override
-  Future<List<GroupWithMembersDto>>
-  getManagedGroupsWithMembersByAdministratorId(String administratorId) async {
+  Future<List<GroupWithMembersDto>> getManagedGroupsWithMembersByOwnerId(
+    String ownerId,
+  ) async {
     try {
-      final managedGroups = await _getGroupsWhereUserIsAdmin(administratorId);
+      final managedGroups = await _getGroupsWhereUserIsAdmin(ownerId);
       return await _addMembersToGroups(managedGroups);
     } catch (e) {
       return [];
@@ -37,7 +38,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
   ) async {
     final snapshot = await _firestore
         .collection('groups')
-        .where('administratorId', isEqualTo: memberId)
+        .where('ownerId', isEqualTo: memberId)
         .get();
 
     return snapshot.docs.map((doc) {

@@ -6,7 +6,7 @@ abstract class GroupRepository {
   Future<void> updateGroup(Group group);
   Future<void> deleteGroup(String groupId);
   Future<Group?> getGroupById(String groupId);
-  Future<List<Group>> getGroupsByAdministratorId(String administratorId);
+  Future<List<Group>> getGroupsByOwnerId(String ownerId);
   Future<List<Group>> getGroupsWhereUserIsAdmin(String memberId);
   Future<List<Group>> getGroupsWhereUserIsMember(String memberId);
 }

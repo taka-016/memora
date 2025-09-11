@@ -55,7 +55,7 @@ void main() {
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
-      administratorId: null,
+      ownerId: null,
       displayName: 'Test User',
       kanjiLastName: '山田',
       kanjiFirstName: '太郎',
@@ -85,7 +85,7 @@ void main() {
     );
     group1 = Group(
       id: 'group-1',
-      administratorId: testMember.id,
+      ownerId: testMember.id,
       name: 'Test Group 1',
       memo: 'Test memo 1',
     );
@@ -97,7 +97,7 @@ void main() {
       final managedGroupsWithMembers = [groupWithMembers1, groupWithMembers2];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -129,7 +129,7 @@ void main() {
 
       // Assert
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).called(1);
@@ -141,7 +141,7 @@ void main() {
     testWidgets('管理しているグループがない場合、空状態が表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => []);
@@ -176,7 +176,7 @@ void main() {
     testWidgets('グループ追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => []);
@@ -210,7 +210,7 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenThrow(Exception('Network error'));
@@ -248,7 +248,7 @@ void main() {
       final managedGroupsWithMembers = [groupWithMembers1];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -284,7 +284,7 @@ void main() {
 
       // Assert
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).called(2);
@@ -295,7 +295,7 @@ void main() {
       final managedGroupsWithMembers = [groupWithMembers1];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -331,7 +331,7 @@ void main() {
       final availableMembers = [testMember];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -341,7 +341,7 @@ void main() {
       ).thenAnswer((_) async => group1);
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => availableMembers);
 
       // Act
@@ -380,7 +380,7 @@ void main() {
       final availableMembers = [testMember];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -390,7 +390,7 @@ void main() {
       ).thenAnswer((_) async => group1);
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => availableMembers);
 
       when(
@@ -451,7 +451,7 @@ void main() {
       final member2 = Member(
         id: 'member-2',
         accountId: 'account-2',
-        administratorId: testMember.id,
+        ownerId: testMember.id,
         displayName: 'Member 2',
         kanjiLastName: '田中',
         kanjiFirstName: '花子',
@@ -475,7 +475,7 @@ void main() {
       final availableMembers = [testMember, member2];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -485,7 +485,7 @@ void main() {
       ).thenAnswer((_) async => group1);
 
       when(
-        mockMemberRepository.getMembersByAdministratorId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => availableMembers);
 
       when(
@@ -568,7 +568,7 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
@@ -641,7 +641,7 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByAdministratorId(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);

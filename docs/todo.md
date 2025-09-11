@@ -110,11 +110,11 @@
 
 ## グループ管理
 
-- [x] GroupをadministratorIdで抽出する処理をリポジトリに追加する
+- [x] GroupをownerIdで抽出する処理をリポジトリに追加する
 - [x] GruopMemberをmemberIdで抽出する処理をリポジトリに追加する
 - [x] GetGroupsWithMembersUsecaseのexecuteメソッドを修正する
   - [x] memberを引数に取るようにする
-  - [x] Group取得はgetGroupsは使用せず、getGroupsByAdministratorIdを使用する（member.idを使用）
+  - [x] Group取得はgetGroupsは使用せず、getGroupsByOwnerIdを使用する（member.idを使用）
   - [x] Groupは以下の結果もマージする
     - [x] GroupMemberをgetGroupMembersByMemberIdで取得（member.idを使用）
     - [x] GroupをgetGroupsByGroupIdで取得（groupMember.groupIdを使用）
@@ -130,7 +130,7 @@
 - [x] メンバー設定メニューから開く
 - [x] メンバー一覧表示
   - [x] ログインユーザーが管理しているメンバーの一覧を表示する
-  - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
+  - [x] ログインユーザーのmemberIdでownerIdを紐づけて取得する
   - [x] 1行目にログインユーザーに紐づくmember(TopPageの_currentMember)を表示する（削除不可とす
   る）
   - [x] ログインユーザー行の表示情報を他の行と同様に調整する
@@ -138,8 +138,8 @@
   - [x] 必ず1行以上存在するため、空状態メッセージの処理は不要
   - [x] 編集ボタンではなく、行タップで編集画面に遷移するように変更
 - [x] メンバー新規登録
-  - [x] Memberのid,accountId,administratorId以外の入力項目を作成する(モーダル画面)
-  - [x] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
+  - [x] Memberのid,accountId,ownerId以外の入力項目を作成する(モーダル画面)
+  - [x] 登録時にログインユーザーのmemberIdをownerIdにセットする
 - [x] メンバー情報編集
   - [x] メンバー一覧から対象メンバーの編集ボタンをクリックして開く
   - [x] メンバー新規登録と同一の情報がすべて編集可能（同一画面を使いまわす）
@@ -149,7 +149,7 @@
 - [x] メンバー削除
   - [x] メンバー一覧から対象メンバーの削除ボタンをクリック
   - [x] 確認ダイアログ(モーダル)を表示して、OKなら削除実行
-- [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとadministratorIdを渡す形に変更する
+- [x] newMemberの作成はcreateMemberUsecase側の責務とし、executeにeditedMemberとownerIdを渡す形に変更する
 - [x] accountIdを持っているメンバーは削除不可とする（削除ボタンを表示しない）
 - [x] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
 - [x] メール認証の有効化
@@ -158,17 +158,17 @@
 
 - [x] グループ設定メニューから開く
 - [x] usecaseの作成
-  - [x] GroupをadministratorIdで取得するusecaseを作成する（GetManagedMembersUsecaseを参考に）
+  - [x] GroupをownerIdで取得するusecaseを作成する（GetManagedMembersUsecaseを参考に）
   - [x] GroupMemberをgroupIdで取得するusecaseを作成する（GetGroupMembersByGroupIdUsecase）
   - [x] Groupを新規作成するusecaseを作成する（CreateMemberUsecaseを参考に）
   - [x] Groupを編集するusecaseを作成する（UpdateMemberUsecaseを参考に）
   - [x] Groupを削除するusecaseを作成する（DeleteMemberUsecaseを参考に）
 - [x] グループ一覧表示(MemberManagementを参考に)
   - [x] ログインユーザーが管理しているグループの一覧を表示する
-  - [x] ログインユーザーのmemberIdでadministratorIdを紐づけて取得する
+  - [x] ログインユーザーのmemberIdでownerIdを紐づけて取得する
 - [x] グループ新規登録(MemberManagement,MemberEditModalを参考に)
-  - [x] Groupのid,administratorId以外の入力項目を作成する(モーダル画面)
-  - [x] 登録時にログインユーザーのmemberIdをadministratorIdにセットする
+  - [x] Groupのid,ownerId以外の入力項目を作成する(モーダル画面)
+  - [x] 登録時にログインユーザーのmemberIdをownerIdにセットする
   - [x] グループに所属させるメンバーを選択できる（ログインユーザーが管理しているメンバーから選択）
   - [x] メンバー選択の対象数が多い場合、メンバー一覧のみをスクロールする
 - [x] グループ情報編集(MemberManagement,MemberEditModalを参考に)

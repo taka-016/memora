@@ -89,11 +89,11 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<Group>> getGroupsByAdministratorId(String administratorId) async {
+  Future<List<Group>> getGroupsByOwnerId(String ownerId) async {
     try {
       final snapshot = await _firestore
           .collection('groups')
-          .where('administratorId', isEqualTo: administratorId)
+          .where('ownerId', isEqualTo: ownerId)
           .get();
       return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
@@ -107,7 +107,7 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<List<Group>> getGroupsWhereUserIsAdmin(String memberId) async {
     final snapshot = await _firestore
         .collection('groups')
-        .where('administratorId', isEqualTo: memberId)
+        .where('ownerId', isEqualTo: memberId)
         .get();
 
     return snapshot.docs

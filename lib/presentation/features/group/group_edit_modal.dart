@@ -204,7 +204,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
     if (_formKey.currentState!.validate()) {
       final group = Group(
         id: widget.group?.id ?? '',
-        administratorId: widget.group?.administratorId ?? '',
+        ownerId: widget.group?.ownerId ?? '',
         name: _nameController.text,
         memo: _memoController.text.isEmpty ? null : _memoController.text,
       );

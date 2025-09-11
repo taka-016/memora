@@ -72,13 +72,11 @@ class FirestoreMemberRepository implements MemberRepository {
   }
 
   @override
-  Future<List<Member>> getMembersByAdministratorId(
-    String administratorId,
-  ) async {
+  Future<List<Member>> getMembersByOwnerId(String ownerId) async {
     try {
       final querySnapshot = await _firestore
           .collection('members')
-          .where('administratorId', isEqualTo: administratorId)
+          .where('ownerId', isEqualTo: ownerId)
           .get();
 
       return querySnapshot.docs
