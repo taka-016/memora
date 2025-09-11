@@ -37,6 +37,7 @@ erDiagram
         string id PK
         string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
+        boolean isAdministrator "NOT NULL"
     }
     group_events {
         string id PK
@@ -75,6 +76,12 @@ erDiagram
         timestamp endDate "NOT NULL"
         string memo
     }
+    member_invitations {
+        string id PK
+        string inviteeId FK "NOT NULL"
+        string inviterId FK "NOT NULL"
+        string invitationKey "NOT NULL"
+    }
 
     trip_entries ||--o{ trip_participants : "id → tripId"
     trip_participants ||--|| members : "memberId → id"
@@ -88,4 +95,6 @@ erDiagram
     externally_managed_accounts ||--|| members : "id → accountId"
     members ||--o{ members : "id → ownerId"
     members ||--o{ groups : "id → ownerId"
+    members ||--o{ member_invitations : "id → inviteeId"
+    members ||--o{ member_invitations : "id → inviterId"
 ```
