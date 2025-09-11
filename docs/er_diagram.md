@@ -64,8 +64,6 @@ erDiagram
         string phoneNumber
         string passportNumber
         string passportExpiration
-        string anaMileageNumber
-        string jalMileageNumber
     }
     member_events {
         string id PK

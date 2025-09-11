@@ -48,8 +48,6 @@ void main() {
       type: 'member',
       passportNumber: null,
       passportExpiration: null,
-      anaMileageNumber: null,
-      jalMileageNumber: null,
     );
 
     // 共通的なモック設定: getMemberByIdはデフォルトでtestMemberを返す
@@ -80,8 +78,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -256,8 +252,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -313,8 +307,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -369,8 +361,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -547,8 +537,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -571,8 +559,6 @@ void main() {
         type: testMember.type,
         passportNumber: testMember.passportNumber,
         passportExpiration: testMember.passportExpiration,
-        anaMileageNumber: testMember.anaMileageNumber,
-        jalMileageNumber: testMember.jalMileageNumber,
       );
 
       when(

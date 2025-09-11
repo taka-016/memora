@@ -26,8 +26,6 @@ class CreateMemberUsecase {
       type: editedMember.type,
       passportNumber: editedMember.passportNumber,
       passportExpiration: editedMember.passportExpiration,
-      anaMileageNumber: editedMember.anaMileageNumber,
-      jalMileageNumber: editedMember.jalMileageNumber,
     );
 
     await _memberRepository.saveMember(newMember);

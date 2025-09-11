@@ -70,8 +70,6 @@ void main() {
       type: 'member',
       passportNumber: null,
       passportExpiration: null,
-      anaMileageNumber: null,
-      jalMileageNumber: null,
     );
     groupWithMembers1 = GroupWithMembersDto(
       groupId: 'group-1',
@@ -466,8 +464,6 @@ void main() {
         type: 'member',
         passportNumber: null,
         passportExpiration: null,
-        anaMileageNumber: null,
-        jalMileageNumber: null,
       );
 
       final managedGroupsWithMembers = [groupWithMembers1];

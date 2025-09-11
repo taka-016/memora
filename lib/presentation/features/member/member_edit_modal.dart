@@ -344,8 +344,6 @@ class _MemberEditModalState extends State<MemberEditModal> {
         type: widget.member?.type,
         passportNumber: widget.member?.passportNumber,
         passportExpiration: widget.member?.passportExpiration,
-        anaMileageNumber: widget.member?.anaMileageNumber,
-        jalMileageNumber: widget.member?.jalMileageNumber,
       );
 
       widget.onSave(member);

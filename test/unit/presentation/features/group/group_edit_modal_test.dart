@@ -107,8 +107,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
         Member(
           id: 'member2',
@@ -128,8 +126,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -166,8 +162,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 
@@ -256,8 +250,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       );
 
@@ -304,8 +296,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
         Member(
           id: 'member2',
@@ -325,8 +315,6 @@ void main() {
           type: 'member',
           passportNumber: null,
           passportExpiration: null,
-          anaMileageNumber: null,
-          jalMileageNumber: null,
         ),
       ];
 

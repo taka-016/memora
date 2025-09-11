@@ -22,8 +22,6 @@ class FirestoreMemberMapper {
       phoneNumber: data?['phoneNumber'] as String?,
       passportNumber: data?['passportNumber'] as String?,
       passportExpiration: data?['passportExpiration'] as String?,
-      anaMileageNumber: data?['anaMileageNumber'] as String?,
-      jalMileageNumber: data?['jalMileageNumber'] as String?,
     );
   }
 
@@ -47,8 +45,6 @@ class FirestoreMemberMapper {
       'phoneNumber': member.phoneNumber,
       'passportNumber': member.passportNumber,
       'passportExpiration': member.passportExpiration,
-      'anaMileageNumber': member.anaMileageNumber,
-      'jalMileageNumber': member.jalMileageNumber,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

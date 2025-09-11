@@ -41,8 +41,6 @@ void main() {
         type: 'member',
         passportNumber: null,
         passportExpiration: null,
-        anaMileageNumber: null,
-        jalMileageNumber: null,
       );
 
       // Act
@@ -79,8 +77,6 @@ void main() {
         type: 'member',
         passportNumber: null,
         passportExpiration: null,
-        anaMileageNumber: null,
-        jalMileageNumber: null,
       );
 
       // Act

@@ -23,8 +23,6 @@ void main() {
         phoneNumber: '090-1234-5678',
         passportNumber: 'A1234567',
         passportExpiration: '2030-01-01',
-        anaMileageNumber: 'ANA123456',
-        jalMileageNumber: 'JAL123456',
       );
       expect(member.id, 'member001');
       expect(member.accountId, 'account001');
@@ -43,8 +41,6 @@ void main() {
       expect(member.phoneNumber, '090-1234-5678');
       expect(member.passportNumber, 'A1234567');
       expect(member.passportExpiration, '2030-01-01');
-      expect(member.anaMileageNumber, 'ANA123456');
-      expect(member.jalMileageNumber, 'JAL123456');
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
@@ -66,8 +62,6 @@ void main() {
       expect(member.phoneNumber, null);
       expect(member.passportNumber, null);
       expect(member.passportExpiration, null);
-      expect(member.anaMileageNumber, null);
-      expect(member.jalMileageNumber, null);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
