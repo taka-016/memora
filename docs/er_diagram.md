@@ -19,6 +19,7 @@ erDiagram
         string id PK
         string pinId "NOT NULL"
         string tripId FK
+        string groupId FK
         number latitude "NOT NULL"
         number longitude "NOT NULL"
         string locationName
@@ -83,6 +84,7 @@ erDiagram
     group_members ||--|| members : "memberId → id"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
+    groups ||--o{ pins : "id → groupId"
     externally_managed_accounts ||--|| members : "id → accountId"
     members ||--o{ members : "id → ownerId"
     members ||--o{ groups : "id → ownerId"
