@@ -22,8 +22,22 @@ void main() {
     test('getPinsが呼ばれたとき、Pinのリストを返す', () async {
       // Arrange
       final pins = [
-        Pin(id: '1', pinId: '1', latitude: 35.681236, longitude: 139.767125),
-        Pin(id: '2', pinId: '2', latitude: 34.123456, longitude: 135.123456),
+        Pin(
+          id: '1',
+          pinId: '1',
+          tripId: 'test-trip-id',
+          groupId: 'test-group-id',
+          latitude: 35.681236,
+          longitude: 139.767125,
+        ),
+        Pin(
+          id: '2',
+          pinId: '2',
+          tripId: 'test-trip-id',
+          groupId: 'test-group-id',
+          latitude: 34.123456,
+          longitude: 135.123456,
+        ),
       ];
       final pinDtos = [
         PinDto(pinId: '1', latitude: 35.681236, longitude: 139.767125),

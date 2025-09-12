@@ -1,6 +1,7 @@
 class PinDto {
   final String pinId;
   final String? tripId;
+  final String? groupId;
   final double latitude;
   final double longitude;
   final String? locationName;
@@ -11,6 +12,7 @@ class PinDto {
   const PinDto({
     required this.pinId,
     this.tripId,
+    this.groupId,
     required this.latitude,
     required this.longitude,
     this.locationName,
@@ -22,6 +24,7 @@ class PinDto {
   PinDto copyWith({
     String? pinId,
     String? tripId,
+    String? groupId,
     double? latitude,
     double? longitude,
     String? locationName,
@@ -32,6 +35,7 @@ class PinDto {
     return PinDto(
       pinId: pinId ?? this.pinId,
       tripId: tripId ?? this.tripId,
+      groupId: groupId ?? this.groupId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,

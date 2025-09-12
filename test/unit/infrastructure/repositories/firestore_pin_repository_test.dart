@@ -38,6 +38,8 @@ void main() {
       final pin = Pin(
         id: 'test-id',
         pinId: 'test-marker-id',
+        tripId: 'test-trip-id',
+        groupId: 'test-group-id',
         latitude: 35.0,
         longitude: 139.0,
       );
@@ -312,6 +314,7 @@ void main() {
         id: 'pin123',
         pinId: 'pin123',
         tripId: 'trip123',
+        groupId: 'group123',
         latitude: 35.0,
         longitude: 139.0,
         visitStartDate: DateTime(2024, 1, 1),

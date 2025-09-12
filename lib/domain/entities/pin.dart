@@ -4,7 +4,8 @@ class Pin extends Equatable {
   const Pin({
     required this.id,
     required this.pinId,
-    this.tripId,
+    required this.tripId,
+    required this.groupId,
     required this.latitude,
     required this.longitude,
     this.locationName,
@@ -15,7 +16,8 @@ class Pin extends Equatable {
 
   final String id;
   final String pinId;
-  final String? tripId;
+  final String tripId;
+  final String groupId;
   final double latitude;
   final double longitude;
   final String? locationName;
@@ -27,6 +29,7 @@ class Pin extends Equatable {
     String? id,
     String? pinId,
     String? tripId,
+    String? groupId,
     double? latitude,
     double? longitude,
     String? locationName,
@@ -38,6 +41,7 @@ class Pin extends Equatable {
       id: id ?? this.id,
       pinId: pinId ?? this.pinId,
       tripId: tripId ?? this.tripId,
+      groupId: groupId ?? this.groupId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
@@ -52,6 +56,7 @@ class Pin extends Equatable {
     id,
     pinId,
     tripId,
+    groupId,
     latitude,
     longitude,
     locationName,

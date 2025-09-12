@@ -120,7 +120,10 @@ class _TripManagementState extends State<TripManagement> {
 
       if (pins != null && pins.isNotEmpty && _createPinUseCase != null) {
         for (final pin in pins) {
-          final pinWithTripId = pin.copyWith(tripId: tripId);
+          final pinWithTripId = pin.copyWith(
+            tripId: tripId,
+            groupId: tripEntry.groupId,
+          );
           await _createPinUseCase!.execute(pinWithTripId);
         }
       }
@@ -166,7 +169,10 @@ class _TripManagementState extends State<TripManagement> {
           _createPinUseCase != null) {
         await _deletePinsByTripIdUseCase!.execute(tripEntry.id);
         for (final pin in pins) {
-          final pinWithTripId = pin.copyWith(tripId: tripEntry.id);
+          final pinWithTripId = pin.copyWith(
+            tripId: tripEntry.id,
+            groupId: tripEntry.groupId,
+          );
           await _createPinUseCase!.execute(pinWithTripId);
         }
       }

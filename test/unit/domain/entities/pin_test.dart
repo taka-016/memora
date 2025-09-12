@@ -8,6 +8,7 @@ void main() {
         id: 'id001',
         pinId: 'pin001',
         tripId: 'trip001',
+        groupId: 'group001',
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
@@ -18,6 +19,7 @@ void main() {
       expect(pin.id, 'id001');
       expect(pin.pinId, 'pin001');
       expect(pin.tripId, 'trip001');
+      expect(pin.groupId, 'group001');
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
       expect(pin.locationName, '東京駅');
@@ -30,12 +32,15 @@ void main() {
       final pin = Pin(
         id: 'id001',
         pinId: 'pin001',
+        tripId: 'trip001',
+        groupId: 'group001',
         latitude: 35.0,
         longitude: 139.0,
       );
       expect(pin.id, 'id001');
       expect(pin.pinId, 'pin001');
-      expect(pin.tripId, null);
+      expect(pin.tripId, 'trip001');
+      expect(pin.groupId, 'group001');
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
       expect(pin.locationName, null);
@@ -49,6 +54,7 @@ void main() {
         id: 'id001',
         pinId: 'pin001',
         tripId: 'trip001',
+        groupId: 'group001',
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
@@ -60,6 +66,7 @@ void main() {
         id: 'id001',
         pinId: 'pin001',
         tripId: 'trip001',
+        groupId: 'group001',
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
@@ -75,6 +82,7 @@ void main() {
         id: 'id001',
         pinId: 'pin001',
         tripId: 'trip001',
+        groupId: 'group001',
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
@@ -90,6 +98,7 @@ void main() {
       expect(updatedPin.id, 'id001');
       expect(updatedPin.pinId, 'pin001');
       expect(updatedPin.tripId, 'trip001');
+      expect(updatedPin.groupId, 'group001');
       expect(updatedPin.latitude, 36.0);
       expect(updatedPin.longitude, 139.0);
       expect(updatedPin.locationName, '新宿駅');

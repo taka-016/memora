@@ -7,7 +7,8 @@ class FirestorePinMapper {
     return Pin(
       id: doc.id,
       pinId: data?['pinId'] as String? ?? '',
-      tripId: data?['tripId'] as String?,
+      tripId: data?['tripId'] as String? ?? '',
+      groupId: data?['groupId'] as String? ?? '',
       latitude: (data?['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (data?['longitude'] as num?)?.toDouble() ?? 0.0,
       locationName: data?['locationName'] as String?,
@@ -25,6 +26,7 @@ class FirestorePinMapper {
     return {
       'pinId': pin.pinId,
       'tripId': pin.tripId,
+      'groupId': pin.groupId,
       'latitude': pin.latitude,
       'longitude': pin.longitude,
       'locationName': pin.locationName,

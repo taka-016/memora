@@ -23,11 +23,15 @@ void main() {
       final pin = Pin(
         id: '',
         pinId: 'test-marker-id',
+        tripId: 'test-trip-id',
+        groupId: 'test-group-id',
         latitude: 35.0,
         longitude: 139.0,
       );
       final pinDto = PinDto(
         pinId: 'test-marker-id',
+        tripId: 'test-trip-id',
+        groupId: 'test-group-id',
         latitude: 35.0,
         longitude: 139.0,
       );
@@ -45,11 +49,15 @@ void main() {
       final pin = Pin(
         id: '',
         pinId: 'test-marker-id',
+        tripId: 'test-trip-id',
+        groupId: 'test-group-id',
         latitude: 35.0,
         longitude: 139.0,
       );
       final pinDto = PinDto(
         pinId: 'test-marker-id',
+        tripId: 'test-trip-id',
+        groupId: 'test-group-id',
         latitude: 35.0,
         longitude: 139.0,
       );

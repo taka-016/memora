@@ -19,7 +19,8 @@ class PinMapper {
     return Pin(
       id: id,
       pinId: dto.pinId,
-      tripId: dto.tripId,
+      tripId: dto.tripId!,
+      groupId: dto.groupId!,
       latitude: dto.latitude,
       longitude: dto.longitude,
       locationName: dto.locationName,
@@ -33,7 +34,11 @@ class PinMapper {
     return entities.map(toDto).toList();
   }
 
-  static List<Pin> toEntityList(List<PinDto> dtos, {List<String>? ids}) {
+  static List<Pin> toEntityList(
+    List<PinDto> dtos, {
+    List<String>? ids,
+    List<String>? groupIds,
+  }) {
     return dtos.asMap().entries.map((entry) {
       final index = entry.key;
       final dto = entry.value;
