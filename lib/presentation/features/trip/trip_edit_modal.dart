@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import '../../../domain/entities/trip_entry.dart';
-import '../../../domain/entities/pin.dart';
 import '../../helpers/date_picker_helper.dart';
 import '../../shared/map_views/map_view_factory.dart';
 import '../../shared/sheets/pin_detail_bottom_sheet.dart';
@@ -10,8 +10,8 @@ import 'package:uuid/uuid.dart';
 class TripEditModal extends StatefulWidget {
   final String groupId;
   final TripEntry? tripEntry;
-  final List<Pin>? pins;
-  final Function(TripEntry, {List<Pin>? pins}) onSave;
+  final List<PinDto>? pins;
+  final Function(TripEntry, {List<PinDto>? pins}) onSave;
   final bool isTestEnvironment;
   final int? year;
 
@@ -41,8 +41,8 @@ class _TripEditModalState extends State<TripEditModal> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
 
-  List<Pin> _pins = [];
-  Pin? _selectedPin;
+  List<PinDto> _pins = [];
+  PinDto? _selectedPin;
   bool _isBottomSheetVisible = false;
 
   @override
@@ -66,8 +66,7 @@ class _TripEditModalState extends State<TripEditModal> {
   Future<void> _onMapLongTapped(Location location) async {
     final uuid = Uuid();
     final pinId = uuid.v4();
-    final newPin = Pin(
-      id: pinId,
+    final newPin = PinDto(
       pinId: pinId,
       latitude: location.latitude,
       longitude: location.longitude,
@@ -79,7 +78,7 @@ class _TripEditModalState extends State<TripEditModal> {
     });
   }
 
-  void _onPinTapped(Pin pin) {
+  void _onPinTapped(PinDto pin) {
     setState(() {
       _selectedPin = pin;
     });
@@ -102,7 +101,7 @@ class _TripEditModalState extends State<TripEditModal> {
     _hidePinDetailBottomSheet();
   }
 
-  void _onPinUpdated(Pin pin) {
+  void _onPinUpdated(PinDto pin) {
     setState(() {
       final index = _pins.indexWhere((p) => p.pinId == pin.pinId);
       if (index != -1) {
@@ -300,7 +299,7 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
-  Widget _buildPinListItem(Pin pin, int index) {
+  Widget _buildPinListItem(PinDto pin, int index) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
       child: ListTile(
@@ -326,7 +325,7 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
-  Widget? _buildPinSubtitle(Pin pin) {
+  Widget? _buildPinSubtitle(PinDto pin) {
     final List<String> subtitleParts = [];
 
     if (pin.visitStartDate != null && pin.visitEndDate != null) {

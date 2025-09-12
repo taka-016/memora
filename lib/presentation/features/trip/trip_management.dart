@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import '../../../application/usecases/trip/create_trip_entry_usecase.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
 import '../../../application/usecases/trip/get_trip_entries_usecase.dart';
@@ -8,7 +9,6 @@ import '../../../application/usecases/pin/create_pin_usecase.dart';
 import '../../../application/usecases/pin/get_pins_by_trip_id_usecase.dart';
 import '../../../application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
 import '../../../domain/entities/trip_entry.dart';
-import '../../../domain/entities/pin.dart';
 import '../../../domain/repositories/trip_entry_repository.dart';
 import '../../../domain/repositories/pin_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';
@@ -111,7 +111,7 @@ class _TripManagementState extends State<TripManagement> {
 
   Future<void> _handleAddTripSave(
     TripEntry tripEntry, {
-    List<Pin>? pins,
+    List<PinDto>? pins,
   }) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -154,7 +154,7 @@ class _TripManagementState extends State<TripManagement> {
 
   Future<void> _handleEditTripSave(
     TripEntry tripEntry, {
-    List<Pin>? pins,
+    List<PinDto>? pins,
   }) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -187,7 +187,7 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   Future<void> _showEditTripDialog(TripEntry tripEntry) async {
-    List<Pin>? existingPins;
+    List<PinDto>? existingPins;
     if (_getPinsByTripIdUseCase != null) {
       try {
         existingPins = await _getPinsByTripIdUseCase!.execute(tripEntry.id);

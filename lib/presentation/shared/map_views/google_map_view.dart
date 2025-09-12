@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
@@ -10,12 +10,12 @@ import 'package:memora/infrastructure/services/google_places_api_location_search
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class GoogleMapView extends ConsumerWidget {
-  final List<Pin> pins;
+  final List<PinDto> pins;
   final Function(Location)? onMapLongTapped;
-  final Function(Pin)? onMarkerTapped;
-  final Function(Pin)? onMarkerUpdated;
+  final Function(PinDto)? onMarkerTapped;
+  final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
-  final Pin? selectedPin;
+  final PinDto? selectedPin;
 
   const GoogleMapView({
     super.key,
@@ -41,12 +41,12 @@ class GoogleMapView extends ConsumerWidget {
 }
 
 class _GoogleMapViewWidget extends ConsumerStatefulWidget {
-  final List<Pin> pins;
+  final List<PinDto> pins;
   final Function(Location)? onMapLongTapped;
-  final Function(Pin)? onMarkerTapped;
-  final Function(Pin)? onMarkerUpdated;
+  final Function(PinDto)? onMarkerTapped;
+  final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
-  final Pin? selectedPin;
+  final PinDto? selectedPin;
 
   const _GoogleMapViewWidget({
     required this.pins,
@@ -67,7 +67,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
 
   GoogleMapController? _mapController;
   bool _isBottomSheetVisible = false;
-  Pin? _selectedPin;
+  PinDto? _selectedPin;
 
   Set<Marker> get _markers {
     return widget.pins.map((pin) {
@@ -159,7 +159,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     }
   }
 
-  void _onMarkerTap(Pin pin) {
+  void _onMarkerTap(PinDto pin) {
     if (widget.onMarkerTapped != null) {
       widget.onMarkerTapped!(pin);
     }
@@ -183,7 +183,7 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
     _hidePinDetailBottomSheet();
   }
 
-  void _onMarkerUpdate(Pin pin) {
+  void _onMarkerUpdate(PinDto pin) {
     if (widget.onMarkerUpdated != null) {
       widget.onMarkerUpdated!(pin);
     }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -23,7 +23,7 @@ class MockLocationService implements CurrentLocationService {
 void main() {
   group('GoogleMapView', () {
     testWidgets('GoogleMapViewが正しく表示される', (WidgetTester tester) async {
-      const testPins = <Pin>[];
+      const testPins = <PinDto>[];
 
       await tester.pumpWidget(
         ProviderScope(
@@ -126,14 +126,12 @@ void main() {
     testWidgets('ピンがある場合、1件目のピンの位置を使用する', (WidgetTester tester) async {
       // 名古屋と京都のピンを作成（名古屋が1件目）
       final testPins = [
-        const Pin(
-          id: 'pin1',
+        const PinDto(
           pinId: 'pin1',
           latitude: 35.170915, // 名古屋
           longitude: 136.881537,
         ),
-        const Pin(
-          id: 'pin2',
+        const PinDto(
           pinId: 'pin2',
           latitude: 35.011635, // 京都
           longitude: 135.768029,
@@ -170,18 +168,8 @@ void main() {
 
     testWidgets('ピンがマーカーとして表示される', (WidgetTester tester) async {
       final testPins = [
-        const Pin(
-          id: 'pin1',
-          pinId: 'pin1',
-          latitude: 35.681236,
-          longitude: 139.767125,
-        ),
-        const Pin(
-          id: 'pin2',
-          pinId: 'pin2',
-          latitude: 35.681236,
-          longitude: 139.767125,
-        ),
+        const PinDto(pinId: 'pin1', latitude: 35.681236, longitude: 139.767125),
+        const PinDto(pinId: 'pin2', latitude: 35.681236, longitude: 139.767125),
       ];
 
       await tester.pumpWidget(
@@ -210,8 +198,8 @@ void main() {
                   mapTapped = true;
                   tappedLocation = location;
                 },
-                onMarkerTapped: (Pin pin) {},
-                onMarkerUpdated: (Pin pin) {},
+                onMarkerTapped: (PinDto pin) {},
+                onMarkerUpdated: (PinDto pin) {},
                 onMarkerDeleted: (String pinId) {},
               ),
             ),
@@ -238,15 +226,14 @@ void main() {
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,
     ) async {
-      const testPin = Pin(
-        id: 'pin1',
+      const testPin = PinDto(
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
       );
 
       bool markerTapped = false;
-      Pin? tappedPin;
+      PinDto? tappedPin;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -254,7 +241,7 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerTapped: (Pin pin) {
+                onMarkerTapped: (PinDto pin) {
                   markerTapped = true;
                   tappedPin = pin;
                 },
@@ -289,15 +276,14 @@ void main() {
     testWidgets('更新ボタンをタップするとonMarkerUpdatedコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
-      const testPin = Pin(
-        id: 'pin1',
+      const testPin = PinDto(
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
       );
 
       bool markerUpdated = false;
-      Pin? updatedPin;
+      PinDto? updatedPin;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -305,7 +291,7 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerUpdated: (Pin pin) {
+                onMarkerUpdated: (PinDto pin) {
                   markerUpdated = true;
                   updatedPin = pin;
                 },
@@ -336,8 +322,7 @@ void main() {
     testWidgets('削除ボタンをタップするとonMarkerDeletedコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
-      const testPin = Pin(
-        id: 'pin1',
+      const testPin = PinDto(
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -379,8 +364,7 @@ void main() {
     });
 
     testWidgets('ボトムシートが表示されて更新ボタンが存在する', (WidgetTester tester) async {
-      const testPin = Pin(
-        id: 'pin1',
+      const testPin = PinDto(
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -410,15 +394,13 @@ void main() {
       WidgetTester tester,
     ) async {
       // 異なるメモを持つ2つのピンを準備
-      const pin1 = Pin(
-        id: 'pin1',
+      const pin1 = PinDto(
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
         visitMemo: 'ピン1のメモ',
       );
-      const pin2 = Pin(
-        id: 'pin2',
+      const pin2 = PinDto(
         pinId: 'pin2',
         latitude: 35.690000,
         longitude: 139.770000,

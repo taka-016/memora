@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../domain/entities/pin.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import '../../../domain/services/nearby_location_service.dart';
 import '../../../domain/value_objects/location.dart';
 import '../../../infrastructure/services/google_places_api_nearby_location_service.dart';
@@ -7,9 +7,9 @@ import '../../../env/env.dart';
 import '../../helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
-  final Pin pin;
+  final PinDto pin;
   final VoidCallback onClose;
-  final Function(Pin pin)? onUpdate;
+  final Function(PinDto pin)? onUpdate;
   final Function(String)? onDelete;
   final NearbyLocationService? reverseGeocodingService;
 

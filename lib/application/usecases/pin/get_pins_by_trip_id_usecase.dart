@@ -1,4 +1,5 @@
-import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
+import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 
@@ -7,10 +8,11 @@ class GetPinsByTripIdUseCase {
 
   GetPinsByTripIdUseCase(this._pinRepository);
 
-  Future<List<Pin>> execute(String tripId) async {
-    return await _pinRepository.getPinsByTripId(
+  Future<List<PinDto>> execute(String tripId) async {
+    final pins = await _pinRepository.getPinsByTripId(
       tripId,
       orderBy: [const OrderBy('visitStartDate', descending: false)],
     );
+    return PinMapper.toDtoList(pins);
   }
 }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
-import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 
 import 'pin_detail_bottom_sheet_test.mocks.dart';
@@ -12,8 +12,7 @@ import 'pin_detail_bottom_sheet_test.mocks.dart';
 void main() {
   group('PinDetailBottomSheet', () {
     // デフォルトのPinオブジェクト
-    final defaultPin = Pin(
-      id: 'default-id',
+    final defaultPin = PinDto(
       pinId: 'default-pin-id',
       latitude: 35.681236,
       longitude: 139.767125,
@@ -188,8 +187,7 @@ void main() {
     });
 
     testWidgets('更新ボタンタップ時にonUpdateコールバックが呼ばれること', (WidgetTester tester) async {
-      final pin = Pin(
-        id: 'test-id',
+      final pin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -206,7 +204,7 @@ void main() {
             body: PinDetailBottomSheet(
               pin: pin,
               onClose: () {},
-              onUpdate: (Pin pin) {
+              onUpdate: (PinDto pin) {
                 onUpdateCalled = true;
               },
             ),
@@ -227,8 +225,7 @@ void main() {
     });
 
     testWidgets('Pinデータを受け取って初期値が正しくセットされること', (WidgetTester tester) async {
-      final pin = Pin(
-        id: 'test-id',
+      final pin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -262,8 +259,7 @@ void main() {
     testWidgets('Pinデータにvisitデータがない場合は空の状態で表示されること', (
       WidgetTester tester,
     ) async {
-      final emptyPin = Pin(
-        id: 'empty-id',
+      final emptyPin = PinDto(
         pinId: 'empty-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -289,8 +285,7 @@ void main() {
     });
 
     testWidgets('更新ボタンタップ時にPinデータを作成してコールバックすること', (WidgetTester tester) async {
-      final pin = Pin(
-        id: 'test-id',
+      final pin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -299,7 +294,7 @@ void main() {
         visitMemo: 'テストメモ',
       );
 
-      Pin? callbackPin;
+      PinDto? callbackPin;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -332,11 +327,10 @@ void main() {
     testWidgets('訪問開始日時が訪問終了日時より後の場合にエラーメッセージが表示されること', (
       WidgetTester tester,
     ) async {
-      Pin? callbackPin;
+      PinDto? callbackPin;
 
       // 既存のPinデータを設定（開始日時 > 終了日時）
-      final invalidPin = Pin(
-        id: 'test-id',
+      final invalidPin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -372,11 +366,10 @@ void main() {
     });
 
     testWidgets('訪問開始日時が訪問終了日時より前の場合は正常に更新されること', (WidgetTester tester) async {
-      Pin? callbackPin;
+      PinDto? callbackPin;
 
       // 既存のPinデータを設定（開始日時 < 終了日時）
-      final validPin = Pin(
-        id: 'test-id',
+      final validPin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -419,8 +412,7 @@ void main() {
       final mockNearbyLocationService = MockNearbyLocationService();
 
       // 場所名がnullのPin
-      final pinWithoutLocationName = Pin(
-        id: 'test-id',
+      final pinWithoutLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -460,8 +452,7 @@ void main() {
       final mockNearbyLocationService = MockNearbyLocationService();
 
       // 場所名が既にあるPin
-      final pinWithLocationName = Pin(
-        id: 'test-id',
+      final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -491,8 +482,7 @@ void main() {
     });
 
     testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
-      final pinWithLocationName = Pin(
-        id: 'test-id',
+      final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -516,8 +506,7 @@ void main() {
 
     testWidgets('更新アイコンをタップすると位置取得処理が呼ばれる', (WidgetTester tester) async {
       final mockNearbyLocationService = MockNearbyLocationService();
-      final pinWithLocationName = Pin(
-        id: 'test-id',
+      final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
@@ -558,11 +547,10 @@ void main() {
     });
 
     testWidgets('更新ボタンタップ時に取得した場所名もPinに含まれる', (WidgetTester tester) async {
-      Pin? callbackPin;
+      PinDto? callbackPin;
 
       // 既に場所名があるPinで、場所名が保存されることを確認
-      final pin = Pin(
-        id: 'test-id',
+      final pin = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,

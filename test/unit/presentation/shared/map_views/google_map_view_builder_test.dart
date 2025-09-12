@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view_builder.dart';
-import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 
@@ -8,7 +8,7 @@ void main() {
   group('GoogleMapViewBuilder', () {
     test('createMapViewでGoogleMapViewを作成する', () {
       const service = GoogleMapViewBuilder();
-      final pins = <Pin>[];
+      final pins = <PinDto>[];
 
       final widget = service.createMapView(pins: pins);
 
@@ -17,10 +17,10 @@ void main() {
 
     test('コールバック関数を正しく渡す', () {
       const service = GoogleMapViewBuilder();
-      final pins = <Pin>[];
+      final pins = <PinDto>[];
 
       void onMapLongTapped(Location location) {}
-      void onMarkerTapped(Pin pin) {}
+      void onMarkerTapped(PinDto pin) {}
       void onMarkerDeleted(String pinId) {}
 
       final widget = service.createMapView(

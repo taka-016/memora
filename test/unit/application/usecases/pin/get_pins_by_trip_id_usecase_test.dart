@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/domain/entities/pin.dart';
@@ -38,6 +39,20 @@ void main() {
           longitude: 135.123456,
         ),
       ];
+      final pinDtos = [
+        PinDto(
+          pinId: '1',
+          tripId: tripId,
+          latitude: 35.681236,
+          longitude: 139.767125,
+        ),
+        PinDto(
+          pinId: '2',
+          tripId: tripId,
+          latitude: 34.123456,
+          longitude: 135.123456,
+        ),
+      ];
 
       when(
         mockPinRepository.getPinsByTripId(
@@ -50,10 +65,10 @@ void main() {
       final result = await getPinsByTripIdUseCase.execute(tripId);
 
       // Assert
-      expect(result, isA<List<Pin>>());
+      expect(result, isA<List<PinDto>>());
       expect(result.length, 2);
-      expect(result[0].tripId, tripId);
-      expect(result[1].tripId, tripId);
+      expect(result[0].tripId, pinDtos[0].tripId);
+      expect(result[1].tripId, pinDtos[1].tripId);
       verify(
         mockPinRepository.getPinsByTripId(
           tripId,
@@ -76,7 +91,7 @@ void main() {
       final result = await getPinsByTripIdUseCase.execute(tripId);
 
       // Assert
-      expect(result, isA<List<Pin>>());
+      expect(result, isA<List<PinDto>>());
       expect(result.isEmpty, true);
       verify(
         mockPinRepository.getPinsByTripId(

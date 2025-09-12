@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -13,7 +13,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -39,7 +39,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               tripEntry: tripEntry,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -65,7 +65,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               tripEntry: tripEntry,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -84,7 +84,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -101,7 +101,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -117,7 +117,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -133,7 +133,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -184,7 +184,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -231,7 +231,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -257,7 +257,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               tripEntry: tripEntry,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -273,7 +273,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -291,7 +291,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -346,7 +346,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               tripEntry: existingTripEntry,
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 updatedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -377,7 +377,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -415,7 +415,7 @@ void main() {
                 tripEndDate: DateTime(2024, 1, 1),
                 tripMemo: 'テストメモ',
               ),
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -453,7 +453,7 @@ void main() {
                 tripEndDate: DateTime(2024, 6, 10),
                 tripMemo: 'テストメモ',
               ),
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -491,7 +491,7 @@ void main() {
                 tripEndDate: DateTime(2025, 1, 3), // 年またぎ
                 tripMemo: 'テストメモ',
               ),
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
@@ -527,7 +527,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               year: parameterYear,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -562,7 +562,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               year: currentYear,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -604,7 +604,7 @@ void main() {
                 tripEndDate: DateTime(2023, 5, 20),
                 tripMemo: 'テストメモ',
               ),
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -639,7 +639,7 @@ void main() {
               builder: (context) {
                 return TripEditModal(
                   groupId: groupId,
-                  onSave: (tripEntry, {List<Pin>? pins}) {},
+                  onSave: (tripEntry, {List<PinDto>? pins}) {},
                   isTestEnvironment: true,
                 );
               },
@@ -688,8 +688,7 @@ void main() {
       WidgetTester tester,
     ) async {
       const testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -703,7 +702,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -718,14 +717,14 @@ void main() {
     testWidgets('作成ボタン押下時にonSaveコールバックでpinsが渡されること', (
       WidgetTester tester,
     ) async {
-      List<Pin>? receivedPins;
+      List<PinDto>? receivedPins;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 receivedPins = pins;
               },
               isTestEnvironment: true,
@@ -764,8 +763,7 @@ void main() {
 
       // 初期ピンデータ
       final initialPins = [
-        Pin(
-          id: 'pin-1',
+        PinDto(
           pinId: 'pin-1',
           latitude: 35.6762,
           longitude: 139.6503,
@@ -775,7 +773,7 @@ void main() {
         ),
       ];
 
-      List<Pin>? savedPins;
+      List<PinDto>? savedPins;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -783,7 +781,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: initialPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {
+              onSave: (tripEntry, {List<PinDto>? pins}) {
                 savedPins = pins;
               },
               isTestEnvironment: true,
@@ -819,8 +817,7 @@ void main() {
 
     testWidgets('ピンが存在する場合、訪問場所一覧が表示されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -837,7 +834,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -857,7 +854,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: [],
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -870,8 +867,7 @@ void main() {
 
     testWidgets('locationNameが空の場合、空白で表示されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -888,7 +884,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -904,8 +900,7 @@ void main() {
 
     testWidgets('複数のピンが正しく表示されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -914,8 +909,7 @@ void main() {
           visitStartDate: DateTime(2024, 1, 1, 10, 0),
           visitEndDate: DateTime(2024, 1, 1, 12, 0),
         ),
-        Pin(
-          id: 'test-pin-2',
+        PinDto(
           pinId: 'test-pin-2',
           tripId: 'test-trip-id',
           latitude: 35.6585,
@@ -932,7 +926,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -949,8 +943,7 @@ void main() {
 
     testWidgets('ピンリストをタップするとボトムシートが表示されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -967,7 +960,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -987,8 +980,7 @@ void main() {
 
     testWidgets('削除ボタンがピンリストアイテムに表示されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -1003,7 +995,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -1016,16 +1008,14 @@ void main() {
 
     testWidgets('削除ボタンをタップするとピンが一覧から削除されること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
           longitude: 139.6503,
           locationName: '東京駅',
         ),
-        Pin(
-          id: 'test-pin-2',
+        PinDto(
           pinId: 'test-pin-2',
           tripId: 'test-trip-id',
           latitude: 35.6585,
@@ -1040,7 +1030,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),
@@ -1064,8 +1054,7 @@ void main() {
 
     testWidgets('全てのピンを削除すると訪問場所一覧が非表示になること', (WidgetTester tester) async {
       final testPins = [
-        Pin(
-          id: 'test-pin-1',
+        PinDto(
           pinId: 'test-pin-1',
           tripId: 'test-trip-id',
           latitude: 35.6762,
@@ -1080,7 +1069,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               pins: testPins,
-              onSave: (tripEntry, {List<Pin>? pins}) {},
+              onSave: (tripEntry, {List<PinDto>? pins}) {},
               isTestEnvironment: true,
             ),
           ),

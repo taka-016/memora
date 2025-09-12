@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/entities/pin.dart';
 
 abstract class MapViewBuilder {
   Widget createMapView({
-    required List<Pin> pins,
+    required List<PinDto> pins,
     Function(Location)? onMapLongTapped,
-    Function(Pin)? onMarkerTapped,
-    Function(Pin)? onMarkerUpdated,
+    Function(PinDto)? onMarkerTapped,
+    Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
-    Pin? selectedPin,
+    PinDto? selectedPin,
   });
 }

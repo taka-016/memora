@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
@@ -20,7 +21,12 @@ void main() {
   group('CreatePinUseCase', () {
     test('正常にピンを保存できる', () async {
       final pin = Pin(
-        id: 'test-id',
+        id: '',
+        pinId: 'test-marker-id',
+        latitude: 35.0,
+        longitude: 139.0,
+      );
+      final pinDto = PinDto(
         pinId: 'test-marker-id',
         latitude: 35.0,
         longitude: 139.0,
@@ -30,14 +36,19 @@ void main() {
         mockPinRepository.savePin(pin),
       ).thenAnswer((_) async => Future.value());
 
-      await createPinUseCase.execute(pin);
+      await createPinUseCase.execute(pinDto);
 
       verify(mockPinRepository.savePin(pin)).called(1);
     });
 
     test('保存時に例外が発生した場合、例外が投げられる', () async {
       final pin = Pin(
-        id: 'test-id',
+        id: '',
+        pinId: 'test-marker-id',
+        latitude: 35.0,
+        longitude: 139.0,
+      );
+      final pinDto = PinDto(
         pinId: 'test-marker-id',
         latitude: 35.0,
         longitude: 139.0,
@@ -45,7 +56,7 @@ void main() {
 
       when(mockPinRepository.savePin(pin)).thenThrow(Exception('保存失敗'));
 
-      expect(() => createPinUseCase.execute(pin), throwsException);
+      expect(() => createPinUseCase.execute(pinDto), throwsException);
     });
   });
 }
