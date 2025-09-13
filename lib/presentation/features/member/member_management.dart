@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../application/usecases/member/get_managed_members_usecase.dart';
 import '../../../application/usecases/member/create_or_update_member_invitation_usecase.dart';
 import '../../../infrastructure/repositories/firestore_member_invitation_repository.dart';
@@ -295,6 +296,9 @@ class _MemberManagementState extends State<MemberManagement> {
       final invitationCode = await _createOrUpdateMemberInvitationUsecase
           .execute(inviteeId: member.id, inviterId: widget.member.id);
 
+      // UUIDのハイフンを削除
+      final cleanInvitationCode = invitationCode.replaceAll('-', '');
+
       // 招待コードを表示するダイアログを表示
       if (mounted) {
         showDialog(
@@ -307,17 +311,27 @@ class _MemberManagementState extends State<MemberManagement> {
                 Text('${member.displayName}さんの招待コードが生成されました。'),
                 const SizedBox(height: 16),
                 SelectableText(
-                  invitationCode,
+                  cleanInvitationCode,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'この招待コードを${member.displayName}さんに伝えてください。',
-                  style: const TextStyle(fontSize: 12),
                 ),
               ],
             ),
             actions: [
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await Share.share(
+                      'あなたのMemoraへの招待コード: $cleanInvitationCode\n\nこのコードをアプリで入力してください。',
+                      subject: 'Memoraへの招待',
+                    );
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(content: Text('共有に失敗しました')),
+                    );
+                  }
+                },
+                child: const Text('共有'),
+              ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('閉じる'),
