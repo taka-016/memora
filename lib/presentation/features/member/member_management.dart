@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../application/usecases/member/get_managed_members_usecase.dart';
+import '../../../application/usecases/member/create_or_update_member_invitation_usecase.dart';
+import '../../../infrastructure/repositories/firestore_member_invitation_repository.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
 import '../../../application/usecases/member/create_member_usecase.dart';
 import '../../../application/usecases/member/update_member_usecase.dart';
@@ -10,6 +14,7 @@ import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';
 import '../../../domain/repositories/group_member_repository.dart';
 import '../../../domain/repositories/member_event_repository.dart';
+import '../../../domain/repositories/member_invitation_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import '../../../infrastructure/repositories/firestore_group_member_repository.dart';
@@ -22,6 +27,7 @@ class MemberManagement extends StatefulWidget {
   final TripParticipantRepository? tripParticipantRepository;
   final GroupMemberRepository? groupMemberRepository;
   final MemberEventRepository? memberEventRepository;
+  final MemberInvitationRepository? memberInvitationRepository;
 
   const MemberManagement({
     super.key,
@@ -30,6 +36,7 @@ class MemberManagement extends StatefulWidget {
     this.tripParticipantRepository,
     this.groupMemberRepository,
     this.memberEventRepository,
+    this.memberInvitationRepository,
   });
 
   @override
@@ -42,6 +49,8 @@ class _MemberManagementState extends State<MemberManagement> {
   late final UpdateMemberUsecase _updateMemberUsecase;
   late final DeleteMemberUsecase _deleteMemberUsecase;
   late final GetMemberByIdUseCase _getMemberByIdUseCase;
+  late final CreateOrUpdateMemberInvitationUsecase
+  _createOrUpdateMemberInvitationUsecase;
 
   List<Member> _managedMembers = [];
   bool _isLoading = true;
@@ -59,6 +68,9 @@ class _MemberManagementState extends State<MemberManagement> {
         widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
     final memberEventRepository =
         widget.memberEventRepository ?? FirestoreMemberEventRepository();
+    final memberInvitationRepository =
+        widget.memberInvitationRepository ??
+        FirestoreMemberInvitationRepository(FirebaseFirestore.instance);
 
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
@@ -70,6 +82,8 @@ class _MemberManagementState extends State<MemberManagement> {
       memberEventRepository,
     );
     _getMemberByIdUseCase = GetMemberByIdUseCase(memberRepository);
+    _createOrUpdateMemberInvitationUsecase =
+        CreateOrUpdateMemberInvitationUsecase(memberInvitationRepository);
 
     _loadData();
   }
@@ -156,6 +170,11 @@ class _MemberManagementState extends State<MemberManagement> {
             }
           }
         },
+        onInvite: member.id != widget.member.id
+            ? (member) async {
+                await _handleMemberInvite(member);
+              }
+            : null,
       ),
     );
   }
@@ -267,5 +286,66 @@ class _MemberManagementState extends State<MemberManagement> {
       );
     }
     return null;
+  }
+
+  Future<void> _handleMemberInvite(Member member) async {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      // MemberInvitationを作成または更新
+      final invitationCode = await _createOrUpdateMemberInvitationUsecase
+          .execute(inviteeId: member.id, inviterId: widget.member.id);
+
+      // UUIDのハイフンを削除
+      final cleanInvitationCode = invitationCode.replaceAll('-', '');
+
+      // 招待コードを表示するダイアログを表示
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('招待コード'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('${member.displayName}さんの招待コードが生成されました。'),
+                const SizedBox(height: 16),
+                SelectableText(
+                  cleanInvitationCode,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await Share.share(
+                      'あなたのMemoraへの招待コード: $cleanInvitationCode\n\nこのコードをアプリで入力してください。',
+                      subject: 'Memoraへの招待',
+                    );
+                  } catch (e) {
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(content: Text('共有に失敗しました')),
+                    );
+                  }
+                },
+                child: const Text('共有'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('閉じる'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('招待コードの生成に失敗しました: $e')),
+        );
+      }
+    }
   }
 }

@@ -292,6 +292,22 @@
   - [x] 場所名のボックス右端に更新アイコンを配置し、タップでGoogle Places APIで場所名を再取得する
   - [x] 場所名も更新処理時に保存する
 
+## 招待機能
+
+- [x] MemberInvitationエンティティを作成する
+- [x] メンバー編集画面に(新規の時は除く)招待ボタンを配置する
+- [x] 招待ボタンボタンクリックでMemberInvitationを作成
+  - [x] 招待メンバーIDをinviteeId、ログインユーザーのメンバーIDをinviterIdとする
+  - [x] invitationCodeはUUIDで生成
+  - [x] 招待メンバーIDでinviteeIdを紐づけて、存在する場合は更新、存在しない場合は新規作成
+- [ ] ログイン時の処理改修
+  - [ ] GetOrCreateMemberUseCaseの処理を廃止
+  - [ ] ログイン時に、ユーザーIDでメンバーのAccountIdを紐づけて、存在チェック
+  - [ ] 存在しない場合にダイアログを表示し、新規作成or招待コード入力を選択
+    - [ ] 新規作成の場合は、displayName: user.loginId, accountId: user.id, email: user.loginId,でメンバー作成
+    - [ ] 招待コード入力の場合は、入力されたコードでMemberInvitationを紐づけ、accountIdにuser.idをセットして更新する
+    - [ ] 入力された招待コードで紐づかない場合はエラー表示（新規作成はしない。）
+
 ## デザイン
 
 - [x] ベースカラーを青系統に変更する
