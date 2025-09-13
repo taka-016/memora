@@ -80,7 +80,7 @@ erDiagram
         string id PK
         string inviteeId FK "NOT NULL"
         string inviterId FK "NOT NULL"
-        string invitationKey "NOT NULL"
+        string invitationCode "NOT NULL"
     }
 
     trip_entries ||--o{ trip_participants : "id → tripId"
