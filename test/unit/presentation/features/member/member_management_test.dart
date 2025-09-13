@@ -637,5 +637,133 @@ void main() {
       expect(find.text('更新されたユーザー'), findsOneWidget);
       expect(find.text('Test User'), findsNothing);
     });
+
+    testWidgets('既存メンバーの編集画面に招待ボタンが表示されること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberManagement(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
+            memberInvitationRepository: mockMemberInvitationRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 管理メンバーの行をタップして編集モーダルを開く
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+
+      // Assert - 編集画面に招待ボタンが表示されること
+      expect(find.text('招待'), findsOneWidget);
+      expect(find.byIcon(Icons.person_add), findsOneWidget);
+    });
+
+    testWidgets('招待ボタンクリック時に招待コードが生成されダイアログが表示されること', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final managedMembers = [
+        Member(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+
+      when(
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
+      ).thenAnswer((_) async => managedMembers);
+
+      when(
+        mockMemberInvitationRepository.getByInviteeId('managed-member-1'),
+      ).thenAnswer((_) async => null);
+
+      when(mockMemberInvitationRepository.save(any)).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberManagement(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
+            memberInvitationRepository: mockMemberInvitationRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 管理メンバーの行をタップして編集モーダルを開く
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+
+      // 招待ボタンをタップ
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      // Assert - 招待コード表示ダイアログが開いていること
+      expect(find.text('招待コード'), findsOneWidget);
+      expect(find.text('Managed User 1さんの招待コードが生成されました。'), findsOneWidget);
+      expect(find.text('この招待コードをManaged User 1さんに伝えてください。'), findsOneWidget);
+      expect(find.text('閉じる'), findsOneWidget);
+
+      // 招待の保存処理が呼ばれることを確認
+      verify(mockMemberInvitationRepository.save(any)).called(1);
+    });
+
+    testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockMemberRepository.getMembersByOwnerId(testMember.id),
+      ).thenAnswer((_) async => []);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemberManagement(
+            member: testMember,
+            memberRepository: mockMemberRepository,
+            tripParticipantRepository: mockTripParticipantRepository,
+            groupMemberRepository: mockGroupMemberRepository,
+            memberEventRepository: mockMemberEventRepository,
+            memberInvitationRepository: mockMemberInvitationRepository,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // ログインユーザーの行をタップして編集モーダルを開く
+      await tester.tap(find.byType(ListTile).at(0));
+      await tester.pumpAndSettle();
+
+      // Assert - ログインユーザーの編集画面には招待ボタンが表示されないこと
+      expect(find.text('招待'), findsNothing);
+      expect(find.byIcon(Icons.person_add), findsNothing);
+    });
   });
 }

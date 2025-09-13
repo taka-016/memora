@@ -302,7 +302,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
   Widget _buildActionButtons(bool isEditing) {
     return Column(
       children: [
-        if (isEditing) ...[
+        if (isEditing && widget.onInvite != null) ...[
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

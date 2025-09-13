@@ -169,9 +169,11 @@ class _MemberManagementState extends State<MemberManagement> {
             }
           }
         },
-        onInvite: (member) async {
-          await _handleMemberInvite(member);
-        },
+        onInvite: member.id != widget.member.id
+            ? (member) async {
+                await _handleMemberInvite(member);
+              }
+            : null,
       ),
     );
   }
