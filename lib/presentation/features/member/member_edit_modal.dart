@@ -5,8 +5,14 @@ import '../../helpers/date_picker_helper.dart';
 class MemberEditModal extends StatefulWidget {
   final Member? member;
   final Function(Member) onSave;
+  final Function(Member)? onInvite;
 
-  const MemberEditModal({super.key, this.member, required this.onSave});
+  const MemberEditModal({
+    super.key,
+    this.member,
+    required this.onSave,
+    this.onInvite,
+  });
 
   @override
   State<MemberEditModal> createState() => _MemberEditModalState();
@@ -294,20 +300,47 @@ class _MemberEditModalState extends State<MemberEditModal> {
   }
 
   Widget _buildActionButtons(bool isEditing) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    return Column(
       children: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: () => _handleSave(isEditing),
-          child: Text(isEditing ? '更新' : '作成'),
+        if (isEditing) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: _handleInvite,
+                icon: const Icon(Icons.person_add),
+                label: const Text('招待'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('キャンセル'),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => _handleSave(isEditing),
+              child: Text(isEditing ? '更新' : '作成'),
+            ),
+          ],
         ),
       ],
     );
+  }
+
+  void _handleInvite() {
+    if (widget.member != null && widget.onInvite != null) {
+      widget.onInvite!(widget.member!);
+    }
   }
 
   void _handleSave(bool isEditing) {
