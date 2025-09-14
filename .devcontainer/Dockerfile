@@ -38,6 +38,10 @@ RUN mkdir -p /commandhistory && \
 ARG CLAUDE_CODE_VERSION=latest
 RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
+# Codex CLIのインストール
+ARG CODEX_VERSION=latest
+RUN npm install -g @openai/codex@${CODEX_VERSION}
+
 # Firebase CLIのインストール
 RUN npm install -g firebase-tools
 

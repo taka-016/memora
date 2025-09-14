@@ -4,7 +4,8 @@
         "dockerfile": "Dockerfile",
         "args": {
             "TZ": "${localEnv:TZ:Asia/Tokyo}",
-            "CLAUDE_CODE_VERSION": "latest"
+            "CLAUDE_CODE_VERSION": "latest",
+            "CODEX_VERSION": "latest"
         }
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
@@ -12,6 +13,7 @@
     "mounts": [
         "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
         "source=claude-global-memora,target=/root/.claude,type=volume",
+        "source=codex-global-memora,target=/root/.codex,type=volume",
         "source=android-config-memora,target=/root/.android,type=volume",
         "source=android-sdk-memora,target=/opt/android-sdk-linux,type=volume",
         "source=gradle-memora,target=/root/.gradle,type=volume",
@@ -39,7 +41,9 @@
                 "donjayamanne.githistory",
                 "eamodio.gitlens",
                 "yzhang.markdown-all-in-one",
-                "ms-azuretools.vscode-containers"
+                "ms-azuretools.vscode-containers",
+                "openai.chatgpt",
+                "tamasfe.even-better-toml"
             ],
             "settings": {
                 "editor.formatOnSave": true,
