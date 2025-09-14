@@ -307,9 +307,7 @@
     - [x] 新規作成の場合は、displayName: user.loginId, accountId: user.id, email: user.loginId,でメンバー作成
     - [x] 招待コード入力の場合は、入力されたコードでMemberInvitationを紐づけ、accountIdにuser.idをセットして更新する
     - [x] 入力された招待コードで紐づかない場合はエラー表示（新規作成はしない。）
-
 - [x] 招待受諾時、inviteeIdでmembers.idを取得し、accountIdがnullでない場合は無効と判定して更新しない
-- [x] 上記仕様のユニットテストを追加
 
 ## デザイン
 
