@@ -16,7 +16,7 @@ class CreateOrUpdateMemberInvitationUsecase {
       inviteeId,
     );
 
-    final invitationCode = const Uuid().v4();
+    final invitationCode = const Uuid().v4().replaceAll('-', '');
 
     if (existingInvitation != null) {
       // 既存招待の更新

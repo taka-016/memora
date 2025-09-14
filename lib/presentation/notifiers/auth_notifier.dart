@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/value_objects/auth_state.dart';
 import '../../domain/entities/user.dart';
 import '../../application/interfaces/auth_service.dart';
 import '../../domain/repositories/member_repository.dart';
+import '../../domain/repositories/member_invitation_repository.dart';
 import '../../infrastructure/services/firebase_auth_service.dart';
 import '../../infrastructure/repositories/firestore_member_repository.dart';
-import '../../application/usecases/member/get_or_create_member_usecase.dart';
+import '../../infrastructure/repositories/firestore_member_invitation_repository.dart';
+import '../../application/usecases/member/check_member_exists_usecase.dart';
+import '../../application/usecases/member/create_member_from_user_usecase.dart';
+import '../../application/usecases/member/accept_invitation_usecase.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService();
@@ -17,22 +22,50 @@ final memberRepositoryProvider = Provider<MemberRepository>((ref) {
   return FirestoreMemberRepository();
 });
 
-final getOrCreateMemberUseCaseProvider = Provider<GetOrCreateMemberUseCase>((
+final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
+  (ref) {
+    return FirestoreMemberInvitationRepository(FirebaseFirestore.instance);
+  },
+);
+
+final checkMemberExistsUseCaseProvider = Provider<CheckMemberExistsUseCase>((
   ref,
 ) {
   final memberRepository = ref.watch(memberRepositoryProvider);
-  return GetOrCreateMemberUseCase(memberRepository);
+  return CheckMemberExistsUseCase(memberRepository);
+});
+
+final createMemberFromUserUseCaseProvider =
+    Provider<CreateMemberFromUserUseCase>((ref) {
+      final memberRepository = ref.watch(memberRepositoryProvider);
+      return CreateMemberFromUserUseCase(memberRepository);
+    });
+
+final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
+  ref,
+) {
+  final memberInvitationRepository = ref.watch(
+    memberInvitationRepositoryProvider,
+  );
+  final memberRepository = ref.watch(memberRepositoryProvider);
+  return AcceptInvitationUseCase(memberInvitationRepository, memberRepository);
 });
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
   ref,
 ) {
   final authService = ref.watch(authServiceProvider);
-  final getOrCreateMemberUseCase = ref.watch(getOrCreateMemberUseCaseProvider);
+  final checkMemberExistsUseCase = ref.watch(checkMemberExistsUseCaseProvider);
+  final createMemberFromUserUseCase = ref.watch(
+    createMemberFromUserUseCaseProvider,
+  );
+  final acceptInvitationUseCase = ref.watch(acceptInvitationUseCaseProvider);
 
   final authNotifier = AuthNotifier(
     authService: authService,
-    getOrCreateMemberUseCase: getOrCreateMemberUseCase,
+    checkMemberExistsUseCase: checkMemberExistsUseCase,
+    createMemberFromUserUseCase: createMemberFromUserUseCase,
+    acceptInvitationUseCase: acceptInvitationUseCase,
   );
 
   authNotifier.initialize();
@@ -41,11 +74,17 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier({required this.authService, this.getOrCreateMemberUseCase})
-    : super(const AuthState.loading());
+  AuthNotifier({
+    required this.authService,
+    required this.checkMemberExistsUseCase,
+    required this.createMemberFromUserUseCase,
+    required this.acceptInvitationUseCase,
+  }) : super(const AuthState.loading());
 
   final AuthService authService;
-  final GetOrCreateMemberUseCase? getOrCreateMemberUseCase;
+  final CheckMemberExistsUseCase checkMemberExistsUseCase;
+  final CreateMemberFromUserUseCase createMemberFromUserUseCase;
+  final AcceptInvitationUseCase acceptInvitationUseCase;
   StreamSubscription<User?>? _authStateSubscription;
 
   Future<void> initialize() async {
@@ -81,24 +120,55 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _handleVerifiedUser(User user) async {
-    if (getOrCreateMemberUseCase == null) {
-      state = AuthState.authenticated(user);
-      return;
-    }
     await _processUserMembership(user);
   }
 
   Future<void> _processUserMembership(User user) async {
     try {
       await authService.validateCurrentUserToken();
-      final result = await getOrCreateMemberUseCase!.execute(user);
-      if (!result) {
-        await _signOutWithError('認証が無効です。再度ログインしてください。');
+
+      final memberExists = await checkMemberExistsUseCase.execute(user);
+
+      if (memberExists) {
+        state = AuthState.authenticated(user);
         return;
       }
-      state = AuthState.authenticated(user);
+
+      state = AuthState.unauthenticated(
+        'member_selection_required',
+        messageType: MessageType.info,
+      );
     } catch (e) {
       await _signOutWithError('認証が無効です。再度ログインしてください。');
+    }
+  }
+
+  Future<void> createNewMember(User user) async {
+    try {
+      final success = await createMemberFromUserUseCase.execute(user);
+      if (success) {
+        state = AuthState.authenticated(user);
+      } else {
+        await _signOutWithError('メンバー作成に失敗しました。');
+      }
+    } catch (e) {
+      await _signOutWithError('メンバー作成に失敗しました。');
+    }
+  }
+
+  Future<bool> acceptInvitation(String invitationCode, User user) async {
+    try {
+      final success = await acceptInvitationUseCase.execute(
+        invitationCode,
+        user.id,
+      );
+      if (!success) {
+        return false;
+      }
+      state = AuthState.authenticated(user);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -116,7 +186,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _handleUnauthenticatedUser() async {
-    // 現在の状態がメッセージ付きunauthenticatedの場合はメッセージを保持
     if (state.status == AuthStatus.unauthenticated &&
         state.message.isNotEmpty) {
       return;

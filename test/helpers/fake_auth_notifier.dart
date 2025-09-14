@@ -2,6 +2,9 @@ import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
+import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 
 /// テスト用のFakeAuthNotifier
 ///
@@ -14,7 +17,12 @@ class FakeAuthNotifier extends AuthNotifier {
   bool get loginCalled => _loginCalled;
 
   FakeAuthNotifier(AuthState initialState)
-    : super(authService: _FakeAuthService(), getOrCreateMemberUseCase: null) {
+    : super(
+        authService: _FakeAuthService(),
+        checkMemberExistsUseCase: _FakeCheckMemberExistsUseCase(),
+        createMemberFromUserUseCase: _FakeCreateMemberFromUserUseCase(),
+        acceptInvitationUseCase: _FakeAcceptInvitationUseCase(),
+      ) {
     state = initialState;
   }
 
@@ -110,5 +118,29 @@ class _FakeAuthService implements AuthService {
   @override
   Future<void> validateCurrentUserToken() {
     throw UnimplementedError();
+  }
+}
+
+/// テスト用のCheckMemberExistsUseCase実装
+class _FakeCheckMemberExistsUseCase implements CheckMemberExistsUseCase {
+  @override
+  Future<bool> execute(User user) async {
+    return true; // テスト用に常にtrueを返す
+  }
+}
+
+/// テスト用のCreateMemberFromUserUseCase実装
+class _FakeCreateMemberFromUserUseCase implements CreateMemberFromUserUseCase {
+  @override
+  Future<bool> execute(User user) async {
+    return true; // テスト用に常にtrueを返す
+  }
+}
+
+/// テスト用のAcceptInvitationUseCase実装
+class _FakeAcceptInvitationUseCase implements AcceptInvitationUseCase {
+  @override
+  Future<bool> execute(String invitationCode, String userId) async {
+    return true; // テスト用に常にtrueを返す
   }
 }

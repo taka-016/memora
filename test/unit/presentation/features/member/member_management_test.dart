@@ -728,7 +728,7 @@ void main() {
       // Assert - 招待コード表示ダイアログが開いていること
       expect(find.text('招待コード'), findsOneWidget);
       expect(find.text('Managed User 1さんの招待コードが生成されました。'), findsOneWidget);
-      expect(find.text('この招待コードをManaged User 1さんに伝えてください。'), findsOneWidget);
+      expect(find.text('共有'), findsOneWidget);
       expect(find.text('閉じる'), findsOneWidget);
 
       // 招待の保存処理が呼ばれることを確認
