@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
+import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -14,6 +15,24 @@ import 'package:mockito/mockito.dart';
 
 import 'top_page_test.mocks.dart';
 import '../../../helpers/fake_auth_notifier.dart';
+
+// テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
+class _TestNavigationNotifier extends NavigationNotifier {
+  _TestNavigationNotifier() : super() {
+    state = const NavigationState(selectedItem: NavigationItem.settings);
+  }
+}
+
+class _TestGroupTimelineNavigationNotifier
+    extends GroupTimelineNavigationNotifier {
+  _TestGroupTimelineNavigationNotifier() : super() {
+    state = const GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.timeline,
+      selectedGroupId: 'g1',
+      selectedYear: 2024,
+    );
+  }
+}
 
 @GenerateMocks([
   GetGroupsWithMembersUsecase,
@@ -465,6 +484,51 @@ void main() {
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
+    });
+
+    testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
+      // Arrange
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      // Providerをオーバーライドして、非デフォルト状態から開始
+      final widget = ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith((ref) {
+            return FakeAuthNotifier.authenticated();
+          }),
+          navigationNotifierProvider.overrideWith((ref) {
+            return _TestNavigationNotifier();
+          }),
+          groupTimelineNavigationNotifierProvider.overrideWith((ref) {
+            return _TestGroupTimelineNavigationNotifier();
+          }),
+        ],
+        child: MaterialApp(
+          home: TopPage(
+            getGroupsWithMembersUsecase: mockUsecase,
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget); // 初期フレーム
+      await tester.pump(); // post frame callback を実行
+
+      // Providerの状態を取得
+      final topPageElement = tester.element(find.byType(TopPage));
+      final container = ProviderScope.containerOf(topPageElement);
+
+      // Assert - TopPageのpost frame処理でリセットされていること
+      final navState = container.read(navigationNotifierProvider);
+      expect(navState.selectedItem, NavigationItem.groupTimeline);
+
+      final timelineState = container.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(timelineState.currentScreen, GroupTimelineScreenState.groupList);
+      expect(timelineState.selectedGroupId, isNull);
+      expect(timelineState.selectedYear, isNull);
     });
   });
 }

@@ -42,6 +42,15 @@ class _TopPageState extends State<TopPage> {
   void initState() {
     super.initState();
     _initializeGetCurrentMemberUseCase();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final container = ProviderScope.containerOf(context);
+        container.read(navigationNotifierProvider.notifier).resetToDefault();
+        container
+            .read(groupTimelineNavigationNotifierProvider.notifier)
+            .resetToGroupList();
+      }
+    });
   }
 
   void _initializeGetCurrentMemberUseCase() async {

@@ -31,4 +31,8 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   void selectItem(NavigationItem item) {
     state = state.copyWith(selectedItem: item);
   }
+
+  void resetToDefault() {
+    state = const NavigationState(selectedItem: NavigationItem.groupTimeline);
+  }
 }

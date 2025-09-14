@@ -292,14 +292,9 @@ class _MemberManagementState extends State<MemberManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      // MemberInvitationを作成または更新
       final invitationCode = await _createOrUpdateMemberInvitationUsecase
           .execute(inviteeId: member.id, inviterId: widget.member.id);
 
-      // UUIDのハイフンを削除
-      final cleanInvitationCode = invitationCode.replaceAll('-', '');
-
-      // 招待コードを表示するダイアログを表示
       if (mounted) {
         showDialog(
           context: context,
@@ -311,7 +306,7 @@ class _MemberManagementState extends State<MemberManagement> {
                 Text('${member.displayName}さんの招待コードが生成されました。'),
                 const SizedBox(height: 16),
                 SelectableText(
-                  cleanInvitationCode,
+                  invitationCode,
                   style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
                 ),
               ],
@@ -321,7 +316,7 @@ class _MemberManagementState extends State<MemberManagement> {
                 onPressed: () async {
                   try {
                     await Share.share(
-                      'あなたのMemoraへの招待コード: $cleanInvitationCode\n\nこのコードをアプリで入力してください。',
+                      'あなたのMemoraへの招待コード: $invitationCode\n\nこのコードをアプリで入力してください。',
                       subject: 'Memoraへの招待',
                     );
                   } catch (e) {

@@ -89,15 +89,10 @@ void main() {
       );
 
       // Assert
-      // UUID形式かチェック（36文字、ハイフンを含む）
-      expect(invitationCode.length, 36);
-      expect(invitationCode.contains('-'), true);
-      expect(
-        RegExp(
-          r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-        ).hasMatch(invitationCode),
-        true,
-      );
+      // UUID形式かチェック（32文字、ハイフンなし）
+      expect(invitationCode.length, 32);
+      expect(invitationCode.contains('-'), false);
+      expect(RegExp(r'^[0-9a-f]{32}$').hasMatch(invitationCode), true);
     });
   });
 }
