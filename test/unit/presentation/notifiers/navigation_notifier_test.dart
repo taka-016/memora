@@ -75,5 +75,38 @@ void main() {
       // Assert
       expect(notificationCount, 2);
     });
+
+    test('resetToDefaultでデフォルト状態に戻る', () {
+      // Arrange
+      final notifier = container.read(navigationNotifierProvider.notifier);
+
+      // Act
+      notifier.selectItem(NavigationItem.mapDisplay);
+      notifier.resetToDefault();
+
+      // Assert
+      final state = container.read(navigationNotifierProvider);
+      expect(state.selectedItem, NavigationItem.groupTimeline);
+    });
+
+    test('resetToDefault 呼び出しで状態の変更が通知される', () {
+      // Arrange
+      final notifier = container.read(navigationNotifierProvider.notifier);
+      var notificationCount = 0;
+
+      container.listen<NavigationState>(navigationNotifierProvider, (
+        previous,
+        next,
+      ) {
+        notificationCount++;
+      });
+
+      // Act
+      notifier.selectItem(NavigationItem.settings);
+      notifier.resetToDefault();
+
+      // Assert
+      expect(notificationCount, 2);
+    });
   });
 }
