@@ -60,5 +60,24 @@ void main() {
         mockMemberRepository.getMemberByAccountId('test-user-id'),
       ).called(1);
     });
+
+    test('getMemberByAccountIdで例外が発生した場合は例外をそのまま投げる', () async {
+      // Arrange
+      const user = User(
+        id: 'test-user-id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+
+      when(
+        mockMemberRepository.getMemberByAccountId('test-user-id'),
+      ).thenThrow(Exception('Database error'));
+
+      // Assert
+      expect(() => useCase.execute(user), throwsException);
+      verify(
+        mockMemberRepository.getMemberByAccountId('test-user-id'),
+      ).called(1);
+    });
   });
 }

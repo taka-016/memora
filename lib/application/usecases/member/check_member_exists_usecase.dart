@@ -7,13 +7,9 @@ class CheckMemberExistsUseCase {
   CheckMemberExistsUseCase(this._memberRepository);
 
   Future<bool> execute(User user) async {
-    try {
-      final existingMember = await _memberRepository.getMemberByAccountId(
-        user.id,
-      );
-      return existingMember != null;
-    } catch (e) {
-      return false;
-    }
+    final existingMember = await _memberRepository.getMemberByAccountId(
+      user.id,
+    );
+    return existingMember != null;
   }
 }

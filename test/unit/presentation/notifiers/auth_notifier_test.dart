@@ -110,6 +110,39 @@ void main() {
       controller.close();
     });
 
+    test(
+      'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
+      () async {
+        const user = User(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        );
+
+        final controller = StreamController<User?>();
+        when(
+          mockAuthService.authStateChanges,
+        ).thenAnswer((_) => controller.stream);
+        when(
+          mockAuthService.validateCurrentUserToken(),
+        ).thenAnswer((_) async {});
+        when(
+          mockCheckMemberExistsUseCase.execute(user),
+        ).thenThrow(Exception('Firestore error'));
+        when(mockAuthService.signOut()).thenAnswer((_) async {});
+
+        await authNotifier.initialize();
+        controller.add(user);
+        await Future(() {});
+
+        expect(authNotifier.state.status, AuthStatus.unauthenticated);
+        expect(authNotifier.state.message, '認証が無効です。再度ログインしてください。');
+        verify(mockAuthService.signOut()).called(1);
+
+        controller.close();
+      },
+    );
+
     test('createNewMemberが成功した場合authenticated状態になる', () async {
       const user = User(
         id: 'user123',
