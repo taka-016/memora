@@ -27,6 +27,10 @@ class AcceptInvitationUseCase {
         return false;
       }
 
+      if (member.accountId != null) {
+        return false;
+      }
+
       final updatedMember = member.copyWith(accountId: userId);
       await _memberRepository.updateMember(updatedMember);
 

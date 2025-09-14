@@ -108,5 +108,40 @@ void main() {
       verify(mockMemberRepository.getMemberById('invitee-id')).called(1);
       verifyNever(mockMemberRepository.saveMember(any));
     });
+
+    test('招待対象メンバーにaccountIdが既に存在する場合、更新せずfalseを返す', () async {
+      // Arrange
+      const invitationCode = 'test-invitation-code';
+      const userId = 'new-user-id';
+      const memberInvitation = MemberInvitation(
+        id: 'invitation-id',
+        inviteeId: 'invitee-id',
+        inviterId: 'inviter-id',
+        invitationCode: invitationCode,
+      );
+      const member = Member(
+        id: 'invitee-id',
+        displayName: 'Invitee User',
+        accountId: 'existing-account-id',
+      );
+
+      when(
+        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+      ).thenAnswer((_) async => memberInvitation);
+      when(
+        mockMemberRepository.getMemberById('invitee-id'),
+      ).thenAnswer((_) async => member);
+
+      // Act
+      final result = await useCase.execute(invitationCode, userId);
+
+      // Assert
+      expect(result, isFalse);
+      verify(
+        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+      ).called(1);
+      verify(mockMemberRepository.getMemberById('invitee-id')).called(1);
+      verifyNever(mockMemberRepository.updateMember(any));
+    });
   });
 }
