@@ -1,8 +1,13 @@
+import 'dart:async';
+
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logger/logger.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/repositories/group_member_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
@@ -18,16 +23,29 @@ import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+late final Logger logger;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initLogger();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: false,
   );
 
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  runApp(const MyApp());
+
+  runZonedGuarded<Future<void>>(
+    () async {
+      runApp(const MyApp());
+    },
+    (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    },
+  );
 }
 
 class MyApp extends StatefulWidget {

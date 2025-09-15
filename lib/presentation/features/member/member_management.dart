@@ -316,7 +316,7 @@ class _MemberManagementState extends State<MemberManagement> {
                 onPressed: () async {
                   try {
                     await Share.share(
-                      'あなたのMemoraへの招待コード: $invitationCode\n\nこのコードをアプリで入力してください。',
+                      'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
                       subject: 'Memoraへの招待',
                     );
                   } catch (e) {
