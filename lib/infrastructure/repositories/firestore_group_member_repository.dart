@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/group_member_repository.dart';
 import '../../domain/entities/group_member.dart';
 import '../mappers/firestore_group_member_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreGroupMemberRepository implements GroupMemberRepository {
   final FirebaseFirestore _firestore;
@@ -23,7 +24,12 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupMemberRepository.getGroupMembers: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -43,7 +49,12 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupMemberRepository.getGroupMembersByGroupId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -58,7 +69,12 @@ class FirestoreGroupMemberRepository implements GroupMemberRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupMemberRepository.getGroupMembersByMemberId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

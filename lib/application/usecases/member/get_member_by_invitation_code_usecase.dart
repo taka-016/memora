@@ -1,6 +1,7 @@
 import '../../../domain/entities/member.dart';
 import '../../../domain/repositories/member_invitation_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
+import '../../../core/app_logger.dart';
 
 class GetMemberByInvitationCodeUseCase {
   final MemberInvitationRepository _memberInvitationRepository;
@@ -25,7 +26,12 @@ class GetMemberByInvitationCodeUseCase {
       );
 
       return member;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'GetMemberByInvitationCodeUseCase.execute: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }

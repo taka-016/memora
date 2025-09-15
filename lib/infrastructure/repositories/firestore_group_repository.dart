@@ -4,6 +4,7 @@ import '../../domain/entities/group.dart';
 import '../mappers/firestore_group_mapper.dart';
 import '../mappers/firestore_group_member_mapper.dart';
 import '../mappers/firestore_group_event_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreGroupRepository implements GroupRepository {
   final FirebaseFirestore _firestore;
@@ -65,7 +66,12 @@ class FirestoreGroupRepository implements GroupRepository {
       }
 
       return completeGroups;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupRepository.getGroups: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -83,7 +89,12 @@ class FirestoreGroupRepository implements GroupRepository {
         return FirestoreGroupMapper.fromFirestore(doc);
       }
       return null;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupRepository.getGroupById: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }
@@ -98,7 +109,12 @@ class FirestoreGroupRepository implements GroupRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupRepository.getGroupsByOwnerId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

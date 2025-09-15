@@ -1,5 +1,6 @@
 import '../../../domain/repositories/member_invitation_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
+import '../../../core/app_logger.dart';
 
 class AcceptInvitationUseCase {
   final MemberInvitationRepository _memberInvitationRepository;
@@ -35,7 +36,12 @@ class AcceptInvitationUseCase {
       await _memberRepository.updateMember(updatedMember);
 
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AcceptInvitationUseCase.execute: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return false;
     }
   }

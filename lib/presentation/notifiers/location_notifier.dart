@@ -3,6 +3,7 @@ import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/location_state.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
+import '../../core/app_logger.dart';
 
 final locationProvider = StateNotifierProvider<LocationNotifier, LocationState>(
   (ref) {
@@ -21,7 +22,12 @@ class LocationNotifier extends StateNotifier<LocationState> {
       if (location != null) {
         state = state.copyWith(location: location, lastUpdated: DateTime.now());
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'LocationNotifier.getCurrentLocation: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       rethrow;
     }
   }

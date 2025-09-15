@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../application/usecases/account/delete_user_usecase.dart';
 import '../../../application/usecases/account/reauthenticate_usecase.dart';
 import 'reauthenticate_modal.dart';
+import '../../../core/app_logger.dart';
 
 class AccountDeleteModal extends StatefulWidget {
   final DeleteUserUseCase deleteUserUseCase;
@@ -34,7 +35,12 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
           context,
         ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AccountDeleteModal._deleteAccount: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         if (e.toString().contains('requires-recent-login')) {
           await _showReauthenticateDialog();
@@ -76,7 +82,12 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
             context,
           ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
         }
-      } catch (e) {
+      } catch (e, stack) {
+        logger.e(
+          'AccountDeleteModal._showReauthenticateDialog: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),

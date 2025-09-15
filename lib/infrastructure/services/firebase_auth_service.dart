@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:memora/infrastructure/errors/firebase_error_mapper.dart';
 import '../../domain/entities/user.dart' as domain;
 import '../../application/interfaces/auth_service.dart';
+import '../../core/app_logger.dart';
 
 class FirebaseAuthService implements AuthService {
   FirebaseAuthService({FirebaseAuth? firebaseAuth})
@@ -122,7 +123,12 @@ class FirebaseAuthService implements AuthService {
       // forceRefresh: trueでサーバーからトークンを強制取得
       // トークンが期限切れの場合、ここで例外が発生する
       await currentUser.getIdToken(true);
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirebaseAuthService.validateCurrentUserToken: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       throw Exception('認証トークンが無効です: $e');
     }
   }
@@ -136,7 +142,12 @@ class FirebaseAuthService implements AuthService {
 
     try {
       await currentUser.sendEmailVerification();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirebaseAuthService.sendEmailVerification: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       throw Exception('認証メールの送信に失敗しました: $e');
     }
   }

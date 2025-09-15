@@ -16,6 +16,7 @@ import '../../../infrastructure/repositories/firestore_trip_entry_repository.dar
 import '../../../infrastructure/repositories/firestore_pin_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'trip_edit_modal.dart';
+import '../../../core/app_logger.dart';
 
 class TripManagement extends StatefulWidget {
   final String groupId;
@@ -90,7 +91,12 @@ class _TripManagementState extends State<TripManagement> {
         widget.year,
       );
       _tripEntries = tripEntries;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_TripManagementState._loadTripEntries: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -134,7 +140,12 @@ class _TripManagementState extends State<TripManagement> {
           const SnackBar(content: Text('旅行を作成しました')),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_TripManagementState._handleAddTripSave: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('作成に失敗しました: $e')),
@@ -183,7 +194,12 @@ class _TripManagementState extends State<TripManagement> {
           const SnackBar(content: Text('旅行を更新しました')),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_TripManagementState._handleEditTripSave: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('更新に失敗しました: $e')),
@@ -197,7 +213,12 @@ class _TripManagementState extends State<TripManagement> {
     if (_getPinsByTripIdUseCase != null) {
       try {
         existingPins = await _getPinsByTripIdUseCase!.execute(tripEntry.id);
-      } catch (e) {
+      } catch (e, stack) {
+        logger.e(
+          '_TripManagementState._showEditTripDialog: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
         existingPins = [];
       }
     } else {
@@ -239,7 +260,12 @@ class _TripManagementState extends State<TripManagement> {
           SnackBar(content: Text('${tripEntry.tripName}を削除しました')),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_TripManagementState._deleteTripEntry: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('削除に失敗しました: $e')),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../application/usecases/account/reauthenticate_usecase.dart';
+import '../../../core/app_logger.dart';
 
 class ReauthenticateModal extends StatefulWidget {
   const ReauthenticateModal({
@@ -43,7 +44,12 @@ class _ReauthenticateModalState extends State<ReauthenticateModal> {
         Navigator.of(context).pop(true);
         widget.onSuccess?.call();
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'ReauthenticateModal._authenticate: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         setState(() {
           _errorMessage = e.toString().replaceFirst('Exception: ', '');

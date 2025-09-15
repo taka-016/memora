@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/member_event_repository.dart';
 import '../../domain/entities/member_event.dart';
 import '../mappers/firestore_member_event_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreMemberEventRepository implements MemberEventRepository {
   final FirebaseFirestore _firestore;
@@ -23,7 +24,12 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
       return snapshot.docs
           .map((doc) => FirestoreMemberEventMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberEventRepository.getMemberEvents: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -43,7 +49,12 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
       return snapshot.docs
           .map((doc) => FirestoreMemberEventMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberEventRepository.getMemberEventsByMemberId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

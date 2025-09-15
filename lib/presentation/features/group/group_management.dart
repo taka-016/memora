@@ -30,6 +30,7 @@ import '../../../infrastructure/repositories/firestore_trip_entry_repository.dar
 import '../../../infrastructure/repositories/firestore_pin_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'group_edit_modal.dart';
+import '../../../core/app_logger.dart';
 
 class GroupManagement extends StatefulWidget {
   final Member member;
@@ -127,7 +128,12 @@ class _GroupManagementState extends State<GroupManagement> {
       final managedGroupsWithMembers = await _getManagedGroupsWithMembersUsecase
           .execute(widget.member);
       _managedGroupsWithMembers = managedGroupsWithMembers;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_GroupManagementState._loadData: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -182,7 +188,12 @@ class _GroupManagementState extends State<GroupManagement> {
                   const SnackBar(content: Text('グループを作成しました')),
                 );
               }
-            } catch (e) {
+            } catch (e, stack) {
+              logger.e(
+                '_GroupManagementState._showAddGroupDialog.onSave: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
               if (mounted) {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text('作成に失敗しました: $e')),
@@ -192,7 +203,12 @@ class _GroupManagementState extends State<GroupManagement> {
           },
         ),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_GroupManagementState._showAddGroupDialog: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')),
@@ -244,7 +260,12 @@ class _GroupManagementState extends State<GroupManagement> {
                   const SnackBar(content: Text('グループを更新しました')),
                 );
               }
-            } catch (e) {
+            } catch (e, stack) {
+              logger.e(
+                '_GroupManagementState._showEditGroupDialog.onSave: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
               if (mounted) {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text('更新に失敗しました: $e')),
@@ -254,7 +275,12 @@ class _GroupManagementState extends State<GroupManagement> {
           },
         ),
       );
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_GroupManagementState._showEditGroupDialog: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')),
@@ -285,7 +311,12 @@ class _GroupManagementState extends State<GroupManagement> {
           const SnackBar(content: Text('グループを削除しました')),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_GroupManagementState._deleteGroup: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('削除に失敗しました: $e')),

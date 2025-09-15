@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/member_repository.dart';
 import '../../domain/entities/member.dart';
 import '../mappers/firestore_member_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreMemberRepository implements MemberRepository {
   final FirebaseFirestore _firestore;
@@ -31,7 +32,12 @@ class FirestoreMemberRepository implements MemberRepository {
       return snapshot.docs
           .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberRepository.getMembers: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -49,7 +55,12 @@ class FirestoreMemberRepository implements MemberRepository {
         return FirestoreMemberMapper.fromFirestore(doc);
       }
       return null;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberRepository.getMemberById: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }
@@ -66,7 +77,12 @@ class FirestoreMemberRepository implements MemberRepository {
         return FirestoreMemberMapper.fromFirestore(querySnapshot.docs.first);
       }
       return null;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberRepository.getMemberByAccountId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }
@@ -82,7 +98,12 @@ class FirestoreMemberRepository implements MemberRepository {
       return querySnapshot.docs
           .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreMemberRepository.getMembersByOwnerId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

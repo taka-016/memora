@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/validators/password_validator.dart';
+import '../../../core/app_logger.dart';
 
 class PasswordChangeModal extends StatefulWidget {
   final Function(String) onPasswordChange;
@@ -37,7 +38,12 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'PasswordChangeModal._updatePassword: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {

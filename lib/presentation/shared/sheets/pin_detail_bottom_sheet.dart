@@ -5,6 +5,7 @@ import '../../../domain/value_objects/location.dart';
 import '../../../infrastructure/services/google_places_api_nearby_location_service.dart';
 import '../../../env/env.dart';
 import '../../helpers/date_picker_helper.dart';
+import '../../../core/app_logger.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
   final PinDto pin;
@@ -118,7 +119,12 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
         _locationName = locationName;
         _isLoadingLocation = false;
       });
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_PinDetailBottomSheetState._loadLocationName: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       setState(() {
         _locationName = null;
         _isLoadingLocation = false;

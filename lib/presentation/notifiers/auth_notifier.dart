@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/value_objects/auth_state.dart';
 import '../../domain/entities/user.dart';
@@ -13,6 +12,7 @@ import '../../infrastructure/repositories/firestore_member_invitation_repository
 import '../../application/usecases/member/check_member_exists_usecase.dart';
 import '../../application/usecases/member/create_member_from_user_usecase.dart';
 import '../../application/usecases/member/accept_invitation_usecase.dart';
+import '../../core/app_logger.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService();
@@ -108,7 +108,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _handleUnverifiedUser() async {
     try {
       await authService.sendEmailVerification();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier._handleUnverifiedUser: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       await _signOutWithError('認証メールの送信に失敗しました。再度ログインしてください。');
       return;
     }
@@ -138,7 +143,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'member_selection_required',
         messageType: MessageType.info,
       );
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier._processUserMembership: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       await _signOutWithError('認証が無効です。再度ログインしてください。');
     }
   }
@@ -151,7 +161,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       } else {
         await _signOutWithError('メンバー作成に失敗しました。');
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier.createNewMember: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       await _signOutWithError('メンバー作成に失敗しました。');
     }
   }
@@ -167,7 +182,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = AuthState.authenticated(user);
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier.acceptInvitation: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return false;
     }
   }
@@ -175,8 +195,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _signOut() async {
     try {
       await authService.signOut();
-    } catch (e) {
-      debugPrint('サインアウト失敗: $e');
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier._signOut: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
     }
   }
 
@@ -201,7 +225,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       // 状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier.login: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       state = AuthState.unauthenticated(
         e.toString(),
         messageType: MessageType.error,
@@ -219,7 +248,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       isSuccess = true;
       // 状態更新はauthStateChangesリスナーで自動的に処理される
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier.signup: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       state = AuthState.unauthenticated(
         e.toString(),
         messageType: MessageType.error,

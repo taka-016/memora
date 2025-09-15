@@ -9,6 +9,7 @@ import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';
 import 'reauthenticate_modal.dart';
+import '../../../core/app_logger.dart';
 
 class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});
@@ -37,7 +38,12 @@ class AccountSettings extends ConsumerWidget {
                 ),
               );
             }
-          } catch (e) {
+          } catch (e, stack) {
+            logger.e(
+              'AccountSettings._showEmailChangeModal.onEmailChange: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
             if (e.toString().contains('requires-recent-login')) {
               if (!context.mounted) return;
               final result = await showDialog<bool>(
@@ -95,7 +101,12 @@ class AccountSettings extends ConsumerWidget {
                 context,
               ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
             }
-          } catch (e) {
+          } catch (e, stack) {
+            logger.e(
+              'AccountSettings._showPasswordChangeModal.onPasswordChange: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
             if (e.toString().contains('requires-recent-login')) {
               if (!context.mounted) return;
               final result = await showDialog<bool>(

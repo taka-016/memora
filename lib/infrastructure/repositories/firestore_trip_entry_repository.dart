@@ -3,6 +3,7 @@ import '../../domain/repositories/trip_entry_repository.dart';
 import '../../domain/entities/trip_entry.dart';
 import '../../domain/value_objects/order_by.dart';
 import '../mappers/firestore_trip_entry_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
   final FirebaseFirestore _firestore;
@@ -33,7 +34,12 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       return snapshot.docs
           .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripEntryRepository.getTripEntries: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -51,7 +57,12 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         return FirestoreTripEntryMapper.fromFirestore(doc);
       }
       return null;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripEntryRepository.getTripEntryById: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return null;
     }
   }
@@ -87,7 +98,12 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       return snapshot.docs
           .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripEntryRepository.getTripEntriesByGroupIdAndYear: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/app_logger.dart';
 
 class EmailChangeModal extends StatefulWidget {
   final Function(String) onEmailChange;
@@ -32,7 +33,12 @@ class _EmailChangeModalState extends State<EmailChangeModal> {
       if (mounted) {
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'EmailChangeModal._updateEmail: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {

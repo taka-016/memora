@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import '../../../core/app_logger.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
@@ -52,7 +53,12 @@ class _GroupListState extends State<GroupList> {
           _state = GroupListState.groupList;
         }
       });
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'GroupList._loadData: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (!mounted) return;
       setState(() {
         _state = GroupListState.error;

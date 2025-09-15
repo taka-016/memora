@@ -8,6 +8,7 @@ import 'package:memora/infrastructure/repositories/firestore_trip_entry_reposito
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
+import '../../../core/app_logger.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override
@@ -123,7 +124,12 @@ class _GroupTimelineState extends State<GroupTimeline> {
           _tripsByYear[year] = trips;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'GroupTimeline._loadTripDataForYear: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         setState(() {
           _tripsByYear[year] = [];

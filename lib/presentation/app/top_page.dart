@@ -17,6 +17,7 @@ import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
+import '../../core/app_logger.dart';
 
 class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
@@ -68,7 +69,12 @@ class _TopPageState extends State<TopPage> {
           _currentMember = member;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_TopPageState._loadCurrentMember: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       // エラー時はnullのまま
     }
   }

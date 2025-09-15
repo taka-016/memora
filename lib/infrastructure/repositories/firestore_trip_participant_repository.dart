@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/trip_participant_repository.dart';
 import '../../domain/entities/trip_participant.dart';
 import '../mappers/firestore_trip_participant_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreTripParticipantRepository implements TripParticipantRepository {
   final FirebaseFirestore _firestore;
@@ -23,7 +24,12 @@ class FirestoreTripParticipantRepository implements TripParticipantRepository {
       return snapshot.docs
           .map((doc) => FirestoreTripParticipantMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripParticipantRepository.getTripParticipants: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -48,7 +54,12 @@ class FirestoreTripParticipantRepository implements TripParticipantRepository {
       return snapshot.docs
           .map((doc) => FirestoreTripParticipantMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripParticipantRepository.getTripParticipantsByTripId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

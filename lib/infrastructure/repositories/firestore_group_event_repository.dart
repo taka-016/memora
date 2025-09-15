@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/repositories/group_event_repository.dart';
 import '../../domain/entities/group_event.dart';
 import '../mappers/firestore_group_event_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreGroupEventRepository implements GroupEventRepository {
   final FirebaseFirestore _firestore;
@@ -23,7 +24,12 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupEventRepository.getGroupEvents: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -43,7 +49,12 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
       return snapshot.docs
           .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupEventRepository.getGroupEventsByGroupId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

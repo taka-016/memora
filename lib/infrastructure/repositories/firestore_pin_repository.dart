@@ -3,6 +3,7 @@ import '../../domain/repositories/pin_repository.dart';
 import '../../domain/entities/pin.dart';
 import '../../domain/value_objects/order_by.dart';
 import '../mappers/firestore_pin_mapper.dart';
+import '../../core/app_logger.dart';
 
 class FirestorePinRepository implements PinRepository {
   final FirebaseFirestore _firestore;
@@ -24,7 +25,12 @@ class FirestorePinRepository implements PinRepository {
       return snapshot.docs
           .map((doc) => FirestorePinMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestorePinRepository.getPins: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -61,7 +67,12 @@ class FirestorePinRepository implements PinRepository {
       return snapshot.docs
           .map((doc) => FirestorePinMapper.fromFirestore(doc))
           .toList();
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestorePinRepository.getPinsByTripId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }

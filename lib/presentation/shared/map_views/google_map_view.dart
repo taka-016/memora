@@ -8,6 +8,7 @@ import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import '../../../core/app_logger.dart';
 
 class GoogleMapView extends ConsumerWidget {
   final List<PinDto> pins;
@@ -132,7 +133,12 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
       }
 
       _animateToPosition(LatLng(location.latitude, location.longitude));
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        '_GoogleMapViewWidgetState._moveToCurrentLocation: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (!mounted) return;
       _showErrorSnackBar('現在地取得に失敗: $e');
     }

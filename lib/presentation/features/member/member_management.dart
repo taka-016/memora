@@ -20,6 +20,7 @@ import '../../../infrastructure/repositories/firestore_trip_participant_reposito
 import '../../../infrastructure/repositories/firestore_group_member_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_event_repository.dart';
 import 'member_edit_modal.dart';
+import '../../../core/app_logger.dart';
 
 class MemberManagement extends StatefulWidget {
   final Member member;
@@ -104,7 +105,12 @@ class _MemberManagementState extends State<MemberManagement> {
         throw Exception('ログインユーザーメンバーの最新情報の取得に失敗しました');
       }
       _managedMembers = [currentMember, ...managedMembers];
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'MemberManagement._loadData: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -134,7 +140,12 @@ class _MemberManagementState extends State<MemberManagement> {
                 const SnackBar(content: Text('メンバーを作成しました')),
               );
             }
-          } catch (e) {
+          } catch (e, stack) {
+            logger.e(
+              'MemberManagement._showAddMemberDialog: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
             if (mounted) {
               scaffoldMessenger.showSnackBar(
                 SnackBar(content: Text('作成に失敗しました: $e')),
@@ -162,7 +173,12 @@ class _MemberManagementState extends State<MemberManagement> {
                 const SnackBar(content: Text('メンバーを更新しました')),
               );
             }
-          } catch (e) {
+          } catch (e, stack) {
+            logger.e(
+              'MemberManagement._showEditMemberDialog: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
             if (mounted) {
               scaffoldMessenger.showSnackBar(
                 SnackBar(content: Text('更新に失敗しました: $e')),
@@ -199,7 +215,12 @@ class _MemberManagementState extends State<MemberManagement> {
           const SnackBar(content: Text('メンバーを削除しました')),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'MemberManagement._deleteMember: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('削除に失敗しました: $e')),
@@ -319,7 +340,12 @@ class _MemberManagementState extends State<MemberManagement> {
                       'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
                       subject: 'Memoraへの招待',
                     );
-                  } catch (e) {
+                  } catch (e, stack) {
+                    logger.e(
+                      'MemberManagement._handleMemberInvite.shareDialog: ${e.toString()}',
+                      error: e,
+                      stackTrace: stack,
+                    );
                     scaffoldMessenger.showSnackBar(
                       const SnackBar(content: Text('共有に失敗しました')),
                     );
@@ -335,7 +361,12 @@ class _MemberManagementState extends State<MemberManagement> {
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'MemberManagement._handleMemberInvite: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       if (mounted) {
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('招待コードの生成に失敗しました: $e')),

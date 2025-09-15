@@ -1,6 +1,7 @@
 import '../../../domain/entities/member.dart';
 import '../../../domain/entities/user.dart';
 import '../../../domain/repositories/member_repository.dart';
+import '../../../core/app_logger.dart';
 
 class GetOrCreateMemberUseCase {
   final MemberRepository _memberRepository;
@@ -26,7 +27,12 @@ class GetOrCreateMemberUseCase {
 
       await _memberRepository.saveMember(newMember);
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'GetOrCreateMemberUseCase.execute: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return false;
     }
   }

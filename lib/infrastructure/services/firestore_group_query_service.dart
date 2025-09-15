@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import '../../core/app_logger.dart';
 
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -16,7 +17,12 @@ class FirestoreGroupQueryService implements GroupQueryService {
       final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
 
       return await _addMembersToGroups(allGroups);
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupQueryService.getGroupsWithMembersByMemberId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
@@ -28,7 +34,12 @@ class FirestoreGroupQueryService implements GroupQueryService {
     try {
       final managedGroups = await _getGroupsWhereUserIsAdmin(ownerId);
       return await _addMembersToGroups(managedGroups);
-    } catch (e) {
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupQueryService.getManagedGroupsWithMembersByOwnerId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
       return [];
     }
   }
