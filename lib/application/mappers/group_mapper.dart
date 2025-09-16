@@ -8,6 +8,7 @@ import '../../domain/entities/group_event.dart';
 class GroupMapper {
   static GroupDto toDto(Group entity) {
     return GroupDto(
+      id: entity.id,
       ownerId: entity.ownerId,
       name: entity.name,
       memo: entity.memo,
@@ -16,17 +17,20 @@ class GroupMapper {
     );
   }
 
-  static Group toEntity(GroupDto dto, {required String id}) {
+  static Group toEntity(GroupDto dto, {String? id}) {
+    final entityId = id ?? dto.id;
     return Group(
-      id: id,
+      id: entityId,
       ownerId: dto.ownerId,
       name: dto.name,
       memo: dto.memo,
       members: dto.members
-          .map((memberDto) => _toGroupMemberEntity(memberDto, groupId: id))
+          .map(
+            (memberDto) => _toGroupMemberEntity(memberDto, groupId: entityId),
+          )
           .toList(),
       events: dto.events
-          .map((eventDto) => _toGroupEventEntity(eventDto, groupId: id))
+          .map((eventDto) => _toGroupEventEntity(eventDto, groupId: entityId))
           .toList(),
     );
   }
@@ -48,7 +52,11 @@ class GroupMapper {
   }
 
   static GroupMemberDto _toGroupMemberDto(GroupMember entity) {
-    return GroupMemberDto(groupId: entity.groupId, memberId: entity.memberId);
+    return GroupMemberDto(
+      id: entity.id,
+      groupId: entity.groupId,
+      memberId: entity.memberId,
+    );
   }
 
   static GroupMember _toGroupMemberEntity(
@@ -56,11 +64,16 @@ class GroupMapper {
     required String groupId,
     String? id,
   }) {
-    return GroupMember(id: id ?? '', groupId: groupId, memberId: dto.memberId);
+    return GroupMember(
+      id: id ?? dto.id,
+      groupId: groupId,
+      memberId: dto.memberId,
+    );
   }
 
   static GroupEventDto _toGroupEventDto(GroupEvent entity) {
     return GroupEventDto(
+      id: entity.id,
       groupId: entity.groupId,
       type: entity.type,
       name: entity.name,
@@ -76,7 +89,7 @@ class GroupMapper {
     String? id,
   }) {
     return GroupEvent(
-      id: id ?? '',
+      id: id ?? dto.id,
       groupId: groupId,
       type: dto.type,
       name: dto.name,

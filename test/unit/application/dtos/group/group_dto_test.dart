@@ -7,14 +7,20 @@ void main() {
   group('GroupDto', () {
     test('コンストラクタでプロパティが正しく設定される', () {
       // Arrange
+      const id = 'group-1';
       const ownerId = 'owner-1';
       const name = 'テストグループ';
       const memo = 'テストメモ';
       final members = [
-        GroupMemberDto(groupId: 'group-1', memberId: 'member-id-1'),
+        GroupMemberDto(
+          id: 'member-1',
+          groupId: 'group-1',
+          memberId: 'member-id-1',
+        ),
       ];
       final events = [
         GroupEventDto(
+          id: 'event-1',
           groupId: 'group-1',
           type: 'テストイベント',
           name: 'イベント名',
@@ -26,6 +32,7 @@ void main() {
 
       // Act
       final groupDto = GroupDto(
+        id: id,
         ownerId: ownerId,
         name: name,
         memo: memo,
@@ -34,6 +41,7 @@ void main() {
       );
 
       // Assert
+      expect(groupDto.id, id);
       expect(groupDto.ownerId, ownerId);
       expect(groupDto.name, name);
       expect(groupDto.memo, memo);
@@ -43,9 +51,14 @@ void main() {
 
     test('オプショナルパラメータがnullの場合でもインスタンスが作成される', () {
       // Arrange & Act
-      final groupDto = GroupDto(ownerId: 'owner-1', name: 'テストグループ');
+      final groupDto = GroupDto(
+        id: 'group-1',
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+      );
 
       // Assert
+      expect(groupDto.id, 'group-1');
       expect(groupDto.ownerId, 'owner-1');
       expect(groupDto.name, 'テストグループ');
       expect(groupDto.memo, isNull);
@@ -56,6 +69,7 @@ void main() {
     test('copyWithメソッドで値が正しく更新される', () {
       // Arrange
       final originalDto = GroupDto(
+        id: 'group-1',
         ownerId: 'owner-1',
         name: 'オリジナル',
         memo: 'オリジナルメモ',
@@ -68,6 +82,7 @@ void main() {
       );
 
       // Assert
+      expect(copiedDto.id, 'group-1');
       expect(copiedDto.ownerId, 'owner-1');
       expect(copiedDto.name, '更新されたグループ');
       expect(copiedDto.memo, '更新されたメモ');
@@ -75,12 +90,13 @@ void main() {
 
     test('同じ値を持つインスタンスは等しい', () {
       // Arrange
+      const id = 'group-1';
       const ownerId = 'owner-1';
       const name = 'テストグループ';
 
-      final dto1 = GroupDto(ownerId: ownerId, name: name);
+      final dto1 = GroupDto(id: id, ownerId: ownerId, name: name);
 
-      final dto2 = GroupDto(ownerId: ownerId, name: name);
+      final dto2 = GroupDto(id: id, ownerId: ownerId, name: name);
 
       // Act & Assert
       expect(dto1, equals(dto2));
@@ -89,9 +105,9 @@ void main() {
 
     test('異なる値を持つインスタンスは等しくない', () {
       // Arrange
-      final dto1 = GroupDto(ownerId: 'owner-1', name: 'グループ1');
+      final dto1 = GroupDto(id: 'group-1', ownerId: 'owner-1', name: 'グループ1');
 
-      final dto2 = GroupDto(ownerId: 'owner-2', name: 'グループ1');
+      final dto2 = GroupDto(id: 'group-2', ownerId: 'owner-2', name: 'グループ1');
 
       // Act & Assert
       expect(dto1, isNot(equals(dto2)));

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class GroupEventDto extends Equatable {
   const GroupEventDto({
+    required this.id,
     required this.groupId,
     required this.type,
     this.name,
@@ -10,6 +11,7 @@ class GroupEventDto extends Equatable {
     this.memo,
   });
 
+  final String id;
   final String groupId;
   final String type;
   final String? name;
@@ -18,6 +20,7 @@ class GroupEventDto extends Equatable {
   final String? memo;
 
   GroupEventDto copyWith({
+    String? id,
     String? groupId,
     String? type,
     String? name,
@@ -26,6 +29,7 @@ class GroupEventDto extends Equatable {
     String? memo,
   }) {
     return GroupEventDto(
+      id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       type: type ?? this.type,
       name: name ?? this.name,
@@ -36,5 +40,13 @@ class GroupEventDto extends Equatable {
   }
 
   @override
-  List<Object?> get props => [groupId, type, name, startDate, endDate, memo];
+  List<Object?> get props => [
+    id,
+    groupId,
+    type,
+    name,
+    startDate,
+    endDate,
+    memo,
+  ];
 }

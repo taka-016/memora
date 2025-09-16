@@ -45,12 +45,15 @@ void main() {
         final dto = GroupMapper.toDto(group);
 
         // Assert
+        expect(dto.id, 'group-1');
         expect(dto.ownerId, 'owner-1');
         expect(dto.name, 'テストグループ');
         expect(dto.memo, 'テストメモ');
         expect(dto.members.length, 1);
+        expect(dto.members.first.id, 'member-1');
         expect(dto.members.first.groupId, 'group-1');
         expect(dto.events.length, 1);
+        expect(dto.events.first.id, 'event-1');
         expect(dto.events.first.groupId, 'group-1');
       });
 
@@ -77,11 +80,16 @@ void main() {
       test('GroupDtoをGroupエンティティに正しく変換する', () {
         // Arrange
         final groupMemberDtos = [
-          GroupMemberDto(groupId: 'group-1', memberId: 'member-id-1'),
+          GroupMemberDto(
+            id: 'member-1',
+            groupId: 'group-1',
+            memberId: 'member-id-1',
+          ),
         ];
 
         final groupEventDtos = [
           GroupEventDto(
+            id: 'event-1',
             groupId: 'group-1',
             type: 'テストイベント',
             name: 'イベント名',
@@ -92,6 +100,7 @@ void main() {
         ];
 
         final dto = GroupDto(
+          id: 'group-1',
           ownerId: 'owner-1',
           name: 'テストグループ',
           memo: 'テストメモ',
@@ -127,8 +136,10 @@ void main() {
 
         // Assert
         expect(dtos.length, 2);
+        expect(dtos[0].id, 'group-1');
         expect(dtos[0].ownerId, 'owner-1');
         expect(dtos[0].name, 'グループ1');
+        expect(dtos[1].id, 'group-2');
         expect(dtos[1].ownerId, 'owner-1');
         expect(dtos[1].name, 'グループ2');
       });
@@ -138,8 +149,8 @@ void main() {
       test('GroupDtoリストを正しく変換する', () {
         // Arrange
         final dtos = [
-          GroupDto(ownerId: 'owner-1', name: 'グループ1'),
-          GroupDto(ownerId: 'owner-1', name: 'グループ2'),
+          GroupDto(id: 'group-1', ownerId: 'owner-1', name: 'グループ1'),
+          GroupDto(id: 'group-2', ownerId: 'owner-1', name: 'グループ2'),
         ];
 
         // Act

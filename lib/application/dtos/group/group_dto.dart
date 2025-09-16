@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/group/group_event_dto.dart';
 
 class GroupDto extends Equatable {
   const GroupDto({
+    required this.id,
     required this.ownerId,
     required this.name,
     this.memo,
@@ -11,6 +12,7 @@ class GroupDto extends Equatable {
     this.events = const [],
   });
 
+  final String id;
   final String ownerId;
   final String name;
   final String? memo;
@@ -18,6 +20,7 @@ class GroupDto extends Equatable {
   final List<GroupEventDto> events;
 
   GroupDto copyWith({
+    String? id,
     String? ownerId,
     String? name,
     String? memo,
@@ -25,6 +28,7 @@ class GroupDto extends Equatable {
     List<GroupEventDto>? events,
   }) {
     return GroupDto(
+      id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       name: name ?? this.name,
       memo: memo ?? this.memo,
@@ -34,5 +38,5 @@ class GroupDto extends Equatable {
   }
 
   @override
-  List<Object?> get props => [ownerId, name, memo, members, events];
+  List<Object?> get props => [id, ownerId, name, memo, members, events];
 }
