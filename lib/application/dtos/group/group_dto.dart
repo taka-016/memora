@@ -4,7 +4,7 @@ import 'package:memora/application/dtos/group/group_event_dto.dart';
 
 class GroupDto extends Equatable {
   const GroupDto({
-    required this.id,
+    this.id,
     required this.ownerId,
     required this.name,
     this.memo,
@@ -12,7 +12,7 @@ class GroupDto extends Equatable {
     this.events = const [],
   });
 
-  final String id;
+  final String? id;
   final String ownerId;
   final String name;
   final String? memo;

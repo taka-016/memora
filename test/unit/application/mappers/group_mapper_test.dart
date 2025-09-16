@@ -9,163 +9,146 @@ import 'package:memora/domain/entities/group_event.dart';
 
 void main() {
   group('GroupMapper', () {
-    group('toDto', () {
-      test('GroupエンティティをGroupDtoに正しく変換する', () {
-        // Arrange
-        final groupMembers = [
-          GroupMember(
-            id: 'member-1',
-            groupId: 'group-1',
-            memberId: 'member-id-1',
-          ),
-        ];
+    test('GroupエンティティをGroupDtoに正しく変換する', () {
+      // Arrange
+      final groupMembers = [
+        GroupMember(
+          id: 'member-1',
+          groupId: 'group-1',
+          memberId: 'member-id-1',
+        ),
+      ];
 
-        final groupEvents = [
-          GroupEvent(
-            id: 'event-1',
-            groupId: 'group-1',
-            type: 'テストイベント',
-            name: 'イベント名',
-            startDate: DateTime(2024, 1, 1),
-            endDate: DateTime(2024, 1, 2),
-            memo: 'イベントメモ',
-          ),
-        ];
+      final groupEvents = [
+        GroupEvent(
+          id: 'event-1',
+          groupId: 'group-1',
+          type: 'テストイベント',
+          name: 'イベント名',
+          startDate: DateTime(2024, 1, 1),
+          endDate: DateTime(2024, 1, 2),
+          memo: 'イベントメモ',
+        ),
+      ];
 
-        final group = Group(
-          id: 'group-1',
-          ownerId: 'owner-1',
-          name: 'テストグループ',
-          memo: 'テストメモ',
-          members: groupMembers,
-          events: groupEvents,
-        );
+      final group = Group(
+        id: 'group-1',
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+        members: groupMembers,
+        events: groupEvents,
+      );
 
-        // Act
-        final dto = GroupMapper.toDto(group);
+      // Act
+      final dto = GroupMapper.toDto(group);
 
-        // Assert
-        expect(dto.id, 'group-1');
-        expect(dto.ownerId, 'owner-1');
-        expect(dto.name, 'テストグループ');
-        expect(dto.memo, 'テストメモ');
-        expect(dto.members.length, 1);
-        expect(dto.members.first.id, 'member-1');
-        expect(dto.members.first.groupId, 'group-1');
-        expect(dto.events.length, 1);
-        expect(dto.events.first.id, 'event-1');
-        expect(dto.events.first.groupId, 'group-1');
-      });
-
-      test('membersがnullの場合は空のリストに変換される', () {
-        // Arrange
-        final group = Group(
-          id: 'group-1',
-          ownerId: 'owner-1',
-          name: 'テストグループ',
-          members: null,
-          events: null,
-        );
-
-        // Act
-        final dto = GroupMapper.toDto(group);
-
-        // Assert
-        expect(dto.members, isEmpty);
-        expect(dto.events, isEmpty);
-      });
+      // Assert
+      expect(dto.id, 'group-1');
+      expect(dto.ownerId, 'owner-1');
+      expect(dto.name, 'テストグループ');
+      expect(dto.memo, 'テストメモ');
+      expect(dto.members.length, 1);
+      expect(dto.members.first.id, 'member-1');
+      expect(dto.members.first.groupId, 'group-1');
+      expect(dto.events.length, 1);
+      expect(dto.events.first.id, 'event-1');
+      expect(dto.events.first.groupId, 'group-1');
     });
 
-    group('toEntity', () {
-      test('GroupDtoをGroupエンティティに正しく変換する', () {
-        // Arrange
-        final groupMemberDtos = [
-          GroupMemberDto(
-            id: 'member-1',
-            groupId: 'group-1',
-            memberId: 'member-id-1',
-          ),
-        ];
+    test('membersとeventsがnullの場合は空のリストに変換される', () {
+      // Arrange
+      final group = Group(
+        id: 'group-1',
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+        members: null,
+        events: null,
+      );
 
-        final groupEventDtos = [
-          GroupEventDto(
-            id: 'event-1',
-            groupId: 'group-1',
-            type: 'テストイベント',
-            name: 'イベント名',
-            startDate: DateTime(2024, 1, 1),
-            endDate: DateTime(2024, 1, 2),
-            memo: 'イベントメモ',
-          ),
-        ];
+      // Act
+      final dto = GroupMapper.toDto(group);
 
-        final dto = GroupDto(
-          id: 'group-1',
-          ownerId: 'owner-1',
-          name: 'テストグループ',
-          memo: 'テストメモ',
-          members: groupMemberDtos,
-          events: groupEventDtos,
-        );
-
-        // Act
-        final entity = GroupMapper.toEntity(dto, id: 'group-1');
-
-        // Assert
-        expect(entity.id, 'group-1');
-        expect(entity.ownerId, 'owner-1');
-        expect(entity.name, 'テストグループ');
-        expect(entity.memo, 'テストメモ');
-        expect(entity.members?.length, 1);
-        expect(entity.members?.first.groupId, 'group-1');
-        expect(entity.events?.length, 1);
-        expect(entity.events?.first.groupId, 'group-1');
-      });
+      // Assert
+      expect(dto.members, isEmpty);
+      expect(dto.events, isEmpty);
     });
 
-    group('toDtoList', () {
-      test('Groupエンティティリストを正しく変換する', () {
-        // Arrange
-        final groups = [
-          Group(id: 'group-1', ownerId: 'owner-1', name: 'グループ1'),
-          Group(id: 'group-2', ownerId: 'owner-1', name: 'グループ2'),
-        ];
+    test('GroupDtoをGroupエンティティに正しく変換する', () {
+      // Arrange
+      final groupMemberDtos = [
+        GroupMemberDto(groupId: 'group-1', memberId: 'member-id-1'),
+      ];
 
-        // Act
-        final dtos = GroupMapper.toDtoList(groups);
+      final groupEventDtos = [
+        GroupEventDto(
+          groupId: 'group-1',
+          type: 'テストイベント',
+          name: 'イベント名',
+          startDate: DateTime(2024, 1, 1),
+          endDate: DateTime(2024, 1, 2),
+          memo: 'イベントメモ',
+        ),
+      ];
 
-        // Assert
-        expect(dtos.length, 2);
-        expect(dtos[0].id, 'group-1');
-        expect(dtos[0].ownerId, 'owner-1');
-        expect(dtos[0].name, 'グループ1');
-        expect(dtos[1].id, 'group-2');
-        expect(dtos[1].ownerId, 'owner-1');
-        expect(dtos[1].name, 'グループ2');
-      });
+      final dto = GroupDto(
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+        members: groupMemberDtos,
+        events: groupEventDtos,
+      );
+
+      // Act
+      final entity = GroupMapper.toEntity(dto);
+
+      // Assert
+      expect(entity.id, '');
+      expect(entity.ownerId, 'owner-1');
+      expect(entity.name, 'テストグループ');
+      expect(entity.memo, 'テストメモ');
+      expect(entity.members?.length, 1);
+      expect(entity.members?.first.groupId, 'group-1');
+      expect(entity.events?.length, 1);
+      expect(entity.events?.first.groupId, 'group-1');
     });
 
-    group('toEntityList', () {
-      test('GroupDtoリストを正しく変換する', () {
-        // Arrange
-        final dtos = [
-          GroupDto(id: 'group-1', ownerId: 'owner-1', name: 'グループ1'),
-          GroupDto(id: 'group-2', ownerId: 'owner-1', name: 'グループ2'),
-        ];
+    test('Groupエンティティリストを正しく変換する', () {
+      // Arrange
+      final groups = [
+        Group(id: 'group-1', ownerId: 'owner-1', name: 'グループ1'),
+        Group(id: 'group-2', ownerId: 'owner-1', name: 'グループ2'),
+      ];
 
-        // Act
-        final entities = GroupMapper.toEntityList(
-          dtos,
-          ids: ['group-1', 'group-2'],
-        );
+      // Act
+      final dtos = GroupMapper.toDtoList(groups);
 
-        // Assert
-        expect(entities.length, 2);
-        expect(entities[0].id, 'group-1');
-        expect(entities[0].name, 'グループ1');
-        expect(entities[1].id, 'group-2');
-        expect(entities[1].name, 'グループ2');
-      });
+      // Assert
+      expect(dtos.length, 2);
+      expect(dtos[0].id, 'group-1');
+      expect(dtos[0].ownerId, 'owner-1');
+      expect(dtos[0].name, 'グループ1');
+      expect(dtos[1].id, 'group-2');
+      expect(dtos[1].ownerId, 'owner-1');
+      expect(dtos[1].name, 'グループ2');
+    });
+
+    test('GroupDtoリストを正しく変換する', () {
+      // Arrange
+      final dtos = [
+        GroupDto(ownerId: 'owner-1', name: 'グループ1'),
+        GroupDto(ownerId: 'owner-1', name: 'グループ2'),
+      ];
+
+      // Act
+      final entities = GroupMapper.toEntityList(dtos);
+
+      // Assert
+      expect(entities.length, 2);
+      expect(entities[0].id, '');
+      expect(entities[0].name, 'グループ1');
+      expect(entities[1].id, '');
+      expect(entities[1].name, 'グループ2');
     });
   });
 }

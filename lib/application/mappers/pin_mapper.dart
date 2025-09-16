@@ -4,6 +4,7 @@ import '../../domain/entities/pin.dart';
 class PinMapper {
   static PinDto toDto(Pin entity) {
     return PinDto(
+      id: entity.id,
       pinId: entity.pinId,
       tripId: entity.tripId,
       latitude: entity.latitude,
@@ -15,9 +16,9 @@ class PinMapper {
     );
   }
 
-  static Pin toEntity(PinDto dto, {String id = ''}) {
+  static Pin toEntity(PinDto dto) {
     return Pin(
-      id: id,
+      id: dto.id ?? '',
       pinId: dto.pinId,
       tripId: dto.tripId!,
       groupId: dto.groupId!,
@@ -34,16 +35,7 @@ class PinMapper {
     return entities.map(toDto).toList();
   }
 
-  static List<Pin> toEntityList(
-    List<PinDto> dtos, {
-    List<String>? ids,
-    List<String>? groupIds,
-  }) {
-    return dtos.asMap().entries.map((entry) {
-      final index = entry.key;
-      final dto = entry.value;
-      final id = ids != null && index < ids.length ? ids[index] : '';
-      return toEntity(dto, id: id);
-    }).toList();
+  static List<Pin> toEntityList(List<PinDto> dtos) {
+    return dtos.map(toEntity).toList();
   }
 }

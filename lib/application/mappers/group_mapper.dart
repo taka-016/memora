@@ -17,20 +17,17 @@ class GroupMapper {
     );
   }
 
-  static Group toEntity(GroupDto dto, {String? id}) {
-    final entityId = id ?? dto.id;
+  static Group toEntity(GroupDto dto) {
     return Group(
-      id: entityId,
+      id: dto.id ?? '',
       ownerId: dto.ownerId,
       name: dto.name,
       memo: dto.memo,
       members: dto.members
-          .map(
-            (memberDto) => _toGroupMemberEntity(memberDto, groupId: entityId),
-          )
+          .map((memberDto) => _toGroupMemberEntity(memberDto))
           .toList(),
       events: dto.events
-          .map((eventDto) => _toGroupEventEntity(eventDto, groupId: entityId))
+          .map((eventDto) => _toGroupEventEntity(eventDto))
           .toList(),
     );
   }
@@ -39,16 +36,8 @@ class GroupMapper {
     return entities.map(toDto).toList();
   }
 
-  static List<Group> toEntityList(
-    List<GroupDto> dtos, {
-    required List<String> ids,
-  }) {
-    return dtos.asMap().entries.map((entry) {
-      final index = entry.key;
-      final dto = entry.value;
-      final id = index < ids.length ? ids[index] : '';
-      return toEntity(dto, id: id);
-    }).toList();
+  static List<Group> toEntityList(List<GroupDto> dtos) {
+    return dtos.map(toEntity).toList();
   }
 
   static GroupMemberDto _toGroupMemberDto(GroupMember entity) {
@@ -59,14 +48,10 @@ class GroupMapper {
     );
   }
 
-  static GroupMember _toGroupMemberEntity(
-    GroupMemberDto dto, {
-    required String groupId,
-    String? id,
-  }) {
+  static GroupMember _toGroupMemberEntity(GroupMemberDto dto) {
     return GroupMember(
-      id: id ?? dto.id,
-      groupId: groupId,
+      id: dto.id ?? '',
+      groupId: dto.groupId,
       memberId: dto.memberId,
     );
   }
@@ -83,14 +68,10 @@ class GroupMapper {
     );
   }
 
-  static GroupEvent _toGroupEventEntity(
-    GroupEventDto dto, {
-    required String groupId,
-    String? id,
-  }) {
+  static GroupEvent _toGroupEventEntity(GroupEventDto dto) {
     return GroupEvent(
-      id: id ?? dto.id,
-      groupId: groupId,
+      id: dto.id ?? '',
+      groupId: dto.groupId,
       type: dto.type,
       name: dto.name,
       startDate: dto.startDate,

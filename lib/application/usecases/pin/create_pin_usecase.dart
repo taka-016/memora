@@ -6,8 +6,8 @@ class CreatePinUseCase {
   final PinRepository _pinRepository;
   CreatePinUseCase(this._pinRepository);
 
-  Future<void> execute(PinDto pinDto, {String id = ''}) async {
-    final pin = PinMapper.toEntity(pinDto, id: id);
+  Future<void> execute(PinDto pinDto) async {
+    final pin = PinMapper.toEntity(pinDto);
     await _pinRepository.savePin(pin);
   }
 }

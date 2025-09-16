@@ -2,12 +2,12 @@ import 'package:equatable/equatable.dart';
 
 class GroupMemberDto extends Equatable {
   const GroupMemberDto({
-    required this.id,
+    this.id,
     required this.groupId,
     required this.memberId,
   });
 
-  final String id;
+  final String? id;
   final String groupId;
   final String memberId;
 
@@ -20,5 +20,5 @@ class GroupMemberDto extends Equatable {
   }
 
   @override
-  List<Object> get props => [id, groupId, memberId];
+  List<Object?> get props => [id, groupId, memberId];
 }

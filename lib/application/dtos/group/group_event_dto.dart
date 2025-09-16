@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class GroupEventDto extends Equatable {
   const GroupEventDto({
-    required this.id,
+    this.id,
     required this.groupId,
     required this.type,
     this.name,
@@ -11,7 +11,7 @@ class GroupEventDto extends Equatable {
     this.memo,
   });
 
-  final String id;
+  final String? id;
   final String groupId;
   final String type;
   final String? name;
