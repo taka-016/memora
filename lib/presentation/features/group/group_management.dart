@@ -5,7 +5,7 @@ import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'package:uuid/uuid.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
-import '../../../application/usecases/member/get_managed_groups_with_members_usecase.dart';
+import '../../../application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import '../../../application/usecases/group/delete_group_usecase.dart';
 import '../../../application/usecases/group/create_group_usecase.dart';
 import '../../../application/usecases/group/update_group_usecase.dart';
