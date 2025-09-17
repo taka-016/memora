@@ -106,7 +106,7 @@ void main() {
 
     testWidgets('エラーが発生した場合、エラー状態が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(Exception('テストエラー'));
+      when(mockUsecase.execute(testMember)).thenThrow(Exception('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -121,7 +121,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(Exception('テストエラー'));
+      when(mockUsecase.execute(testMember)).thenThrow(Exception('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());
