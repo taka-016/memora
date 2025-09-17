@@ -1,10 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
-import '../repositories/firestore_group_repository_test.mocks.dart';
 
+import 'firestore_group_mapper_test.mocks.dart';
+
+@GenerateMocks([QueryDocumentSnapshot])
 void main() {
   group('FirestoreGroupMapper', () {
     test('FirestoreのDocumentSnapshotからGroupへ変換できる', () {
