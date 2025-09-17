@@ -264,6 +264,12 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockPinRepository.getPinsByTripId(
+          'trip-1',
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
+      ).thenAnswer((_) async => []);
 
       // Act
       await tester.pumpWidget(
@@ -303,6 +309,12 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockPinRepository.getPinsByTripId(
+          'trip-1',
+          orderBy: [const OrderBy('visitStartDate', descending: false)],
+        ),
+      ).thenAnswer((_) async => []);
       when(
         mockTripEntryRepository.updateTripEntry(any),
       ).thenAnswer((_) async {});
