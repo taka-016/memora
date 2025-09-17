@@ -1,7 +1,31 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../dtos/member/member_dto.dart';
 import '../../domain/entities/member.dart';
 
 class MemberMapper {
+  static MemberDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data();
+    return MemberDto(
+      id: doc.id,
+      accountId: data?['accountId'] as String?,
+      ownerId: data?['ownerId'] as String?,
+      hiraganaFirstName: data?['hiraganaFirstName'] as String?,
+      hiraganaLastName: data?['hiraganaLastName'] as String?,
+      kanjiFirstName: data?['kanjiFirstName'] as String?,
+      kanjiLastName: data?['kanjiLastName'] as String?,
+      firstName: data?['firstName'] as String?,
+      lastName: data?['lastName'] as String?,
+      displayName: data?['displayName'] as String? ?? '',
+      type: data?['type'] as String?,
+      birthday: (data?['birthday'] as Timestamp?)?.toDate(),
+      gender: data?['gender'] as String?,
+      email: data?['email'] as String?,
+      phoneNumber: data?['phoneNumber'] as String?,
+      passportNumber: data?['passportNumber'] as String?,
+      passportExpiration: data?['passportExpiration'] as String?,
+    );
+  }
+
   static MemberDto toDto(Member entity) {
     return MemberDto(
       id: entity.id,

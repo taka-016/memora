@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class MemberDto extends Equatable {
@@ -80,54 +79,24 @@ class MemberDto extends Equatable {
     );
   }
 
-  factory MemberDto.fromFirestore(Map<String, dynamic> data, String id) {
-    final birthdayRaw = data['birthday'];
-    DateTime? birthday;
-    if (birthdayRaw is Timestamp) {
-      birthday = birthdayRaw.toDate();
-    } else if (birthdayRaw is DateTime) {
-      birthday = birthdayRaw;
-    }
-
-    return MemberDto(
-      id: id,
-      accountId: data['accountId'] as String?,
-      ownerId: data['ownerId'] as String?,
-      hiraganaFirstName: data['hiraganaFirstName'] as String?,
-      hiraganaLastName: data['hiraganaLastName'] as String?,
-      kanjiFirstName: data['kanjiFirstName'] as String?,
-      kanjiLastName: data['kanjiLastName'] as String?,
-      firstName: data['firstName'] as String?,
-      lastName: data['lastName'] as String?,
-      displayName: data['displayName'] as String? ?? '',
-      type: data['type'] as String?,
-      birthday: birthday,
-      gender: data['gender'] as String?,
-      email: data['email'] as String?,
-      phoneNumber: data['phoneNumber'] as String?,
-      passportNumber: data['passportNumber'] as String?,
-      passportExpiration: data['passportExpiration'] as String?,
-    );
-  }
-
   @override
   List<Object?> get props => [
-        id,
-        accountId,
-        ownerId,
-        hiraganaFirstName,
-        hiraganaLastName,
-        kanjiFirstName,
-        kanjiLastName,
-        firstName,
-        lastName,
-        displayName,
-        type,
-        birthday,
-        gender,
-        email,
-        phoneNumber,
-        passportNumber,
-        passportExpiration,
-      ];
+    id,
+    accountId,
+    ownerId,
+    hiraganaFirstName,
+    hiraganaLastName,
+    kanjiFirstName,
+    kanjiLastName,
+    firstName,
+    lastName,
+    displayName,
+    type,
+    birthday,
+    gender,
+    email,
+    phoneNumber,
+    passportNumber,
+    passportExpiration,
+  ];
 }
