@@ -40,6 +40,19 @@ void main() {
       expect(group.memo, null);
     });
 
+    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('group003');
+      when(mockDoc.data()).thenReturn({});
+
+      final group = FirestoreGroupMapper.fromFirestore(mockDoc);
+
+      expect(group.id, 'group003');
+      expect(group.ownerId, '');
+      expect(group.name, '');
+      expect(group.memo, isNull);
+    });
+
     test('GroupからFirestoreのMapへ変換できる', () {
       final group = Group(
         id: 'group001',
@@ -67,6 +80,17 @@ void main() {
 
       expect(data['ownerId'], 'admin002');
       expect(data['name'], 'テストグループ2');
+      expect(data['memo'], null);
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('空文字を含むGroupからFirestoreのMapへ変換できる', () {
+      final group = Group(id: 'group004', ownerId: '', name: '');
+
+      final data = FirestoreGroupMapper.toFirestore(group);
+
+      expect(data['ownerId'], '');
+      expect(data['name'], '');
       expect(data['memo'], null);
       expect(data['createdAt'], isA<FieldValue>());
     });

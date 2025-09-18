@@ -50,6 +50,41 @@ void main() {
       expect(tripEntry.tripMemo, null);
     });
 
+    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('trip003');
+      when(mockDoc.data()).thenReturn({});
+      final before = DateTime.now();
+
+      final tripEntry = FirestoreTripEntryMapper.fromFirestore(mockDoc);
+      final after = DateTime.now();
+
+      expect(tripEntry.id, 'trip003');
+      expect(tripEntry.groupId, '');
+      expect(tripEntry.tripName, isNull);
+      expect(tripEntry.tripMemo, isNull);
+      expect(
+        tripEntry.tripStartDate.isAfter(
+          before.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
+      expect(
+        tripEntry.tripStartDate.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
+      expect(
+        tripEntry.tripEndDate.isAfter(
+          before.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
+      expect(
+        tripEntry.tripEndDate.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
+    });
+
     test('TripEntryからFirestoreのMapへ変換できる', () {
       final tripEntry = TripEntry(
         id: 'trip001',
