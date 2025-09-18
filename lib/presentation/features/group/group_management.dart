@@ -3,29 +3,22 @@ import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
-import 'package:uuid/uuid.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
 import '../../../application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import '../../../application/usecases/group/delete_group_usecase.dart';
 import '../../../application/usecases/group/create_group_usecase.dart';
 import '../../../application/usecases/group/update_group_usecase.dart';
 import '../../../application/usecases/member/get_managed_members_usecase.dart';
-import '../../../application/usecases/group/create_group_member_usecase.dart';
-import '../../../application/usecases/group/delete_group_members_by_group_id_usecase.dart';
 import '../../../domain/entities/member.dart';
 import '../../../domain/entities/group.dart';
 import '../../../domain/entities/group_member.dart';
 import '../../../domain/repositories/group_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
-import '../../../domain/repositories/group_member_repository.dart';
-import '../../../domain/repositories/group_event_repository.dart';
 import '../../../domain/repositories/trip_entry_repository.dart';
 import '../../../domain/repositories/pin_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';
 import '../../../infrastructure/repositories/firestore_group_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_repository.dart';
-import '../../../infrastructure/repositories/firestore_group_member_repository.dart';
-import '../../../infrastructure/repositories/firestore_group_event_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 import '../../../infrastructure/repositories/firestore_pin_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
@@ -37,8 +30,6 @@ class GroupManagement extends StatefulWidget {
   final GroupRepository? groupRepository;
   final GroupQueryService? groupQueryService;
   final MemberRepository? memberRepository;
-  final GroupMemberRepository? groupMemberRepository;
-  final GroupEventRepository? groupEventRepository;
   final TripEntryRepository? tripEntryRepository;
   final PinRepository? pinRepository;
   final TripParticipantRepository? tripParticipantRepository;
@@ -49,8 +40,6 @@ class GroupManagement extends StatefulWidget {
     this.groupRepository,
     this.groupQueryService,
     this.memberRepository,
-    this.groupMemberRepository,
-    this.groupEventRepository,
     this.tripEntryRepository,
     this.pinRepository,
     this.tripParticipantRepository,
@@ -68,9 +57,6 @@ class _GroupManagementState extends State<GroupManagement> {
   late final CreateGroupUsecase _createGroupUsecase;
   late final UpdateGroupUsecase _updateGroupUsecase;
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
-  late final CreateGroupMemberUsecase _createGroupMemberUsecase;
-  late final DeleteGroupMembersByGroupIdUsecase
-  _deleteGroupMembersByGroupIdUsecase;
 
   List<GroupWithMembersDto> _managedGroupsWithMembers = [];
   bool _isLoading = true;
@@ -85,10 +71,6 @@ class _GroupManagementState extends State<GroupManagement> {
         widget.groupQueryService ?? FirestoreGroupQueryService();
     final memberRepository =
         widget.memberRepository ?? FirestoreMemberRepository();
-    final groupMemberRepository =
-        widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
-    final groupEventRepository =
-        widget.groupEventRepository ?? FirestoreGroupEventRepository();
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
     final pinRepository = widget.pinRepository ?? FirestorePinRepository();
@@ -102,8 +84,6 @@ class _GroupManagementState extends State<GroupManagement> {
     );
     _deleteGroupUsecase = DeleteGroupUsecase(
       groupRepository,
-      groupMemberRepository,
-      groupEventRepository,
       tripEntryRepository,
       pinRepository,
       tripParticipantRepository,
@@ -111,10 +91,6 @@ class _GroupManagementState extends State<GroupManagement> {
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
-    _createGroupMemberUsecase = CreateGroupMemberUsecase(groupMemberRepository);
-    _deleteGroupMembersByGroupIdUsecase = DeleteGroupMembersByGroupIdUsecase(
-      groupMemberRepository,
-    );
 
     _loadData();
   }
@@ -165,22 +141,24 @@ class _GroupManagementState extends State<GroupManagement> {
           selectedMemberIds: null,
           onSave: (group, selectedMemberIds) async {
             try {
+              List<GroupMember> groupMember = [];
+              for (final memberId in selectedMemberIds) {
+                groupMember.add(
+                  GroupMember(
+                    groupId: '', // 仮の値、後で更新される
+                    memberId: memberId,
+                  ),
+                );
+              }
               final newGroup = Group(
                 id: '', // IDは自動採番されるため空文字列
                 ownerId: widget.member.id,
                 name: group.name,
                 memo: group.memo,
+                members: groupMember,
+                events: [],
               );
-              final newGroupId = await _createGroupUsecase.execute(newGroup);
-
-              for (final memberId in selectedMemberIds) {
-                final groupMember = GroupMember(
-                  id: const Uuid().v4(),
-                  groupId: newGroupId,
-                  memberId: memberId,
-                );
-                await _createGroupMemberUsecase.execute(groupMember);
-              }
+              await _createGroupUsecase.execute(newGroup);
 
               if (mounted) {
                 await _loadData();
@@ -243,16 +221,17 @@ class _GroupManagementState extends State<GroupManagement> {
           selectedMemberIds: existingMemberIds,
           onSave: (editedGroup, selectedMemberIds) async {
             try {
-              await _updateGroupUsecase.execute(editedGroup);
-              await _deleteGroupMembersByGroupIdUsecase.execute(group!.id);
+              List<GroupMember> groupMember = [];
               for (final memberId in selectedMemberIds) {
-                final groupMember = GroupMember(
-                  id: const Uuid().v4(),
-                  groupId: group.id,
-                  memberId: memberId,
+                groupMember.add(
+                  GroupMember(
+                    groupId: '', // 仮の値、後で更新される
+                    memberId: memberId,
+                  ),
                 );
-                await _createGroupMemberUsecase.execute(groupMember);
               }
+              final updateGroup = editedGroup.copyWith(members: groupMember);
+              await _updateGroupUsecase.execute(updateGroup);
 
               if (mounted) {
                 await _loadData();

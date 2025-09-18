@@ -13,6 +13,7 @@ import 'package:memora/domain/entities/group.dart';
   QueryDocumentSnapshot,
   DocumentSnapshot,
   Query,
+  WriteBatch,
   FirestoreGroupRepository,
 ])
 import 'firestore_group_repository_test.mocks.dart';
@@ -43,23 +44,21 @@ void main() {
       );
 
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      final mockBatch = MockWriteBatch();
+
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockCollection.doc()).thenReturn(mockDocRef);
       when(mockDocRef.id).thenReturn('auto_generated_id');
+      when(mockBatch.set(any, any)).thenReturn(null);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       final result = await repository.saveGroup(group);
 
       expect(result, 'auto_generated_id');
-      verify(
-        mockCollection.add(
-          argThat(
-            allOf([
-              containsPair('name', 'テストグループ'),
-              containsPair('memo', 'テストメモ'),
-              contains('createdAt'),
-            ]),
-          ),
-        ),
-      ).called(1);
+      verify(mockFirestore.batch()).called(1);
+      verify(mockCollection.doc()).called(1);
+      verify(mockBatch.set(mockDocRef, any)).called(1);
+      verify(mockBatch.commit()).called(1);
     });
 
     test('getGroupsがFirestoreからGroupのリストを返す', () async {
@@ -128,10 +127,8 @@ void main() {
       expect(result[0].name, 'テストグループ');
       expect(result[0].memo, 'テストメモ');
       expect(result[0].members?.length, 1);
-      expect(result[0].members?[0].id, 'group_member001');
       expect(result[0].members?[0].memberId, 'member001');
       expect(result[0].events?.length, 1);
-      expect(result[0].events?[0].id, 'group_event001');
       expect(result[0].events?[0].name, 'テストイベント');
     });
 
@@ -146,14 +143,56 @@ void main() {
     test('deleteGroupがgroups collectionの該当ドキュメントを削除する', () async {
       const groupId = 'group001';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
 
+      // group_membersコレクション用のモック
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+
+      // group_eventsコレクション用のモック
+      final mockGroupEventsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupEventsQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupEventsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(mockFirestore.batch()).thenReturn(mockBatch);
       when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
+
+      // group_membersの削除処理
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockGroupMembersQuery);
+      when(
+        mockGroupMembersQuery.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([]);
+
+      // group_eventsの削除処理
+      when(
+        mockFirestore.collection('group_events'),
+      ).thenReturn(mockGroupEventsCollection);
+      when(
+        mockGroupEventsCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockGroupEventsQuery);
+      when(
+        mockGroupEventsQuery.get(),
+      ).thenAnswer((_) async => mockGroupEventsSnapshot);
+      when(mockGroupEventsSnapshot.docs).thenReturn([]);
+
+      when(mockBatch.delete(any)).thenReturn(null);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.deleteGroup(groupId);
 
-      verify(mockCollection.doc(groupId)).called(1);
-      verify(mockDocRef.delete()).called(1);
+      verify(mockFirestore.batch()).called(1);
+      verify(mockBatch.delete(mockDocRef)).called(1);
+      verify(mockBatch.commit()).called(1);
     });
 
     test('getGroupByIdが特定のグループを返す', () async {

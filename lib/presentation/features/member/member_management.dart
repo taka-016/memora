@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../application/usecases/member/get_managed_members_usecase.dart';
 import '../../../application/usecases/member/create_or_update_member_invitation_usecase.dart';
@@ -12,12 +14,10 @@ import '../../../application/usecases/member/get_member_by_id_usecase.dart';
 import '../../../domain/entities/member.dart';
 import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';
-import '../../../domain/repositories/group_member_repository.dart';
 import '../../../domain/repositories/member_event_repository.dart';
 import '../../../domain/repositories/member_invitation_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
-import '../../../infrastructure/repositories/firestore_group_member_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_event_repository.dart';
 import 'member_edit_modal.dart';
 import '../../../core/app_logger.dart';
@@ -26,7 +26,7 @@ class MemberManagement extends StatefulWidget {
   final Member member;
   final MemberRepository? memberRepository;
   final TripParticipantRepository? tripParticipantRepository;
-  final GroupMemberRepository? groupMemberRepository;
+  final GroupRepository? groupRepository;
   final MemberEventRepository? memberEventRepository;
   final MemberInvitationRepository? memberInvitationRepository;
 
@@ -35,7 +35,7 @@ class MemberManagement extends StatefulWidget {
     required this.member,
     this.memberRepository,
     this.tripParticipantRepository,
-    this.groupMemberRepository,
+    this.groupRepository,
     this.memberEventRepository,
     this.memberInvitationRepository,
   });
@@ -65,8 +65,8 @@ class _MemberManagementState extends State<MemberManagement> {
     final tripParticipantRepository =
         widget.tripParticipantRepository ??
         FirestoreTripParticipantRepository();
-    final groupMemberRepository =
-        widget.groupMemberRepository ?? FirestoreGroupMemberRepository();
+    final groupRepository =
+        widget.groupRepository ?? FirestoreGroupRepository();
     final memberEventRepository =
         widget.memberEventRepository ?? FirestoreMemberEventRepository();
     final memberInvitationRepository =
@@ -79,7 +79,7 @@ class _MemberManagementState extends State<MemberManagement> {
     _deleteMemberUsecase = DeleteMemberUsecase(
       memberRepository,
       tripParticipantRepository,
-      groupMemberRepository,
+      groupRepository,
       memberEventRepository,
     );
     _getMemberByIdUseCase = GetMemberByIdUseCase(memberRepository);

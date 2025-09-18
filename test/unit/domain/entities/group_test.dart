@@ -6,13 +6,8 @@ import 'package:memora/domain/entities/group_member.dart';
 void main() {
   group('Group', () {
     test('インスタンス生成が正しく行われる', () {
-      final testMember = GroupMember(
-        id: 'member001',
-        groupId: 'group001',
-        memberId: 'user001',
-      );
+      final testMember = GroupMember(groupId: 'group001', memberId: 'user001');
       final testEvent = GroupEvent(
-        id: 'event001',
         groupId: 'group001',
         type: 'meeting',
         startDate: DateTime(2024, 1, 1, 10, 0),
@@ -80,24 +75,17 @@ void main() {
 
     test('copyWithメソッドが正しく動作する', () {
       final originalMember = GroupMember(
-        id: 'member001',
         groupId: 'group001',
         memberId: 'user001',
       );
-      final newMember = GroupMember(
-        id: 'member002',
-        groupId: 'group001',
-        memberId: 'user002',
-      );
+      final newMember = GroupMember(groupId: 'group001', memberId: 'user002');
       final originalEvent = GroupEvent(
-        id: 'event001',
         groupId: 'group001',
         type: 'meeting',
         startDate: DateTime(2024, 1, 1, 10, 0),
         endDate: DateTime(2024, 1, 1, 12, 0),
       );
       final newEvent = GroupEvent(
-        id: 'event002',
         groupId: 'group001',
         type: 'workshop',
         startDate: DateTime(2024, 1, 2, 14, 0),
@@ -129,13 +117,8 @@ void main() {
     });
 
     test('copyWithメソッドで変更しないフィールドは元の値が保持される', () {
-      final testMember = GroupMember(
-        id: 'member001',
-        groupId: 'group001',
-        memberId: 'user001',
-      );
+      final testMember = GroupMember(groupId: 'group001', memberId: 'user001');
       final testEvent = GroupEvent(
-        id: 'event001',
         groupId: 'group001',
         type: 'meeting',
         startDate: DateTime(2024, 1, 1, 10, 0),

@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/repositories/group_member_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
@@ -19,7 +18,6 @@ import 'application/interfaces/auth_service.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/group/get_groups_with_members_usecase.dart';
 import 'application/usecases/member/get_current_member_usecase.dart';
-import 'infrastructure/repositories/firestore_group_member_repository.dart';
 import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -59,7 +57,6 @@ class _MyAppState extends State<MyApp> {
   late final AuthService authService;
   late final MemberRepository memberRepository;
   late final GroupQueryService groupQueryService;
-  late final GroupMemberRepository groupMemberRepository;
   late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   late final GetCurrentMemberUseCase getCurrentMemberUseCase;
 
@@ -70,7 +67,6 @@ class _MyAppState extends State<MyApp> {
     memberRepository = FirestoreMemberRepository();
 
     groupQueryService = FirestoreGroupQueryService();
-    groupMemberRepository = FirestoreGroupMemberRepository();
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupQueryService,
     );

@@ -6,7 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
-import 'package:memora/domain/repositories/group_member_repository.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -16,14 +16,14 @@ import 'member_management_test.mocks.dart';
 @GenerateMocks([
   MemberRepository,
   TripParticipantRepository,
-  GroupMemberRepository,
+  GroupRepository,
   MemberEventRepository,
   MemberInvitationRepository,
 ])
 void main() {
   late MockMemberRepository mockMemberRepository;
   late MockTripParticipantRepository mockTripParticipantRepository;
-  late MockGroupMemberRepository mockGroupMemberRepository;
+  late MockGroupRepository mockGroupRepository;
   late MockMemberEventRepository mockMemberEventRepository;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late Member testMember;
@@ -31,7 +31,7 @@ void main() {
   setUp(() {
     mockMemberRepository = MockMemberRepository();
     mockTripParticipantRepository = MockTripParticipantRepository();
-    mockGroupMemberRepository = MockGroupMemberRepository();
+    mockGroupRepository = MockGroupRepository();
     mockMemberEventRepository = MockMemberEventRepository();
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     testMember = Member(
@@ -96,7 +96,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -166,7 +166,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -194,7 +194,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -222,7 +222,7 @@ void main() {
               member: testMember,
               memberRepository: mockMemberRepository,
               tripParticipantRepository: mockTripParticipantRepository,
-              groupMemberRepository: mockGroupMemberRepository,
+              groupRepository: mockGroupRepository,
               memberEventRepository: mockMemberEventRepository,
               memberInvitationRepository: mockMemberInvitationRepository,
             ),
@@ -274,7 +274,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -330,7 +330,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -387,7 +387,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -434,7 +434,7 @@ void main() {
               member: testMember,
               memberRepository: mockMemberRepository,
               tripParticipantRepository: mockTripParticipantRepository,
-              groupMemberRepository: mockGroupMemberRepository,
+              groupRepository: mockGroupRepository,
               memberEventRepository: mockMemberEventRepository,
               memberInvitationRepository: mockMemberInvitationRepository,
             ),
@@ -481,7 +481,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -600,7 +600,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -660,7 +660,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -708,7 +708,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),
@@ -748,7 +748,7 @@ void main() {
             member: testMember,
             memberRepository: mockMemberRepository,
             tripParticipantRepository: mockTripParticipantRepository,
-            groupMemberRepository: mockGroupMemberRepository,
+            groupRepository: mockGroupRepository,
             memberEventRepository: mockMemberEventRepository,
             memberInvitationRepository: mockMemberInvitationRepository,
           ),

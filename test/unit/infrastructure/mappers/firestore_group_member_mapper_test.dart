@@ -19,7 +19,6 @@ void main() {
 
       final groupMember = FirestoreGroupMemberMapper.fromFirestore(mockDoc);
 
-      expect(groupMember.id, 'groupmember001');
       expect(groupMember.groupId, 'group001');
       expect(groupMember.memberId, 'member001');
     });
@@ -31,14 +30,12 @@ void main() {
 
       final groupMember = FirestoreGroupMemberMapper.fromFirestore(mockDoc);
 
-      expect(groupMember.id, 'groupmember002');
       expect(groupMember.groupId, '');
       expect(groupMember.memberId, '');
     });
 
     test('GroupMemberからFirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(
-        id: 'groupmember001',
         groupId: 'group001',
         memberId: 'member001',
       );
@@ -51,11 +48,7 @@ void main() {
     });
 
     test('空文字を含むGroupMemberからFirestoreのMapへ変換できる', () {
-      final groupMember = GroupMember(
-        id: 'groupmember003',
-        groupId: '',
-        memberId: '',
-      );
+      final groupMember = GroupMember(groupId: '', memberId: '');
 
       final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
 

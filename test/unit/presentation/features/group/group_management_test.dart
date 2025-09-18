@@ -10,8 +10,6 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/group_member_repository.dart';
-import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
@@ -23,8 +21,6 @@ import 'group_management_test.mocks.dart';
   GroupRepository,
   GroupQueryService,
   MemberRepository,
-  GroupMemberRepository,
-  GroupEventRepository,
   TripEntryRepository,
   PinRepository,
   TripParticipantRepository,
@@ -33,8 +29,6 @@ void main() {
   late MockGroupRepository mockGroupRepository;
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberRepository mockMemberRepository;
-  late MockGroupMemberRepository mockGroupMemberRepository;
-  late MockGroupEventRepository mockGroupEventRepository;
   late MockTripEntryRepository mockTripEntryRepository;
   late MockPinRepository mockPinRepository;
   late MockTripParticipantRepository mockTripParticipantRepository;
@@ -47,8 +41,6 @@ void main() {
     mockGroupRepository = MockGroupRepository();
     mockGroupQueryService = MockGroupQueryService();
     mockMemberRepository = MockMemberRepository();
-    mockGroupMemberRepository = MockGroupMemberRepository();
-    mockGroupEventRepository = MockGroupEventRepository();
     mockTripEntryRepository = MockTripEntryRepository();
     mockPinRepository = MockPinRepository();
     mockTripParticipantRepository = MockTripParticipantRepository();
@@ -109,8 +101,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -153,8 +143,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -188,8 +176,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -222,8 +208,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -260,8 +244,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -307,8 +289,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -351,8 +331,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -391,20 +369,6 @@ void main() {
         mockMemberRepository.getMembersByOwnerId(testMember.id),
       ).thenAnswer((_) async => availableMembers);
 
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-
-      when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
-
-      when(
-        mockGroupMemberRepository.deleteGroupMember(any),
-      ).thenAnswer((_) async {});
-
-      when(
-        mockGroupMemberRepository.saveGroupMember(any),
-      ).thenAnswer((_) async {});
-
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -414,8 +378,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,
@@ -444,180 +406,6 @@ void main() {
       verify(mockGroupRepository.updateGroup(any)).called(1);
     });
 
-    testWidgets('グループメンバーの追加削除ができること', (WidgetTester tester) async {
-      // Arrange
-      final member2 = Member(
-        id: 'member-2',
-        accountId: 'account-2',
-        ownerId: testMember.id,
-        displayName: 'Member 2',
-        kanjiLastName: '田中',
-        kanjiFirstName: '花子',
-        hiraganaLastName: 'たなか',
-        hiraganaFirstName: 'はなこ',
-        firstName: 'Hanako',
-        lastName: 'Tanaka',
-        gender: '女性',
-        birthday: DateTime(1992, 5, 15),
-        email: 'hanako@example.com',
-        phoneNumber: '090-8765-4321',
-        type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
-      );
-
-      final managedGroupsWithMembers = [groupWithMembers1];
-
-      final availableMembers = [testMember, member2];
-
-      when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
-          testMember.id,
-        ),
-      ).thenAnswer((_) async => managedGroupsWithMembers);
-
-      when(
-        mockGroupRepository.getGroupById(group1.id),
-      ).thenAnswer((_) async => group1);
-
-      when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
-      ).thenAnswer((_) async => availableMembers);
-
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-
-      when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
-
-      when(
-        mockGroupMemberRepository.deleteGroupMember(any),
-      ).thenAnswer((_) async {});
-
-      when(
-        mockGroupMemberRepository.saveGroupMember(any),
-      ).thenAnswer((_) async {});
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
-              tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // ListTileをタップして編集モーダルを開く
-      await tester.tap(find.byType(ListTile));
-      await tester.pumpAndSettle();
-
-      // メンバー一覧のコンテナ内をスクロールして2番目のメンバーを表示
-      await tester.scrollUntilVisible(
-        find.byType(CheckboxListTile).at(1),
-        100.0,
-        scrollable: find.descendant(
-          of: find.byKey(const Key('member_list_container')),
-          matching: find.byType(Scrollable),
-        ),
-      );
-
-      // 2番目のメンバーをチェック
-      final secondCheckbox = find.byType(CheckboxListTile).at(1);
-      expect(secondCheckbox, findsOneWidget);
-      await tester.tap(secondCheckbox);
-      await tester.pumpAndSettle();
-
-      // 更新ボタンをタップ
-      await tester.tap(find.text('更新'));
-      await tester.pumpAndSettle();
-
-      // Assert - メンバー作成処理が呼ばれることを確認
-      verify(mockGroupMemberRepository.saveGroupMember(any)).called(1);
-    });
-
-    testWidgets('グループ削除時にグループメンバーも削除されること', (WidgetTester tester) async {
-      // Arrange
-      final now = DateTime.now();
-      final managedGroupsWithMembers = [groupWithMembers1];
-
-      final tripEntries = [
-        TripEntry(
-          id: 'trip1',
-          groupId: 'group-1',
-          tripName: 'テスト旅行1',
-          tripStartDate: now,
-          tripEndDate: now,
-          tripMemo: null,
-        ),
-      ];
-
-      when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
-          testMember.id,
-        ),
-      ).thenAnswer((_) async => managedGroupsWithMembers);
-
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-
-      when(mockGroupRepository.deleteGroup('group-1')).thenAnswer((_) async {});
-      when(
-        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async {});
-
-      when(
-        mockTripEntryRepository.getTripEntries(),
-      ).thenAnswer((_) async => tripEntries);
-
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
-              tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // 削除ボタンをタップ
-      await tester.tap(find.byIcon(Icons.delete));
-      await tester.pumpAndSettle();
-
-      // 確認ダイアログで削除ボタンをタップ
-      await tester.tap(find.text('削除'));
-      await tester.pumpAndSettle();
-
-      // Assert - グループメンバー削除処理が呼ばれることを確認
-      verify(
-        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
-      ).called(1);
-      verify(mockGroupRepository.deleteGroup('group-1')).called(1);
-    });
-
     testWidgets('グループ削除時にエラーが発生した場合、エラーメッセージが表示されること', (
       WidgetTester tester,
     ) async {
@@ -642,14 +430,7 @@ void main() {
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
-      when(
-        mockGroupMemberRepository.getGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async => []);
-
-      // グループメンバー削除は成功するが、グループ削除でエラーが発生
-      when(
-        mockGroupMemberRepository.deleteGroupMembersByGroupId('group-1'),
-      ).thenAnswer((_) async {});
+      // グループ削除でエラーが発生
       when(
         mockGroupRepository.deleteGroup('group-1'),
       ).thenThrow(Exception('削除エラー'));
@@ -667,8 +448,6 @@ void main() {
               groupRepository: mockGroupRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
-              groupMemberRepository: mockGroupMemberRepository,
-              groupEventRepository: mockGroupEventRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
               tripParticipantRepository: mockTripParticipantRepository,

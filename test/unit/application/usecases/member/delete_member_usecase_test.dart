@@ -4,7 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
-import 'package:memora/domain/repositories/group_member_repository.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 
 import 'delete_member_usecase_test.mocks.dart';
@@ -12,25 +12,25 @@ import 'delete_member_usecase_test.mocks.dart';
 @GenerateMocks([
   MemberRepository,
   TripParticipantRepository,
-  GroupMemberRepository,
+  GroupRepository,
   MemberEventRepository,
 ])
 void main() {
   late DeleteMemberUsecase usecase;
   late MockMemberRepository mockMemberRepository;
   late MockTripParticipantRepository mockTripParticipantRepository;
-  late MockGroupMemberRepository mockGroupMemberRepository;
+  late MockGroupRepository mockGroupRepository;
   late MockMemberEventRepository mockMemberEventRepository;
 
   setUp(() {
     mockMemberRepository = MockMemberRepository();
     mockTripParticipantRepository = MockTripParticipantRepository();
-    mockGroupMemberRepository = MockGroupMemberRepository();
+    mockGroupRepository = MockGroupRepository();
     mockMemberEventRepository = MockMemberEventRepository();
     usecase = DeleteMemberUsecase(
       mockMemberRepository,
       mockTripParticipantRepository,
-      mockGroupMemberRepository,
+      mockGroupRepository,
       mockMemberEventRepository,
     );
   });
@@ -51,7 +51,7 @@ void main() {
       ).thenAnswer((_) async => {});
 
       when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
       ).thenAnswer((_) async => {});
 
       when(
@@ -80,7 +80,7 @@ void main() {
       ).thenAnswer((_) async => {});
 
       when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
       ).thenAnswer((_) async => {});
 
       when(
@@ -106,7 +106,7 @@ void main() {
       ).thenAnswer((_) async => {});
 
       when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
       ).thenAnswer((_) async => {});
 
       when(
@@ -140,7 +140,7 @@ void main() {
       ).thenAnswer((_) async => {});
 
       when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
       ).thenAnswer((_) async => {});
 
       when(
@@ -151,7 +151,7 @@ void main() {
       await usecase.execute(memberId);
 
       // assert
-      verify(mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId));
+      verify(mockGroupRepository.deleteGroupMembersByMemberId(memberId));
     });
 
     test('メンバー削除時にメンバーイベントも削除されること', () async {
@@ -169,7 +169,7 @@ void main() {
       ).thenAnswer((_) async => {});
 
       when(
-        mockGroupMemberRepository.deleteGroupMembersByMemberId(memberId),
+        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
       ).thenAnswer((_) async => {});
 
       when(

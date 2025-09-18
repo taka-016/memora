@@ -5,7 +5,6 @@ class FirestoreGroupMemberMapper {
   static GroupMember fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return GroupMember(
-      id: doc.id,
       groupId: data?['groupId'] as String? ?? '',
       memberId: data?['memberId'] as String? ?? '',
     );
