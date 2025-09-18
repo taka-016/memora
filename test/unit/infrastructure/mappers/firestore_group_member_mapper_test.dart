@@ -24,6 +24,18 @@ void main() {
       expect(groupMember.memberId, 'member001');
     });
 
+    test('Firestoreのデータが不足している場合でもデフォルト値を返す', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('groupmember002');
+      when(mockDoc.data()).thenReturn({});
+
+      final groupMember = FirestoreGroupMemberMapper.fromFirestore(mockDoc);
+
+      expect(groupMember.id, 'groupmember002');
+      expect(groupMember.groupId, '');
+      expect(groupMember.memberId, '');
+    });
+
     test('GroupMemberからFirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(
         id: 'groupmember001',
@@ -35,6 +47,20 @@ void main() {
 
       expect(data['groupId'], 'group001');
       expect(data['memberId'], 'member001');
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('空文字を含むGroupMemberからFirestoreのMapへ変換できる', () {
+      final groupMember = GroupMember(
+        id: 'groupmember003',
+        groupId: '',
+        memberId: '',
+      );
+
+      final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
+
+      expect(data['groupId'], '');
+      expect(data['memberId'], '');
       expect(data['createdAt'], isA<FieldValue>());
     });
   });

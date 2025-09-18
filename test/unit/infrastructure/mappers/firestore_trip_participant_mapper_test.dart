@@ -26,6 +26,20 @@ void main() {
       expect(tripParticipant.memberId, 'member001');
     });
 
+    test('Firestoreのデータが不足している場合でもデフォルト値を返す', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('participant002');
+      when(mockDoc.data()).thenReturn({});
+
+      final tripParticipant = FirestoreTripParticipantMapper.fromFirestore(
+        mockDoc,
+      );
+
+      expect(tripParticipant.id, 'participant002');
+      expect(tripParticipant.tripId, '');
+      expect(tripParticipant.memberId, '');
+    });
+
     test('TripParticipantからFirestoreのMapへ変換できる', () {
       final tripParticipant = TripParticipant(
         id: 'participant001',
@@ -37,6 +51,20 @@ void main() {
 
       expect(data['tripId'], 'trip001');
       expect(data['memberId'], 'member001');
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('空文字を含むTripParticipantからFirestoreのMapへ変換できる', () {
+      final tripParticipant = TripParticipant(
+        id: 'participant003',
+        tripId: '',
+        memberId: '',
+      );
+
+      final data = FirestoreTripParticipantMapper.toFirestore(tripParticipant);
+
+      expect(data['tripId'], '');
+      expect(data['memberId'], '');
       expect(data['createdAt'], isA<FieldValue>());
     });
   });

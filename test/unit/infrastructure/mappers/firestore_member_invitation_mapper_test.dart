@@ -11,44 +11,73 @@ import 'firestore_member_invitation_mapper_test.mocks.dart';
 void main() {
   group('FirestoreMemberInvitationMapper', () {
     test('FirestoreのDocumentSnapshotからMemberInvitationへ変換できる', () {
-      // Arrange
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('invitation123');
+      when(mockDoc.id).thenReturn('invitation001');
       when(mockDoc.data()).thenReturn({
-        'inviteeId': 'invitee123',
-        'inviterId': 'inviter456',
-        'invitationCode': 'code789',
+        'inviteeId': 'invitee001',
+        'inviterId': 'inviter001',
+        'invitationCode': 'code001',
       });
 
-      // Act
       final memberInvitation = FirestoreMemberInvitationMapper.fromFirestore(
         mockDoc,
       );
 
-      // Assert
-      expect(memberInvitation.id, 'invitation123');
-      expect(memberInvitation.inviteeId, 'invitee123');
-      expect(memberInvitation.inviterId, 'inviter456');
-      expect(memberInvitation.invitationCode, 'code789');
+      expect(memberInvitation.id, 'invitation001');
+      expect(memberInvitation.inviteeId, 'invitee001');
+      expect(memberInvitation.inviterId, 'inviter001');
+      expect(memberInvitation.invitationCode, 'code001');
     });
 
-    test('MemberInvitationからFirestoreのMapに変換できる', () {
-      // Arrange
-      const memberInvitation = MemberInvitation(
-        id: 'invitation123',
-        inviteeId: 'invitee123',
-        inviterId: 'inviter456',
-        invitationCode: 'code789',
+    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('invitation002');
+      when(mockDoc.data()).thenReturn({});
+
+      final memberInvitation = FirestoreMemberInvitationMapper.fromFirestore(
+        mockDoc,
       );
 
-      // Act
-      final map = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+      expect(memberInvitation.id, 'invitation002');
+      expect(memberInvitation.inviteeId, '');
+      expect(memberInvitation.inviterId, '');
+      expect(memberInvitation.invitationCode, '');
+    });
 
-      // Assert
-      expect(map['inviteeId'], 'invitee123');
-      expect(map['inviterId'], 'inviter456');
-      expect(map['invitationCode'], 'code789');
-      expect(map.containsKey('id'), false);
+    test('MemberInvitationからFirestoreのMapへ変換できる', () {
+      const memberInvitation = MemberInvitation(
+        id: 'invitation001',
+        inviteeId: 'invitee001',
+        inviterId: 'inviter001',
+        invitationCode: 'code001',
+      );
+
+      final data = FirestoreMemberInvitationMapper.toFirestore(
+        memberInvitation,
+      );
+
+      expect(data['inviteeId'], 'invitee001');
+      expect(data['inviterId'], 'inviter001');
+      expect(data['invitationCode'], 'code001');
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('空文字を含むMemberInvitationからFirestoreのMapへ変換できる', () {
+      const memberInvitation = MemberInvitation(
+        id: 'invitation003',
+        inviteeId: '',
+        inviterId: '',
+        invitationCode: '',
+      );
+
+      final data = FirestoreMemberInvitationMapper.toFirestore(
+        memberInvitation,
+      );
+
+      expect(data['inviteeId'], '');
+      expect(data['inviterId'], '');
+      expect(data['invitationCode'], '');
+      expect(data['createdAt'], isA<FieldValue>());
     });
   });
 }

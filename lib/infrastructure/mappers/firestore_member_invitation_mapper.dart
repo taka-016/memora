@@ -5,12 +5,12 @@ class FirestoreMemberInvitationMapper {
   static MemberInvitation fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
   ) {
-    final data = snapshot.data()!;
+    final data = snapshot.data() ?? {};
     return MemberInvitation(
       id: snapshot.id,
-      inviteeId: data['inviteeId'] as String,
-      inviterId: data['inviterId'] as String,
-      invitationCode: data['invitationCode'] as String,
+      inviteeId: data['inviteeId'] as String? ?? '',
+      inviterId: data['inviterId'] as String? ?? '',
+      invitationCode: data['invitationCode'] as String? ?? '',
     );
   }
 
@@ -19,6 +19,7 @@ class FirestoreMemberInvitationMapper {
       'inviteeId': memberInvitation.inviteeId,
       'inviterId': memberInvitation.inviterId,
       'invitationCode': memberInvitation.invitationCode,
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 }

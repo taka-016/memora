@@ -52,6 +52,42 @@ void main() {
       expect(memberEvent.memo, null);
     });
 
+    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('memberevent003');
+      when(mockDoc.data()).thenReturn({});
+      final before = DateTime.now();
+
+      final memberEvent = FirestoreMemberEventMapper.fromFirestore(mockDoc);
+      final after = DateTime.now();
+
+      expect(memberEvent.id, 'memberevent003');
+      expect(memberEvent.memberId, '');
+      expect(memberEvent.type, '');
+      expect(memberEvent.name, isNull);
+      expect(memberEvent.memo, isNull);
+      expect(
+        memberEvent.startDate.isAfter(
+          before.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
+      expect(
+        memberEvent.startDate.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
+      expect(
+        memberEvent.endDate.isAfter(
+          before.subtract(const Duration(seconds: 1)),
+        ),
+        isTrue,
+      );
+      expect(
+        memberEvent.endDate.isBefore(after.add(const Duration(seconds: 1))),
+        isTrue,
+      );
+    });
+
     test('MemberEventからFirestoreのMapへ変換できる', () {
       final memberEvent = MemberEvent(
         id: 'memberevent001',
@@ -71,6 +107,26 @@ void main() {
       expect(data['startDate'], isA<Timestamp>());
       expect(data['endDate'], isA<Timestamp>());
       expect(data['memo'], 'テストメモ');
+      expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
+      final memberEvent = MemberEvent(
+        id: 'memberevent004',
+        memberId: 'member002',
+        type: 'anniversary',
+        startDate: DateTime(2025, 8, 1),
+        endDate: DateTime(2025, 8, 2),
+      );
+
+      final data = FirestoreMemberEventMapper.toFirestore(memberEvent);
+
+      expect(data['memberId'], 'member002');
+      expect(data['type'], 'anniversary');
+      expect(data['name'], isNull);
+      expect(data['startDate'], isA<Timestamp>());
+      expect(data['endDate'], isA<Timestamp>());
+      expect(data['memo'], isNull);
       expect(data['createdAt'], isA<FieldValue>());
     });
   });
