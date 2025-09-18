@@ -1,288 +1,356 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/member_mapper.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
 import 'member_mapper_test.mocks.dart';
 
 @GenerateMocks([DocumentSnapshot])
+MockDocumentSnapshot<Map<String, dynamic>> _createDocument({
+  String id = 'member001',
+  Map<String, dynamic>? data,
+}) {
+  final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+  when(doc.id).thenReturn(id);
+  when(doc.data()).thenReturn(data);
+  return doc;
+}
+
+Member _createMember({
+  String id = 'member-1',
+  String displayName = 'タロちゃん',
+  String? accountId,
+  String? ownerId,
+  String? hiraganaFirstName,
+  String? hiraganaLastName,
+  String? kanjiFirstName,
+  String? kanjiLastName,
+  String? firstName,
+  String? lastName,
+  String? type,
+  DateTime? birthday,
+  String? gender,
+  String? email,
+  String? phoneNumber,
+  String? passportNumber,
+  String? passportExpiration,
+}) {
+  return Member(
+    id: id,
+    accountId: accountId,
+    ownerId: ownerId,
+    hiraganaFirstName: hiraganaFirstName,
+    hiraganaLastName: hiraganaLastName,
+    kanjiFirstName: kanjiFirstName,
+    kanjiLastName: kanjiLastName,
+    firstName: firstName,
+    lastName: lastName,
+    displayName: displayName,
+    type: type,
+    birthday: birthday,
+    gender: gender,
+    email: email,
+    phoneNumber: phoneNumber,
+    passportNumber: passportNumber,
+    passportExpiration: passportExpiration,
+  );
+}
+
+MemberDto _createMemberDto({
+  String id = 'member-1',
+  String displayName = 'タロちゃん',
+  String? accountId,
+  String? ownerId,
+  String? hiraganaFirstName,
+  String? hiraganaLastName,
+  String? kanjiFirstName,
+  String? kanjiLastName,
+  String? firstName,
+  String? lastName,
+  String? type,
+  DateTime? birthday,
+  String? gender,
+  String? email,
+  String? phoneNumber,
+  String? passportNumber,
+  String? passportExpiration,
+}) {
+  return MemberDto(
+    id: id,
+    accountId: accountId,
+    ownerId: ownerId,
+    hiraganaFirstName: hiraganaFirstName,
+    hiraganaLastName: hiraganaLastName,
+    kanjiFirstName: kanjiFirstName,
+    kanjiLastName: kanjiLastName,
+    firstName: firstName,
+    lastName: lastName,
+    displayName: displayName,
+    type: type,
+    birthday: birthday,
+    gender: gender,
+    email: email,
+    phoneNumber: phoneNumber,
+    passportNumber: passportNumber,
+    passportExpiration: passportExpiration,
+  );
+}
+
 void main() {
   group('MemberMapper', () {
-    test('FirestoreのDocumentSnapshotからMemberDtoへ変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member001');
-      when(mockDoc.data()).thenReturn({
-        'accountId': 'account001',
-        'ownerId': 'admin001',
-        'hiraganaFirstName': 'たろう',
-        'hiraganaLastName': 'やまだ',
-        'kanjiFirstName': '太郎',
-        'kanjiLastName': '山田',
-        'firstName': 'Taro',
-        'lastName': 'Yamada',
-        'displayName': 'たろちゃん',
-        'type': '一般',
-        'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
-        'gender': 'male',
-        'email': 'taro@example.com',
-        'phoneNumber': '090-1234-5678',
-        'passportNumber': 'A1234567',
-        'passportExpiration': '2030-01-01',
+    group('fromFirestore', () {
+      test('FirestoreのデータをDtoに変換するとTimestampはDateTimeに変換される', () {
+        final mockDoc = _createDocument(
+          data: {
+            'accountId': 'account001',
+            'ownerId': 'admin001',
+            'hiraganaFirstName': 'たろう',
+            'hiraganaLastName': 'やまだ',
+            'kanjiFirstName': '太郎',
+            'kanjiLastName': '山田',
+            'firstName': 'Taro',
+            'lastName': 'Yamada',
+            'displayName': 'たろちゃん',
+            'type': '一般',
+            'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
+            'gender': 'male',
+            'email': 'taro@example.com',
+            'phoneNumber': '090-1234-5678',
+            'passportNumber': 'A1234567',
+            'passportExpiration': '2030-01-01',
+          },
+        );
+
+        final dto = MemberMapper.fromFirestore(mockDoc);
+
+        expect(dto.id, 'member001');
+        expect(dto.accountId, 'account001');
+        expect(dto.ownerId, 'admin001');
+        expect(dto.hiraganaFirstName, 'たろう');
+        expect(dto.hiraganaLastName, 'やまだ');
+        expect(dto.kanjiFirstName, '太郎');
+        expect(dto.kanjiLastName, '山田');
+        expect(dto.firstName, 'Taro');
+        expect(dto.lastName, 'Yamada');
+        expect(dto.displayName, 'たろちゃん');
+        expect(dto.type, '一般');
+        expect(dto.birthday, DateTime(2000, 1, 1));
+        expect(dto.gender, 'male');
+        expect(dto.email, 'taro@example.com');
+        expect(dto.phoneNumber, '090-1234-5678');
+        expect(dto.passportNumber, 'A1234567');
+        expect(dto.passportExpiration, '2030-01-01');
       });
 
-      final member = MemberMapper.fromFirestore(mockDoc);
+      test('Firestoreのデータが一部欠けていてもデフォルト値を適用する', () {
+        final mockDoc = _createDocument(
+          id: 'member002',
+          data: {'displayName': 'ゲストユーザー', 'type': 'guest'},
+        );
 
-      expect(member.id, 'member001');
-      expect(member.accountId, 'account001');
-      expect(member.ownerId, 'admin001');
-      expect(member.hiraganaFirstName, 'たろう');
-      expect(member.hiraganaLastName, 'やまだ');
-      expect(member.kanjiFirstName, '太郎');
-      expect(member.kanjiLastName, '山田');
-      expect(member.firstName, 'Taro');
-      expect(member.lastName, 'Yamada');
-      expect(member.displayName, 'たろちゃん');
-      expect(member.type, '一般');
-      expect(member.birthday, DateTime(2000, 1, 1));
-      expect(member.gender, 'male');
-      expect(member.email, 'taro@example.com');
-      expect(member.phoneNumber, '090-1234-5678');
-      expect(member.passportNumber, 'A1234567');
-      expect(member.passportExpiration, '2030-01-01');
-    });
+        final dto = MemberMapper.fromFirestore(mockDoc);
 
-    test('Firestoreのデータが一部nullの場合も正しく変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member002');
-      when(mockDoc.data()).thenReturn({
-        'displayName': 'ゲストユーザー',
-        'type': 'guest',
-        // 他のフィールドはnullまたは未設定
+        expect(dto.id, 'member002');
+        expect(dto.displayName, 'ゲストユーザー');
+        expect(dto.type, 'guest');
+        expect(dto.accountId, isNull);
+        expect(dto.ownerId, isNull);
+        expect(dto.birthday, isNull);
+        expect(dto.email, isNull);
       });
 
-      final member = MemberMapper.fromFirestore(mockDoc);
+      test('displayNameが未設定の場合は空文字が設定される', () {
+        final mockDoc = _createDocument(
+          id: 'member003',
+          data: {'firstName': 'Test', 'lastName': 'User'},
+        );
 
-      expect(member.id, 'member002');
-      expect(member.displayName, 'ゲストユーザー');
-      expect(member.type, 'guest');
-      expect(member.accountId, isNull);
-      expect(member.ownerId, isNull);
-      expect(member.birthday, isNull);
-      expect(member.email, isNull);
-    });
+        final dto = MemberMapper.fromFirestore(mockDoc);
 
-    test('displayNameが未設定の場合はデフォルト値を設定する', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member003');
-      when(mockDoc.data()).thenReturn({
-        'firstName': 'Test',
-        'lastName': 'User',
-        // displayNameは未設定
+        expect(dto.id, 'member003');
+        expect(dto.displayName, '');
+        expect(dto.firstName, 'Test');
+        expect(dto.lastName, 'User');
       });
 
-      final member = MemberMapper.fromFirestore(mockDoc);
+      test('DocumentSnapshotのdataがnullでも空のDtoを返す', () {
+        final mockDoc = _createDocument(id: 'member004', data: null);
 
-      expect(member.id, 'member003');
-      expect(member.displayName, ''); // デフォルト値
-      expect(member.firstName, 'Test');
-      expect(member.lastName, 'User');
+        final dto = MemberMapper.fromFirestore(mockDoc);
+
+        expect(dto.id, 'member004');
+        expect(dto.displayName, '');
+        expect(dto.accountId, isNull);
+        expect(dto.ownerId, isNull);
+      });
     });
 
-    test('MemberエンティティをMemberDtoに正しく変換する', () {
-      // Arrange
-      final member = Member(
-        id: 'member-1',
-        accountId: 'account-1',
-        ownerId: 'owner-1',
-        hiraganaFirstName: 'たろう',
-        hiraganaLastName: 'やまだ',
-        kanjiFirstName: '太郎',
-        kanjiLastName: '山田',
-        firstName: 'Taro',
-        lastName: 'Yamada',
-        displayName: 'タロちゃん',
-        type: 'family',
-        birthday: DateTime(1990, 1, 1),
-        gender: 'male',
-        email: 'taro@example.com',
-        phoneNumber: '09012345678',
-        passportNumber: 'AB1234567',
-        passportExpiration: '2030-01-01',
-      );
+    group('toDto', () {
+      test('MemberエンティティをDtoに正しく変換する', () {
+        final member = _createMember(
+          id: 'member-1',
+          accountId: 'account-1',
+          ownerId: 'owner-1',
+          hiraganaFirstName: 'たろう',
+          hiraganaLastName: 'やまだ',
+          kanjiFirstName: '太郎',
+          kanjiLastName: '山田',
+          firstName: 'Taro',
+          lastName: 'Yamada',
+          type: 'family',
+          birthday: DateTime(1990, 1, 1),
+          gender: 'male',
+          email: 'taro@example.com',
+          phoneNumber: '09012345678',
+          passportNumber: 'AB1234567',
+          passportExpiration: '2030-01-01',
+        );
 
-      // Act
-      final dto = MemberMapper.toDto(member);
+        final dto = MemberMapper.toDto(member);
 
-      // Assert
-      expect(dto.id, 'member-1');
-      expect(dto.accountId, 'account-1');
-      expect(dto.ownerId, 'owner-1');
-      expect(dto.hiraganaFirstName, 'たろう');
-      expect(dto.hiraganaLastName, 'やまだ');
-      expect(dto.kanjiFirstName, '太郎');
-      expect(dto.kanjiLastName, '山田');
-      expect(dto.firstName, 'Taro');
-      expect(dto.lastName, 'Yamada');
-      expect(dto.displayName, 'タロちゃん');
-      expect(dto.type, 'family');
-      expect(dto.birthday, DateTime(1990, 1, 1));
-      expect(dto.gender, 'male');
-      expect(dto.email, 'taro@example.com');
-      expect(dto.phoneNumber, '09012345678');
-      expect(dto.passportNumber, 'AB1234567');
-      expect(dto.passportExpiration, '2030-01-01');
+        expect(dto.id, 'member-1');
+        expect(dto.accountId, 'account-1');
+        expect(dto.ownerId, 'owner-1');
+        expect(dto.hiraganaFirstName, 'たろう');
+        expect(dto.hiraganaLastName, 'やまだ');
+        expect(dto.kanjiFirstName, '太郎');
+        expect(dto.kanjiLastName, '山田');
+        expect(dto.firstName, 'Taro');
+        expect(dto.lastName, 'Yamada');
+        expect(dto.displayName, 'タロちゃん');
+        expect(dto.type, 'family');
+        expect(dto.birthday, DateTime(1990, 1, 1));
+        expect(dto.gender, 'male');
+        expect(dto.email, 'taro@example.com');
+        expect(dto.phoneNumber, '09012345678');
+        expect(dto.passportNumber, 'AB1234567');
+        expect(dto.passportExpiration, '2030-01-01');
+      });
+
+      test('オプショナルフィールドがnullのエンティティはDtoでもnullのままになる', () {
+        final member = _createMember(id: 'member-2', displayName: 'ハナコ');
+
+        final dto = MemberMapper.toDto(member);
+
+        expect(dto.id, 'member-2');
+        expect(dto.accountId, isNull);
+        expect(dto.ownerId, isNull);
+        expect(dto.hiraganaFirstName, isNull);
+        expect(dto.kanjiFirstName, isNull);
+        expect(dto.firstName, isNull);
+        expect(dto.type, isNull);
+        expect(dto.birthday, isNull);
+        expect(dto.gender, isNull);
+        expect(dto.email, isNull);
+        expect(dto.phoneNumber, isNull);
+        expect(dto.passportNumber, isNull);
+        expect(dto.passportExpiration, isNull);
+      });
     });
 
-    test('オプショナルプロパティがnullのMemberエンティティをDtoに変換する', () {
-      // Arrange
-      final member = Member(id: 'member-2', displayName: 'ハナコ');
+    group('toEntity', () {
+      test('MemberDtoをエンティティに正しく変換する', () {
+        final dto = _createMemberDto(
+          id: 'member-3',
+          accountId: 'account-3',
+          ownerId: 'owner-3',
+          hiraganaFirstName: 'じろう',
+          hiraganaLastName: 'さとう',
+          kanjiFirstName: '次郎',
+          kanjiLastName: '佐藤',
+          firstName: 'Jiro',
+          lastName: 'Sato',
+          displayName: 'ジロー',
+          type: 'friend',
+          birthday: DateTime(1992, 2, 2),
+          gender: 'male',
+          email: 'jiro@example.com',
+          phoneNumber: '08098765432',
+          passportNumber: 'CD7654321',
+          passportExpiration: '2031-02-02',
+        );
 
-      // Act
-      final dto = MemberMapper.toDto(member);
+        final entity = MemberMapper.toEntity(dto);
 
-      // Assert
-      expect(dto.id, 'member-2');
-      expect(dto.accountId, isNull);
-      expect(dto.ownerId, isNull);
-      expect(dto.hiraganaFirstName, isNull);
-      expect(dto.hiraganaLastName, isNull);
-      expect(dto.kanjiFirstName, isNull);
-      expect(dto.kanjiLastName, isNull);
-      expect(dto.firstName, isNull);
-      expect(dto.lastName, isNull);
-      expect(dto.displayName, 'ハナコ');
-      expect(dto.type, isNull);
-      expect(dto.birthday, isNull);
-      expect(dto.gender, isNull);
-      expect(dto.email, isNull);
-      expect(dto.phoneNumber, isNull);
-      expect(dto.passportNumber, isNull);
-      expect(dto.passportExpiration, isNull);
+        expect(entity.id, 'member-3');
+        expect(entity.accountId, 'account-3');
+        expect(entity.ownerId, 'owner-3');
+        expect(entity.hiraganaFirstName, 'じろう');
+        expect(entity.hiraganaLastName, 'さとう');
+        expect(entity.kanjiFirstName, '次郎');
+        expect(entity.kanjiLastName, '佐藤');
+        expect(entity.firstName, 'Jiro');
+        expect(entity.lastName, 'Sato');
+        expect(entity.displayName, 'ジロー');
+        expect(entity.type, 'friend');
+        expect(entity.birthday, DateTime(1992, 2, 2));
+        expect(entity.gender, 'male');
+        expect(entity.email, 'jiro@example.com');
+        expect(entity.phoneNumber, '08098765432');
+        expect(entity.passportNumber, 'CD7654321');
+        expect(entity.passportExpiration, '2031-02-02');
+      });
+
+      test('オプショナルフィールドがnullのDtoでもnullのままエンティティに設定される', () {
+        final dto = _createMemberDto(id: 'member-4', displayName: 'ボブ');
+
+        final entity = MemberMapper.toEntity(dto);
+
+        expect(entity.id, 'member-4');
+        expect(entity.accountId, isNull);
+        expect(entity.ownerId, isNull);
+        expect(entity.hiraganaFirstName, isNull);
+        expect(entity.kanjiFirstName, isNull);
+        expect(entity.firstName, isNull);
+        expect(entity.displayName, 'ボブ');
+        expect(entity.type, isNull);
+        expect(entity.birthday, isNull);
+        expect(entity.gender, isNull);
+        expect(entity.email, isNull);
+        expect(entity.phoneNumber, isNull);
+        expect(entity.passportNumber, isNull);
+        expect(entity.passportExpiration, isNull);
+      });
     });
 
-    test('MemberDtoをMemberエンティティに正しく変換する', () {
-      // Arrange
-      final dto = MemberDto(
-        id: 'member-3',
-        accountId: 'account-3',
-        ownerId: 'owner-3',
-        hiraganaFirstName: 'じろう',
-        hiraganaLastName: 'さとう',
-        kanjiFirstName: '次郎',
-        kanjiLastName: '佐藤',
-        firstName: 'Jiro',
-        lastName: 'Sato',
-        displayName: 'ジロー',
-        type: 'friend',
-        birthday: DateTime(1992, 2, 2),
-        gender: 'male',
-        email: 'jiro@example.com',
-        phoneNumber: '08098765432',
-        passportNumber: 'CD7654321',
-        passportExpiration: '2031-02-02',
-      );
+    group('リスト変換', () {
+      test('エンティティリストをDtoリストに変換する', () {
+        final members = [
+          _createMember(id: 'member-5', displayName: 'ケン'),
+          _createMember(id: 'member-6', displayName: 'リナ'),
+        ];
 
-      // Act
-      final entity = MemberMapper.toEntity(dto);
+        final dtos = MemberMapper.toDtoList(members);
 
-      // Assert
-      expect(entity.id, 'member-3');
-      expect(entity.accountId, 'account-3');
-      expect(entity.ownerId, 'owner-3');
-      expect(entity.hiraganaFirstName, 'じろう');
-      expect(entity.hiraganaLastName, 'さとう');
-      expect(entity.kanjiFirstName, '次郎');
-      expect(entity.kanjiLastName, '佐藤');
-      expect(entity.firstName, 'Jiro');
-      expect(entity.lastName, 'Sato');
-      expect(entity.displayName, 'ジロー');
-      expect(entity.type, 'friend');
-      expect(entity.birthday, DateTime(1992, 2, 2));
-      expect(entity.gender, 'male');
-      expect(entity.email, 'jiro@example.com');
-      expect(entity.phoneNumber, '08098765432');
-      expect(entity.passportNumber, 'CD7654321');
-      expect(entity.passportExpiration, '2031-02-02');
-    });
+        expect(dtos, hasLength(2));
+        expect(dtos[0].id, 'member-5');
+        expect(dtos[0].displayName, 'ケン');
+        expect(dtos[1].id, 'member-6');
+        expect(dtos[1].displayName, 'リナ');
+      });
 
-    test('オプショナルプロパティがnullのDtoをエンティティに変換する', () {
-      // Arrange
-      final dto = MemberDto(id: 'member-4', displayName: 'ボブ');
+      test('Dtoリストをエンティティリストに変換する', () {
+        final dtos = [
+          _createMemberDto(id: 'member-7', displayName: 'アヤ'),
+          _createMemberDto(id: 'member-8', displayName: 'ユウ'),
+        ];
 
-      // Act
-      final entity = MemberMapper.toEntity(dto);
+        final entities = MemberMapper.toEntityList(dtos);
 
-      // Assert
-      expect(entity.id, 'member-4');
-      expect(entity.accountId, isNull);
-      expect(entity.ownerId, isNull);
-      expect(entity.hiraganaFirstName, isNull);
-      expect(entity.hiraganaLastName, isNull);
-      expect(entity.kanjiFirstName, isNull);
-      expect(entity.kanjiLastName, isNull);
-      expect(entity.firstName, isNull);
-      expect(entity.lastName, isNull);
-      expect(entity.displayName, 'ボブ');
-      expect(entity.type, isNull);
-      expect(entity.birthday, isNull);
-      expect(entity.gender, isNull);
-      expect(entity.email, isNull);
-      expect(entity.phoneNumber, isNull);
-      expect(entity.passportNumber, isNull);
-      expect(entity.passportExpiration, isNull);
-    });
+        expect(entities, hasLength(2));
+        expect(entities[0].id, 'member-7');
+        expect(entities[0].displayName, 'アヤ');
+        expect(entities[1].id, 'member-8');
+        expect(entities[1].displayName, 'ユウ');
+      });
 
-    test('Memberエンティティのリストを正しくDtoリストに変換する', () {
-      // Arrange
-      final members = [
-        Member(id: 'member-5', displayName: 'ケン'),
-        Member(id: 'member-6', displayName: 'リナ'),
-      ];
-
-      // Act
-      final dtos = MemberMapper.toDtoList(members);
-
-      // Assert
-      expect(dtos.length, 2);
-      expect(dtos[0].id, 'member-5');
-      expect(dtos[0].displayName, 'ケン');
-      expect(dtos[1].id, 'member-6');
-      expect(dtos[1].displayName, 'リナ');
-    });
-
-    test('MemberDtoのリストを正しくエンティティリストに変換する', () {
-      // Arrange
-      final dtos = [
-        MemberDto(id: 'member-7', displayName: 'アヤ'),
-        MemberDto(id: 'member-8', displayName: 'ユウ'),
-      ];
-
-      // Act
-      final entities = MemberMapper.toEntityList(dtos);
-
-      // Assert
-      expect(entities.length, 2);
-      expect(entities[0].id, 'member-7');
-      expect(entities[0].displayName, 'アヤ');
-      expect(entities[1].id, 'member-8');
-      expect(entities[1].displayName, 'ユウ');
-    });
-
-    test('空のリストを変換する', () {
-      // Arrange
-      final emptyMemberList = <Member>[];
-      final emptyDtoList = <MemberDto>[];
-
-      // Act
-      final emptyDtoResult = MemberMapper.toDtoList(emptyMemberList);
-      final emptyEntityResult = MemberMapper.toEntityList(emptyDtoList);
-
-      // Assert
-      expect(emptyDtoResult, isEmpty);
-      expect(emptyEntityResult, isEmpty);
+      test('空のリストは空のまま変換される', () {
+        expect(MemberMapper.toDtoList(const <Member>[]), isEmpty);
+        expect(MemberMapper.toEntityList(const <MemberDto>[]), isEmpty);
+      });
     });
   });
 }
