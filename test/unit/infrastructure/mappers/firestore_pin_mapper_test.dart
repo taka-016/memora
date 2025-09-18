@@ -39,14 +39,39 @@ void main() {
       expect(pin.visitMemo, '集合場所');
     });
 
-    test('Firestoreのデータが不足している場合はデフォルト値に変換される', () {
+    test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('pin002');
-      when(mockDoc.data()).thenReturn({});
+      when(mockDoc.data()).thenReturn({
+        'pinId': 'pin-doc-002',
+        'tripId': 'trip002',
+        'groupId': 'group002',
+        'latitude': 34.701909,
+        'longitude': 135.494977,
+      });
 
       final pin = FirestorePinMapper.fromFirestore(mockDoc);
 
       expect(pin.id, 'pin002');
+      expect(pin.pinId, 'pin-doc-002');
+      expect(pin.tripId, 'trip002');
+      expect(pin.groupId, 'group002');
+      expect(pin.latitude, 34.701909);
+      expect(pin.longitude, 135.494977);
+      expect(pin.locationName, isNull);
+      expect(pin.visitStartDate, isNull);
+      expect(pin.visitEndDate, isNull);
+      expect(pin.visitMemo, isNull);
+    });
+
+    test('Firestoreのデータが不足している場合はデフォルト値に変換される', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('pin003');
+      when(mockDoc.data()).thenReturn({});
+
+      final pin = FirestorePinMapper.fromFirestore(mockDoc);
+
+      expect(pin.id, 'pin003');
       expect(pin.pinId, '');
       expect(pin.tripId, '');
       expect(pin.groupId, '');
@@ -60,7 +85,7 @@ void main() {
 
     test('PinエンティティからFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        id: 'pin003',
+        id: 'pin004',
         pinId: 'pin-entity-001',
         tripId: 'trip-entity-001',
         groupId: 'group-entity-001',
@@ -88,7 +113,7 @@ void main() {
 
     test('オプショナルプロパティがnullでもFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        id: 'pin004',
+        id: 'pin005',
         pinId: 'pin-entity-002',
         tripId: 'trip-entity-002',
         groupId: 'group-entity-002',
@@ -103,6 +128,30 @@ void main() {
       expect(map['groupId'], 'group-entity-002');
       expect(map['latitude'], 26.2125);
       expect(map['longitude'], 127.6811);
+      expect(map['locationName'], isNull);
+      expect(map['visitStartDate'], isNull);
+      expect(map['visitEndDate'], isNull);
+      expect(map['visitMemo'], isNull);
+      expect(map['createdAt'], isA<FieldValue>());
+    });
+
+    test('空文字列を含むPinからFirestoreのMapへ変換できる', () {
+      final pin = Pin(
+        id: 'pin006',
+        pinId: '',
+        tripId: '',
+        groupId: '',
+        latitude: 0.0,
+        longitude: 0.0,
+      );
+
+      final map = FirestorePinMapper.toFirestore(pin);
+
+      expect(map['pinId'], '');
+      expect(map['tripId'], '');
+      expect(map['groupId'], '');
+      expect(map['latitude'], 0.0);
+      expect(map['longitude'], 0.0);
       expect(map['locationName'], isNull);
       expect(map['visitStartDate'], isNull);
       expect(map['visitEndDate'], isNull);
