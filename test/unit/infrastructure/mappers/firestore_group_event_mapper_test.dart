@@ -24,6 +24,7 @@ void main() {
 
       final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
 
+      expect(groupEvent.id, 'groupevent001');
       expect(groupEvent.groupId, 'group001');
       expect(groupEvent.type, 'meeting');
       expect(groupEvent.name, 'テストイベント');
@@ -44,6 +45,7 @@ void main() {
 
       final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
 
+      expect(groupEvent.id, 'groupevent002');
       expect(groupEvent.groupId, 'group001');
       expect(groupEvent.type, 'meeting');
       expect(groupEvent.name, null);
@@ -59,6 +61,7 @@ void main() {
       final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
       final after = DateTime.now();
 
+      expect(groupEvent.id, 'groupevent003');
       expect(groupEvent.groupId, '');
       expect(groupEvent.type, '');
       expect(groupEvent.name, isNull);
@@ -85,6 +88,7 @@ void main() {
 
     test('GroupEventからFirestoreのMapへ変換できる', () {
       final groupEvent = GroupEvent(
+        id: 'groupevent001',
         groupId: 'group001',
         type: 'meeting',
         name: 'テストイベント',
@@ -106,6 +110,7 @@ void main() {
 
     test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
       final groupEvent = GroupEvent(
+        id: 'groupevent004',
         groupId: 'group002',
         type: 'reminder',
         startDate: DateTime(2025, 7, 10),

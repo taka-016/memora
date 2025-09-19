@@ -13,11 +13,13 @@ import '../../../domain/entities/member.dart';
 import '../../../domain/entities/group.dart';
 import '../../../domain/entities/group_member.dart';
 import '../../../domain/repositories/group_repository.dart';
+import '../../../domain/repositories/group_event_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
 import '../../../domain/repositories/trip_entry_repository.dart';
 import '../../../domain/repositories/pin_repository.dart';
 import '../../../domain/repositories/trip_participant_repository.dart';
 import '../../../infrastructure/repositories/firestore_group_repository.dart';
+import '../../../infrastructure/repositories/firestore_group_event_repository.dart';
 import '../../../infrastructure/repositories/firestore_member_repository.dart';
 import '../../../infrastructure/repositories/firestore_trip_entry_repository.dart';
 import '../../../infrastructure/repositories/firestore_pin_repository.dart';
@@ -28,6 +30,7 @@ import '../../../core/app_logger.dart';
 class GroupManagement extends StatefulWidget {
   final Member member;
   final GroupRepository? groupRepository;
+  final GroupEventRepository? groupEventRepository;
   final GroupQueryService? groupQueryService;
   final MemberRepository? memberRepository;
   final TripEntryRepository? tripEntryRepository;
@@ -38,6 +41,7 @@ class GroupManagement extends StatefulWidget {
     super.key,
     required this.member,
     this.groupRepository,
+    this.groupEventRepository,
     this.groupQueryService,
     this.memberRepository,
     this.tripEntryRepository,
@@ -67,6 +71,8 @@ class _GroupManagementState extends State<GroupManagement> {
 
     final groupRepository =
         widget.groupRepository ?? FirestoreGroupRepository();
+    final groupEventRepository =
+        widget.groupEventRepository ?? FirestoreGroupEventRepository();
     final groupQueryService =
         widget.groupQueryService ?? FirestoreGroupQueryService();
     final memberRepository =
@@ -84,6 +90,7 @@ class _GroupManagementState extends State<GroupManagement> {
     );
     _deleteGroupUsecase = DeleteGroupUsecase(
       groupRepository,
+      groupEventRepository,
       tripEntryRepository,
       pinRepository,
       tripParticipantRepository,
@@ -156,7 +163,6 @@ class _GroupManagementState extends State<GroupManagement> {
                 name: group.name,
                 memo: group.memo,
                 members: groupMember,
-                events: [],
               );
               await _createGroupUsecase.execute(newGroup);
 

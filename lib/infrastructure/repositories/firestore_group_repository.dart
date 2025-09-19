@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/domain/entities/group_event.dart';
 import 'package:memora/domain/entities/group_member.dart';
 import '../../domain/repositories/group_repository.dart';
 import '../../domain/entities/group.dart';
 import '../mappers/firestore_group_mapper.dart';
 import '../mappers/firestore_group_member_mapper.dart';
-import '../mappers/firestore_group_event_mapper.dart';
 import '../../core/app_logger.dart';
 
 class FirestoreGroupRepository implements GroupRepository {
@@ -27,16 +25,6 @@ class FirestoreGroupRepository implements GroupRepository {
         memberDocRef,
         FirestoreGroupMemberMapper.toFirestore(
           member.copyWith(groupId: groupDocRef.id),
-        ),
-      );
-    }
-
-    for (final GroupEvent event in group.events ?? []) {
-      final eventDocRef = _firestore.collection('group_events').doc();
-      batch.set(
-        eventDocRef,
-        FirestoreGroupEventMapper.toFirestore(
-          event.copyWith(groupId: groupDocRef.id),
         ),
       );
     }
@@ -74,26 +62,6 @@ class FirestoreGroupRepository implements GroupRepository {
       }
     }
 
-    if (group.events != null) {
-      final eventSnapshot = await _firestore
-          .collection('group_events')
-          .where('groupId', isEqualTo: group.id)
-          .get();
-      for (final doc in eventSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
-
-      for (final GroupEvent event in group.events!) {
-        final eventDocRef = _firestore.collection('group_events').doc();
-        batch.set(
-          eventDocRef,
-          FirestoreGroupEventMapper.toFirestore(
-            event.copyWith(groupId: group.id),
-          ),
-        );
-      }
-    }
-
     await batch.commit();
   }
 
@@ -117,19 +85,7 @@ class FirestoreGroupRepository implements GroupRepository {
             .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
             .toList();
 
-        final eventsSnapshot = await _firestore
-            .collection('group_events')
-            .where('groupId', isEqualTo: group.id)
-            .get();
-
-        final groupEvents = eventsSnapshot.docs
-            .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
-            .toList();
-
-        final completeGroup = group.copyWith(
-          members: groupMembers,
-          events: groupEvents,
-        );
+        final completeGroup = group.copyWith(members: groupMembers);
 
         completeGroups.add(completeGroup);
       }
@@ -154,14 +110,6 @@ class FirestoreGroupRepository implements GroupRepository {
         .where('groupId', isEqualTo: groupId)
         .get();
     for (final doc in memberSnapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    final eventSnapshot = await _firestore
-        .collection('group_events')
-        .where('groupId', isEqualTo: groupId)
-        .get();
-    for (final doc in eventSnapshot.docs) {
       batch.delete(doc.reference);
     }
 

@@ -5,6 +5,7 @@ class FirestoreGroupEventMapper {
   static GroupEvent fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return GroupEvent(
+      id: doc.id,
       groupId: data?['groupId'] as String? ?? '',
       type: data?['type'] as String? ?? '',
       name: data?['name'] as String?,

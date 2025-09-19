@@ -9,6 +9,7 @@ import 'package:mockito/mockito.dart';
 
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
+import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
@@ -19,6 +20,7 @@ import 'group_management_test.mocks.dart';
 
 @GenerateMocks([
   GroupRepository,
+  GroupEventRepository,
   GroupQueryService,
   MemberRepository,
   TripEntryRepository,
@@ -27,6 +29,7 @@ import 'group_management_test.mocks.dart';
 ])
 void main() {
   late MockGroupRepository mockGroupRepository;
+  late MockGroupEventRepository mockGroupEventRepository;
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberRepository mockMemberRepository;
   late MockTripEntryRepository mockTripEntryRepository;
@@ -39,6 +42,7 @@ void main() {
 
   setUp(() {
     mockGroupRepository = MockGroupRepository();
+    mockGroupEventRepository = MockGroupEventRepository();
     mockGroupQueryService = MockGroupQueryService();
     mockMemberRepository = MockMemberRepository();
     mockTripEntryRepository = MockTripEntryRepository();
@@ -99,6 +103,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -141,6 +146,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -174,6 +180,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -206,6 +213,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -242,6 +250,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -287,6 +296,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -329,6 +339,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -376,6 +387,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
@@ -446,6 +458,7 @@ void main() {
             body: GroupManagement(
               member: testMember,
               groupRepository: mockGroupRepository,
+              groupEventRepository: mockGroupEventRepository,
               groupQueryService: mockGroupQueryService,
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,

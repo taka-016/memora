@@ -128,8 +128,6 @@ void main() {
       expect(result[0].memo, 'テストメモ');
       expect(result[0].members?.length, 1);
       expect(result[0].members?[0].memberId, 'member001');
-      expect(result[0].events?.length, 1);
-      expect(result[0].events?[0].name, 'テストイベント');
     });
 
     test('getGroupsがエラー時に空のリストを返す', () async {
