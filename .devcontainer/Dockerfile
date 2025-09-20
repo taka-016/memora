@@ -1,5 +1,5 @@
 # Flutter + Android開発環境（Android専用）
-FROM instrumentisto/flutter:3.32.2-androidsdk35-r0
+FROM instrumentisto/flutter:3.35.4-androidsdk35-r0
 
 USER root
 
