@@ -24,20 +24,22 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 late final Logger logger;
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await initLogger();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: false,
-  );
-
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
   runZonedGuarded<Future<void>>(
     () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      await initLogger();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: false,
+      );
+
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
       runApp(const MyApp());
     },
     (error, stack) {
