@@ -204,7 +204,25 @@ void main() {
       when(mockDocSnapshot.id).thenReturn(groupId);
       when(
         mockDocSnapshot.data(),
-      ).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
+      ).thenReturn({'ownerId': 'owner-id', 'name': 'テストグループ', 'memo': 'テストメモ'});
+
+      // group_membersのモック
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockGroupMembersQuery);
+      when(
+        mockGroupMembersQuery.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([]);
 
       final result = await repository.getGroupById(groupId);
 

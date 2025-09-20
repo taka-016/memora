@@ -66,6 +66,37 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
+  Future<void> deleteGroup(String groupId) async {
+    final batch = _firestore.batch();
+
+    final memberSnapshot = await _firestore
+        .collection('group_members')
+        .where('groupId', isEqualTo: groupId)
+        .get();
+    for (final doc in memberSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(_firestore.collection('groups').doc(groupId));
+    await batch.commit();
+  }
+
+  @override
+  Future<void> deleteGroupMembersByMemberId(String memberId) async {
+    final batch = _firestore.batch();
+    final snapshot = await _firestore
+        .collection('group_members')
+        .where('memberId', isEqualTo: memberId)
+        .get();
+
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
+
+  @override
   Future<List<Group>> getGroups() async {
     try {
       final snapshot = await _firestore.collection('groups').get();
@@ -102,47 +133,27 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<void> deleteGroup(String groupId) async {
-    final batch = _firestore.batch();
-
-    final memberSnapshot = await _firestore
-        .collection('group_members')
-        .where('groupId', isEqualTo: groupId)
-        .get();
-    for (final doc in memberSnapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    batch.delete(_firestore.collection('groups').doc(groupId));
-    await batch.commit();
-  }
-
-  @override
-  Future<void> deleteGroupMembersByMemberId(String memberId) async {
-    final batch = _firestore.batch();
-    final snapshot = await _firestore
-        .collection('group_members')
-        .where('memberId', isEqualTo: memberId)
-        .get();
-
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-
-    await batch.commit();
-  }
-
-  @override
   Future<Group?> getGroupById(String groupId) async {
     try {
       final doc = await _firestore.collection('groups').doc(groupId).get();
-      if (doc.exists) {
-        return FirestoreGroupMapper.fromFirestore(doc);
+      if (!doc.exists) {
+        return null;
       }
-      return null;
+      final group = FirestoreGroupMapper.fromFirestore(doc);
+
+      final groupMembersSnapshot = await _firestore
+          .collection('group_members')
+          .where('groupId', isEqualTo: group.id)
+          .get();
+
+      final groupMembers = groupMembersSnapshot.docs
+          .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
+          .toList();
+
+      return group.copyWith(members: groupMembers);
     } catch (e, stack) {
       logger.e(
-        'FirestoreGroupRepository.getGroupById: ${e.toString()}',
+        'FirestoreGroupRepository.getGroups: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );

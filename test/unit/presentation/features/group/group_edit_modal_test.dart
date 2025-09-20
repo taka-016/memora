@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
@@ -11,7 +12,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: const Group(id: '', ownerId: '', name: '', memo: ''),
+            onSave: (group) {},
             availableMembers: const [],
           ),
         ),
@@ -32,7 +34,7 @@ void main() {
         MaterialApp(
           home: GroupEditModal(
             group: group,
-            onSave: (group, selectedMemberIds) {},
+            onSave: (group) {},
             availableMembers: const [],
           ),
         ),
@@ -45,7 +47,8 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: const Group(id: '', ownerId: '', name: '', memo: ''),
+            onSave: (group) {},
             availableMembers: const [],
           ),
         ),
@@ -60,14 +63,13 @@ void main() {
 
     testWidgets('有効な入力でonSaveコールバックが呼ばれる', (WidgetTester tester) async {
       Group? savedGroup;
-      List<String>? savedMemberIds;
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {
+            group: const Group(id: '', ownerId: '', name: '', memo: ''),
+            onSave: (group) {
               savedGroup = group;
-              savedMemberIds = selectedMemberIds;
             },
             availableMembers: const [],
           ),
@@ -84,7 +86,6 @@ void main() {
 
       expect(savedGroup, isNotNull);
       expect(savedGroup!.name, 'テストグループ');
-      expect(savedMemberIds, isNotNull);
     });
 
     testWidgets('既存メンバーが一覧表示される', (WidgetTester tester) async {
@@ -132,9 +133,17 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: Group(
+              id: 'group1',
+              ownerId: 'owner1',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(groupId: 'group1', memberId: 'member1'),
+                GroupMember(groupId: 'group1', memberId: 'member2'),
+              ],
+            ),
+            onSave: (group) {},
             availableMembers: availableMembers,
-            selectedMemberIds: const ['member1', 'member2'],
           ),
         ),
       );
@@ -169,7 +178,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: const Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+            ),
+            onSave: (group) {},
             availableMembers: availableMembers,
           ),
         ),
@@ -230,9 +245,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: const Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+            ),
+            onSave: (group) {},
             availableMembers: availableMembers,
-            selectedMemberIds: const ['member1'],
           ),
         ),
       );
@@ -276,9 +296,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: const Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+            ),
+            onSave: (group) {},
             availableMembers: availableMembers,
-            selectedMemberIds: const ['member1'],
           ),
         ),
       );
@@ -292,7 +317,7 @@ void main() {
       expect(find.text('メンバー1'), findsNothing);
     });
 
-    testWidgets('保存時に選択されたメンバーIDが渡される', (WidgetTester tester) async {
+    testWidgets('保存時に選択されたメンバーがGroupに含まれる', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -315,13 +340,14 @@ void main() {
         ),
       ];
 
-      List<String>? savedMemberIds;
+      Group? savedGroup;
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {
-              savedMemberIds = selectedMemberIds;
+            group: const Group(id: '', ownerId: '', name: '', memo: ''),
+            onSave: (group) {
+              savedGroup = group;
             },
             availableMembers: availableMembers,
           ),
@@ -341,7 +367,8 @@ void main() {
       await tester.tap(find.text('作成'));
       await tester.pump();
 
-      expect(savedMemberIds, ['member1']);
+      expect(savedGroup, isNotNull);
+      expect(savedGroup!.name, 'テストグループ');
     });
 
     testWidgets('キャンセルボタンでダイアログが閉じる', (WidgetTester tester) async {
@@ -353,7 +380,8 @@ void main() {
                 onPressed: () => showDialog(
                   context: context,
                   builder: (context) => GroupEditModal(
-                    onSave: (group, selectedMemberIds) {},
+                    group: const Group(id: '', ownerId: '', name: '', memo: ''),
+                    onSave: (group) {},
                     availableMembers: const [],
                   ),
                 ),
@@ -407,12 +435,20 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            onSave: (group, selectedMemberIds) {},
+            group: Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: availableMembers
+                  .take(5)
+                  .map(
+                    (member) =>
+                        GroupMember(groupId: 'test-id', memberId: member.id),
+                  )
+                  .toList(),
+            ),
+            onSave: (group) {},
             availableMembers: availableMembers,
-            selectedMemberIds: availableMembers
-                .take(5)
-                .map((member) => member.id)
-                .toList(),
           ),
         ),
       );
@@ -430,6 +466,7 @@ void main() {
         ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
+        members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
       );
 
       final availableMembers = [
@@ -477,9 +514,8 @@ void main() {
         MaterialApp(
           home: GroupEditModal(
             group: group,
-            onSave: (group, selectedMemberIds) {},
+            onSave: (group) {},
             availableMembers: availableMembers,
-            selectedMemberIds: ['member1'], // member1が既に選択されている
           ),
         ),
       );
@@ -503,7 +539,7 @@ void main() {
         MaterialApp(
           home: GroupEditModal(
             group: group,
-            onSave: (group, selectedMemberIds) {},
+            onSave: (group) {},
             availableMembers: const [],
           ),
         ),

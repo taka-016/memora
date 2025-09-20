@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../domain/entities/group.dart';
+import '../../../domain/entities/group_member.dart';
 import '../../../domain/entities/member.dart';
 
 class GroupEditModal extends StatefulWidget {
-  final Group? group;
-  final Function(Group, List<String>) onSave;
+  final Group group;
+  final Function(Group) onSave;
   final List<Member> availableMembers;
-  final List<String>? selectedMemberIds;
 
   const GroupEditModal({
     super.key,
-    this.group,
+    required this.group,
     required this.onSave,
     required this.availableMembers,
-    this.selectedMemberIds,
   });
 
   @override
@@ -24,21 +23,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _memoController;
-  final List<String> _selectedMemberIds = [];
+  late Group _group;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.group?.name ?? '');
-    _memoController = TextEditingController(text: widget.group?.memo ?? '');
-
-    final initialMemberIds =
-        widget.selectedMemberIds ??
-        widget.group?.members?.map((member) => member.memberId).toList();
-
-    if (initialMemberIds != null) {
-      _selectedMemberIds.addAll(initialMemberIds);
-    }
+    _group = widget.group;
+    _nameController = TextEditingController(text: _group.name);
+    _memoController = TextEditingController(text: _group.memo ?? '');
   }
 
   @override
@@ -50,7 +42,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditing = widget.group != null;
+    final isEditing = widget.group.id.isNotEmpty;
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
@@ -143,7 +135,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_selectedMemberIds.isEmpty)
+        if (_group.members?.isEmpty ?? true)
           _buildEmptyMemberState()
         else
           _buildSelectedMemberList(),
@@ -170,7 +162,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       key: const Key('selected_member_list'),
       height: 250,
       child: ListView.separated(
-        itemCount: _selectedMemberIds.length,
+        itemCount: _group.members?.length ?? 0,
         itemBuilder: (context, index) => _buildMemberListTile(index),
         separatorBuilder: (context, index) => const Divider(height: 1),
       ),
@@ -178,8 +170,8 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Widget _buildMemberListTile(int index) {
-    final memberId = _selectedMemberIds[index];
-    final member = _findMemberById(memberId);
+    final groupMember = _group.members![index];
+    final member = _findMemberById(groupMember.memberId);
     final displayName = member?.displayName ?? '不明なメンバー';
 
     return ListTile(
@@ -206,14 +198,20 @@ class _GroupEditModalState extends State<GroupEditModal> {
       builder: (buttonContext) => ElevatedButton.icon(
         key: const Key('add_member_button'),
         icon: const Icon(Icons.add),
-        label: const Text('＋追加'),
+        label: const Text('追加'),
         onPressed: addableMembers.isEmpty
             ? null
             : () => _showMemberSelectionMenu(buttonContext, addableMembers, (
                 selectedMemberId,
               ) {
                 setState(() {
-                  _selectedMemberIds.add(selectedMemberId);
+                  final updatedMembers = List<GroupMember>.from(
+                    _group.members ?? [],
+                  );
+                  updatedMembers.add(
+                    GroupMember(groupId: _group.id, memberId: selectedMemberId),
+                  );
+                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -234,7 +232,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 selectedMemberId,
               ) {
                 setState(() {
-                  _selectedMemberIds[index] = selectedMemberId;
+                  final updatedMembers = List<GroupMember>.from(
+                    _group.members ?? [],
+                  );
+                  updatedMembers[index] = GroupMember(
+                    groupId: _group.id,
+                    memberId: selectedMemberId,
+                  );
+                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -243,7 +248,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _removeMemberAt(int index) {
     setState(() {
-      _selectedMemberIds.removeAt(index);
+      final updatedMembers = List<GroupMember>.from(_group.members ?? []);
+      updatedMembers.removeAt(index);
+      _group = _group.copyWith(members: updatedMembers);
     });
   }
 
@@ -257,19 +264,23 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   List<Member> _getAddableMembers() {
+    final selectedMemberIds =
+        _group.members?.map((gm) => gm.memberId).toSet() ?? <String>{};
     return widget.availableMembers
-        .where((member) => !_selectedMemberIds.contains(member.id))
+        .where((member) => !selectedMemberIds.contains(member.id))
         .toList();
   }
 
   List<Member> _getChangeCandidates(int index) {
-    final currentMemberId = _selectedMemberIds[index];
+    final currentMemberId = _group.members![index].memberId;
+    final selectedMemberIds =
+        _group.members?.map((gm) => gm.memberId).toSet() ?? <String>{};
 
     return widget.availableMembers.where((member) {
       if (member.id == currentMemberId) {
         return true;
       }
-      return !_selectedMemberIds.contains(member.id);
+      return !selectedMemberIds.contains(member.id);
     }).toList();
   }
 
@@ -278,39 +289,122 @@ class _GroupEditModalState extends State<GroupEditModal> {
     List<Member> candidates,
     ValueChanged<String> onSelected,
   ) async {
-    final renderBox = anchorContext.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-
-    final overlayState = Overlay.of(context);
-    final overlay = overlayState.context.findRenderObject() as RenderBox?;
-    if (overlay == null) {
-      return;
-    }
-
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
-        renderBox.localToGlobal(
-          renderBox.size.bottomRight(Offset.zero),
-          ancestor: overlay,
+    final selectedMemberId = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) => Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'メンバーを選択',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        foregroundColor: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: candidates.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_off,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              '選択可能なメンバーがいません',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: candidates.length,
+                        itemBuilder: (context, index) {
+                          final member = candidates[index];
+                          return Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.transparent,
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              title: Text(
+                                member.displayName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              onTap: () => Navigator.of(context).pop(member.id),
+                              hoverColor: Colors.grey[50],
+                            ),
+                          );
+                        },
+                      ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
-      Offset.zero & overlay.size,
-    );
-
-    final selectedMemberId = await showMenu<String>(
-      context: context,
-      position: position,
-      items: candidates
-          .map(
-            (member) => PopupMenuItem<String>(
-              value: member.id,
-              child: Text(member.displayName),
-            ),
-          )
-          .toList(),
     );
 
     if (selectedMemberId != null) {
@@ -345,14 +439,12 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _handleSave() {
     if (_formKey.currentState!.validate()) {
-      final group = Group(
-        id: widget.group?.id ?? '',
-        ownerId: widget.group?.ownerId ?? '',
+      final updatedGroup = _group.copyWith(
         name: _nameController.text,
         memo: _memoController.text.isEmpty ? null : _memoController.text,
       );
 
-      widget.onSave(group, List.of(_selectedMemberIds));
+      widget.onSave(updatedGroup);
       Navigator.of(context).pop();
     }
   }
