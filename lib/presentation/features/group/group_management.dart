@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/domain/entities/group.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import '../../shared/dialogs/delete_confirm_dialog.dart';
 import '../../../application/usecases/group/get_managed_groups_with_members_usecase.dart';
@@ -10,8 +11,6 @@ import '../../../application/usecases/group/create_group_usecase.dart';
 import '../../../application/usecases/group/update_group_usecase.dart';
 import '../../../application/usecases/member/get_managed_members_usecase.dart';
 import '../../../domain/entities/member.dart';
-import '../../../domain/entities/group.dart';
-import '../../../domain/entities/group_member.dart';
 import '../../../domain/repositories/group_repository.dart';
 import '../../../domain/repositories/group_event_repository.dart';
 import '../../../domain/repositories/member_repository.dart';
@@ -135,6 +134,12 @@ class _GroupManagementState extends State<GroupManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
+      final group = Group(
+        id: '',
+        ownerId: widget.member.id,
+        name: '',
+        members: [],
+      );
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
@@ -144,27 +149,11 @@ class _GroupManagementState extends State<GroupManagement> {
       await showDialog(
         context: context,
         builder: (context) => GroupEditModal(
+          group: group,
           availableMembers: availableMembers,
-          selectedMemberIds: null,
-          onSave: (group, selectedMemberIds) async {
+          onSave: (group) async {
             try {
-              List<GroupMember> groupMember = [];
-              for (final memberId in selectedMemberIds) {
-                groupMember.add(
-                  GroupMember(
-                    groupId: '', // 仮の値、後で更新される
-                    memberId: memberId,
-                  ),
-                );
-              }
-              final newGroup = Group(
-                id: '', // IDは自動採番されるため空文字列
-                ownerId: widget.member.id,
-                name: group.name,
-                memo: group.memo,
-                members: groupMember,
-              );
-              await _createGroupUsecase.execute(newGroup);
+              await _createGroupUsecase.execute(group);
 
               if (mounted) {
                 await _loadData();
@@ -213,31 +202,16 @@ class _GroupManagementState extends State<GroupManagement> {
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
-      final existingMemberIds = groupWithMembers.members
-          .map((member) => member.id)
-          .toList();
-
       if (!mounted) return;
 
       await showDialog(
         context: context,
         builder: (context) => GroupEditModal(
-          group: group,
+          group: group!,
           availableMembers: availableMembers,
-          selectedMemberIds: existingMemberIds,
-          onSave: (editedGroup, selectedMemberIds) async {
+          onSave: (group) async {
             try {
-              List<GroupMember> groupMember = [];
-              for (final memberId in selectedMemberIds) {
-                groupMember.add(
-                  GroupMember(
-                    groupId: '', // 仮の値、後で更新される
-                    memberId: memberId,
-                  ),
-                );
-              }
-              final updateGroup = editedGroup.copyWith(members: groupMember);
-              await _updateGroupUsecase.execute(updateGroup);
+              await _updateGroupUsecase.execute(group);
 
               if (mounted) {
                 await _loadData();

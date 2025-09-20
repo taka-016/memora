@@ -194,6 +194,7 @@
 - [x] グループに紐づくグループメンバーの削除は_deleteGroupUsecase.executeの責務とする
 - [x] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
 - [x] グループ削除時は、groupIdで紐づくtrip_entriesが削除されるため、tripIdで紐づくpinsとtrip_participantsも削除する（delete_group_usecaseで対応）
+- [x] グループ編集モーダルのメンバー追加・変更UIをプルダウン選択に変更する
 
 ## グループ年表画面
 
@@ -220,6 +221,7 @@
   - [x] 表示しきれない場合の省略処理
   - [x] 行の高さに応じた表示内容の増減
 - [x] 遷移先画面から戻った場合、旅行行の内容を更新する
+- [ ] グループ編集モーダルのメンバー追加・変更UIをプルダウン選択に変更する
 
 ## 旅行管理画面
 
