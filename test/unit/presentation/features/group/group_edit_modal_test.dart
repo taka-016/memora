@@ -87,7 +87,7 @@ void main() {
       expect(savedMemberIds, isNotNull);
     });
 
-    testWidgets('利用可能なメンバーが表示される', (WidgetTester tester) async {
+    testWidgets('既存メンバーが一覧表示される', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -134,6 +134,7 @@ void main() {
           home: GroupEditModal(
             onSave: (group, selectedMemberIds) {},
             availableMembers: availableMembers,
+            selectedMemberIds: const ['member1', 'member2'],
           ),
         ),
       );
@@ -142,7 +143,156 @@ void main() {
       expect(find.text('メンバー2'), findsOneWidget);
     });
 
-    testWidgets('メンバーを選択できる', (WidgetTester tester) async {
+    testWidgets('追加ボタンから未選択メンバーを追加できる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('add_member_button')));
+      await tester.tap(find.byKey(const Key('add_member_button')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('メンバー1').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('メンバー1'), findsOneWidget);
+    });
+
+    testWidgets('変更ボタンでメンバーを入れ替えられる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+        Member(
+          id: 'member2',
+          accountId: 'account2',
+          ownerId: 'admin-id',
+          displayName: 'メンバー2',
+          kanjiLastName: '鈴木',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'すずき',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Suzuki',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-8765-4321',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: availableMembers,
+            selectedMemberIds: const ['member1'],
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const Key('change_member_button_0')),
+      );
+      await tester.tap(find.byKey(const Key('change_member_button_0')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('メンバー2').first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('メンバー2'), findsOneWidget);
+      expect(find.text('メンバー1'), findsNothing);
+    });
+
+    testWidgets('削除ボタンでメンバーを削除できる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            onSave: (group, selectedMemberIds) {},
+            availableMembers: availableMembers,
+            selectedMemberIds: const ['member1'],
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(
+        find.byKey(const Key('delete_member_button_0')),
+      );
+      await tester.tap(find.byKey(const Key('delete_member_button_0')));
+      await tester.pump();
+
+      expect(find.text('メンバー1'), findsNothing);
+    });
+
+    testWidgets('保存時に選択されたメンバーIDが渡される', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -178,19 +328,20 @@ void main() {
         ),
       );
 
-      // メンバーのチェックボックスをタップ
-      await tester.tap(find.byType(CheckboxListTile));
-      await tester.pump();
+      await tester.ensureVisible(find.byKey(const Key('add_member_button')));
+      await tester.tap(find.byKey(const Key('add_member_button')));
+      await tester.pumpAndSettle();
 
-      // グループ名を入力
+      await tester.tap(find.text('メンバー1').first);
+      await tester.pumpAndSettle();
+
       await tester.enterText(find.byType(TextFormField).first, 'テストグループ');
       await tester.pump();
 
-      // 作成ボタンをタップ
       await tester.tap(find.text('作成'));
       await tester.pump();
 
-      expect(savedMemberIds, contains('member1'));
+      expect(savedMemberIds, ['member1']);
     });
 
     testWidgets('キャンセルボタンでダイアログが閉じる', (WidgetTester tester) async {
@@ -258,15 +409,19 @@ void main() {
           home: GroupEditModal(
             onSave: (group, selectedMemberIds) {},
             availableMembers: availableMembers,
+            selectedMemberIds: availableMembers
+                .take(5)
+                .map((member) => member.id)
+                .toList(),
           ),
         ),
       );
 
-      // メンバー選択セクションが存在することを確認
-      expect(find.text('メンバー選択'), findsOneWidget);
+      // メンバー一覧セクションが存在することを確認
+      expect(find.text('メンバー一覧'), findsOneWidget);
 
       // メンバー一覧コンテナが存在することを確認
-      expect(find.byKey(const Key('member_list_container')), findsOneWidget);
+      expect(find.byKey(const Key('selected_member_list')), findsOneWidget);
     });
 
     testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
@@ -331,17 +486,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // member1のチェックボックスが選択されていることを確認
-      final checkbox1 = tester.widget<CheckboxListTile>(
-        find.byType(CheckboxListTile).first,
-      );
-      expect(checkbox1.value, isTrue);
-
-      // member2のチェックボックスが選択されていないことを確認
-      final checkbox2 = tester.widget<CheckboxListTile>(
-        find.byType(CheckboxListTile).at(1),
-      );
-      expect(checkbox2.value, isFalse);
+      // 選択済みのメンバーが一覧に表示されていることを確認
+      expect(find.text('メンバー1'), findsOneWidget);
+      expect(find.text('メンバー2'), findsNothing);
     });
 
     testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {

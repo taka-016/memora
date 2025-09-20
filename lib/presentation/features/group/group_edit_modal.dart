@@ -24,7 +24,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _memoController;
-  final Set<String> _selectedMemberIds = {};
+  final List<String> _selectedMemberIds = [];
 
   @override
   void initState() {
@@ -32,8 +32,12 @@ class _GroupEditModalState extends State<GroupEditModal> {
     _nameController = TextEditingController(text: widget.group?.name ?? '');
     _memoController = TextEditingController(text: widget.group?.memo ?? '');
 
-    if (widget.selectedMemberIds != null) {
-      _selectedMemberIds.addAll(widget.selectedMemberIds!);
+    final initialMemberIds =
+        widget.selectedMemberIds ??
+        widget.group?.members?.map((member) => member.memberId).toList();
+
+    if (initialMemberIds != null) {
+      _selectedMemberIds.addAll(initialMemberIds);
     }
   }
 
@@ -93,7 +97,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
             const SizedBox(height: 16),
             _buildMemoField(),
             const SizedBox(height: 16),
-            if (widget.availableMembers.isNotEmpty) _buildMemberSelection(),
+            _buildMemberManagementSection(),
           ],
         ),
       ),
@@ -127,52 +131,191 @@ class _GroupEditModalState extends State<GroupEditModal> {
     );
   }
 
-  Widget _buildMemberSelection() {
+  Widget _buildMemberManagementSection() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildMemberSelectionHeader(),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'メンバー一覧',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        ),
         const SizedBox(height: 8),
-        _buildMemberList(),
+        if (_selectedMemberIds.isEmpty)
+          _buildEmptyMemberState()
+        else
+          _buildSelectedMemberList(),
+        const SizedBox(height: 12),
+        _buildAddMemberButton(),
       ],
     );
   }
 
-  Widget _buildMemberSelectionHeader() {
-    return const Align(
-      alignment: Alignment.centerLeft,
-      child: Text(
-        'メンバー選択',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+  Widget _buildEmptyMemberState() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
       ),
+      child: const Text('メンバーが追加されていません', style: TextStyle(color: Colors.grey)),
     );
   }
 
-  Widget _buildMemberList() {
+  Widget _buildSelectedMemberList() {
     return SizedBox(
-      key: const Key('member_list_container'),
-      height: 350,
-      child: ListView.builder(
-        itemCount: widget.availableMembers.length,
-        itemBuilder: (context, index) => _buildMemberCheckbox(index),
+      key: const Key('selected_member_list'),
+      height: 250,
+      child: ListView.separated(
+        itemCount: _selectedMemberIds.length,
+        itemBuilder: (context, index) => _buildMemberListTile(index),
+        separatorBuilder: (context, index) => const Divider(height: 1),
       ),
     );
   }
 
-  Widget _buildMemberCheckbox(int index) {
-    final member = widget.availableMembers[index];
-    return CheckboxListTile(
-      title: Text(member.displayName),
-      value: _selectedMemberIds.contains(member.id),
-      onChanged: (value) {
-        setState(() {
-          if (value == true) {
-            _selectedMemberIds.add(member.id);
-          } else {
-            _selectedMemberIds.remove(member.id);
-          }
-        });
-      },
+  Widget _buildMemberListTile(int index) {
+    final memberId = _selectedMemberIds[index];
+    final member = _findMemberById(memberId);
+    final displayName = member?.displayName ?? '不明なメンバー';
+
+    return ListTile(
+      key: Key('member_row_$index'),
+      title: Text(displayName),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildChangeMemberButton(index),
+          IconButton(
+            key: Key('delete_member_button_$index'),
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _removeMemberAt(index),
+          ),
+        ],
+      ),
     );
+  }
+
+  Widget _buildAddMemberButton() {
+    final addableMembers = _getAddableMembers();
+
+    return Builder(
+      builder: (buttonContext) => ElevatedButton.icon(
+        key: const Key('add_member_button'),
+        icon: const Icon(Icons.add),
+        label: const Text('＋追加'),
+        onPressed: addableMembers.isEmpty
+            ? null
+            : () => _showMemberSelectionMenu(buttonContext, addableMembers, (
+                selectedMemberId,
+              ) {
+                setState(() {
+                  _selectedMemberIds.add(selectedMemberId);
+                });
+              }),
+      ),
+    );
+  }
+
+  Widget _buildChangeMemberButton(int index) {
+    final changeCandidates = _getChangeCandidates(index);
+
+    return Builder(
+      builder: (buttonContext) => IconButton(
+        key: Key('change_member_button_$index'),
+        icon: const Icon(Icons.edit),
+        tooltip: 'メンバーを変更',
+        onPressed: changeCandidates.isEmpty
+            ? null
+            : () => _showMemberSelectionMenu(buttonContext, changeCandidates, (
+                selectedMemberId,
+              ) {
+                setState(() {
+                  _selectedMemberIds[index] = selectedMemberId;
+                });
+              }),
+      ),
+    );
+  }
+
+  void _removeMemberAt(int index) {
+    setState(() {
+      _selectedMemberIds.removeAt(index);
+    });
+  }
+
+  Member? _findMemberById(String memberId) {
+    for (final member in widget.availableMembers) {
+      if (member.id == memberId) {
+        return member;
+      }
+    }
+    return null;
+  }
+
+  List<Member> _getAddableMembers() {
+    return widget.availableMembers
+        .where((member) => !_selectedMemberIds.contains(member.id))
+        .toList();
+  }
+
+  List<Member> _getChangeCandidates(int index) {
+    final currentMemberId = _selectedMemberIds[index];
+
+    return widget.availableMembers.where((member) {
+      if (member.id == currentMemberId) {
+        return true;
+      }
+      return !_selectedMemberIds.contains(member.id);
+    }).toList();
+  }
+
+  Future<void> _showMemberSelectionMenu(
+    BuildContext anchorContext,
+    List<Member> candidates,
+    ValueChanged<String> onSelected,
+  ) async {
+    final renderBox = anchorContext.findRenderObject() as RenderBox?;
+    if (renderBox == null) {
+      return;
+    }
+
+    final overlayState = Overlay.of(context);
+    final overlay = overlayState.context.findRenderObject() as RenderBox?;
+    if (overlay == null) {
+      return;
+    }
+
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(
+          renderBox.size.bottomRight(Offset.zero),
+          ancestor: overlay,
+        ),
+      ),
+      Offset.zero & overlay.size,
+    );
+
+    final selectedMemberId = await showMenu<String>(
+      context: context,
+      position: position,
+      items: candidates
+          .map(
+            (member) => PopupMenuItem<String>(
+              value: member.id,
+              child: Text(member.displayName),
+            ),
+          )
+          .toList(),
+    );
+
+    if (selectedMemberId != null) {
+      onSelected(selectedMemberId);
+    }
   }
 
   Widget _buildActionButtons(bool isEditing) {
@@ -209,7 +352,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         memo: _memoController.text.isEmpty ? null : _memoController.text,
       );
 
-      widget.onSave(group, _selectedMemberIds.toList());
+      widget.onSave(group, List.of(_selectedMemberIds));
       Navigator.of(context).pop();
     }
   }
