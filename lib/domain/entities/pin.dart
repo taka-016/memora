@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class Pin extends Equatable {
-  const Pin({
+  Pin({
     required this.id,
     required this.pinId,
     required this.tripId,
@@ -12,7 +12,14 @@ class Pin extends Equatable {
     this.visitStartDate,
     this.visitEndDate,
     this.visitMemo,
-  });
+  }) : assert(() {
+         final start = visitStartDate;
+         final end = visitEndDate;
+         if (start == null || end == null) {
+           return true;
+         }
+         return !end.isBefore(start);
+       }(), '訪問終了日時は訪問開始日時以降でなければなりません');
 
   final String id;
   final String pinId;

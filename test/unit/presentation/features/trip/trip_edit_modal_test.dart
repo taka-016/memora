@@ -411,8 +411,8 @@ void main() {
                 id: 'test-id',
                 groupId: 'test-group-id',
                 tripName: 'テスト旅行',
-                tripStartDate: DateTime(2024, 1, 3),
-                tripEndDate: DateTime(2024, 1, 1),
+                tripStartDate: DateTime(2024, 1, 1),
+                tripEndDate: DateTime(2024, 1, 3),
                 tripMemo: 'テストメモ',
               ),
               onSave: (tripEntry, {List<PinDto>? pins}) {
@@ -423,6 +423,10 @@ void main() {
           ),
         ),
       );
+
+      final state = tester.state(find.byType(TripEditModal)) as dynamic;
+      state.setDateRangeForTest(DateTime(2024, 1, 3), DateTime(2024, 1, 1));
+      await tester.pump();
 
       // 更新ボタンをタップ
       await tester.tap(find.text('更新'));

@@ -29,6 +29,7 @@ void main() {
       expect(tripEntry.tripStartDate, DateTime(2025, 6, 1));
       expect(tripEntry.tripEndDate, DateTime(2025, 6, 10));
       expect(tripEntry.tripMemo, 'テストメモ');
+      expect(tripEntry.pins, isEmpty);
     });
 
     test('nullableなフィールドがnullの場合でも変換できる', () {
@@ -48,6 +49,7 @@ void main() {
       expect(tripEntry.tripStartDate, DateTime(2025, 7, 1));
       expect(tripEntry.tripEndDate, DateTime(2025, 7, 5));
       expect(tripEntry.tripMemo, null);
+      expect(tripEntry.pins, isEmpty);
     });
 
     test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
@@ -83,6 +85,7 @@ void main() {
         tripEntry.tripEndDate.isBefore(after.add(const Duration(seconds: 1))),
         isTrue,
       );
+      expect(tripEntry.pins, isEmpty);
     });
 
     test('TripEntryからFirestoreのMapへ変換できる', () {

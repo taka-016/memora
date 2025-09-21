@@ -28,6 +28,22 @@ void main() {
       expect(pin.visitMemo, 'テストメモ');
     });
 
+    test('訪問終了日時が開始日時より前の場合はassertが発生する', () {
+      expect(
+        () => Pin(
+          id: 'id001',
+          pinId: 'pin001',
+          tripId: 'trip001',
+          groupId: 'group001',
+          latitude: 35.0,
+          longitude: 139.0,
+          visitStartDate: DateTime(2025, 6, 2),
+          visitEndDate: DateTime(2025, 6, 1),
+        ),
+        throwsAssertionError,
+      );
+    });
+
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
       final pin = Pin(
         id: 'id001',
