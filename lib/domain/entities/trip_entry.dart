@@ -47,12 +47,6 @@ class TripEntry extends Equatable {
     );
   }
 
-  TripEntry addPin(Pin pin) {
-    _validatePinPeriod(pin);
-    final updatedPins = List<Pin>.from(pins)..add(pin);
-    return copyWith(pins: updatedPins);
-  }
-
   void _validatePinPeriod(Pin pin) {
     if (pin.visitStartDate != null) {
       if (pin.visitStartDate!.isBefore(tripStartDate) ||

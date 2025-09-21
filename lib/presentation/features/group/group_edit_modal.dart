@@ -205,9 +205,11 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 selectedMemberId,
               ) {
                 setState(() {
-                  _group = _group.addMember(
+                  final updatedMembers = List<GroupMember>.from(_group.members);
+                  updatedMembers.add(
                     GroupMember(groupId: _group.id, memberId: selectedMemberId),
                   );
+                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -228,10 +230,12 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 selectedMemberId,
               ) {
                 setState(() {
-                  _group = _group.updateMember(
-                    _group.members[index].memberId,
-                    GroupMember(groupId: _group.id, memberId: selectedMemberId),
+                  final updatedMembers = List<GroupMember>.from(_group.members);
+                  updatedMembers[index] = GroupMember(
+                    groupId: _group.id,
+                    memberId: selectedMemberId,
                   );
+                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -240,7 +244,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _removeMemberAt(int index) {
     setState(() {
-      _group = _group.removeMember(_group.members[index].memberId);
+      final updatedMembers = List<GroupMember>.from(_group.members);
+      updatedMembers.removeAt(index);
+      _group = _group.copyWith(members: updatedMembers);
     });
   }
 

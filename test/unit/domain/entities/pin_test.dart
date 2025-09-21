@@ -183,48 +183,5 @@ void main() {
         throwsArgumentError,
       );
     });
-
-    test('addDetailメソッドで詳細予定を追加できる', () {
-      final pin = Pin(
-        id: 'id001',
-        pinId: 'pin001',
-        tripId: 'trip001',
-        groupId: 'group001',
-        latitude: 35.0,
-        longitude: 139.0,
-        visitStartDate: DateTime(2025, 6, 1, 8, 0),
-        visitEndDate: DateTime(2025, 6, 1, 20, 0),
-      );
-
-      final updated = pin.addDetail(
-        PinDetail(
-          pinId: 'pin001',
-          name: '夕食',
-          startDate: DateTime(2025, 6, 1, 18, 0),
-          endDate: DateTime(2025, 6, 1, 19, 0),
-        ),
-      );
-
-      expect(updated.details, hasLength(1));
-      expect(updated.details.first.name, '夕食');
-    });
-
-    test('訪問日時が未設定のピンに詳細予定を追加すると例外が発生する', () {
-      final pin = Pin(
-        id: 'id001',
-        pinId: 'pin001',
-        tripId: 'trip001',
-        groupId: 'group001',
-        latitude: 35.0,
-        longitude: 139.0,
-      );
-
-      expect(
-        () => pin.addDetail(
-          PinDetail(pinId: 'pin001', startDate: DateTime(2025, 6, 1, 10, 0)),
-        ),
-        throwsArgumentError,
-      );
-    });
   });
 }

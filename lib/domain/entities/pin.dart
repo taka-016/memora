@@ -70,15 +70,6 @@ class Pin extends Equatable {
     );
   }
 
-  Pin addDetail(PinDetail detail) {
-    if (visitStartDate == null || visitEndDate == null) {
-      throw ArgumentError('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
-    }
-    _validateDetailPeriod(detail);
-    final updatedDetails = List<PinDetail>.from(details)..add(detail);
-    return copyWith(details: updatedDetails);
-  }
-
   void _validateDetailPeriod(PinDetail detail) {
     if (detail.startDate != null) {
       if (detail.startDate!.isBefore(visitStartDate!) ||

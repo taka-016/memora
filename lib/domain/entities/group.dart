@@ -41,25 +41,6 @@ class Group extends Equatable {
     );
   }
 
-  Group addMember(GroupMember member) {
-    final updatedMembers = List<GroupMember>.from(members)..add(member);
-    return copyWith(members: updatedMembers);
-  }
-
-  Group updateMember(String memberId, GroupMember member) {
-    final updatedMembers = members
-        .map((m) => m.memberId == memberId ? member : m)
-        .toList();
-    return copyWith(members: updatedMembers);
-  }
-
-  Group removeMember(String memberId) {
-    final updatedMembers = members
-        .where((m) => m.memberId != memberId)
-        .toList();
-    return copyWith(members: updatedMembers);
-  }
-
   @override
   List<Object?> get props => [id, ownerId, name, memo, members];
 }

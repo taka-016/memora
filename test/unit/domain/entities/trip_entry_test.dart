@@ -146,39 +146,5 @@ void main() {
         throwsArgumentError,
       );
     });
-
-    test('addPinメソッドでピンを追加できる', () {
-      final entry = TripEntry(
-        id: 'abc123',
-        groupId: 'group456',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-      );
-
-      final updated = entry.addPin(
-        Pin(
-          id: 'pin1',
-          pinId: 'pin1',
-          tripId: 'abc123',
-          groupId: 'group456',
-          latitude: 0,
-          longitude: 0,
-          locationName: 'パリ',
-          visitStartDate: DateTime(2025, 6, 2),
-          visitEndDate: DateTime(2025, 6, 3),
-          details: [
-            PinDetail(
-              pinId: 'pin1',
-              startDate: DateTime(2025, 6, 2, 10),
-              endDate: DateTime(2025, 6, 2, 11),
-            ),
-          ],
-        ),
-      );
-
-      expect(updated.pins, hasLength(1));
-      expect(updated.pins.first.locationName, 'パリ');
-      expect(updated.pins.first.details, hasLength(1));
-    });
   });
 }
