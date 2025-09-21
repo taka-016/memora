@@ -18,14 +18,10 @@ void main() {
         visitMemo: 'テストメモ',
         details: [
           PinDetail(
-            id: 'detail001',
-            detailId: 'detail001',
             pinId: 'pin001',
-            tripId: 'trip001',
-            groupId: 'group001',
-            detailName: '朝食',
-            detailStartDate: DateTime(2025, 6, 1, 8, 0),
-            detailEndDate: DateTime(2025, 6, 1, 9, 0),
+            name: '朝食',
+            startDate: DateTime(2025, 6, 1, 8, 0),
+            endDate: DateTime(2025, 6, 1, 9, 0),
           ),
         ],
       );
@@ -40,10 +36,10 @@ void main() {
       expect(pin.visitEndDate, DateTime(2025, 6, 2));
       expect(pin.visitMemo, 'テストメモ');
       expect(pin.details, hasLength(1));
-      expect(pin.details.first.detailName, '朝食');
+      expect(pin.details.first.name, '朝食');
     });
 
-    test('訪問終了日時が開始日時より前の場合はassertが発生する', () {
+    test('訪問終了日時が開始日時より前の場合は例外が発生する', () {
       expect(
         () => Pin(
           id: 'id001',
@@ -55,7 +51,7 @@ void main() {
           visitStartDate: DateTime(2025, 6, 2),
           visitEndDate: DateTime(2025, 6, 1),
         ),
-        throwsAssertionError,
+        throwsArgumentError,
       );
     });
 
@@ -127,14 +123,10 @@ void main() {
         visitMemo: '新しいメモ',
         details: [
           PinDetail(
-            id: 'detail002',
-            detailId: 'detail002',
             pinId: 'pin001',
-            tripId: 'trip001',
-            groupId: 'group001',
-            detailName: '夜景鑑賞',
-            detailStartDate: DateTime(2025, 6, 1, 20, 0),
-            detailEndDate: DateTime(2025, 6, 1, 22, 0),
+            name: '夜景鑑賞',
+            startDate: DateTime(2025, 6, 1, 20, 0),
+            endDate: DateTime(2025, 6, 1, 22, 0),
           ),
         ],
       );
@@ -149,7 +141,7 @@ void main() {
       expect(updatedPin.visitEndDate, DateTime(2025, 6, 2));
       expect(updatedPin.visitMemo, '新しいメモ');
       expect(updatedPin.details, hasLength(1));
-      expect(updatedPin.details.first.detailName, '夜景鑑賞');
+      expect(updatedPin.details.first.name, '夜景鑑賞');
     });
 
     test('訪問期間外の詳細予定が含まれる場合は例外が発生する', () {
@@ -165,13 +157,9 @@ void main() {
           visitEndDate: DateTime(2025, 6, 1, 20, 0),
           details: [
             PinDetail(
-              id: 'detail001',
-              detailId: 'detail001',
               pinId: 'pin001',
-              tripId: 'trip001',
-              groupId: 'group001',
-              detailStartDate: DateTime(2025, 6, 1, 7, 0),
-              detailEndDate: DateTime(2025, 6, 1, 9, 0),
+              startDate: DateTime(2025, 6, 1, 7, 0),
+              endDate: DateTime(2025, 6, 1, 9, 0),
             ),
           ],
         ),
@@ -189,14 +177,7 @@ void main() {
           latitude: 35.0,
           longitude: 139.0,
           details: [
-            PinDetail(
-              id: 'detail001',
-              detailId: 'detail001',
-              pinId: 'pin001',
-              tripId: 'trip001',
-              groupId: 'group001',
-              detailStartDate: DateTime(2025, 6, 1, 10, 0),
-            ),
+            PinDetail(pinId: 'pin001', startDate: DateTime(2025, 6, 1, 10, 0)),
           ],
         ),
         throwsArgumentError,
@@ -217,19 +198,15 @@ void main() {
 
       final updated = pin.addDetail(
         PinDetail(
-          id: 'detail002',
-          detailId: 'detail002',
           pinId: 'pin001',
-          tripId: 'trip001',
-          groupId: 'group001',
-          detailName: '夕食',
-          detailStartDate: DateTime(2025, 6, 1, 18, 0),
-          detailEndDate: DateTime(2025, 6, 1, 19, 0),
+          name: '夕食',
+          startDate: DateTime(2025, 6, 1, 18, 0),
+          endDate: DateTime(2025, 6, 1, 19, 0),
         ),
       );
 
       expect(updated.details, hasLength(1));
-      expect(updated.details.first.detailName, '夕食');
+      expect(updated.details.first.name, '夕食');
     });
 
     test('訪問日時が未設定のピンに詳細予定を追加すると例外が発生する', () {
@@ -244,14 +221,7 @@ void main() {
 
       expect(
         () => pin.addDetail(
-          PinDetail(
-            id: 'detail003',
-            detailId: 'detail003',
-            pinId: 'pin001',
-            tripId: 'trip001',
-            groupId: 'group001',
-            detailStartDate: DateTime(2025, 6, 1, 10, 0),
-          ),
+          PinDetail(pinId: 'pin001', startDate: DateTime(2025, 6, 1, 10, 0)),
         ),
         throwsArgumentError,
       );

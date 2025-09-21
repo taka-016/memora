@@ -6,7 +6,7 @@ class GroupMember extends Equatable {
   final String groupId;
   final String memberId;
 
-  GroupMember copyWith({String? id, String? groupId, String? memberId}) {
+  GroupMember copyWith({String? groupId, String? memberId}) {
     return GroupMember(
       groupId: groupId ?? this.groupId,
       memberId: memberId ?? this.memberId,

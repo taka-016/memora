@@ -14,15 +14,13 @@ class Pin extends Equatable {
     this.visitEndDate,
     this.visitMemo,
     List<PinDetail>? details,
-  }) : details = List.unmodifiable(details ?? const []),
-       assert(() {
-         final start = visitStartDate;
-         final end = visitEndDate;
-         if (start == null || end == null) {
-           return true;
-         }
-         return !end.isBefore(start);
-       }(), '訪問終了日時は訪問開始日時以降でなければなりません') {
+  }) : details = List.unmodifiable(details ?? const []) {
+    // 訪問開始日時と終了日時の順序検証
+    final start = visitStartDate;
+    final end = visitEndDate;
+    if (start != null && end != null && end.isBefore(start)) {
+      throw ArgumentError('訪問終了日時は訪問開始日時以降でなければなりません');
+    }
     if (this.details.isNotEmpty &&
         (visitStartDate == null || visitEndDate == null)) {
       throw ArgumentError('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
@@ -82,26 +80,16 @@ class Pin extends Equatable {
   }
 
   void _validateDetailPeriod(PinDetail detail) {
-    final visitStart = visitStartDate;
-    final visitEnd = visitEndDate;
-    final detailStart = detail.detailStartDate;
-    final detailEnd = detail.detailEndDate;
-
-    if (detailStart != null) {
-      if (visitStart != null && detailStart.isBefore(visitStart)) {
-        throw ArgumentError('詳細予定の開始日時は訪問開始日時以降でなければなりません');
-      }
-      if (visitEnd != null && detailStart.isAfter(visitEnd)) {
-        throw ArgumentError('詳細予定の開始日時は訪問終了日時以前でなければなりません');
+    if (detail.startDate != null) {
+      if (detail.startDate!.isBefore(visitStartDate!) ||
+          detail.startDate!.isAfter(visitEndDate!)) {
+        throw ArgumentError('詳細予定の開始日時は旅行期間内でなければなりません');
       }
     }
-
-    if (detailEnd != null) {
-      if (visitEnd != null && detailEnd.isAfter(visitEnd)) {
-        throw ArgumentError('詳細予定の終了日時は訪問終了日時以前でなければなりません');
-      }
-      if (visitStart != null && detailEnd.isBefore(visitStart)) {
-        throw ArgumentError('詳細予定の終了日時は訪問開始日時以降でなければなりません');
+    if (detail.endDate != null) {
+      if (detail.endDate!.isBefore(visitStartDate!) ||
+          detail.endDate!.isAfter(visitEndDate!)) {
+        throw ArgumentError('詳細予定の終了日時は旅行期間内でなければなりません');
       }
     }
   }
