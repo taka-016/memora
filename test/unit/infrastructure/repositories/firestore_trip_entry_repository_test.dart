@@ -61,14 +61,14 @@ void main() {
         verify(
           mockCollection.add(
             argThat(
-              allOf([
-                containsPair('groupId', 'group001'),
-                containsPair('tripName', 'テスト旅行'),
-                containsPair('tripMemo', 'テストメモ'),
-                contains('tripStartDate'),
-                contains('tripEndDate'),
-                contains('createdAt'),
-              ]),
+              predicate<Map<String, dynamic>>((map) {
+                return map['groupId'] == 'group001' &&
+                    map['tripName'] == 'テスト旅行' &&
+                    map['tripMemo'] == 'テストメモ' &&
+                    map.containsKey('tripStartDate') &&
+                    map.containsKey('tripEndDate') &&
+                    map.containsKey('createdAt');
+              }),
             ),
           ),
         ).called(1);
@@ -100,10 +100,12 @@ void main() {
       expect(result[0].groupId, 'group001');
       expect(result[0].tripName, 'テスト旅行1');
       expect(result[0].tripMemo, 'テストメモ1');
+      expect(result[0].pins, isEmpty);
       expect(result[1].id, 'trip002');
       expect(result[1].groupId, 'group002');
       expect(result[1].tripName, null);
       expect(result[1].tripMemo, null);
+      expect(result[1].pins, isEmpty);
     });
 
     test('getTripEntriesがエラー時に空のリストを返す', () async {
@@ -150,6 +152,7 @@ void main() {
       expect(result!.id, tripId);
       expect(result.groupId, 'group001');
       expect(result.tripName, 'テスト旅行');
+      expect(result.pins, isEmpty);
     });
 
     test('getTripEntryByIdが存在しない旅行でnullを返す', () async {

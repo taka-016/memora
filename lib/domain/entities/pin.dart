@@ -1,7 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/entities/pin_detail.dart';
 
 class Pin extends Equatable {
-  const Pin({
+  Pin({
     required this.id,
     required this.pinId,
     required this.tripId,
@@ -12,7 +13,22 @@ class Pin extends Equatable {
     this.visitStartDate,
     this.visitEndDate,
     this.visitMemo,
-  });
+    List<PinDetail>? details,
+  }) : details = List.unmodifiable(details ?? const []) {
+    // 訪問開始日時と終了日時の順序検証
+    final start = visitStartDate;
+    final end = visitEndDate;
+    if (start != null && end != null && end.isBefore(start)) {
+      throw ArgumentError('訪問終了日時は訪問開始日時以降でなければなりません');
+    }
+    if (this.details.isNotEmpty &&
+        (visitStartDate == null || visitEndDate == null)) {
+      throw ArgumentError('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
+    }
+    for (final detail in this.details) {
+      _validateDetailPeriod(detail);
+    }
+  }
 
   final String id;
   final String pinId;
@@ -24,6 +40,7 @@ class Pin extends Equatable {
   final DateTime? visitStartDate;
   final DateTime? visitEndDate;
   final String? visitMemo;
+  final List<PinDetail> details;
 
   Pin copyWith({
     String? id,
@@ -36,6 +53,7 @@ class Pin extends Equatable {
     DateTime? visitStartDate,
     DateTime? visitEndDate,
     String? visitMemo,
+    List<PinDetail>? details,
   }) {
     return Pin(
       id: id ?? this.id,
@@ -48,7 +66,32 @@ class Pin extends Equatable {
       visitStartDate: visitStartDate ?? this.visitStartDate,
       visitEndDate: visitEndDate ?? this.visitEndDate,
       visitMemo: visitMemo ?? this.visitMemo,
+      details: details ?? this.details,
     );
+  }
+
+  Pin addDetail(PinDetail detail) {
+    if (visitStartDate == null || visitEndDate == null) {
+      throw ArgumentError('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
+    }
+    _validateDetailPeriod(detail);
+    final updatedDetails = List<PinDetail>.from(details)..add(detail);
+    return copyWith(details: updatedDetails);
+  }
+
+  void _validateDetailPeriod(PinDetail detail) {
+    if (detail.startDate != null) {
+      if (detail.startDate!.isBefore(visitStartDate!) ||
+          detail.startDate!.isAfter(visitEndDate!)) {
+        throw ArgumentError('詳細予定の開始日時は旅行期間内でなければなりません');
+      }
+    }
+    if (detail.endDate != null) {
+      if (detail.endDate!.isBefore(visitStartDate!) ||
+          detail.endDate!.isAfter(visitEndDate!)) {
+        throw ArgumentError('詳細予定の終了日時は旅行期間内でなければなりません');
+      }
+    }
   }
 
   @override
@@ -63,5 +106,6 @@ class Pin extends Equatable {
     visitStartDate,
     visitEndDate,
     visitMemo,
+    details,
   ];
 }

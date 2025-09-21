@@ -496,6 +496,14 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
+  @visibleForTesting
+  void setDateRangeForTest(DateTime? start, DateTime? end) {
+    setState(() {
+      _startDate = start;
+      _endDate = end;
+    });
+  }
+
   DateTime _determineInitialDate(DateTime? selectedDate, String labelText) {
     if (selectedDate != null) {
       return selectedDate;
