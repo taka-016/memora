@@ -8,7 +8,6 @@ class PinDetail extends Equatable {
     this.endDate,
     this.memo,
   }) {
-    // 詳細開始日時と終了日時の順序検証
     final start = startDate;
     final end = endDate;
     if (start != null && end != null && end.isBefore(start)) {
