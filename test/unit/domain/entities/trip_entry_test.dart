@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/pin_detail.dart';
 
 void main() {
   group('TripEntry', () {
@@ -24,6 +25,18 @@ void main() {
             visitStartDate: DateTime(2025, 6, 2),
             visitEndDate: DateTime(2025, 6, 3),
             visitMemo: 'エッフェル塔',
+            details: [
+              PinDetail(
+                id: 'detail1',
+                detailId: 'detail1',
+                pinId: 'pin1',
+                tripId: 'abc123',
+                groupId: 'group456',
+                detailName: '午前観光',
+                detailStartDate: DateTime(2025, 6, 2, 9),
+                detailEndDate: DateTime(2025, 6, 2, 12),
+              ),
+            ],
           ),
         ],
       );
@@ -36,6 +49,7 @@ void main() {
       expect(entry.pins, hasLength(1));
       expect(entry.pins.first.locationName, 'パリ');
       expect(entry.pins.first.visitMemo, 'エッフェル塔');
+      expect(entry.pins.first.details, hasLength(1));
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
@@ -179,11 +193,57 @@ void main() {
           locationName: 'パリ',
           visitStartDate: DateTime(2025, 6, 2),
           visitEndDate: DateTime(2025, 6, 3),
+          details: [
+            PinDetail(
+              id: 'detail2',
+              detailId: 'detail2',
+              pinId: 'pin1',
+              tripId: 'abc123',
+              groupId: 'group456',
+              detailStartDate: DateTime(2025, 6, 2, 10),
+              detailEndDate: DateTime(2025, 6, 2, 11),
+            ),
+          ],
         ),
       );
 
       expect(updated.pins, hasLength(1));
       expect(updated.pins.first.locationName, 'パリ');
+      expect(updated.pins.first.details, hasLength(1));
+    });
+
+    test('旅行期間外の詳細予定を含むと例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'abc123',
+          groupId: 'group456',
+          tripStartDate: DateTime(2025, 6, 1),
+          tripEndDate: DateTime(2025, 6, 10),
+          pins: [
+            Pin(
+              id: 'pin1',
+              pinId: 'pin1',
+              tripId: 'abc123',
+              groupId: 'group456',
+              latitude: 0,
+              longitude: 0,
+              visitStartDate: DateTime(2025, 6, 2),
+              visitEndDate: DateTime(2025, 6, 3),
+              details: [
+                PinDetail(
+                  id: 'detail3',
+                  detailId: 'detail3',
+                  pinId: 'pin1',
+                  tripId: 'abc123',
+                  groupId: 'group456',
+                  detailStartDate: DateTime(2025, 6, 11),
+                ),
+              ],
+            ),
+          ],
+        ),
+        throwsArgumentError,
+      );
     });
   });
 }
