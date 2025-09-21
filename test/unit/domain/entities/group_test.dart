@@ -110,5 +110,68 @@ void main() {
       expect(updatedGroup.memo, 'メモ');
       expect(updatedGroup.members, [testMember]);
     });
+
+    test('メンバーIDが重複している場合にエラーをスローする', () {
+      expect(
+        () => Group(
+          id: 'group001',
+          ownerId: 'admin001',
+          name: 'グループ名',
+          members: [
+            GroupMember(groupId: 'group001', memberId: 'user001'),
+            GroupMember(groupId: 'group001', memberId: 'user001'),
+          ],
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('addMemberメソッドが新しいメンバーを追加したGroupを返す', () {
+      final group = Group(id: 'group001', ownerId: 'admin001', name: 'グループ名');
+
+      final newMember = GroupMember(groupId: 'group001', memberId: 'user001');
+      final updatedGroup = group.addMember(newMember);
+
+      expect(updatedGroup.members, [newMember]);
+      expect(group.members, isEmpty); // 元のオブジェクトは変更されない
+    });
+
+    test('updateMemberメソッドが指定したメンバーを更新したGroupを返す', () {
+      final originalMember = GroupMember(
+        groupId: 'group001',
+        memberId: 'user001',
+      );
+      final group = Group(
+        id: 'group001',
+        ownerId: 'admin001',
+        name: 'グループ名',
+        members: [originalMember],
+      );
+
+      final updatedMember = GroupMember(
+        groupId: 'group001',
+        memberId: 'user002',
+      );
+      final updatedGroup = group.updateMember('user001', updatedMember);
+
+      expect(updatedGroup.members, [updatedMember]);
+      expect(updatedGroup.members.length, 1);
+    });
+
+    test('removeMemberメソッドが指定したメンバーを削除したGroupを返す', () {
+      final member1 = GroupMember(groupId: 'group001', memberId: 'user001');
+      final member2 = GroupMember(groupId: 'group001', memberId: 'user002');
+      final group = Group(
+        id: 'group001',
+        ownerId: 'admin001',
+        name: 'グループ名',
+        members: [member1, member2],
+      );
+
+      final updatedGroup = group.removeMember('user001');
+
+      expect(updatedGroup.members, [member2]);
+      expect(updatedGroup.members.length, 1);
+    });
   });
 }

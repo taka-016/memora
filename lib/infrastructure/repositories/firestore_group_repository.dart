@@ -19,7 +19,7 @@ class FirestoreGroupRepository implements GroupRepository {
     final groupDocRef = _firestore.collection('groups').doc();
     batch.set(groupDocRef, FirestoreGroupMapper.toFirestore(group));
 
-    for (final GroupMember member in group.members ?? []) {
+    for (final GroupMember member in group.members) {
       final memberDocRef = _firestore.collection('group_members').doc();
       batch.set(
         memberDocRef,
@@ -42,7 +42,7 @@ class FirestoreGroupRepository implements GroupRepository {
       FirestoreGroupMapper.toFirestore(group),
     );
 
-    if (group.members != null) {
+    if (group.members.isNotEmpty) {
       final memberSnapshot = await _firestore
           .collection('group_members')
           .where('groupId', isEqualTo: group.id)
@@ -51,7 +51,7 @@ class FirestoreGroupRepository implements GroupRepository {
         batch.delete(doc.reference);
       }
 
-      for (final GroupMember member in group.members!) {
+      for (final GroupMember member in group.members) {
         final memberDocRef = _firestore.collection('group_members').doc();
         batch.set(
           memberDocRef,

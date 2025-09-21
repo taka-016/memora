@@ -135,7 +135,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
           ),
         ),
         const SizedBox(height: 8),
-        if (_group.members?.isEmpty ?? true)
+        if (_group.members.isEmpty)
           _buildEmptyMemberState()
         else
           _buildSelectedMemberList(),
@@ -162,7 +162,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       key: const Key('selected_member_list'),
       height: 250,
       child: ListView.separated(
-        itemCount: _group.members?.length ?? 0,
+        itemCount: _group.members.length,
         itemBuilder: (context, index) => _buildMemberListTile(index),
         separatorBuilder: (context, index) => const Divider(height: 1),
       ),
@@ -170,7 +170,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Widget _buildMemberListTile(int index) {
-    final groupMember = _group.members![index];
+    final groupMember = _group.members[index];
     final member = _findMemberById(groupMember.memberId);
     final displayName = member?.displayName ?? '不明なメンバー';
 
@@ -205,13 +205,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 selectedMemberId,
               ) {
                 setState(() {
-                  final updatedMembers = List<GroupMember>.from(
-                    _group.members ?? [],
-                  );
-                  updatedMembers.add(
+                  _group = _group.addMember(
                     GroupMember(groupId: _group.id, memberId: selectedMemberId),
                   );
-                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -232,14 +228,10 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 selectedMemberId,
               ) {
                 setState(() {
-                  final updatedMembers = List<GroupMember>.from(
-                    _group.members ?? [],
+                  _group = _group.updateMember(
+                    _group.members[index].memberId,
+                    GroupMember(groupId: _group.id, memberId: selectedMemberId),
                   );
-                  updatedMembers[index] = GroupMember(
-                    groupId: _group.id,
-                    memberId: selectedMemberId,
-                  );
-                  _group = _group.copyWith(members: updatedMembers);
                 });
               }),
       ),
@@ -248,9 +240,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _removeMemberAt(int index) {
     setState(() {
-      final updatedMembers = List<GroupMember>.from(_group.members ?? []);
-      updatedMembers.removeAt(index);
-      _group = _group.copyWith(members: updatedMembers);
+      _group = _group.removeMember(_group.members[index].memberId);
     });
   }
 
@@ -264,17 +254,15 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   List<Member> _getAddableMembers() {
-    final selectedMemberIds =
-        _group.members?.map((gm) => gm.memberId).toSet() ?? <String>{};
+    final selectedMemberIds = _group.members.map((gm) => gm.memberId).toSet();
     return widget.availableMembers
         .where((member) => !selectedMemberIds.contains(member.id))
         .toList();
   }
 
   List<Member> _getChangeCandidates(int index) {
-    final currentMemberId = _group.members![index].memberId;
-    final selectedMemberIds =
-        _group.members?.map((gm) => gm.memberId).toSet() ?? <String>{};
+    final currentMemberId = _group.members[index].memberId;
+    final selectedMemberIds = _group.members.map((gm) => gm.memberId).toSet();
 
     return widget.availableMembers.where((member) {
       if (member.id == currentMemberId) {
