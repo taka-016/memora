@@ -69,4 +69,5 @@ echo 'export PATH="$PATH:$HOME/.pub-cache/bin"' >> ~/.bashrc
 # 作業ディレクトリへ移動
 cd /workspace/memora
 
-source ./maintenance.sh
+# メンテナンス用セットアップスクリプト実行
+source ./.codex/maintenance.sh
