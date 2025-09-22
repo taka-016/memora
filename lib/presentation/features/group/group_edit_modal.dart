@@ -403,6 +403,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
     if (selectedMemberId != null) {
       onSelected(selectedMemberId);
+      // メンバー選択後にフォーカスを外す（setStateの後に実行）
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            FocusScope.of(context).unfocus();
+          }
+        });
+      }
     }
   }
 
