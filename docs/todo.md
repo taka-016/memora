@@ -196,6 +196,7 @@
 - [x] グループ削除時は、groupIdで紐づくテーブル（group_members,group_events,trip_entries）をすべて削除する（delete_group_usecaseで対応）
 - [x] グループ削除時は、groupIdで紐づくtrip_entriesが削除されるため、tripIdで紐づくpinsとtrip_participantsも削除する（delete_group_usecaseで対応）
 - [x] グループ編集モーダルのメンバー追加・変更UIをプルダウン選択に変更する
+- [x] グループ編集モーダルでメンバー選択後にフォーカスを外す
 
 ## グループ年表画面
 

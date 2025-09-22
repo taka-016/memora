@@ -201,17 +201,25 @@ class _GroupEditModalState extends State<GroupEditModal> {
         label: const Text('追加'),
         onPressed: addableMembers.isEmpty
             ? null
-            : () => _showMemberSelectionMenu(buttonContext, addableMembers, (
-                selectedMemberId,
-              ) {
-                setState(() {
-                  final updatedMembers = List<GroupMember>.from(_group.members);
-                  updatedMembers.add(
-                    GroupMember(groupId: _group.id, memberId: selectedMemberId),
-                  );
-                  _group = _group.copyWith(members: updatedMembers);
+            : () {
+                FocusScope.of(buttonContext).unfocus();
+                _showMemberSelectionMenu(buttonContext, addableMembers, (
+                  selectedMemberId,
+                ) {
+                  setState(() {
+                    final updatedMembers = List<GroupMember>.from(
+                      _group.members,
+                    );
+                    updatedMembers.add(
+                      GroupMember(
+                        groupId: _group.id,
+                        memberId: selectedMemberId,
+                      ),
+                    );
+                    _group = _group.copyWith(members: updatedMembers);
+                  });
                 });
-              }),
+              },
       ),
     );
   }
@@ -226,18 +234,23 @@ class _GroupEditModalState extends State<GroupEditModal> {
         tooltip: 'メンバーを変更',
         onPressed: changeCandidates.isEmpty
             ? null
-            : () => _showMemberSelectionMenu(buttonContext, changeCandidates, (
-                selectedMemberId,
-              ) {
-                setState(() {
-                  final updatedMembers = List<GroupMember>.from(_group.members);
-                  updatedMembers[index] = GroupMember(
-                    groupId: _group.id,
-                    memberId: selectedMemberId,
-                  );
-                  _group = _group.copyWith(members: updatedMembers);
+            : () {
+                FocusScope.of(buttonContext).unfocus();
+                _showMemberSelectionMenu(buttonContext, changeCandidates, (
+                  selectedMemberId,
+                ) {
+                  setState(() {
+                    final updatedMembers = List<GroupMember>.from(
+                      _group.members,
+                    );
+                    updatedMembers[index] = GroupMember(
+                      groupId: _group.id,
+                      memberId: selectedMemberId,
+                    );
+                    _group = _group.copyWith(members: updatedMembers);
+                  });
                 });
-              }),
+              },
       ),
     );
   }
@@ -283,6 +296,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
     List<Member> candidates,
     ValueChanged<String> onSelected,
   ) async {
+    FocusScope.of(anchorContext).unfocus();
     final selectedMemberId = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -432,6 +446,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   void _handleSave() {
+    FocusScope.of(context).unfocus();
     if (_formKey.currentState!.validate()) {
       final updatedGroup = _group.copyWith(
         name: _nameController.text,

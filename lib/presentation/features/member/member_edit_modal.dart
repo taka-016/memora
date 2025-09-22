@@ -228,7 +228,7 @@ class _MemberEditModalState extends State<MemberEditModal> {
 
   Widget _buildGenderField() {
     return DropdownButtonFormField<String>(
-      initialValue: _gender,
+      value: _gender,
       decoration: const InputDecoration(
         labelText: '性別',
         border: OutlineInputBorder(),
