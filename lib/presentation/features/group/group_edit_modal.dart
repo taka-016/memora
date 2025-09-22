@@ -302,97 +302,13 @@ class _GroupEditModalState extends State<GroupEditModal> {
           expand: false,
           builder: (context, scrollController) => Column(
             children: [
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'メンバーを選択',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.grey[100],
-                        foregroundColor: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildMemberSelectionModalHandle(),
+              _buildMemberSelectionModalHeader(context),
               const Divider(height: 1),
               Expanded(
                 child: candidates.isEmpty
-                    ? const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.person_off,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 12),
-                            Text(
-                              '選択可能なメンバーがいません',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: candidates.length,
-                        itemBuilder: (context, index) {
-                          final member = candidates[index];
-                          return Container(
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.transparent,
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              title: Text(
-                                member.displayName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              onTap: () => Navigator.of(context).pop(member.id),
-                              hoverColor: Colors.grey[50],
-                            ),
-                          );
-                        },
-                      ),
+                    ? _buildMemberSelectionEmptyState()
+                    : _buildMemberSelectionList(candidates, scrollController),
               ),
               const SizedBox(height: 16),
             ],
@@ -401,17 +317,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       ),
     );
 
-    if (selectedMemberId != null) {
-      onSelected(selectedMemberId);
-    }
-    // 選択前の項目にフォーカスが戻るため、外す
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          FocusScope.of(context).unfocus();
-        }
-      });
-    }
+    _handleMemberSelectionResult(selectedMemberId, onSelected);
   }
 
   Widget _buildActionButtons(bool isEditing) {
@@ -448,6 +354,109 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
       widget.onSave(updatedGroup);
       Navigator.of(context).pop();
+    }
+  }
+
+  Widget _buildMemberSelectionModalHandle() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      width: 40,
+      height: 4,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+
+  Widget _buildMemberSelectionModalHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'メンバーを選択',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.grey[100],
+              foregroundColor: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberSelectionEmptyState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.person_off, size: 48, color: Colors.grey),
+          SizedBox(height: 12),
+          Text(
+            '選択可能なメンバーがいません',
+            style: TextStyle(color: Colors.grey, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberSelectionList(
+    List<Member> candidates,
+    ScrollController scrollController,
+  ) {
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: candidates.length,
+      itemBuilder: (context, index) {
+        final member = candidates[index];
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.transparent,
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 4,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: Text(
+              member.displayName,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            onTap: () => Navigator.of(context).pop(member.id),
+            hoverColor: Colors.grey[50],
+          ),
+        );
+      },
+    );
+  }
+
+  void _handleMemberSelectionResult(
+    String? selectedMemberId,
+    ValueChanged<String> onSelected,
+  ) {
+    if (selectedMemberId != null) {
+      onSelected(selectedMemberId);
+    }
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          FocusScope.of(context).unfocus();
+        }
+      });
     }
   }
 }
