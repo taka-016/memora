@@ -3,6 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
+import '../../../helpers/test_exception.dart';
 
 import 'firestore_group_query_service_test.mocks.dart';
 
@@ -176,7 +177,7 @@ void main() {
         ).thenReturn(mockGroupsCollection);
         when(
           mockGroupsCollection.where('ownerId', isEqualTo: memberId),
-        ).thenThrow(Exception('Firestore error'));
+        ).thenThrow(TestException('Firestore error'));
 
         final result = await service.getGroupsWithMembersByMemberId(memberId);
 
@@ -252,7 +253,7 @@ void main() {
         ).thenReturn(mockGroupsCollection);
         when(
           mockGroupsCollection.where('ownerId', isEqualTo: ownerId),
-        ).thenThrow(Exception('Firestore error'));
+        ).thenThrow(TestException('Firestore error'));
 
         final result = await service.getManagedGroupsWithMembersByOwnerId(
           ownerId,

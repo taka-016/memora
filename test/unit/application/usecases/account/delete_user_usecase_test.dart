@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'delete_user_usecase_test.mocks.dart';
 
 @GenerateMocks([AuthService])
@@ -27,9 +28,9 @@ void main() {
 
     test('アカウント削除でエラーが発生した場合は例外を再スローする', () async {
       const errorMessage = 'アカウント削除エラー';
-      when(mockAuthService.deleteUser()).thenThrow(Exception(errorMessage));
+      when(mockAuthService.deleteUser()).thenThrow(TestException(errorMessage));
 
-      await expectLater(useCase.execute(), throwsA(isA<Exception>()));
+      await expectLater(useCase.execute(), throwsA(isA<TestException>()));
 
       verify(mockAuthService.deleteUser()).called(1);
     });

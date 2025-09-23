@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'package:memora/domain/entities/trip_participant.dart';
+import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -82,7 +83,7 @@ void main() {
     });
 
     test('getTripParticipantsがエラー時に空のリストを返す', () async {
-      when(mockCollection.get()).thenThrow(Exception('Firestore error'));
+      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getTripParticipants();
 
@@ -132,7 +133,7 @@ void main() {
       when(
         mockCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenThrow(Exception('Firestore error'));
+      when(mockQuery.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getTripParticipantsByTripId(tripId);
 

@@ -123,9 +123,10 @@ class FirebaseAuthService implements AuthService {
       // forceRefresh: trueでサーバーからトークンを強制取得
       // トークンが期限切れの場合、ここで例外が発生する
       await currentUser.getIdToken(true);
-    } catch (e, stack) {
+    } on FirebaseAuthException catch (e, stack) {
+      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
       logger.e(
-        'FirebaseAuthService.validateCurrentUserToken: ${e.toString()}',
+        'FirebaseAuthService.validateCurrentUserToken: $message',
         error: e,
         stackTrace: stack,
       );

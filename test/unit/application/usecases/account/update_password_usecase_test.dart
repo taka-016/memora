@@ -3,6 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'update_password_usecase_test.mocks.dart';
 
@@ -35,11 +36,11 @@ void main() {
       const errorMessage = 'パスワード更新エラー';
       when(
         mockAuthService.updatePassword(newPassword: newPassword),
-      ).thenThrow(Exception(errorMessage));
+      ).thenThrow(TestException(errorMessage));
 
       await expectLater(
         useCase.execute(newPassword: newPassword),
-        throwsA(isA<Exception>()),
+        throwsA(isA<TestException>()),
       );
 
       verify(

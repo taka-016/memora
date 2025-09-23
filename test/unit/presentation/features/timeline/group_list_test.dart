@@ -7,6 +7,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'group_list_test.mocks.dart';
 
@@ -106,7 +107,7 @@ void main() {
 
     testWidgets('エラーが発生した場合、エラー状態が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(Exception('エラーテスト'));
+      when(mockUsecase.execute(testMember)).thenThrow(TestException('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -121,7 +122,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(Exception('エラーテスト'));
+      when(mockUsecase.execute(testMember)).thenThrow(TestException('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());

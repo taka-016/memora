@@ -21,6 +21,11 @@ Future<void> initLogger() async {
 class ConsoleOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
+    final message = event.lines.join('\n');
+    if (message.contains('TestException:')) {
+      return;
+    }
+
     for (var line in event.lines) {
       debugPrint(line);
     }

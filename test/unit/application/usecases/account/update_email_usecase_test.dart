@@ -3,6 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'update_email_usecase_test.mocks.dart';
 
@@ -33,11 +34,11 @@ void main() {
       const errorMessage = 'メールアドレス更新エラー';
       when(
         mockAuthService.updateEmail(newEmail: newEmail),
-      ).thenThrow(Exception(errorMessage));
+      ).thenThrow(TestException(errorMessage));
 
       await expectLater(
         useCase.execute(newEmail: newEmail),
-        throwsA(isA<Exception>()),
+        throwsA(isA<TestException>()),
       );
 
       verify(mockAuthService.updateEmail(newEmail: newEmail)).called(1);

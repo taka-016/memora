@@ -6,6 +6,7 @@ import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'get_groups_with_members_usecase_test.mocks.dart';
 
@@ -121,7 +122,7 @@ void main() {
         gender: 'male',
       );
 
-      final exception = Exception('Database error');
+      final exception = TestException('Database error');
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
       ).thenThrow(exception);

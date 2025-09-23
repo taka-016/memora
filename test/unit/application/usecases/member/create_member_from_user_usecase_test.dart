@@ -6,6 +6,7 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'create_member_from_user_usecase_test.mocks.dart';
+import '../../../../helpers/test_exception.dart';
 
 @GenerateMocks([MemberRepository])
 void main() {
@@ -59,7 +60,7 @@ void main() {
 
       when(
         mockMemberRepository.saveMember(any),
-      ).thenThrow(Exception('Database error'));
+      ).thenThrow(TestException('Database error'));
 
       // Act
       final result = await useCase.execute(user);

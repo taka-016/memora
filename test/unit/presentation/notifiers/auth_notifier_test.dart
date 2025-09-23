@@ -9,6 +9,7 @@ import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
+import '../../../helpers/test_exception.dart';
 
 import 'auth_notifier_test.mocks.dart';
 
@@ -128,7 +129,7 @@ void main() {
         ).thenAnswer((_) async {});
         when(
           mockCheckMemberExistsUseCase.execute(user),
-        ).thenThrow(Exception('Firestore error'));
+        ).thenThrow(TestException('Firestore error'));
         when(mockAuthService.signOut()).thenAnswer((_) async {});
 
         await authNotifier.initialize();

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -88,7 +89,7 @@ void main() {
     });
 
     test('getPinsがエラー時に空のリストを返す', () async {
-      when(mockCollection.get()).thenThrow(Exception('Firestore error'));
+      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getPins();
 
@@ -302,7 +303,7 @@ void main() {
       when(
         mockCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockCollection);
-      when(mockCollection.get()).thenThrow(Exception('Firestore error'));
+      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getPinsByTripId(tripId);
 

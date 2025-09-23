@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'email_change_modal_test.mocks.dart';
 
@@ -83,7 +84,7 @@ void main() {
 
     testWidgets('エラー発生時にコールバックが例外をスローする', (WidgetTester tester) async {
       bool callbackCalled = false;
-      Exception? thrownException;
+      TestException? thrownException;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -96,7 +97,7 @@ void main() {
                     builder: (context) => EmailChangeModal(
                       onEmailChange: (email) async {
                         callbackCalled = true;
-                        thrownException = Exception(
+                        thrownException = TestException(
                           '[firebase_auth/requires-recent-login]',
                         );
                         throw thrownException!;

@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/application/usecases/pin/create_pin_usecase.dart';
 import 'package:memora/domain/entities/pin.dart';
+import '../../../../helpers/test_exception.dart';
 
 @GenerateMocks([FirestorePinRepository])
 import 'create_pin_usecase_test.mocks.dart';
@@ -62,7 +63,7 @@ void main() {
         longitude: 139.0,
       );
 
-      when(mockPinRepository.savePin(pin)).thenThrow(Exception('保存失敗'));
+      when(mockPinRepository.savePin(pin)).thenThrow(TestException('保存失敗'));
 
       expect(() => createPinUseCase.execute(pinDto), throwsException);
     });

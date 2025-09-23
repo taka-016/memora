@@ -6,7 +6,6 @@ import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
@@ -15,6 +14,7 @@ import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'group_management_test.mocks.dart';
 
@@ -204,7 +204,7 @@ void main() {
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
         ),
-      ).thenThrow(Exception('Network error'));
+      ).thenThrow(TestException('Network error'));
 
       // Act
       await tester.pumpWidget(
@@ -228,7 +228,7 @@ void main() {
 
       // Assert
       expect(
-        find.text('データの読み込みに失敗しました: Exception: Network error'),
+        find.text('データの読み込みに失敗しました: TestException: Network error'),
         findsOneWidget,
       );
     });
@@ -445,7 +445,7 @@ void main() {
       // グループ削除でエラーが発生
       when(
         mockGroupRepository.deleteGroup('group-1'),
-      ).thenThrow(Exception('削除エラー'));
+      ).thenThrow(TestException('削除エラー'));
 
       when(
         mockTripEntryRepository.getTripEntries(),
@@ -480,7 +480,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - エラーメッセージが表示されることを確認
-      expect(find.text('削除に失敗しました: Exception: 削除エラー'), findsOneWidget);
+      expect(find.text('削除に失敗しました: TestException: 削除エラー'), findsOneWidget);
     });
   });
 }

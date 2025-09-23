@@ -1,11 +1,11 @@
 import 'dart:async';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
+import '../../../helpers/test_exception.dart';
 
 import 'location_notifier_test.mocks.dart';
 
@@ -50,7 +50,7 @@ void main() {
 
       final future = locationNotifier.getCurrentLocation();
 
-      completer.completeError(Exception('位置情報取得エラー'));
+      completer.completeError(TestException('位置情報取得エラー'));
 
       await expectLater(future, throwsException);
 

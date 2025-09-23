@@ -5,6 +5,7 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/usecases/member/get_or_create_member_usecase.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'get_or_create_member_usecase_test.mocks.dart';
 
@@ -78,7 +79,7 @@ void main() {
       // arrange
       when(
         mockMemberRepository.getMemberByAccountId(testUid),
-      ).thenThrow(Exception('Database error'));
+      ).thenThrow(TestException('Database error'));
 
       // act
       final result = await useCase.execute(testUser);
@@ -96,7 +97,7 @@ void main() {
       ).thenAnswer((_) async => null);
       when(
         mockMemberRepository.saveMember(any),
-      ).thenThrow(Exception('Save failed'));
+      ).thenThrow(TestException('Save failed'));
 
       // act
       final result = await useCase.execute(testUser);

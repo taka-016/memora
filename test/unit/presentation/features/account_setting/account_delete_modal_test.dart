@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'account_delete_modal_test.mocks.dart';
 
@@ -76,7 +77,7 @@ void main() {
     ) async {
       when(
         mockDeleteUserUseCase.execute(),
-      ).thenThrow(Exception('[firebase_auth/requires-recent-login]'));
+      ).thenThrow(TestException('[firebase_auth/requires-recent-login]'));
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));
@@ -113,7 +114,9 @@ void main() {
     });
 
     testWidgets('エラー発生時にエラーメッセージが表示される', (WidgetTester tester) async {
-      when(mockDeleteUserUseCase.execute()).thenThrow(Exception('削除に失敗しました'));
+      when(
+        mockDeleteUserUseCase.execute(),
+      ).thenThrow(TestException('削除に失敗しました'));
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -109,7 +110,7 @@ void main() {
     });
 
     test('getTripEntriesがエラー時に空のリストを返す', () async {
-      when(mockCollection.get()).thenThrow(Exception('Firestore error'));
+      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getTripEntries();
 

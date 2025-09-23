@@ -8,6 +8,7 @@ import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
@@ -182,7 +183,7 @@ void main() {
           testYear,
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
-      ).thenThrow(Exception('Network error'));
+      ).thenThrow(TestException('Network error'));
 
       // Act
       await tester.pumpWidget(
@@ -205,7 +206,7 @@ void main() {
 
       // Assert
       expect(
-        find.text('旅行一覧の読み込みに失敗しました: Exception: Network error'),
+        find.text('旅行一覧の読み込みに失敗しました: TestException: Network error'),
         findsOneWidget,
       );
     });

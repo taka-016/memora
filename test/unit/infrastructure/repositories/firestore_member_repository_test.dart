@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
 import 'package:memora/domain/entities/member.dart';
+import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -123,7 +124,7 @@ void main() {
     });
 
     test('getMembersがエラー時に空のリストを返す', () async {
-      when(mockCollection.get()).thenThrow(Exception('Firestore error'));
+      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
       final result = await repository.getMembers();
 
