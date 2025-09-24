@@ -34,8 +34,14 @@ class FirebaseAuthService implements AuthService {
       }
 
       return _mapFirebaseUserToDomainUser(userCredential.user!);
-    } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
+    } on FirebaseAuthException catch (e, stack) {
+      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
+      logger.e(
+        'FirebaseAuthService.signInWithEmailAndPassword: $message',
+        error: e,
+        stackTrace: stack,
+      );
+      throw Exception(message);
     }
   }
 
@@ -55,8 +61,14 @@ class FirebaseAuthService implements AuthService {
       }
 
       return _mapFirebaseUserToDomainUser(userCredential.user!);
-    } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
+    } on FirebaseAuthException catch (e, stack) {
+      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
+      logger.e(
+        'FirebaseAuthService.createUserWithEmailAndPassword: $message',
+        error: e,
+        stackTrace: stack,
+      );
+      throw Exception(message);
     }
   }
 
@@ -64,8 +76,14 @@ class FirebaseAuthService implements AuthService {
   Future<void> signOut() async {
     try {
       await _firebaseAuth.signOut();
-    } on FirebaseAuthException catch (e) {
-      throw FirebaseErrorMapper.getFirebaseErrorMessage(e);
+    } on FirebaseAuthException catch (e, stack) {
+      final message = FirebaseErrorMapper.getFirebaseErrorMessage(e);
+      logger.e(
+        'FirebaseAuthService.signOut: $message',
+        error: e,
+        stackTrace: stack,
+      );
+      throw Exception(message);
     }
   }
 
@@ -130,7 +148,7 @@ class FirebaseAuthService implements AuthService {
         error: e,
         stackTrace: stack,
       );
-      throw Exception('認証トークンが無効です: $e');
+      throw Exception(message);
     }
   }
 

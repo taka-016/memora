@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/reauthenticate_modal.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'reauthenticate_modal_test.mocks.dart';
 
 @GenerateMocks([ReauthenticateUseCase])
@@ -106,7 +107,7 @@ void main() {
     testWidgets('再認証エラー時にエラーメッセージが表示される', (WidgetTester tester) async {
       when(
         mockReauthenticateUseCase.execute(password: anyNamed('password')),
-      ).thenThrow(Exception('認証に失敗しました'));
+      ).thenThrow(TestException('認証に失敗しました'));
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));
@@ -117,7 +118,7 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pump();
 
-      expect(find.text('認証に失敗しました'), findsOneWidget);
+      expect(find.text('Test認証に失敗しました'), findsOneWidget);
     });
   });
 }

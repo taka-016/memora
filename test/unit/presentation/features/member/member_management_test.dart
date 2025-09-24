@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -417,6 +418,8 @@ void main() {
     testWidgets('ログインユーザーメンバーの取得に失敗した場合、エラーが表示されること', (
       WidgetTester tester,
     ) async {
+      AppLogger.suppressLogging(true);
+
       // Arrange
       when(
         mockMemberRepository.getMembersByOwnerId(testMember.id),

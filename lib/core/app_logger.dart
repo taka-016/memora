@@ -18,11 +18,21 @@ Future<void> initLogger() async {
   );
 }
 
+class AppLogger {
+  static bool _suppressLogging = false;
+
+  static void suppressLogging(bool suppress) {
+    _suppressLogging = suppress;
+  }
+
+  static bool get isLoggingSuppressed => _suppressLogging;
+}
+
 class ConsoleOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
-    final message = event.lines.join('\n');
-    if (message.contains('TestException:')) {
+    if (AppLogger.isLoggingSuppressed) {
+      AppLogger.suppressLogging(false);
       return;
     }
 

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -71,6 +72,8 @@ void main() {
     });
 
     test('ログインに失敗した場合、例外をスローする', () async {
+      AppLogger.suppressLogging(true);
+
       when(
         mockFirebaseAuth.signInWithEmailAndPassword(
           email: 'test@example.com',
@@ -83,7 +86,13 @@ void main() {
           email: 'test@example.com',
           password: 'wrongpassword',
         ),
-        throwsA(isA<String>()),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('パスワードが間違っています。'),
+          ),
+        ),
       );
     });
 
@@ -146,6 +155,8 @@ void main() {
     });
 
     test('トークンの取得に失敗した場合は例外をスロー', () async {
+      AppLogger.suppressLogging(true);
+
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
       when(
         mockFirebaseUser.getIdToken(true),
@@ -157,17 +168,19 @@ void main() {
           isA<Exception>().having(
             (e) => e.toString(),
             'message',
-            contains('認証トークンが無効です'),
+            contains('ネットワークエラーが発生しました。通信環境を確認してください。'),
           ),
         ),
       );
     });
 
     test('トークンが期限切れの場合は例外をスロー', () async {
+      AppLogger.suppressLogging(true);
+
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
       when(
         mockFirebaseUser.getIdToken(true),
-      ).thenThrow(FirebaseAuthException(code: 'user-token-expired'));
+      ).thenThrow(FirebaseAuthException(code: 'invalid-credential'));
 
       expect(
         () => firebaseAuthService.validateCurrentUserToken(),
@@ -175,7 +188,7 @@ void main() {
           isA<Exception>().having(
             (e) => e.toString(),
             'message',
-            contains('認証トークンが無効です'),
+            contains('認証情報が無効または期限切れです。やり直してください。'),
           ),
         ),
       );
