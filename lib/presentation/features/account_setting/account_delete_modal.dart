@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../../application/usecases/account/delete_user_usecase.dart';
-import '../../../application/usecases/account/reauthenticate_usecase.dart';
+import 'package:memora/application/usecases/account/delete_user_usecase.dart';
+import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 import 'reauthenticate_modal.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 class AccountDeleteModal extends StatefulWidget {
   final DeleteUserUseCase deleteUserUseCase;

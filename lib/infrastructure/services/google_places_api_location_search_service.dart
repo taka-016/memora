@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:memora/domain/services/location_search_service.dart';
+import 'package:memora/domain/interfaces/location_search_service.dart';
 import 'package:memora/domain/value_objects/location_candidate.dart';
 import 'package:memora/domain/value_objects/location.dart';
 

@@ -8,7 +8,7 @@ import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 class GoogleMapView extends ConsumerWidget {
   final List<PinDto> pins;

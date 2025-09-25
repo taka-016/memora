@@ -1,5 +1,5 @@
-import '../../../domain/entities/user.dart';
-import '../../../domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
 
 class CheckMemberExistsUseCase {
   final MemberRepository _memberRepository;

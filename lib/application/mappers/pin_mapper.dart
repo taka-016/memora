@@ -1,5 +1,5 @@
-import '../dtos/pin/pin_dto.dart';
-import '../../domain/entities/pin.dart';
+import 'package:memora/application/dtos/pin/pin_dto.dart';
+import 'package:memora/domain/entities/pin.dart';
 
 class PinMapper {
   static PinDto toDto(Pin entity) {

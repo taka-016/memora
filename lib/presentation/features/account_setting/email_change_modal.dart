@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 class EmailChangeModal extends StatefulWidget {
   final Function(String) onEmailChange;

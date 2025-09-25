@@ -1,5 +1,5 @@
-import '../../../domain/entities/group.dart';
-import '../../../domain/repositories/group_repository.dart';
+import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
 
 class UpdateGroupUsecase {
   final GroupRepository _groupRepository;

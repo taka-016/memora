@@ -1,4 +1,4 @@
-import '../../interfaces/auth_service.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
 
 class UpdateEmailUseCase {
   const UpdateEmailUseCase({required this.authService});

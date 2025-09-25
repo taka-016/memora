@@ -1,6 +1,6 @@
-import '../../../domain/repositories/trip_entry_repository.dart';
-import '../../../domain/repositories/pin_repository.dart';
-import '../../../domain/repositories/trip_participant_repository.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
 
 class DeleteTripEntryUsecase {
   final TripEntryRepository _tripEntryRepository;

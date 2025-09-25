@@ -1,7 +1,7 @@
-import '../../../domain/entities/member.dart';
-import '../../../domain/entities/user.dart';
-import '../../../domain/repositories/member_repository.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/core/app_logger.dart';
 
 class GetOrCreateMemberUseCase {
   final MemberRepository _memberRepository;

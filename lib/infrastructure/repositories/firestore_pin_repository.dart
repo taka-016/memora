@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/pin_repository.dart';
-import '../../domain/entities/pin.dart';
-import '../../domain/value_objects/order_by.dart';
-import '../mappers/firestore_pin_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_pin_mapper.dart';
 
 class FirestorePinRepository implements PinRepository {
   final FirebaseFirestore _firestore;

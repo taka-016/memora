@@ -4,7 +4,7 @@ import 'package:memora/domain/value_objects/location.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/domain/interfaces/current_location_service.dart';
 import '../../../helpers/test_exception.dart';
 
 import 'location_notifier_test.mocks.dart';

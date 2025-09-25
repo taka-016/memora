@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/services/location_search_service.dart';
+import 'package:memora/domain/interfaces/location_search_service.dart';
 import 'package:memora/domain/value_objects/location_candidate.dart';
 
 class CustomSearchBar extends StatefulWidget {

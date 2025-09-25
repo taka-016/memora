@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
-import '../../../domain/entities/member.dart';
-import '../../../domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
 
 class CreateMemberUsecase {
   final MemberRepository _memberRepository;

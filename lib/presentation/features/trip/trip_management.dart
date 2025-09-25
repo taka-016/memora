@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
-import '../../../application/usecases/trip/create_trip_entry_usecase.dart';
-import '../../shared/dialogs/delete_confirm_dialog.dart';
-import '../../../application/usecases/trip/get_trip_entries_usecase.dart';
-import '../../../application/usecases/trip/update_trip_entry_usecase.dart';
-import '../../../application/usecases/trip/delete_trip_entry_usecase.dart';
-import '../../../application/usecases/pin/create_pin_usecase.dart';
-import '../../../application/usecases/pin/get_pins_by_trip_id_usecase.dart';
-import '../../../application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
-import '../../../domain/entities/trip_entry.dart';
-import '../../../domain/repositories/trip_entry_repository.dart';
-import '../../../domain/repositories/pin_repository.dart';
-import '../../../domain/repositories/trip_participant_repository.dart';
-import '../../../infrastructure/repositories/firestore_trip_entry_repository.dart';
-import '../../../infrastructure/repositories/firestore_pin_repository.dart';
-import '../../../infrastructure/repositories/firestore_trip_participant_repository.dart';
+import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
+import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/pin/create_pin_usecase.dart';
+import 'package:memora/application/usecases/pin/get_pins_by_trip_id_usecase.dart';
+import 'package:memora/application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/repositories/pin_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_trip_participant_repository.dart';
+import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 class TripManagement extends StatefulWidget {
   final String groupId;

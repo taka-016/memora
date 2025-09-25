@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group_member.dart';
-import '../../domain/repositories/group_repository.dart';
-import '../../domain/entities/group.dart';
-import '../mappers/firestore_group_mapper.dart';
-import '../mappers/firestore_group_member_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
+import 'package:memora/domain/entities/group.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_group_mapper.dart';
+import 'package:memora/infrastructure/mappers/firestore_group_member_mapper.dart';
 
 class FirestoreGroupRepository implements GroupRepository {
   final FirebaseFirestore _firestore;

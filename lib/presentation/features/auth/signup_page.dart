@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/value_objects/auth_state.dart';
-import '../../notifiers/auth_notifier.dart';
-import '../../../core/validators/password_validator.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/core/validators/password_validator.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 
 class SignupPage extends ConsumerStatefulWidget {
   const SignupPage({super.key});

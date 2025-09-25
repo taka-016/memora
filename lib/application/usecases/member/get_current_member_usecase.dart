@@ -1,6 +1,6 @@
-import '../../../domain/entities/member.dart';
-import '../../../domain/repositories/member_repository.dart';
-import '../../interfaces/auth_service.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
 
 class GetCurrentMemberUseCase {
   final MemberRepository _memberRepository;

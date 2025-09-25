@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../application/usecases/account/reauthenticate_usecase.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 
 class ReauthenticateModal extends StatefulWidget {
   const ReauthenticateModal({

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 String _getWeekdayString(DateTime date) {
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];

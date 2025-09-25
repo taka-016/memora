@@ -1,4 +1,4 @@
-import '../entities/member_invitation.dart';
+import 'package:memora/domain/entities/member_invitation.dart';
 
 abstract class MemberInvitationRepository {
   Future<MemberInvitation?> getByInviteeId(String inviteeId);

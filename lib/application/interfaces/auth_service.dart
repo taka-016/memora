@@ -1,4 +1,4 @@
-import '../../domain/entities/user.dart';
+import 'package:memora/domain/entities/user.dart';
 
 abstract class AuthService {
   Future<User?> getCurrentUser();

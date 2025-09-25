@@ -1,6 +1,6 @@
 import 'package:uuid/uuid.dart';
-import '../../../domain/entities/member_invitation.dart';
-import '../../../domain/repositories/member_invitation_repository.dart';
+import 'package:memora/domain/entities/member_invitation.dart';
+import 'package:memora/domain/repositories/member_invitation_repository.dart';
 
 class CreateOrUpdateMemberInvitationUsecase {
   final MemberInvitationRepository _memberInvitationRepository;

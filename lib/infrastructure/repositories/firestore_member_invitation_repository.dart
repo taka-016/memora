@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/member_invitation.dart';
-import '../../domain/repositories/member_invitation_repository.dart';
-import '../mappers/firestore_member_invitation_mapper.dart';
+import 'package:memora/domain/entities/member_invitation.dart';
+import 'package:memora/domain/repositories/member_invitation_repository.dart';
+import 'package:memora/infrastructure/mappers/firestore_member_invitation_mapper.dart';
 
 class FirestoreMemberInvitationRepository
     implements MemberInvitationRepository {

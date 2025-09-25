@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../shared/dialogs/custom_date_picker_dialog.dart';
+import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
 class DatePickerHelper {
   static Future<DateTime?> showCustomDatePicker(

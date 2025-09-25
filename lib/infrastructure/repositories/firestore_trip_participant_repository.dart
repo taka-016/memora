@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/trip_participant_repository.dart';
-import '../../domain/entities/trip_participant.dart';
-import '../mappers/firestore_trip_participant_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
+import 'package:memora/domain/entities/trip_participant.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_trip_participant_mapper.dart';
 
 class FirestoreTripParticipantRepository implements TripParticipantRepository {
   final FirebaseFirestore _firestore;

@@ -1,4 +1,4 @@
-import '../../interfaces/auth_service.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
 
 class DeleteUserUseCase {
   const DeleteUserUseCase({required this.authService});

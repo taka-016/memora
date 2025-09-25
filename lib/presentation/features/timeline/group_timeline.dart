@@ -8,7 +8,7 @@ import 'package:memora/infrastructure/repositories/firestore_trip_entry_reposito
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/core/app_logger.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../domain/entities/group.dart';
-import '../../../domain/entities/group_member.dart';
-import '../../../domain/entities/member.dart';
+import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group_member.dart';
+import 'package:memora/domain/entities/member.dart';
 
 class GroupEditModal extends StatefulWidget {
   final Group group;

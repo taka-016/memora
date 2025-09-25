@@ -1,7 +1,7 @@
-import '../../../domain/entities/member.dart';
-import '../../../domain/repositories/member_invitation_repository.dart';
-import '../../../domain/repositories/member_repository.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/repositories/member_invitation_repository.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/core/app_logger.dart';
 
 class GetMemberByInvitationCodeUseCase {
   final MemberInvitationRepository _memberInvitationRepository;

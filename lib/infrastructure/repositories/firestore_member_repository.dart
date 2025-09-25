@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/member_repository.dart';
-import '../../domain/entities/member.dart';
-import '../mappers/firestore_member_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/member.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_member_mapper.dart';
 
 class FirestoreMemberRepository implements MemberRepository {
   final FirebaseFirestore _firestore;

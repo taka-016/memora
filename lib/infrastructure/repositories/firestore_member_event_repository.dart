@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/member_event_repository.dart';
-import '../../domain/entities/member_event.dart';
-import '../mappers/firestore_member_event_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/member_event_repository.dart';
+import 'package:memora/domain/entities/member_event.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_member_event_mapper.dart';
 
 class FirestoreMemberEventRepository implements MemberEventRepository {
   final FirebaseFirestore _firestore;

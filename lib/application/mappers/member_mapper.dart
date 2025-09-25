@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../dtos/member/member_dto.dart';
-import '../../domain/entities/member.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/domain/entities/member.dart';
 
 class MemberMapper {
   static MemberDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {

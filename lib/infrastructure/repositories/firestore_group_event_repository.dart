@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/repositories/group_event_repository.dart';
-import '../../domain/entities/group_event.dart';
-import '../mappers/firestore_group_event_mapper.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/repositories/group_event_repository.dart';
+import 'package:memora/domain/entities/group_event.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/firestore_group_event_mapper.dart';
 
 class FirestoreGroupEventRepository implements GroupEventRepository {
   final FirebaseFirestore _firestore;

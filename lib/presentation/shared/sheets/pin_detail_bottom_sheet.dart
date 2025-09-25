@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
-import '../../../domain/services/nearby_location_service.dart';
-import '../../../domain/value_objects/location.dart';
-import '../../../infrastructure/services/google_places_api_nearby_location_service.dart';
-import '../../../env/env.dart';
-import '../../helpers/date_picker_helper.dart';
-import '../../../core/app_logger.dart';
+import 'package:memora/domain/interfaces/nearby_location_service.dart';
+import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
+import 'package:memora/env/env.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends StatefulWidget {
   final PinDto pin;

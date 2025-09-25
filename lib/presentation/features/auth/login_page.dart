@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../domain/value_objects/auth_state.dart';
-import '../../notifiers/auth_notifier.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'signup_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {

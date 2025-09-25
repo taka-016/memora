@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../entities/user.dart';
+import 'package:memora/domain/entities/user.dart';
 
 enum AuthStatus { loading, authenticated, unauthenticated }
 

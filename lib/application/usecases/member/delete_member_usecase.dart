@@ -1,7 +1,7 @@
-import '../../../domain/repositories/member_repository.dart';
-import '../../../domain/repositories/trip_participant_repository.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
-import '../../../domain/repositories/member_event_repository.dart';
+import 'package:memora/domain/repositories/member_event_repository.dart';
 
 class DeleteMemberUsecase {
   final MemberRepository _memberRepository;

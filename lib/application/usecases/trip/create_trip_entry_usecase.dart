@@ -1,5 +1,5 @@
-import '../../../domain/entities/trip_entry.dart';
-import '../../../domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/repositories/trip_entry_repository.dart';
 
 class CreateTripEntryUsecase {
   final TripEntryRepository _tripEntryRepository;

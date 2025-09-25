@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/entities/member_invitation.dart';
+import 'package:memora/domain/entities/member_invitation.dart';
 
 class FirestoreMemberInvitationMapper {
   static MemberInvitation fromFirestore(

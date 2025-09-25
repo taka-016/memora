@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../domain/value_objects/auth_state.dart';
-import '../../domain/entities/user.dart';
-import '../../application/interfaces/auth_service.dart';
-import '../../domain/repositories/member_repository.dart';
-import '../../domain/repositories/member_invitation_repository.dart';
-import '../../infrastructure/services/firebase_auth_service.dart';
-import '../../infrastructure/repositories/firestore_member_repository.dart';
-import '../../infrastructure/repositories/firestore_member_invitation_repository.dart';
-import '../../application/usecases/member/check_member_exists_usecase.dart';
-import '../../application/usecases/member/create_member_from_user_usecase.dart';
-import '../../application/usecases/member/accept_invitation_usecase.dart';
-import '../../core/app_logger.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/repositories/member_invitation_repository.dart';
+import 'package:memora/infrastructure/services/firebase_auth_service.dart';
+import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_member_invitation_repository.dart';
+import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
+import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
+import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) {
   return FirebaseAuthService();

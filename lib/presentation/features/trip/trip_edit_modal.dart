@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import '../../../domain/entities/trip_entry.dart';
-import '../../helpers/date_picker_helper.dart';
-import '../../shared/map_views/map_view_factory.dart';
-import '../../shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 class TripEditModal extends StatefulWidget {
