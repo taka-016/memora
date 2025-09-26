@@ -174,17 +174,39 @@ class _GroupEditModalState extends State<GroupEditModal> {
     final member = _findMemberById(groupMember.memberId);
     final displayName = member?.displayName ?? '不明なメンバー';
 
-    return ListTile(
+    return Container(
       key: Key('member_row_$index'),
-      title: Text(displayName),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: Row(
         children: [
-          _buildChangeMemberButton(index),
-          IconButton(
-            key: Key('delete_member_button_$index'),
-            icon: const Icon(Icons.delete, color: Colors.red),
-            onPressed: () => _removeMemberAt(index),
+          Expanded(
+            child: Row(
+              children: [
+                Text(displayName, style: Theme.of(context).textTheme.bodyLarge),
+                if (groupMember.isAdministrator) _buildAdminBadge(),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                key: Key('admin_toggle_button_$index'),
+                icon: Icon(
+                  groupMember.isAdministrator
+                      ? Icons.admin_panel_settings
+                      : Icons.person,
+                ),
+                color: groupMember.isAdministrator ? Colors.blue : Colors.grey,
+                onPressed: () => _toggleAdministrator(index),
+              ),
+              _buildChangeMemberButton(index),
+              IconButton(
+                key: Key('delete_member_button_$index'),
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => _removeMemberAt(index),
+              ),
+            ],
           ),
         ],
       ),
@@ -248,6 +270,31 @@ class _GroupEditModalState extends State<GroupEditModal> {
       updatedMembers.removeAt(index);
       _group = _group.copyWith(members: updatedMembers);
     });
+  }
+
+  void _toggleAdministrator(int index) {
+    setState(() {
+      final updatedMembers = List<GroupMember>.from(_group.members);
+      updatedMembers[index] = updatedMembers[index].copyWith(
+        isAdministrator: !updatedMembers[index].isAdministrator,
+      );
+      _group = _group.copyWith(members: updatedMembers);
+    });
+  }
+
+  Widget _buildAdminBadge() {
+    return Container(
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.blue,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: const Text(
+        '管理者',
+        style: TextStyle(color: Colors.white, fontSize: 10),
+      ),
+    );
   }
 
   Member? _findMemberById(String memberId) {

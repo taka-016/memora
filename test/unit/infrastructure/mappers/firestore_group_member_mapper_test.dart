@@ -13,14 +13,17 @@ void main() {
     test('FirestoreのDocumentSnapshotからGroupMemberへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('groupmember001');
-      when(
-        mockDoc.data(),
-      ).thenReturn({'groupId': 'group001', 'memberId': 'member001'});
+      when(mockDoc.data()).thenReturn({
+        'groupId': 'group001',
+        'memberId': 'member001',
+        'isAdministrator': true,
+      });
 
       final groupMember = FirestoreGroupMemberMapper.fromFirestore(mockDoc);
 
       expect(groupMember.groupId, 'group001');
       expect(groupMember.memberId, 'member001');
+      expect(groupMember.isAdministrator, true);
     });
 
     test('Firestoreのデータが不足している場合でもデフォルト値を返す', () {
@@ -32,18 +35,21 @@ void main() {
 
       expect(groupMember.groupId, '');
       expect(groupMember.memberId, '');
+      expect(groupMember.isAdministrator, false);
     });
 
     test('GroupMemberからFirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(
         groupId: 'group001',
         memberId: 'member001',
+        isAdministrator: true,
       );
 
       final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
 
       expect(data['groupId'], 'group001');
       expect(data['memberId'], 'member001');
+      expect(data['isAdministrator'], true);
       expect(data['createdAt'], isA<FieldValue>());
     });
 
@@ -54,6 +60,7 @@ void main() {
 
       expect(data['groupId'], '');
       expect(data['memberId'], '');
+      expect(data['isAdministrator'], false);
       expect(data['createdAt'], isA<FieldValue>());
     });
   });

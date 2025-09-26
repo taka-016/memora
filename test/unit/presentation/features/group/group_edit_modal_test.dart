@@ -559,5 +559,155 @@ void main() {
       // 更新ボタンが表示されることを確認
       expect(find.text('更新'), findsOneWidget);
     });
+
+    testWidgets('管理者バッジが管理者メンバーに表示される', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'admin-member',
+          accountId: 'admin-account',
+          ownerId: 'owner-id',
+          displayName: '管理者メンバー',
+          kanjiLastName: '管理',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'かんり',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Kanri',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'admin@example.com',
+          phoneNumber: '090-1111-1111',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+        Member(
+          id: 'normal-member',
+          accountId: 'normal-account',
+          ownerId: 'owner-id',
+          displayName: '一般メンバー',
+          kanjiLastName: '一般',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'いっぱん',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Ippan',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'normal@example.com',
+          phoneNumber: '090-2222-2222',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-group',
+              ownerId: 'owner-id',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(
+                  groupId: 'test-group',
+                  memberId: 'admin-member',
+                  isAdministrator: true,
+                ),
+                GroupMember(
+                  groupId: 'test-group',
+                  memberId: 'normal-member',
+                  isAdministrator: false,
+                ),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 管理者バッジが表示されることを確認
+      expect(find.text('管理者'), findsOneWidget);
+      // 管理者メンバー名が表示されることを確認
+      expect(find.text('管理者メンバー'), findsOneWidget);
+      // 一般メンバー名が表示されることを確認
+      expect(find.text('一般メンバー'), findsOneWidget);
+    });
+
+    testWidgets('管理者トグルボタンをタップすると管理者権限が切り替わる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'owner-id',
+          displayName: 'テストメンバー',
+          kanjiLastName: 'テスト',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'てすと',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Test',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'test@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      Group? savedGroup;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-group',
+              ownerId: 'owner-id',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(
+                  groupId: 'test-group',
+                  memberId: 'member1',
+                  isAdministrator: false,
+                ),
+              ],
+            ),
+            onSave: (group) {
+              savedGroup = group;
+            },
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // 初期状態では管理者バッジが表示されないことを確認
+      expect(find.text('管理者'), findsNothing);
+
+      // 管理者トグルボタンをタップ
+      final toggleButton = find.byKey(const Key('admin_toggle_button_0'));
+      expect(toggleButton, findsOneWidget);
+      await tester.tap(toggleButton);
+      await tester.pumpAndSettle();
+
+      // 管理者バッジが表示されることを確認
+      expect(find.text('管理者'), findsOneWidget);
+
+      // グループ名を入力して保存
+      await tester.enterText(find.byType(TextFormField).first, 'テストグループ');
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      // 保存されたグループの管理者権限が更新されていることを確認
+      expect(savedGroup, isNotNull);
+      expect(savedGroup!.members.first.isAdministrator, isTrue);
+    });
   });
 }

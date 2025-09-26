@@ -7,6 +7,7 @@ class FirestoreGroupMemberMapper {
     return GroupMember(
       groupId: data?['groupId'] as String? ?? '',
       memberId: data?['memberId'] as String? ?? '',
+      isAdministrator: data?['isAdministrator'] as bool? ?? false,
     );
   }
 
@@ -14,6 +15,7 @@ class FirestoreGroupMemberMapper {
     return {
       'groupId': groupMember.groupId,
       'memberId': groupMember.memberId,
+      'isAdministrator': groupMember.isAdministrator,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
