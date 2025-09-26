@@ -19,6 +19,8 @@ class GroupEditModal extends StatefulWidget {
   State<GroupEditModal> createState() => _GroupEditModalState();
 }
 
+enum _MemberAction { toggleAdministrator, changeMember, removeMember }
+
 class _GroupEditModalState extends State<GroupEditModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
@@ -173,6 +175,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
     final groupMember = _group.members[index];
     final member = _findMemberById(groupMember.memberId);
     final displayName = member?.displayName ?? '不明なメンバー';
+    final changeCandidates = _getChangeCandidates(index);
 
     return Container(
       key: Key('member_row_$index'),
@@ -180,36 +183,48 @@ class _GroupEditModalState extends State<GroupEditModal> {
       child: Row(
         children: [
           Expanded(
-            child: Row(
-              children: [
-                Text(displayName, style: Theme.of(context).textTheme.bodyLarge),
-                if (groupMember.isAdministrator) _buildAdminBadge(),
-              ],
+            child: Text(
+              displayName,
+              style: Theme.of(context).textTheme.bodyLarge,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                key: Key('admin_toggle_button_$index'),
-                icon: Icon(
-                  groupMember.isAdministrator
-                      ? Icons.admin_panel_settings
-                      : Icons.person,
-                ),
-                color: groupMember.isAdministrator ? Colors.blue : Colors.grey,
-                onPressed: () => _toggleAdministrator(index),
-              ),
-              _buildChangeMemberButton(index),
-              IconButton(
-                key: Key('delete_member_button_$index'),
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _removeMemberAt(index),
-              ),
-            ],
-          ),
+          const SizedBox(width: 12),
+          _buildAdminBadgeSlot(index, groupMember.isAdministrator),
+          const SizedBox(width: 8),
+          _buildMemberActionMenu(index, groupMember, changeCandidates),
         ],
       ),
+    );
+  }
+
+  Widget _buildMemberActionMenu(
+    int index,
+    GroupMember groupMember,
+    List<Member> changeCandidates,
+  ) {
+    return PopupMenuButton<_MemberAction>(
+      key: Key('member_action_menu_$index'),
+      icon: const Icon(Icons.more_vert),
+      tooltip: '操作メニュー',
+      onSelected: (action) =>
+          _handleMemberAction(index, action, changeCandidates),
+      itemBuilder: (context) => [
+        PopupMenuItem<_MemberAction>(
+          value: _MemberAction.toggleAdministrator,
+          child: Text(groupMember.isAdministrator ? '管理者を解除' : '管理者に設定'),
+        ),
+        PopupMenuItem<_MemberAction>(
+          value: _MemberAction.changeMember,
+          enabled: changeCandidates.isNotEmpty,
+          child: const Text('メンバーを変更'),
+        ),
+        const PopupMenuItem<_MemberAction>(
+          value: _MemberAction.removeMember,
+          child: Text('メンバーを削除'),
+        ),
+      ],
     );
   }
 
@@ -238,38 +253,42 @@ class _GroupEditModalState extends State<GroupEditModal> {
     );
   }
 
-  Widget _buildChangeMemberButton(int index) {
-    final changeCandidates = _getChangeCandidates(index);
-
-    return Builder(
-      builder: (buttonContext) => IconButton(
-        key: Key('change_member_button_$index'),
-        icon: const Icon(Icons.edit),
-        tooltip: 'メンバーを変更',
-        onPressed: changeCandidates.isEmpty
-            ? null
-            : () => _showMemberSelectionMenu(buttonContext, changeCandidates, (
-                selectedMemberId,
-              ) {
-                setState(() {
-                  final updatedMembers = List<GroupMember>.from(_group.members);
-                  updatedMembers[index] = GroupMember(
-                    groupId: _group.id,
-                    memberId: selectedMemberId,
-                  );
-                  _group = _group.copyWith(members: updatedMembers);
-                });
-              }),
-      ),
-    );
-  }
-
   void _removeMemberAt(int index) {
     setState(() {
       final updatedMembers = List<GroupMember>.from(_group.members);
       updatedMembers.removeAt(index);
       _group = _group.copyWith(members: updatedMembers);
     });
+  }
+
+  void _handleMemberAction(
+    int index,
+    _MemberAction action,
+    List<Member> changeCandidates,
+  ) {
+    switch (action) {
+      case _MemberAction.toggleAdministrator:
+        _toggleAdministrator(index);
+        break;
+      case _MemberAction.changeMember:
+        if (changeCandidates.isEmpty) {
+          return;
+        }
+        _showMemberSelectionMenu(context, changeCandidates, (selectedMemberId) {
+          setState(() {
+            final updatedMembers = List<GroupMember>.from(_group.members);
+            updatedMembers[index] = GroupMember(
+              groupId: _group.id,
+              memberId: selectedMemberId,
+            );
+            _group = _group.copyWith(members: updatedMembers);
+          });
+        });
+        break;
+      case _MemberAction.removeMember:
+        _removeMemberAt(index);
+        break;
+    }
   }
 
   void _toggleAdministrator(int index) {
@@ -280,6 +299,17 @@ class _GroupEditModalState extends State<GroupEditModal> {
       );
       _group = _group.copyWith(members: updatedMembers);
     });
+  }
+
+  Widget _buildAdminBadgeSlot(int index, bool isAdministrator) {
+    const badgeSlotWidth = 72.0;
+    return SizedBox(
+      key: Key('admin_badge_slot_$index'),
+      width: badgeSlotWidth,
+      child: isAdministrator
+          ? Align(alignment: Alignment.centerLeft, child: _buildAdminBadge())
+          : const SizedBox.shrink(),
+    );
   }
 
   Widget _buildAdminBadge() {
