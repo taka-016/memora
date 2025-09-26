@@ -3,6 +3,7 @@
 ## テーブルレイアウト
 
 - [x] pinsテーブルにlocationNameカラムを追加する
+- [x] group_membersにisAdministratorを追加する
 
 ## リポジトリ
 
