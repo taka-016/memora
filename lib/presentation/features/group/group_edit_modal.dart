@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/presentation/helpers/focus_killer.dart';
 
 class GroupEditModal extends StatefulWidget {
   final Group group;
@@ -53,21 +54,26 @@ class _GroupEditModalState extends State<GroupEditModal> {
       ),
       child: Material(
         type: MaterialType.card,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.95,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildTitle(isEditing),
-              const SizedBox(height: 20),
-              Expanded(child: _buildScrollableContent()),
-              const SizedBox(height: 24),
-              _buildActionButtons(isEditing),
-            ],
-          ),
+        child: Stack(
+          children: [
+            FocusKiller.createDummyFocusWidget(),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.95,
+              height: MediaQuery.of(context).size.height * 0.8,
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildTitle(isEditing),
+                  const SizedBox(height: 20),
+                  Expanded(child: _buildScrollableContent()),
+                  const SizedBox(height: 24),
+                  _buildActionButtons(isEditing),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -165,13 +171,13 @@ class _GroupEditModalState extends State<GroupEditModal> {
       height: 250,
       child: ListView.separated(
         itemCount: _group.members.length,
-        itemBuilder: (context, index) => _buildMemberListTile(index),
+        itemBuilder: (context, index) => _buildMemberContainer(index),
         separatorBuilder: (context, index) => const Divider(height: 1),
       ),
     );
   }
 
-  Widget _buildMemberListTile(int index) {
+  Widget _buildMemberContainer(int index) {
     final groupMember = _group.members[index];
     final member = _findMemberById(groupMember.memberId);
     final displayName = member?.displayName ?? '不明なメンバー';
@@ -212,6 +218,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       key: Key('member_action_menu_$index'),
       icon: const Icon(Icons.more_vert),
       tooltip: '操作メニュー',
+      onOpened: () => FocusKiller.killFocus(),
       onSelected: (action) =>
           _handleMemberAction(index, action, changeCandidates),
       itemBuilder: (context) => [
@@ -244,17 +251,23 @@ class _GroupEditModalState extends State<GroupEditModal> {
         label: const Text('追加'),
         onPressed: addableMembers.isEmpty
             ? null
-            : () => _showMemberSelectionMenu(addableMembers, (
-                selectedMemberId,
-              ) {
-                setState(() {
-                  final updatedMembers = List<GroupMember>.from(_group.members);
-                  updatedMembers.add(
-                    GroupMember(groupId: _group.id, memberId: selectedMemberId),
-                  );
-                  _group = _group.copyWith(members: updatedMembers);
+            : () {
+                FocusKiller.killFocus();
+                _showMemberSelectionMenu(addableMembers, (selectedMemberId) {
+                  setState(() {
+                    final updatedMembers = List<GroupMember>.from(
+                      _group.members,
+                    );
+                    updatedMembers.add(
+                      GroupMember(
+                        groupId: _group.id,
+                        memberId: selectedMemberId,
+                      ),
+                    );
+                    _group = _group.copyWith(members: updatedMembers);
+                  });
                 });
-              }),
+              },
       ),
     );
   }
@@ -419,7 +432,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
       ),
     );
 
-    _handleMemberSelectionResult(selectedMemberId, onSelected);
+    if (selectedMemberId != null) {
+      onSelected(selectedMemberId);
+    }
   }
 
   Widget _buildActionButtons(bool isEditing) {
@@ -544,21 +559,5 @@ class _GroupEditModalState extends State<GroupEditModal> {
         );
       },
     );
-  }
-
-  void _handleMemberSelectionResult(
-    String? selectedMemberId,
-    ValueChanged<String> onSelected,
-  ) {
-    if (selectedMemberId != null) {
-      onSelected(selectedMemberId);
-    }
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          FocusScope.of(context).unfocus();
-        }
-      });
-    }
   }
 }
