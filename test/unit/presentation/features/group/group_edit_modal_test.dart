@@ -202,7 +202,7 @@ void main() {
       expect(find.text('メンバー1'), findsOneWidget);
     });
 
-    testWidgets('変更ボタンでメンバーを入れ替えられる', (WidgetTester tester) async {
+    testWidgets('操作メニューからメンバーを入れ替えられる', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -261,10 +261,11 @@ void main() {
         ),
       );
 
-      await tester.ensureVisible(
-        find.byKey(const Key('change_member_button_0')),
-      );
-      await tester.tap(find.byKey(const Key('change_member_button_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('メンバーを変更'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('メンバー2').first);
@@ -273,7 +274,7 @@ void main() {
       expect(find.text('メンバー2'), findsOneWidget);
     });
 
-    testWidgets('削除ボタンでメンバーを削除できる', (WidgetTester tester) async {
+    testWidgets('操作メニューからメンバーを削除できる', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -313,13 +314,110 @@ void main() {
         ),
       );
 
-      await tester.ensureVisible(
-        find.byKey(const Key('delete_member_button_0')),
-      );
-      await tester.tap(find.byKey(const Key('delete_member_button_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('メンバーを削除'));
       await tester.pump();
 
       expect(find.text('メンバー1'), findsNothing);
+    });
+
+    testWidgets('変更候補がない場合はメンバー変更メニューが無効になる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      final changeMenuItem = tester.widget<PopupMenuItem>(
+        find.byKey(const Key('member_change_action_0')),
+      );
+
+      expect(changeMenuItem.enabled, isFalse);
+    });
+
+    testWidgets('メンバー名が長い場合に省略表示される', (WidgetTester tester) async {
+      final longName = 'とても長い名前のテストメンバー' * 3;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+            ),
+            onSave: (group) {},
+            availableMembers: [
+              Member(
+                id: 'member1',
+                accountId: 'account1',
+                ownerId: 'admin-id',
+                displayName: longName,
+                kanjiLastName: '長い',
+                kanjiFirstName: '名前',
+                hiraganaLastName: 'ながい',
+                hiraganaFirstName: 'なまえ',
+                firstName: 'Long',
+                lastName: 'Name',
+                gender: 'その他',
+                birthday: DateTime(1990, 1, 1),
+                email: 'long@example.com',
+                phoneNumber: '090-0000-0000',
+                type: 'member',
+                passportNumber: null,
+                passportExpiration: null,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final textWidget = tester.widget<Text>(find.text(longName));
+      expect(textWidget.maxLines, 1);
+      expect(textWidget.overflow, TextOverflow.ellipsis);
     });
 
     testWidgets('保存時に選択されたメンバーがGroupに含まれる', (WidgetTester tester) async {
@@ -638,7 +736,102 @@ void main() {
       expect(find.text('一般メンバー'), findsOneWidget);
     });
 
-    testWidgets('管理者トグルボタンをタップすると管理者権限が切り替わる', (WidgetTester tester) async {
+    testWidgets('管理者バッジの表示位置が固定される', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'admin-member',
+          accountId: 'admin-account',
+          ownerId: 'owner-id',
+          displayName: '管理者メンバー',
+          kanjiLastName: '管理',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'かんり',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Kanri',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'admin@example.com',
+          phoneNumber: '090-1111-1111',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+        Member(
+          id: 'normal-member',
+          accountId: 'normal-account',
+          ownerId: 'owner-id',
+          displayName: '一般メンバー',
+          kanjiLastName: '一般',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'いっぱん',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Ippan',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'normal@example.com',
+          phoneNumber: '090-2222-2222',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-group',
+              ownerId: 'owner-id',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(
+                  groupId: 'test-group',
+                  memberId: 'admin-member',
+                  isAdministrator: true,
+                ),
+                GroupMember(
+                  groupId: 'test-group',
+                  memberId: 'normal-member',
+                  isAdministrator: false,
+                ),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      final adminSlot = tester.widget<SizedBox>(
+        find.byKey(const Key('admin_badge_slot_0')),
+      );
+      final normalSlot = tester.widget<SizedBox>(
+        find.byKey(const Key('admin_badge_slot_1')),
+      );
+
+      expect(adminSlot.width, equals(normalSlot.width));
+      expect(adminSlot.width, isNotNull);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('admin_badge_slot_0')),
+          matching: find.text('管理者'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('admin_badge_slot_1')),
+          matching: find.text('管理者'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('操作メニューから管理者権限を切り替えられる', (WidgetTester tester) async {
       final availableMembers = [
         Member(
           id: 'member1',
@@ -691,10 +884,11 @@ void main() {
       // 初期状態では管理者バッジが表示されないことを確認
       expect(find.text('管理者'), findsNothing);
 
-      // 管理者トグルボタンをタップ
-      final toggleButton = find.byKey(const Key('admin_toggle_button_0'));
-      expect(toggleButton, findsOneWidget);
-      await tester.tap(toggleButton);
+      // 操作メニューから管理者権限を付与
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('管理者に設定'));
       await tester.pumpAndSettle();
 
       // 管理者バッジが表示されることを確認
