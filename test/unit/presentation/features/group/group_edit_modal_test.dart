@@ -324,6 +324,57 @@ void main() {
       expect(find.text('メンバー1'), findsNothing);
     });
 
+    testWidgets('変更候補がない場合はメンバー変更メニューが無効になる', (WidgetTester tester) async {
+      final availableMembers = [
+        Member(
+          id: 'member1',
+          accountId: 'account1',
+          ownerId: 'admin-id',
+          displayName: 'メンバー1',
+          kanjiLastName: '田中',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'たなか',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Tanaka',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'taro@example.com',
+          phoneNumber: '090-1234-5678',
+          type: 'member',
+          passportNumber: null,
+          passportExpiration: null,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: Group(
+              id: 'test-id',
+              ownerId: 'admin-id',
+              name: 'テストグループ',
+              members: const [
+                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      final changeMenuItem = tester.widget<PopupMenuItem>(
+        find.byKey(const Key('member_change_action_0')),
+      );
+
+      expect(changeMenuItem.enabled, isFalse);
+    });
+
     testWidgets('メンバー名が長い場合に省略表示される', (WidgetTester tester) async {
       final longName = 'とても長い名前のテストメンバー' * 3;
 

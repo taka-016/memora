@@ -204,6 +204,10 @@ class _GroupEditModalState extends State<GroupEditModal> {
     GroupMember groupMember,
     List<Member> changeCandidates,
   ) {
+    final hasAlternative = changeCandidates
+        .where((candidate) => candidate.id != groupMember.memberId)
+        .isNotEmpty;
+
     return PopupMenuButton<_MemberAction>(
       key: Key('member_action_menu_$index'),
       icon: const Icon(Icons.more_vert),
@@ -212,12 +216,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
           _handleMemberAction(index, action, changeCandidates),
       itemBuilder: (context) => [
         PopupMenuItem<_MemberAction>(
+          key: Key('member_toggle_admin_action_$index'),
           value: _MemberAction.toggleAdministrator,
           child: Text(groupMember.isAdministrator ? '管理者を解除' : '管理者に設定'),
         ),
         PopupMenuItem<_MemberAction>(
+          key: Key('member_change_action_$index'),
           value: _MemberAction.changeMember,
-          enabled: changeCandidates.isNotEmpty,
+          enabled: hasAlternative,
           child: const Text('メンバーを変更'),
         ),
         const PopupMenuItem<_MemberAction>(
@@ -238,7 +244,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         label: const Text('追加'),
         onPressed: addableMembers.isEmpty
             ? null
-            : () => _showMemberSelectionMenu(buttonContext, addableMembers, (
+            : () => _showMemberSelectionMenu(addableMembers, (
                 selectedMemberId,
               ) {
                 setState(() {
@@ -271,10 +277,15 @@ class _GroupEditModalState extends State<GroupEditModal> {
         _toggleAdministrator(index);
         break;
       case _MemberAction.changeMember:
-        if (changeCandidates.isEmpty) {
+        final currentMemberId = _group.members[index].memberId;
+        final hasAlternative = changeCandidates
+            .where((candidate) => candidate.id != currentMemberId)
+            .isNotEmpty;
+
+        if (!hasAlternative) {
           return;
         }
-        _showMemberSelectionMenu(context, changeCandidates, (selectedMemberId) {
+        _showMemberSelectionMenu(changeCandidates, (selectedMemberId) {
           setState(() {
             final updatedMembers = List<GroupMember>.from(_group.members);
             updatedMembers[index] = GroupMember(
@@ -345,18 +356,32 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   List<Member> _getChangeCandidates(int index) {
     final currentMemberId = _group.members[index].memberId;
-    final selectedMemberIds = _group.members.map((gm) => gm.memberId).toSet();
+    final selectedMemberIds = _group.members
+        .asMap()
+        .entries
+        .where((entry) => entry.key != index)
+        .map((entry) => entry.value.memberId)
+        .toSet();
 
-    return widget.availableMembers.where((member) {
-      if (member.id == currentMemberId) {
-        return true;
-      }
-      return !selectedMemberIds.contains(member.id);
-    }).toList();
+    final candidates = <Member>[];
+    final currentMember = _findMemberById(currentMemberId);
+    if (currentMember != null) {
+      candidates.add(currentMember);
+    }
+
+    candidates.addAll(
+      widget.availableMembers.where((member) {
+        if (member.id == currentMemberId) {
+          return false;
+        }
+        return !selectedMemberIds.contains(member.id);
+      }),
+    );
+
+    return candidates;
   }
 
   Future<void> _showMemberSelectionMenu(
-    BuildContext anchorContext,
     List<Member> candidates,
     ValueChanged<String> onSelected,
   ) async {
