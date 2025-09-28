@@ -240,7 +240,7 @@ class _TopPageState extends State<TopPage> {
     return Consumer(
       builder: (context, ref, child) {
         return Scaffold(
-          appBar: _buildAppBar(),
+          appBar: _buildAppBar(context),
           drawer: _buildDrawer(context, ref),
           body: _buildBody(ref),
         );
@@ -248,8 +248,15 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  AppBar _buildAppBar() {
-    return AppBar(title: const Text('memora'), leading: _buildMenuButton());
+  AppBar _buildAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return AppBar(
+      title: const Text('memora'),
+      leading: _buildMenuButton(),
+      backgroundColor: colorScheme.primary,
+      foregroundColor: colorScheme.onPrimary,
+    );
   }
 
   Widget _buildMenuButton() {
