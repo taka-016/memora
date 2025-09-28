@@ -86,6 +86,10 @@ class _MyAppState extends State<MyApp> {
         title: 'memora',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.lightBlue,
+            foregroundColor: Colors.white,
+          ),
         ),
         locale: const Locale('ja'),
         supportedLocales: const [Locale('ja'), Locale('en')],

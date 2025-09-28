@@ -11,7 +11,6 @@ import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
-import 'package:memora/presentation/shared/headers/user_drawer_header.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
@@ -240,7 +239,7 @@ class _TopPageState extends State<TopPage> {
     return Consumer(
       builder: (context, ref, child) {
         return Scaffold(
-          appBar: _buildAppBar(),
+          appBar: _buildAppBar(context),
           drawer: _buildDrawer(context, ref),
           body: _buildBody(ref),
         );
@@ -248,7 +247,7 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  AppBar _buildAppBar() {
+  AppBar _buildAppBar(BuildContext context) {
     return AppBar(title: const Text('memora'), leading: _buildMenuButton());
   }
 
@@ -281,7 +280,7 @@ class _TopPageState extends State<TopPage> {
       builder: (context, ref, child) {
         final authState = ref.watch(authNotifierProvider);
         if (authState.status == AuthStatus.authenticated) {
-          return UserDrawerHeader(email: authState.user!.loginId);
+          return _buildUserDrawerHeader(context, authState.user!.loginId);
         } else {
           return _buildDefaultHeader(context);
         }
@@ -289,15 +288,39 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Widget _buildDefaultHeader(BuildContext context) {
+  Widget _buildUserDrawerHeader(BuildContext context, String email) {
+    final appBarTheme = Theme.of(context).appBarTheme;
+
     return DrawerHeader(
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+      decoration: BoxDecoration(color: appBarTheme.backgroundColor),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'memora',
+            style: TextStyle(color: appBarTheme.foregroundColor, fontSize: 24),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            email,
+            style: TextStyle(
+              color: appBarTheme.foregroundColor?.withValues(alpha: 0.7),
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDefaultHeader(BuildContext context) {
+    final appBarTheme = Theme.of(context).appBarTheme;
+
+    return DrawerHeader(
+      decoration: BoxDecoration(color: appBarTheme.backgroundColor),
       child: Text(
         'memora',
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onPrimary,
-          fontSize: 24,
-        ),
+        style: TextStyle(color: appBarTheme.foregroundColor, fontSize: 24),
       ),
     );
   }

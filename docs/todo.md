@@ -79,6 +79,7 @@
   - [x] NavigationNotifierクラスを作成する（lib/application/controllers/navigation_controller.dart）
   - [x] GroupTimelineNavigationNotifierクラスを作成する（lib/application/controllers/group_timeline_navigation_controller.dart）
   - [x] TopPageをリファクタリングしてコントローラーを使用する形に変更する
+- [x] トップページのヘッダ色をハンバーガーメニューのヘッダ色と合わせる
 
 ## アカウント管理
 

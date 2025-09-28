@@ -3,7 +3,6 @@ import 'package:memora/domain/entities/trip_entry.dart';
 
 class TripCell extends StatelessWidget {
   static const double _itemHeight = 32.0;
-  static const TextStyle _textStyle = TextStyle(fontSize: 12.0);
 
   final List<TripEntry> trips;
   final double availableHeight;
@@ -22,19 +21,24 @@ class TripCell extends StatelessWidget {
       return Container();
     }
 
+    final textStyle = TextStyle(
+      fontSize: 12.0,
+      color: Theme.of(context).colorScheme.onSurface,
+    );
+
     return Container(
       height: availableHeight,
       width: availableWidth,
       padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return _buildTripList(constraints);
+          return _buildTripList(constraints, textStyle);
         },
       ),
     );
   }
 
-  Widget _buildTripList(BoxConstraints constraints) {
+  Widget _buildTripList(BoxConstraints constraints, TextStyle textStyle) {
     final availableLines = (constraints.maxHeight / _itemHeight).floor();
     final remainingHeight = _itemHeight / 2;
 
@@ -45,7 +49,7 @@ class TripCell extends StatelessWidget {
     if (trips.length <= availableLines) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: trips.map((trip) => _buildTripItem(trip)).toList(),
+        children: trips.map((trip) => _buildTripItem(trip, textStyle)).toList(),
       );
     } else {
       final displayCount =
@@ -53,14 +57,16 @@ class TripCell extends StatelessWidget {
       final remainingCount = trips.length - displayCount;
 
       final displayTrips = trips.take(displayCount).toList();
-      final items = displayTrips.map((trip) => _buildTripItem(trip)).toList();
+      final items = displayTrips
+          .map((trip) => _buildTripItem(trip, textStyle))
+          .toList();
 
       items.add(
         SizedBox(
           height: remainingHeight,
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Text('...他$remainingCount件', style: _textStyle),
+            child: Text('...他$remainingCount件', style: textStyle),
           ),
         ),
       );
@@ -72,7 +78,7 @@ class TripCell extends StatelessWidget {
     }
   }
 
-  Widget _buildTripItem(TripEntry trip) {
+  Widget _buildTripItem(TripEntry trip, TextStyle textStyle) {
     final year = trip.tripStartDate.year;
     final month = trip.tripStartDate.month.toString().padLeft(2, '0');
     final day = trip.tripStartDate.day.toString().padLeft(2, '0');
@@ -87,7 +93,7 @@ class TripCell extends StatelessWidget {
           Flexible(
             child: Text(
               formattedDate,
-              style: _textStyle.copyWith(fontWeight: FontWeight.w500),
+              style: textStyle.copyWith(fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
@@ -97,7 +103,7 @@ class TripCell extends StatelessWidget {
               padding: const EdgeInsets.only(left: 8.0),
               child: Text(
                 trip.tripName ?? '旅行名未設定',
-                style: _textStyle,
+                style: textStyle,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),

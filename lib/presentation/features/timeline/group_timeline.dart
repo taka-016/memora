@@ -42,9 +42,10 @@ class _GroupTimelineState extends State<GroupTimeline> {
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
 
+  late Color _borderColor;
+
   static const double _dataRowHeight = 100.0;
   static const double _headerRowHeight = 56.0;
-  static const Color _borderColor = Colors.grey;
   static const double _borderWidth = 1.0;
 
   static const double _fixedColumnWidth = 100.0;
@@ -157,6 +158,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
 
   @override
   Widget build(BuildContext context) {
+    _borderColor = Theme.of(context).colorScheme.outlineVariant;
+
     return Container(
       key: const Key('group_timeline'),
       child: Column(
@@ -275,6 +278,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
   }
 
   Widget _buildDataRow(int rowIndex, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Stack(
       children: [
         Row(
@@ -356,11 +361,13 @@ class _GroupTimelineState extends State<GroupTimeline> {
                   child: Container(
                     width: _fixedColumnWidth,
                     height: 50,
-                    decoration: const BoxDecoration(color: Colors.transparent),
-                    child: const Icon(
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(0, 255, 0, 0),
+                    ),
+                    child: Icon(
                       Icons.drag_handle,
                       size: 40,
-                      color: Colors.grey,
+                      color: colorScheme.outline,
                     ),
                   ),
                 ),
@@ -381,6 +388,7 @@ class _GroupTimelineState extends State<GroupTimeline> {
             : _yearColumnWidth;
 
         final isTripRow = rowIndex == 0;
+        final isGroupEventRow = rowIndex == 1;
         final isYearColumn = columnIndex != 0 && columnIndex != columnCount - 1;
 
         return SizedBox(
@@ -397,8 +405,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
                   bottom: BorderSide(color: _borderColor, width: _borderWidth),
                   right: BorderSide(color: _borderColor, width: _borderWidth),
                 ),
-                color: isTripRow && isYearColumn
-                    ? Colors.blue.shade50
+                color: isTripRow || isGroupEventRow
+                    ? Colors.lightBlue.shade50
                     : Colors.transparent,
               ),
               child: isTripRow && isYearColumn
