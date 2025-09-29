@@ -50,7 +50,7 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntries(),
+        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => []);
       when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
@@ -74,7 +74,7 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntries(),
+        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => []);
       when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
@@ -95,7 +95,7 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntries(),
+        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => []);
       when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
@@ -138,7 +138,7 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntries(),
+        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => tripEntries);
       when(
         mockGroupRepository.deleteGroup(groupId),
@@ -157,7 +157,7 @@ void main() {
       await usecase.execute(groupId);
 
       // assert
-      verify(mockTripEntryRepository.getTripEntries());
+      verify(mockTripEntryRepository.getTripEntriesByGroupId(groupId));
       verify(mockPinRepository.deletePinsByTripId('trip1'));
       verify(mockPinRepository.deletePinsByTripId('trip2'));
       verify(

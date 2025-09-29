@@ -12,6 +12,7 @@
 - [x] GetManagedGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
 - [x] GroupをルートエンティティとしてGroupMemberを内部エンティティに加える
 - [x] TripEntryの集約に訪問場所と詳細予定を追加しリポジトリを対応させる
+- [x] getTripEntries→getTripEntriesByGroupIdに変更
 
 ## マップの表示
 

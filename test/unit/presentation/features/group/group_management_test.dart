@@ -448,7 +448,7 @@ void main() {
       ).thenThrow(TestException('削除エラー'));
 
       when(
-        mockTripEntryRepository.getTripEntries(),
+        mockTripEntryRepository.getTripEntriesByGroupId('group-1'),
       ).thenAnswer((_) async => tripEntries);
 
       // Act

@@ -28,15 +28,18 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
-  Future<List<TripEntry>> getTripEntries() async {
+  Future<List<TripEntry>> getTripEntriesByGroupId(String groupId) async {
     try {
-      final snapshot = await _firestore.collection('trip_entries').get();
+      final snapshot = await _firestore
+          .collection('trip_entries')
+          .where('groupId', isEqualTo: groupId)
+          .get();
       return snapshot.docs
           .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(
-        'FirestoreTripEntryRepository.getTripEntries: ${e.toString()}',
+        'FirestoreTripEntryRepository.getTripEntriesByGroupId: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );

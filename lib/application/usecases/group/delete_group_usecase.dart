@@ -20,12 +20,11 @@ class DeleteGroupUsecase {
   );
 
   Future<void> execute(String groupId) async {
-    final tripEntries = await _tripEntryRepository.getTripEntries();
-    final targetTripEntries = tripEntries.where(
-      (entry) => entry.groupId == groupId,
+    final tripEntries = await _tripEntryRepository.getTripEntriesByGroupId(
+      groupId,
     );
     await Future.wait([
-      for (final entry in targetTripEntries) ...[
+      for (final entry in tripEntries) ...[
         _pinRepository.deletePinsByTripId(entry.id),
         _tripParticipantRepository.deleteTripParticipantsByTripId(entry.id),
       ],

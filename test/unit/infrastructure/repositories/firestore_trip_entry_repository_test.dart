@@ -76,9 +76,15 @@ void main() {
       },
     );
 
-    test('getTripEntriesがFirestoreからTripEntryのリストを返す', () async {
-      when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
+    test('getTripEntriesByGroupIdがFirestoreからTripEntryのリストを返す', () async {
+      const groupId = 'group001';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
       when(mockDoc1.id).thenReturn('trip001');
       when(mockDoc1.data()).thenReturn({
         'groupId': 'group001',
@@ -87,32 +93,21 @@ void main() {
         'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
         'tripMemo': 'テストメモ1',
       });
-      when(mockDoc2.id).thenReturn('trip002');
-      when(mockDoc2.data()).thenReturn({
-        'groupId': 'group002',
-        'tripStartDate': Timestamp.fromDate(DateTime(2025, 7, 1)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2025, 7, 5)),
-      });
 
-      final result = await repository.getTripEntries();
+      final result = await repository.getTripEntriesByGroupId(groupId);
 
-      expect(result.length, 2);
+      expect(result.length, 1);
       expect(result[0].id, 'trip001');
       expect(result[0].groupId, 'group001');
       expect(result[0].tripName, 'テスト旅行1');
       expect(result[0].tripMemo, 'テストメモ1');
       expect(result[0].pins, isEmpty);
-      expect(result[1].id, 'trip002');
-      expect(result[1].groupId, 'group002');
-      expect(result[1].tripName, null);
-      expect(result[1].tripMemo, null);
-      expect(result[1].pins, isEmpty);
     });
 
-    test('getTripEntriesがエラー時に空のリストを返す', () async {
+    test('getTripEntriesByGroupIdがエラー時に空のリストを返す', () async {
       when(mockCollection.get()).thenThrow(TestException('Firestore error'));
 
-      final result = await repository.getTripEntries();
+      final result = await repository.getTripEntriesByGroupId('group001');
 
       expect(result, isEmpty);
     });
