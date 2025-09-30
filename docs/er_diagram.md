@@ -17,7 +17,7 @@ erDiagram
     }
     pins {
         string id PK
-        string pinId "NOT NULL"
+        string pinId UK "NOT NULL"
         string tripId FK
         string groupId FK
         number latitude "NOT NULL"
@@ -26,6 +26,14 @@ erDiagram
         timestamp visitStartDate
         timestamp visitEndDate
         string visitMemo
+    }
+    pin_details {
+        string id PK
+        string pinId FK "NOT NULL"
+        string name
+        timestamp startDate
+        timestamp endDate
+        string memo
     }
     groups {
         string id PK
@@ -97,4 +105,5 @@ erDiagram
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
+    pins ||--o{ pin_details : "pinId → pinId"
 ```

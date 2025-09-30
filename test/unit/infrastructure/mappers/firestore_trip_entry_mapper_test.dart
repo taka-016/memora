@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/infrastructure/mappers/firestore_trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 
@@ -124,6 +125,69 @@ void main() {
       expect(data['tripEndDate'], isA<Timestamp>());
       expect(data['tripMemo'], null);
       expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('pinsパラメータを指定した場合にTripEntryにPinが含まれる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('trip004');
+      when(mockDoc.data()).thenReturn({
+        'groupId': 'group004',
+        'tripName': 'Pin付き旅行',
+        'tripStartDate': Timestamp.fromDate(DateTime(2025, 8, 1)),
+        'tripEndDate': Timestamp.fromDate(DateTime(2025, 8, 10)),
+        'tripMemo': 'Pin含むテスト',
+      });
+
+      final pins = [
+        Pin(
+          id: 'pin001',
+          pinId: 'pin-doc-001',
+          tripId: 'trip004',
+          groupId: 'group004',
+          latitude: 35.681236,
+          longitude: 139.767125,
+          locationName: '東京駅',
+          visitStartDate: DateTime(2025, 8, 2, 10),
+          visitEndDate: DateTime(2025, 8, 2, 12),
+        ),
+        Pin(
+          id: 'pin002',
+          pinId: 'pin-doc-002',
+          tripId: 'trip004',
+          groupId: 'group004',
+          latitude: 34.701909,
+          longitude: 135.494977,
+          locationName: '大阪駅',
+          visitStartDate: DateTime(2025, 8, 5, 14),
+          visitEndDate: DateTime(2025, 8, 5, 16),
+        ),
+      ];
+
+      final tripEntry = FirestoreTripEntryMapper.fromFirestore(
+        mockDoc,
+        pins: pins,
+      );
+
+      expect(tripEntry.pins, hasLength(2));
+      expect(tripEntry.pins[0].locationName, '東京駅');
+      expect(tripEntry.pins[0].latitude, 35.681236);
+      expect(tripEntry.pins[1].locationName, '大阪駅');
+      expect(tripEntry.pins[1].latitude, 34.701909);
+    });
+
+    test('pinsパラメータを指定しない場合は空のリストになる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('trip005');
+      when(mockDoc.data()).thenReturn({
+        'groupId': 'group005',
+        'tripName': 'Pin無し旅行',
+        'tripStartDate': Timestamp.fromDate(DateTime(2025, 9, 1)),
+        'tripEndDate': Timestamp.fromDate(DateTime(2025, 9, 5)),
+      });
+
+      final tripEntry = FirestoreTripEntryMapper.fromFirestore(mockDoc);
+
+      expect(tripEntry.pins, isEmpty);
     });
   });
 }

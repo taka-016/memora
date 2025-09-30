@@ -139,18 +139,17 @@ class FirestoreGroupRepository implements GroupRepository {
       if (!doc.exists) {
         return null;
       }
-      final group = FirestoreGroupMapper.fromFirestore(doc);
 
       final groupMembersSnapshot = await _firestore
           .collection('group_members')
-          .where('groupId', isEqualTo: group.id)
+          .where('groupId', isEqualTo: doc.id)
           .get();
 
       final groupMembers = groupMembersSnapshot.docs
           .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
           .toList();
 
-      return group.copyWith(members: groupMembers);
+      return FirestoreGroupMapper.fromFirestore(doc, members: groupMembers);
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupRepository.getGroups: ${e.toString()}',

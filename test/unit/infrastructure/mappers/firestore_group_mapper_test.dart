@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
 
@@ -23,6 +24,7 @@ void main() {
       expect(group.ownerId, 'admin001');
       expect(group.name, 'テストグループ');
       expect(group.memo, 'テストメモ');
+      expect(group.members, isEmpty);
     });
 
     test('nullableなフィールドがnullの場合でも変換できる', () {
@@ -38,6 +40,7 @@ void main() {
       expect(group.ownerId, 'admin002');
       expect(group.name, 'テストグループ2');
       expect(group.memo, null);
+      expect(group.members, isEmpty);
     });
 
     test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
@@ -51,6 +54,7 @@ void main() {
       expect(group.ownerId, '');
       expect(group.name, '');
       expect(group.memo, isNull);
+      expect(group.members, isEmpty);
     });
 
     test('GroupからFirestoreのMapへ変換できる', () {
@@ -93,6 +97,50 @@ void main() {
       expect(data['name'], '');
       expect(data['memo'], null);
       expect(data['createdAt'], isA<FieldValue>());
+    });
+
+    test('membersパラメータを指定した場合にGroupにメンバーが含まれる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('group005');
+      when(
+        mockDoc.data(),
+      ).thenReturn({'ownerId': 'admin005', 'name': 'メンバー付きグループ', 'memo': 'メモ'});
+
+      final members = [
+        const GroupMember(
+          groupId: 'group005',
+          memberId: 'member001',
+          isAdministrator: true,
+        ),
+        const GroupMember(
+          groupId: 'group005',
+          memberId: 'member002',
+          isAdministrator: false,
+        ),
+      ];
+
+      final group = FirestoreGroupMapper.fromFirestore(
+        mockDoc,
+        members: members,
+      );
+
+      expect(group.members, hasLength(2));
+      expect(group.members[0].memberId, 'member001');
+      expect(group.members[0].isAdministrator, true);
+      expect(group.members[1].memberId, 'member002');
+      expect(group.members[1].isAdministrator, false);
+    });
+
+    test('membersパラメータを指定しない場合は空のリストになる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('group006');
+      when(
+        mockDoc.data(),
+      ).thenReturn({'ownerId': 'admin006', 'name': 'メンバー無しグループ'});
+
+      final group = FirestoreGroupMapper.fromFirestore(mockDoc);
+
+      expect(group.members, isEmpty);
     });
   });
 }

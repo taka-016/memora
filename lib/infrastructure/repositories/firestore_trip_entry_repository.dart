@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/firestore_trip_entry_mapper.dart';
+import 'package:memora/infrastructure/mappers/firestore_pin_mapper.dart';
+import 'package:memora/infrastructure/mappers/firestore_pin_detail_mapper.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
   final FirebaseFirestore _firestore;
@@ -28,6 +31,57 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
+  Future<void> deleteTripEntry(String tripId) async {
+    await _firestore.collection('trip_entries').doc(tripId).delete();
+  }
+
+  @override
+  Future<TripEntry?> getTripEntryById(String tripId) async {
+    try {
+      final doc = await _firestore.collection('trip_entries').doc(tripId).get();
+      if (!doc.exists) {
+        return null;
+      }
+
+      final pinsSnapshot = await _firestore
+          .collection('pins')
+          .where('tripId', isEqualTo: tripId)
+          .get();
+
+      final pins = <Pin>[];
+      for (final pinDoc in pinsSnapshot.docs) {
+        final pinId = pinDoc.data()['pinId'] as String? ?? '';
+
+        final pinDetailsSnapshot = await _firestore
+            .collection('pin_details')
+            .where('pinId', isEqualTo: pinId)
+            .get();
+
+        final pinDetails = pinDetailsSnapshot.docs
+            .map(
+              (detailDoc) => FirestorePinDetailMapper.fromFirestore(detailDoc),
+            )
+            .toList();
+
+        final pin = FirestorePinMapper.fromFirestore(
+          pinDoc,
+          details: pinDetails,
+        );
+        pins.add(pin);
+      }
+
+      return FirestoreTripEntryMapper.fromFirestore(doc, pins: pins);
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripEntryRepository.getTripEntryById: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      return null;
+    }
+  }
+
+  @override
   Future<List<TripEntry>> getTripEntriesByGroupId(String groupId) async {
     try {
       final snapshot = await _firestore
@@ -44,29 +98,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         stackTrace: stack,
       );
       return [];
-    }
-  }
-
-  @override
-  Future<void> deleteTripEntry(String tripId) async {
-    await _firestore.collection('trip_entries').doc(tripId).delete();
-  }
-
-  @override
-  Future<TripEntry?> getTripEntryById(String tripId) async {
-    try {
-      final doc = await _firestore.collection('trip_entries').doc(tripId).get();
-      if (doc.exists) {
-        return FirestoreTripEntryMapper.fromFirestore(doc);
-      }
-      return null;
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreTripEntryRepository.getTripEntryById: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return null;
     }
   }
 

@@ -1,8 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 
 class FirestoreTripEntryMapper {
-  static TripEntry fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  static TripEntry fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc, {
+    List<Pin>? pins,
+  }) {
     final data = doc.data();
     return TripEntry(
       id: doc.id,
@@ -13,6 +17,7 @@ class FirestoreTripEntryMapper {
       tripEndDate:
           (data?['tripEndDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       tripMemo: data?['tripMemo'] as String?,
+      pins: pins ?? const [],
     );
   }
 
