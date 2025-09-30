@@ -45,7 +45,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
       final tripEntry = FirestoreTripEntryMapper.fromFirestore(doc);
 
-      // TripEntryに紐づくPinを取得
       final pinsSnapshot = await _firestore
           .collection('pins')
           .where('tripId', isEqualTo: tripId)
@@ -55,7 +54,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       for (final pinDoc in pinsSnapshot.docs) {
         final pinId = pinDoc.data()['pinId'] as String? ?? '';
 
-        // 各Pinに紐づくPinDetailを取得
         final pinDetailsSnapshot = await _firestore
             .collection('pin_details')
             .where('pinId', isEqualTo: pinId)
