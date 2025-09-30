@@ -105,5 +105,5 @@ erDiagram
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
-    pins ||--o{ pin_details : "id → pinId"
+    pins ||--o{ pin_details : "pinId → pinId"
 ```
