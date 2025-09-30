@@ -39,10 +39,42 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   Future<TripEntry?> getTripEntryById(String tripId) async {
     try {
       final doc = await _firestore.collection('trip_entries').doc(tripId).get();
-      if (doc.exists) {
-        return FirestoreTripEntryMapper.fromFirestore(doc);
+      if (!doc.exists) {
+        return null;
       }
-      return null;
+
+      final tripEntry = FirestoreTripEntryMapper.fromFirestore(doc);
+
+      // TripEntryに紐づくPinを取得
+      final pinsSnapshot = await _firestore
+          .collection('pins')
+          .where('tripId', isEqualTo: tripId)
+          .get();
+
+      final pins = <Pin>[];
+      for (final pinDoc in pinsSnapshot.docs) {
+        final pinId = pinDoc.data()['pinId'] as String? ?? '';
+
+        // 各Pinに紐づくPinDetailを取得
+        final pinDetailsSnapshot = await _firestore
+            .collection('pin_details')
+            .where('pinId', isEqualTo: pinId)
+            .get();
+
+        final pinDetails = pinDetailsSnapshot.docs
+            .map(
+              (detailDoc) => FirestorePinDetailMapper.fromFirestore(detailDoc),
+            )
+            .toList();
+
+        final pin = FirestorePinMapper.fromFirestore(
+          pinDoc,
+          details: pinDetails,
+        );
+        pins.add(pin);
+      }
+
+      return tripEntry.copyWith(pins: pins);
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryRepository.getTripEntryById: ${e.toString()}',
@@ -60,45 +92,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
           .get();
-
-      final tripEntries = <TripEntry>[];
-      for (final doc in snapshot.docs) {
-        final tripEntry = FirestoreTripEntryMapper.fromFirestore(doc);
-
-        // 各TripEntryに紐づくPinを取得
-        final pinsSnapshot = await _firestore
-            .collection('pins')
-            .where('tripId', isEqualTo: tripEntry.id)
-            .get();
-
-        final pins = <Pin>[];
-        for (final pinDoc in pinsSnapshot.docs) {
-          final pinId = pinDoc.data()['pinId'] as String? ?? '';
-
-          // 各Pinに紐づくPinDetailを取得
-          final pinDetailsSnapshot = await _firestore
-              .collection('pin_details')
-              .where('pinId', isEqualTo: pinId)
-              .get();
-
-          final pinDetails = pinDetailsSnapshot.docs
-              .map(
-                (detailDoc) =>
-                    FirestorePinDetailMapper.fromFirestore(detailDoc),
-              )
-              .toList();
-
-          final pin = FirestorePinMapper.fromFirestore(
-            pinDoc,
-            details: pinDetails,
-          );
-          pins.add(pin);
-        }
-
-        tripEntries.add(tripEntry.copyWith(pins: pins));
-      }
-
-      return tripEntries;
+      return snapshot.docs
+          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
+          .toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryRepository.getTripEntriesByGroupId: ${e.toString()}',

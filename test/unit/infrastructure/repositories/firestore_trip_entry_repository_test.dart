@@ -76,90 +76,33 @@ void main() {
       },
     );
 
-    test(
-      'getTripEntriesByGroupIdがFirestoreからTripEntryのリストをpinとpin_detailsも含めて返す',
-      () async {
-        const groupId = 'group001';
-        final mockQuery = MockQuery<Map<String, dynamic>>();
-        final mockPinsCollection =
-            MockCollectionReference<Map<String, dynamic>>();
-        final mockPinsQuery = MockQuery<Map<String, dynamic>>();
-        final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-        final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-        final mockPinDetailsCollection =
-            MockCollectionReference<Map<String, dynamic>>();
-        final mockPinDetailsQuery = MockQuery<Map<String, dynamic>>();
-        final mockPinDetailsSnapshot =
-            MockQuerySnapshot<Map<String, dynamic>>();
-        final mockPinDetailDoc =
-            MockQueryDocumentSnapshot<Map<String, dynamic>>();
+    test('getTripEntriesByGroupIdがFirestoreからTripEntryのリストを返す', () async {
+      const groupId = 'group001';
+      final mockQuery = MockQuery<Map<String, dynamic>>();
 
-        when(
-          mockCollection.where('groupId', isEqualTo: groupId),
-        ).thenReturn(mockQuery);
-        when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
-        when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
-        when(mockDoc1.id).thenReturn('trip001');
-        when(mockDoc1.data()).thenReturn({
-          'groupId': 'group001',
-          'tripName': 'テスト旅行1',
-          'tripStartDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
-          'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
-          'tripMemo': 'テストメモ1',
-        });
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('trip001');
+      when(mockDoc1.data()).thenReturn({
+        'groupId': 'group001',
+        'tripName': 'テスト旅行1',
+        'tripStartDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
+        'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
+        'tripMemo': 'テストメモ1',
+      });
 
-        when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
-        when(
-          mockPinsCollection.where('tripId', isEqualTo: 'trip001'),
-        ).thenReturn(mockPinsQuery);
-        when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
-        when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
-        when(mockPinDoc.id).thenReturn('pin001');
-        when(mockPinDoc.data()).thenReturn({
-          'pinId': 'pin001',
-          'tripId': 'trip001',
-          'groupId': 'group001',
-          'latitude': 35.6812,
-          'longitude': 139.7671,
-          'locationName': 'テスト場所',
-          'visitStartDate': Timestamp.fromDate(DateTime(2025, 6, 2, 10)),
-          'visitEndDate': Timestamp.fromDate(DateTime(2025, 6, 2, 15)),
-          'visitMemo': 'テスト訪問メモ',
-        });
+      final result = await repository.getTripEntriesByGroupId(groupId);
 
-        when(
-          mockFirestore.collection('pin_details'),
-        ).thenReturn(mockPinDetailsCollection);
-        when(
-          mockPinDetailsCollection.where('pinId', isEqualTo: 'pin001'),
-        ).thenReturn(mockPinDetailsQuery);
-        when(
-          mockPinDetailsQuery.get(),
-        ).thenAnswer((_) async => mockPinDetailsSnapshot);
-        when(mockPinDetailsSnapshot.docs).thenReturn([mockPinDetailDoc]);
-        when(mockPinDetailDoc.id).thenReturn('detail001');
-        when(mockPinDetailDoc.data()).thenReturn({
-          'pinId': 'pin001',
-          'name': 'テスト詳細予定',
-          'startDate': Timestamp.fromDate(DateTime(2025, 6, 2, 11)),
-          'endDate': Timestamp.fromDate(DateTime(2025, 6, 2, 13)),
-          'memo': 'テスト詳細メモ',
-        });
-
-        final result = await repository.getTripEntriesByGroupId(groupId);
-
-        expect(result.length, 1);
-        expect(result[0].id, 'trip001');
-        expect(result[0].groupId, 'group001');
-        expect(result[0].tripName, 'テスト旅行1');
-        expect(result[0].tripMemo, 'テストメモ1');
-        expect(result[0].pins.length, 1);
-        expect(result[0].pins[0].id, 'pin001');
-        expect(result[0].pins[0].locationName, 'テスト場所');
-        expect(result[0].pins[0].details.length, 1);
-        expect(result[0].pins[0].details[0].name, 'テスト詳細予定');
-      },
-    );
+      expect(result.length, 1);
+      expect(result[0].id, 'trip001');
+      expect(result[0].groupId, 'group001');
+      expect(result[0].tripName, 'テスト旅行1');
+      expect(result[0].tripMemo, 'テストメモ1');
+      expect(result[0].pins, isEmpty);
+    });
 
     test('getTripEntriesByGroupIdがエラー時に空のリストを返す', () async {
       when(mockCollection.get()).thenThrow(TestException('Firestore error'));
@@ -182,10 +125,21 @@ void main() {
       verify(mockDocRef.delete()).called(1);
     });
 
-    test('getTripEntryByIdが特定の旅行を返す', () async {
+    test('getTripEntryByIdが特定の旅行をpinとpin_detailsも含めて返す', () async {
       const tripId = 'trip001';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinDetailsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinDetailsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinDetailsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDetailDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(mockCollection.doc(tripId)).thenReturn(mockDocRef);
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
@@ -199,13 +153,55 @@ void main() {
         'tripMemo': 'テストメモ',
       });
 
+      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockPinsQuery);
+      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
+      when(mockPinDoc.id).thenReturn('pin001');
+      when(mockPinDoc.data()).thenReturn({
+        'pinId': 'pin001',
+        'tripId': tripId,
+        'groupId': 'group001',
+        'latitude': 35.6812,
+        'longitude': 139.7671,
+        'locationName': 'テスト場所',
+        'visitStartDate': Timestamp.fromDate(DateTime(2025, 6, 2, 10)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2025, 6, 2, 15)),
+        'visitMemo': 'テスト訪問メモ',
+      });
+
+      when(
+        mockFirestore.collection('pin_details'),
+      ).thenReturn(mockPinDetailsCollection);
+      when(
+        mockPinDetailsCollection.where('pinId', isEqualTo: 'pin001'),
+      ).thenReturn(mockPinDetailsQuery);
+      when(
+        mockPinDetailsQuery.get(),
+      ).thenAnswer((_) async => mockPinDetailsSnapshot);
+      when(mockPinDetailsSnapshot.docs).thenReturn([mockPinDetailDoc]);
+      when(mockPinDetailDoc.id).thenReturn('detail001');
+      when(mockPinDetailDoc.data()).thenReturn({
+        'pinId': 'pin001',
+        'name': 'テスト詳細予定',
+        'startDate': Timestamp.fromDate(DateTime(2025, 6, 2, 11)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2, 13)),
+        'memo': 'テスト詳細メモ',
+      });
+
       final result = await repository.getTripEntryById(tripId);
 
       expect(result, isNotNull);
       expect(result!.id, tripId);
       expect(result.groupId, 'group001');
       expect(result.tripName, 'テスト旅行');
-      expect(result.pins, isEmpty);
+      expect(result.pins.length, 1);
+      expect(result.pins[0].id, 'pin001');
+      expect(result.pins[0].locationName, 'テスト場所');
+      expect(result.pins[0].details.length, 1);
+      expect(result.pins[0].details[0].name, 'テスト詳細予定');
     });
 
     test('getTripEntryByIdが存在しない旅行でnullを返す', () async {
