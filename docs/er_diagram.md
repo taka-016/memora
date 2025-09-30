@@ -17,7 +17,7 @@ erDiagram
     }
     pins {
         string id PK
-        string pinId "NOT NULL"
+        string pinId UK "NOT NULL"
         string tripId FK
         string groupId FK
         number latitude "NOT NULL"
