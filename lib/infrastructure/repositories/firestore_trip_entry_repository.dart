@@ -43,8 +43,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         return null;
       }
 
-      final tripEntry = FirestoreTripEntryMapper.fromFirestore(doc);
-
       final pinsSnapshot = await _firestore
           .collection('pins')
           .where('tripId', isEqualTo: tripId)
@@ -72,7 +70,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         pins.add(pin);
       }
 
-      return tripEntry.copyWith(pins: pins);
+      return FirestoreTripEntryMapper.fromFirestore(doc, pins: pins);
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryRepository.getTripEntryById: ${e.toString()}',

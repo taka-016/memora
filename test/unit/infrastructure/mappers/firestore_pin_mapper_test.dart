@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/domain/entities/pin_detail.dart';
 import 'package:memora/infrastructure/mappers/firestore_pin_mapper.dart';
 
 import 'firestore_pin_mapper_test.mocks.dart';
@@ -157,6 +158,63 @@ void main() {
       expect(map['visitEndDate'], isNull);
       expect(map['visitMemo'], isNull);
       expect(map['createdAt'], isA<FieldValue>());
+    });
+
+    test('detailsパラメータを指定した場合にPinに詳細予定が含まれる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('pin007');
+      when(mockDoc.data()).thenReturn({
+        'pinId': 'pin-doc-007',
+        'tripId': 'trip007',
+        'groupId': 'group007',
+        'latitude': 35.681236,
+        'longitude': 139.767125,
+        'locationName': '東京駅',
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1, 10)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2024, 1, 1, 12)),
+        'visitMemo': '集合場所',
+      });
+
+      final details = [
+        PinDetail(
+          pinId: 'pin-doc-007',
+          name: '詳細1',
+          startDate: DateTime(2024, 1, 1, 10, 30),
+          endDate: DateTime(2024, 1, 1, 11),
+          memo: 'メモ1',
+        ),
+        PinDetail(
+          pinId: 'pin-doc-007',
+          name: '詳細2',
+          startDate: DateTime(2024, 1, 1, 11),
+          endDate: DateTime(2024, 1, 1, 11, 30),
+          memo: 'メモ2',
+        ),
+      ];
+
+      final pin = FirestorePinMapper.fromFirestore(mockDoc, details: details);
+
+      expect(pin.details, hasLength(2));
+      expect(pin.details[0].name, '詳細1');
+      expect(pin.details[0].startDate, DateTime(2024, 1, 1, 10, 30));
+      expect(pin.details[1].name, '詳細2');
+      expect(pin.details[1].startDate, DateTime(2024, 1, 1, 11));
+    });
+
+    test('detailsパラメータを指定しない場合は空のリストになる', () {
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.id).thenReturn('pin008');
+      when(mockDoc.data()).thenReturn({
+        'pinId': 'pin-doc-008',
+        'tripId': 'trip008',
+        'groupId': 'group008',
+        'latitude': 35.681236,
+        'longitude': 139.767125,
+      });
+
+      final pin = FirestorePinMapper.fromFirestore(mockDoc);
+
+      expect(pin.details, isEmpty);
     });
   });
 }
