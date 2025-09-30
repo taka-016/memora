@@ -67,8 +67,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
         final pin = FirestorePinMapper.fromFirestore(
           pinDoc,
-          details: pinDetails,
-        );
+        ).copyWith(details: pinDetails);
         pins.add(pin);
       }
 

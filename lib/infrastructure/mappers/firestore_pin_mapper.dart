@@ -1,12 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/domain/entities/pin_detail.dart';
 
 class FirestorePinMapper {
-  static Pin fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc, {
-    List<PinDetail>? details,
-  }) {
+  static Pin fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return Pin(
       id: doc.id,
@@ -23,7 +19,7 @@ class FirestorePinMapper {
           ? (data!['visitEndDate'] as Timestamp).toDate()
           : null,
       visitMemo: data?['visitMemo'] as String?,
-      details: details ?? const [],
+      details: const [],
     );
   }
 
