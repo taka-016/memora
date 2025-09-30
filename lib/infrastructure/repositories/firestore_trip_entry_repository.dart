@@ -52,11 +52,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
       final pins = <Pin>[];
       for (final pinDoc in pinsSnapshot.docs) {
-        final pinId = pinDoc.data()['pinId'] as String? ?? '';
-
         final pinDetailsSnapshot = await _firestore
             .collection('pin_details')
-            .where('pinId', isEqualTo: pinId)
+            .where('pinId', isEqualTo: pinDoc.id)
             .get();
 
         final pinDetails = pinDetailsSnapshot.docs
