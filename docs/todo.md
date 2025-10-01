@@ -14,6 +14,7 @@
 - [x] TripEntryの集約に訪問場所と詳細予定を追加しリポジトリを対応させる
   - [x] getTripEntries→getTripEntriesByGroupIdに変更
   - [x] getで子エンティティも取得する
+  - [x] save,update,deleteも子エンティティに対応する
 
 ## マップの表示
 

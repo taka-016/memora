@@ -16,23 +16,107 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
   @override
   Future<String> saveTripEntry(TripEntry tripEntry) async {
-    final docRef = await _firestore
-        .collection('trip_entries')
-        .add(FirestoreTripEntryMapper.toFirestore(tripEntry));
-    return docRef.id;
+    final batch = _firestore.batch();
+
+    final tripDocRef = _firestore.collection('trip_entries').doc();
+    batch.set(tripDocRef, FirestoreTripEntryMapper.toFirestore(tripEntry));
+
+    for (final Pin pin in tripEntry.pins) {
+      final pinDocRef = _firestore.collection('pins').doc();
+      batch.set(
+        pinDocRef,
+        FirestorePinMapper.toFirestore(pin.copyWith(tripId: tripDocRef.id)),
+      );
+
+      for (final detail in pin.details) {
+        final detailDocRef = _firestore.collection('pin_details').doc();
+        batch.set(
+          detailDocRef,
+          FirestorePinDetailMapper.toFirestore(
+            detail.copyWith(pinId: pin.pinId),
+          ),
+        );
+      }
+    }
+
+    await batch.commit();
+    return tripDocRef.id;
   }
 
   @override
   Future<void> updateTripEntry(TripEntry tripEntry) async {
-    await _firestore
-        .collection('trip_entries')
-        .doc(tripEntry.id)
-        .update(FirestoreTripEntryMapper.toFirestore(tripEntry));
+    final batch = _firestore.batch();
+
+    batch.update(
+      _firestore.collection('trip_entries').doc(tripEntry.id),
+      FirestoreTripEntryMapper.toFirestore(tripEntry),
+    );
+
+    if (tripEntry.pins.isNotEmpty) {
+      final pinsSnapshot = await _firestore
+          .collection('pins')
+          .where('tripId', isEqualTo: tripEntry.id)
+          .get();
+      for (final doc in pinsSnapshot.docs) {
+        final pinId = doc.data()['pinId'] as String? ?? '';
+
+        final detailsSnapshot = await _firestore
+            .collection('pin_details')
+            .where('pinId', isEqualTo: pinId)
+            .get();
+        for (final detailDoc in detailsSnapshot.docs) {
+          batch.delete(detailDoc.reference);
+        }
+
+        batch.delete(doc.reference);
+      }
+
+      for (final Pin pin in tripEntry.pins) {
+        final pinDocRef = _firestore.collection('pins').doc();
+        batch.set(
+          pinDocRef,
+          FirestorePinMapper.toFirestore(pin.copyWith(tripId: tripEntry.id)),
+        );
+
+        for (final detail in pin.details) {
+          final detailDocRef = _firestore.collection('pin_details').doc();
+          batch.set(
+            detailDocRef,
+            FirestorePinDetailMapper.toFirestore(
+              detail.copyWith(pinId: pin.pinId),
+            ),
+          );
+        }
+      }
+    }
+
+    await batch.commit();
   }
 
   @override
   Future<void> deleteTripEntry(String tripId) async {
-    await _firestore.collection('trip_entries').doc(tripId).delete();
+    final batch = _firestore.batch();
+
+    final pinsSnapshot = await _firestore
+        .collection('pins')
+        .where('tripId', isEqualTo: tripId)
+        .get();
+    for (final doc in pinsSnapshot.docs) {
+      final pinId = doc.data()['pinId'] as String? ?? '';
+
+      final detailsSnapshot = await _firestore
+          .collection('pin_details')
+          .where('pinId', isEqualTo: pinId)
+          .get();
+      for (final detailDoc in detailsSnapshot.docs) {
+        batch.delete(detailDoc.reference);
+      }
+
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(_firestore.collection('trip_entries').doc(tripId));
+    await batch.commit();
   }
 
   @override
