@@ -53,26 +53,17 @@ void main() {
         );
 
         final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+        final mockBatch = MockWriteBatch();
         when(mockDocRef.id).thenReturn('generated-doc-id');
-        when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+        when(mockCollection.doc()).thenReturn(mockDocRef);
+        when(mockFirestore.batch()).thenReturn(mockBatch);
+        when(mockBatch.commit()).thenAnswer((_) async {});
 
         final result = await repository.saveTripEntry(tripEntry);
 
         expect(result, equals('generated-doc-id'));
-        verify(
-          mockCollection.add(
-            argThat(
-              predicate<Map<String, dynamic>>((map) {
-                return map['groupId'] == 'group001' &&
-                    map['tripName'] == 'テスト旅行' &&
-                    map['tripMemo'] == 'テストメモ' &&
-                    map.containsKey('tripStartDate') &&
-                    map.containsKey('tripEndDate') &&
-                    map.containsKey('createdAt');
-              }),
-            ),
-          ),
-        ).called(1);
+        verify(mockFirestore.batch()).called(1);
+        verify(mockBatch.commit()).called(1);
       },
     );
 
@@ -115,14 +106,27 @@ void main() {
     test('deleteTripEntryがtrip_entries collectionの該当ドキュメントを削除する', () async {
       const tripId = 'trip001';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
+      final mockPinsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
 
       when(mockCollection.doc(tripId)).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockPinsQuery);
+      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([]);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.deleteTripEntry(tripId);
 
       verify(mockCollection.doc(tripId)).called(1);
-      verify(mockDocRef.delete()).called(1);
+      verify(mockFirestore.batch()).called(1);
+      verify(mockBatch.commit()).called(1);
     });
 
     test('getTripEntryByIdが特定の旅行をpinとpin_detailsも含めて返す', () async {
