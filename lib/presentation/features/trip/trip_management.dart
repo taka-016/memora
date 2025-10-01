@@ -10,10 +10,8 @@ import 'package:memora/application/usecases/pin/delete_pins_by_trip_id_usecase.d
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -24,7 +22,6 @@ class TripManagement extends StatefulWidget {
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
   final PinRepository? pinRepository;
-  final TripParticipantRepository? tripParticipantRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -34,7 +31,6 @@ class TripManagement extends StatefulWidget {
     this.onBackPressed,
     this.tripEntryRepository,
     this.pinRepository,
-    this.tripParticipantRepository,
     this.isTestEnvironment = false,
   });
 
@@ -61,9 +57,6 @@ class _TripManagementState extends State<TripManagement> {
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
     final pinRepository = widget.pinRepository ?? FirestorePinRepository();
-    final tripParticipantRepository =
-        widget.tripParticipantRepository ??
-        FirestoreTripParticipantRepository();
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
@@ -71,7 +64,6 @@ class _TripManagementState extends State<TripManagement> {
     _deleteTripEntryUsecase = DeleteTripEntryUsecase(
       tripEntryRepository,
       pinRepository,
-      tripParticipantRepository,
     );
     _createPinUseCase = CreatePinUseCase(pinRepository);
     _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);

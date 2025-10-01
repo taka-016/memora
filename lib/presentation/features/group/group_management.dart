@@ -15,13 +15,11 @@ import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_event_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'group_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -34,7 +32,6 @@ class GroupManagement extends StatefulWidget {
   final MemberRepository? memberRepository;
   final TripEntryRepository? tripEntryRepository;
   final PinRepository? pinRepository;
-  final TripParticipantRepository? tripParticipantRepository;
 
   const GroupManagement({
     super.key,
@@ -45,7 +42,6 @@ class GroupManagement extends StatefulWidget {
     this.memberRepository,
     this.tripEntryRepository,
     this.pinRepository,
-    this.tripParticipantRepository,
   });
 
   @override
@@ -79,9 +75,6 @@ class _GroupManagementState extends State<GroupManagement> {
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
     final pinRepository = widget.pinRepository ?? FirestorePinRepository();
-    final tripParticipantRepository =
-        widget.tripParticipantRepository ??
-        FirestoreTripParticipantRepository();
 
     _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
@@ -92,7 +85,6 @@ class _GroupManagementState extends State<GroupManagement> {
       groupEventRepository,
       tripEntryRepository,
       pinRepository,
-      tripParticipantRepository,
     );
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);

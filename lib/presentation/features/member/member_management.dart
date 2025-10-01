@@ -13,11 +13,9 @@ import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_participant_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_event_repository.dart';
 import 'member_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -25,7 +23,6 @@ import 'package:memora/core/app_logger.dart';
 class MemberManagement extends StatefulWidget {
   final Member member;
   final MemberRepository? memberRepository;
-  final TripParticipantRepository? tripParticipantRepository;
   final GroupRepository? groupRepository;
   final MemberEventRepository? memberEventRepository;
   final MemberInvitationRepository? memberInvitationRepository;
@@ -34,7 +31,6 @@ class MemberManagement extends StatefulWidget {
     super.key,
     required this.member,
     this.memberRepository,
-    this.tripParticipantRepository,
     this.groupRepository,
     this.memberEventRepository,
     this.memberInvitationRepository,
@@ -62,9 +58,6 @@ class _MemberManagementState extends State<MemberManagement> {
 
     final memberRepository =
         widget.memberRepository ?? FirestoreMemberRepository();
-    final tripParticipantRepository =
-        widget.tripParticipantRepository ??
-        FirestoreTripParticipantRepository();
     final groupRepository =
         widget.groupRepository ?? FirestoreGroupRepository();
     final memberEventRepository =
@@ -78,7 +71,6 @@ class _MemberManagementState extends State<MemberManagement> {
     _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
     _deleteMemberUsecase = DeleteMemberUsecase(
       memberRepository,
-      tripParticipantRepository,
       groupRepository,
       memberEventRepository,
     );

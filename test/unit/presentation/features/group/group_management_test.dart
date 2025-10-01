@@ -12,7 +12,6 @@ import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -25,7 +24,6 @@ import 'group_management_test.mocks.dart';
   MemberRepository,
   TripEntryRepository,
   PinRepository,
-  TripParticipantRepository,
 ])
 void main() {
   late MockGroupRepository mockGroupRepository;
@@ -34,7 +32,6 @@ void main() {
   late MockMemberRepository mockMemberRepository;
   late MockTripEntryRepository mockTripEntryRepository;
   late MockPinRepository mockPinRepository;
-  late MockTripParticipantRepository mockTripParticipantRepository;
   late Group group1;
   late Member testMember;
   late GroupWithMembersDto groupWithMembers1;
@@ -47,7 +44,6 @@ void main() {
     mockMemberRepository = MockMemberRepository();
     mockTripEntryRepository = MockTripEntryRepository();
     mockPinRepository = MockPinRepository();
-    mockTripParticipantRepository = MockTripParticipantRepository();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -108,7 +104,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -151,7 +146,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -185,7 +179,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -218,7 +211,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -255,7 +247,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -301,7 +292,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -344,7 +334,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -392,7 +381,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),
@@ -463,7 +451,6 @@ void main() {
               memberRepository: mockMemberRepository,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
             ),
           ),
         ),

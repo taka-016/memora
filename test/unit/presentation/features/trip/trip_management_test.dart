@@ -5,24 +5,21 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/domain/repositories/trip_participant_repository.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, PinRepository, TripParticipantRepository])
+@GenerateMocks([TripEntryRepository, PinRepository])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockPinRepository mockPinRepository;
-  late MockTripParticipantRepository mockTripParticipantRepository;
   late List<TripEntry> testTripEntries;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockPinRepository = MockPinRepository();
-    mockTripParticipantRepository = MockTripParticipantRepository();
     testTripEntries = [
       TripEntry(
         id: 'trip-1',
@@ -67,7 +64,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -122,7 +118,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -161,7 +156,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -195,7 +189,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -230,7 +223,6 @@ void main() {
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
             pinRepository: mockPinRepository,
-            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -281,7 +273,6 @@ void main() {
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
             pinRepository: mockPinRepository,
-            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -330,7 +321,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -376,7 +366,6 @@ void main() {
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
             pinRepository: mockPinRepository,
-            tripParticipantRepository: mockTripParticipantRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -418,7 +407,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -461,7 +449,6 @@ void main() {
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -509,7 +496,6 @@ void main() {
               },
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -548,7 +534,6 @@ void main() {
               year: testYear,
               tripEntryRepository: mockTripEntryRepository,
               pinRepository: mockPinRepository,
-              tripParticipantRepository: mockTripParticipantRepository,
               isTestEnvironment: true,
             ),
           ),

@@ -10,11 +10,6 @@ erDiagram
         timestamp tripEndDate "NOT NULL"
         string tripMemo
     }
-    trip_participants {
-        string id PK
-        string tripId FK "NOT NULL"
-        string memberId FK "NOT NULL"
-    }
     pins {
         string id PK
         string pinId UK "NOT NULL"
@@ -91,19 +86,16 @@ erDiagram
         string invitationCode "NOT NULL"
     }
 
-    trip_entries ||--o{ trip_participants : "id → tripId"
-    trip_participants ||--|| members : "memberId → id"
-    members ||--o{ member_events : "id → memberId"
     trip_entries ||--o{ pins : "id → tripId"
+    pins ||--o{ pin_details : "pinId → pinId"
     groups ||--o{ group_members : "id → groupId"
-    group_members ||--|| members : "memberId → id"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
     groups ||--o{ pins : "id → groupId"
-    externally_managed_accounts ||--|| members : "id → accountId"
+    group_members ||--|| members : "memberId → id"
+    members ||--o{ member_events : "id → memberId"
     members ||--o{ members : "id → ownerId"
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
-    pins ||--o{ pin_details : "pinId → pinId"
 ```
