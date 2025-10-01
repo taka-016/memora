@@ -98,4 +98,5 @@ erDiagram
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
+    externally_managed_accounts ||--|| members : "id → accountId"
 ```
