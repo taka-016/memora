@@ -94,32 +94,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
-  Future<void> deleteTripEntry(String tripId) async {
-    final batch = _firestore.batch();
-
-    final pinsSnapshot = await _firestore
-        .collection('pins')
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final doc in pinsSnapshot.docs) {
-      final pinId = doc.data()['pinId'] as String? ?? '';
-
-      final detailsSnapshot = await _firestore
-          .collection('pin_details')
-          .where('pinId', isEqualTo: pinId)
-          .get();
-      for (final detailDoc in detailsSnapshot.docs) {
-        batch.delete(detailDoc.reference);
-      }
-
-      batch.delete(doc.reference);
-    }
-
-    batch.delete(_firestore.collection('trip_entries').doc(tripId));
-    await batch.commit();
-  }
-
-  @override
   Future<TripEntry?> getTripEntryById(String tripId) async {
     try {
       final doc = await _firestore.collection('trip_entries').doc(tripId).get();
@@ -227,15 +201,57 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
+  Future<void> deleteTripEntry(String tripId) async {
+    final batch = _firestore.batch();
+
+    final pinsSnapshot = await _firestore
+        .collection('pins')
+        .where('tripId', isEqualTo: tripId)
+        .get();
+    for (final doc in pinsSnapshot.docs) {
+      final pinId = doc.data()['pinId'] as String? ?? '';
+
+      final detailsSnapshot = await _firestore
+          .collection('pin_details')
+          .where('pinId', isEqualTo: pinId)
+          .get();
+      for (final detailDoc in detailsSnapshot.docs) {
+        batch.delete(detailDoc.reference);
+      }
+
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(_firestore.collection('trip_entries').doc(tripId));
+    await batch.commit();
+  }
+
+  @override
   Future<void> deleteTripEntriesByGroupId(String groupId) async {
-    final snapshot = await _firestore
+    final batch = _firestore.batch();
+
+    final tripEntriesSnapshot = await _firestore
         .collection('trip_entries')
         .where('groupId', isEqualTo: groupId)
         .get();
+    for (final tripEntrieDoc in tripEntriesSnapshot.docs) {
+      final pinsSnapshot = await _firestore
+          .collection('pins')
+          .where('tripId', isEqualTo: tripEntrieDoc.id)
+          .get();
+      for (final pinDoc in pinsSnapshot.docs) {
+        final pinId = pinDoc.data()['pinId'] as String? ?? '';
 
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
+        final detailsSnapshot = await _firestore
+            .collection('pin_details')
+            .where('pinId', isEqualTo: pinId)
+            .get();
+        for (final detailDoc in detailsSnapshot.docs) {
+          batch.delete(detailDoc.reference);
+        }
+        batch.delete(pinDoc.reference);
+      }
+      batch.delete(tripEntrieDoc.reference);
     }
     await batch.commit();
   }
