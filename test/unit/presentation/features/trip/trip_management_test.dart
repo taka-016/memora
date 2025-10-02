@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/repositories/pin_repository.dart';
@@ -16,10 +17,24 @@ void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockPinRepository mockPinRepository;
   late List<TripEntry> testTripEntries;
+  late Pin testPin;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockPinRepository = MockPinRepository();
+    testPin = Pin(
+      id: 'pin-1',
+      pinId: 'pin-1',
+      tripId: 'trip-1',
+      groupId: 'test-group-id',
+      latitude: 43.06417,
+      longitude: 141.34694,
+      locationName: '札幌駅',
+      visitStartDate: DateTime(2025, 7, 1, 9),
+      visitEndDate: DateTime(2025, 7, 1, 12),
+      visitMemo: '待ち合わせ',
+    );
+
     testTripEntries = [
       TripEntry(
         id: 'trip-1',
@@ -28,6 +43,7 @@ void main() {
         tripStartDate: DateTime(2025, 7, 1),
         tripEndDate: DateTime(2025, 7, 5),
         tripMemo: '夏の北海道を楽しむ',
+        pins: [testPin],
       ),
       TripEntry(
         id: 'trip-2',
@@ -257,13 +273,6 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
-      when(
-        mockPinRepository.getPinsByTripId(
-          'trip-1',
-          orderBy: [const OrderBy('visitStartDate', descending: false)],
-        ),
-      ).thenAnswer((_) async => []);
-
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -290,6 +299,11 @@ void main() {
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
+      expect(find.text('札幌駅'), findsOneWidget);
+
+      verifyNever(
+        mockPinRepository.getPinsByTripId(any, orderBy: anyNamed('orderBy')),
+      );
     });
 
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
@@ -301,12 +315,6 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
-      when(
-        mockPinRepository.getPinsByTripId(
-          'trip-1',
-          orderBy: [const OrderBy('visitStartDate', descending: false)],
-        ),
-      ).thenAnswer((_) async => []);
       when(
         mockTripEntryRepository.updateTripEntry(any),
       ).thenAnswer((_) async {});

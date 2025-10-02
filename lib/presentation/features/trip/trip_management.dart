@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
+import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/pin/create_pin_usecase.dart';
-import 'package:memora/application/usecases/pin/get_pins_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
@@ -44,7 +44,6 @@ class _TripManagementState extends State<TripManagement> {
   late final UpdateTripEntryUsecase _updateTripEntryUsecase;
   late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
   CreatePinUseCase? _createPinUseCase;
-  GetPinsByTripIdUseCase? _getPinsByTripIdUseCase;
   DeletePinsByTripIdUseCase? _deletePinsByTripIdUseCase;
 
   List<TripEntry> _tripEntries = [];
@@ -63,7 +62,6 @@ class _TripManagementState extends State<TripManagement> {
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
     _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
     _createPinUseCase = CreatePinUseCase(pinRepository);
-    _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);
     _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
 
     _loadTripEntries();
@@ -198,21 +196,7 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   Future<void> _showEditTripDialog(TripEntry tripEntry) async {
-    List<PinDto>? existingPins;
-    if (_getPinsByTripIdUseCase != null) {
-      try {
-        existingPins = await _getPinsByTripIdUseCase!.execute(tripEntry.id);
-      } catch (e, stack) {
-        logger.e(
-          '_TripManagementState._showEditTripDialog: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        existingPins = [];
-      }
-    } else {
-      existingPins = [];
-    }
+    final existingPins = PinMapper.toDtoList(tripEntry.pins);
 
     if (!mounted) return;
 

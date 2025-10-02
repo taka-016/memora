@@ -426,5 +426,140 @@ void main() {
       verify(mockQuery.orderBy('tripStartDate', descending: false)).called(1);
       verify(mockQuery.orderBy('tripName', descending: true)).called(1);
     });
+
+    test('getTripEntriesByGroupIdAndYearがpinsとpinDetailsを含めて返す', () async {
+      const groupId = 'group001';
+      const year = 2025;
+      final startOfYear = DateTime(year, 1, 1);
+      final endOfYear = DateTime(year + 1, 1, 1);
+
+      final mockPinsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinDetailsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinDetailsQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockPinDetailsQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockPinDetailsSnapshot1 = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDetailsSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDetailDoc1 =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinDetailDoc2 =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where(
+          'tripStartDate',
+          isLessThan: Timestamp.fromDate(endOfYear),
+        ),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('trip001');
+      when(mockDoc1.data()).thenReturn({
+        'groupId': groupId,
+        'tripName': 'テスト旅行',
+        'tripStartDate': Timestamp.fromDate(DateTime(2025, 7, 1)),
+        'tripEndDate': Timestamp.fromDate(DateTime(2025, 7, 5)),
+        'tripMemo': 'テストメモ',
+      });
+
+      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockPinsQuery);
+      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc1, mockPinDoc2]);
+
+      when(mockPinDoc1.id).thenReturn('pin-doc-1');
+      when(mockPinDoc1.data()).thenReturn({
+        'pinId': 'pin001',
+        'tripId': 'trip001',
+        'groupId': groupId,
+        'latitude': 43.06417,
+        'longitude': 141.34694,
+        'locationName': '札幌駅',
+        'visitStartDate': Timestamp.fromDate(DateTime(2025, 7, 2, 10)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2025, 7, 2, 12)),
+        'visitMemo': '2日目の観光',
+      });
+      when(mockPinDoc2.id).thenReturn('pin-doc-2');
+      when(mockPinDoc2.data()).thenReturn({
+        'pinId': 'pin002',
+        'tripId': 'trip001',
+        'groupId': groupId,
+        'latitude': 26.2124,
+        'longitude': 127.6811,
+        'locationName': '那覇空港',
+        'visitStartDate': Timestamp.fromDate(DateTime(2025, 7, 1, 9)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2025, 7, 1, 11)),
+        'visitMemo': '到着',
+      });
+
+      when(
+        mockFirestore.collection('pin_details'),
+      ).thenReturn(mockPinDetailsCollection);
+      when(
+        mockPinDetailsCollection.where('pinId', isEqualTo: 'pin001'),
+      ).thenReturn(mockPinDetailsQuery1);
+      when(
+        mockPinDetailsCollection.where('pinId', isEqualTo: 'pin002'),
+      ).thenReturn(mockPinDetailsQuery2);
+
+      when(
+        mockPinDetailsQuery1.get(),
+      ).thenAnswer((_) async => mockPinDetailsSnapshot1);
+      when(
+        mockPinDetailsQuery2.get(),
+      ).thenAnswer((_) async => mockPinDetailsSnapshot2);
+
+      when(mockPinDetailsSnapshot1.docs).thenReturn([mockPinDetailDoc1]);
+      when(mockPinDetailsSnapshot2.docs).thenReturn([mockPinDetailDoc2]);
+
+      when(mockPinDetailDoc1.data()).thenReturn({
+        'pinId': 'pin001',
+        'name': '時計台見学',
+        'startDate': Timestamp.fromDate(DateTime(2025, 7, 2, 10, 30)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 7, 2, 11, 30)),
+        'memo': '記念撮影',
+      });
+      when(mockPinDetailDoc2.data()).thenReturn({
+        'pinId': 'pin002',
+        'name': 'レンタカー受け取り',
+        'startDate': Timestamp.fromDate(DateTime(2025, 7, 1, 9, 30)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 7, 1, 10, 0)),
+        'memo': '手続き',
+      });
+
+      final result = await repository.getTripEntriesByGroupIdAndYear(
+        groupId,
+        year,
+      );
+
+      expect(result.length, 1);
+      final tripEntry = result.first;
+      expect(tripEntry.pins.length, 2);
+
+      // visitStartDateの昇順でソートされていること
+      expect(tripEntry.pins.first.pinId, 'pin002');
+      expect(tripEntry.pins.first.locationName, '那覇空港');
+      expect(tripEntry.pins.first.details.first.name, 'レンタカー受け取り');
+
+      final secondPin = tripEntry.pins.last;
+      expect(secondPin.pinId, 'pin001');
+      expect(secondPin.details.first.name, '時計台見学');
+    });
   });
 }
