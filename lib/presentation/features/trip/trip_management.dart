@@ -61,10 +61,7 @@ class _TripManagementState extends State<TripManagement> {
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
-    _deleteTripEntryUsecase = DeleteTripEntryUsecase(
-      tripEntryRepository,
-      pinRepository,
-    );
+    _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
     _createPinUseCase = CreatePinUseCase(pinRepository);
     _getPinsByTripIdUseCase = GetPinsByTripIdUseCase(pinRepository);
     _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);

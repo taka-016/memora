@@ -4,7 +4,6 @@ import 'package:memora/domain/value_objects/order_by.dart';
 abstract class TripEntryRepository {
   Future<String> saveTripEntry(TripEntry tripEntry);
   Future<void> updateTripEntry(TripEntry tripEntry);
-  Future<void> deleteTripEntry(String tripId);
   Future<TripEntry?> getTripEntryById(String tripId);
   Future<List<TripEntry>> getTripEntriesByGroupId(String groupId);
   Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
@@ -12,5 +11,6 @@ abstract class TripEntryRepository {
     int year, {
     List<OrderBy>? orderBy,
   });
+  Future<void> deleteTripEntry(String tripId);
   Future<void> deleteTripEntriesByGroupId(String groupId);
 }

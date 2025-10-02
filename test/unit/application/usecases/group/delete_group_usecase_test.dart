@@ -5,34 +5,24 @@ import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
 
 import 'delete_group_usecase_test.mocks.dart';
 
-@GenerateMocks([
-  GroupRepository,
-  GroupEventRepository,
-  TripEntryRepository,
-  PinRepository,
-])
+@GenerateMocks([GroupRepository, GroupEventRepository, TripEntryRepository])
 void main() {
   late DeleteGroupUsecase usecase;
   late MockGroupRepository mockGroupRepository;
   late MockGroupEventRepository mockGroupEventRepository;
   late MockTripEntryRepository mockTripEntryRepository;
-  late MockPinRepository mockPinRepository;
 
   setUp(() {
     mockGroupRepository = MockGroupRepository();
     mockGroupEventRepository = MockGroupEventRepository();
     mockTripEntryRepository = MockTripEntryRepository();
-    mockPinRepository = MockPinRepository();
     usecase = DeleteGroupUsecase(
       mockGroupRepository,
       mockGroupEventRepository,
       mockTripEntryRepository,
-      mockPinRepository,
     );
   });
 
@@ -104,54 +94,6 @@ void main() {
 
       // assert
       verify(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId));
-    });
-
-    test('グループ削除時にtripIdで紐づくpinsも削除されること', () async {
-      // arrange
-      const groupId = 'group123';
-      final now = DateTime.now();
-      final tripEntries = [
-        TripEntry(
-          id: 'trip1',
-          groupId: groupId,
-          tripName: 'テスト旅行1',
-          tripStartDate: now,
-          tripEndDate: now,
-          tripMemo: null,
-        ),
-        TripEntry(
-          id: 'trip2',
-          groupId: groupId,
-          tripName: 'テスト旅行2',
-          tripStartDate: now,
-          tripEndDate: now,
-          tripMemo: null,
-        ),
-      ];
-
-      when(
-        mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => tripEntries);
-      when(
-        mockGroupRepository.deleteGroup(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockPinRepository.deletePinsByTripId(any),
-      ).thenAnswer((_) async => {});
-
-      // act
-      await usecase.execute(groupId);
-
-      // assert
-      verify(mockTripEntryRepository.getTripEntriesByGroupId(groupId));
-      verify(mockPinRepository.deletePinsByTripId('trip1'));
-      verify(mockPinRepository.deletePinsByTripId('trip2'));
     });
   });
 }

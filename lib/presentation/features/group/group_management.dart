@@ -14,12 +14,10 @@ import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_event_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'group_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -31,7 +29,6 @@ class GroupManagement extends StatefulWidget {
   final GroupQueryService? groupQueryService;
   final MemberRepository? memberRepository;
   final TripEntryRepository? tripEntryRepository;
-  final PinRepository? pinRepository;
 
   const GroupManagement({
     super.key,
@@ -41,7 +38,6 @@ class GroupManagement extends StatefulWidget {
     this.groupQueryService,
     this.memberRepository,
     this.tripEntryRepository,
-    this.pinRepository,
   });
 
   @override
@@ -74,7 +70,6 @@ class _GroupManagementState extends State<GroupManagement> {
         widget.memberRepository ?? FirestoreMemberRepository();
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
-    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
 
     _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
@@ -84,7 +79,6 @@ class _GroupManagementState extends State<GroupManagement> {
       groupRepository,
       groupEventRepository,
       tripEntryRepository,
-      pinRepository,
     );
     _createGroupUsecase = CreateGroupUsecase(groupRepository);
     _updateGroupUsecase = UpdateGroupUsecase(groupRepository);

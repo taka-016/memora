@@ -3,24 +3,18 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
 
 import 'delete_trip_entry_usecase_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, PinRepository])
+@GenerateMocks([TripEntryRepository])
 void main() {
   group('DeleteTripEntryUsecase', () {
     late DeleteTripEntryUsecase usecase;
     late MockTripEntryRepository mockTripEntryRepository;
-    late MockPinRepository mockPinRepository;
 
     setUp(() {
       mockTripEntryRepository = MockTripEntryRepository();
-      mockPinRepository = MockPinRepository();
-      usecase = DeleteTripEntryUsecase(
-        mockTripEntryRepository,
-        mockPinRepository,
-      );
+      usecase = DeleteTripEntryUsecase(mockTripEntryRepository);
     });
 
     test('旅行エントリが正常に削除されること', () async {
@@ -36,24 +30,6 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.deleteTripEntry(tripEntryId)).called(1);
-    });
-
-    test('旅行エントリ削除時に関連するpinsも削除されること', () async {
-      // Arrange
-      const tripEntryId = 'trip-id';
-
-      when(
-        mockTripEntryRepository.deleteTripEntry(tripEntryId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockPinRepository.deletePinsByTripId(tripEntryId),
-      ).thenAnswer((_) async => {});
-
-      // Act
-      await usecase.execute(tripEntryId);
-
-      // Assert
-      verify(mockPinRepository.deletePinsByTripId(tripEntryId)).called(1);
     });
   });
 }
