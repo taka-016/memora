@@ -20,7 +20,6 @@ void main() {
       expect(pinDto.pinId, pinId);
       expect(pinDto.latitude, latitude);
       expect(pinDto.longitude, longitude);
-      expect(pinDto.id, isNull);
       expect(pinDto.tripId, isNull);
       expect(pinDto.groupId, isNull);
       expect(pinDto.locationName, isNull);
@@ -31,7 +30,6 @@ void main() {
 
     test('全パラメータでコンストラクタが正しく動作する', () {
       // Arrange
-      const id = 'id-123';
       const pinId = 'pin-123';
       const tripId = 'trip-456';
       const groupId = 'group-789';
@@ -44,7 +42,6 @@ void main() {
 
       // Act
       final pinDto = PinDto(
-        id: id,
         pinId: pinId,
         tripId: tripId,
         groupId: groupId,
@@ -57,7 +54,6 @@ void main() {
       );
 
       // Assert
-      expect(pinDto.id, id);
       expect(pinDto.pinId, pinId);
       expect(pinDto.tripId, tripId);
       expect(pinDto.groupId, groupId);
@@ -117,7 +113,6 @@ void main() {
     test('copyWithメソッドでnullを指定しても元の値が保持される', () {
       // Arrange
       final originalDto = PinDto(
-        id: 'id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -131,7 +126,6 @@ void main() {
       final copiedDto = originalDto.copyWith();
 
       // Assert
-      expect(copiedDto.id, 'id-123');
       expect(copiedDto.pinId, 'pin-123');
       expect(copiedDto.tripId, 'trip-456');
       expect(copiedDto.groupId, 'group-789');
@@ -143,7 +137,6 @@ void main() {
 
     test('同じ値を持つインスタンスは等しい', () {
       // Arrange
-      const id = 'id-123';
       const pinId = 'pin-123';
       const tripId = 'trip-456';
       const groupId = 'group-789';
@@ -155,7 +148,6 @@ void main() {
       const visitMemo = '観光で訪問';
 
       final dto1 = PinDto(
-        id: id,
         pinId: pinId,
         tripId: tripId,
         groupId: groupId,
@@ -168,7 +160,6 @@ void main() {
       );
 
       final dto2 = PinDto(
-        id: id,
         pinId: pinId,
         tripId: tripId,
         groupId: groupId,
@@ -188,7 +179,6 @@ void main() {
     test('異なる値を持つインスタンスは等しくない', () {
       // Arrange
       final dto1 = PinDto(
-        id: 'id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -199,7 +189,6 @@ void main() {
       );
 
       final dto2 = PinDto(
-        id: 'id-124',
         pinId: 'pin-124',
         tripId: 'trip-457',
         groupId: 'group-790',

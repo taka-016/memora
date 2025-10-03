@@ -15,6 +15,7 @@
   - [x] getTripEntries→getTripEntriesByGroupIdに変更
   - [x] getで子エンティティも取得する
   - [x] save,update,deleteも子エンティティに対応する
+- [x] GetPinsByTripIdUseCaseの使用を廃止し、GetTripEntriesUsecaseで取得したpinsデータを使用する
 
 ## マップの表示
 

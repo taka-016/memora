@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/group_member.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class Group extends Equatable {
   Group({
@@ -13,7 +14,7 @@ class Group extends Equatable {
       final memberIds = <String>{};
       for (final member in members) {
         if (!memberIds.add(member.memberId)) {
-          throw ArgumentError('メンバーIDが重複しています: ${member.memberId}');
+          throw ValidationException('メンバーIDが重複しています: ${member.memberId}');
         }
       }
     }

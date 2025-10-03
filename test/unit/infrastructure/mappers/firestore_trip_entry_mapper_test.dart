@@ -140,7 +140,6 @@ void main() {
 
       final pins = [
         Pin(
-          id: 'pin001',
           pinId: 'pin-doc-001',
           tripId: 'trip004',
           groupId: 'group004',
@@ -151,7 +150,6 @@ void main() {
           visitEndDate: DateTime(2025, 8, 2, 12),
         ),
         Pin(
-          id: 'pin002',
           pinId: 'pin-doc-002',
           tripId: 'trip004',
           groupId: 'group004',

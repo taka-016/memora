@@ -2,24 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, PinRepository])
+@GenerateMocks([TripEntryRepository])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
-  late MockPinRepository mockPinRepository;
   late List<TripEntry> testTripEntries;
+  late Pin testPin;
+  late TripEntry detailedTripEntry;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
-    mockPinRepository = MockPinRepository();
+    testPin = Pin(
+      pinId: 'pin-1',
+      tripId: 'trip-1',
+      groupId: 'test-group-id',
+      latitude: 43.06417,
+      longitude: 141.34694,
+      locationName: '札幌駅',
+      visitStartDate: DateTime(2025, 7, 1, 9),
+      visitEndDate: DateTime(2025, 7, 1, 12),
+      visitMemo: '待ち合わせ',
+    );
+
     testTripEntries = [
       TripEntry(
         id: 'trip-1',
@@ -38,6 +50,8 @@ void main() {
         tripMemo: null,
       ),
     ];
+
+    detailedTripEntry = testTripEntries.first.copyWith(pins: [testPin]);
   });
 
   group('TripManagement', () {
@@ -63,7 +77,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -117,7 +130,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -155,7 +167,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -188,7 +199,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -217,13 +227,14 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            onBackPressed: null,
-            tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
-            isTestEnvironment: true,
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );
@@ -258,12 +269,8 @@ void main() {
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockPinRepository.getPinsByTripId(
-          'trip-1',
-          orderBy: [const OrderBy('visitStartDate', descending: false)],
-        ),
-      ).thenAnswer((_) async => []);
-
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => detailedTripEntry);
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -272,7 +279,6 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -285,11 +291,53 @@ void main() {
 
       // 最初の旅行項目をタップ
       await tester.tap(find.byType(ListTile).first);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
+      expect(find.text('札幌駅'), findsOneWidget);
+
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
+    });
+
+    testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => null);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
     });
 
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
@@ -302,11 +350,8 @@ void main() {
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockPinRepository.getPinsByTripId(
-          'trip-1',
-          orderBy: [const OrderBy('visitStartDate', descending: false)],
-        ),
-      ).thenAnswer((_) async => []);
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => detailedTripEntry);
       when(
         mockTripEntryRepository.updateTripEntry(any),
       ).thenAnswer((_) async {});
@@ -320,7 +365,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -345,6 +389,7 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockTripEntryRepository.updateTripEntry(any)).called(1);
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
     });
 
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
@@ -365,7 +410,6 @@ void main() {
             year: testYear,
             onBackPressed: null,
             tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
             isTestEnvironment: true,
           ),
         ),
@@ -406,7 +450,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -448,7 +491,6 @@ void main() {
               year: testYear,
               onBackPressed: null,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -495,7 +537,6 @@ void main() {
                 backPressed = true;
               },
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),
@@ -533,7 +574,6 @@ void main() {
               groupId: testGroupId,
               year: testYear,
               tripEntryRepository: mockTripEntryRepository,
-              pinRepository: mockPinRepository,
               isTestEnvironment: true,
             ),
           ),

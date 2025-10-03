@@ -1,9 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/pin_detail.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class Pin extends Equatable {
   Pin({
-    required this.id,
     required this.pinId,
     required this.tripId,
     required this.groupId,
@@ -15,22 +15,20 @@ class Pin extends Equatable {
     this.visitMemo,
     List<PinDetail>? details,
   }) : details = List.unmodifiable(details ?? const []) {
-    // 訪問開始日時と終了日時の順序検証
     final start = visitStartDate;
     final end = visitEndDate;
     if (start != null && end != null && end.isBefore(start)) {
-      throw ArgumentError('訪問終了日時は訪問開始日時以降でなければなりません');
+      throw ValidationException('訪問終了日時は訪問開始日時以降でなければなりません');
     }
     if (this.details.isNotEmpty &&
         (visitStartDate == null || visitEndDate == null)) {
-      throw ArgumentError('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
+      throw ValidationException('詳細予定を追加する場合は訪問開始日時と訪問終了日時が必要です');
     }
     for (final detail in this.details) {
       _validateDetailPeriod(detail);
     }
   }
 
-  final String id;
   final String pinId;
   final String tripId;
   final String groupId;
@@ -43,7 +41,6 @@ class Pin extends Equatable {
   final List<PinDetail> details;
 
   Pin copyWith({
-    String? id,
     String? pinId,
     String? tripId,
     String? groupId,
@@ -56,7 +53,6 @@ class Pin extends Equatable {
     List<PinDetail>? details,
   }) {
     return Pin(
-      id: id ?? this.id,
       pinId: pinId ?? this.pinId,
       tripId: tripId ?? this.tripId,
       groupId: groupId ?? this.groupId,
@@ -74,20 +70,19 @@ class Pin extends Equatable {
     if (detail.startDate != null) {
       if (detail.startDate!.isBefore(visitStartDate!) ||
           detail.startDate!.isAfter(visitEndDate!)) {
-        throw ArgumentError('詳細予定の開始日時は旅行期間内でなければなりません');
+        throw ValidationException('詳細予定の開始日時は旅行期間内でなければなりません');
       }
     }
     if (detail.endDate != null) {
       if (detail.endDate!.isBefore(visitStartDate!) ||
           detail.endDate!.isAfter(visitEndDate!)) {
-        throw ArgumentError('詳細予定の終了日時は旅行期間内でなければなりません');
+        throw ValidationException('詳細予定の終了日時は旅行期間内でなければなりません');
       }
     }
   }
 
   @override
   List<Object?> get props => [
-    id,
     pinId,
     tripId,
     groupId,

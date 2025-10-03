@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/pin_detail.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
   group('PinDetail', () {
@@ -26,7 +27,7 @@ void main() {
           startDate: DateTime(2025, 6, 2, 12, 0),
           endDate: DateTime(2025, 6, 2, 9, 0),
         ),
-        throwsArgumentError,
+        throwsA(isA<ValidationException>()),
       );
     });
 

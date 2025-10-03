@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class PinDetail extends Equatable {
   PinDetail({
@@ -11,7 +12,7 @@ class PinDetail extends Equatable {
     final start = startDate;
     final end = endDate;
     if (start != null && end != null && end.isBefore(start)) {
-      throw ArgumentError('詳細終了日時は詳細開始日時以降でなければなりません');
+      throw ValidationException('詳細終了日時は詳細開始日時以降でなければなりません');
     }
   }
 
