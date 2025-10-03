@@ -42,24 +42,22 @@ class FirestoreGroupRepository implements GroupRepository {
       FirestoreGroupMapper.toFirestore(group),
     );
 
-    if (group.members.isNotEmpty) {
-      final memberSnapshot = await _firestore
-          .collection('group_members')
-          .where('groupId', isEqualTo: group.id)
-          .get();
-      for (final doc in memberSnapshot.docs) {
-        batch.delete(doc.reference);
-      }
+    final memberSnapshot = await _firestore
+        .collection('group_members')
+        .where('groupId', isEqualTo: group.id)
+        .get();
+    for (final doc in memberSnapshot.docs) {
+      batch.delete(doc.reference);
+    }
 
-      for (final GroupMember member in group.members) {
-        final memberDocRef = _firestore.collection('group_members').doc();
-        batch.set(
-          memberDocRef,
-          FirestoreGroupMemberMapper.toFirestore(
-            member.copyWith(groupId: group.id),
-          ),
-        );
-      }
+    for (final GroupMember member in group.members) {
+      final memberDocRef = _firestore.collection('group_members').doc();
+      batch.set(
+        memberDocRef,
+        FirestoreGroupMemberMapper.toFirestore(
+          member.copyWith(groupId: group.id),
+        ),
+      );
     }
 
     await batch.commit();

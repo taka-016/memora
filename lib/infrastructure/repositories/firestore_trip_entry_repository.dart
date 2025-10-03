@@ -52,43 +52,41 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       FirestoreTripEntryMapper.toFirestore(tripEntry),
     );
 
-    if (tripEntry.pins.isNotEmpty) {
-      final pinsSnapshot = await _firestore
-          .collection('pins')
-          .where('tripId', isEqualTo: tripEntry.id)
+    final pinsSnapshot = await _firestore
+        .collection('pins')
+        .where('tripId', isEqualTo: tripEntry.id)
+        .get();
+    for (final pinDoc in pinsSnapshot.docs) {
+      final pinId = pinDoc.data()['pinId'] as String? ?? '';
+
+      final detailsSnapshot = await _firestore
+          .collection('pin_details')
+          .where('pinId', isEqualTo: pinId)
           .get();
-      for (final pinDoc in pinsSnapshot.docs) {
-        final pinId = pinDoc.data()['pinId'] as String? ?? '';
-
-        final detailsSnapshot = await _firestore
-            .collection('pin_details')
-            .where('pinId', isEqualTo: pinId)
-            .get();
-        for (final detailDoc in detailsSnapshot.docs) {
-          batch.delete(detailDoc.reference);
-        }
-
-        batch.delete(pinDoc.reference);
+      for (final detailDoc in detailsSnapshot.docs) {
+        batch.delete(detailDoc.reference);
       }
 
-      for (final Pin pin in tripEntry.pins) {
-        final pinDocRef = _firestore.collection('pins').doc();
+      batch.delete(pinDoc.reference);
+    }
+
+    for (final Pin pin in tripEntry.pins) {
+      final pinDocRef = _firestore.collection('pins').doc();
+      batch.set(
+        pinDocRef,
+        FirestorePinMapper.toFirestore(
+          pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
+        ),
+      );
+
+      for (final detail in pin.details) {
+        final detailDocRef = _firestore.collection('pin_details').doc();
         batch.set(
-          pinDocRef,
-          FirestorePinMapper.toFirestore(
-            pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
+          detailDocRef,
+          FirestorePinDetailMapper.toFirestore(
+            detail.copyWith(pinId: pin.pinId),
           ),
         );
-
-        for (final detail in pin.details) {
-          final detailDocRef = _firestore.collection('pin_details').doc();
-          batch.set(
-            detailDocRef,
-            FirestorePinDetailMapper.toFirestore(
-              detail.copyWith(pinId: pin.pinId),
-            ),
-          );
-        }
       }
     }
 
