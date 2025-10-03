@@ -18,6 +18,7 @@ void main() {
   late MockPinRepository mockPinRepository;
   late List<TripEntry> testTripEntries;
   late Pin testPin;
+  late TripEntry detailedTripEntry;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
@@ -43,7 +44,6 @@ void main() {
         tripStartDate: DateTime(2025, 7, 1),
         tripEndDate: DateTime(2025, 7, 5),
         tripMemo: '夏の北海道を楽しむ',
-        pins: [testPin],
       ),
       TripEntry(
         id: 'trip-2',
@@ -54,6 +54,8 @@ void main() {
         tripMemo: null,
       ),
     ];
+
+    detailedTripEntry = testTripEntries.first.copyWith(pins: [testPin]);
   });
 
   group('TripManagement', () {
@@ -233,13 +235,15 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            onBackPressed: null,
-            tripEntryRepository: mockTripEntryRepository,
-            pinRepository: mockPinRepository,
-            isTestEnvironment: true,
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );
@@ -273,6 +277,9 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => detailedTripEntry);
       // Act
       await tester.pumpWidget(
         MaterialApp(
@@ -294,7 +301,7 @@ void main() {
 
       // 最初の旅行項目をタップ
       await tester.tap(find.byType(ListTile).first);
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
@@ -304,6 +311,47 @@ void main() {
       verifyNever(
         mockPinRepository.getPinsByTripId(any, orderBy: anyNamed('orderBy')),
       );
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
+    });
+
+    testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: [const OrderBy('tripStartDate', descending: false)],
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => null);
+
+      // Act
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              pinRepository: mockPinRepository,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
     });
 
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
@@ -315,6 +363,9 @@ void main() {
           orderBy: [const OrderBy('tripStartDate', descending: false)],
         ),
       ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryRepository.getTripEntryById('trip-1'),
+      ).thenAnswer((_) async => detailedTripEntry);
       when(
         mockTripEntryRepository.updateTripEntry(any),
       ).thenAnswer((_) async {});
@@ -353,6 +404,7 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockTripEntryRepository.updateTripEntry(any)).called(1);
+      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
     });
 
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {

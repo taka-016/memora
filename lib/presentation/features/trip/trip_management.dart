@@ -4,6 +4,7 @@ import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/pin/create_pin_usecase.dart';
 import 'package:memora/application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
@@ -43,6 +44,7 @@ class _TripManagementState extends State<TripManagement> {
   late final CreateTripEntryUsecase _createTripEntryUsecase;
   late final UpdateTripEntryUsecase _updateTripEntryUsecase;
   late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
+  late final GetTripEntryByIdUsecase _getTripEntryByIdUsecase;
   CreatePinUseCase? _createPinUseCase;
   DeletePinsByTripIdUseCase? _deletePinsByTripIdUseCase;
 
@@ -61,6 +63,7 @@ class _TripManagementState extends State<TripManagement> {
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
     _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
+    _getTripEntryByIdUsecase = GetTripEntryByIdUsecase(tripEntryRepository);
     _createPinUseCase = CreatePinUseCase(pinRepository);
     _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
 
@@ -196,21 +199,50 @@ class _TripManagementState extends State<TripManagement> {
   }
 
   Future<void> _showEditTripDialog(TripEntry tripEntry) async {
-    final existingPins = PinMapper.toDtoList(tripEntry.pins);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    if (!mounted) return;
+    try {
+      final detailedTripEntry = await _getTripEntryByIdUsecase.execute(
+        tripEntry.id,
+      );
 
-    await showDialog(
-      context: context,
-      builder: (context) => TripEditModal(
-        groupId: widget.groupId,
-        tripEntry: tripEntry,
-        pins: existingPins,
-        year: widget.year,
-        isTestEnvironment: widget.isTestEnvironment,
-        onSave: _handleEditTripSave,
-      ),
-    );
+      if (!mounted) {
+        return;
+      }
+
+      if (detailedTripEntry == null) {
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('旅行の詳細取得に失敗しました: データが見つかりませんでした')),
+        );
+        return;
+      }
+
+      final existingPins = PinMapper.toDtoList(detailedTripEntry.pins);
+
+      await showDialog(
+        context: context,
+        builder: (context) => TripEditModal(
+          groupId: widget.groupId,
+          tripEntry: detailedTripEntry,
+          pins: existingPins,
+          year: widget.year,
+          isTestEnvironment: widget.isTestEnvironment,
+          onSave: _handleEditTripSave,
+        ),
+      );
+    } catch (e, stack) {
+      logger.e(
+        '_TripManagementState._showEditTripDialog: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      if (!mounted) {
+        return;
+      }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('旅行の詳細取得に失敗しました: $e')),
+      );
+    }
   }
 
   Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {

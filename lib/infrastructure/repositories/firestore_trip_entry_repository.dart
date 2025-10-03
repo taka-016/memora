@@ -186,67 +186,10 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       }
 
       final snapshot = await query.get();
-      final tripEntries = <TripEntry>[];
 
-      for (final doc in snapshot.docs) {
-        final pins = <Pin>[];
-
-        try {
-          final pinsSnapshot = await _firestore
-              .collection('pins')
-              .where('tripId', isEqualTo: doc.id)
-              .get();
-
-          for (final pinDoc in pinsSnapshot.docs) {
-            final pinId = pinDoc.data()['pinId'] as String? ?? '';
-
-            final pinDetailsSnapshot = await _firestore
-                .collection('pin_details')
-                .where('pinId', isEqualTo: pinId)
-                .get();
-
-            final pinDetails = pinDetailsSnapshot.docs
-                .map(
-                  (detailDoc) =>
-                      FirestorePinDetailMapper.fromFirestore(detailDoc),
-                )
-                .toList();
-
-            final pin = FirestorePinMapper.fromFirestore(
-              pinDoc,
-              details: pinDetails,
-            );
-            pins.add(pin);
-          }
-
-          pins.sort((a, b) {
-            final startA = a.visitStartDate;
-            final startB = b.visitStartDate;
-            if (startA == null && startB == null) {
-              return 0;
-            }
-            if (startA == null) {
-              return -1;
-            }
-            if (startB == null) {
-              return 1;
-            }
-            return startA.compareTo(startB);
-          });
-        } catch (e, stack) {
-          logger.e(
-            'FirestoreTripEntryRepository.getTripEntriesByGroupIdAndYear (pins): ${e.toString()}',
-            error: e,
-            stackTrace: stack,
-          );
-        }
-
-        tripEntries.add(
-          FirestoreTripEntryMapper.fromFirestore(doc, pins: pins),
-        );
-      }
-
-      return tripEntries;
+      return snapshot.docs
+          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
+          .toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryRepository.getTripEntriesByGroupIdAndYear: ${e.toString()}',
