@@ -9,7 +9,6 @@ class FirestorePinMapper {
   }) {
     final data = doc.data();
     return Pin(
-      id: doc.id,
       pinId: data?['pinId'] as String? ?? '',
       tripId: data?['tripId'] as String? ?? '',
       groupId: data?['groupId'] as String? ?? '',

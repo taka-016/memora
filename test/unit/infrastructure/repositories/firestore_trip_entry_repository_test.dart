@@ -234,7 +234,6 @@ void main() {
       expect(result.groupId, 'group001');
       expect(result.tripName, 'テスト旅行');
       expect(result.pins.length, 1);
-      expect(result.pins[0].id, 'pin001');
       expect(result.pins[0].locationName, 'テスト場所');
       expect(result.pins[0].details.length, 1);
       expect(result.pins[0].details[0].name, 'テスト詳細予定');

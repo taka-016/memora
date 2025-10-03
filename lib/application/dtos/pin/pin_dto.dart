@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 class PinDto extends Equatable {
-  final String? id;
   final String pinId;
   final String? tripId;
   final String? groupId;
@@ -13,7 +12,6 @@ class PinDto extends Equatable {
   final String? visitMemo;
 
   const PinDto({
-    this.id,
     required this.pinId,
     this.tripId,
     this.groupId,
@@ -26,7 +24,6 @@ class PinDto extends Equatable {
   });
 
   PinDto copyWith({
-    String? id,
     String? pinId,
     String? tripId,
     String? groupId,
@@ -38,7 +35,6 @@ class PinDto extends Equatable {
     String? visitMemo,
   }) {
     return PinDto(
-      id: id ?? this.id,
       pinId: pinId ?? this.pinId,
       tripId: tripId ?? this.tripId,
       groupId: groupId ?? this.groupId,
@@ -53,7 +49,6 @@ class PinDto extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
     pinId,
     tripId,
     groupId,

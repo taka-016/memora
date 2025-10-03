@@ -4,7 +4,6 @@ import 'package:memora/domain/entities/pin.dart';
 class PinMapper {
   static PinDto toDto(Pin entity) {
     return PinDto(
-      id: entity.id,
       pinId: entity.pinId,
       tripId: entity.tripId,
       latitude: entity.latitude,
@@ -18,10 +17,9 @@ class PinMapper {
 
   static Pin toEntity(PinDto dto) {
     return Pin(
-      id: dto.id ?? '',
       pinId: dto.pinId,
-      tripId: dto.tripId!,
-      groupId: dto.groupId!,
+      tripId: dto.tripId ?? '',
+      groupId: dto.groupId ?? '',
       latitude: dto.latitude,
       longitude: dto.longitude,
       locationName: dto.locationName,

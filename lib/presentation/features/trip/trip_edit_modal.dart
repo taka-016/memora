@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
+import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
+import 'package:memora/core/app_logger.dart';
 
 class TripEditModal extends StatefulWidget {
   final String groupId;
   final TripEntry? tripEntry;
   final List<PinDto>? pins;
-  final Function(TripEntry, {List<PinDto>? pins}) onSave;
+  final Function(TripEntry) onSave;
   final bool isTestEnvironment;
   final int? year;
 
@@ -36,7 +39,7 @@ class _TripEditModalState extends State<TripEditModal> {
   late TextEditingController _visitLocationController;
   DateTime? _startDate;
   DateTime? _endDate;
-  String? _dateErrorMessage;
+  String? _errorMessage;
   bool _isMapExpanded = false;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
@@ -155,7 +158,7 @@ class _TripEditModalState extends State<TripEditModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
             Expanded(child: _buildForm()),
             const SizedBox(height: 24),
             _buildActionButtons(),
@@ -182,7 +185,22 @@ class _TripEditModalState extends State<TripEditModal> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
+            if (_errorMessage != null) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.red.shade200),
+                ),
+                child: Text(
+                  _errorMessage!,
+                  style: TextStyle(color: Colors.red.shade700, fontSize: 14),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
             _buildTripNameField(),
             const SizedBox(height: 16),
             _buildDateSection(),
@@ -220,7 +238,7 @@ class _TripEditModalState extends State<TripEditModal> {
           onDateSelected: (date) {
             setState(() {
               _startDate = date;
-              _dateErrorMessage = null;
+              _errorMessage = null;
             });
           },
         ),
@@ -231,20 +249,10 @@ class _TripEditModalState extends State<TripEditModal> {
           onDateSelected: (date) {
             setState(() {
               _endDate = date;
-              _dateErrorMessage = null;
+              _errorMessage = null;
             });
           },
         ),
-        if (_dateErrorMessage != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _dateErrorMessage!,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-              fontSize: 12,
-            ),
-          ),
-        ],
       ],
     );
   }
@@ -434,6 +442,69 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
+  Future<void> _handleSave() async {
+    setState(() {
+      _errorMessage = null;
+    });
+
+    if (_startDate == null || _endDate == null) {
+      setState(() {
+        _errorMessage = '開始日と終了日を選択してください';
+      });
+      return;
+    }
+
+    if (_startDate!.isAfter(_endDate!)) {
+      setState(() {
+        _errorMessage = '開始日は終了日より前の日付を選択してください';
+      });
+      return;
+    }
+
+    if (widget.year != null && _startDate!.year != widget.year!) {
+      setState(() {
+        _errorMessage = '開始日は${widget.year}年の日付を選択してください';
+      });
+      return;
+    }
+
+    if (_formKey.currentState!.validate()) {
+      try {
+        final tripEntry = TripEntry(
+          id: widget.tripEntry?.id ?? '',
+          groupId: widget.groupId,
+          tripName: _nameController.text.isEmpty ? null : _nameController.text,
+          tripStartDate: _startDate!,
+          tripEndDate: _endDate!,
+          tripMemo: _memoController.text.isEmpty ? null : _memoController.text,
+          pins: PinMapper.toEntityList(_pins),
+        );
+
+        widget.onSave(tripEntry);
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+      } on ValidationException catch (e) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = '$e';
+          });
+        }
+      } catch (e, stack) {
+        logger.e(
+          '_TripEditModalState._handleSave: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'エラーが発生しました: $e';
+          });
+        }
+      }
+    }
+  }
+
   Widget _buildActionButtons() {
     final isEditing = widget.tripEntry != null;
 
@@ -446,50 +517,7 @@ class _TripEditModalState extends State<TripEditModal> {
         ),
         const SizedBox(width: 8),
         ElevatedButton(
-          onPressed: () {
-            setState(() {
-              _dateErrorMessage = null;
-            });
-
-            if (_startDate == null || _endDate == null) {
-              setState(() {
-                _dateErrorMessage = '開始日と終了日を選択してください';
-              });
-              return;
-            }
-
-            if (_startDate!.isAfter(_endDate!)) {
-              setState(() {
-                _dateErrorMessage = '開始日は終了日より前の日付を選択してください';
-              });
-              return;
-            }
-
-            if (widget.year != null && _startDate!.year != widget.year!) {
-              setState(() {
-                _dateErrorMessage = '開始日は${widget.year}年の日付を選択してください';
-              });
-              return;
-            }
-
-            if (_formKey.currentState!.validate()) {
-              final tripEntry = TripEntry(
-                id: widget.tripEntry?.id ?? '',
-                groupId: widget.groupId,
-                tripName: _nameController.text.isEmpty
-                    ? null
-                    : _nameController.text,
-                tripStartDate: _startDate!,
-                tripEndDate: _endDate!,
-                tripMemo: _memoController.text.isEmpty
-                    ? null
-                    : _memoController.text,
-              );
-
-              widget.onSave(tripEntry, pins: _pins);
-              Navigator.of(context).pop();
-            }
-          },
+          onPressed: _handleSave,
           child: Text(isEditing ? '更新' : '作成'),
         ),
       ],

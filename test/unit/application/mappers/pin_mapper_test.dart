@@ -8,7 +8,6 @@ void main() {
     test('PinエンティティをPinDtoに正しく変換する', () {
       // Arrange
       final pin = Pin(
-        id: 'pin-id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -24,7 +23,6 @@ void main() {
       final dto = PinMapper.toDto(pin);
 
       // Assert
-      expect(dto.id, 'pin-id-123');
       expect(dto.pinId, 'pin-123');
       expect(dto.tripId, 'trip-456');
       expect(dto.groupId, null); // groupIdはDtoからエンティティへの変換でのみ使用される
@@ -39,7 +37,6 @@ void main() {
     test('オプショナルプロパティがnullのPinエンティティをDtoに変換する', () {
       // Arrange
       final pin = Pin(
-        id: 'pin-id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -51,7 +48,6 @@ void main() {
       final dto = PinMapper.toDto(pin);
 
       // Assert
-      expect(dto.id, 'pin-id-123');
       expect(dto.pinId, 'pin-123');
       expect(dto.tripId, 'trip-456');
       expect(dto.latitude, 35.6762);
@@ -65,7 +61,6 @@ void main() {
     test('PinDtoをPinエンティティに正しく変換する', () {
       // Arrange
       final dto = PinDto(
-        id: 'pin-id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -81,7 +76,6 @@ void main() {
       final entity = PinMapper.toEntity(dto);
 
       // Assert
-      expect(entity.id, 'pin-id-123');
       expect(entity.pinId, 'pin-123');
       expect(entity.tripId, 'trip-456');
       expect(entity.groupId, 'group-789');
@@ -107,7 +101,6 @@ void main() {
       final entity = PinMapper.toEntity(dto);
 
       // Assert
-      expect(entity.id, '');
       expect(entity.pinId, 'pin-123');
       expect(entity.tripId, 'trip-456');
       expect(entity.groupId, 'group-789');
@@ -116,7 +109,6 @@ void main() {
     test('オプショナルプロパティがnullのDtoをエンティティに変換する', () {
       // Arrange
       final dto = PinDto(
-        id: 'pin-id-123',
         pinId: 'pin-123',
         tripId: 'trip-456',
         groupId: 'group-789',
@@ -128,7 +120,6 @@ void main() {
       final entity = PinMapper.toEntity(dto);
 
       // Assert
-      expect(entity.id, 'pin-id-123');
       expect(entity.pinId, 'pin-123');
       expect(entity.tripId, 'trip-456');
       expect(entity.groupId, 'group-789');
@@ -144,7 +135,6 @@ void main() {
       // Arrange
       final pins = [
         Pin(
-          id: 'pin-id-1',
           pinId: 'pin-1',
           tripId: 'trip-1',
           groupId: 'group-1',
@@ -153,7 +143,6 @@ void main() {
           locationName: '東京駅',
         ),
         Pin(
-          id: 'pin-id-2',
           pinId: 'pin-2',
           tripId: 'trip-2',
           groupId: 'group-2',
@@ -168,11 +157,9 @@ void main() {
 
       // Assert
       expect(dtos.length, 2);
-      expect(dtos[0].id, 'pin-id-1');
       expect(dtos[0].pinId, 'pin-1');
       expect(dtos[0].tripId, 'trip-1');
       expect(dtos[0].locationName, '東京駅');
-      expect(dtos[1].id, 'pin-id-2');
       expect(dtos[1].pinId, 'pin-2');
       expect(dtos[1].tripId, 'trip-2');
       expect(dtos[1].locationName, '大阪駅');
@@ -182,7 +169,6 @@ void main() {
       // Arrange
       final dtos = [
         PinDto(
-          id: 'pin-id-1',
           pinId: 'pin-1',
           tripId: 'trip-1',
           groupId: 'group-1',
@@ -191,7 +177,6 @@ void main() {
           locationName: '東京駅',
         ),
         PinDto(
-          id: 'pin-id-2',
           pinId: 'pin-2',
           tripId: 'trip-2',
           groupId: 'group-2',
@@ -206,12 +191,10 @@ void main() {
 
       // Assert
       expect(entities.length, 2);
-      expect(entities[0].id, 'pin-id-1');
       expect(entities[0].pinId, 'pin-1');
       expect(entities[0].tripId, 'trip-1');
       expect(entities[0].groupId, 'group-1');
       expect(entities[0].locationName, '東京駅');
-      expect(entities[1].id, 'pin-id-2');
       expect(entities[1].pinId, 'pin-2');
       expect(entities[1].tripId, 'trip-2');
       expect(entities[1].groupId, 'group-2');

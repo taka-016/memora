@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/entities/pin_detail.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
   group('TripEntry', () {
@@ -15,7 +16,6 @@ void main() {
         tripMemo: 'テストメモ',
         pins: [
           Pin(
-            id: 'pin1',
             pinId: 'pin1',
             tripId: 'abc123',
             groupId: 'group456',
@@ -102,7 +102,6 @@ void main() {
         tripEndDate: DateTime(2025, 6, 15),
         pins: [
           Pin(
-            id: 'pin2',
             pinId: 'pin2',
             tripId: 'abc123',
             groupId: 'group456',
@@ -132,7 +131,6 @@ void main() {
           tripEndDate: DateTime(2025, 6, 10),
           pins: [
             Pin(
-              id: 'pin1',
               pinId: 'pin1',
               tripId: 'abc123',
               groupId: 'group456',
@@ -143,7 +141,7 @@ void main() {
             ),
           ],
         ),
-        throwsArgumentError,
+        throwsA(isA<ValidationException>()),
       );
     });
   });

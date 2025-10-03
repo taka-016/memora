@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/group_member.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
   group('Group', () {
@@ -122,7 +123,7 @@ void main() {
             GroupMember(groupId: 'group001', memberId: 'user001'),
           ],
         ),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<ValidationException>()),
       );
     });
   });

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/pin.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class TripEntry extends Equatable {
   TripEntry({
@@ -12,7 +13,7 @@ class TripEntry extends Equatable {
     List<Pin>? pins,
   }) : pins = List.unmodifiable(pins ?? const []) {
     if (tripEndDate.isBefore(tripStartDate)) {
-      throw ArgumentError('旅行の終了日は開始日以降でなければなりません');
+      throw ValidationException('旅行の終了日は開始日以降でなければなりません');
     }
     for (final pin in this.pins) {
       _validatePinPeriod(pin);
@@ -51,13 +52,13 @@ class TripEntry extends Equatable {
     if (pin.visitStartDate != null) {
       if (pin.visitStartDate!.isBefore(tripStartDate) ||
           pin.visitStartDate!.isAfter(tripEndDate)) {
-        throw ArgumentError('訪問開始日時は旅行期間内でなければなりません');
+        throw ValidationException('訪問開始日時は旅行期間内でなければなりません');
       }
     }
     if (pin.visitEndDate != null) {
       if (pin.visitEndDate!.isBefore(tripStartDate) ||
           pin.visitEndDate!.isAfter(tripEndDate)) {
-        throw ArgumentError('訪問終了日時は旅行期間内でなければなりません');
+        throw ValidationException('訪問終了日時は旅行期間内でなければなりません');
       }
     }
   }

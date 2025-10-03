@@ -13,7 +13,6 @@ void main() {
   group('FirestorePinMapper', () {
     test('FirestoreのDocumentSnapshotからPinへ変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('pin001');
       when(mockDoc.data()).thenReturn({
         'pinId': 'pin-doc-001',
         'tripId': 'trip001',
@@ -28,7 +27,6 @@ void main() {
 
       final pin = FirestorePinMapper.fromFirestore(mockDoc);
 
-      expect(pin.id, 'pin001');
       expect(pin.pinId, 'pin-doc-001');
       expect(pin.tripId, 'trip001');
       expect(pin.groupId, 'group001');
@@ -42,7 +40,6 @@ void main() {
 
     test('nullableなフィールドがnullの場合でも変換できる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('pin002');
       when(mockDoc.data()).thenReturn({
         'pinId': 'pin-doc-002',
         'tripId': 'trip002',
@@ -53,7 +50,6 @@ void main() {
 
       final pin = FirestorePinMapper.fromFirestore(mockDoc);
 
-      expect(pin.id, 'pin002');
       expect(pin.pinId, 'pin-doc-002');
       expect(pin.tripId, 'trip002');
       expect(pin.groupId, 'group002');
@@ -67,12 +63,10 @@ void main() {
 
     test('Firestoreのデータが不足している場合はデフォルト値に変換される', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('pin003');
       when(mockDoc.data()).thenReturn({});
 
       final pin = FirestorePinMapper.fromFirestore(mockDoc);
 
-      expect(pin.id, 'pin003');
       expect(pin.pinId, '');
       expect(pin.tripId, '');
       expect(pin.groupId, '');
@@ -86,7 +80,6 @@ void main() {
 
     test('PinエンティティからFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        id: 'pin004',
         pinId: 'pin-entity-001',
         tripId: 'trip-entity-001',
         groupId: 'group-entity-001',
@@ -114,7 +107,6 @@ void main() {
 
     test('オプショナルプロパティがnullでもFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        id: 'pin005',
         pinId: 'pin-entity-002',
         tripId: 'trip-entity-002',
         groupId: 'group-entity-002',
@@ -138,7 +130,6 @@ void main() {
 
     test('空文字列を含むPinからFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        id: 'pin006',
         pinId: '',
         tripId: '',
         groupId: '',
@@ -162,7 +153,6 @@ void main() {
 
     test('detailsパラメータを指定した場合にPinに詳細予定が含まれる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('pin007');
       when(mockDoc.data()).thenReturn({
         'pinId': 'pin-doc-007',
         'tripId': 'trip007',
@@ -203,7 +193,6 @@ void main() {
 
     test('detailsパラメータを指定しない場合は空のリストになる', () {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('pin008');
       when(mockDoc.data()).thenReturn({
         'pinId': 'pin-doc-008',
         'tripId': 'trip008',

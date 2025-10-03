@@ -57,8 +57,8 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
           .collection('pins')
           .where('tripId', isEqualTo: tripEntry.id)
           .get();
-      for (final doc in pinsSnapshot.docs) {
-        final pinId = doc.data()['pinId'] as String? ?? '';
+      for (final pinDoc in pinsSnapshot.docs) {
+        final pinId = pinDoc.data()['pinId'] as String? ?? '';
 
         final detailsSnapshot = await _firestore
             .collection('pin_details')
@@ -68,14 +68,16 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
           batch.delete(detailDoc.reference);
         }
 
-        batch.delete(doc.reference);
+        batch.delete(pinDoc.reference);
       }
 
       for (final Pin pin in tripEntry.pins) {
         final pinDocRef = _firestore.collection('pins').doc();
         batch.set(
           pinDocRef,
-          FirestorePinMapper.toFirestore(pin.copyWith(tripId: tripEntry.id)),
+          FirestorePinMapper.toFirestore(
+            pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
+          ),
         );
 
         for (final detail in pin.details) {

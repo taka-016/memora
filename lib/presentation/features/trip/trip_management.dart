@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/pin/create_pin_usecase.dart';
-import 'package:memora/application/usecases/pin/delete_pins_by_trip_id_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/pin_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_pin_repository.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -22,7 +17,6 @@ class TripManagement extends StatefulWidget {
   final int year;
   final VoidCallback? onBackPressed;
   final TripEntryRepository? tripEntryRepository;
-  final PinRepository? pinRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -31,7 +25,6 @@ class TripManagement extends StatefulWidget {
     required this.year,
     this.onBackPressed,
     this.tripEntryRepository,
-    this.pinRepository,
     this.isTestEnvironment = false,
   });
 
@@ -45,8 +38,6 @@ class _TripManagementState extends State<TripManagement> {
   late final UpdateTripEntryUsecase _updateTripEntryUsecase;
   late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
   late final GetTripEntryByIdUsecase _getTripEntryByIdUsecase;
-  CreatePinUseCase? _createPinUseCase;
-  DeletePinsByTripIdUseCase? _deletePinsByTripIdUseCase;
 
   List<TripEntry> _tripEntries = [];
   bool _isLoading = true;
@@ -57,15 +48,12 @@ class _TripManagementState extends State<TripManagement> {
 
     final tripEntryRepository =
         widget.tripEntryRepository ?? FirestoreTripEntryRepository();
-    final pinRepository = widget.pinRepository ?? FirestorePinRepository();
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
     _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
     _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
     _getTripEntryByIdUsecase = GetTripEntryByIdUsecase(tripEntryRepository);
-    _createPinUseCase = CreatePinUseCase(pinRepository);
-    _deletePinsByTripIdUseCase = DeletePinsByTripIdUseCase(pinRepository);
 
     _loadTripEntries();
   }
@@ -105,24 +93,11 @@ class _TripManagementState extends State<TripManagement> {
     return '${date.year}/${date.month}/${date.day}';
   }
 
-  Future<void> _handleAddTripSave(
-    TripEntry tripEntry, {
-    List<PinDto>? pins,
-  }) async {
+  Future<void> _handleAddTripSave(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      final tripId = await _createTripEntryUsecase.execute(tripEntry);
-
-      if (pins != null && pins.isNotEmpty && _createPinUseCase != null) {
-        for (final pin in pins) {
-          final pinWithTripId = pin.copyWith(
-            tripId: tripId,
-            groupId: tripEntry.groupId,
-          );
-          await _createPinUseCase!.execute(pinWithTripId);
-        }
-      }
+      await _createTripEntryUsecase.execute(tripEntry);
 
       if (mounted) {
         await _loadTripEntries();
@@ -156,27 +131,11 @@ class _TripManagementState extends State<TripManagement> {
     );
   }
 
-  Future<void> _handleEditTripSave(
-    TripEntry tripEntry, {
-    List<PinDto>? pins,
-  }) async {
+  Future<void> _handleEditTripSave(TripEntry tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
       await _updateTripEntryUsecase.execute(tripEntry);
-
-      if (pins != null &&
-          _deletePinsByTripIdUseCase != null &&
-          _createPinUseCase != null) {
-        await _deletePinsByTripIdUseCase!.execute(tripEntry.id);
-        for (final pin in pins) {
-          final pinWithTripId = pin.copyWith(
-            tripId: tripEntry.id,
-            groupId: tripEntry.groupId,
-          );
-          await _createPinUseCase!.execute(pinWithTripId);
-        }
-      }
 
       if (mounted) {
         await _loadTripEntries();
