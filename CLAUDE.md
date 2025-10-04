@@ -64,7 +64,7 @@
 
 ## アーキテクチャ
 
-※Robert C.Martinが提唱した**クリーンアーキテクチャの原則**に従います。
+Robert C.Martinが提唱した**クリーンアーキテクチャの原則**に従います。
 
 ### クリーンアーキテクチャの原則
 
@@ -75,7 +75,7 @@
 
 ## TDDワークフロー定義
 
-※Kent Beckの原著『Test-Driven Development: By Example』とその翻訳者であるt-wadaの解釈に従います。
+Kent Beckの原著『Test-Driven Development: By Example』とその翻訳者であるt-wadaの解釈に従います。
 
 ### Red - Green - Refactor サイクル
 
@@ -115,7 +115,7 @@
 
 ## リファクタリング定義
 
-※Martin Fowlerの著書『Refactoring: Improving the Design of Existing Code』に従います。
+Martin Fowlerの著書『Refactoring: Improving the Design of Existing Code』に従います。
 
 ### 基本原則
 
@@ -151,7 +151,7 @@
 
 ## コミット形式
 
-※Conventional Commits仕様に従います。
+Conventional Commits仕様に従います。
 
 ### 基本形式
 
@@ -265,6 +265,18 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 
 ### テストベストプラクティス
 
+- **テストでの例外発生**: テストで例外を発生させる場合は、必ず`test/helpers/test_exception.dart`の`TestException`を使用すること。`TestException`はログ出力を抑制するため、テスト実行時のノイズを減らすことができる
+
+  ```dart
+  // ❌ 避けるべき方法
+  when(mockUseCase.execute()).thenThrow(Exception('エラーメッセージ'));
+
+  // ✅ 推奨する方法
+  import '../../../helpers/test_exception.dart';
+
+  when(mockUseCase.execute()).thenThrow(TestException('エラーメッセージ'));
+  ```
+
 - **非同期テストの制御**: `Future.delayed`を使った待機は避ける。環境によって不安定になるため、`Completer`を使用してテストコードが非同期処理のタイミングを制御する
 
   ```dart
@@ -273,7 +285,7 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
     await Future.delayed(const Duration(milliseconds: 100));
     return result;
   });
-  
+
   // ✅ 推奨する方法
   final completer = Completer<Result>();
   when(mockUseCase.execute()).thenAnswer((_) => completer.future);

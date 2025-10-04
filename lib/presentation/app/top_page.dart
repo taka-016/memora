@@ -74,7 +74,17 @@ class _TopPageState extends State<TopPage> {
         error: e,
         stackTrace: stack,
       );
-      // エラー時はnullのまま
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('メンバー情報の取得に失敗しました。再度ログインしてください。')),
+            );
+            final container = ProviderScope.containerOf(context);
+            container.read(authNotifierProvider.notifier).logout();
+          }
+        });
+      }
     }
   }
 
