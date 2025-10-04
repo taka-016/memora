@@ -265,6 +265,18 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 
 ### テストベストプラクティス
 
+- **テストでの例外発生**: テストで例外を発生させる場合は、必ず`test/helpers/test_exception.dart`の`TestException`を使用すること。`TestException`はログ出力を抑制するため、テスト実行時のノイズを減らすことができる
+
+  ```dart
+  // ❌ 避けるべき方法
+  when(mockUseCase.execute()).thenThrow(Exception('エラーメッセージ'));
+
+  // ✅ 推奨する方法
+  import '../../../helpers/test_exception.dart';
+
+  when(mockUseCase.execute()).thenThrow(TestException('エラーメッセージ'));
+  ```
+
 - **非同期テストの制御**: `Future.delayed`を使った待機は避ける。環境によって不安定になるため、`Completer`を使用してテストコードが非同期処理のタイミングを制御する
 
   ```dart
@@ -273,7 +285,7 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
     await Future.delayed(const Duration(milliseconds: 100));
     return result;
   });
-  
+
   // ✅ 推奨する方法
   final completer = Completer<Result>();
   when(mockUseCase.execute()).thenAnswer((_) => completer.future);

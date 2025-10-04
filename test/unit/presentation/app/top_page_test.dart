@@ -15,6 +15,7 @@ import 'package:mockito/mockito.dart';
 
 import 'top_page_test.mocks.dart';
 import '../../../helpers/fake_auth_notifier.dart';
+import '../../../helpers/test_exception.dart';
 
 // テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
 class _TestNavigationNotifier extends NavigationNotifier {
@@ -529,6 +530,43 @@ void main() {
       expect(timelineState.currentScreen, GroupTimelineScreenState.groupList);
       expect(timelineState.selectedGroupId, isNull);
       expect(timelineState.selectedYear, isNull);
+    });
+
+    testWidgets('_currentMember取得でエラーになった場合、SnackBarでエラーを表示してログアウトする', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final mockAuthNotifier = MockAuthNotifier();
+      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+
+      when(
+        testGetCurrentMemberUseCase.execute(),
+      ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
+      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+
+      final widget = ProviderScope(
+        overrides: [
+          authNotifierProvider.overrideWith((ref) {
+            return mockAuthNotifier;
+          }),
+        ],
+        child: MaterialApp(
+          home: TopPage(
+            getGroupsWithMembersUsecase: mockUsecase,
+            isTestEnvironment: true,
+            getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+          ),
+        ),
+      );
+
+      // Act
+      await tester.pumpWidget(widget);
+      await tester.pump();
+
+      // Assert
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('メンバー情報の取得に失敗しました。再度ログインしてください。'), findsOneWidget);
+      verify(mockAuthNotifier.logout()).called(1);
     });
   });
 }

@@ -84,6 +84,7 @@
   - [x] GroupTimelineNavigationNotifierクラスを作成する（lib/application/controllers/group_timeline_navigation_controller.dart）
   - [x] TopPageをリファクタリングしてコントローラーを使用する形に変更する
 - [x] トップページのヘッダ色をハンバーガーメニューのヘッダ色と合わせる
+- [x] _currentMember取得でエラーになった場合、showSnackBarでエラーを表示し、そのままログアウトする
 
 ## アカウント管理
 
