@@ -64,7 +64,7 @@
 
 ## アーキテクチャ
 
-※Robert C.Martinが提唱した**クリーンアーキテクチャの原則**に従います。
+Robert C.Martinが提唱した**クリーンアーキテクチャの原則**に従います。
 
 ### クリーンアーキテクチャの原則
 
@@ -75,7 +75,7 @@
 
 ## TDDワークフロー定義
 
-※Kent Beckの原著『Test-Driven Development: By Example』とその翻訳者であるt-wadaの解釈に従います。
+Kent Beckの原著『Test-Driven Development: By Example』とその翻訳者であるt-wadaの解釈に従います。
 
 ### Red - Green - Refactor サイクル
 
@@ -115,7 +115,7 @@
 
 ## リファクタリング定義
 
-※Martin Fowlerの著書『Refactoring: Improving the Design of Existing Code』に従います。
+Martin Fowlerの著書『Refactoring: Improving the Design of Existing Code』に従います。
 
 ### 基本原則
 
@@ -151,7 +151,7 @@
 
 ## コミット形式
 
-※Conventional Commits仕様に従います。
+Conventional Commits仕様に従います。
 
 ### 基本形式
 
