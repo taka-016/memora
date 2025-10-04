@@ -6,7 +6,7 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:memora/presentation/features/map/map_screen.dart';
 
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -175,11 +175,10 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.groupTimeline:
         return _buildGroupTimelineStack(ref);
       case NavigationItem.mapDisplay:
-        return widget.isTestEnvironment
-            ? MapViewFactory.create(
-                MapViewType.placeholder,
-              ).createMapView(pins: [])
-            : MapViewFactory.create(MapViewType.google).createMapView(pins: []);
+        return MapScreen(
+          pins: const [],
+          isTestEnvironment: widget.isTestEnvironment,
+        );
       case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
