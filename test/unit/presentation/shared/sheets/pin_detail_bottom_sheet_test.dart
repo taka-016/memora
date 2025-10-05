@@ -35,7 +35,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+            body: PinDetailBottomSheet(
+              pin: defaultPin,
+              onClose: () {},
+              onUpdate: (_) {},
+              onDelete: (_) {},
+            ),
           ),
         ),
       );

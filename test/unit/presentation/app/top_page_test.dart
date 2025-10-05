@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
+import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -39,6 +41,7 @@ class _TestGroupTimelineNavigationNotifier
   GetGroupsWithMembersUsecase,
   GetCurrentMemberUseCase,
   AuthNotifier,
+  PinQueryService,
 ])
 void main() {
   late MockGetGroupsWithMembersUsecase mockUsecase;
@@ -96,11 +99,17 @@ void main() {
       ),
     );
 
+    final mockPinQueryService = MockPinQueryService();
+    when(
+      mockPinQueryService.getPinsByMemberId(any),
+    ).thenAnswer((_) async => []);
+
     return ProviderScope(
       overrides: [
         authNotifierProvider.overrideWith((ref) {
           return FakeAuthNotifier.authenticated();
         }),
+        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       ],
       child: MaterialApp(
         home: TopPage(
