@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
-import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
   return FirestorePinQueryService(firestore: FirebaseFirestore.instance);
@@ -48,43 +46,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     }
   }
 
-  void _onMapLongTapped(Location location) {
-    // WIP
-  }
-
-  void _onMarkerTapped(PinDto pin) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => PinDetailBottomSheet(
-        pin: pin,
-        onClose: () => Navigator.pop(context),
-        onUpdate: null,
-        onDelete: null,
-      ),
-    );
-  }
-
-  void _onMarkerUpdated(PinDto pin) {
-    // WIP
-  }
-
-  void _onMarkerDeleted(String pinId) {
-    // WIP
-  }
-
   @override
   Widget build(BuildContext context) {
     final mapViewType = widget.isTestEnvironment
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    return MapViewFactory.create(mapViewType).createMapView(
-      pins: _pins,
-      onMapLongTapped: _onMapLongTapped,
-      onMarkerTapped: _onMarkerTapped,
-      onMarkerUpdated: _onMarkerUpdated,
-      onMarkerDeleted: _onMarkerDeleted,
-    );
+    return MapViewFactory.create(
+      mapViewType,
+    ).createMapView(pins: _pins, isReadOnly: true);
   }
 }

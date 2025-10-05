@@ -212,6 +212,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     );
   }
 
+  bool get isReadOnly => widget.onUpdate == null;
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -297,8 +299,6 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     required IconData icon,
     Key? testKey,
   }) {
-    final isReadOnly = widget.onUpdate == null;
-
     return InkWell(
       key: testKey,
       onTap: isReadOnly ? null : onTap,
@@ -429,7 +429,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.refresh),
-              onPressed: _isLoadingLocation
+              onPressed: (_isLoadingLocation || isReadOnly)
                   ? null
                   : () => _loadLocationName(forceRefresh: true),
               color: Colors.grey[600],
@@ -442,8 +442,6 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }
 
   Widget _buildMemoField() {
-    final isReadOnly = widget.onUpdate == null;
-
     return TextFormField(
       key: const Key('visitMemoField'),
       minLines: 4,

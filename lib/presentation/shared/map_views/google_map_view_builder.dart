@@ -15,6 +15,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
     PinDto? selectedPin,
+    bool isReadOnly = false,
   }) {
     return GoogleMapView(
       pins: pins,
@@ -23,6 +24,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
       onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
+      isReadOnly: isReadOnly,
     );
   }
 }
