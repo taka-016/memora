@@ -22,6 +22,9 @@
 
 - [x] ~~起動時に現在地に移動~~→仕様変更により廃止
 - [x] 地図表示画面はMapViewを直接表示するのではなく、mapDisplayウィジェットを表示してその上にMapViewを生成する形にする
+- [x] PinQueryServiceのgetPinsByMemberIdを使用してログインユーザーが所属するグループに紐づくpinsを取得する
+  - [x] 取得したpinsをマップにmarkerで表示する
+  - [x] markerタップでpin内容を表示するが、変更/削除は不可とする
 
 ## マップピンのポップアップメニュー表示
 
@@ -41,9 +44,6 @@
   - [x] Firebaseから該当ピンを削除する処理
   - [x] マップ上から該当ピンを削除
   - [x] markerIdで紐づけて削除する
-- [x] PinQueryServiceのgetPinsByMemberIdを使用してログインユーザーが所属するグループに紐づくpinsを取得する
-  - [x] 取得したpinsをマップにmarkerで表示する
-  - [x] markerタップでpin内容を表示するが、変更/削除は不可とする
 
 ## マップの検索機能追加
 
