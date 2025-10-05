@@ -3,50 +3,63 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/fake_auth_notifier.dart';
 import 'map_screen_test.mocks.dart';
 
 @GenerateMocks([PinQueryService])
 void main() {
+  const testMember = Member(id: 'test-member-id', displayName: 'テストメンバー');
+
   group('MapScreen', () {
     testWidgets('テスト環境の場合、PlaceholderMapViewを表示する', (tester) async {
+      final mockPinQueryService = MockPinQueryService();
+      when(
+        mockPinQueryService.getPinsByMemberId(any),
+      ).thenAnswer((_) async => []);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authNotifierProvider.overrideWith(
-              (ref) => FakeAuthNotifier.unauthenticated(),
-            ),
+            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
           ],
           child: const MaterialApp(
-            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
+            home: Scaffold(
+              body: MapScreen(member: testMember, isTestEnvironment: true),
+            ),
           ),
         ),
       );
 
+      await tester.pumpAndSettle();
       expect(find.byType(PlaceholderMapView), findsOneWidget);
     });
 
     testWidgets('本番環境の場合、GoogleMapViewを表示する', (tester) async {
+      final mockPinQueryService = MockPinQueryService();
+      when(
+        mockPinQueryService.getPinsByMemberId(any),
+      ).thenAnswer((_) async => []);
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authNotifierProvider.overrideWith(
-              (ref) => FakeAuthNotifier.unauthenticated(),
-            ),
+            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
           ],
           child: const MaterialApp(
-            home: Scaffold(body: MapScreen(isTestEnvironment: false)),
+            home: Scaffold(
+              body: MapScreen(member: testMember, isTestEnvironment: false),
+            ),
           ),
         ),
       );
 
+      await tester.pumpAndSettle();
       expect(find.byType(GoogleMapView), findsOneWidget);
     });
 
@@ -76,13 +89,12 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authNotifierProvider.overrideWith(
-              (ref) => FakeAuthNotifier.authenticated(userId: 'test-member-id'),
-            ),
             pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
           ],
           child: const MaterialApp(
-            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
+            home: Scaffold(
+              body: MapScreen(member: testMember, isTestEnvironment: true),
+            ),
           ),
         ),
       );

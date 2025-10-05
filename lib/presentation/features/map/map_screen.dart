@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -14,9 +14,14 @@ final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
 });
 
 class MapScreen extends ConsumerStatefulWidget {
+  final Member member;
   final bool isTestEnvironment;
 
-  const MapScreen({super.key, this.isTestEnvironment = false});
+  const MapScreen({
+    super.key,
+    required this.member,
+    this.isTestEnvironment = false,
+  });
 
   @override
   ConsumerState<MapScreen> createState() => _MapScreenState();
@@ -34,13 +39,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _loadPins() async {
-    final authState = ref.read(authNotifierProvider);
-    if (authState.user == null) {
-      return;
-    }
-
     final pinQueryService = ref.read(pinQueryServiceProvider);
-    final pins = await pinQueryService.getPinsByMemberId(authState.user!.id);
+    final pins = await pinQueryService.getPinsByMemberId(widget.member.id);
     if (mounted) {
       setState(() {
         _pins = pins;
