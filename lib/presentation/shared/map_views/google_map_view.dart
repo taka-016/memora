@@ -17,6 +17,7 @@ class GoogleMapView extends ConsumerWidget {
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
   final PinDto? selectedPin;
+  final bool isReadOnly;
 
   const GoogleMapView({
     super.key,
@@ -26,6 +27,7 @@ class GoogleMapView extends ConsumerWidget {
     this.onMarkerUpdated,
     this.onMarkerDeleted,
     this.selectedPin,
+    this.isReadOnly = false,
   });
 
   @override
@@ -37,6 +39,7 @@ class GoogleMapView extends ConsumerWidget {
       onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,
       selectedPin: selectedPin,
+      isReadOnly: isReadOnly,
     );
   }
 }
@@ -48,6 +51,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
   final PinDto? selectedPin;
+  final bool isReadOnly;
 
   const _GoogleMapViewWidget({
     required this.pins,
@@ -56,6 +60,7 @@ class _GoogleMapViewWidget extends ConsumerStatefulWidget {
     this.onMarkerUpdated,
     this.onMarkerDeleted,
     this.selectedPin,
+    this.isReadOnly = false,
   });
 
   @override
@@ -263,8 +268,8 @@ class _GoogleMapViewWidgetState extends ConsumerState<_GoogleMapViewWidget> {
 
     return PinDetailBottomSheet(
       pin: _selectedPin!,
-      onUpdate: _onMarkerUpdate,
-      onDelete: _onMarkerDelete,
+      onUpdate: widget.isReadOnly ? null : _onMarkerUpdate,
+      onDelete: widget.isReadOnly ? null : _onMarkerDelete,
       onClose: _hidePinDetailBottomSheet,
     );
   }

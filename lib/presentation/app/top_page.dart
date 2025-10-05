@@ -175,7 +175,13 @@ class _TopPageState extends State<TopPage> {
       case NavigationItem.groupTimeline:
         return _buildGroupTimelineStack(ref);
       case NavigationItem.mapDisplay:
-        return MapScreen(isTestEnvironment: widget.isTestEnvironment);
+        if (_currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return MapScreen(
+          member: _currentMember!,
+          isTestEnvironment: widget.isTestEnvironment,
+        );
       case NavigationItem.groupManagement:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());

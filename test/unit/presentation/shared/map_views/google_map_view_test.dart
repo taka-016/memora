@@ -439,5 +439,48 @@ void main() {
       expect(find.text('ピン1のメモ'), findsNothing);
       expect(find.text('ピン2のメモ'), findsOneWidget);
     });
+
+    testWidgets('isReadOnlyがtrueの場合、全ての編集機能が無効化される', (
+      WidgetTester tester,
+    ) async {
+      const testPin = PinDto(
+        pinId: 'pin1',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(pins: const [testPin], isReadOnly: true),
+            ),
+          ),
+        ),
+      );
+
+      // マーカーをタップしてボトムシートを表示
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final marker = googleMap.markers.first;
+      marker.onTap!();
+      await tester.pumpAndSettle();
+
+      // ボトムシート自体は表示される
+      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
+
+      // 更新・削除ボタンが表示されない
+      expect(find.text('更新'), findsNothing);
+      expect(find.text('削除'), findsNothing);
+
+      // 現在地再取得ボタンが無効化されている
+      final refreshButton = tester.widget<IconButton>(
+        find.descendant(
+          of: find.byType(PinDetailBottomSheet),
+          matching: find.widgetWithIcon(IconButton, Icons.refresh),
+        ),
+      );
+      expect(refreshButton.onPressed, isNull);
+    });
   });
 }

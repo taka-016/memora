@@ -15,6 +15,7 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
     PinDto? selectedPin,
+    bool isReadOnly = false,
   }) {
     return const PlaceholderMapView();
   }

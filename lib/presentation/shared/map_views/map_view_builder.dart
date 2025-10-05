@@ -10,5 +10,6 @@ abstract class MapViewBuilder {
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
     PinDto? selectedPin,
+    bool isReadOnly = false,
   });
 }

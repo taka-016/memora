@@ -35,7 +35,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: PinDetailBottomSheet(pin: defaultPin, onClose: () {}),
+            body: PinDetailBottomSheet(
+              pin: defaultPin,
+              onClose: () {},
+              onUpdate: (_) {},
+              onDelete: (_) {},
+            ),
           ),
         ),
       );
@@ -524,6 +529,7 @@ void main() {
             body: PinDetailBottomSheet(
               pin: pinWithLocationName,
               onClose: () {},
+              onUpdate: (pin) {},
               reverseGeocodingService: mockNearbyLocationService,
             ),
           ),
@@ -544,6 +550,55 @@ void main() {
       // ローディング状態の確認
       await tester.pump();
       expect(find.text('新しい場所名'), findsOneWidget);
+    });
+
+    testWidgets('読み取り専用モードでは全ての編集機能が無効化される', (WidgetTester tester) async {
+      final mockNearbyLocationService = MockNearbyLocationService();
+      final pin = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+        visitStartDate: DateTime(2025, 1, 15, 10, 30),
+        visitMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pin,
+              onClose: () {},
+              reverseGeocodingService: mockNearbyLocationService,
+            ),
+          ),
+        ),
+      );
+
+      // 現在地再取得アイコンをタップしても処理が呼ばれない
+      final refreshIconFinder = find.byIcon(Icons.refresh);
+      await tester.tap(refreshIconFinder);
+      await tester.pump();
+      verifyNever(mockNearbyLocationService.getLocationName(any));
+
+      // 日付・時間フィールドが無効化されている
+      final visitStartDateField = tester.widget<InkWell>(
+        find.byKey(const Key('visitStartDateField')),
+      );
+      expect(visitStartDateField.onTap, isNull);
+
+      // メモフィールドが読み取り専用になっている
+      final editableText = tester.widget<EditableText>(
+        find.descendant(
+          of: find.byKey(const Key('visitMemoField')),
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(editableText.readOnly, isTrue);
+
+      // 更新・削除ボタンが表示されない
+      expect(find.text('更新'), findsNothing);
+      expect(find.text('削除'), findsNothing);
     });
 
     testWidgets('更新ボタンタップ時に取得した場所名もPinに含まれる', (WidgetTester tester) async {

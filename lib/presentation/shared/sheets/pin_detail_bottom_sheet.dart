@@ -212,6 +212,8 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
     );
   }
 
+  bool get isReadOnly => widget.onUpdate == null;
+
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
@@ -299,21 +301,25 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
   }) {
     return InkWell(
       key: testKey,
-      onTap: onTap,
+      onTap: isReadOnly ? null : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.black54),
           borderRadius: BorderRadius.circular(4),
+          color: isReadOnly ? Colors.grey[100] : null,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               value,
-              style: const TextStyle(color: Colors.black, fontSize: 16),
+              style: TextStyle(
+                color: isReadOnly ? Colors.black54 : Colors.black,
+                fontSize: 16,
+              ),
             ),
-            Icon(icon, color: Colors.black54),
+            Icon(icon, color: isReadOnly ? Colors.grey : Colors.black54),
           ],
         ),
       ),
@@ -423,7 +429,7 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
               constraints: const BoxConstraints(),
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.refresh),
-              onPressed: _isLoadingLocation
+              onPressed: (_isLoadingLocation || isReadOnly)
                   ? null
                   : () => _loadLocationName(forceRefresh: true),
               color: Colors.grey[600],
@@ -441,19 +447,28 @@ class _PinDetailBottomSheetState extends State<PinDetailBottomSheet> {
       minLines: 4,
       maxLines: null,
       controller: memoController,
-      decoration: const InputDecoration(
+      readOnly: isReadOnly,
+      decoration: InputDecoration(
         labelText: 'メモ',
-        border: OutlineInputBorder(),
+        border: const OutlineInputBorder(),
+        fillColor: isReadOnly ? Colors.grey[100] : null,
+        filled: isReadOnly,
       ),
     );
   }
 
   Widget _buildActionButtons() {
+    if (widget.onUpdate == null && widget.onDelete == null) {
+      return const SizedBox.shrink();
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        ElevatedButton(onPressed: _handleDelete, child: const Text('削除')),
-        ElevatedButton(onPressed: _handleUpdate, child: const Text('更新')),
+        if (widget.onDelete != null)
+          ElevatedButton(onPressed: _handleDelete, child: const Text('削除')),
+        if (widget.onUpdate != null)
+          ElevatedButton(onPressed: _handleUpdate, child: const Text('更新')),
       ],
     );
   }
