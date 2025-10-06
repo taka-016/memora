@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_invitation_repository.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/usecases/member/create_member_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
@@ -15,12 +14,10 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_event_repository.dart';
 import 'member_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
-class MemberManagement extends StatefulWidget {
+class MemberManagement extends ConsumerStatefulWidget {
   final Member member;
   final MemberRepository? memberRepository;
   final GroupRepository? groupRepository;
@@ -37,10 +34,10 @@ class MemberManagement extends StatefulWidget {
   });
 
   @override
-  State<MemberManagement> createState() => _MemberManagementState();
+  ConsumerState<MemberManagement> createState() => _MemberManagementState();
 }
 
-class _MemberManagementState extends State<MemberManagement> {
+class _MemberManagementState extends ConsumerState<MemberManagement> {
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
   late final CreateMemberUsecase _createMemberUsecase;
   late final UpdateMemberUsecase _updateMemberUsecase;
@@ -57,14 +54,17 @@ class _MemberManagementState extends State<MemberManagement> {
     super.initState();
 
     final memberRepository =
-        widget.memberRepository ?? FirestoreMemberRepository();
+        widget.memberRepository ??
+        RepositoryFactory.create<MemberRepository>(ref: ref);
     final groupRepository =
-        widget.groupRepository ?? FirestoreGroupRepository();
+        widget.groupRepository ??
+        RepositoryFactory.create<GroupRepository>(ref: ref);
     final memberEventRepository =
-        widget.memberEventRepository ?? FirestoreMemberEventRepository();
+        widget.memberEventRepository ??
+        RepositoryFactory.create<MemberEventRepository>(ref: ref);
     final memberInvitationRepository =
         widget.memberInvitationRepository ??
-        FirestoreMemberInvitationRepository(FirebaseFirestore.instance);
+        RepositoryFactory.create<MemberInvitationRepository>(ref: ref);
 
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);
