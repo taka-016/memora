@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -22,12 +23,14 @@ class TopPage extends StatefulWidget {
   final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
   final bool isTestEnvironment;
   final GetCurrentMemberUseCase? getCurrentMemberUseCase;
+  final PinQueryService? pinQueryService;
 
   const TopPage({
     super.key,
     required this.getGroupsWithMembersUsecase,
     this.isTestEnvironment = false,
     this.getCurrentMemberUseCase,
+    this.pinQueryService,
   });
 
   @override
@@ -181,6 +184,7 @@ class _TopPageState extends State<TopPage> {
         return MapScreen(
           member: _currentMember!,
           isTestEnvironment: widget.isTestEnvironment,
+          pinQueryService: widget.pinQueryService,
         );
       case NavigationItem.groupManagement:
         if (_currentMember == null) {

@@ -1,44 +1,48 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/application/usecases/pin/get_pins_by_member_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
-  return FirestorePinQueryService(firestore: FirebaseFirestore.instance);
-});
-
-class MapScreen extends ConsumerStatefulWidget {
+class MapScreen extends StatefulWidget {
   final Member member;
   final bool isTestEnvironment;
+  final PinQueryService? pinQueryService;
 
   const MapScreen({
     super.key,
     required this.member,
     this.isTestEnvironment = false,
+    this.pinQueryService,
   });
 
   @override
-  ConsumerState<MapScreen> createState() => _MapScreenState();
+  State<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends ConsumerState<MapScreen> {
+class _MapScreenState extends State<MapScreen> {
+  late final GetPinsByMemberIdUsecase _getPinsByMemberIdUsecase;
+
   List<PinDto> _pins = [];
 
   @override
   void initState() {
     super.initState();
+
+    final pinQueryService =
+        widget.pinQueryService ?? FirestorePinQueryService();
+
+    _getPinsByMemberIdUsecase = GetPinsByMemberIdUsecase(pinQueryService);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPins();
     });
   }
 
   Future<void> _loadPins() async {
-    final pinQueryService = ref.read(pinQueryServiceProvider);
-    final pins = await pinQueryService.getPinsByMemberId(widget.member.id);
+    final pins = await _getPinsByMemberIdUsecase.execute(widget.member.id);
     if (mounted) {
       setState(() {
         _pins = pins;
