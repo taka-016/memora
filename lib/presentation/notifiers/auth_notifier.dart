@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
@@ -24,7 +23,7 @@ final memberRepositoryProvider = Provider<MemberRepository>((ref) {
 
 final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
   (ref) {
-    return FirestoreMemberInvitationRepository(FirebaseFirestore.instance);
+    return FirestoreMemberInvitationRepository();
   },
 );
 

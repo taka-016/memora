@@ -687,7 +687,9 @@ void main() {
         mockMemberInvitationRepository.getByInviteeId('managed-member-1'),
       ).thenAnswer((_) async => null);
 
-      when(mockMemberInvitationRepository.save(any)).thenAnswer((_) async {});
+      when(
+        mockMemberInvitationRepository.saveMemberInvitation(any),
+      ).thenAnswer((_) async {});
 
       // Act
       await tester.pumpWidget(
@@ -719,7 +721,9 @@ void main() {
       expect(find.text('閉じる'), findsOneWidget);
 
       // 招待の保存処理が呼ばれることを確認
-      verify(mockMemberInvitationRepository.save(any)).called(1);
+      verify(
+        mockMemberInvitationRepository.saveMemberInvitation(any),
+      ).called(1);
     });
 
     testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {
