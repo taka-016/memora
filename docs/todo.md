@@ -337,7 +337,7 @@
 - [x] GroupDtoを作成する
   - [x] GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - [x] マッパーも用意する
-- [x] Repository Factoryパターンを導入してDB切り替えを可能にする
+- [ ] Repository Factoryパターンを導入してDB切り替えを可能にする
   - [x] DatabaseTypeのenumとRiverpod Providerを作成
   - [x] RepositoryFactoryを実装
   - [x] MemberManagementでRepositoryFactoryを使用するように変更
