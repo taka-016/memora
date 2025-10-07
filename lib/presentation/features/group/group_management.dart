@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
@@ -14,15 +15,12 @@ import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_group_event_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'group_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
-class GroupManagement extends StatefulWidget {
+class GroupManagement extends ConsumerStatefulWidget {
   final Member member;
   final GroupRepository? groupRepository;
   final GroupEventRepository? groupEventRepository;
@@ -41,10 +39,10 @@ class GroupManagement extends StatefulWidget {
   });
 
   @override
-  State<GroupManagement> createState() => _GroupManagementState();
+  ConsumerState<GroupManagement> createState() => _GroupManagementState();
 }
 
-class _GroupManagementState extends State<GroupManagement> {
+class _GroupManagementState extends ConsumerState<GroupManagement> {
   late final GetGroupByIdUsecase _getGroupByIdUsecase;
   late final GetManagedGroupsWithMembersUsecase
   _getManagedGroupsWithMembersUsecase;
@@ -61,15 +59,19 @@ class _GroupManagementState extends State<GroupManagement> {
     super.initState();
 
     final groupRepository =
-        widget.groupRepository ?? FirestoreGroupRepository();
+        widget.groupRepository ??
+        RepositoryFactory.createWithWidgetRef<GroupRepository>(ref: ref);
     final groupEventRepository =
-        widget.groupEventRepository ?? FirestoreGroupEventRepository();
+        widget.groupEventRepository ??
+        RepositoryFactory.createWithWidgetRef<GroupEventRepository>(ref: ref);
     final groupQueryService =
         widget.groupQueryService ?? FirestoreGroupQueryService();
     final memberRepository =
-        widget.memberRepository ?? FirestoreMemberRepository();
+        widget.memberRepository ??
+        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
     final tripEntryRepository =
-        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+        widget.tripEntryRepository ??
+        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
 
     _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(

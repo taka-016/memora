@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
@@ -17,7 +18,7 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   }
 }
 
-class GroupTimeline extends StatefulWidget {
+class GroupTimeline extends ConsumerStatefulWidget {
   final GroupWithMembersDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
@@ -34,10 +35,10 @@ class GroupTimeline extends StatefulWidget {
   });
 
   @override
-  State<GroupTimeline> createState() => _GroupTimelineState();
+  ConsumerState<GroupTimeline> createState() => _GroupTimelineState();
 }
 
-class _GroupTimelineState extends State<GroupTimeline> {
+class _GroupTimelineState extends ConsumerState<GroupTimeline> {
   late final GetTripEntriesUsecase _getTripEntriesUsecase;
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;
@@ -77,7 +78,8 @@ class _GroupTimelineState extends State<GroupTimeline> {
     super.initState();
 
     final tripEntryRepository =
-        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+        widget.tripEntryRepository ??
+        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     final totalDataRows = 2 + widget.groupWithMembers.members.length;

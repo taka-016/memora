@@ -40,7 +40,9 @@ void main() {
       expect(invitationCode, isNotEmpty);
 
       // 新規作成のsaveが呼ばれることを確認
-      verify(mockMemberInvitationRepository.save(any)).called(1);
+      verify(
+        mockMemberInvitationRepository.saveMemberInvitation(any),
+      ).called(1);
     });
 
     test('既存の招待がある場合、更新される', () async {
@@ -70,7 +72,9 @@ void main() {
       expect(invitationCode, isNot(equals('old_code'))); // 新しいコードが生成される
 
       // 更新のsaveが呼ばれることを確認
-      verify(mockMemberInvitationRepository.save(any)).called(1);
+      verify(
+        mockMemberInvitationRepository.saveMemberInvitation(any),
+      ).called(1);
     });
 
     test('招待コードはUUID形式で生成される', () async {

@@ -7,7 +7,29 @@ class FirestoreMemberInvitationRepository
     implements MemberInvitationRepository {
   final FirebaseFirestore _firestore;
 
-  FirestoreMemberInvitationRepository(this._firestore);
+  FirestoreMemberInvitationRepository({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  @override
+  Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {
+    final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+
+    if (memberInvitation.id.isEmpty) {
+      // 新規作成
+      await _firestore.collection('member_invitations').add(data);
+    } else {
+      // 更新
+      await _firestore
+          .collection('member_invitations')
+          .doc(memberInvitation.id)
+          .set(data);
+    }
+  }
+
+  @override
+  Future<void> deleteMemberInvitation(String id) async {
+    await _firestore.collection('member_invitations').doc(id).delete();
+  }
 
   @override
   Future<MemberInvitation?> getByInviteeId(String inviteeId) async {
@@ -39,26 +61,5 @@ class FirestoreMemberInvitationRepository
     return FirestoreMemberInvitationMapper.fromFirestore(
       querySnapshot.docs.first,
     );
-  }
-
-  @override
-  Future<void> save(MemberInvitation memberInvitation) async {
-    final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
-
-    if (memberInvitation.id.isEmpty) {
-      // 新規作成
-      await _firestore.collection('member_invitations').add(data);
-    } else {
-      // 更新
-      await _firestore
-          .collection('member_invitations')
-          .doc(memberInvitation.id)
-          .set(data);
-    }
-  }
-
-  @override
-  Future<void> delete(String id) async {
-    await _firestore.collection('member_invitations').doc(id).delete();
   }
 }

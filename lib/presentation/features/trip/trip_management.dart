@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/mappers/pin_mapper.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
@@ -7,12 +8,12 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
-class TripManagement extends StatefulWidget {
+class TripManagement extends ConsumerStatefulWidget {
   final String groupId;
   final int year;
   final VoidCallback? onBackPressed;
@@ -29,10 +30,10 @@ class TripManagement extends StatefulWidget {
   });
 
   @override
-  State<TripManagement> createState() => _TripManagementState();
+  ConsumerState<TripManagement> createState() => _TripManagementState();
 }
 
-class _TripManagementState extends State<TripManagement> {
+class _TripManagementState extends ConsumerState<TripManagement> {
   late final GetTripEntriesUsecase _getTripEntriesUsecase;
   late final CreateTripEntryUsecase _createTripEntryUsecase;
   late final UpdateTripEntryUsecase _updateTripEntryUsecase;
@@ -47,7 +48,8 @@ class _TripManagementState extends State<TripManagement> {
     super.initState();
 
     final tripEntryRepository =
-        widget.tripEntryRepository ?? FirestoreTripEntryRepository();
+        widget.tripEntryRepository ??
+        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);

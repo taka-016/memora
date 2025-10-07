@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
@@ -90,15 +91,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -131,15 +134,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -163,15 +168,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -194,15 +201,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -229,15 +238,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -273,15 +284,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -314,15 +327,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -360,15 +375,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),
@@ -429,15 +446,17 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupManagement(
-              member: testMember,
-              groupRepository: mockGroupRepository,
-              groupEventRepository: mockGroupEventRepository,
-              groupQueryService: mockGroupQueryService,
-              memberRepository: mockMemberRepository,
-              tripEntryRepository: mockTripEntryRepository,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupManagement(
+                member: testMember,
+                groupRepository: mockGroupRepository,
+                groupEventRepository: mockGroupEventRepository,
+                groupQueryService: mockGroupQueryService,
+                memberRepository: mockMemberRepository,
+                tripEntryRepository: mockTripEntryRepository,
+              ),
             ),
           ),
         ),

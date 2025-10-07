@@ -24,7 +24,7 @@ class CreateOrUpdateMemberInvitationUsecase {
         invitationCode: invitationCode,
         inviterId: inviterId,
       );
-      await _memberInvitationRepository.save(updatedInvitation);
+      await _memberInvitationRepository.saveMemberInvitation(updatedInvitation);
     } else {
       // 新規招待の作成
       final newInvitation = MemberInvitation(
@@ -33,7 +33,7 @@ class CreateOrUpdateMemberInvitationUsecase {
         inviterId: inviterId,
         invitationCode: invitationCode,
       );
-      await _memberInvitationRepository.save(newInvitation);
+      await _memberInvitationRepository.saveMemberInvitation(newInvitation);
     }
 
     return invitationCode;
