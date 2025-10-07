@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -70,14 +71,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -123,14 +126,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -160,14 +165,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -192,14 +199,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -226,14 +235,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -273,13 +284,15 @@ void main() {
       ).thenAnswer((_) async => detailedTripEntry);
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            onBackPressed: null,
-            tripEntryRepository: mockTripEntryRepository,
-            isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );
@@ -316,14 +329,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -358,14 +373,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -404,13 +421,15 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            onBackPressed: null,
-            tripEntryRepository: mockTripEntryRepository,
-            isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              tripEntryRepository: mockTripEntryRepository,
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );
@@ -443,14 +462,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -484,14 +505,16 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: null,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -528,16 +551,18 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: () {
-                backPressed = true;
-              },
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                onBackPressed: () {
+                  backPressed = true;
+                },
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -568,13 +593,15 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              tripEntryRepository: mockTripEntryRepository,
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripManagement(
+                groupId: testGroupId,
+                year: testYear,
+                tripEntryRepository: mockTripEntryRepository,
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),

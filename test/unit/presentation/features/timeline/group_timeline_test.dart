@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -42,14 +43,17 @@ void main() {
   });
 
   Widget createTestWidget({TripEntryRepository? tripEntryRepository}) {
-    return MaterialApp(
-      home: Scaffold(
-        body: SizedBox(
-          width: 1200, // より広い画面サイズを設定
-          height: 800,
-          child: GroupTimeline(
-            groupWithMembers: testGroupWithMembers,
-            tripEntryRepository: tripEntryRepository ?? mockTripEntryRepository,
+    return ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200, // より広い画面サイズを設定
+            height: 800,
+            child: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              tripEntryRepository:
+                  tripEntryRepository ?? mockTripEntryRepository,
+            ),
           ),
         ),
       ),

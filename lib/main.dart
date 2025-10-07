@@ -10,6 +10,7 @@ import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
@@ -40,7 +41,7 @@ Future<void> main() async {
 
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-      runApp(const MyApp());
+      runApp(const ProviderScope(child: MyApp()));
     },
     (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
@@ -48,14 +49,14 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> {
   late final AuthService authService;
   late final MemberRepository memberRepository;
   late final GroupQueryService groupQueryService;
@@ -66,7 +67,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     authService = FirebaseAuthService();
-    memberRepository = FirestoreMemberRepository();
+    memberRepository = RepositoryFactory.create<MemberRepository>(ref: ref);
 
     groupQueryService = FirestoreGroupQueryService();
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
