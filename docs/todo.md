@@ -342,6 +342,10 @@
   - [x] RepositoryFactoryを実装
   - [x] MemberManagementでRepositoryFactoryを使用するように変更
   - [x] 他の処理にも適用
+- [x] QueryService Factoryパターンを導入してDB切り替えを可能にする
+  - [x] QueryServiceFactoryを実装
+  - [x] GroupManagementでQueryServiceFactoryを使用するように変更
+  - [x] 他の処理にも適用
 
 ## 全体
 

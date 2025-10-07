@@ -10,8 +10,8 @@ import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
@@ -70,7 +70,8 @@ class _MyAppState extends ConsumerState<MyApp> {
       ref: ref,
     );
 
-    groupQueryService = FirestoreGroupQueryService();
+    groupQueryService =
+        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupQueryService,
     );

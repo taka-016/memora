@@ -4,8 +4,8 @@ import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
@@ -65,7 +65,8 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
         widget.groupEventRepository ??
         RepositoryFactory.createWithWidgetRef<GroupEventRepository>(ref: ref);
     final groupQueryService =
-        widget.groupQueryService ?? FirestoreGroupQueryService();
+        widget.groupQueryService ??
+        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
     final memberRepository =
         widget.memberRepository ??
         RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
