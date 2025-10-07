@@ -8,17 +8,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
-import 'application/interfaces/auth_service.dart';
-import 'infrastructure/services/firebase_auth_service.dart';
-import 'application/usecases/group/get_groups_with_members_usecase.dart';
-import 'application/usecases/member/get_current_member_usecase.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 late final Logger logger;
@@ -48,39 +40,8 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends ConsumerStatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  ConsumerState<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends ConsumerState<MyApp> {
-  late final AuthService authService;
-  late final MemberRepository memberRepository;
-  late final GroupQueryService groupQueryService;
-  late final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
-  late final GetCurrentMemberUseCase getCurrentMemberUseCase;
-
-  @override
-  void initState() {
-    super.initState();
-    authService = FirebaseAuthService();
-    memberRepository = RepositoryFactory.createWithWidgetRef<MemberRepository>(
-      ref: ref,
-    );
-
-    groupQueryService =
-        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
-    getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
-      groupQueryService,
-    );
-
-    getCurrentMemberUseCase = GetCurrentMemberUseCase(
-      memberRepository,
-      authService,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,12 +61,7 @@ class _MyAppState extends ConsumerState<MyApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: AuthGuard(
-        child: TopPage(
-          getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
-          getCurrentMemberUseCase: getCurrentMemberUseCase,
-        ),
-      ),
+      home: const AuthGuard(child: TopPage()),
     );
   }
 }

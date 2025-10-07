@@ -2,35 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'main_test.mocks.dart';
 import '../helpers/fake_auth_notifier.dart';
+import 'main_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase, GetCurrentMemberUseCase])
+@GenerateMocks([
+  GroupQueryService,
+  MemberRepository,
+  AuthService,
+  PinQueryService,
+])
 void main() {
-  late MockGetGroupsWithMembersUsecase mockUsecase;
-  late MockGetCurrentMemberUseCase mockGetCurrentMemberUseCase;
+  late MockGroupQueryService mockGroupQueryService;
+  late MockMemberRepository mockMemberRepository;
+  late MockAuthService mockAuthService;
+  late MockPinQueryService mockPinQueryService;
 
   setUp(() {
-    mockUsecase = MockGetGroupsWithMembersUsecase();
-    mockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+    mockGroupQueryService = MockGroupQueryService();
+    mockMemberRepository = MockMemberRepository();
+    mockAuthService = MockAuthService();
+    mockPinQueryService = MockPinQueryService();
 
-    when(mockUsecase.execute(any)).thenAnswer((_) async => []);
-    when(mockGetCurrentMemberUseCase.execute()).thenAnswer(
-      (_) async => Member(
-        id: 'test_member',
-        displayName: '表示名',
-        kanjiLastName: 'テスト',
-        kanjiFirstName: 'ユーザー',
-      ),
+    const testUser = User(
+      id: 'test_user_id',
+      loginId: 'test@example.com',
+      isVerified: true,
     );
+
+    final testMember = Member(
+      id: 'test_member_id',
+      displayName: 'テストユーザー',
+      kanjiLastName: 'テスト',
+      kanjiFirstName: 'ユーザー',
+    );
+
+    when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
+    when(
+      mockMemberRepository.getMemberByAccountId(any),
+    ).thenAnswer((_) async => testMember);
+    when(
+      mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+    ).thenAnswer((_) async => []);
+    when(
+      mockPinQueryService.getPinsByMemberId(any),
+    ).thenAnswer((_) async => []);
   });
 
   Widget createTestApp() {
@@ -42,14 +68,13 @@ void main() {
       ],
       child: MaterialApp(
         title: 'memora',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        ),
         locale: const Locale('ja'),
         home: TopPage(
-          getGroupsWithMembersUsecase: mockUsecase,
           isTestEnvironment: true,
-          getCurrentMemberUseCase: mockGetCurrentMemberUseCase,
+          memberRepository: mockMemberRepository,
+          authService: mockAuthService,
+          groupQueryService: mockGroupQueryService,
+          pinQueryService: mockPinQueryService,
         ),
       ),
     );

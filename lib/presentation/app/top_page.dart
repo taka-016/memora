@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/infrastructure/services/firebase_auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -19,53 +23,58 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/core/app_logger.dart';
 
-class TopPage extends StatefulWidget {
-  final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
+class TopPage extends ConsumerStatefulWidget {
   final bool isTestEnvironment;
-  final GetCurrentMemberUseCase? getCurrentMemberUseCase;
+  final MemberRepository? memberRepository;
+  final AuthService? authService;
+  final GroupQueryService? groupQueryService;
   final PinQueryService? pinQueryService;
 
   const TopPage({
     super.key,
-    required this.getGroupsWithMembersUsecase,
     this.isTestEnvironment = false,
-    this.getCurrentMemberUseCase,
+    this.memberRepository,
+    this.authService,
+    this.groupQueryService,
     this.pinQueryService,
   });
 
   @override
-  State<TopPage> createState() => _TopPageState();
+  ConsumerState<TopPage> createState() => _TopPageState();
 }
 
-class _TopPageState extends State<TopPage> {
-  GetCurrentMemberUseCase? _getCurrentMemberUseCase;
+class _TopPageState extends ConsumerState<TopPage> {
+  late final GetCurrentMemberUseCase _getCurrentMemberUseCase;
   Member? _currentMember;
 
   @override
   void initState() {
     super.initState();
-    _initializeGetCurrentMemberUseCase();
+
+    final memberRepository =
+        widget.memberRepository ??
+        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
+    final authService = widget.authService ?? FirebaseAuthService();
+
+    _getCurrentMemberUseCase = GetCurrentMemberUseCase(
+      memberRepository,
+      authService,
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        final container = ProviderScope.containerOf(context);
-        container.read(navigationNotifierProvider.notifier).resetToDefault();
-        container
+        ref.read(navigationNotifierProvider.notifier).resetToDefault();
+        ref
             .read(groupTimelineNavigationNotifierProvider.notifier)
             .resetToGroupList();
+        _loadCurrentMember();
       }
     });
   }
 
-  void _initializeGetCurrentMemberUseCase() async {
-    _getCurrentMemberUseCase = widget.getCurrentMemberUseCase;
-    if (_getCurrentMemberUseCase != null) {
-      await _loadCurrentMember();
-    }
-  }
-
   Future<void> _loadCurrentMember() async {
     try {
-      final member = await _getCurrentMemberUseCase!.execute();
+      final member = await _getCurrentMemberUseCase.execute();
       if (mounted) {
         setState(() {
           _currentMember = member;
@@ -83,15 +92,14 @@ class _TopPageState extends State<TopPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('メンバー情報の取得に失敗しました。再度ログインしてください。')),
             );
-            final container = ProviderScope.containerOf(context);
-            container.read(authNotifierProvider.notifier).logout();
+            ref.read(authNotifierProvider.notifier).logout();
           }
         });
       }
     }
   }
 
-  void _onNavigationItemSelected(NavigationItem item, WidgetRef ref) {
+  void _onNavigationItemSelected(NavigationItem item) {
     ref.read(navigationNotifierProvider.notifier).selectItem(item);
     if (item != NavigationItem.groupTimeline) {
       ref
@@ -101,13 +109,13 @@ class _TopPageState extends State<TopPage> {
     Navigator.of(context).pop();
   }
 
-  void _onGroupSelected(GroupWithMembersDto groupWithMembers, WidgetRef ref) {
+  void _onGroupSelected(GroupWithMembersDto groupWithMembers) {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
         .showGroupTimeline(groupWithMembers);
   }
 
-  Widget _buildGroupTimelineStack(WidgetRef ref) {
+  Widget _buildGroupTimelineStack() {
     if (_currentMember == null) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -120,12 +128,12 @@ class _TopPageState extends State<TopPage> {
           .getStackIndex(),
       children: [
         GroupList(
-          getGroupsWithMembersUsecase: widget.getGroupsWithMembersUsecase,
           member: _currentMember!,
-          onGroupSelected: (group) => _onGroupSelected(group, ref),
+          onGroupSelected: (group) => _onGroupSelected(group),
+          groupQueryService: widget.groupQueryService,
         ),
         widget.isTestEnvironment
-            ? _buildTestGroupTimeline(ref)
+            ? _buildTestGroupTimeline()
             : timelineState.groupTimelineInstance ?? Container(),
         timelineState.selectedGroupId != null &&
                 timelineState.selectedYear != null
@@ -141,7 +149,7 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Widget _buildTestGroupTimeline(WidgetRef ref) {
+  Widget _buildTestGroupTimeline() {
     return Container(
       key: const Key('group_timeline'),
       child: Column(
@@ -171,12 +179,12 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Widget _buildBody(WidgetRef ref) {
+  Widget _buildBody() {
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
-        return _buildGroupTimelineStack(ref);
+        return _buildGroupTimelineStack();
       case NavigationItem.mapDisplay:
         if (_currentMember == null) {
           return const Center(child: CircularProgressIndicator());
@@ -252,14 +260,10 @@ class _TopPageState extends State<TopPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        return Scaffold(
-          appBar: _buildAppBar(context),
-          drawer: _buildDrawer(context, ref),
-          body: _buildBody(ref),
-        );
-      },
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      drawer: _buildDrawer(context),
+      body: _buildBody(),
     );
   }
 
@@ -277,13 +281,13 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context, WidgetRef ref) {
+  Drawer _buildDrawer(BuildContext context) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           _buildDrawerHeader(context),
-          ..._buildDrawerItems(ref),
+          ..._buildDrawerItems(),
           const Divider(),
           _buildLogoutItem(),
         ],
@@ -292,16 +296,12 @@ class _TopPageState extends State<TopPage> {
   }
 
   Widget _buildDrawerHeader(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final authState = ref.watch(authNotifierProvider);
-        if (authState.status == AuthStatus.authenticated) {
-          return _buildUserDrawerHeader(context, authState.user!.loginId);
-        } else {
-          return _buildDefaultHeader(context);
-        }
-      },
-    );
+    final authState = ref.watch(authNotifierProvider);
+    if (authState.status == AuthStatus.authenticated) {
+      return _buildUserDrawerHeader(context, authState.user!.loginId);
+    } else {
+      return _buildDefaultHeader(context);
+    }
   }
 
   Widget _buildUserDrawerHeader(BuildContext context, String email) {
@@ -341,62 +341,43 @@ class _TopPageState extends State<TopPage> {
     );
   }
 
-  List<Widget> _buildDrawerItems(WidgetRef ref) {
+  List<Widget> _buildDrawerItems() {
     return [
-      _buildDrawerItem(
-        Icons.timeline,
-        'グループ年表',
-        NavigationItem.groupTimeline,
-        ref,
-      ),
-      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay, ref),
-      _buildDrawerItem(
-        Icons.people,
-        'メンバー管理',
-        NavigationItem.memberManagement,
-        ref,
-      ),
+      _buildDrawerItem(Icons.timeline, 'グループ年表', NavigationItem.groupTimeline),
+      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay),
+      _buildDrawerItem(Icons.people, 'メンバー管理', NavigationItem.memberManagement),
       _buildDrawerItem(
         Icons.group_work,
         'グループ管理',
         NavigationItem.groupManagement,
-        ref,
       ),
-      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings, ref),
+      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings),
       _buildDrawerItem(
         Icons.account_circle,
         'アカウント設定',
         NavigationItem.accountSettings,
-        ref,
       ),
     ];
   }
 
-  Widget _buildDrawerItem(
-    IconData icon,
-    String title,
-    NavigationItem item,
-    WidgetRef ref,
-  ) {
+  Widget _buildDrawerItem(IconData icon, String title, NavigationItem item) {
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
       selected: selectedItem == item,
-      onTap: () => _onNavigationItemSelected(item, ref),
+      onTap: () => _onNavigationItemSelected(item),
     );
   }
 
   Widget _buildLogoutItem() {
-    return Consumer(
-      builder: (context, ref, child) => ListTile(
-        leading: const Icon(Icons.logout),
-        title: const Text('ログアウト'),
-        onTap: () {
-          ref.read(authNotifierProvider.notifier).logout();
-        },
-      ),
+    return ListTile(
+      leading: const Icon(Icons.logout),
+      title: const Text('ログアウト'),
+      onTap: () {
+        ref.read(authNotifierProvider.notifier).logout();
+      },
     );
   }
 }

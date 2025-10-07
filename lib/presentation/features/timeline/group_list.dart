@@ -1,28 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/core/app_logger.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
-class GroupList extends StatefulWidget {
-  final GetGroupsWithMembersUsecase getGroupsWithMembersUsecase;
+class GroupList extends ConsumerStatefulWidget {
   final Member member;
   final void Function(GroupWithMembersDto)? onGroupSelected;
+  final GroupQueryService? groupQueryService;
 
   const GroupList({
     super.key,
-    required this.getGroupsWithMembersUsecase,
     required this.member,
     this.onGroupSelected,
+    this.groupQueryService,
   });
 
   @override
-  State<GroupList> createState() => _GroupListState();
+  ConsumerState<GroupList> createState() => _GroupListState();
 }
 
-class _GroupListState extends State<GroupList> {
+class _GroupListState extends ConsumerState<GroupList> {
+  late final GetGroupsWithMembersUsecase _getGroupsWithMembersUsecase;
   GroupListState _state = GroupListState.loading;
   List<GroupWithMembersDto> _groupsWithMembers = [];
   String _errorMessage = '';
@@ -30,6 +34,15 @@ class _GroupListState extends State<GroupList> {
   @override
   void initState() {
     super.initState();
+
+    final groupQueryService =
+        widget.groupQueryService ??
+        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
+
+    _getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
+      groupQueryService,
+    );
+
     _loadData();
   }
 
@@ -40,8 +53,9 @@ class _GroupListState extends State<GroupList> {
         _state = GroupListState.loading;
       });
 
-      final groupsWithMembers = await widget.getGroupsWithMembersUsecase
-          .execute(widget.member);
+      final groupsWithMembers = await _getGroupsWithMembersUsecase.execute(
+        widget.member,
+      );
 
       if (!mounted) return;
       setState(() {
