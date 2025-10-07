@@ -84,28 +84,26 @@ class _MyAppState extends ConsumerState<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ProviderScope(
-      child: MaterialApp(
-        title: 'memora',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.lightBlue,
-            foregroundColor: Colors.white,
-          ),
+    return MaterialApp(
+      title: 'memora',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.lightBlue,
+          foregroundColor: Colors.white,
         ),
-        locale: const Locale('ja'),
-        supportedLocales: const [Locale('ja'), Locale('en')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: AuthGuard(
-          child: TopPage(
-            getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
-            getCurrentMemberUseCase: getCurrentMemberUseCase,
-          ),
+      ),
+      locale: const Locale('ja'),
+      supportedLocales: const [Locale('ja'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: AuthGuard(
+        child: TopPage(
+          getGroupsWithMembersUsecase: getGroupsWithMembersUsecase,
+          getCurrentMemberUseCase: getCurrentMemberUseCase,
         ),
       ),
     );
