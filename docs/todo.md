@@ -346,6 +346,8 @@
   - [x] QueryServiceFactoryを実装
   - [x] GroupManagementでQueryServiceFactoryを使用するように変更
   - [x] 他の処理にも適用
+- [x] TopPageにUseCaseを渡さない。
+- [x] GroupListにUseCaseを渡さない。
 
 ## 全体
 

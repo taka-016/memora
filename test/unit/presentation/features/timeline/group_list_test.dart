@@ -4,21 +4,22 @@ import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'group_list_test.mocks.dart';
 
-@GenerateMocks([GetGroupsWithMembersUsecase])
+@GenerateMocks([GroupQueryService])
 void main() {
-  late MockGetGroupsWithMembersUsecase mockUsecase;
+  late MockGroupQueryService mockGroupQueryService;
   late Member testMember;
   late MemberDto testMemberDto;
 
   setUp(() {
-    mockUsecase = MockGetGroupsWithMembersUsecase();
+    mockGroupQueryService = MockGroupQueryService();
     testMember = Member(
       id: 'admin1',
       hiraganaFirstName: 'たろう',
@@ -40,11 +41,13 @@ void main() {
   });
 
   Widget createTestWidget({Member? member}) {
-    return MaterialApp(
-      home: Scaffold(
-        body: GroupList(
-          getGroupsWithMembersUsecase: mockUsecase,
-          member: member ?? testMember,
+    return ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(
+          body: GroupList(
+            groupQueryService: mockGroupQueryService,
+            member: member ?? testMember,
+          ),
         ),
       ),
     );
@@ -76,7 +79,7 @@ void main() {
         ),
       ];
       when(
-        mockUsecase.execute(testMember),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -94,7 +97,9 @@ void main() {
 
     testWidgets('グループが存在しない場合、空状態が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenAnswer((_) async => []);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+      ).thenAnswer((_) async => []);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -107,7 +112,9 @@ void main() {
 
     testWidgets('エラーが発生した場合、エラー状態が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(TestException('エラーテスト'));
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+      ).thenThrow(TestException('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -122,7 +129,9 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(testMember)).thenThrow(TestException('エラーテスト'));
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+      ).thenThrow(TestException('エラーテスト'));
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -137,7 +146,7 @@ void main() {
         ),
       ];
       when(
-        mockUsecase.execute(testMember),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // 再読み込みボタンをタップ
@@ -148,7 +157,9 @@ void main() {
       expect(find.text('グループ一覧'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsNothing);
-      verify(mockUsecase.execute(testMember)).called(2); // 最初のエラー + 再読み込み
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+      ).called(2); // 最初のエラー + 再読み込み
     });
 
     testWidgets('グループ行をタップしたときにコールバック関数が呼ばれる', (WidgetTester tester) async {
@@ -162,19 +173,21 @@ void main() {
         ),
       ];
       when(
-        mockUsecase.execute(testMember),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: GroupList(
-              getGroupsWithMembersUsecase: mockUsecase,
-              member: testMember,
-              onGroupSelected: (groupWithMembers) {
-                selectedGroup = groupWithMembers;
-              },
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupList(
+                groupQueryService: mockGroupQueryService,
+                member: testMember,
+                onGroupSelected: (groupWithMembers) {
+                  selectedGroup = groupWithMembers;
+                },
+              ),
             ),
           ),
         ),

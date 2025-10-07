@@ -12,9 +12,11 @@ import 'package:memora/application/usecases/member/accept_invitation_usecase.dar
 class FakeAuthNotifier extends AuthNotifier {
   bool _signupCalled = false;
   bool _loginCalled = false;
+  bool _logoutCalled = false;
 
   bool get signupCalled => _signupCalled;
   bool get loginCalled => _loginCalled;
+  bool get logoutCalled => _logoutCalled;
 
   FakeAuthNotifier(AuthState initialState)
     : super(
@@ -55,6 +57,12 @@ class FakeAuthNotifier extends AuthNotifier {
   @override
   Future<void> login({required String email, required String password}) async {
     _loginCalled = true;
+  }
+
+  @override
+  Future<void> logout() async {
+    _logoutCalled = true;
+    state = const AuthState.unauthenticated('');
   }
 }
 

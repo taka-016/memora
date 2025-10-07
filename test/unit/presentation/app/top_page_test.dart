@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
+import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -37,20 +40,26 @@ class _TestGroupTimelineNavigationNotifier
 }
 
 @GenerateMocks([
-  GetGroupsWithMembersUsecase,
-  GetCurrentMemberUseCase,
+  GroupQueryService,
+  MemberRepository,
+  AuthService,
   AuthNotifier,
   PinQueryService,
 ])
 void main() {
-  late MockGetGroupsWithMembersUsecase mockUsecase;
+  late MockGroupQueryService mockGroupQueryService;
+  late MockMemberRepository mockMemberRepository;
+  late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
   late List<GroupWithMembersDto> groupsWithMembers;
   late Member testMember;
 
   setUp(() {
-    mockUsecase = MockGetGroupsWithMembersUsecase();
+    mockGroupQueryService = MockGroupQueryService();
+    mockMemberRepository = MockMemberRepository();
+    mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
+
     when(
       mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
@@ -90,18 +99,33 @@ void main() {
   });
 
   Widget createTestWidget({
-    MockGetCurrentMemberUseCase? getCurrentMemberUseCase,
+    MockMemberRepository? memberRepository,
+    MockAuthService? authService,
     MockAuthNotifier? authNotifier,
   }) {
-    final defaultMockGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
-    when(defaultMockGetCurrentMemberUseCase.execute()).thenAnswer(
-      (_) async => Member(
-        id: 'default_member',
-        displayName: '表示名',
-        kanjiLastName: 'デフォルト',
-        kanjiFirstName: 'ユーザー',
-      ),
+    final defaultMember = Member(
+      id: 'default_member',
+      displayName: '表示名',
+      kanjiLastName: 'デフォルト',
+      kanjiFirstName: 'ユーザー',
     );
+
+    final testMemberRepository = memberRepository ?? mockMemberRepository;
+    final testAuthService = authService ?? mockAuthService;
+
+    const testUser = User(
+      id: 'test_user_id',
+      loginId: 'test@example.com',
+      isVerified: true,
+    );
+
+    when(
+      testMemberRepository.getMemberByAccountId(any),
+    ).thenAnswer((_) async => defaultMember);
+    when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
+    when(
+      mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+    ).thenAnswer((_) async => groupsWithMembers);
 
     return ProviderScope(
       overrides: [
@@ -111,10 +135,10 @@ void main() {
       ],
       child: MaterialApp(
         home: TopPage(
-          getGroupsWithMembersUsecase: mockUsecase,
           isTestEnvironment: true,
-          getCurrentMemberUseCase:
-              getCurrentMemberUseCase ?? defaultMockGetCurrentMemberUseCase,
+          memberRepository: testMemberRepository,
+          authService: testAuthService,
+          groupQueryService: mockGroupQueryService,
           pinQueryService: mockPinQueryService,
         ),
       ),
@@ -124,7 +148,9 @@ void main() {
   group('TopPage', () {
     testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -137,7 +163,9 @@ void main() {
 
     testWidgets('メニューが表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -162,7 +190,9 @@ void main() {
 
     testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -177,7 +207,9 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -198,7 +230,9 @@ void main() {
 
     testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -221,7 +255,9 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -244,7 +280,9 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -265,7 +303,9 @@ void main() {
 
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -286,7 +326,9 @@ void main() {
 
     testWidgets('メニュー選択後にメニューが自動的に閉じる', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(createTestWidget());
@@ -306,7 +348,6 @@ void main() {
 
     testWidgets('ログインユーザーのメールアドレスが表示される', (WidgetTester tester) async {
       // Arrange
-      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       final currentMember = Member(
         id: 'current_member',
         displayName: 'ログインユーザー',
@@ -315,14 +356,13 @@ void main() {
       );
 
       when(
-        testGetCurrentMemberUseCase.execute(),
+        mockMemberRepository.getMemberByAccountId(any),
       ).thenAnswer((_) async => currentMember);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      final widget = createTestWidget(
-        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
-      );
+      final widget = createTestWidget();
 
       // Act
       await tester.pumpWidget(widget);
@@ -339,16 +379,14 @@ void main() {
 
     testWidgets('グループ年表から戻るボタンでグループ一覧に戻ることができる', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       when(
-        testGetCurrentMemberUseCase.execute(),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockMemberRepository.getMemberByAccountId(any),
       ).thenAnswer((_) async => testMember);
 
-      final widget = createTestWidget(
-        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
-      );
+      final widget = createTestWidget();
 
       await tester.pumpWidget(widget);
       await tester.pumpAndSettle();
@@ -372,16 +410,14 @@ void main() {
 
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
-
-      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
       when(
-        testGetCurrentMemberUseCase.execute(),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockMemberRepository.getMemberByAccountId(any),
       ).thenAnswer((_) async => testMember);
 
-      final widget = createTestWidget(
-        getCurrentMemberUseCase: testGetCurrentMemberUseCase,
-      );
+      final widget = createTestWidget();
 
       await tester.pumpWidget(widget);
       await tester.pumpAndSettle();
@@ -497,7 +533,9 @@ void main() {
 
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
       // Arrange
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
       // Providerをオーバーライドして、非デフォルト状態から開始
       final widget = ProviderScope(
@@ -514,8 +552,10 @@ void main() {
         ],
         child: MaterialApp(
           home: TopPage(
-            getGroupsWithMembersUsecase: mockUsecase,
             isTestEnvironment: true,
+            memberRepository: mockMemberRepository,
+            authService: mockAuthService,
+            groupQueryService: mockGroupQueryService,
             pinQueryService: mockPinQueryService,
           ),
         ),
@@ -545,25 +585,36 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final mockAuthNotifier = MockAuthNotifier();
-      final testGetCurrentMemberUseCase = MockGetCurrentMemberUseCase();
+      final testMemberRepository = MockMemberRepository();
+      final testAuthService = MockAuthService();
+
+      const testUser = User(
+        id: 'test_user_id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
 
       when(
-        testGetCurrentMemberUseCase.execute(),
+        testMemberRepository.getMemberByAccountId(any),
       ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
-      when(mockUsecase.execute(any)).thenAnswer((_) async => groupsWithMembers);
+      when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      ).thenAnswer((_) async => groupsWithMembers);
 
+      final fakeAuthNotifier = FakeAuthNotifier(
+        const AuthState.authenticated(testUser),
+      );
       final widget = ProviderScope(
         overrides: [
-          authNotifierProvider.overrideWith((ref) {
-            return mockAuthNotifier;
-          }),
+          authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
         ],
         child: MaterialApp(
           home: TopPage(
-            getGroupsWithMembersUsecase: mockUsecase,
             isTestEnvironment: true,
-            getCurrentMemberUseCase: testGetCurrentMemberUseCase,
+            memberRepository: testMemberRepository,
+            authService: testAuthService,
+            groupQueryService: mockGroupQueryService,
             pinQueryService: mockPinQueryService,
           ),
         ),
@@ -572,11 +623,12 @@ void main() {
       // Act
       await tester.pumpWidget(widget);
       await tester.pump();
+      await tester.pump();
 
       // Assert
       expect(find.byType(SnackBar), findsOneWidget);
       expect(find.text('メンバー情報の取得に失敗しました。再度ログインしてください。'), findsOneWidget);
-      verify(mockAuthNotifier.logout()).called(1);
+      expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
 }
