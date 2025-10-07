@@ -6,8 +6,7 @@ import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/infrastructure/services/firebase_auth_service.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_invitation_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -18,12 +17,12 @@ final authServiceProvider = Provider<AuthService>((ref) {
 });
 
 final memberRepositoryProvider = Provider<MemberRepository>((ref) {
-  return FirestoreMemberRepository();
+  return RepositoryFactory.create<MemberRepository>(ref: ref);
 });
 
 final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
   (ref) {
-    return FirestoreMemberInvitationRepository();
+    return RepositoryFactory.create<MemberInvitationRepository>(ref: ref);
   },
 );
 

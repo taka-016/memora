@@ -15,7 +15,12 @@ import 'package:memora/infrastructure/repositories/firestore_member_repository.d
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 
 class RepositoryFactory {
-  static T create<T extends Object>({required WidgetRef ref}) {
+  static T create<T extends Object>({required Ref ref}) {
+    final dbType = ref.read(databaseTypeProvider);
+    return _createRepositoryByType<T>(dbType);
+  }
+
+  static T createWithWidgetRef<T extends Object>({required WidgetRef ref}) {
     final dbType = ref.read(databaseTypeProvider);
     return _createRepositoryByType<T>(dbType);
   }
