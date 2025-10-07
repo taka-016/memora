@@ -19,7 +19,6 @@ import 'application/interfaces/auth_service.dart';
 import 'infrastructure/services/firebase_auth_service.dart';
 import 'application/usecases/group/get_groups_with_members_usecase.dart';
 import 'application/usecases/member/get_current_member_usecase.dart';
-import 'infrastructure/repositories/firestore_member_repository.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 late final Logger logger;
@@ -67,7 +66,9 @@ class _MyAppState extends ConsumerState<MyApp> {
   void initState() {
     super.initState();
     authService = FirebaseAuthService();
-    memberRepository = RepositoryFactory.create<MemberRepository>(ref: ref);
+    memberRepository = RepositoryFactory.createWithWidgetRef<MemberRepository>(
+      ref: ref,
+    );
 
     groupQueryService = FirestoreGroupQueryService();
     getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
