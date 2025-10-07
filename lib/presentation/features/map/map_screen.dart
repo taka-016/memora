@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/application/usecases/pin/get_pins_by_member_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-class MapScreen extends StatefulWidget {
+class MapScreen extends ConsumerStatefulWidget {
   final Member member;
   final bool isTestEnvironment;
   final PinQueryService? pinQueryService;
@@ -19,10 +20,10 @@ class MapScreen extends StatefulWidget {
   });
 
   @override
-  State<MapScreen> createState() => _MapScreenState();
+  ConsumerState<MapScreen> createState() => _MapScreenState();
 }
 
-class _MapScreenState extends State<MapScreen> {
+class _MapScreenState extends ConsumerState<MapScreen> {
   late final GetPinsByMemberIdUsecase _getPinsByMemberIdUsecase;
 
   List<PinDto> _pins = [];
@@ -32,7 +33,8 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
 
     final pinQueryService =
-        widget.pinQueryService ?? FirestorePinQueryService();
+        widget.pinQueryService ??
+        QueryServiceFactory.createWithWidgetRef<PinQueryService>(ref: ref);
 
     _getPinsByMemberIdUsecase = GetPinsByMemberIdUsecase(pinQueryService);
 
