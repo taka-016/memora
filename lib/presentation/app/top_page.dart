@@ -4,8 +4,8 @@ import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/infrastructure/services/firebase_auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -54,7 +54,9 @@ class _TopPageState extends ConsumerState<TopPage> {
     final memberRepository =
         widget.memberRepository ??
         RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
-    final authService = widget.authService ?? FirebaseAuthService();
+    final authService =
+        widget.authService ??
+        AuthServiceFactory.createWithWidgetRef<AuthService>(ref: ref);
 
     _getCurrentMemberUseCase = GetCurrentMemberUseCase(
       memberRepository,

@@ -348,6 +348,11 @@
   - [x] 他の処理にも適用
 - [x] TopPageにUseCaseを渡さない。
 - [x] GroupListにUseCaseを渡さない。
+- [ ] AccountDeleteModalにUseCaseを渡さない。
+- [ ] ReauthenticateModalにUseCaseを渡さない。
+- [x] AuthService Factoryパターンを導入してサービスを切り替えを可能にする
+  - [x] AuthServiceFactoryを実装
+  - [x] TopPageでAuthServiceFactoryを使用するように変更
 
 ## 全体
 
