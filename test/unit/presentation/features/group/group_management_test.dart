@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
+import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
+import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'group_management_test.mocks.dart';
@@ -34,6 +35,7 @@ void main() {
   late Member testMember;
   late GroupWithMembersDto groupWithMembers1;
   late GroupWithMembersDto groupWithMembers2;
+  late List<Override> providerOverrides;
 
   setUp(() {
     mockGroupRepository = MockGroupRepository();
@@ -76,7 +78,24 @@ void main() {
       name: 'Test Group 1',
       memo: 'Test memo 1',
     );
+
+    providerOverrides = [
+      groupRepositoryProvider.overrideWithValue(mockGroupRepository),
+      groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
+      groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+      memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+      tripEntryRepositoryProvider.overrideWithValue(mockTripEntryRepository),
+    ];
   });
+
+  Widget createGroupManagementApp() {
+    return ProviderScope(
+      overrides: providerOverrides,
+      child: MaterialApp(
+        home: Scaffold(body: GroupManagement(member: testMember)),
+      ),
+    );
+  }
 
   group('GroupManagement', () {
     testWidgets('初期化時にグループリストが読み込まれること', (WidgetTester tester) async {
@@ -90,22 +109,7 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       // 初期ローディング状態を確認
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -133,22 +137,7 @@ void main() {
       ).thenAnswer((_) async => []);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -167,22 +156,7 @@ void main() {
       ).thenAnswer((_) async => []);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -200,22 +174,7 @@ void main() {
       ).thenThrow(TestException('Network error'));
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -237,22 +196,7 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -283,22 +227,7 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -326,22 +255,7 @@ void main() {
       ).thenAnswer((_) async => availableMembers);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -374,22 +288,7 @@ void main() {
       ).thenAnswer((_) async => availableMembers);
 
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -415,19 +314,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final now = DateTime.now();
       final managedGroupsWithMembers = [groupWithMembers1];
-
-      final tripEntries = [
-        TripEntry(
-          id: 'trip1',
-          groupId: 'group-1',
-          tripName: 'テスト旅行1',
-          tripStartDate: now,
-          tripEndDate: now,
-          tripMemo: null,
-        ),
-      ];
 
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
@@ -435,32 +322,21 @@ void main() {
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
+      when(
+        mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'),
+      ).thenAnswer((_) async {});
+
+      when(
+        mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'),
+      ).thenAnswer((_) async {});
+
       // グループ削除でエラーが発生
       when(
         mockGroupRepository.deleteGroup('group-1'),
       ).thenThrow(TestException('削除エラー'));
 
-      when(
-        mockTripEntryRepository.getTripEntriesByGroupId('group-1'),
-      ).thenAnswer((_) async => tripEntries);
-
       // Act
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupManagement(
-                member: testMember,
-                groupRepository: mockGroupRepository,
-                groupEventRepository: mockGroupEventRepository,
-                groupQueryService: mockGroupQueryService,
-                memberRepository: mockMemberRepository,
-                tripEntryRepository: mockTripEntryRepository,
-              ),
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createGroupManagementApp());
 
       await tester.pumpAndSettle();
 
@@ -474,6 +350,13 @@ void main() {
 
       // Assert - エラーメッセージが表示されることを確認
       expect(find.text('削除に失敗しました: TestException: 削除エラー'), findsOneWidget);
+      verify(
+        mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'),
+      ).called(1);
+      verify(
+        mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'),
+      ).called(1);
+      verify(mockGroupRepository.deleteGroup('group-1')).called(1);
     });
   });
 }

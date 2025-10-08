@@ -53,20 +53,15 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
   void initState() {
     super.initState();
 
-    final memberRepository =
-        widget.memberRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
-    final groupRepository =
-        widget.groupRepository ??
-        RepositoryFactory.createWithWidgetRef<GroupRepository>(ref: ref);
-    final memberEventRepository =
-        widget.memberEventRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberEventRepository>(ref: ref);
-    final memberInvitationRepository =
+    final MemberRepository memberRepository =
+        widget.memberRepository ?? ref.read(memberRepositoryProvider);
+    final GroupRepository groupRepository =
+        widget.groupRepository ?? ref.read(groupRepositoryProvider);
+    final MemberEventRepository memberEventRepository =
+        widget.memberEventRepository ?? ref.read(memberEventRepositoryProvider);
+    final MemberInvitationRepository memberInvitationRepository =
         widget.memberInvitationRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberInvitationRepository>(
-          ref: ref,
-        );
+        ref.read(memberInvitationRepositoryProvider);
 
     _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
     _createMemberUsecase = CreateMemberUsecase(memberRepository);

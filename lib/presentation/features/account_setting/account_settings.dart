@@ -4,7 +4,7 @@ import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';

@@ -77,9 +77,8 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
   void initState() {
     super.initState();
 
-    final tripEntryRepository =
-        widget.tripEntryRepository ??
-        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
+    final TripEntryRepository tripEntryRepository =
+        widget.tripEntryRepository ?? ref.read(tripEntryRepositoryProvider);
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     final totalDataRows = 2 + widget.groupWithMembers.members.length;

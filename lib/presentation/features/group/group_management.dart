@@ -1,42 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/domain/repositories/group_event_repository.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'group_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
 class GroupManagement extends ConsumerStatefulWidget {
   final Member member;
-  final GroupRepository? groupRepository;
-  final GroupEventRepository? groupEventRepository;
-  final GroupQueryService? groupQueryService;
-  final MemberRepository? memberRepository;
-  final TripEntryRepository? tripEntryRepository;
 
-  const GroupManagement({
-    super.key,
-    required this.member,
-    this.groupRepository,
-    this.groupEventRepository,
-    this.groupQueryService,
-    this.memberRepository,
-    this.tripEntryRepository,
-  });
+  const GroupManagement({super.key, required this.member});
 
   @override
   ConsumerState<GroupManagement> createState() => _GroupManagementState();
@@ -58,34 +38,14 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
   void initState() {
     super.initState();
 
-    final groupRepository =
-        widget.groupRepository ??
-        RepositoryFactory.createWithWidgetRef<GroupRepository>(ref: ref);
-    final groupEventRepository =
-        widget.groupEventRepository ??
-        RepositoryFactory.createWithWidgetRef<GroupEventRepository>(ref: ref);
-    final groupQueryService =
-        widget.groupQueryService ??
-        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
-    final memberRepository =
-        widget.memberRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
-    final tripEntryRepository =
-        widget.tripEntryRepository ??
-        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
-
-    _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
-    _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(
-      groupQueryService,
+    _getGroupByIdUsecase = ref.read(getGroupByIdUsecaseProvider);
+    _getManagedGroupsWithMembersUsecase = ref.read(
+      getManagedGroupsWithMembersUsecaseProvider,
     );
-    _deleteGroupUsecase = DeleteGroupUsecase(
-      groupRepository,
-      groupEventRepository,
-      tripEntryRepository,
-    );
-    _createGroupUsecase = CreateGroupUsecase(groupRepository);
-    _updateGroupUsecase = UpdateGroupUsecase(groupRepository);
-    _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
+    _deleteGroupUsecase = ref.read(deleteGroupUsecaseProvider);
+    _createGroupUsecase = ref.read(createGroupUsecaseProvider);
+    _updateGroupUsecase = ref.read(updateGroupUsecaseProvider);
+    _getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
 
     _loadData();
   }

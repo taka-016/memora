@@ -6,14 +6,17 @@ import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
 import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
 
+final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
+  return QueryServiceFactory.create<GroupQueryService>(ref: ref);
+});
+
+final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
+  return QueryServiceFactory.create<PinQueryService>(ref: ref);
+});
+
 class QueryServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.read(databaseTypeProvider);
-    return _createQueryServiceByType<T>(dbType);
-  }
-
-  static T createWithWidgetRef<T extends Object>({required WidgetRef ref}) {
-    final dbType = ref.read(databaseTypeProvider);
+    final dbType = ref.watch(databaseTypeProvider);
     return _createQueryServiceByType<T>(dbType);
   }
 

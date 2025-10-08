@@ -32,9 +32,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
 
-    final pinQueryService =
-        widget.pinQueryService ??
-        QueryServiceFactory.createWithWidgetRef<PinQueryService>(ref: ref);
+    final PinQueryService pinQueryService =
+        widget.pinQueryService ?? ref.read(pinQueryServiceProvider);
 
     _getPinsByMemberIdUsecase = GetPinsByMemberIdUsecase(pinQueryService);
 
