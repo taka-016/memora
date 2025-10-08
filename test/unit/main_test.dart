@@ -10,6 +10,9 @@ import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -65,17 +68,15 @@ void main() {
         authNotifierProvider.overrideWith((ref) {
           return FakeAuthNotifier.authenticated();
         }),
+        memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+        authServiceProvider.overrideWithValue(mockAuthService),
+        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       ],
       child: MaterialApp(
         title: 'memora',
         locale: const Locale('ja'),
-        home: TopPage(
-          isTestEnvironment: true,
-          memberRepository: mockMemberRepository,
-          authService: mockAuthService,
-          groupQueryService: mockGroupQueryService,
-          pinQueryService: mockPinQueryService,
-        ),
+        home: TopPage(isTestEnvironment: true),
       ),
     );
   }

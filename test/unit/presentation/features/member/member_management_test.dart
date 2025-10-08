@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
@@ -8,6 +9,7 @@ import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -25,6 +27,7 @@ void main() {
   late MockMemberEventRepository mockMemberEventRepository;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late Member testMember;
+  late List<Override> providerOverrides;
 
   setUp(() {
     mockMemberRepository = MockMemberRepository();
@@ -55,7 +58,29 @@ void main() {
     when(
       mockMemberRepository.getMemberById(testMember.id),
     ).thenAnswer((_) async => testMember);
+
+    providerOverrides = [
+      memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+      groupRepositoryProvider.overrideWithValue(mockGroupRepository),
+      memberEventRepositoryProvider.overrideWithValue(
+        mockMemberEventRepository,
+      ),
+      memberInvitationRepositoryProvider.overrideWithValue(
+        mockMemberInvitationRepository,
+      ),
+    ];
   });
+
+  Widget createApp({Member? member, Widget? home}) {
+    final defaultHome = Scaffold(
+      body: MemberManagement(member: member ?? testMember),
+    );
+
+    return ProviderScope(
+      overrides: providerOverrides,
+      child: MaterialApp(home: home ?? defaultHome),
+    );
+  }
 
   group('MemberManagement', () {
     testWidgets('初期化時にメンバーリストが読み込まれること', (WidgetTester tester) async {
@@ -87,17 +112,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       // 初期ローディング状態を確認
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -156,17 +171,7 @@ void main() {
       ).thenAnswer((_) async => []);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -183,17 +188,7 @@ void main() {
       ).thenAnswer((_) async => []);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -209,19 +204,7 @@ void main() {
       ).thenThrow(TestException('Network error'));
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberManagement(
-              member: testMember,
-              memberRepository: mockMemberRepository,
-              groupRepository: mockGroupRepository,
-              memberEventRepository: mockMemberEventRepository,
-              memberInvitationRepository: mockMemberInvitationRepository,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -261,17 +244,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -316,17 +289,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -372,17 +335,7 @@ void main() {
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -419,19 +372,7 @@ void main() {
       ).thenAnswer((_) async => null); // nullを返すように設定
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberManagement(
-              member: testMember,
-              memberRepository: mockMemberRepository,
-              groupRepository: mockGroupRepository,
-              memberEventRepository: mockMemberEventRepository,
-              memberInvitationRepository: mockMemberInvitationRepository,
-            ),
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -466,17 +407,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -584,17 +515,7 @@ void main() {
       });
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -643,17 +564,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -692,17 +603,7 @@ void main() {
       ).thenAnswer((_) async {});
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 
@@ -733,17 +634,7 @@ void main() {
       ).thenAnswer((_) async => []);
 
       // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: MemberManagement(
-            member: testMember,
-            memberRepository: mockMemberRepository,
-            groupRepository: mockGroupRepository,
-            memberEventRepository: mockMemberEventRepository,
-            memberInvitationRepository: mockMemberInvitationRepository,
-          ),
-        ),
-      );
+      await tester.pumpWidget(createApp());
 
       await tester.pumpAndSettle();
 

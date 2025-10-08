@@ -3,9 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
@@ -22,13 +20,11 @@ class GroupTimeline extends ConsumerStatefulWidget {
   final GroupWithMembersDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
-  final TripEntryRepository? tripEntryRepository;
   final Function(VoidCallback)? onSetRefreshCallback;
 
   const GroupTimeline({
     super.key,
     required this.groupWithMembers,
-    this.tripEntryRepository,
     this.onBackPressed,
     this.onTripManagementSelected,
     this.onSetRefreshCallback,
@@ -77,10 +73,7 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
   void initState() {
     super.initState();
 
-    final TripEntryRepository tripEntryRepository =
-        widget.tripEntryRepository ?? ref.read(tripEntryRepositoryProvider);
-
-    _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
+    _getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
     final totalDataRows = 2 + widget.groupWithMembers.members.length;
     _rowHeights = List.filled(totalDataRows, _dataRowHeight);
 

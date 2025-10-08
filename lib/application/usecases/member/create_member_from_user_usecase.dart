@@ -1,7 +1,14 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/app_logger.dart';
+
+final createMemberFromUserUseCaseProvider =
+    Provider<CreateMemberFromUserUseCase>((ref) {
+      return CreateMemberFromUserUseCase(ref.watch(memberRepositoryProvider));
+    });
 
 class CreateMemberFromUserUseCase {
   final MemberRepository _memberRepository;

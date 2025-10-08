@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/application/usecases/pin/get_pins_by_member_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
   final Member member;
   final bool isTestEnvironment;
-  final PinQueryService? pinQueryService;
 
   const MapScreen({
     super.key,
     required this.member,
     this.isTestEnvironment = false,
-    this.pinQueryService,
   });
 
   @override
@@ -32,10 +28,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
 
-    final PinQueryService pinQueryService =
-        widget.pinQueryService ?? ref.read(pinQueryServiceProvider);
-
-    _getPinsByMemberIdUsecase = GetPinsByMemberIdUsecase(pinQueryService);
+    _getPinsByMemberIdUsecase = ref.read(getPinsByMemberIdUsecaseProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadPins();

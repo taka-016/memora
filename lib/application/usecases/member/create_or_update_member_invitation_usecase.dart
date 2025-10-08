@@ -1,6 +1,15 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/domain/entities/member_invitation.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
+
+final createOrUpdateMemberInvitationUsecaseProvider =
+    Provider<CreateOrUpdateMemberInvitationUsecase>((ref) {
+      return CreateOrUpdateMemberInvitationUsecase(
+        ref.watch(memberInvitationRepositoryProvider),
+      );
+    });
 
 class CreateOrUpdateMemberInvitationUsecase {
   final MemberInvitationRepository _memberInvitationRepository;

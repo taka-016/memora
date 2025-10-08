@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/interfaces/auth_service.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/interfaces/pin_query_service.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -25,19 +19,8 @@ import 'package:memora/core/app_logger.dart';
 
 class TopPage extends ConsumerStatefulWidget {
   final bool isTestEnvironment;
-  final MemberRepository? memberRepository;
-  final AuthService? authService;
-  final GroupQueryService? groupQueryService;
-  final PinQueryService? pinQueryService;
 
-  const TopPage({
-    super.key,
-    this.isTestEnvironment = false,
-    this.memberRepository,
-    this.authService,
-    this.groupQueryService,
-    this.pinQueryService,
-  });
+  const TopPage({super.key, this.isTestEnvironment = false});
 
   @override
   ConsumerState<TopPage> createState() => _TopPageState();
@@ -51,15 +34,7 @@ class _TopPageState extends ConsumerState<TopPage> {
   void initState() {
     super.initState();
 
-    final MemberRepository memberRepository =
-        widget.memberRepository ?? ref.read(memberRepositoryProvider);
-    final AuthService authService =
-        widget.authService ?? ref.read(authServiceProvider);
-
-    _getCurrentMemberUseCase = GetCurrentMemberUseCase(
-      memberRepository,
-      authService,
-    );
+    _getCurrentMemberUseCase = ref.read(getCurrentMemberUsecaseProvider);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -130,7 +105,6 @@ class _TopPageState extends ConsumerState<TopPage> {
         GroupList(
           member: _currentMember!,
           onGroupSelected: (group) => _onGroupSelected(group),
-          groupQueryService: widget.groupQueryService,
         ),
         widget.isTestEnvironment
             ? _buildTestGroupTimeline()
@@ -192,7 +166,6 @@ class _TopPageState extends ConsumerState<TopPage> {
         return MapScreen(
           member: _currentMember!,
           isTestEnvironment: widget.isTestEnvironment,
-          pinQueryService: widget.pinQueryService,
         );
       case NavigationItem.groupManagement:
         if (_currentMember == null) {

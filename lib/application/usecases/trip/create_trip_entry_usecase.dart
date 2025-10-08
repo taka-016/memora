@@ -1,5 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
+
+final createTripEntryUsecaseProvider = Provider<CreateTripEntryUsecase>((ref) {
+  return CreateTripEntryUsecase(ref.watch(tripEntryRepositoryProvider));
+});
 
 class CreateTripEntryUsecase {
   final TripEntryRepository _tripEntryRepository;

@@ -4,34 +4,10 @@ import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-
-final checkMemberExistsUseCaseProvider = Provider<CheckMemberExistsUseCase>((
-  ref,
-) {
-  final memberRepository = ref.watch(memberRepositoryProvider);
-  return CheckMemberExistsUseCase(memberRepository);
-});
-
-final createMemberFromUserUseCaseProvider =
-    Provider<CreateMemberFromUserUseCase>((ref) {
-      final memberRepository = ref.watch(memberRepositoryProvider);
-      return CreateMemberFromUserUseCase(memberRepository);
-    });
-
-final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
-  ref,
-) {
-  final memberInvitationRepository = ref.watch(
-    memberInvitationRepositoryProvider,
-  );
-  final memberRepository = ref.watch(memberRepositoryProvider);
-  return AcceptInvitationUseCase(memberInvitationRepository, memberRepository);
-});
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
   ref,

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
@@ -11,27 +9,13 @@ import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/member_event_repository.dart';
-import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'member_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
 class MemberManagement extends ConsumerStatefulWidget {
   final Member member;
-  final MemberRepository? memberRepository;
-  final GroupRepository? groupRepository;
-  final MemberEventRepository? memberEventRepository;
-  final MemberInvitationRepository? memberInvitationRepository;
 
-  const MemberManagement({
-    super.key,
-    required this.member,
-    this.memberRepository,
-    this.groupRepository,
-    this.memberEventRepository,
-    this.memberInvitationRepository,
-  });
+  const MemberManagement({super.key, required this.member});
 
   @override
   ConsumerState<MemberManagement> createState() => _MemberManagementState();
@@ -53,27 +37,14 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
   void initState() {
     super.initState();
 
-    final MemberRepository memberRepository =
-        widget.memberRepository ?? ref.read(memberRepositoryProvider);
-    final GroupRepository groupRepository =
-        widget.groupRepository ?? ref.read(groupRepositoryProvider);
-    final MemberEventRepository memberEventRepository =
-        widget.memberEventRepository ?? ref.read(memberEventRepositoryProvider);
-    final MemberInvitationRepository memberInvitationRepository =
-        widget.memberInvitationRepository ??
-        ref.read(memberInvitationRepositoryProvider);
-
-    _getManagedMembersUsecase = GetManagedMembersUsecase(memberRepository);
-    _createMemberUsecase = CreateMemberUsecase(memberRepository);
-    _updateMemberUsecase = UpdateMemberUsecase(memberRepository);
-    _deleteMemberUsecase = DeleteMemberUsecase(
-      memberRepository,
-      groupRepository,
-      memberEventRepository,
+    _getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
+    _createMemberUsecase = ref.read(createMemberUsecaseProvider);
+    _updateMemberUsecase = ref.read(updateMemberUsecaseProvider);
+    _deleteMemberUsecase = ref.read(deleteMemberUsecaseProvider);
+    _getMemberByIdUseCase = ref.read(getMemberByIdUsecaseProvider);
+    _createOrUpdateMemberInvitationUsecase = ref.read(
+      createOrUpdateMemberInvitationUsecaseProvider,
     );
-    _getMemberByIdUseCase = GetMemberByIdUseCase(memberRepository);
-    _createOrUpdateMemberInvitationUsecase =
-        CreateOrUpdateMemberInvitationUsecase(memberInvitationRepository);
 
     _loadData();
   }

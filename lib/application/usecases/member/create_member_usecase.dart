@@ -1,6 +1,12 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
+
+final createMemberUsecaseProvider = Provider<CreateMemberUsecase>((ref) {
+  return CreateMemberUsecase(ref.watch(memberRepositoryProvider));
+});
 
 class CreateMemberUsecase {
   final MemberRepository _memberRepository;

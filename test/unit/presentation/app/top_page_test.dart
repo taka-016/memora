@@ -11,6 +11,9 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -132,16 +135,12 @@ void main() {
         authNotifierProvider.overrideWith((ref) {
           return FakeAuthNotifier.authenticated();
         }),
+        memberRepositoryProvider.overrideWithValue(testMemberRepository),
+        authServiceProvider.overrideWithValue(testAuthService),
+        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       ],
-      child: MaterialApp(
-        home: TopPage(
-          isTestEnvironment: true,
-          memberRepository: testMemberRepository,
-          authService: testAuthService,
-          groupQueryService: mockGroupQueryService,
-          pinQueryService: mockPinQueryService,
-        ),
-      ),
+      child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
   }
 
@@ -549,16 +548,12 @@ void main() {
           groupTimelineNavigationNotifierProvider.overrideWith((ref) {
             return _TestGroupTimelineNavigationNotifier();
           }),
+          memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+          authServiceProvider.overrideWithValue(mockAuthService),
+          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
         ],
-        child: MaterialApp(
-          home: TopPage(
-            isTestEnvironment: true,
-            memberRepository: mockMemberRepository,
-            authService: mockAuthService,
-            groupQueryService: mockGroupQueryService,
-            pinQueryService: mockPinQueryService,
-          ),
-        ),
+        child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
       // Act
@@ -608,16 +603,12 @@ void main() {
       final widget = ProviderScope(
         overrides: [
           authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
+          memberRepositoryProvider.overrideWithValue(testMemberRepository),
+          authServiceProvider.overrideWithValue(testAuthService),
+          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
         ],
-        child: MaterialApp(
-          home: TopPage(
-            isTestEnvironment: true,
-            memberRepository: testMemberRepository,
-            authService: testAuthService,
-            groupQueryService: mockGroupQueryService,
-            pinQueryService: mockPinQueryService,
-          ),
-        ),
+        child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
       // Act

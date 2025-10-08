@@ -8,6 +8,7 @@ import 'package:mockito/annotations.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -44,16 +45,17 @@ void main() {
 
   Widget createTestWidget({TripEntryRepository? tripEntryRepository}) {
     return ProviderScope(
+      overrides: [
+        tripEntryRepositoryProvider.overrideWithValue(
+          tripEntryRepository ?? mockTripEntryRepository,
+        ),
+      ],
       child: MaterialApp(
         home: Scaffold(
           body: SizedBox(
             width: 1200, // より広い画面サイズを設定
             height: 800,
-            child: GroupTimeline(
-              groupWithMembers: testGroupWithMembers,
-              tripEntryRepository:
-                  tripEntryRepository ?? mockTripEntryRepository,
-            ),
+            child: GroupTimeline(groupWithMembers: testGroupWithMembers),
           ),
         ),
       ),
@@ -303,15 +305,21 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 1200,
-            height: 800,
-            child: GroupTimeline(
-              groupWithMembers: testGroupWithMembers,
-              tripEntryRepository: mockTripEntryRepository,
-              onBackPressed: () {},
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryRepositoryProvider.overrideWithValue(
+            mockTripEntryRepository,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onBackPressed: () {},
+              ),
             ),
           ),
         ),
@@ -342,17 +350,23 @@ void main() {
       // Arrange
       bool callbackCalled = false;
 
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 1200,
-            height: 800,
-            child: GroupTimeline(
-              groupWithMembers: testGroupWithMembers,
-              tripEntryRepository: mockTripEntryRepository,
-              onBackPressed: () {
-                callbackCalled = true;
-              },
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryRepositoryProvider.overrideWithValue(
+            mockTripEntryRepository,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onBackPressed: () {
+                  callbackCalled = true;
+                },
+              ),
             ),
           ),
         ),
@@ -376,18 +390,24 @@ void main() {
       String? selectedGroupId;
       int? selectedYear;
 
-      final widget = MaterialApp(
-        home: Scaffold(
-          body: SizedBox(
-            width: 1200,
-            height: 800,
-            child: GroupTimeline(
-              groupWithMembers: testGroupWithMembers,
-              tripEntryRepository: mockTripEntryRepository,
-              onTripManagementSelected: (groupId, year) {
-                selectedGroupId = groupId;
-                selectedYear = year;
-              },
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryRepositoryProvider.overrideWithValue(
+            mockTripEntryRepository,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onTripManagementSelected: (groupId, year) {
+                  selectedGroupId = groupId;
+                  selectedYear = year;
+                },
+              ),
             ),
           ),
         ),
@@ -454,14 +474,20 @@ void main() {
       // Arrange
       VoidCallback? capturedCallback;
 
-      Widget widget = MaterialApp(
-        home: Scaffold(
-          body: GroupTimeline(
-            groupWithMembers: testGroupWithMembers,
-            tripEntryRepository: mockTripEntryRepository,
-            onSetRefreshCallback: (callback) {
-              capturedCallback = callback;
-            },
+      Widget widget = ProviderScope(
+        overrides: [
+          tripEntryRepositoryProvider.overrideWithValue(
+            mockTripEntryRepository,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: GroupTimeline(
+              groupWithMembers: testGroupWithMembers,
+              onSetRefreshCallback: (callback) {
+                capturedCallback = callback;
+              },
+            ),
           ),
         ),
       );
