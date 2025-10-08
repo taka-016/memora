@@ -4,13 +4,12 @@ import 'package:memora/infrastructure/config/auth_type.dart';
 import 'package:memora/infrastructure/config/auth_type_provider.dart';
 import 'package:memora/infrastructure/services/firebase_auth_service.dart';
 
+final authServiceProvider = Provider<AuthService>((ref) {
+  return AuthServiceFactory.create<AuthService>(ref: ref);
+});
+
 class AuthServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final authType = ref.read(authTypeProvider);
-    return _createServiceByType<T>(authType);
-  }
-
-  static T createWithWidgetRef<T extends Object>({required WidgetRef ref}) {
     final authType = ref.read(authTypeProvider);
     return _createServiceByType<T>(authType);
   }

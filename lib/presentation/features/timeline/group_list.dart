@@ -35,9 +35,8 @@ class _GroupListState extends ConsumerState<GroupList> {
   void initState() {
     super.initState();
 
-    final groupQueryService =
-        widget.groupQueryService ??
-        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
+    final GroupQueryService groupQueryService =
+        widget.groupQueryService ?? ref.read(groupQueryServiceProvider);
 
     _getGroupsWithMembersUsecase = GetGroupsWithMembersUsecase(
       groupQueryService,

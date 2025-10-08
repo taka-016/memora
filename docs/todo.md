@@ -354,6 +354,7 @@
   - [x] AuthTypeのenumとRiverpod Providerを作成
   - [x] AuthServiceFactoryを実装
   - [x] TopPageでAuthServiceFactoryを使用するように変更
+  - [x] 他の処理にも適用
 
 ## 全体
 

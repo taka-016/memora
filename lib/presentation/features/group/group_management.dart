@@ -58,21 +58,16 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
   void initState() {
     super.initState();
 
-    final groupRepository =
-        widget.groupRepository ??
-        RepositoryFactory.createWithWidgetRef<GroupRepository>(ref: ref);
-    final groupEventRepository =
-        widget.groupEventRepository ??
-        RepositoryFactory.createWithWidgetRef<GroupEventRepository>(ref: ref);
-    final groupQueryService =
-        widget.groupQueryService ??
-        QueryServiceFactory.createWithWidgetRef<GroupQueryService>(ref: ref);
-    final memberRepository =
-        widget.memberRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
-    final tripEntryRepository =
-        widget.tripEntryRepository ??
-        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
+    final GroupRepository groupRepository =
+        widget.groupRepository ?? ref.read(groupRepositoryProvider);
+    final GroupEventRepository groupEventRepository =
+        widget.groupEventRepository ?? ref.read(groupEventRepositoryProvider);
+    final GroupQueryService groupQueryService =
+        widget.groupQueryService ?? ref.read(groupQueryServiceProvider);
+    final MemberRepository memberRepository =
+        widget.memberRepository ?? ref.read(memberRepositoryProvider);
+    final TripEntryRepository tripEntryRepository =
+        widget.tripEntryRepository ?? ref.read(tripEntryRepositoryProvider);
 
     _getGroupByIdUsecase = GetGroupByIdUsecase(groupRepository);
     _getManagedGroupsWithMembersUsecase = GetManagedGroupsWithMembersUsecase(

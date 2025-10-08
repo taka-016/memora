@@ -47,9 +47,8 @@ class _TripManagementState extends ConsumerState<TripManagement> {
   void initState() {
     super.initState();
 
-    final tripEntryRepository =
-        widget.tripEntryRepository ??
-        RepositoryFactory.createWithWidgetRef<TripEntryRepository>(ref: ref);
+    final TripEntryRepository tripEntryRepository =
+        widget.tripEntryRepository ?? ref.read(tripEntryRepositoryProvider);
 
     _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
     _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);

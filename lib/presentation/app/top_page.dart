@@ -51,12 +51,10 @@ class _TopPageState extends ConsumerState<TopPage> {
   void initState() {
     super.initState();
 
-    final memberRepository =
-        widget.memberRepository ??
-        RepositoryFactory.createWithWidgetRef<MemberRepository>(ref: ref);
-    final authService =
-        widget.authService ??
-        AuthServiceFactory.createWithWidgetRef<AuthService>(ref: ref);
+    final MemberRepository memberRepository =
+        widget.memberRepository ?? ref.read(memberRepositoryProvider);
+    final AuthService authService =
+        widget.authService ?? ref.read(authServiceProvider);
 
     _getCurrentMemberUseCase = GetCurrentMemberUseCase(
       memberRepository,

@@ -14,13 +14,34 @@ import 'package:memora/infrastructure/repositories/firestore_member_invitation_r
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
 
+final groupRepositoryProvider = Provider<GroupRepository>((ref) {
+  return RepositoryFactory.create<GroupRepository>(ref: ref);
+});
+
+final groupEventRepositoryProvider = Provider<GroupEventRepository>((ref) {
+  return RepositoryFactory.create<GroupEventRepository>(ref: ref);
+});
+
+final memberEventRepositoryProvider = Provider<MemberEventRepository>((ref) {
+  return RepositoryFactory.create<MemberEventRepository>(ref: ref);
+});
+
+final memberRepositoryProvider = Provider<MemberRepository>((ref) {
+  return RepositoryFactory.create<MemberRepository>(ref: ref);
+});
+
+final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
+  (ref) {
+    return RepositoryFactory.create<MemberInvitationRepository>(ref: ref);
+  },
+);
+
+final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
+  return RepositoryFactory.create<TripEntryRepository>(ref: ref);
+});
+
 class RepositoryFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.read(databaseTypeProvider);
-    return _createRepositoryByType<T>(dbType);
-  }
-
-  static T createWithWidgetRef<T extends Object>({required WidgetRef ref}) {
     final dbType = ref.read(databaseTypeProvider);
     return _createRepositoryByType<T>(dbType);
   }
