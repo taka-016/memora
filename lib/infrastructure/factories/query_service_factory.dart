@@ -16,7 +16,7 @@ final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
 
 class QueryServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.read(databaseTypeProvider);
+    final dbType = ref.watch(databaseTypeProvider);
     return _createQueryServiceByType<T>(dbType);
   }
 

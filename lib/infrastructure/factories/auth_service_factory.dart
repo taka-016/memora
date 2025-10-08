@@ -10,7 +10,7 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 class AuthServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final authType = ref.read(authTypeProvider);
+    final authType = ref.watch(authTypeProvider);
     return _createServiceByType<T>(authType);
   }
 

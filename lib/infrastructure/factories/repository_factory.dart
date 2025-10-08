@@ -42,7 +42,7 @@ final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
 
 class RepositoryFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.read(databaseTypeProvider);
+    final dbType = ref.watch(databaseTypeProvider);
     return _createRepositoryByType<T>(dbType);
   }
 

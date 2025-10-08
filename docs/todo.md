@@ -340,21 +340,17 @@
 - [x] Repository Factoryパターンを導入してDB切り替えを可能にする
   - [x] DatabaseTypeのenumとRiverpod Providerを作成
   - [x] RepositoryFactoryを実装
-  - [x] MemberManagementでRepositoryFactoryを使用するように変更
-  - [x] 他の処理にも適用
 - [x] QueryService Factoryパターンを導入してDB切り替えを可能にする
   - [x] QueryServiceFactoryを実装
-  - [x] GroupManagementでQueryServiceFactoryを使用するように変更
-  - [x] 他の処理にも適用
-- [x] TopPageにUseCaseを渡さない。
-- [x] GroupListにUseCaseを渡さない。
-- [ ] AccountDeleteModalにUseCaseを渡さない。
-- [ ] ReauthenticateModalにUseCaseを渡さない。
+- [x] TopPageにUseCaseを渡さない
+- [x] GroupListにUseCaseを渡さない
+- [ ] AccountDeleteModalにUseCaseを渡さない
+- [ ] ReauthenticateModalにUseCaseを渡さない
 - [x] AuthService Factoryパターンを導入してサービスを切り替えを可能にする
   - [x] AuthTypeのenumとRiverpod Providerを作成
   - [x] AuthServiceFactoryを実装
-  - [x] TopPageでAuthServiceFactoryを使用するように変更
-  - [x] 他の処理にも適用
+- [x] UseCaseをProviderに依存する形に変更する
+  - [x] GroupManagementで実装
 
 ## 全体
 
