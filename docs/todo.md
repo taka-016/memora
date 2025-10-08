@@ -351,6 +351,7 @@
 - [ ] AccountDeleteModalにUseCaseを渡さない。
 - [ ] ReauthenticateModalにUseCaseを渡さない。
 - [x] AuthService Factoryパターンを導入してサービスを切り替えを可能にする
+  - [x] AuthTypeのenumとRiverpod Providerを作成
   - [x] AuthServiceFactoryを実装
   - [x] TopPageでAuthServiceFactoryを使用するように変更
 
