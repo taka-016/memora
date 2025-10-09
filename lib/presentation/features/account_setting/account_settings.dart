@@ -4,7 +4,6 @@ import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';
@@ -18,11 +17,8 @@ class AccountSettings extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final authService = ref.read(authServiceProvider);
-    final updateEmailUseCase = UpdateEmailUseCase(authService: authService);
-    final reauthenticateUseCase = ReauthenticateUseCase(
-      authService: authService,
-    );
+    final updateEmailUseCase = ref.read(updateEmailUseCaseProvider);
+    final reauthenticateUseCase = ref.read(reauthenticateUseCaseProvider);
 
     await showDialog(
       context: context,
@@ -82,13 +78,8 @@ class AccountSettings extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final authService = ref.read(authServiceProvider);
-    final updatePasswordUseCase = UpdatePasswordUseCase(
-      authService: authService,
-    );
-    final reauthenticateUseCase = ReauthenticateUseCase(
-      authService: authService,
-    );
+    final updatePasswordUseCase = ref.read(updatePasswordUseCaseProvider);
+    final reauthenticateUseCase = ref.read(reauthenticateUseCaseProvider);
 
     await showDialog(
       context: context,
@@ -142,11 +133,8 @@ class AccountSettings extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final authService = ref.read(authServiceProvider);
-    final deleteUserUseCase = DeleteUserUseCase(authService: authService);
-    final reauthenticateUseCase = ReauthenticateUseCase(
-      authService: authService,
-    );
+    final deleteUserUseCase = ref.read(deleteUserUseCaseProvider);
+    final reauthenticateUseCase = ref.read(reauthenticateUseCaseProvider);
 
     await showDialog(
       context: context,

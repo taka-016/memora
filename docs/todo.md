@@ -344,13 +344,13 @@
   - [x] QueryServiceFactoryを実装
 - [x] TopPageにUseCaseを渡さない
 - [x] GroupListにUseCaseを渡さない
-- [ ] AccountDeleteModalにUseCaseを渡さない
-- [ ] ReauthenticateModalにUseCaseを渡さない
 - [x] AuthService Factoryパターンを導入してサービスを切り替えを可能にする
   - [x] AuthTypeのenumとRiverpod Providerを作成
   - [x] AuthServiceFactoryを実装
 - [x] UseCaseをProviderに依存する形に変更する
   - [x] GroupManagementで実装
+- [x] UseCase Providerを利用するようにリポジトリDIをリファクタリングする
+  - [x] 全機能に展開する
 
 ## 全体
 

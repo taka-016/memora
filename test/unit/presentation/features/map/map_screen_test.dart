@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 import 'package:mockito/annotations.dart';
@@ -22,12 +24,13 @@ void main() {
       ).thenAnswer((_) async => []);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MapScreen(
-              member: testMember,
-              isTestEnvironment: true,
-              pinQueryService: mockPinQueryService,
+        ProviderScope(
+          overrides: [
+            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: MapScreen(member: testMember, isTestEnvironment: true),
             ),
           ),
         ),
@@ -61,12 +64,13 @@ void main() {
       ).thenAnswer((_) async => testPins);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MapScreen(
-              member: testMember,
-              isTestEnvironment: true,
-              pinQueryService: mockPinQueryService,
+        ProviderScope(
+          overrides: [
+            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: MapScreen(member: testMember, isTestEnvironment: true),
             ),
           ),
         ),

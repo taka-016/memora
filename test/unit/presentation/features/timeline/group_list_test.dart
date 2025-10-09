@@ -6,6 +6,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
@@ -42,13 +43,11 @@ void main() {
 
   Widget createTestWidget({Member? member}) {
     return ProviderScope(
+      overrides: [
+        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+      ],
       child: MaterialApp(
-        home: Scaffold(
-          body: GroupList(
-            groupQueryService: mockGroupQueryService,
-            member: member ?? testMember,
-          ),
-        ),
+        home: Scaffold(body: GroupList(member: member ?? testMember)),
       ),
     );
   }
@@ -179,10 +178,12 @@ void main() {
       // Act
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: GroupList(
-                groupQueryService: mockGroupQueryService,
                 member: testMember,
                 onGroupSelected: (groupWithMembers) {
                   selectedGroup = groupWithMembers;

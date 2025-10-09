@@ -1,6 +1,17 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/app_logger.dart';
+
+final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
+  ref,
+) {
+  return AcceptInvitationUseCase(
+    ref.watch(memberInvitationRepositoryProvider),
+    ref.watch(memberRepositoryProvider),
+  );
+});
 
 class AcceptInvitationUseCase {
   final MemberInvitationRepository _memberInvitationRepository;

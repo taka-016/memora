@@ -7,8 +7,6 @@ import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart'
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
@@ -17,7 +15,6 @@ class TripManagement extends ConsumerStatefulWidget {
   final String groupId;
   final int year;
   final VoidCallback? onBackPressed;
-  final TripEntryRepository? tripEntryRepository;
   final bool isTestEnvironment;
 
   const TripManagement({
@@ -25,7 +22,6 @@ class TripManagement extends ConsumerStatefulWidget {
     required this.groupId,
     required this.year,
     this.onBackPressed,
-    this.tripEntryRepository,
     this.isTestEnvironment = false,
   });
 
@@ -47,14 +43,11 @@ class _TripManagementState extends ConsumerState<TripManagement> {
   void initState() {
     super.initState();
 
-    final TripEntryRepository tripEntryRepository =
-        widget.tripEntryRepository ?? ref.read(tripEntryRepositoryProvider);
-
-    _getTripEntriesUsecase = GetTripEntriesUsecase(tripEntryRepository);
-    _createTripEntryUsecase = CreateTripEntryUsecase(tripEntryRepository);
-    _updateTripEntryUsecase = UpdateTripEntryUsecase(tripEntryRepository);
-    _deleteTripEntryUsecase = DeleteTripEntryUsecase(tripEntryRepository);
-    _getTripEntryByIdUsecase = GetTripEntryByIdUsecase(tripEntryRepository);
+    _getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
+    _createTripEntryUsecase = ref.read(createTripEntryUsecaseProvider);
+    _updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
+    _deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
+    _getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
 
     _loadTripEntries();
   }
