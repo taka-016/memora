@@ -532,6 +532,22 @@ void main() {
 
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
       // Arrange
+      final defaultMember = Member(
+        id: 'default_member',
+        displayName: '表示名',
+        kanjiLastName: 'デフォルト',
+        kanjiFirstName: 'ユーザー',
+      );
+      const testUser = User(
+        id: 'test_user_id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+
+      when(
+        mockMemberRepository.getMemberByAccountId(any),
+      ).thenAnswer((_) async => defaultMember);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(any),
       ).thenAnswer((_) async => groupsWithMembers);
@@ -580,9 +596,6 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      final testMemberRepository = MockMemberRepository();
-      final testAuthService = MockAuthService();
-
       const testUser = User(
         id: 'test_user_id',
         loginId: 'test@example.com',
@@ -590,9 +603,9 @@ void main() {
       );
 
       when(
-        testMemberRepository.getMemberByAccountId(any),
+        mockMemberRepository.getMemberByAccountId(any),
       ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
-      when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(any),
       ).thenAnswer((_) async => groupsWithMembers);
@@ -603,8 +616,8 @@ void main() {
       final widget = ProviderScope(
         overrides: [
           authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
-          memberRepositoryProvider.overrideWithValue(testMemberRepository),
-          authServiceProvider.overrideWithValue(testAuthService),
+          memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+          authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
           pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
         ],
