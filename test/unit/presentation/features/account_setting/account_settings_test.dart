@@ -4,9 +4,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
+import '../../../../helpers/test_exception.dart';
 
-class _FakeAuthService implements AuthService {
+class _TestAuthService implements AuthService {
+  _TestAuthService({List<Future<void> Function()>? deleteUserBehaviors})
+    : _deleteUserBehaviors = deleteUserBehaviors ?? [() async {}];
+
+  final List<Future<void> Function()> _deleteUserBehaviors;
+  int _deleteUserIndex = 0;
+
+  int deleteUserCallCount = 0;
+  int reauthenticateCallCount = 0;
+  Future<void> Function(String password)? onReauthenticate;
+
   @override
   Future<void> createUserWithEmailAndPassword({
     required String email,
@@ -20,10 +32,20 @@ class _FakeAuthService implements AuthService {
   Future<User?> getCurrentUser() async => null;
 
   @override
-  Future<void> deleteUser() async {}
+  Future<void> deleteUser() async {
+    deleteUserCallCount++;
+    if (_deleteUserIndex < _deleteUserBehaviors.length) {
+      final behavior = _deleteUserBehaviors[_deleteUserIndex];
+      _deleteUserIndex++;
+      await behavior();
+    }
+  }
 
   @override
-  Future<void> reauthenticate({required String password}) async {}
+  Future<void> reauthenticate({required String password}) async {
+    reauthenticateCallCount++;
+    await onReauthenticate?.call(password);
+  }
 
   @override
   Future<void> sendEmailVerification() async {}
@@ -47,9 +69,11 @@ class _FakeAuthService implements AuthService {
   Future<void> validateCurrentUserToken() async {}
 }
 
-Widget _buildTestApp(Widget child) {
+Widget _buildTestApp(Widget child, {_TestAuthService? authService}) {
   return ProviderScope(
-    overrides: [authServiceProvider.overrideWithValue(_FakeAuthService())],
+    overrides: [
+      authServiceProvider.overrideWithValue(authService ?? _TestAuthService()),
+    ],
     child: MaterialApp(home: child),
   );
 }
@@ -78,6 +102,76 @@ void main() {
       await tester.pumpWidget(_buildTestApp(const AccountSettings()));
 
       expect(find.text('アカウント削除'), findsOneWidget);
+    });
+
+    testWidgets('アカウント削除が成功するとスナックバーが表示される', (WidgetTester tester) async {
+      final authService = _TestAuthService();
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+
+      await tester.tap(find.text('アカウント削除'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      expect(authService.deleteUserCallCount, 1);
+      expect(find.byType(AccountDeleteModal), findsNothing);
+      expect(find.text('アカウントを削除しました'), findsOneWidget);
+    });
+
+    testWidgets('再認証が必要な場合は再認証モーダルが表示される', (WidgetTester tester) async {
+      final authService = _TestAuthService(
+        deleteUserBehaviors: [
+          () async =>
+              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async {},
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+
+      await tester.tap(find.text('アカウント削除'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('削除'));
+      await tester.pump();
+
+      expect(find.text('パスワード再入力'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'password123');
+      await tester.tap(find.text('認証'));
+      await tester.pumpAndSettle();
+
+      expect(authService.deleteUserCallCount, 2);
+      expect(authService.reauthenticateCallCount, 1);
+      expect(find.byType(AccountDeleteModal), findsNothing);
+      expect(find.text('アカウントを削除しました'), findsOneWidget);
+    });
+
+    testWidgets('再認証不要のエラー時はエラースナックバーが表示されダイアログが残る', (
+      WidgetTester tester,
+    ) async {
+      final authService = _TestAuthService(
+        deleteUserBehaviors: [() async => throw TestException('削除に失敗しました')],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+
+      await tester.tap(find.text('アカウント削除'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('削除'));
+      await tester.pump();
+
+      expect(find.byType(AccountDeleteModal), findsOneWidget);
+      expect(find.text('エラーが発生しました: TestException: 削除に失敗しました'), findsOneWidget);
     });
   });
 }

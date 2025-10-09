@@ -1,18 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/usecases/account/delete_user_usecase.dart';
-import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
-import 'reauthenticate_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
 class AccountDeleteModal extends StatefulWidget {
-  final DeleteUserUseCase deleteUserUseCase;
-  final ReauthenticateUseCase reauthenticateUseCase;
+  final Future<void> Function() onAccountDelete;
 
-  const AccountDeleteModal({
-    super.key,
-    required this.deleteUserUseCase,
-    required this.reauthenticateUseCase,
-  });
+  const AccountDeleteModal({super.key, required this.onAccountDelete});
 
   @override
   State<AccountDeleteModal> createState() => _AccountDeleteModalState();
@@ -27,13 +19,10 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
     });
 
     try {
-      await widget.deleteUserUseCase.execute();
+      await widget.onAccountDelete();
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
       }
     } catch (e, stack) {
       logger.e(
@@ -41,64 +30,11 @@ class _AccountDeleteModalState extends State<AccountDeleteModal> {
         error: e,
         stackTrace: stack,
       );
-      if (mounted) {
-        if (e.toString().contains('requires-recent-login')) {
-          await _showReauthenticateDialog();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-      }
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
-      }
-    }
-  }
-
-  Future<void> _showReauthenticateDialog() async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => ReauthenticateModal(
-        reauthenticateUseCase: widget.reauthenticateUseCase,
-      ),
-    );
-
-    if (result == true && mounted) {
-      // 再認証成功後にアカウント削除を再実行（再帰を避けるため直接実行）
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        await widget.deleteUserUseCase.execute();
-
-        if (mounted) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
-        }
-      } catch (e, stack) {
-        logger.e(
-          'AccountDeleteModal._showReauthenticateDialog: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
       }
     }
   }

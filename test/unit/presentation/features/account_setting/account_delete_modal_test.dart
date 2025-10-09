@@ -1,26 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
-import 'package:memora/application/usecases/account/delete_user_usecase.dart';
-import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 import '../../../../helpers/test_exception.dart';
 
-import 'account_delete_modal_test.mocks.dart';
-
-@GenerateMocks([DeleteUserUseCase, ReauthenticateUseCase])
 void main() {
   group('AccountDeleteModal', () {
-    late MockDeleteUserUseCase mockDeleteUserUseCase;
-    late MockReauthenticateUseCase mockReauthenticateUseCase;
-
-    setUp(() {
-      mockDeleteUserUseCase = MockDeleteUserUseCase();
-      mockReauthenticateUseCase = MockReauthenticateUseCase();
-    });
-
-    Widget createTestWidget() {
+    Widget createTestWidget({
+      required Future<void> Function() onAccountDelete,
+    }) {
       return MaterialApp(
         home: Scaffold(
           body: Builder(
@@ -28,10 +15,8 @@ void main() {
               onPressed: () {
                 showDialog(
                   context: context,
-                  builder: (context) => AccountDeleteModal(
-                    deleteUserUseCase: mockDeleteUserUseCase,
-                    reauthenticateUseCase: mockReauthenticateUseCase,
-                  ),
+                  builder: (context) =>
+                      AccountDeleteModal(onAccountDelete: onAccountDelete),
                 );
               },
               child: const Text('Show Dialog'),
@@ -42,7 +27,7 @@ void main() {
     }
 
     testWidgets('アカウント削除ダイアログの基本要素が表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -59,38 +44,27 @@ void main() {
       expect(find.text('削除'), findsOneWidget);
     });
 
-    testWidgets('削除ボタンをタップするとアカウント削除が実行される', (WidgetTester tester) async {
-      when(mockDeleteUserUseCase.execute()).thenAnswer((_) async {});
+    testWidgets('削除ボタンをタップするとコールバックが実行される', (WidgetTester tester) async {
+      var isCalled = false;
 
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(
+          onAccountDelete: () async {
+            isCalled = true;
+          },
+        ),
+      );
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('削除'));
       await tester.pump();
 
-      verify(mockDeleteUserUseCase.execute()).called(1);
-    });
-
-    testWidgets('requires-recent-loginエラー時に再認証ダイアログが表示される', (
-      WidgetTester tester,
-    ) async {
-      when(
-        mockDeleteUserUseCase.execute(),
-      ).thenThrow(TestException('[firebase_auth/requires-recent-login]'));
-
-      await tester.pumpWidget(createTestWidget());
-      await tester.tap(find.text('Show Dialog'));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('削除'));
-      await tester.pump();
-
-      expect(find.text('パスワード再入力'), findsOneWidget);
+      expect(isCalled, isTrue);
     });
 
     testWidgets('キャンセルボタンをタップするとダイアログが閉じる', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -101,7 +75,7 @@ void main() {
     });
 
     testWidgets('削除ボタンは赤色で表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -113,22 +87,21 @@ void main() {
       expect(button.style?.foregroundColor?.resolve({}), Colors.white);
     });
 
-    testWidgets('エラー発生時にエラーメッセージが表示される', (WidgetTester tester) async {
-      when(
-        mockDeleteUserUseCase.execute(),
-      ).thenThrow(TestException('削除に失敗しました'));
-
-      await tester.pumpWidget(createTestWidget());
+    testWidgets('エラー発生時はダイアログが閉じない', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          onAccountDelete: () async {
+            throw TestException('削除に失敗しました');
+          },
+        ),
+      );
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('削除'));
       await tester.pump();
 
-      // スナックバーの表示を待つ
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.textContaining('削除に失敗しました'), findsOneWidget);
+      expect(find.byType(AccountDeleteModal), findsOneWidget);
     });
   });
 }

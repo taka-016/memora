@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/usecases/account/update_email_usecase.dart';
-import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+import 'package:memora/application/usecases/account/update_email_usecase.dart';
+import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'account_delete_modal.dart';
@@ -139,8 +139,47 @@ class AccountSettings extends ConsumerWidget {
     await showDialog(
       context: context,
       builder: (context) => AccountDeleteModal(
-        deleteUserUseCase: deleteUserUseCase,
-        reauthenticateUseCase: reauthenticateUseCase,
+        onAccountDelete: () async {
+          try {
+            await deleteUserUseCase.execute();
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
+            }
+          } catch (e, stack) {
+            logger.e(
+              'AccountSettings._showAccountDeleteModal.onAccountDelete: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
+            if (e.toString().contains('requires-recent-login')) {
+              if (!context.mounted) return;
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => ReauthenticateModal(
+                  reauthenticateUseCase: reauthenticateUseCase,
+                ),
+              );
+              if (result == true && context.mounted) {
+                await deleteUserUseCase.execute();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
+                }
+              }
+            } else {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
+                );
+              }
+            }
+            rethrow;
+          }
+        },
       ),
     );
   }
