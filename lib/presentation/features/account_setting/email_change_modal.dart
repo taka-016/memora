@@ -39,7 +39,6 @@ class _EmailChangeModalState extends State<EmailChangeModal> {
         error: e,
         stackTrace: stack,
       );
-      // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {
         setState(() {
@@ -92,6 +91,7 @@ class _EmailChangeModalState extends State<EmailChangeModal> {
     return Form(
       key: _formKey,
       child: TextFormField(
+        key: const Key('newEmailField'),
         controller: _newEmailController,
         keyboardType: TextInputType.emailAddress,
         decoration: const InputDecoration(

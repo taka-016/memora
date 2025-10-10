@@ -44,7 +44,6 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
         error: e,
         stackTrace: stack,
       );
-      // エラーハンドリングは呼び出し側で行う
     } finally {
       if (mounted) {
         setState(() {
@@ -134,6 +133,7 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
 
   Widget _buildNewPasswordField() {
     return TextFormField(
+      key: const Key('newPasswordField'),
       controller: _newPasswordController,
       obscureText: _obscureNewPassword,
       decoration: InputDecoration(
@@ -158,6 +158,7 @@ class _PasswordChangeModalState extends State<PasswordChangeModal> {
 
   Widget _buildConfirmPasswordField() {
     return TextFormField(
+      key: const Key('confirmPasswordField'),
       controller: _confirmPasswordController,
       obscureText: _obscureConfirmPassword,
       decoration: InputDecoration(
