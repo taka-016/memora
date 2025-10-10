@@ -1,25 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 
-class ReauthenticateModal extends StatefulWidget {
-  const ReauthenticateModal({
-    super.key,
-    required this.reauthenticateUseCase,
-    this.onSuccess,
-  });
+class ReauthenticateModal extends ConsumerStatefulWidget {
+  const ReauthenticateModal({super.key, this.onSuccess});
 
-  final ReauthenticateUseCase reauthenticateUseCase;
   final VoidCallback? onSuccess;
 
   @override
-  State<ReauthenticateModal> createState() => _ReauthenticateModalState();
+  ConsumerState<ReauthenticateModal> createState() =>
+      _ReauthenticateModalState();
 }
 
-class _ReauthenticateModalState extends State<ReauthenticateModal> {
+class _ReauthenticateModalState extends ConsumerState<ReauthenticateModal> {
+  late final ReauthenticateUseCase _reauthenticateUseCase;
+
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _reauthenticateUseCase = ref.read(reauthenticateUseCaseProvider);
+  }
 
   @override
   void dispose() {
@@ -39,7 +45,7 @@ class _ReauthenticateModalState extends State<ReauthenticateModal> {
     });
 
     try {
-      await widget.reauthenticateUseCase.execute(password: password);
+      await _reauthenticateUseCase.execute(password: password);
       if (mounted) {
         Navigator.of(context).pop(true);
         widget.onSuccess?.call();
@@ -99,6 +105,7 @@ class _ReauthenticateModalState extends State<ReauthenticateModal> {
 
   Widget _buildPasswordField() {
     return TextField(
+      key: const Key('passwordField'),
       controller: _passwordController,
       decoration: const InputDecoration(
         labelText: 'パスワード',

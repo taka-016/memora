@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -18,19 +19,24 @@ void main() {
     });
 
     Widget createTestWidget() {
-      return MaterialApp(
-        home: Scaffold(
-          body: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => ReauthenticateModal(
-                    reauthenticateUseCase: mockReauthenticateUseCase,
-                  ),
-                );
-              },
-              child: const Text('Show Dialog'),
+      return ProviderScope(
+        overrides: [
+          reauthenticateUseCaseProvider.overrideWithValue(
+            mockReauthenticateUseCase,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const ReauthenticateModal(),
+                  );
+                },
+                child: const Text('Show Dialog'),
+              ),
             ),
           ),
         ),
