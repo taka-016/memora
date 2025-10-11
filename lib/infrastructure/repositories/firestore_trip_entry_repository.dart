@@ -94,26 +94,50 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   }
 
   @override
-  Future<TripEntry?> getTripEntryById(String tripId) async {
+  Future<TripEntry?> getTripEntryById(
+    String tripId, {
+    List<OrderBy>? pinsOrderBy,
+    List<OrderBy>? pinDetailsOrderBy,
+  }) async {
     try {
       final doc = await _firestore.collection('trip_entries').doc(tripId).get();
       if (!doc.exists) {
         return null;
       }
 
-      final pinsSnapshot = await _firestore
+      Query<Map<String, dynamic>> pinsQuery = _firestore
           .collection('pins')
-          .where('tripId', isEqualTo: tripId)
-          .get();
+          .where('tripId', isEqualTo: tripId);
+
+      if (pinsOrderBy != null && pinsOrderBy.isNotEmpty) {
+        for (final order in pinsOrderBy) {
+          pinsQuery = pinsQuery.orderBy(
+            order.field,
+            descending: order.descending,
+          );
+        }
+      }
+
+      final pinsSnapshot = await pinsQuery.get();
 
       final pins = <Pin>[];
       for (final pinDoc in pinsSnapshot.docs) {
         final pinId = pinDoc.data()['pinId'] as String? ?? '';
 
-        final pinDetailsSnapshot = await _firestore
+        Query<Map<String, dynamic>> pinDetailsQuery = _firestore
             .collection('pin_details')
-            .where('pinId', isEqualTo: pinId)
-            .get();
+            .where('pinId', isEqualTo: pinId);
+
+        if (pinDetailsOrderBy != null && pinDetailsOrderBy.isNotEmpty) {
+          for (final order in pinDetailsOrderBy) {
+            pinDetailsQuery = pinDetailsQuery.orderBy(
+              order.field,
+              descending: order.descending,
+            );
+          }
+        }
+
+        final pinDetailsSnapshot = await pinDetailsQuery.get();
 
         final pinDetails = pinDetailsSnapshot.docs
             .map(

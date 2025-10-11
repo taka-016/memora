@@ -17,6 +17,7 @@
   - [x] save,update,deleteも子エンティティに対応する
 - [x] GetPinsByTripIdUseCaseの使用を廃止し、GetTripEntriesUsecaseで取得したpinsデータを使用する
 - [x] FirestorePinQueryServiceを作成し、自分が所属するグループに紐づくピンを取得する
+- [x] FirestoreTripEntryRepositoryのgetTripEntryByIdにpinsとpinDetails用のorderByを設定できるようにする
 
 ## マップの表示
 
