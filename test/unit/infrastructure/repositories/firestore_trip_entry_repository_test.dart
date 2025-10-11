@@ -253,6 +253,100 @@ void main() {
       expect(result, isNull);
     });
 
+    test('getTripEntryByIdがpinsOrderByとpinDetailsOrderByありで正しくソートする', () async {
+      const tripId = 'trip001';
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinsQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockPinsQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinDetailsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinDetailsQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockPinDetailsQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockPinDetailsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockPinDetailDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      final pinsOrderBy = [const OrderBy('visitStartDate', descending: false)];
+      final pinDetailsOrderBy = [const OrderBy('startDate', descending: false)];
+
+      when(mockCollection.doc(tripId)).thenReturn(mockDocRef);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocSnapshot.id).thenReturn(tripId);
+      when(mockDocSnapshot.data()).thenReturn({
+        'groupId': 'group001',
+        'tripName': 'テスト旅行',
+        'tripStartDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
+        'tripEndDate': Timestamp.fromDate(DateTime(2025, 6, 10)),
+        'tripMemo': 'テストメモ',
+      });
+
+      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockPinsQuery1);
+      when(
+        mockPinsQuery1.orderBy('visitStartDate', descending: false),
+      ).thenReturn(mockPinsQuery2);
+      when(mockPinsQuery2.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
+      when(mockPinDoc.id).thenReturn('pin001');
+      when(mockPinDoc.data()).thenReturn({
+        'pinId': 'pin001',
+        'tripId': tripId,
+        'groupId': 'group001',
+        'latitude': 35.6812,
+        'longitude': 139.7671,
+        'locationName': 'テスト場所',
+        'visitStartDate': Timestamp.fromDate(DateTime(2025, 6, 2, 10)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2025, 6, 2, 15)),
+        'visitMemo': 'テスト訪問メモ',
+      });
+
+      when(
+        mockFirestore.collection('pin_details'),
+      ).thenReturn(mockPinDetailsCollection);
+      when(
+        mockPinDetailsCollection.where('pinId', isEqualTo: 'pin001'),
+      ).thenReturn(mockPinDetailsQuery1);
+      when(
+        mockPinDetailsQuery1.orderBy('startDate', descending: false),
+      ).thenReturn(mockPinDetailsQuery2);
+      when(
+        mockPinDetailsQuery2.get(),
+      ).thenAnswer((_) async => mockPinDetailsSnapshot);
+      when(mockPinDetailsSnapshot.docs).thenReturn([mockPinDetailDoc]);
+      when(mockPinDetailDoc.id).thenReturn('detail001');
+      when(mockPinDetailDoc.data()).thenReturn({
+        'pinId': 'pin001',
+        'name': 'テスト詳細予定',
+        'startDate': Timestamp.fromDate(DateTime(2025, 6, 2, 11)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2, 13)),
+        'memo': 'テスト詳細メモ',
+      });
+
+      final result = await repository.getTripEntryById(
+        tripId,
+        pinsOrderBy: pinsOrderBy,
+        pinDetailsOrderBy: pinDetailsOrderBy,
+      );
+
+      expect(result, isNotNull);
+      expect(result!.id, tripId);
+      expect(result.pins.length, 1);
+      verify(
+        mockPinsQuery1.orderBy('visitStartDate', descending: false),
+      ).called(1);
+      verify(
+        mockPinDetailsQuery1.orderBy('startDate', descending: false),
+      ).called(1);
+    });
+
     test(
       'deleteTripEntriesByGroupIdが指定したgroupIdの全旅行エントリとその子エンティティを削除する',
       () async {

@@ -1,6 +1,21 @@
 {
   "indexes": [
     {
+      "collectionGroup": "pin_details",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "pinId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "pins",
       "queryScope": "COLLECTION",
       "fields": [

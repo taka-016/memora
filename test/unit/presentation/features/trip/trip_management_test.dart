@@ -280,7 +280,11 @@ void main() {
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById('trip-1'),
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
       ).thenAnswer((_) async => detailedTripEntry);
       // Act
       await tester.pumpWidget(
@@ -308,7 +312,13 @@ void main() {
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
       expect(find.text('札幌駅'), findsOneWidget);
 
-      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
+      verify(
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
+      ).called(1);
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
@@ -321,7 +331,11 @@ void main() {
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById('trip-1'),
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -346,7 +360,13 @@ void main() {
       // Assert
       expect(find.text('旅行編集'), findsNothing);
       expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
-      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
+      verify(
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
+      ).called(1);
     });
 
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
@@ -359,7 +379,11 @@ void main() {
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById('trip-1'),
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
       ).thenAnswer((_) async => detailedTripEntry);
       when(
         mockTripEntryRepository.updateTripEntry(any),
@@ -397,7 +421,13 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockTripEntryRepository.updateTripEntry(any)).called(1);
-      verify(mockTripEntryRepository.getTripEntryById('trip-1')).called(1);
+      verify(
+        mockTripEntryRepository.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+        ),
+      ).called(1);
     });
 
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
