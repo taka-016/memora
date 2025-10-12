@@ -98,28 +98,9 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<List<Group>> getGroups() async {
     try {
       final snapshot = await _firestore.collection('groups').get();
-      final groups = snapshot.docs
+      return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
-
-      final List<Group> completeGroups = [];
-
-      for (final group in groups) {
-        final groupMembersSnapshot = await _firestore
-            .collection('group_members')
-            .where('groupId', isEqualTo: group.id)
-            .get();
-
-        final groupMembers = groupMembersSnapshot.docs
-            .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
-            .toList();
-
-        final completeGroup = group.copyWith(members: groupMembers);
-
-        completeGroups.add(completeGroup);
-      }
-
-      return completeGroups;
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupRepository.getGroups: ${e.toString()}',
