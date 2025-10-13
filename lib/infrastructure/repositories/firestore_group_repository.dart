@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_mapper.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_member_mapper.dart';
@@ -95,9 +96,18 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<Group>> getGroups() async {
+  Future<List<Group>> getGroups({List<OrderBy>? orderBy}) async {
     try {
-      final snapshot = await _firestore.collection('groups').get();
+      Query<Map<String, dynamic>> query = _firestore.collection('groups');
+
+      // ソート条件が指定されている場合のみ適用
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
+          query = query.orderBy(order.field, descending: order.descending);
+        }
+      }
+
+      final snapshot = await query.get();
       return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
@@ -112,17 +122,31 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<Group?> getGroupById(String groupId) async {
+  Future<Group?> getGroupById(
+    String groupId, {
+    List<OrderBy>? membersOrderBy,
+  }) async {
     try {
       final doc = await _firestore.collection('groups').doc(groupId).get();
       if (!doc.exists) {
         return null;
       }
 
-      final groupMembersSnapshot = await _firestore
+      Query<Map<String, dynamic>> membersQuery = _firestore
           .collection('group_members')
-          .where('groupId', isEqualTo: doc.id)
-          .get();
+          .where('groupId', isEqualTo: doc.id);
+
+      // ソート条件が指定されている場合のみ適用
+      if (membersOrderBy != null && membersOrderBy.isNotEmpty) {
+        for (final order in membersOrderBy) {
+          membersQuery = membersQuery.orderBy(
+            order.field,
+            descending: order.descending,
+          );
+        }
+      }
+
+      final groupMembersSnapshot = await membersQuery.get();
 
       final groupMembers = groupMembersSnapshot.docs
           .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
@@ -140,12 +164,23 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<Group>> getGroupsByOwnerId(String ownerId) async {
+  Future<List<Group>> getGroupsByOwnerId(
+    String ownerId, {
+    List<OrderBy>? orderBy,
+  }) async {
     try {
-      final snapshot = await _firestore
+      Query<Map<String, dynamic>> query = _firestore
           .collection('groups')
-          .where('ownerId', isEqualTo: ownerId)
-          .get();
+          .where('ownerId', isEqualTo: ownerId);
+
+      // ソート条件が指定されている場合のみ適用
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
+          query = query.orderBy(order.field, descending: order.descending);
+        }
+      }
+
+      final snapshot = await query.get();
       return snapshot.docs
           .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
           .toList();
@@ -160,11 +195,22 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<Group>> getGroupsWhereUserIsAdmin(String memberId) async {
-    final snapshot = await _firestore
+  Future<List<Group>> getGroupsWhereUserIsAdmin(
+    String memberId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('groups')
-        .where('ownerId', isEqualTo: memberId)
-        .get();
+        .where('ownerId', isEqualTo: memberId);
+
+    // ソート条件が指定されている場合のみ適用
+    if (orderBy != null && orderBy.isNotEmpty) {
+      for (final order in orderBy) {
+        query = query.orderBy(order.field, descending: order.descending);
+      }
+    }
+
+    final snapshot = await query.get();
 
     return snapshot.docs
         .map((doc) => FirestoreGroupMapper.fromFirestore(doc))
@@ -172,7 +218,10 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<List<Group>> getGroupsWhereUserIsMember(String memberId) async {
+  Future<List<Group>> getGroupsWhereUserIsMember(
+    String memberId, {
+    List<OrderBy>? orderBy,
+  }) async {
     final memberGroupsSnapshot = await _firestore
         .collection('group_members')
         .where('memberId', isEqualTo: memberId)
@@ -187,6 +236,48 @@ class FirestoreGroupRepository implements GroupRepository {
         groups.add(group);
       }
     }
+
+    // ソート条件が指定されている場合のみ適用
+    if (orderBy != null && orderBy.isNotEmpty) {
+      groups.sort((a, b) {
+        int comparison = 0;
+        for (final order in orderBy) {
+          final aValue = _getFieldValue(a, order.field);
+          final bValue = _getFieldValue(b, order.field);
+
+          if (aValue == null && bValue == null) {
+            comparison = 0;
+          } else if (aValue == null) {
+            comparison = order.descending ? -1 : 1;
+          } else if (bValue == null) {
+            comparison = order.descending ? 1 : -1;
+          } else if (aValue is Comparable && bValue is Comparable) {
+            comparison = order.descending
+                ? bValue.compareTo(aValue)
+                : aValue.compareTo(bValue);
+          }
+
+          if (comparison != 0) {
+            break;
+          }
+        }
+        return comparison;
+      });
+    }
+
     return groups;
+  }
+
+  dynamic _getFieldValue(Group group, String field) {
+    switch (field) {
+      case 'name':
+        return group.name;
+      case 'ownerId':
+        return group.ownerId;
+      case 'id':
+        return group.id;
+      default:
+        return null;
+    }
   }
 }
