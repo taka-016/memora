@@ -122,10 +122,7 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   @override
-  Future<Group?> getGroupById(
-    String groupId, {
-    List<OrderBy>? membersOrderBy,
-  }) async {
+  Future<Group?> getGroupById(String groupId, {List<OrderBy>? orderBy}) async {
     try {
       final doc = await _firestore.collection('groups').doc(groupId).get();
       if (!doc.exists) {
@@ -137,8 +134,8 @@ class FirestoreGroupRepository implements GroupRepository {
           .where('groupId', isEqualTo: doc.id);
 
       // ソート条件が指定されている場合のみ適用
-      if (membersOrderBy != null && membersOrderBy.isNotEmpty) {
-        for (final order in membersOrderBy) {
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
           membersQuery = membersQuery.orderBy(
             order.field,
             descending: order.descending,
@@ -222,10 +219,18 @@ class FirestoreGroupRepository implements GroupRepository {
     String memberId, {
     List<OrderBy>? orderBy,
   }) async {
-    final memberGroupsSnapshot = await _firestore
+    Query<Map<String, dynamic>> query = _firestore
         .collection('group_members')
-        .where('memberId', isEqualTo: memberId)
-        .get();
+        .where('memberId', isEqualTo: memberId);
+
+    // ソート条件が指定されている場合のみ適用
+    if (orderBy != null && orderBy.isNotEmpty) {
+      for (final order in orderBy) {
+        query = query.orderBy(order.field, descending: order.descending);
+      }
+    }
+
+    final memberGroupsSnapshot = await query.get();
 
     final List<Group> groups = [];
     for (final doc in memberGroupsSnapshot.docs) {
@@ -236,48 +241,6 @@ class FirestoreGroupRepository implements GroupRepository {
         groups.add(group);
       }
     }
-
-    // ソート条件が指定されている場合のみ適用
-    if (orderBy != null && orderBy.isNotEmpty) {
-      groups.sort((a, b) {
-        int comparison = 0;
-        for (final order in orderBy) {
-          final aValue = _getFieldValue(a, order.field);
-          final bValue = _getFieldValue(b, order.field);
-
-          if (aValue == null && bValue == null) {
-            comparison = 0;
-          } else if (aValue == null) {
-            comparison = order.descending ? -1 : 1;
-          } else if (bValue == null) {
-            comparison = order.descending ? 1 : -1;
-          } else if (aValue is Comparable && bValue is Comparable) {
-            comparison = order.descending
-                ? bValue.compareTo(aValue)
-                : aValue.compareTo(bValue);
-          }
-
-          if (comparison != 0) {
-            break;
-          }
-        }
-        return comparison;
-      });
-    }
-
     return groups;
-  }
-
-  dynamic _getFieldValue(Group group, String field) {
-    switch (field) {
-      case 'name':
-        return group.name;
-      case 'ownerId':
-        return group.ownerId;
-      case 'id':
-        return group.id;
-      default:
-        return null;
-    }
   }
 }

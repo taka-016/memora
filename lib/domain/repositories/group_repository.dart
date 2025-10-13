@@ -7,7 +7,7 @@ abstract class GroupRepository {
   Future<void> updateGroup(Group group);
   Future<void> deleteGroup(String groupId);
   Future<void> deleteGroupMembersByMemberId(String memberId);
-  Future<Group?> getGroupById(String groupId, {List<OrderBy>? membersOrderBy});
+  Future<Group?> getGroupById(String groupId, {List<OrderBy>? orderBy});
   Future<List<Group>> getGroupsByOwnerId(
     String ownerId, {
     List<OrderBy>? orderBy,
