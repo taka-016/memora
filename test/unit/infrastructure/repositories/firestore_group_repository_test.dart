@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
 import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
@@ -567,6 +568,180 @@ void main() {
       verify(mockGroupMembersQuery.get()).called(1);
       verify(mockCollection.doc(existingGroupId)).called(1);
       verify(mockCollection.doc(nonExistingGroupId)).called(1);
+    });
+
+    test('getGroupsがorderByパラメータでソートする', () async {
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.orderBy('name', descending: false),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('group001');
+      when(mockDoc1.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
+
+      final result = await repository.getGroups(
+        orderBy: [const OrderBy('name')],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].name, 'テストグループ');
+      verify(mockCollection.orderBy('name', descending: false)).called(1);
+    });
+
+    test('getGroupByIdがmembersOrderByパラメータでメンバーをソートする', () async {
+      const groupId = 'group001';
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocSnapshot.id).thenReturn(groupId);
+      when(
+        mockDocSnapshot.data(),
+      ).thenReturn({'ownerId': 'owner-id', 'name': 'テストグループ'});
+
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockGroupMembersQuery1);
+      when(
+        mockGroupMembersQuery1.orderBy('memberId', descending: false),
+      ).thenReturn(mockGroupMembersQuery2);
+      when(
+        mockGroupMembersQuery2.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([]);
+
+      await repository.getGroupById(
+        groupId,
+        orderBy: [const OrderBy('memberId')],
+      );
+
+      verify(
+        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
+      ).called(1);
+      verify(
+        mockGroupMembersQuery1.orderBy('memberId', descending: false),
+      ).called(1);
+    });
+
+    test('getGroupsByOwnerIdがorderByパラメータでソートする', () async {
+      const ownerId = 'owner001';
+      final mockQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('ownerId', isEqualTo: ownerId),
+      ).thenReturn(mockQuery1);
+      when(
+        mockQuery1.orderBy('name', descending: false),
+      ).thenReturn(mockQuery2);
+      when(mockQuery2.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('group001');
+      when(mockDoc1.data()).thenReturn({'ownerId': ownerId, 'name': 'テストグループ'});
+
+      final result = await repository.getGroupsByOwnerId(
+        ownerId,
+        orderBy: [const OrderBy('name')],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].name, 'テストグループ');
+      verify(mockCollection.where('ownerId', isEqualTo: ownerId)).called(1);
+      verify(mockQuery1.orderBy('name', descending: false)).called(1);
+    });
+
+    test('getGroupsWhereUserIsAdminがorderByパラメータでソートする', () async {
+      const memberId = 'member001';
+      final mockQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('ownerId', isEqualTo: memberId),
+      ).thenReturn(mockQuery1);
+      when(mockQuery1.orderBy('name', descending: true)).thenReturn(mockQuery2);
+      when(mockQuery2.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.id).thenReturn('group001');
+      when(
+        mockDoc1.data(),
+      ).thenReturn({'ownerId': memberId, 'name': '所有者グループ'});
+
+      final result = await repository.getGroupsWhereUserIsAdmin(
+        memberId,
+        orderBy: [const OrderBy('name', descending: true)],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].name, '所有者グループ');
+      verify(mockCollection.where('ownerId', isEqualTo: memberId)).called(1);
+      verify(mockQuery1.orderBy('name', descending: true)).called(1);
+    });
+
+    test('getGroupsWhereUserIsMemberがorderByパラメータでソートする', () async {
+      const memberId = 'member001';
+      const groupId1 = 'group001';
+
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+      final mockGroupDoc1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockGroupSnapshot1 = MockDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockGroupMembersQuery1);
+      when(
+        mockGroupMembersQuery1.orderBy('groupId', descending: false),
+      ).thenReturn(mockGroupMembersQuery2);
+      when(
+        mockGroupMembersQuery2.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([mockDoc1]);
+      when(mockDoc1.data()).thenReturn({'groupId': groupId1});
+
+      when(mockCollection.doc(groupId1)).thenReturn(mockGroupDoc1);
+      when(mockGroupDoc1.get()).thenAnswer((_) async => mockGroupSnapshot1);
+      when(mockGroupSnapshot1.exists).thenReturn(true);
+      when(mockGroupSnapshot1.id).thenReturn(groupId1);
+      when(
+        mockGroupSnapshot1.data(),
+      ).thenReturn({'ownerId': 'owner001', 'name': 'テストグループ'});
+
+      final result = await repository.getGroupsWhereUserIsMember(
+        memberId,
+        orderBy: [const OrderBy('groupId')],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].name, 'テストグループ');
+      verify(
+        mockGroupMembersCollection.where('memberId', isEqualTo: memberId),
+      ).called(1);
+      verify(
+        mockGroupMembersQuery1.orderBy('groupId', descending: false),
+      ).called(1);
     });
   });
 }

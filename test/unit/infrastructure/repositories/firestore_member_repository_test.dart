@@ -4,6 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
@@ -232,6 +233,99 @@ void main() {
 
       expect(result, isNull);
       verify(mockCollection.where('accountId', isEqualTo: accountId)).called(1);
+    });
+
+    test('getMembersがorderByパラメータでソートする', () async {
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.orderBy('displayName', descending: false),
+      ).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.id).thenReturn('member001');
+      when(mockDoc.data()).thenReturn({
+        'hiraganaFirstName': 'たろう',
+        'hiraganaLastName': 'やまだ',
+        'displayName': '太郎',
+        'type': '一般',
+        'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
+        'gender': 'male',
+      });
+
+      final result = await repository.getMembers(
+        orderBy: [const OrderBy('displayName')],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].displayName, '太郎');
+      verify(
+        mockCollection.orderBy('displayName', descending: false),
+      ).called(1);
+    });
+
+    test('getMembersが複数のorderByパラメータでソートする', () async {
+      final mockQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.orderBy('lastName', descending: false),
+      ).thenReturn(mockQuery1);
+      when(
+        mockQuery1.orderBy('firstName', descending: true),
+      ).thenReturn(mockQuery2);
+      when(mockQuery2.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+
+      await repository.getMembers(
+        orderBy: [
+          const OrderBy('lastName'),
+          const OrderBy('firstName', descending: true),
+        ],
+      );
+
+      verify(mockCollection.orderBy('lastName', descending: false)).called(1);
+      verify(mockQuery1.orderBy('firstName', descending: true)).called(1);
+    });
+
+    test('getMembersByOwnerIdがorderByパラメータでソートする', () async {
+      const ownerId = 'owner001';
+      final mockQuery1 = MockQuery<Map<String, dynamic>>();
+      final mockQuery2 = MockQuery<Map<String, dynamic>>();
+      final mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where('ownerId', isEqualTo: ownerId),
+      ).thenReturn(mockQuery1);
+      when(
+        mockQuery1.orderBy('displayName', descending: false),
+      ).thenReturn(mockQuery2);
+      when(mockQuery2.get()).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.id).thenReturn('member001');
+      when(mockDoc.data()).thenReturn({
+        'ownerId': ownerId,
+        'hiraganaFirstName': 'たろう',
+        'hiraganaLastName': 'やまだ',
+        'displayName': '太郎',
+        'type': '一般',
+        'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
+        'gender': 'male',
+      });
+
+      final result = await repository.getMembersByOwnerId(
+        ownerId,
+        orderBy: [const OrderBy('displayName')],
+      );
+
+      expect(result.length, 1);
+      expect(result[0].displayName, '太郎');
+      verify(mockCollection.where('ownerId', isEqualTo: ownerId)).called(1);
+      verify(mockQuery1.orderBy('displayName', descending: false)).called(1);
     });
   });
 }
