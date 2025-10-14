@@ -12,12 +12,4 @@ abstract class GroupRepository {
     String ownerId, {
     List<OrderBy>? orderBy,
   });
-  Future<List<Group>> getGroupsWhereUserIsAdmin(
-    String memberId, {
-    List<OrderBy>? orderBy,
-  });
-  Future<List<Group>> getGroupsWhereUserIsMember(
-    String memberId, {
-    List<OrderBy>? orderBy,
-  });
 }
