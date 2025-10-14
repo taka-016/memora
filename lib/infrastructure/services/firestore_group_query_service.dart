@@ -16,7 +16,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     String memberId,
   ) async {
     try {
-      final adminGroups = await _getGroupsWhereUserIsAdmin(memberId);
+      final adminGroups = await _getGroupsWhereUserIsOwner(memberId);
       final memberGroups = await _getGroupsWhereUserIsMember(memberId);
       final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
 
@@ -36,7 +36,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     String ownerId,
   ) async {
     try {
-      final managedGroups = await _getGroupsWhereUserIsAdmin(ownerId);
+      final managedGroups = await _getGroupsWhereUserIsOwner(ownerId);
       return await _addMembersToGroups(managedGroups);
     } catch (e, stack) {
       logger.e(
@@ -48,7 +48,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     }
   }
 
-  Future<List<GroupWithMembersDto>> _getGroupsWhereUserIsAdmin(
+  Future<List<GroupWithMembersDto>> _getGroupsWhereUserIsOwner(
     String memberId,
   ) async {
     final snapshot = await _firestore
