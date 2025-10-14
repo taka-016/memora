@@ -9,6 +9,7 @@ import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
@@ -251,7 +252,10 @@ void main() {
       ).thenAnswer((_) async => group1);
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => availableMembers);
 
       // Act
@@ -284,7 +288,10 @@ void main() {
       ).thenAnswer((_) async => group1);
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => availableMembers);
 
       // Act

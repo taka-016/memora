@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
@@ -61,7 +62,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId(
+          'admin-member-id',
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => expectedMembers);
 
       // Act
@@ -70,7 +74,10 @@ void main() {
       // Assert
       expect(result, equals(expectedMembers));
       verify(
-        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId(
+          'admin-member-id',
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).called(1);
     });
 
@@ -90,7 +97,10 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId(
+          'admin-member-id',
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -99,7 +109,10 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(
-        mockMemberRepository.getMembersByOwnerId('admin-member-id'),
+        mockMemberRepository.getMembersByOwnerId(
+          'admin-member-id',
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).called(1);
     });
   });

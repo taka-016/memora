@@ -19,8 +19,9 @@
 - [x] FirestorePinQueryServiceを作成し、自分が所属するグループに紐づくピンを取得する
 - [x] TripEntryRepositoryのgetTripEntryByIdにpinsとpinDetails用のorderByを設定できるようにする
 - [x] MemberRepositoryのgetMembersとgetMembersByOwnerIdにorderByを追加する
-- [x] GroupRepositoryのgetGroups、getGroupsByOwnerId、getGroupsWhereUserIsAdminにorderByを追加する
-- [x] GroupRepositoryのgetGroupById、getGroupsWhereUserIsMemberにorderByを追加する
+  - [x] GetManagedMembersUsecaseでdisplayNameの昇順で取得する処理を追加する
+- [x] GroupRepositoryのgetGroups、getGroupsByOwnerId、getGroupByIdにorderByを追加する
+  - [x] getGroups、getGroupsByOwnerIdはgroupsのソートのためのorderBy、getGroupByIdはmembersのソートのためのorderBy
 
 ## マップの表示
 

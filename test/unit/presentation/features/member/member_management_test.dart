@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -108,7 +109,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -121,7 +125,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - データ取得の確認
-      verify(mockMemberRepository.getMembersByOwnerId(testMember.id)).called(1);
+      verify(
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      ).called(1);
       expect(find.text('メンバー管理'), findsOneWidget);
 
       // メンバー表示の確認
@@ -167,7 +176,10 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -184,7 +196,10 @@ void main() {
     testWidgets('メンバー追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -200,7 +215,10 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenThrow(TestException('Network error'));
 
       // Act
@@ -240,7 +258,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -257,7 +278,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      verify(mockMemberRepository.getMembersByOwnerId(testMember.id)).called(2);
+      verify(
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      ).called(2);
     });
 
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
@@ -285,7 +311,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -329,7 +358,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
@@ -364,7 +396,10 @@ void main() {
 
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       when(
@@ -403,7 +438,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -496,7 +534,10 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
@@ -560,7 +601,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       // Act
@@ -591,7 +635,10 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => managedMembers);
 
       when(
@@ -630,7 +677,10 @@ void main() {
     testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(testMember.id),
+        mockMemberRepository.getMembersByOwnerId(
+          testMember.id,
+          orderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
