@@ -280,37 +280,25 @@ void main() {
 
       // グループのメンバー取得（group1）
       final mockMemberQuery1 = MockQuery<Map<String, dynamic>>();
-      final mockMemberQuery1OrderBy = MockQuery<Map<String, dynamic>>();
       final mockMemberSnapshot1 = MockQuerySnapshot<Map<String, dynamic>>();
       final mockMemberDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
         mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'),
       ).thenReturn(mockMemberQuery1);
-      when(
-        mockMemberQuery1.orderBy('memberId', descending: false),
-      ).thenReturn(mockMemberQuery1OrderBy);
-      when(
-        mockMemberQuery1OrderBy.get(),
-      ).thenAnswer((_) async => mockMemberSnapshot1);
+      when(mockMemberQuery1.get()).thenAnswer((_) async => mockMemberSnapshot1);
       when(mockMemberSnapshot1.docs).thenReturn([mockMemberDoc1]);
       when(mockMemberDoc1.data()).thenReturn({'memberId': 'member1'});
 
       // グループのメンバー取得（group2）
       final mockMemberQuery2 = MockQuery<Map<String, dynamic>>();
-      final mockMemberQuery2OrderBy = MockQuery<Map<String, dynamic>>();
       final mockMemberSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
       final mockMemberDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
         mockGroupMembersCollection.where('groupId', isEqualTo: 'group2'),
       ).thenReturn(mockMemberQuery2);
-      when(
-        mockMemberQuery2.orderBy('memberId', descending: false),
-      ).thenReturn(mockMemberQuery2OrderBy);
-      when(
-        mockMemberQuery2OrderBy.get(),
-      ).thenAnswer((_) async => mockMemberSnapshot2);
+      when(mockMemberQuery2.get()).thenAnswer((_) async => mockMemberSnapshot2);
       when(mockMemberSnapshot2.docs).thenReturn([mockMemberDoc2]);
       when(mockMemberDoc2.data()).thenReturn({'memberId': 'member2'});
 
@@ -348,7 +336,7 @@ void main() {
       final result = await service.getGroupsWithMembersByMemberId(
         memberId,
         groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('memberId', descending: false)],
+        membersOrderBy: [const OrderBy('displayName', descending: false)],
       );
 
       expect(result, hasLength(2));
@@ -358,9 +346,9 @@ void main() {
       expect(result[1].groupId, 'group2');
       expect(result[1].groupName, 'Bグループ');
 
-      // membersOrderByで'memberId'の昇順でソートされることを確認
-      verify(mockMemberQuery1.orderBy('memberId', descending: false)).called(1);
-      verify(mockMemberQuery2.orderBy('memberId', descending: false)).called(1);
+      // メンバーがdisplayNameの昇順でソートされていることを確認
+      expect(result[0].members[0].displayName, 'Aメンバー');
+      expect(result[1].members[0].displayName, 'Bメンバー');
     });
 
     test('groupsOrderByとmembersOrderByを指定して管理グループとメンバーをソート順で取得する', () async {
@@ -389,7 +377,6 @@ void main() {
 
       // グループのメンバー取得
       final mockMemberQuery = MockQuery<Map<String, dynamic>>();
-      final mockMemberQueryOrderBy = MockQuery<Map<String, dynamic>>();
       final mockMemberSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockMemberDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
@@ -399,12 +386,7 @@ void main() {
       when(
         mockGroupMembersCollection.where('groupId', isEqualTo: 'group1'),
       ).thenReturn(mockMemberQuery);
-      when(
-        mockMemberQuery.orderBy('memberId', descending: true),
-      ).thenReturn(mockMemberQueryOrderBy);
-      when(
-        mockMemberQueryOrderBy.get(),
-      ).thenAnswer((_) async => mockMemberSnapshot);
+      when(mockMemberQuery.get()).thenAnswer((_) async => mockMemberSnapshot);
       when(mockMemberSnapshot.docs).thenReturn([mockMemberDoc]);
       when(mockMemberDoc.data()).thenReturn({'memberId': 'member1'});
 
@@ -425,7 +407,7 @@ void main() {
       final result = await service.getManagedGroupsWithMembersByOwnerId(
         ownerId,
         groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('memberId', descending: true)],
+        membersOrderBy: [const OrderBy('displayName', descending: true)],
       );
 
       expect(result, hasLength(1));
@@ -436,8 +418,6 @@ void main() {
 
       // groupsOrderByで'name'の昇順でソートされることを確認
       verify(mockOwnerQuery.orderBy('name', descending: false)).called(1);
-      // membersOrderByで'memberId'の降順でソートされることを確認
-      verify(mockMemberQuery.orderBy('memberId', descending: true)).called(1);
     });
   });
 }

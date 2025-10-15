@@ -197,17 +197,10 @@ class FirestoreGroupQueryService implements GroupQueryService {
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
-    Query<Map<String, dynamic>> query = _firestore
+    final groupMembersSnapshot = await _firestore
         .collection('group_members')
-        .where('groupId', isEqualTo: groupId);
-
-    if (orderBy != null) {
-      for (final order in orderBy) {
-        query = query.orderBy(order.field, descending: order.descending);
-      }
-    }
-
-    final groupMembersSnapshot = await query.get();
+        .where('groupId', isEqualTo: groupId)
+        .get();
 
     final List<MemberDto> members = [];
 
@@ -223,6 +216,31 @@ class FirestoreGroupQueryService implements GroupQueryService {
       }
     }
 
-    return members;
+    return _sortMembers(members, orderBy);
+  }
+
+  List<MemberDto> _sortMembers(
+    List<MemberDto> members,
+    List<OrderBy>? orderBy,
+  ) {
+    if (orderBy == null || orderBy.isEmpty) {
+      return members;
+    }
+
+    final sortedMembers = List<MemberDto>.from(members);
+    sortedMembers.sort((a, b) {
+      for (final order in orderBy) {
+        int comparison = 0;
+        if (order.field == 'displayName') {
+          comparison = a.displayName.compareTo(b.displayName);
+        }
+        if (comparison != 0) {
+          return order.descending ? -comparison : comparison;
+        }
+      }
+      return 0;
+    });
+
+    return sortedMembers;
   }
 }
