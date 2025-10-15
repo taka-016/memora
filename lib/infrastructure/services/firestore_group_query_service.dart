@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/member_mapper.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
@@ -13,14 +14,20 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
   @override
   Future<List<GroupWithMembersDto>> getGroupsWithMembersByMemberId(
-    String memberId,
-  ) async {
+    String memberId, {
+    List<OrderBy>? groupsOrderBy,
+    List<OrderBy>? membersOrderBy,
+  }) async {
     try {
       final adminGroups = await _getGroupsWhereUserIsOwner(memberId);
       final memberGroups = await _getGroupsWhereUserIsMember(memberId);
       final allGroups = _mergeUniqueGroups(adminGroups, memberGroups);
+      final sortedGroups = _sortGroups(allGroups, groupsOrderBy);
 
-      return await _addMembersToGroups(allGroups);
+      return await _addMembersToGroups(
+        sortedGroups,
+        membersOrderBy: membersOrderBy,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupQueryService.getGroupsWithMembersByMemberId: ${e.toString()}',
@@ -33,11 +40,19 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
   @override
   Future<List<GroupWithMembersDto>> getManagedGroupsWithMembersByOwnerId(
-    String ownerId,
-  ) async {
+    String ownerId, {
+    List<OrderBy>? groupsOrderBy,
+    List<OrderBy>? membersOrderBy,
+  }) async {
     try {
-      final managedGroups = await _getGroupsWhereUserIsOwner(ownerId);
-      return await _addMembersToGroups(managedGroups);
+      final managedGroups = await _getGroupsWhereUserIsOwner(
+        ownerId,
+        orderBy: groupsOrderBy,
+      );
+      return await _addMembersToGroups(
+        managedGroups,
+        membersOrderBy: membersOrderBy,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupQueryService.getManagedGroupsWithMembersByOwnerId: ${e.toString()}',
@@ -49,12 +64,20 @@ class FirestoreGroupQueryService implements GroupQueryService {
   }
 
   Future<List<GroupWithMembersDto>> _getGroupsWhereUserIsOwner(
-    String memberId,
-  ) async {
-    final snapshot = await _firestore
+    String memberId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('groups')
-        .where('ownerId', isEqualTo: memberId)
-        .get();
+        .where('ownerId', isEqualTo: memberId);
+
+    if (orderBy != null) {
+      for (final order in orderBy) {
+        query = query.orderBy(order.field, descending: order.descending);
+      }
+    }
+
+    final snapshot = await query.get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
@@ -122,13 +145,42 @@ class FirestoreGroupQueryService implements GroupQueryService {
     return uniqueGroups;
   }
 
-  Future<List<GroupWithMembersDto>> _addMembersToGroups(
+  List<GroupWithMembersDto> _sortGroups(
     List<GroupWithMembersDto> groups,
-  ) async {
+    List<OrderBy>? orderBy,
+  ) {
+    if (orderBy == null || orderBy.isEmpty) {
+      return groups;
+    }
+
+    final sortedGroups = List<GroupWithMembersDto>.from(groups);
+    sortedGroups.sort((a, b) {
+      for (final order in orderBy) {
+        int comparison = 0;
+        if (order.field == 'name') {
+          comparison = a.groupName.compareTo(b.groupName);
+        }
+        if (comparison != 0) {
+          return order.descending ? -comparison : comparison;
+        }
+      }
+      return 0;
+    });
+
+    return sortedGroups;
+  }
+
+  Future<List<GroupWithMembersDto>> _addMembersToGroups(
+    List<GroupWithMembersDto> groups, {
+    List<OrderBy>? membersOrderBy,
+  }) async {
     final List<GroupWithMembersDto> result = [];
 
     for (final group in groups) {
-      final members = await _getMembersForGroup(group.groupId);
+      final members = await _getMembersForGroup(
+        group.groupId,
+        orderBy: membersOrderBy,
+      );
       result.add(
         GroupWithMembersDto(
           groupId: group.groupId,
@@ -141,11 +193,21 @@ class FirestoreGroupQueryService implements GroupQueryService {
     return result;
   }
 
-  Future<List<MemberDto>> _getMembersForGroup(String groupId) async {
-    final groupMembersSnapshot = await _firestore
+  Future<List<MemberDto>> _getMembersForGroup(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('group_members')
-        .where('groupId', isEqualTo: groupId)
-        .get();
+        .where('groupId', isEqualTo: groupId);
+
+    if (orderBy != null) {
+      for (final order in orderBy) {
+        query = query.orderBy(order.field, descending: order.descending);
+      }
+    }
+
+    final groupMembersSnapshot = await query.get();
 
     final List<MemberDto> members = [];
 

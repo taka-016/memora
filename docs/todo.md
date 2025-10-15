@@ -22,6 +22,10 @@
   - [x] GetManagedMembersUsecaseでdisplayNameの昇順で取得する処理を追加する
 - [x] GroupRepositoryのgetGroups、getGroupsByOwnerId、getGroupByIdにorderByを追加する
   - [x] getGroups、getGroupsByOwnerIdはgroupsのソートのためのorderBy、getGroupByIdはmembersのソートのためのorderBy
+- [x] FirestoreGroupQueryServiceのgetGroupsWithMembersByMemberIdにorderByを追加する
+  - [x] groupsのソートのためのorderBy、membersのソートのためのorderByを追加する
+- [x] FirestoreGroupQueryServiceのgetManagedGroupsWithMembersByOwnerIdにorderByを追加する
+  - [x] groupsのソートのためのorderBy、membersのソートのためのorderByを追加する
 
 ## マップの表示
 
