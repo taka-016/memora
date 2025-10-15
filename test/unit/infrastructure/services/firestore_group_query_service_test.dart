@@ -369,10 +369,18 @@ void main() {
       // 管理者として参加しているグループのモック設定
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
 
+      final mockOwnerQuery = MockQuery<Map<String, dynamic>>();
+      final mockOwnerQueryOrderBy = MockQuery<Map<String, dynamic>>();
+
       when(
         mockGroupsCollection.where('ownerId', isEqualTo: ownerId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      ).thenReturn(mockOwnerQuery);
+      when(
+        mockOwnerQuery.orderBy('name', descending: false),
+      ).thenReturn(mockOwnerQueryOrderBy);
+      when(
+        mockOwnerQueryOrderBy.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockQueryDocumentSnapshot]);
       when(mockQueryDocumentSnapshot.id).thenReturn('group1');
       when(
@@ -426,6 +434,8 @@ void main() {
       expect(result[0].members, hasLength(1));
       expect(result[0].members[0].displayName, 'テストメンバー');
 
+      // groupsOrderByで'name'の昇順でソートされることを確認
+      verify(mockOwnerQuery.orderBy('name', descending: false)).called(1);
       // membersOrderByで'memberId'の降順でソートされることを確認
       verify(mockMemberQuery.orderBy('memberId', descending: true)).called(1);
     });

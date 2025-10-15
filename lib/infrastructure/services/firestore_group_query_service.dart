@@ -45,10 +45,12 @@ class FirestoreGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     try {
-      final managedGroups = await _getGroupsWhereUserIsOwner(ownerId);
-      final sortedGroups = _sortGroups(managedGroups, groupsOrderBy);
+      final managedGroups = await _getGroupsWhereUserIsOwner(
+        ownerId,
+        orderBy: groupsOrderBy,
+      );
       return await _addMembersToGroups(
-        sortedGroups,
+        managedGroups,
         membersOrderBy: membersOrderBy,
       );
     } catch (e, stack) {
@@ -62,12 +64,20 @@ class FirestoreGroupQueryService implements GroupQueryService {
   }
 
   Future<List<GroupWithMembersDto>> _getGroupsWhereUserIsOwner(
-    String memberId,
-  ) async {
-    final snapshot = await _firestore
+    String memberId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    Query<Map<String, dynamic>> query = _firestore
         .collection('groups')
-        .where('ownerId', isEqualTo: memberId)
-        .get();
+        .where('ownerId', isEqualTo: memberId);
+
+    if (orderBy != null) {
+      for (final order in orderBy) {
+        query = query.orderBy(order.field, descending: order.descending);
+      }
+    }
+
+    final snapshot = await query.get();
 
     return snapshot.docs.map((doc) {
       final data = doc.data();
