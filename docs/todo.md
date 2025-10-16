@@ -24,8 +24,12 @@
   - [x] getGroups、getGroupsByOwnerIdはgroupsのソートのためのorderBy、getGroupByIdはmembersのソートのためのorderBy
 - [x] FirestoreGroupQueryServiceのgetGroupsWithMembersByMemberIdにorderByを追加する
   - [x] groupsのソートのためのorderBy、membersのソートのためのorderByを追加する
+  - [x] GetGroupsWithMembersUsecaseでgroupsのnameの昇順とmembersのdisplayNameの昇順で取得する処理を追加する
 - [x] FirestoreGroupQueryServiceのgetManagedGroupsWithMembersByOwnerIdにorderByを追加する
   - [x] groupsのソートのためのorderBy、membersのソートのためのorderByを追加する
+  - [x] GetManagedGroupsWithMembersUsecaseでgroupsのnameの昇順とmembersのdisplayNameの昇順で取得する処理を追加する
+- [x] getGroups、getGroupsByOwnerIdは使用していないため廃止する
+- [x] getGroupByIdのorderByはgroup_memberではソートキーとなる要素がないため廃止する
 
 ## マップの表示
 

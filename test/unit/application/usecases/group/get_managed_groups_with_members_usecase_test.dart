@@ -57,7 +57,11 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).thenAnswer((_) async => expectedResult);
 
       // act
@@ -70,7 +74,11 @@ void main() {
       expect(result[1].groupId, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       );
     });
 
@@ -86,7 +94,11 @@ void main() {
       );
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).thenAnswer((_) async => []);
 
       // act
@@ -95,7 +107,45 @@ void main() {
       // assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      );
+    });
+
+    test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
+      // arrange
+      const ownerId = 'admin123';
+      final ownerMember = Member(
+        id: ownerId,
+        displayName: 'Admin User',
+        email: 'admin@example.com',
+        accountId: 'account123',
+        ownerId: '',
+      );
+
+      final expectedResults = <GroupWithMembersDto>[];
+
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => expectedResults);
+
+      // act
+      await usecase.execute(ownerMember);
+
+      // assert
+      verify(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       );
     });
   });

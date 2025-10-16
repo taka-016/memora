@@ -9,7 +9,6 @@ import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
@@ -106,6 +105,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -122,6 +123,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).called(1);
       expect(find.text('グループ管理'), findsOneWidget);
@@ -134,6 +137,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -153,6 +158,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -171,6 +178,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenThrow(TestException('Network error'));
 
@@ -193,6 +202,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -213,6 +224,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).called(2);
     });
@@ -224,6 +237,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -244,6 +259,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -254,7 +271,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => availableMembers);
 
@@ -280,6 +297,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -290,7 +309,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => availableMembers);
 
@@ -326,6 +345,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 

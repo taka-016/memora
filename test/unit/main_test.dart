@@ -55,7 +55,11 @@ void main() {
       mockMemberRepository.getMemberByAccountId(any),
     ).thenAnswer((_) async => testMember);
     when(
-      mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      mockGroupQueryService.getGroupsWithMembersByMemberId(
+        any,
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
     ).thenAnswer((_) async => []);
     when(
       mockPinQueryService.getPinsByMemberId(any),

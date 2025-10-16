@@ -271,9 +271,6 @@ void main() {
       final mockPinDetailDoc =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      final pinsOrderBy = [const OrderBy('visitStartDate', descending: false)];
-      final pinDetailsOrderBy = [const OrderBy('startDate', descending: false)];
-
       when(mockCollection.doc(tripId)).thenReturn(mockDocRef);
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
       when(mockDocSnapshot.exists).thenReturn(true);
@@ -332,8 +329,8 @@ void main() {
 
       final result = await repository.getTripEntryById(
         tripId,
-        pinsOrderBy: pinsOrderBy,
-        pinDetailsOrderBy: pinDetailsOrderBy,
+        pinsOrderBy: [const OrderBy('visitStartDate', descending: false)],
+        pinDetailsOrderBy: [const OrderBy('startDate', descending: false)],
       );
 
       expect(result, isNotNull);
@@ -480,10 +477,6 @@ void main() {
       const year = 2024;
       final startOfYear = DateTime(year, 1, 1);
       final endOfYear = DateTime(year + 1, 1, 1);
-      final orderBy = [
-        const OrderBy('tripStartDate', descending: false),
-        const OrderBy('tripName', descending: true),
-      ];
 
       when(
         mockCollection.where('groupId', isEqualTo: groupId),
@@ -512,7 +505,10 @@ void main() {
       final result = await repository.getTripEntriesByGroupIdAndYear(
         groupId,
         year,
-        orderBy: orderBy,
+        orderBy: [
+          const OrderBy('tripStartDate', descending: false),
+          const OrderBy('tripName', descending: true),
+        ],
       );
 
       expect(result, isEmpty);

@@ -63,7 +63,11 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).thenAnswer((_) async => expectedResults);
 
       // Act
@@ -72,7 +76,11 @@ void main() {
       // Assert
       expect(result, expectedResults);
       verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).called(1);
     });
 
@@ -93,7 +101,11 @@ void main() {
       );
 
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -102,7 +114,11 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).called(1);
     });
 
@@ -124,11 +140,54 @@ void main() {
 
       final exception = TestException('Database error');
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
       ).thenThrow(exception);
 
       // Act & Assert
       expect(() => usecase.execute(member), throwsA(exception));
+    });
+
+    test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
+      // Arrange
+      final member = Member(
+        id: 'member1',
+        hiraganaFirstName: 'たろう',
+        hiraganaLastName: 'やまだ',
+        kanjiFirstName: '太郎',
+        kanjiLastName: '山田',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        displayName: '表示名',
+        type: 'family',
+        birthday: DateTime(1990, 1, 1),
+        gender: 'male',
+      );
+
+      final expectedResults = <GroupWithMembersDto>[];
+
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => expectedResults);
+
+      // Act
+      await usecase.execute(member);
+
+      // Assert
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      );
     });
   });
 }
