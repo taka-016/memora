@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
@@ -57,7 +58,11 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => expectedResult);
 
       // act
@@ -70,7 +75,11 @@ void main() {
       expect(result[1].groupId, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       );
     });
 
@@ -86,7 +95,11 @@ void main() {
       );
 
       when(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // act
@@ -95,7 +108,45 @@ void main() {
       // assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(ownerId),
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      );
+    });
+
+    test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
+      // arrange
+      const ownerId = 'admin123';
+      final ownerMember = Member(
+        id: ownerId,
+        displayName: 'Admin User',
+        email: 'admin@example.com',
+        accountId: 'account123',
+        ownerId: '',
+      );
+
+      final expectedResults = <GroupWithMembersDto>[];
+
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      ).thenAnswer((_) async => expectedResults);
+
+      // act
+      await usecase.execute(ownerMember);
+
+      // assert
+      verify(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          ownerId,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       );
     });
   });

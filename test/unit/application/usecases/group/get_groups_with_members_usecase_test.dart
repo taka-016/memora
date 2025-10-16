@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -63,7 +64,11 @@ void main() {
       ];
 
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => expectedResults);
 
       // Act
@@ -72,7 +77,11 @@ void main() {
       // Assert
       expect(result, expectedResults);
       verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).called(1);
     });
 
@@ -93,7 +102,11 @@ void main() {
       );
 
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -102,7 +115,11 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).called(1);
     });
 
@@ -124,11 +141,54 @@ void main() {
 
       final exception = TestException('Database error');
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(member.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenThrow(exception);
 
       // Act & Assert
       expect(() => usecase.execute(member), throwsA(exception));
+    });
+
+    test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
+      // Arrange
+      final member = Member(
+        id: 'member1',
+        hiraganaFirstName: 'たろう',
+        hiraganaLastName: 'やまだ',
+        kanjiFirstName: '太郎',
+        kanjiLastName: '山田',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        displayName: '表示名',
+        type: 'family',
+        birthday: DateTime(1990, 1, 1),
+        gender: 'male',
+      );
+
+      final expectedResults = <GroupWithMembersDto>[];
+
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      ).thenAnswer((_) async => expectedResults);
+
+      // Act
+      await usecase.execute(member);
+
+      // Assert
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
+      );
     });
   });
 }

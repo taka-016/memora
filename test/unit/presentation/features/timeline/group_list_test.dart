@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
@@ -78,7 +79,11 @@ void main() {
         ),
       ];
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -97,7 +102,11 @@ void main() {
     testWidgets('グループが存在しない場合、空状態が表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => []);
 
       // Act
@@ -112,7 +121,11 @@ void main() {
     testWidgets('エラーが発生した場合、エラー状態が表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenThrow(TestException('エラーテスト'));
 
       // Act
@@ -129,7 +142,11 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenThrow(TestException('エラーテスト'));
 
       // Act
@@ -145,7 +162,11 @@ void main() {
         ),
       ];
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // 再読み込みボタンをタップ
@@ -157,7 +178,11 @@ void main() {
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsNothing);
       verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).called(2); // 最初のエラー + 再読み込み
     });
 
@@ -172,7 +197,11 @@ void main() {
         ),
       ];
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(testMember.id),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act

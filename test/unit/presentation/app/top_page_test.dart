@@ -5,6 +5,7 @@ import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -127,7 +128,11 @@ void main() {
     ).thenAnswer((_) async => defaultMember);
     when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
     when(
-      mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+      mockGroupQueryService.getGroupsWithMembersByMemberId(
+        any,
+        groupsOrderBy: [const OrderBy('name', descending: false)],
+        membersOrderBy: [const OrderBy('displayName', descending: false)],
+      ),
     ).thenAnswer((_) async => groupsWithMembers);
 
     return ProviderScope(
@@ -148,7 +153,11 @@ void main() {
     testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -163,7 +172,11 @@ void main() {
     testWidgets('メニューが表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -190,7 +203,11 @@ void main() {
     testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -207,7 +224,11 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -230,7 +251,11 @@ void main() {
     testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -255,7 +280,11 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -280,7 +309,11 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -303,7 +336,11 @@ void main() {
     testWidgets('メニューから「設定」を選択すると、設定画面が表示される', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -326,7 +363,11 @@ void main() {
     testWidgets('メニュー選択後にメニューが自動的に閉じる', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
@@ -358,7 +399,11 @@ void main() {
         mockMemberRepository.getMemberByAccountId(any),
       ).thenAnswer((_) async => currentMember);
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       final widget = createTestWidget();
@@ -379,7 +424,11 @@ void main() {
     testWidgets('グループ年表から戻るボタンでグループ一覧に戻ることができる', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
         mockMemberRepository.getMemberByAccountId(any),
@@ -410,7 +459,11 @@ void main() {
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
         mockMemberRepository.getMemberByAccountId(any),
@@ -549,7 +602,11 @@ void main() {
       ).thenAnswer((_) async => defaultMember);
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       // Providerをオーバーライドして、非デフォルト状態から開始
@@ -607,7 +664,11 @@ void main() {
       ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(any),
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        ),
       ).thenAnswer((_) async => groupsWithMembers);
 
       final fakeAuthNotifier = FakeAuthNotifier(

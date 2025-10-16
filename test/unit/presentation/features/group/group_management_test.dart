@@ -106,6 +106,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -122,6 +124,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).called(1);
       expect(find.text('グループ管理'), findsOneWidget);
@@ -134,6 +138,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => []);
 
@@ -153,6 +159,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => []);
 
@@ -171,6 +179,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenThrow(TestException('Network error'));
 
@@ -193,6 +203,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -213,6 +225,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).called(2);
     });
@@ -224,6 +238,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -244,6 +260,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -280,6 +298,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
@@ -326,6 +346,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           testMember.id,
+          groupsOrderBy: [const OrderBy('name', descending: false)],
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
