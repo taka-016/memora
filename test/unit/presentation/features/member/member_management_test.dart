@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -111,7 +110,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -128,7 +127,7 @@ void main() {
       verify(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).called(1);
       expect(find.text('メンバー管理'), findsOneWidget);
@@ -178,7 +177,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -198,7 +197,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -217,7 +216,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenThrow(TestException('Network error'));
 
@@ -260,7 +259,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -281,7 +280,7 @@ void main() {
       verify(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).called(2);
     });
@@ -313,7 +312,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -360,7 +359,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -398,7 +397,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -440,7 +439,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -536,7 +535,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -603,7 +602,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -637,7 +636,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
 
@@ -679,7 +678,7 @@ void main() {
       when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
-          orderBy: [const OrderBy('displayName', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
 

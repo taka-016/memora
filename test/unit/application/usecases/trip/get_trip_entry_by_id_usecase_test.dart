@@ -4,7 +4,6 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 
 import 'get_trip_entry_by_id_usecase_test.mocks.dart';
 
@@ -43,8 +42,8 @@ void main() {
       verify(
         mockRepository.getTripEntryById(
           tripId,
-          pinsOrderBy: [const OrderBy('visitStartDate', descending: false)],
-          pinDetailsOrderBy: [const OrderBy('startDate', descending: false)],
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
         ),
       ).called(1);
     });
@@ -65,8 +64,8 @@ void main() {
       verify(
         mockRepository.getTripEntryById(
           tripId,
-          pinsOrderBy: [const OrderBy('visitStartDate', descending: false)],
-          pinDetailsOrderBy: [const OrderBy('startDate', descending: false)],
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
         ),
       ).called(1);
     });

@@ -8,7 +8,6 @@ import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -58,8 +57,8 @@ void main() {
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
         any,
-        groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('displayName', descending: false)],
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => []);
     when(

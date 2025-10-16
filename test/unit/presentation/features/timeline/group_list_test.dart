@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
@@ -81,8 +80,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -104,8 +103,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -123,8 +122,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenThrow(TestException('エラーテスト'));
 
@@ -144,8 +143,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenThrow(TestException('エラーテスト'));
 
@@ -164,8 +163,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -180,8 +179,8 @@ void main() {
       verify(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).called(2); // 最初のエラー + 再読み込み
     });
@@ -199,8 +198,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testMember.id,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 

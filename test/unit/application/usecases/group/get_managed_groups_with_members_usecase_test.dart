@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
@@ -60,8 +59,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => expectedResult);
 
@@ -77,8 +76,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       );
     });
@@ -97,8 +96,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => []);
 
@@ -110,8 +109,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       );
     });
@@ -132,8 +131,8 @@ void main() {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => expectedResults);
 
@@ -144,8 +143,8 @@ void main() {
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
           ownerId,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       );
     });

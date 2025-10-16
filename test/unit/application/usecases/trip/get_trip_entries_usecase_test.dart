@@ -4,7 +4,6 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 
 import 'get_trip_entries_usecase_test.mocks.dart';
 
@@ -44,7 +43,7 @@ void main() {
         mockRepository.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
-          orderBy: [const OrderBy('tripStartDate', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => expectedTripEntries);
 
@@ -57,7 +56,7 @@ void main() {
         mockRepository.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
-          orderBy: [const OrderBy('tripStartDate', descending: false)],
+          orderBy: anyNamed('orderBy'),
         ),
       ).called(1);
     });

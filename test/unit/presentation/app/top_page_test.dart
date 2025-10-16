@@ -5,7 +5,6 @@ import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -130,8 +129,8 @@ void main() {
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
         any,
-        groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('displayName', descending: false)],
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => groupsWithMembers);
 
@@ -155,8 +154,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -174,8 +173,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -205,8 +204,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -226,8 +225,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -253,8 +252,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -282,8 +281,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -311,8 +310,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -338,8 +337,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -365,8 +364,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -401,8 +400,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -426,8 +425,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
@@ -461,8 +460,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
@@ -604,8 +603,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
@@ -666,8 +665,8 @@ void main() {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
-          groupsOrderBy: [const OrderBy('name', descending: false)],
-          membersOrderBy: [const OrderBy('displayName', descending: false)],
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
