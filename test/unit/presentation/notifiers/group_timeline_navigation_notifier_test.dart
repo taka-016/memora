@@ -12,8 +12,8 @@ void main() {
     setUp(() {
       container = ProviderContainer();
       testGroupWithMembers = GroupWithMembersDto(
-        groupId: '1',
-        groupName: 'テストグループ',
+        id: '1',
+        name: 'テストグループ',
         members: [
           MemberDto(
             id: 'member2',

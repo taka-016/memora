@@ -150,10 +150,10 @@ void main() {
       final result = await service.getGroupsWithMembersByMemberId(memberId);
 
       expect(result, hasLength(2));
-      expect(result[0].groupId, 'group1');
-      expect(result[0].groupName, '管理者グループ');
-      expect(result[1].groupId, 'group2');
-      expect(result[1].groupName, 'メンバーグループ');
+      expect(result[0].id, 'group1');
+      expect(result[0].name, '管理者グループ');
+      expect(result[1].id, 'group2');
+      expect(result[1].name, 'メンバーグループ');
     });
 
     test('例外が発生した場合、空のリストを返す', () async {
@@ -218,8 +218,8 @@ void main() {
       );
 
       expect(result, hasLength(1));
-      expect(result[0].groupId, 'group1');
-      expect(result[0].groupName, '管理者グループ');
+      expect(result[0].id, 'group1');
+      expect(result[0].name, '管理者グループ');
       expect(result[0].members, hasLength(1));
       expect(result[0].members[0].displayName, 'テストメンバー');
     });
@@ -341,10 +341,10 @@ void main() {
 
       expect(result, hasLength(2));
       // メモリ内ソートでAグループ、Bグループの順になることを確認
-      expect(result[0].groupId, 'group1');
-      expect(result[0].groupName, 'Aグループ');
-      expect(result[1].groupId, 'group2');
-      expect(result[1].groupName, 'Bグループ');
+      expect(result[0].id, 'group1');
+      expect(result[0].name, 'Aグループ');
+      expect(result[1].id, 'group2');
+      expect(result[1].name, 'Bグループ');
 
       // メンバーがdisplayNameの昇順でソートされていることを確認
       expect(result[0].members[0].displayName, 'Aメンバー');
@@ -411,8 +411,8 @@ void main() {
       );
 
       expect(result, hasLength(1));
-      expect(result[0].groupId, 'group1');
-      expect(result[0].groupName, '管理者グループ');
+      expect(result[0].id, 'group1');
+      expect(result[0].name, '管理者グループ');
       expect(result[0].members, hasLength(1));
       expect(result[0].members[0].displayName, 'テストメンバー');
 

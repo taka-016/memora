@@ -66,14 +66,10 @@ void main() {
         email: 'sato@example.com',
       );
       final groupsWithMembers = [
+        GroupWithMembersDto(id: '1', name: 'グループ1', members: [member1]),
         GroupWithMembersDto(
-          groupId: '1',
-          groupName: 'グループ1',
-          members: [member1],
-        ),
-        GroupWithMembersDto(
-          groupId: '2',
-          groupName: 'グループ2',
+          id: '2',
+          name: 'グループ2',
           members: [member1, member2],
         ),
       ];
@@ -154,11 +150,7 @@ void main() {
 
       // 正常なデータを返すように変更
       final groupsWithMembers = [
-        GroupWithMembersDto(
-          groupId: '1',
-          groupName: 'テストグループ',
-          members: [testMemberDto],
-        ),
+        GroupWithMembersDto(id: '1', name: 'テストグループ', members: [testMemberDto]),
       ];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -189,11 +181,7 @@ void main() {
       // Arrange
       GroupWithMembersDto? selectedGroup;
       final groupsWithMembers = [
-        GroupWithMembersDto(
-          groupId: '1',
-          groupName: 'テストグループ',
-          members: [testMemberDto],
-        ),
+        GroupWithMembersDto(id: '1', name: 'テストグループ', members: [testMemberDto]),
       ];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -229,8 +217,8 @@ void main() {
 
       // Assert
       expect(selectedGroup, isNotNull);
-      expect(selectedGroup!.groupId, '1');
-      expect(selectedGroup!.groupName, 'テストグループ');
+      expect(selectedGroup!.id, '1');
+      expect(selectedGroup!.name, 'テストグループ');
     });
   });
 }

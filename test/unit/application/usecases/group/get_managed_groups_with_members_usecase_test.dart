@@ -44,16 +44,8 @@ void main() {
       );
 
       final expectedResult = [
-        GroupWithMembersDto(
-          groupId: '1',
-          groupName: 'Group 1',
-          members: [member1],
-        ),
-        GroupWithMembersDto(
-          groupId: '2',
-          groupName: 'Group 2',
-          members: [member2],
-        ),
+        GroupWithMembersDto(id: '1', name: 'Group 1', members: [member1]),
+        GroupWithMembersDto(id: '2', name: 'Group 2', members: [member2]),
       ];
 
       when(
@@ -69,9 +61,9 @@ void main() {
 
       // assert
       expect(result.length, equals(2));
-      expect(result[0].groupId, equals('1'));
+      expect(result[0].id, equals('1'));
       expect(result[0].members, equals([member1]));
-      expect(result[1].groupId, equals('2'));
+      expect(result[1].id, equals('2'));
       expect(result[1].members, equals([member2]));
       verify(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(

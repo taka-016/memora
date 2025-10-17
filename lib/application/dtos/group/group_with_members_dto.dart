@@ -1,13 +1,15 @@
 import 'package:memora/application/dtos/member/member_dto.dart';
 
 class GroupWithMembersDto {
-  final String groupId;
-  final String groupName;
+  final String id;
+  final String name;
+  final String? nemo;
   final List<MemberDto> members;
 
   GroupWithMembersDto({
-    required this.groupId,
-    required this.groupName,
+    required this.id,
+    required this.name,
+    this.nemo,
     required this.members,
   });
 }

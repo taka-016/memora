@@ -145,9 +145,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      final group = await _getGroupByIdUsecase.execute(
-        groupWithMembers.groupId,
-      );
+      final group = await _getGroupByIdUsecase.execute(groupWithMembers.id);
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
@@ -203,7 +201,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     await DeleteConfirmDialog.show(
       context,
       title: 'グループ削除',
-      content: '${groupWithMembers.groupName}を削除しますか？',
+      content: '${groupWithMembers.name}を削除しますか？',
       onConfirm: () => _deleteGroup(groupWithMembers),
     );
   }
@@ -212,7 +210,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      await _deleteGroupUsecase.execute(groupWithMembers.groupId);
+      await _deleteGroupUsecase.execute(groupWithMembers.id);
       if (mounted) {
         await _loadData();
         scaffoldMessenger.showSnackBar(
@@ -328,9 +326,9 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
         leading: CircleAvatar(
-          child: Text(groupWithMembers.groupName.substring(0, 1)),
+          child: Text(groupWithMembers.name.substring(0, 1)),
         ),
-        title: Text(groupWithMembers.groupName),
+        title: Text(groupWithMembers.name),
         trailing: _buildDeleteButton(groupWithMembers),
         onTap: () => _showEditGroupDialog(groupWithMembers),
       ),

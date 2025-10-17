@@ -63,13 +63,13 @@ void main() {
       passportExpiration: null,
     );
     groupWithMembers1 = GroupWithMembersDto(
-      groupId: 'group-1',
-      groupName: 'Test Group 1',
+      id: 'group-1',
+      name: 'Test Group 1',
       members: [],
     );
     groupWithMembers2 = GroupWithMembersDto(
-      groupId: 'group-2',
-      groupName: 'Test Group 2',
+      id: 'group-2',
+      name: 'Test Group 2',
       members: [],
     );
     group1 = Group(
