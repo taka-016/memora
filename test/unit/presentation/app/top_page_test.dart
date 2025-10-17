@@ -83,8 +83,8 @@ void main() {
 
     groupsWithMembers = [
       GroupWithMembersDto(
-        groupId: '1',
-        groupName: 'グループ1',
+        id: '1',
+        name: 'グループ1',
         members: [
           MemberDto(
             id: 'member1',

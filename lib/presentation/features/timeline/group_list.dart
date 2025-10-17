@@ -129,7 +129,7 @@ class _GroupListState extends ConsumerState<GroupList> {
   Widget _buildGroupListItem(int index) {
     final groupWithMembers = _groupsWithMembers[index];
     return ListTile(
-      title: Text(groupWithMembers.groupName),
+      title: Text(groupWithMembers.name),
       subtitle: Text('${groupWithMembers.members.length}人のメンバー'),
       trailing: const Icon(Icons.arrow_forward_ios),
       onTap: () => widget.onGroupSelected?.call(groupWithMembers),

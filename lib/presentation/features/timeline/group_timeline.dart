@@ -111,7 +111,7 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
 
     try {
       final trips = await _getTripEntriesUsecase.execute(
-        widget.groupWithMembers.groupId,
+        widget.groupWithMembers.id,
         year,
       );
       if (mounted) {
@@ -192,7 +192,7 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
   Widget _buildGroupTitle() {
     return Center(
       child: Text(
-        widget.groupWithMembers.groupName,
+        widget.groupWithMembers.name,
         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
       ),
     );
@@ -565,7 +565,7 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
 
     if (widget.onTripManagementSelected != null) {
       widget.onTripManagementSelected!(
-        widget.groupWithMembers.groupId,
+        widget.groupWithMembers.id,
         selectedYear,
       );
     }

@@ -82,8 +82,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
     return snapshot.docs.map((doc) {
       final data = doc.data();
       return GroupWithMembersDto(
-        groupId: doc.id,
-        groupName: data['name'] as String,
+        id: doc.id,
+        name: data['name'] as String,
         members: [],
       );
     }).toList();
@@ -110,8 +110,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
         final groupData = groupSnapshot.data()!;
         groups.add(
           GroupWithMembersDto(
-            groupId: groupId,
-            groupName: groupData['name'] as String,
+            id: groupId,
+            name: groupData['name'] as String,
             members: [],
           ),
         );
@@ -129,15 +129,15 @@ class FirestoreGroupQueryService implements GroupQueryService {
     final List<GroupWithMembersDto> uniqueGroups = [];
 
     for (final group in adminGroups) {
-      if (!groupIds.contains(group.groupId)) {
-        groupIds.add(group.groupId);
+      if (!groupIds.contains(group.id)) {
+        groupIds.add(group.id);
         uniqueGroups.add(group);
       }
     }
 
     for (final group in memberGroups) {
-      if (!groupIds.contains(group.groupId)) {
-        groupIds.add(group.groupId);
+      if (!groupIds.contains(group.id)) {
+        groupIds.add(group.id);
         uniqueGroups.add(group);
       }
     }
@@ -158,7 +158,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
       for (final order in orderBy) {
         int comparison = 0;
         if (order.field == 'name') {
-          comparison = a.groupName.compareTo(b.groupName);
+          comparison = a.name.compareTo(b.name);
         }
         if (comparison != 0) {
           return order.descending ? -comparison : comparison;
@@ -178,15 +178,11 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
     for (final group in groups) {
       final members = await _getMembersForGroup(
-        group.groupId,
+        group.id,
         orderBy: membersOrderBy,
       );
       result.add(
-        GroupWithMembersDto(
-          groupId: group.groupId,
-          groupName: group.groupName,
-          members: members,
-        ),
+        GroupWithMembersDto(id: group.id, name: group.name, members: members),
       );
     }
 

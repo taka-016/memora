@@ -50,16 +50,8 @@ void main() {
       );
 
       final expectedResults = [
-        GroupWithMembersDto(
-          groupId: '1',
-          groupName: 'グループ1',
-          members: [member1],
-        ),
-        GroupWithMembersDto(
-          groupId: '2',
-          groupName: 'グループ2',
-          members: [member2],
-        ),
+        GroupWithMembersDto(id: '1', name: 'グループ1', members: [member1]),
+        GroupWithMembersDto(id: '2', name: 'グループ2', members: [member2]),
       ];
 
       when(

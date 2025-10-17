@@ -19,8 +19,8 @@ void main() {
 
   setUp(() {
     testGroupWithMembers = GroupWithMembersDto(
-      groupId: '1',
-      groupName: 'テストグループ',
+      id: '1',
+      name: 'テストグループ',
       members: [
         MemberDto(
           id: 'member1',
@@ -425,7 +425,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - onTripManagementSelectedが呼ばれる
-      expect(selectedGroupId, equals(testGroupWithMembers.groupId));
+      expect(selectedGroupId, equals(testGroupWithMembers.id));
       expect(selectedYear, isNotNull);
     });
 
