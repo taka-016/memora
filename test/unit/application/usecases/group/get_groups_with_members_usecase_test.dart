@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import '../../../../helpers/test_exception.dart';
@@ -37,14 +37,16 @@ void main() {
         gender: 'male',
       );
 
-      final member1 = MemberDto(
-        id: 'member1',
+      final member1 = GroupMemberDto(
+        memberId: 'member1',
+        groupId: 'group1',
         displayName: '表示名',
         email: 'hanako@example.com',
       );
 
-      final member2 = MemberDto(
-        id: 'member2',
+      final member2 = GroupMemberDto(
+        memberId: 'member2',
+        groupId: 'group2',
         displayName: '表示名',
         email: 'jiro@example.com',
       );

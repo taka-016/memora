@@ -30,6 +30,9 @@
   - [x] GetManagedGroupsWithMembersUsecaseでgroupsのnameの昇順とmembersのdisplayNameの昇順で取得する処理を追加する
 - [x] getGroups、getGroupsByOwnerIdは使用していないため廃止する
 - [x] getGroupByIdのorderByはgroup_memberではソートキーとなる要素がないため廃止する
+- [x] FirestoreGroupQueryServiceにgetGroupWithMembersByIdを追加する
+  - [x] グループIDでgroupsを取得し、その子エンティティであるgroup_membersを紐づけmember_idでmembersも紐づけて取得する
+  - [x] 取得結果はGroupWithMembersDtoに格納する
 
 ## マップの表示
 
