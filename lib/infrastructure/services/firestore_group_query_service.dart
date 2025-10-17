@@ -85,8 +85,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
       );
 
       return GroupWithMembersDto(
-        groupId: groupId,
-        groupName: groupData['name'] as String,
+        id: groupId,
+        name: groupData['name'] as String,
         members: members,
       );
     } catch (e, stack) {

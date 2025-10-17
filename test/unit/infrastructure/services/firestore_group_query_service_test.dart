@@ -471,8 +471,8 @@ void main() {
       final result = await service.getGroupWithMembersById(groupId);
 
       expect(result, isNotNull);
-      expect(result!.groupId, groupId);
-      expect(result.groupName, 'テストグループ');
+      expect(result!.id, groupId);
+      expect(result.name, 'テストグループ');
       expect(result.members, hasLength(1));
       expect(result.members[0].displayName, 'テストメンバー');
     });
