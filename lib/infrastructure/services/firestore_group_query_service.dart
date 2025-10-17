@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/member_mapper.dart';
+import 'package:memora/application/mappers/group_member_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 
@@ -225,7 +225,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
     return result;
   }
 
-  Future<List<MemberDto>> _getMembersForGroup(
+  Future<List<GroupMemberDto>> _getMembersForGroup(
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
@@ -234,7 +234,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         .where('groupId', isEqualTo: groupId)
         .get();
 
-    final List<MemberDto> members = [];
+    final List<GroupMemberDto> members = [];
 
     for (final doc in groupMembersSnapshot.docs) {
       final memberId = doc.data()['memberId'] as String;
@@ -244,22 +244,22 @@ class FirestoreGroupQueryService implements GroupQueryService {
           .get();
 
       if (memberSnapshot.exists) {
-        members.add(MemberMapper.fromFirestore(memberSnapshot));
+        members.add(GroupMemberMapper.fromFirestore(doc, memberSnapshot));
       }
     }
 
     return _sortMembers(members, orderBy);
   }
 
-  List<MemberDto> _sortMembers(
-    List<MemberDto> members,
+  List<GroupMemberDto> _sortMembers(
+    List<GroupMemberDto> members,
     List<OrderBy>? orderBy,
   ) {
     if (orderBy == null || orderBy.isEmpty) {
       return members;
     }
 
-    final sortedMembers = List<MemberDto>.from(members);
+    final sortedMembers = List<GroupMemberDto>.from(members);
     sortedMembers.sort((a, b) {
       for (final order in orderBy) {
         int comparison = 0;

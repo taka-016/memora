@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
@@ -22,8 +22,9 @@ void main() {
       id: '1',
       name: 'テストグループ',
       members: [
-        MemberDto(
-          id: 'member1',
+        GroupMemberDto(
+          memberId: 'member1',
+          groupId: 'group1',
           displayName: 'タロちゃん',
           email: 'taro@example.com',
         ),

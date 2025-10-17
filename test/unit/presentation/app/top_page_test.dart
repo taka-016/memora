@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
@@ -15,7 +16,6 @@ import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -86,13 +86,15 @@ void main() {
         id: '1',
         name: 'グループ1',
         members: [
-          MemberDto(
-            id: 'member1',
+          GroupMemberDto(
+            memberId: 'member1',
+            groupId: 'group1',
             displayName: '太郎',
             email: 'taro@example.com',
           ),
-          MemberDto(
-            id: 'member2',
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group2',
             displayName: '花子',
             email: 'hanako@example.com',
           ),

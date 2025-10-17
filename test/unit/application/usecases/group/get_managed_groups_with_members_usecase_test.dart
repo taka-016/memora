@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
@@ -31,14 +31,16 @@ void main() {
         ownerId: '',
       );
 
-      final member1 = MemberDto(
-        id: 'member1',
+      final member1 = GroupMemberDto(
+        memberId: 'member1',
+        groupId: 'group1',
         displayName: 'Member 1',
         email: 'member1@example.com',
       );
 
-      final member2 = MemberDto(
-        id: 'member2',
+      final member2 = GroupMemberDto(
+        memberId: 'member2',
+        groupId: 'group2',
         displayName: 'Member 2',
         email: 'member2@example.com',
       );

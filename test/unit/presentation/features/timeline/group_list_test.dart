@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
@@ -17,7 +17,7 @@ import 'group_list_test.mocks.dart';
 void main() {
   late MockGroupQueryService mockGroupQueryService;
   late Member testMember;
-  late MemberDto testMemberDto;
+  late GroupMemberDto testMemberDto;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
@@ -34,8 +34,9 @@ void main() {
       birthday: DateTime(1990, 1, 1),
       gender: 'male',
     );
-    testMemberDto = MemberDto(
-      id: 'admin1',
+    testMemberDto = GroupMemberDto(
+      memberId: 'admin1',
+      groupId: 'group1',
       displayName: 'タロちゃん',
       email: 'taro@example.com',
     );
@@ -55,13 +56,15 @@ void main() {
   group('GroupList', () {
     testWidgets('グループ一覧が表示される', (WidgetTester tester) async {
       // Arrange
-      final member1 = MemberDto(
-        id: 'member1',
+      final member1 = GroupMemberDto(
+        memberId: 'member1',
+        groupId: 'group1',
         displayName: '田中',
         email: 'tanaka@example.com',
       );
-      final member2 = MemberDto(
-        id: 'member2',
+      final member2 = GroupMemberDto(
+        memberId: 'member2',
+        groupId: 'group2',
         displayName: '佐藤',
         email: 'sato@example.com',
       );
