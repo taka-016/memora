@@ -63,6 +63,42 @@ class FirestoreGroupQueryService implements GroupQueryService {
     }
   }
 
+  @override
+  Future<GroupWithMembersDto?> getGroupWithMembersById(
+    String groupId, {
+    List<OrderBy>? membersOrderBy,
+  }) async {
+    try {
+      final groupSnapshot = await _firestore
+          .collection('groups')
+          .doc(groupId)
+          .get();
+
+      if (!groupSnapshot.exists) {
+        return null;
+      }
+
+      final groupData = groupSnapshot.data()!;
+      final members = await _getMembersForGroup(
+        groupId,
+        orderBy: membersOrderBy,
+      );
+
+      return GroupWithMembersDto(
+        groupId: groupId,
+        groupName: groupData['name'] as String,
+        members: members,
+      );
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreGroupQueryService.getGroupWithMembersById: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      return null;
+    }
+  }
+
   Future<List<GroupWithMembersDto>> _getGroupsWhereUserIsOwner(
     String memberId, {
     List<OrderBy>? orderBy,

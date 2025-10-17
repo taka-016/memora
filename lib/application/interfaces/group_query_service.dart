@@ -13,4 +13,9 @@ abstract class GroupQueryService {
     List<OrderBy>? groupsOrderBy,
     List<OrderBy>? membersOrderBy,
   });
+
+  Future<GroupWithMembersDto?> getGroupWithMembersById(
+    String groupId, {
+    List<OrderBy>? membersOrderBy,
+  });
 }
