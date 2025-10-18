@@ -16,7 +16,9 @@ void main() {
     test('FirestoreのDocumentSnapshotからGroupWithMembersDtoへ変換できる', () {
       final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group001');
-      when(mockDoc.data()).thenReturn({'name': 'テストグループ', 'memo': 'テストメモ'});
+      when(
+        mockDoc.data(),
+      ).thenReturn({'ownerId': 'owner001', 'name': 'テストグループ', 'memo': 'テストメモ'});
 
       final members = [
         GroupMemberDto(
@@ -39,6 +41,7 @@ void main() {
       );
 
       expect(dto.id, 'group001');
+      expect(dto.ownerId, 'owner001');
       expect(dto.name, 'テストグループ');
       expect(dto.memo, 'テストメモ');
       expect(dto.members, members);
@@ -47,11 +50,14 @@ void main() {
     test('membersを指定しない場合は空リストになる', () {
       final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group002');
-      when(mockDoc.data()).thenReturn({'name': 'メンバーなしグループ'});
+      when(
+        mockDoc.data(),
+      ).thenReturn({'ownerId': 'owner002', 'name': 'メンバーなしグループ'});
 
       final dto = GroupWithMembersMapper.fromFirestore(mockDoc);
 
       expect(dto.id, 'group002');
+      expect(dto.ownerId, 'owner002');
       expect(dto.name, 'メンバーなしグループ');
       expect(dto.members, isEmpty);
     });
@@ -64,6 +70,7 @@ void main() {
       final dto = GroupWithMembersMapper.fromFirestore(mockDoc);
 
       expect(dto.id, 'group003');
+      expect(dto.ownerId, '');
       expect(dto.name, '');
       expect(dto.memo, 'メモのみのグループ');
     });
@@ -86,6 +93,7 @@ void main() {
 
       final dto = GroupWithMembersDto(
         id: 'group001',
+        ownerId: 'owner001',
         name: 'テストグループ',
         memo: 'テストメモ',
         members: members,
@@ -97,7 +105,7 @@ void main() {
         entity,
         Group(
           id: 'group001',
-          ownerId: '',
+          ownerId: 'owner001',
           name: 'テストグループ',
           memo: 'テストメモ',
           members: const [
@@ -120,6 +128,7 @@ void main() {
       final dtoList = [
         GroupWithMembersDto(
           id: 'group001',
+          ownerId: 'owner001',
           name: 'グループ1',
           memo: 'メモ1',
           members: const [
@@ -132,6 +141,7 @@ void main() {
         ),
         GroupWithMembersDto(
           id: 'group002',
+          ownerId: 'owner002',
           name: 'グループ2',
           memo: 'メモ2',
           members: const [
@@ -150,7 +160,7 @@ void main() {
       expect(entities, [
         Group(
           id: 'group001',
-          ownerId: '',
+          ownerId: 'owner001',
           name: 'グループ1',
           memo: 'メモ1',
           members: const [
@@ -163,7 +173,7 @@ void main() {
         ),
         Group(
           id: 'group002',
-          ownerId: '',
+          ownerId: 'owner002',
           name: 'グループ2',
           memo: 'メモ2',
           members: const [

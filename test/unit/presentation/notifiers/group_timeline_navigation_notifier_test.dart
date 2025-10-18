@@ -13,6 +13,7 @@ void main() {
       container = ProviderContainer();
       testGroupWithMembers = GroupWithMembersDto(
         id: '1',
+        ownerId: 'owner1',
         name: 'テストグループ',
         members: [
           GroupMemberDto(

@@ -69,9 +69,15 @@ void main() {
         email: 'sato@example.com',
       );
       final groupsWithMembers = [
-        GroupWithMembersDto(id: '1', name: 'グループ1', members: [member1]),
+        GroupWithMembersDto(
+          id: '1',
+          ownerId: 'owner1',
+          name: 'グループ1',
+          members: [member1],
+        ),
         GroupWithMembersDto(
           id: '2',
+          ownerId: 'owner2',
           name: 'グループ2',
           members: [member1, member2],
         ),
@@ -153,7 +159,12 @@ void main() {
 
       // 正常なデータを返すように変更
       final groupsWithMembers = [
-        GroupWithMembersDto(id: '1', name: 'テストグループ', members: [testMemberDto]),
+        GroupWithMembersDto(
+          id: '1',
+          ownerId: 'owner1',
+          name: 'テストグループ',
+          members: [testMemberDto],
+        ),
       ];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -184,7 +195,12 @@ void main() {
       // Arrange
       GroupWithMembersDto? selectedGroup;
       final groupsWithMembers = [
-        GroupWithMembersDto(id: '1', name: 'テストグループ', members: [testMemberDto]),
+        GroupWithMembersDto(
+          id: '1',
+          ownerId: 'owner1',
+          name: 'テストグループ',
+          members: [testMemberDto],
+        ),
       ];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(

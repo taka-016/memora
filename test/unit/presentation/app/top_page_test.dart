@@ -84,6 +84,7 @@ void main() {
     groupsWithMembers = [
       GroupWithMembersDto(
         id: '1',
+        ownerId: 'owner1',
         name: 'グループ1',
         members: [
           GroupMemberDto(

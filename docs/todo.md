@@ -9,6 +9,7 @@
 
 - [x] GroupWithMembersDtoのマッパーを作成する
 - [x] GroupWithMembersMapperにtoEntityとtoEntityListを追加する
+- [x] GroupWithMembersDtoにownerIdを追加する
 - [x] GroupRepositoryにgetGroupsWithMembersByMemberIdメソッドを追加する
 - [x] GetGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する
 - [x] GetManagedGroupsWithMembersUsecaseをリファクタリングしてリポジトリの単一メソッドを使用する

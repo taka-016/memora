@@ -12,6 +12,7 @@ class GroupWithMembersMapper {
     final groupData = groupDoc.data();
     return GroupWithMembersDto(
       id: groupDoc.id,
+      ownerId: groupData?['ownerId'] as String? ?? '',
       name: groupData?['name'] as String? ?? '',
       memo: groupData?['memo'] as String?,
       members: members,
@@ -21,7 +22,7 @@ class GroupWithMembersMapper {
   static Group toEntity(GroupWithMembersDto dto) {
     return Group(
       id: dto.id,
-      ownerId: '',
+      ownerId: dto.ownerId,
       name: dto.name,
       memo: dto.memo,
       members: GroupMemberMapper.toEntityList(dto.members),

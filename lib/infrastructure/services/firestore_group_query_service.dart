@@ -86,6 +86,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
       return GroupWithMembersDto(
         id: groupId,
+        ownerId: groupData['ownerId'] as String? ?? '',
         name: groupData['name'] as String,
         members: members,
       );
@@ -119,6 +120,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
       final data = doc.data();
       return GroupWithMembersDto(
         id: doc.id,
+        ownerId: data['ownerId'] as String? ?? '',
         name: data['name'] as String,
         members: [],
       );
@@ -147,6 +149,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         groups.add(
           GroupWithMembersDto(
             id: groupId,
+            ownerId: groupData['ownerId'] as String? ?? '',
             name: groupData['name'] as String,
             members: [],
           ),
@@ -218,7 +221,13 @@ class FirestoreGroupQueryService implements GroupQueryService {
         orderBy: membersOrderBy,
       );
       result.add(
-        GroupWithMembersDto(id: group.id, name: group.name, members: members),
+        GroupWithMembersDto(
+          id: group.id,
+          ownerId: group.ownerId,
+          name: group.name,
+          memo: group.memo,
+          members: members,
+        ),
       );
     }
 

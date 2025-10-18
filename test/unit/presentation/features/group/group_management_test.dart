@@ -64,11 +64,13 @@ void main() {
     );
     groupWithMembers1 = GroupWithMembersDto(
       id: 'group-1',
+      ownerId: testMember.id,
       name: 'Test Group 1',
       members: [],
     );
     groupWithMembers2 = GroupWithMembersDto(
       id: 'group-2',
+      ownerId: testMember.id,
       name: 'Test Group 2',
       members: [],
     );
