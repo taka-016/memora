@@ -56,4 +56,6 @@ repomix-output.xml
 .firebaserc
 .serena
 .mcp.json
+mcp.json
+.github/prompts
 *.bk
