@@ -1,20 +1,20 @@
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 
 abstract class GroupQueryService {
-  Future<List<GroupWithMembersDto>> getGroupsWithMembersByMemberId(
+  Future<List<GroupDto>> getGroupsWithMembersByMemberId(
     String memberId, {
     List<OrderBy>? groupsOrderBy,
     List<OrderBy>? membersOrderBy,
   });
 
-  Future<List<GroupWithMembersDto>> getManagedGroupsWithMembersByOwnerId(
+  Future<List<GroupDto>> getManagedGroupsWithMembersByOwnerId(
     String ownerId, {
     List<OrderBy>? groupsOrderBy,
     List<OrderBy>? membersOrderBy,
   });
 
-  Future<GroupWithMembersDto?> getGroupWithMembersById(
+  Future<GroupDto?> getGroupWithMembersById(
     String groupId, {
     List<OrderBy>? membersOrderBy,
   });

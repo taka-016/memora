@@ -15,7 +15,7 @@ import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -54,7 +54,7 @@ void main() {
   late MockMemberRepository mockMemberRepository;
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
-  late List<GroupWithMembersDto> groupsWithMembers;
+  late List<GroupDto> groupsWithMembers;
   late Member testMember;
 
   setUp(() {
@@ -82,7 +82,7 @@ void main() {
     );
 
     groupsWithMembers = [
-      GroupWithMembersDto(
+      GroupDto(
         id: '1',
         ownerId: 'owner1',
         name: 'グループ1',

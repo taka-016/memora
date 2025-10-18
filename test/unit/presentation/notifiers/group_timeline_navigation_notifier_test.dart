@@ -2,16 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {
   group('GroupTimelineNavigationNotifier', () {
     late ProviderContainer container;
-    late GroupWithMembersDto testGroupWithMembers;
+    late GroupDto testGroupWithMembers;
 
     setUp(() {
       container = ProviderContainer();
-      testGroupWithMembers = GroupWithMembersDto(
+      testGroupWithMembers = GroupDto(
         id: '1',
         ownerId: 'owner1',
         name: 'テストグループ',

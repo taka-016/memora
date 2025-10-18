@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
@@ -14,11 +14,11 @@ import 'group_timeline_test.mocks.dart';
 
 @GenerateMocks([TripEntryRepository])
 void main() {
-  late GroupWithMembersDto testGroupWithMembers;
+  late GroupDto testGroupWithMembers;
   late MockTripEntryRepository mockTripEntryRepository;
 
   setUp(() {
-    testGroupWithMembers = GroupWithMembersDto(
+    testGroupWithMembers = GroupDto(
       id: '1',
       ownerId: 'owner1',
       name: 'テストグループ',

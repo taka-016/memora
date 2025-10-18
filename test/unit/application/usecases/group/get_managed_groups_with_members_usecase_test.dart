@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
@@ -46,13 +46,13 @@ void main() {
       );
 
       final expectedResult = [
-        GroupWithMembersDto(
+        GroupDto(
           id: '1',
           ownerId: ownerId,
           name: 'Group 1',
           members: [member1],
         ),
-        GroupWithMembersDto(
+        GroupDto(
           id: '2',
           ownerId: ownerId,
           name: 'Group 2',
@@ -130,7 +130,7 @@ void main() {
         ownerId: '',
       );
 
-      final expectedResults = <GroupWithMembersDto>[];
+      final expectedResults = <GroupDto>[];
 
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(

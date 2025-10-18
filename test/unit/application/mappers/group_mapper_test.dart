@@ -1,18 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
-import 'package:memora/application/mappers/group_with_members_mapper.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/group_member.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'group_with_members_mapper_test.mocks.dart';
+import 'group_mapper_test.mocks.dart';
 
 @GenerateMocks([DocumentSnapshot])
 void main() {
-  group('GroupWithMembersMapper', () {
+  group('GroupMapper', () {
     test('FirestoreのDocumentSnapshotからGroupWithMembersDtoへ変換できる', () {
       final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(mockDoc.id).thenReturn('group001');
@@ -35,10 +35,7 @@ void main() {
         ),
       ];
 
-      final dto = GroupWithMembersMapper.fromFirestore(
-        mockDoc,
-        members: members,
-      );
+      final dto = GroupMapper.fromFirestore(mockDoc, members: members);
 
       expect(dto.id, 'group001');
       expect(dto.ownerId, 'owner001');
@@ -54,7 +51,7 @@ void main() {
         mockDoc.data(),
       ).thenReturn({'ownerId': 'owner002', 'name': 'メンバーなしグループ'});
 
-      final dto = GroupWithMembersMapper.fromFirestore(mockDoc);
+      final dto = GroupMapper.fromFirestore(mockDoc);
 
       expect(dto.id, 'group002');
       expect(dto.ownerId, 'owner002');
@@ -67,7 +64,7 @@ void main() {
       when(mockDoc.id).thenReturn('group003');
       when(mockDoc.data()).thenReturn({'memo': 'メモのみのグループ'});
 
-      final dto = GroupWithMembersMapper.fromFirestore(mockDoc);
+      final dto = GroupMapper.fromFirestore(mockDoc);
 
       expect(dto.id, 'group003');
       expect(dto.ownerId, '');
@@ -91,7 +88,7 @@ void main() {
         ),
       ];
 
-      final dto = GroupWithMembersDto(
+      final dto = GroupDto(
         id: 'group001',
         ownerId: 'owner001',
         name: 'テストグループ',
@@ -99,7 +96,7 @@ void main() {
         members: members,
       );
 
-      final entity = GroupWithMembersMapper.toEntity(dto);
+      final entity = GroupMapper.toEntity(dto);
 
       expect(
         entity,
@@ -126,7 +123,7 @@ void main() {
 
     test('DTOリストからGroupエンティティのリストへ変換できる', () {
       final dtoList = [
-        GroupWithMembersDto(
+        GroupDto(
           id: 'group001',
           ownerId: 'owner001',
           name: 'グループ1',
@@ -139,7 +136,7 @@ void main() {
             ),
           ],
         ),
-        GroupWithMembersDto(
+        GroupDto(
           id: 'group002',
           ownerId: 'owner002',
           name: 'グループ2',
@@ -155,7 +152,7 @@ void main() {
         ),
       ];
 
-      final entities = GroupWithMembersMapper.toEntityList(dtoList);
+      final entities = GroupMapper.toEntityList(dtoList);
 
       expect(entities, [
         Group(
