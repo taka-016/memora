@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import '../../../../helpers/test_exception.dart';
@@ -52,8 +52,8 @@ void main() {
       );
 
       final expectedResults = [
-        GroupWithMembersDto(id: '1', name: 'グループ1', members: [member1]),
-        GroupWithMembersDto(id: '2', name: 'グループ2', members: [member2]),
+        GroupDto(id: '1', ownerId: 'owner1', name: 'グループ1', members: [member1]),
+        GroupDto(id: '2', ownerId: 'owner2', name: 'グループ2', members: [member2]),
       ];
 
       when(
@@ -161,7 +161,7 @@ void main() {
         gender: 'male',
       );
 
-      final expectedResults = <GroupWithMembersDto>[];
+      final expectedResults = <GroupDto>[];
 
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(

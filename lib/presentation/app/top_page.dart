@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 
@@ -84,7 +84,7 @@ class _TopPageState extends ConsumerState<TopPage> {
     Navigator.of(context).pop();
   }
 
-  void _onGroupSelected(GroupWithMembersDto groupWithMembers) {
+  void _onGroupSelected(GroupDto groupWithMembers) {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
         .showGroupTimeline(groupWithMembers);

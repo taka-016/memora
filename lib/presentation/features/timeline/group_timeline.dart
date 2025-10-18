@@ -3,7 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
@@ -17,7 +17,7 @@ class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
 }
 
 class GroupTimeline extends ConsumerStatefulWidget {
-  final GroupWithMembersDto groupWithMembers;
+  final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
   final Function(VoidCallback)? onSetRefreshCallback;

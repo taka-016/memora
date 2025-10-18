@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -33,8 +33,8 @@ void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late Group group1;
   late Member testMember;
-  late GroupWithMembersDto groupWithMembers1;
-  late GroupWithMembersDto groupWithMembers2;
+  late GroupDto groupWithMembers1;
+  late GroupDto groupWithMembers2;
   late List<Override> providerOverrides;
 
   setUp(() {
@@ -62,13 +62,15 @@ void main() {
       passportNumber: null,
       passportExpiration: null,
     );
-    groupWithMembers1 = GroupWithMembersDto(
+    groupWithMembers1 = GroupDto(
       id: 'group-1',
+      ownerId: testMember.id,
       name: 'Test Group 1',
       members: [],
     );
-    groupWithMembers2 = GroupWithMembersDto(
+    groupWithMembers2 = GroupDto(
       id: 'group-2',
+      ownerId: testMember.id,
       name: 'Test Group 2',
       members: [],
     );

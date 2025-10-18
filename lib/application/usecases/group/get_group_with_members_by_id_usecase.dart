@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
@@ -14,7 +14,7 @@ class GetGroupWithMembersByIdUsecase {
 
   GetGroupWithMembersByIdUsecase(this._groupQueryServiceProvider);
 
-  Future<GroupWithMembersDto?> execute(String id) async {
+  Future<GroupDto?> execute(String id) async {
     return await _groupQueryServiceProvider.getGroupWithMembersById(id);
   }
 }

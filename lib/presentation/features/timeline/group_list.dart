@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
 class GroupList extends ConsumerStatefulWidget {
   final Member member;
-  final void Function(GroupWithMembersDto)? onGroupSelected;
+  final void Function(GroupDto)? onGroupSelected;
 
   const GroupList({super.key, required this.member, this.onGroupSelected});
 
@@ -20,7 +20,7 @@ class GroupList extends ConsumerStatefulWidget {
 class _GroupListState extends ConsumerState<GroupList> {
   late final GetGroupsWithMembersUsecase _getGroupsWithMembersUsecase;
   GroupListState _state = GroupListState.loading;
-  List<GroupWithMembersDto> _groupsWithMembers = [];
+  List<GroupDto> _groupsWithMembers = [];
   String _errorMessage = '';
 
   @override

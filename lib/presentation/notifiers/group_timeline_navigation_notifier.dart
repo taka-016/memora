@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 enum GroupTimelineScreenState { groupList, timeline, tripManagement }
@@ -71,7 +71,7 @@ class GroupTimelineNavigationNotifier
     );
   }
 
-  void showGroupTimeline(GroupWithMembersDto groupWithMembers) {
+  void showGroupTimeline(GroupDto groupWithMembers) {
     final groupTimeline = GroupTimeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,

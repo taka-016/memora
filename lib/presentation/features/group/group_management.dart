@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
-import 'package:memora/application/dtos/group/group_with_members_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/domain/entities/group.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
@@ -31,7 +31,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
   late final UpdateGroupUsecase _updateGroupUsecase;
   late final GetManagedMembersUsecase _getManagedMembersUsecase;
 
-  List<GroupWithMembersDto> _managedGroupsWithMembers = [];
+  List<GroupDto> _managedGroupsWithMembers = [];
   bool _isLoading = true;
 
   @override
@@ -139,9 +139,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     }
   }
 
-  Future<void> _showEditGroupDialog(
-    GroupWithMembersDto groupWithMembers,
-  ) async {
+  Future<void> _showEditGroupDialog(GroupDto groupWithMembers) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
@@ -195,9 +193,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     }
   }
 
-  Future<void> _showDeleteConfirmDialog(
-    GroupWithMembersDto groupWithMembers,
-  ) async {
+  Future<void> _showDeleteConfirmDialog(GroupDto groupWithMembers) async {
     await DeleteConfirmDialog.show(
       context,
       title: 'グループ削除',
@@ -206,7 +202,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     );
   }
 
-  Future<void> _deleteGroup(GroupWithMembersDto groupWithMembers) async {
+  Future<void> _deleteGroup(GroupDto groupWithMembers) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
@@ -335,7 +331,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     );
   }
 
-  Widget _buildDeleteButton(GroupWithMembersDto groupWithMembers) {
+  Widget _buildDeleteButton(GroupDto groupWithMembers) {
     return IconButton(
       icon: const Icon(Icons.delete, color: Colors.red),
       onPressed: () => _showDeleteConfirmDialog(groupWithMembers),
