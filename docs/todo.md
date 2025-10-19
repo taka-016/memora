@@ -36,6 +36,7 @@
 - [x] FirestoreGroupQueryServiceにgetGroupWithMembersByIdを追加する
   - [x] グループIDでgroupsを取得し、その子エンティティであるgroup_membersを紐づけmember_idでmembersも紐づけて取得する
   - [x] 取得結果はGroupWithMembersDtoに格納する
+- [x] GroupDtoをEquatable化して、copyWithも追加する
 
 ## マップの表示
 
@@ -231,6 +232,10 @@
 - [x] グループ編集モーダルでメンバー選択後にフォーカスを外す
 - [x] グループ編集モーダルのメンバー一覧表示を操作メニュー付きで改善する
 - [x] メンバー一覧で管理者を設定可能にする
+- [ ] GroupEditModalのgroupをGroupDtoに変更する
+  - [ ] GroupManagementの_showEditGroupDialogは_getGroupByIdUsecaseを使用せず、GroupEditModalのgroupにgroupWithMembersをそのまま渡す
+  - [ ] GroupMemberではなくGroupMemberDtoを使用する
+  - [ ] onSaveに渡す際にGroupMapperのtoEntityでGroupエンティティを渡す
 
 ## グループ年表画面
 
