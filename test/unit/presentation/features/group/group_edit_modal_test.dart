@@ -1,10 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
+
+GroupDto createGroupDto({
+  String id = '',
+  String ownerId = '',
+  String name = '',
+  String? memo,
+  List<GroupMemberDto> members = const [],
+}) {
+  return GroupDto(
+    id: id,
+    ownerId: ownerId,
+    name: name,
+    memo: memo,
+    members: members,
+  );
+}
+
+GroupMemberDto createGroupMemberDto({
+  required String memberId,
+  required String groupId,
+  String displayName = '',
+  bool isAdministrator = false,
+}) {
+  return GroupMemberDto(
+    memberId: memberId,
+    groupId: groupId,
+    displayName: displayName,
+    isAdministrator: isAdministrator,
+  );
+}
 
 void main() {
   group('GroupEditModal', () {
@@ -12,7 +43,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
           ),
@@ -23,7 +54,7 @@ void main() {
     });
 
     testWidgets('編集時にタイトルが正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
@@ -47,7 +78,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
           ),
@@ -67,7 +98,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
@@ -133,13 +164,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'group1',
               ownerId: 'owner1',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'group1', memberId: 'member1'),
-                GroupMember(groupId: 'group1', memberId: 'member2'),
+              members: [
+                createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
+                createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
               ],
             ),
             onSave: (group) {},
@@ -178,12 +209,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -247,12 +278,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -300,12 +331,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -350,12 +381,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -381,11 +412,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+              ],
             ),
             onSave: (group) {},
             availableMembers: [
@@ -448,7 +481,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
@@ -483,7 +516,12 @@ void main() {
                 onPressed: () => showDialog(
                   context: context,
                   builder: (context) => GroupEditModal(
-                    group: Group(id: '', ownerId: '', name: '', memo: ''),
+                    group: createGroupDto(
+                      id: '',
+                      ownerId: '',
+                      name: '',
+                      memo: '',
+                    ),
                     onSave: (group) {},
                     availableMembers: const [],
                   ),
@@ -538,15 +576,17 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
               members: availableMembers
                   .take(5)
                   .map(
-                    (member) =>
-                        GroupMember(groupId: 'test-id', memberId: member.id),
+                    (member) => createGroupMemberDto(
+                      groupId: 'test-id',
+                      memberId: member.id,
+                    ),
                   )
                   .toList(),
             ),
@@ -564,12 +604,14 @@ void main() {
     });
 
     testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
-        members: const [GroupMember(groupId: 'test-id', memberId: 'member1')],
+        members: [
+          createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+        ],
       );
 
       final availableMembers = [
@@ -631,7 +673,7 @@ void main() {
     });
 
     testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
@@ -703,17 +745,17 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'admin-member',
                   isAdministrator: true,
                 ),
-                GroupMember(
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'normal-member',
                   isAdministrator: false,
@@ -781,17 +823,17 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'admin-member',
                   isAdministrator: true,
                 ),
-                GroupMember(
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'normal-member',
                   isAdministrator: false,
@@ -859,12 +901,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'member1',
                   isAdministrator: false,

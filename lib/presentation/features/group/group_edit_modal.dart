@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 
 class GroupEditModal extends StatefulWidget {
-  final Group group;
+  final GroupDto group;
   final Function(Group) onSave;
   final List<Member> availableMembers;
 
@@ -26,7 +28,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _memoController;
-  late Group _group;
+  late GroupDto _group;
 
   @override
   void initState() {
@@ -180,7 +182,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
   Widget _buildMemberContainer(int index) {
     final groupMember = _group.members[index];
     final member = _findMemberById(groupMember.memberId);
-    final displayName = member?.displayName ?? '不明なメンバー';
+    final displayName = groupMember.displayName.isNotEmpty
+        ? groupMember.displayName
+        : member?.displayName ?? '不明なメンバー';
     final changeCandidates = _getChangeCandidates(index);
 
     return Container(
@@ -207,7 +211,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   Widget _buildMemberActionMenu(
     int index,
-    GroupMember groupMember,
+    GroupMemberDto groupMember,
     List<Member> changeCandidates,
   ) {
     final hasAlternative = changeCandidates
@@ -255,15 +259,13 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 FocusKiller.killFocus();
                 _showMemberSelectionMenu(addableMembers, (selectedMemberId) {
                   setState(() {
-                    final updatedMembers = List<GroupMember>.from(
+                    final selectedMember = _findMemberById(selectedMemberId);
+                    final updatedMembers = List<GroupMemberDto>.from(
                       _group.members,
                     );
-                    updatedMembers.add(
-                      GroupMember(
-                        groupId: _group.id,
-                        memberId: selectedMemberId,
-                      ),
-                    );
+                    if (selectedMember != null) {
+                      updatedMembers.add(_createGroupMemberDto(selectedMember));
+                    }
                     _group = _group.copyWith(members: updatedMembers);
                   });
                 });
@@ -274,7 +276,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _removeMemberAt(int index) {
     setState(() {
-      final updatedMembers = List<GroupMember>.from(_group.members);
+      final updatedMembers = List<GroupMemberDto>.from(_group.members);
       updatedMembers.removeAt(index);
       _group = _group.copyWith(members: updatedMembers);
     });
@@ -300,11 +302,14 @@ class _GroupEditModalState extends State<GroupEditModal> {
         }
         _showMemberSelectionMenu(changeCandidates, (selectedMemberId) {
           setState(() {
-            final updatedMembers = List<GroupMember>.from(_group.members);
-            updatedMembers[index] = GroupMember(
-              groupId: _group.id,
-              memberId: selectedMemberId,
-            );
+            final selectedMember = _findMemberById(selectedMemberId);
+            final updatedMembers = List<GroupMemberDto>.from(_group.members);
+            if (selectedMember != null) {
+              updatedMembers[index] = _createGroupMemberDto(
+                selectedMember,
+                existing: updatedMembers[index],
+              );
+            }
             _group = _group.copyWith(members: updatedMembers);
           });
         });
@@ -317,7 +322,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _toggleAdministrator(int index) {
     setState(() {
-      final updatedMembers = List<GroupMember>.from(_group.members);
+      final updatedMembers = List<GroupMemberDto>.from(_group.members);
       updatedMembers[index] = updatedMembers[index].copyWith(
         isAdministrator: !updatedMembers[index].isAdministrator,
       );
@@ -469,7 +474,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         memo: _memoController.text.isEmpty ? null : _memoController.text,
       );
 
-      widget.onSave(updatedGroup);
+      widget.onSave(GroupMapper.toEntity(updatedGroup));
       Navigator.of(context).pop();
     }
   }
@@ -558,6 +563,37 @@ class _GroupEditModalState extends State<GroupEditModal> {
           ),
         );
       },
+    );
+  }
+
+  GroupMemberDto _createGroupMemberDto(
+    Member member, {
+    GroupMemberDto? existing,
+  }) {
+    final groupId = existing?.groupId.isNotEmpty == true
+        ? existing!.groupId
+        : _group.id;
+
+    return GroupMemberDto(
+      memberId: member.id,
+      groupId: groupId,
+      isAdministrator: existing?.isAdministrator ?? false,
+      accountId: member.accountId,
+      ownerId: member.ownerId,
+      hiraganaFirstName: member.hiraganaFirstName,
+      hiraganaLastName: member.hiraganaLastName,
+      kanjiFirstName: member.kanjiFirstName,
+      kanjiLastName: member.kanjiLastName,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      displayName: member.displayName,
+      type: member.type,
+      birthday: member.birthday,
+      gender: member.gender,
+      email: member.email,
+      phoneNumber: member.phoneNumber,
+      passportNumber: member.passportNumber,
+      passportExpiration: member.passportExpiration,
     );
   }
 }
