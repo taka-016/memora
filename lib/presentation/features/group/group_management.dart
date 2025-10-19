@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
@@ -88,6 +89,10 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
+      final availableMemberDtos = _convertMembersToGroupMemberDtos(
+        availableMembers,
+        group.id,
+      );
 
       if (!mounted) return;
 
@@ -95,7 +100,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
         context: context,
         builder: (context) => GroupEditModal(
           group: group,
-          availableMembers: availableMembers,
+          availableMembers: availableMemberDtos,
           onSave: (group) async {
             try {
               await _createGroupUsecase.execute(group);
@@ -142,13 +147,17 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
       );
+      final availableMemberDtos = _convertMembersToGroupMemberDtos(
+        availableMembers,
+        groupWithMembers.id,
+      );
       if (!mounted) return;
 
       await showDialog(
         context: context,
         builder: (context) => GroupEditModal(
           group: groupWithMembers,
-          availableMembers: availableMembers,
+          availableMembers: availableMemberDtos,
           onSave: (group) async {
             try {
               await _updateGroupUsecase.execute(group);
@@ -195,6 +204,37 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       content: '${groupWithMembers.name}を削除しますか？',
       onConfirm: () => _deleteGroup(groupWithMembers),
     );
+  }
+
+  List<GroupMemberDto> _convertMembersToGroupMemberDtos(
+    List<Member> members,
+    String groupId,
+  ) {
+    return members
+        .map(
+          (member) => GroupMemberDto(
+            memberId: member.id,
+            groupId: groupId,
+            isAdministrator: false,
+            accountId: member.accountId,
+            ownerId: member.ownerId,
+            hiraganaFirstName: member.hiraganaFirstName,
+            hiraganaLastName: member.hiraganaLastName,
+            kanjiFirstName: member.kanjiFirstName,
+            kanjiLastName: member.kanjiLastName,
+            firstName: member.firstName,
+            lastName: member.lastName,
+            displayName: member.displayName,
+            type: member.type,
+            birthday: member.birthday,
+            gender: member.gender,
+            email: member.email,
+            phoneNumber: member.phoneNumber,
+            passportNumber: member.passportNumber,
+            passportExpiration: member.passportExpiration,
+          ),
+        )
+        .toList();
   }
 
   Future<void> _deleteGroup(GroupDto groupWithMembers) async {

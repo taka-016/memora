@@ -3,13 +3,12 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 
 class GroupEditModal extends StatefulWidget {
   final GroupDto group;
   final Function(Group) onSave;
-  final List<Member> availableMembers;
+  final List<GroupMemberDto> availableMembers;
 
   const GroupEditModal({
     super.key,
@@ -212,10 +211,10 @@ class _GroupEditModalState extends State<GroupEditModal> {
   Widget _buildMemberActionMenu(
     int index,
     GroupMemberDto groupMember,
-    List<Member> changeCandidates,
+    List<GroupMemberDto> changeCandidates,
   ) {
     final hasAlternative = changeCandidates
-        .where((candidate) => candidate.id != groupMember.memberId)
+        .where((candidate) => candidate.memberId != groupMember.memberId)
         .isNotEmpty;
 
     return PopupMenuButton<_MemberAction>(
@@ -285,7 +284,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   void _handleMemberAction(
     int index,
     _MemberAction action,
-    List<Member> changeCandidates,
+    List<GroupMemberDto> changeCandidates,
   ) {
     switch (action) {
       case _MemberAction.toggleAdministrator:
@@ -294,7 +293,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       case _MemberAction.changeMember:
         final currentMemberId = _group.members[index].memberId;
         final hasAlternative = changeCandidates
-            .where((candidate) => candidate.id != currentMemberId)
+            .where((candidate) => candidate.memberId != currentMemberId)
             .isNotEmpty;
 
         if (!hasAlternative) {
@@ -356,23 +355,23 @@ class _GroupEditModalState extends State<GroupEditModal> {
     );
   }
 
-  Member? _findMemberById(String memberId) {
+  GroupMemberDto? _findMemberById(String memberId) {
     for (final member in widget.availableMembers) {
-      if (member.id == memberId) {
+      if (member.memberId == memberId) {
         return member;
       }
     }
     return null;
   }
 
-  List<Member> _getAddableMembers() {
+  List<GroupMemberDto> _getAddableMembers() {
     final selectedMemberIds = _group.members.map((gm) => gm.memberId).toSet();
     return widget.availableMembers
-        .where((member) => !selectedMemberIds.contains(member.id))
+        .where((member) => !selectedMemberIds.contains(member.memberId))
         .toList();
   }
 
-  List<Member> _getChangeCandidates(int index) {
+  List<GroupMemberDto> _getChangeCandidates(int index) {
     final currentMemberId = _group.members[index].memberId;
     final selectedMemberIds = _group.members
         .asMap()
@@ -381,7 +380,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         .map((entry) => entry.value.memberId)
         .toSet();
 
-    final candidates = <Member>[];
+    final candidates = <GroupMemberDto>[];
     final currentMember = _findMemberById(currentMemberId);
     if (currentMember != null) {
       candidates.add(currentMember);
@@ -389,10 +388,10 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
     candidates.addAll(
       widget.availableMembers.where((member) {
-        if (member.id == currentMemberId) {
+        if (member.memberId == currentMemberId) {
           return false;
         }
-        return !selectedMemberIds.contains(member.id);
+        return !selectedMemberIds.contains(member.memberId);
       }),
     );
 
@@ -400,7 +399,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Future<void> _showMemberSelectionMenu(
-    List<Member> candidates,
+    List<GroupMemberDto> candidates,
     ValueChanged<String> onSelected,
   ) async {
     final selectedMemberId = await showModalBottomSheet<String>(
@@ -531,7 +530,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Widget _buildMemberSelectionList(
-    List<Member> candidates,
+    List<GroupMemberDto> candidates,
     ScrollController scrollController,
   ) {
     return ListView.builder(
@@ -558,7 +557,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
               member.displayName,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            onTap: () => Navigator.of(context).pop(member.id),
+            onTap: () => Navigator.of(context).pop(member.memberId),
             hoverColor: Colors.grey[50],
           ),
         );
@@ -567,33 +566,16 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   GroupMemberDto _createGroupMemberDto(
-    Member member, {
+    GroupMemberDto member, {
     GroupMemberDto? existing,
   }) {
     final groupId = existing?.groupId.isNotEmpty == true
         ? existing!.groupId
         : _group.id;
 
-    return GroupMemberDto(
-      memberId: member.id,
+    return member.copyWith(
       groupId: groupId,
       isAdministrator: existing?.isAdministrator ?? false,
-      accountId: member.accountId,
-      ownerId: member.ownerId,
-      hiraganaFirstName: member.hiraganaFirstName,
-      hiraganaLastName: member.hiraganaLastName,
-      kanjiFirstName: member.kanjiFirstName,
-      kanjiLastName: member.kanjiLastName,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      displayName: member.displayName,
-      type: member.type,
-      birthday: member.birthday,
-      gender: member.gender,
-      email: member.email,
-      phoneNumber: member.phoneNumber,
-      passportNumber: member.passportNumber,
-      passportExpiration: member.passportExpiration,
     );
   }
 }
