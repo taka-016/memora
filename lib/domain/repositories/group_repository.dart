@@ -5,5 +5,4 @@ abstract class GroupRepository {
   Future<void> updateGroup(Group group);
   Future<void> deleteGroup(String groupId);
   Future<void> deleteGroupMembersByMemberId(String memberId);
-  Future<Group?> getGroupById(String groupId);
 }

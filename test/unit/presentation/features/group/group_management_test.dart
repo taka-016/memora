@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
-import 'package:memora/domain/entities/group.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
@@ -31,7 +30,6 @@ void main() {
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberRepository mockMemberRepository;
   late MockTripEntryRepository mockTripEntryRepository;
-  late Group group1;
   late Member testMember;
   late GroupDto groupWithMembers1;
   late GroupDto groupWithMembers2;
@@ -73,12 +71,6 @@ void main() {
       ownerId: testMember.id,
       name: 'Test Group 2',
       members: [],
-    );
-    group1 = Group(
-      id: 'group-1',
-      ownerId: testMember.id,
-      name: 'Test Group 1',
-      memo: 'Test memo 1',
     );
 
     providerOverrides = [
@@ -267,10 +259,6 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
-        mockGroupRepository.getGroupById(group1.id),
-      ).thenAnswer((_) async => group1);
-
-      when(
         mockMemberRepository.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
@@ -303,10 +291,6 @@ void main() {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
-
-      when(
-        mockGroupRepository.getGroupById(group1.id),
-      ).thenAnswer((_) async => group1);
 
       when(
         mockMemberRepository.getMembersByOwnerId(

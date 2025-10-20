@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_mapper.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_member_mapper.dart';
 
@@ -92,33 +91,5 @@ class FirestoreGroupRepository implements GroupRepository {
     }
 
     await batch.commit();
-  }
-
-  @override
-  Future<Group?> getGroupById(String groupId) async {
-    try {
-      final doc = await _firestore.collection('groups').doc(groupId).get();
-      if (!doc.exists) {
-        return null;
-      }
-
-      final groupMembersSnapshot = await _firestore
-          .collection('group_members')
-          .where('groupId', isEqualTo: doc.id)
-          .get();
-
-      final groupMembers = groupMembersSnapshot.docs
-          .map((doc) => FirestoreGroupMemberMapper.fromFirestore(doc))
-          .toList();
-
-      return FirestoreGroupMapper.fromFirestore(doc, members: groupMembers);
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreGroupRepository.getGroupById: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return null;
-    }
   }
 }

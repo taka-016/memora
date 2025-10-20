@@ -23,12 +23,10 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
     late FirestoreGroupRepository repository;
-    late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc1;
 
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      mockDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       when(mockFirestore.collection('groups')).thenReturn(mockCollection);
       repository = FirestoreGroupRepository(firestore: mockFirestore);
     });
@@ -94,70 +92,6 @@ void main() {
       verify(mockFirestore.batch()).called(1);
       verify(mockBatch.delete(mockDocRef)).called(1);
       verify(mockBatch.commit()).called(1);
-    });
-
-    test('getGroupByIdが特定のグループを返す', () async {
-      const groupId = 'group001';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
-      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-      when(mockDocSnapshot.exists).thenReturn(true);
-      when(mockDocSnapshot.id).thenReturn(groupId);
-      when(
-        mockDocSnapshot.data(),
-      ).thenReturn({'ownerId': 'owner-id', 'name': 'テストグループ', 'memo': 'テストメモ'});
-
-      // group_membersのモック
-      final mockGroupMembersCollection =
-          MockCollectionReference<Map<String, dynamic>>();
-      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
-      final mockGroupMembersSnapshot =
-          MockQuerySnapshot<Map<String, dynamic>>();
-
-      when(mockDoc1.data()).thenReturn({
-        'groupId': groupId,
-        'memberId': 'member001',
-        'isAdministrator': true,
-      });
-
-      when(
-        mockFirestore.collection('group_members'),
-      ).thenReturn(mockGroupMembersCollection);
-      when(
-        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockGroupMembersQuery);
-      when(
-        mockGroupMembersQuery.get(),
-      ).thenAnswer((_) async => mockGroupMembersSnapshot);
-      when(mockGroupMembersSnapshot.docs).thenReturn([mockDoc1]);
-
-      final result = await repository.getGroupById(groupId);
-
-      expect(result, isNotNull);
-      expect(result!.id, groupId);
-      expect(result.ownerId, 'owner-id');
-      expect(result.name, 'テストグループ');
-      expect(result.memo, 'テストメモ');
-      expect(result.members.length, 1);
-      expect(result.members[0].groupId, groupId);
-      expect(result.members[0].memberId, 'member001');
-      expect(result.members[0].isAdministrator, true);
-    });
-
-    test('getGroupByIdが存在しないグループでnullを返す', () async {
-      const groupId = 'nonexistent';
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
-
-      when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
-      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
-      when(mockDocSnapshot.exists).thenReturn(false);
-
-      final result = await repository.getGroupById(groupId);
-
-      expect(result, isNull);
     });
   });
 }
