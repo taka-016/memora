@@ -1,10 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/application/interfaces/member_invitation_query_service.dart';
+import 'package:memora/application/interfaces/member_query_service.dart';
 import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/application/interfaces/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_member_invitation_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/services/firestore_pin_query_service.dart';
+import 'package:memora/infrastructure/services/firestore_trip_entry_query_service.dart';
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
   return QueryServiceFactory.create<GroupQueryService>(ref: ref);
@@ -13,6 +19,19 @@ final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
 final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
   return QueryServiceFactory.create<PinQueryService>(ref: ref);
 });
+
+final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
+  return QueryServiceFactory.create<TripEntryQueryService>(ref: ref);
+});
+
+final memberQueryServiceProvider = Provider<MemberQueryService>((ref) {
+  return QueryServiceFactory.create<MemberQueryService>(ref: ref);
+});
+
+final memberInvitationQueryServiceProvider =
+    Provider<MemberInvitationQueryService>((ref) {
+      return QueryServiceFactory.create<MemberInvitationQueryService>(ref: ref);
+    });
 
 class QueryServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
@@ -37,6 +56,15 @@ class QueryServiceFactory {
     }
     if (T == PinQueryService) {
       return FirestorePinQueryService() as T;
+    }
+    if (T == TripEntryQueryService) {
+      return FirestoreTripEntryQueryService() as T;
+    }
+    if (T == MemberQueryService) {
+      return FirestoreMemberQueryService() as T;
+    }
+    if (T == MemberInvitationQueryService) {
+      return FirestoreMemberInvitationQueryService() as T;
     }
     throw ArgumentError('Unknown query service type: $T');
   }
