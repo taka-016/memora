@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_member.dart';
-import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 
 class GroupEditModal extends StatefulWidget {
-  final Group group;
+  final GroupDto group;
   final Function(Group) onSave;
-  final List<Member> availableMembers;
+  final List<GroupMemberDto> availableMembers;
 
   const GroupEditModal({
     super.key,
@@ -26,7 +27,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _memoController;
-  late Group _group;
+  late GroupDto _group;
 
   @override
   void initState() {
@@ -180,7 +181,9 @@ class _GroupEditModalState extends State<GroupEditModal> {
   Widget _buildMemberContainer(int index) {
     final groupMember = _group.members[index];
     final member = _findMemberById(groupMember.memberId);
-    final displayName = member?.displayName ?? '不明なメンバー';
+    final displayName = groupMember.displayName.isNotEmpty
+        ? groupMember.displayName
+        : member?.displayName ?? '不明なメンバー';
     final changeCandidates = _getChangeCandidates(index);
 
     return Container(
@@ -207,11 +210,11 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   Widget _buildMemberActionMenu(
     int index,
-    GroupMember groupMember,
-    List<Member> changeCandidates,
+    GroupMemberDto groupMember,
+    List<GroupMemberDto> changeCandidates,
   ) {
     final hasAlternative = changeCandidates
-        .where((candidate) => candidate.id != groupMember.memberId)
+        .where((candidate) => candidate.memberId != groupMember.memberId)
         .isNotEmpty;
 
     return PopupMenuButton<_MemberAction>(
@@ -255,15 +258,13 @@ class _GroupEditModalState extends State<GroupEditModal> {
                 FocusKiller.killFocus();
                 _showMemberSelectionMenu(addableMembers, (selectedMemberId) {
                   setState(() {
-                    final updatedMembers = List<GroupMember>.from(
+                    final selectedMember = _findMemberById(selectedMemberId);
+                    final updatedMembers = List<GroupMemberDto>.from(
                       _group.members,
                     );
-                    updatedMembers.add(
-                      GroupMember(
-                        groupId: _group.id,
-                        memberId: selectedMemberId,
-                      ),
-                    );
+                    if (selectedMember != null) {
+                      updatedMembers.add(selectedMember);
+                    }
                     _group = _group.copyWith(members: updatedMembers);
                   });
                 });
@@ -274,7 +275,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _removeMemberAt(int index) {
     setState(() {
-      final updatedMembers = List<GroupMember>.from(_group.members);
+      final updatedMembers = List<GroupMemberDto>.from(_group.members);
       updatedMembers.removeAt(index);
       _group = _group.copyWith(members: updatedMembers);
     });
@@ -283,7 +284,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   void _handleMemberAction(
     int index,
     _MemberAction action,
-    List<Member> changeCandidates,
+    List<GroupMemberDto> changeCandidates,
   ) {
     switch (action) {
       case _MemberAction.toggleAdministrator:
@@ -292,7 +293,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
       case _MemberAction.changeMember:
         final currentMemberId = _group.members[index].memberId;
         final hasAlternative = changeCandidates
-            .where((candidate) => candidate.id != currentMemberId)
+            .where((candidate) => candidate.memberId != currentMemberId)
             .isNotEmpty;
 
         if (!hasAlternative) {
@@ -300,11 +301,11 @@ class _GroupEditModalState extends State<GroupEditModal> {
         }
         _showMemberSelectionMenu(changeCandidates, (selectedMemberId) {
           setState(() {
-            final updatedMembers = List<GroupMember>.from(_group.members);
-            updatedMembers[index] = GroupMember(
-              groupId: _group.id,
-              memberId: selectedMemberId,
-            );
+            final selectedMember = _findMemberById(selectedMemberId);
+            final updatedMembers = List<GroupMemberDto>.from(_group.members);
+            if (selectedMember != null) {
+              updatedMembers[index] = selectedMember;
+            }
             _group = _group.copyWith(members: updatedMembers);
           });
         });
@@ -317,7 +318,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
   void _toggleAdministrator(int index) {
     setState(() {
-      final updatedMembers = List<GroupMember>.from(_group.members);
+      final updatedMembers = List<GroupMemberDto>.from(_group.members);
       updatedMembers[index] = updatedMembers[index].copyWith(
         isAdministrator: !updatedMembers[index].isAdministrator,
       );
@@ -351,23 +352,23 @@ class _GroupEditModalState extends State<GroupEditModal> {
     );
   }
 
-  Member? _findMemberById(String memberId) {
+  GroupMemberDto? _findMemberById(String memberId) {
     for (final member in widget.availableMembers) {
-      if (member.id == memberId) {
+      if (member.memberId == memberId) {
         return member;
       }
     }
     return null;
   }
 
-  List<Member> _getAddableMembers() {
+  List<GroupMemberDto> _getAddableMembers() {
     final selectedMemberIds = _group.members.map((gm) => gm.memberId).toSet();
     return widget.availableMembers
-        .where((member) => !selectedMemberIds.contains(member.id))
+        .where((member) => !selectedMemberIds.contains(member.memberId))
         .toList();
   }
 
-  List<Member> _getChangeCandidates(int index) {
+  List<GroupMemberDto> _getChangeCandidates(int index) {
     final currentMemberId = _group.members[index].memberId;
     final selectedMemberIds = _group.members
         .asMap()
@@ -376,7 +377,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         .map((entry) => entry.value.memberId)
         .toSet();
 
-    final candidates = <Member>[];
+    final candidates = <GroupMemberDto>[];
     final currentMember = _findMemberById(currentMemberId);
     if (currentMember != null) {
       candidates.add(currentMember);
@@ -384,10 +385,10 @@ class _GroupEditModalState extends State<GroupEditModal> {
 
     candidates.addAll(
       widget.availableMembers.where((member) {
-        if (member.id == currentMemberId) {
+        if (member.memberId == currentMemberId) {
           return false;
         }
-        return !selectedMemberIds.contains(member.id);
+        return !selectedMemberIds.contains(member.memberId);
       }),
     );
 
@@ -395,7 +396,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Future<void> _showMemberSelectionMenu(
-    List<Member> candidates,
+    List<GroupMemberDto> candidates,
     ValueChanged<String> onSelected,
   ) async {
     final selectedMemberId = await showModalBottomSheet<String>(
@@ -469,7 +470,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
         memo: _memoController.text.isEmpty ? null : _memoController.text,
       );
 
-      widget.onSave(updatedGroup);
+      widget.onSave(GroupMapper.toEntity(updatedGroup));
       Navigator.of(context).pop();
     }
   }
@@ -526,7 +527,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
   }
 
   Widget _buildMemberSelectionList(
-    List<Member> candidates,
+    List<GroupMemberDto> candidates,
     ScrollController scrollController,
   ) {
     return ListView.builder(
@@ -553,7 +554,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
               member.displayName,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
-            onTap: () => Navigator.of(context).pop(member.id),
+            onTap: () => Navigator.of(context).pop(member.memberId),
             hoverColor: Colors.grey[50],
           ),
         );

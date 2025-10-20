@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/usecases/group/get_group_by_id_usecase.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/domain/entities/group.dart';
+import 'package:memora/application/mappers/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
@@ -23,7 +22,6 @@ class GroupManagement extends ConsumerStatefulWidget {
 }
 
 class _GroupManagementState extends ConsumerState<GroupManagement> {
-  late final GetGroupByIdUsecase _getGroupByIdUsecase;
   late final GetManagedGroupsWithMembersUsecase
   _getManagedGroupsWithMembersUsecase;
   late final DeleteGroupUsecase _deleteGroupUsecase;
@@ -38,7 +36,6 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
   void initState() {
     super.initState();
 
-    _getGroupByIdUsecase = ref.read(getGroupByIdUsecaseProvider);
     _getManagedGroupsWithMembersUsecase = ref.read(
       getManagedGroupsWithMembersUsecaseProvider,
     );
@@ -83,14 +80,18 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      final group = Group(
+      final group = GroupDto(
         id: '',
         ownerId: widget.member.id,
         name: '',
-        members: [],
+        members: const [],
       );
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
+      );
+      final availableMemberDtos = GroupMemberMapper.fromMemberList(
+        availableMembers,
+        group.id,
       );
 
       if (!mounted) return;
@@ -99,7 +100,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
         context: context,
         builder: (context) => GroupEditModal(
           group: group,
-          availableMembers: availableMembers,
+          availableMembers: availableMemberDtos,
           onSave: (group) async {
             try {
               await _createGroupUsecase.execute(group);
@@ -143,17 +144,20 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
-      final group = await _getGroupByIdUsecase.execute(groupWithMembers.id);
       final availableMembers = await _getManagedMembersUsecase.execute(
         widget.member,
+      );
+      final availableMemberDtos = GroupMemberMapper.fromMemberList(
+        availableMembers,
+        groupWithMembers.id,
       );
       if (!mounted) return;
 
       await showDialog(
         context: context,
         builder: (context) => GroupEditModal(
-          group: group!,
-          availableMembers: availableMembers,
+          group: groupWithMembers,
+          availableMembers: availableMemberDtos,
           onSave: (group) async {
             try {
               await _updateGroupUsecase.execute(group);

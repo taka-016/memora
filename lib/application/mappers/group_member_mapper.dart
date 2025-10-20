@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/domain/entities/group_member.dart';
+import 'package:memora/domain/entities/member.dart';
 
 class GroupMemberMapper {
   static GroupMemberDto fromFirestore(
@@ -30,6 +31,37 @@ class GroupMemberMapper {
       passportNumber: memberData?['passportNumber'] as String?,
       passportExpiration: memberData?['passportExpiration'] as String?,
     );
+  }
+
+  static GroupMemberDto fromMember(Member member, String groupId) {
+    return GroupMemberDto(
+      memberId: member.id,
+      groupId: groupId,
+      isAdministrator: false,
+      accountId: member.accountId,
+      ownerId: member.ownerId,
+      hiraganaFirstName: member.hiraganaFirstName,
+      hiraganaLastName: member.hiraganaLastName,
+      kanjiFirstName: member.kanjiFirstName,
+      kanjiLastName: member.kanjiLastName,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      displayName: member.displayName,
+      type: member.type,
+      birthday: member.birthday,
+      gender: member.gender,
+      email: member.email,
+      phoneNumber: member.phoneNumber,
+      passportNumber: member.passportNumber,
+      passportExpiration: member.passportExpiration,
+    );
+  }
+
+  static List<GroupMemberDto> fromMemberList(
+    List<Member> members,
+    String groupId,
+  ) {
+    return members.map((member) => fromMember(member, groupId)).toList();
   }
 
   static GroupMember toEntity(GroupMemberDto dto) {

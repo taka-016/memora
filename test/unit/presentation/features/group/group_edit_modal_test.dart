@@ -1,10 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/entities/group_member.dart';
-import 'package:memora/domain/entities/member.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
+
+GroupDto createGroupDto({
+  String id = '',
+  String ownerId = '',
+  String name = '',
+  String? memo,
+  List<GroupMemberDto> members = const [],
+}) {
+  return GroupDto(
+    id: id,
+    ownerId: ownerId,
+    name: name,
+    memo: memo,
+    members: members,
+  );
+}
+
+GroupMemberDto createGroupMemberDto({
+  required String memberId,
+  required String groupId,
+  String displayName = '',
+  bool isAdministrator = false,
+  String? accountId,
+  String? ownerId,
+  String? hiraganaFirstName,
+  String? hiraganaLastName,
+  String? kanjiFirstName,
+  String? kanjiLastName,
+  String? firstName,
+  String? lastName,
+  String? type,
+  DateTime? birthday,
+  String? gender,
+  String? email,
+  String? phoneNumber,
+  String? passportNumber,
+  String? passportExpiration,
+}) {
+  return GroupMemberDto(
+    memberId: memberId,
+    groupId: groupId,
+    displayName: displayName,
+    isAdministrator: isAdministrator,
+    accountId: accountId,
+    ownerId: ownerId,
+    hiraganaFirstName: hiraganaFirstName,
+    hiraganaLastName: hiraganaLastName,
+    kanjiFirstName: kanjiFirstName,
+    kanjiLastName: kanjiLastName,
+    firstName: firstName,
+    lastName: lastName,
+    type: type,
+    birthday: birthday,
+    gender: gender,
+    email: email,
+    phoneNumber: phoneNumber,
+    passportNumber: passportNumber,
+    passportExpiration: passportExpiration,
+  );
+}
 
 void main() {
   group('GroupEditModal', () {
@@ -12,7 +72,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
           ),
@@ -23,7 +83,7 @@ void main() {
     });
 
     testWidgets('編集時にタイトルが正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
@@ -47,7 +107,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
           ),
@@ -67,7 +127,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
@@ -90,8 +150,9 @@ void main() {
 
     testWidgets('既存メンバーが一覧表示される', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -106,11 +167,10 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
-        Member(
-          id: 'member2',
+        createGroupMemberDto(
+          memberId: 'member2',
+          groupId: '',
           accountId: 'account2',
           ownerId: 'admin-id',
           displayName: 'メンバー2',
@@ -125,21 +185,19 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-8765-4321',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'group1',
               ownerId: 'owner1',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'group1', memberId: 'member1'),
-                GroupMember(groupId: 'group1', memberId: 'member2'),
+              members: [
+                createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
+                createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
               ],
             ),
             onSave: (group) {},
@@ -154,8 +212,9 @@ void main() {
 
     testWidgets('追加ボタンから未選択メンバーを追加できる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -170,20 +229,18 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -204,8 +261,9 @@ void main() {
 
     testWidgets('操作メニューからメンバーを入れ替えられる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -220,11 +278,10 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
-        Member(
-          id: 'member2',
+        createGroupMemberDto(
+          memberId: 'member2',
+          groupId: '',
           accountId: 'account2',
           ownerId: 'admin-id',
           displayName: 'メンバー2',
@@ -239,20 +296,18 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-8765-4321',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -276,8 +331,9 @@ void main() {
 
     testWidgets('操作メニューからメンバーを削除できる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -292,20 +348,18 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -326,8 +380,9 @@ void main() {
 
     testWidgets('変更候補がない場合はメンバー変更メニューが無効になる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -342,20 +397,18 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(groupId: 'test-id', memberId: 'member1'),
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
               ],
             ),
             onSave: (group) {},
@@ -381,16 +434,19 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
-              members: [GroupMember(groupId: 'test-id', memberId: 'member1')],
+              members: [
+                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+              ],
             ),
             onSave: (group) {},
             availableMembers: [
-              Member(
-                id: 'member1',
+              createGroupMemberDto(
+                memberId: 'member1',
+                groupId: '',
                 accountId: 'account1',
                 ownerId: 'admin-id',
                 displayName: longName,
@@ -405,8 +461,6 @@ void main() {
                 email: 'long@example.com',
                 phoneNumber: '090-0000-0000',
                 type: 'member',
-                passportNumber: null,
-                passportExpiration: null,
               ),
             ],
           ),
@@ -422,8 +476,9 @@ void main() {
 
     testWidgets('保存時に選択されたメンバーがGroupに含まれる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -438,8 +493,6 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -448,7 +501,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
@@ -483,7 +536,12 @@ void main() {
                 onPressed: () => showDialog(
                   context: context,
                   builder: (context) => GroupEditModal(
-                    group: Group(id: '', ownerId: '', name: '', memo: ''),
+                    group: createGroupDto(
+                      id: '',
+                      ownerId: '',
+                      name: '',
+                      memo: '',
+                    ),
                     onSave: (group) {},
                     availableMembers: const [],
                   ),
@@ -514,8 +572,9 @@ void main() {
       // 多数のメンバーを生成
       final availableMembers = List.generate(
         10,
-        (index) => Member(
-          id: 'member$index',
+        (index) => createGroupMemberDto(
+          memberId: 'member$index',
+          groupId: '',
           accountId: 'account$index',
           ownerId: 'admin-id',
           displayName: 'メンバー$index',
@@ -530,23 +589,23 @@ void main() {
           email: 'test$index@example.com',
           phoneNumber: '090-1234-567$index',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       );
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-id',
               ownerId: 'admin-id',
               name: 'テストグループ',
               members: availableMembers
                   .take(5)
                   .map(
-                    (member) =>
-                        GroupMember(groupId: 'test-id', memberId: member.id),
+                    (member) => createGroupMemberDto(
+                      groupId: 'test-id',
+                      memberId: member.memberId,
+                    ),
                   )
                   .toList(),
             ),
@@ -564,17 +623,20 @@ void main() {
     });
 
     testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
         memo: 'テストメモ',
-        members: const [GroupMember(groupId: 'test-id', memberId: 'member1')],
+        members: [
+          createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+        ],
       );
 
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'admin-id',
           displayName: 'メンバー1',
@@ -589,11 +651,10 @@ void main() {
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
-        Member(
-          id: 'member2',
+        createGroupMemberDto(
+          memberId: 'member2',
+          groupId: '',
           accountId: 'account2',
           ownerId: 'admin-id',
           displayName: 'メンバー2',
@@ -608,8 +669,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-8765-4321',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -631,7 +690,7 @@ void main() {
     });
 
     testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {
-      final group = Group(
+      final group = createGroupDto(
         id: 'test-id',
         ownerId: 'admin-id',
         name: 'テストグループ',
@@ -660,8 +719,9 @@ void main() {
 
     testWidgets('管理者バッジが管理者メンバーに表示される', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'admin-member',
+        createGroupMemberDto(
+          memberId: 'admin-member',
+          groupId: '',
           accountId: 'admin-account',
           ownerId: 'owner-id',
           displayName: '管理者メンバー',
@@ -676,11 +736,10 @@ void main() {
           email: 'admin@example.com',
           phoneNumber: '090-1111-1111',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
-        Member(
-          id: 'normal-member',
+        createGroupMemberDto(
+          memberId: 'normal-member',
+          groupId: '',
           accountId: 'normal-account',
           ownerId: 'owner-id',
           displayName: '一般メンバー',
@@ -695,25 +754,23 @@ void main() {
           email: 'normal@example.com',
           phoneNumber: '090-2222-2222',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'admin-member',
                   isAdministrator: true,
                 ),
-                GroupMember(
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'normal-member',
                   isAdministrator: false,
@@ -738,8 +795,9 @@ void main() {
 
     testWidgets('管理者バッジの表示位置が固定される', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'admin-member',
+        createGroupMemberDto(
+          memberId: 'admin-member',
+          groupId: '',
           accountId: 'admin-account',
           ownerId: 'owner-id',
           displayName: '管理者メンバー',
@@ -754,11 +812,10 @@ void main() {
           email: 'admin@example.com',
           phoneNumber: '090-1111-1111',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
-        Member(
-          id: 'normal-member',
+        createGroupMemberDto(
+          memberId: 'normal-member',
+          groupId: '',
           accountId: 'normal-account',
           ownerId: 'owner-id',
           displayName: '一般メンバー',
@@ -773,25 +830,23 @@ void main() {
           email: 'normal@example.com',
           phoneNumber: '090-2222-2222',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'admin-member',
                   isAdministrator: true,
                 ),
-                GroupMember(
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'normal-member',
                   isAdministrator: false,
@@ -833,8 +888,9 @@ void main() {
 
     testWidgets('操作メニューから管理者権限を切り替えられる', (WidgetTester tester) async {
       final availableMembers = [
-        Member(
-          id: 'member1',
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: '',
           accountId: 'account1',
           ownerId: 'owner-id',
           displayName: 'テストメンバー',
@@ -849,8 +905,6 @@ void main() {
           email: 'test@example.com',
           phoneNumber: '090-1234-5678',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -859,12 +913,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: Group(
+            group: createGroupDto(
               id: 'test-group',
               ownerId: 'owner-id',
               name: 'テストグループ',
-              members: const [
-                GroupMember(
+              members: [
+                createGroupMemberDto(
                   groupId: 'test-group',
                   memberId: 'member1',
                   isAdministrator: false,
