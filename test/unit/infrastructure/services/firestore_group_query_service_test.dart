@@ -61,7 +61,7 @@ void main() {
       when(mockQueryDocumentSnapshot.id).thenReturn('group1');
       when(
         mockQueryDocumentSnapshot.data(),
-      ).thenReturn({'name': '管理者グループ', 'ownerId': memberId});
+      ).thenReturn({'name': '管理者グループ', 'ownerId': memberId, 'memo': '管理者メモ'});
 
       // メンバーとして参加しているグループのモック設定
       final mockGroupMemberQuery1 = MockQuery<Map<String, dynamic>>();
@@ -88,9 +88,11 @@ void main() {
       ).thenReturn(mockDocumentReference);
       when(mockDocumentReference.get()).thenAnswer((_) async => mockGroupDoc);
       when(mockGroupDoc.exists).thenReturn(true);
-      when(
-        mockGroupDoc.data(),
-      ).thenReturn({'name': 'メンバーグループ', 'ownerId': 'other_owner'});
+      when(mockGroupDoc.data()).thenReturn({
+        'name': 'メンバーグループ',
+        'ownerId': 'other_owner',
+        'memo': 'メンバーメモ',
+      });
 
       // グループのメンバー取得（group1）
       final mockGroupMemberQuery2 = MockQuery<Map<String, dynamic>>();
@@ -158,8 +160,10 @@ void main() {
       expect(result, hasLength(2));
       expect(result[0].id, 'group1');
       expect(result[0].name, '管理者グループ');
+      expect(result[0].memo, '管理者メモ');
       expect(result[1].id, 'group2');
       expect(result[1].name, 'メンバーグループ');
+      expect(result[1].memo, 'メンバーメモ');
     });
 
     test('例外が発生した場合、空のリストを返す', () async {
@@ -186,9 +190,11 @@ void main() {
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockQueryDocumentSnapshot]);
       when(mockQueryDocumentSnapshot.id).thenReturn('group1');
-      when(
-        mockQueryDocumentSnapshot.data(),
-      ).thenReturn({'name': '管理者グループ', 'ownerId': ownerId});
+      when(mockQueryDocumentSnapshot.data()).thenReturn({
+        'name': '管理者グループ',
+        'ownerId': ownerId,
+        'memo': '管理者グループのメモ',
+      });
 
       // グループのメンバー取得
       final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
@@ -231,6 +237,7 @@ void main() {
       expect(result, hasLength(1));
       expect(result[0].id, 'group1');
       expect(result[0].name, '管理者グループ');
+      expect(result[0].memo, '管理者グループのメモ');
       expect(result[0].members, hasLength(1));
       expect(result[0].members[0].displayName, 'テストメンバー');
     });
@@ -456,7 +463,7 @@ void main() {
       when(mockDocumentSnapshot.id).thenReturn(groupId);
       when(
         mockDocumentSnapshot.data(),
-      ).thenReturn({'name': 'テストグループ', 'ownerId': 'owner1'});
+      ).thenReturn({'name': 'テストグループ', 'ownerId': 'owner1', 'memo': 'テストメモ'});
 
       // グループメンバーの取得
       final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
@@ -501,6 +508,7 @@ void main() {
       expect(result, isNotNull);
       expect(result!.id, groupId);
       expect(result.name, 'テストグループ');
+      expect(result.memo, 'テストメモ');
       expect(result.members, hasLength(1));
       expect(result.members[0].displayName, 'テストメンバー');
     });

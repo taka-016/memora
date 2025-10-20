@@ -88,6 +88,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         id: groupId,
         ownerId: groupData['ownerId'] as String? ?? '',
         name: groupData['name'] as String,
+        memo: groupData['memo'] as String?,
         members: members,
       );
     } catch (e, stack) {
@@ -122,7 +123,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
         id: doc.id,
         ownerId: data['ownerId'] as String? ?? '',
         name: data['name'] as String,
-        members: [],
+        memo: data['memo'] as String?,
+        members: const <GroupMemberDto>[],
       );
     }).toList();
   }
@@ -149,7 +151,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
             id: groupId,
             ownerId: groupData['ownerId'] as String? ?? '',
             name: groupData['name'] as String,
-            members: [],
+            memo: groupData['memo'] as String?,
+            members: const <GroupMemberDto>[],
           ),
         );
       }
