@@ -263,7 +263,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
                       _group.members,
                     );
                     if (selectedMember != null) {
-                      updatedMembers.add(_createGroupMemberDto(selectedMember));
+                      updatedMembers.add(selectedMember);
                     }
                     _group = _group.copyWith(members: updatedMembers);
                   });
@@ -304,10 +304,7 @@ class _GroupEditModalState extends State<GroupEditModal> {
             final selectedMember = _findMemberById(selectedMemberId);
             final updatedMembers = List<GroupMemberDto>.from(_group.members);
             if (selectedMember != null) {
-              updatedMembers[index] = _createGroupMemberDto(
-                selectedMember,
-                existing: updatedMembers[index],
-              );
+              updatedMembers[index] = selectedMember;
             }
             _group = _group.copyWith(members: updatedMembers);
           });
@@ -562,20 +559,6 @@ class _GroupEditModalState extends State<GroupEditModal> {
           ),
         );
       },
-    );
-  }
-
-  GroupMemberDto _createGroupMemberDto(
-    GroupMemberDto member, {
-    GroupMemberDto? existing,
-  }) {
-    final groupId = existing?.groupId.isNotEmpty == true
-        ? existing!.groupId
-        : _group.id;
-
-    return member.copyWith(
-      groupId: groupId,
-      isAdministrator: existing?.isAdministrator ?? false,
     );
   }
 }
