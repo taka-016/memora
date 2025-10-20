@@ -4,6 +4,35 @@ import 'package:memora/domain/entities/group_member.dart';
 import 'package:memora/domain/entities/member.dart';
 
 class GroupMemberMapper {
+  static GroupMemberDto fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> groupMemberDoc,
+    DocumentSnapshot<Map<String, dynamic>> memberDoc,
+  ) {
+    final groupMemberData = groupMemberDoc.data();
+    final memberData = memberDoc.data();
+    return GroupMemberDto(
+      memberId: memberDoc.id,
+      groupId: groupMemberData!['groupId'] as String,
+      isAdministrator: groupMemberData['isAdministrator'] as bool? ?? false,
+      accountId: memberData?['accountId'] as String?,
+      ownerId: memberData?['ownerId'] as String?,
+      hiraganaFirstName: memberData?['hiraganaFirstName'] as String?,
+      hiraganaLastName: memberData?['hiraganaLastName'] as String?,
+      kanjiFirstName: memberData?['kanjiFirstName'] as String?,
+      kanjiLastName: memberData?['kanjiLastName'] as String?,
+      firstName: memberData?['firstName'] as String?,
+      lastName: memberData?['lastName'] as String?,
+      displayName: memberData?['displayName'] as String? ?? '',
+      type: memberData?['type'] as String?,
+      birthday: (memberData?['birthday'] as Timestamp?)?.toDate(),
+      gender: memberData?['gender'] as String?,
+      email: memberData?['email'] as String?,
+      phoneNumber: memberData?['phoneNumber'] as String?,
+      passportNumber: memberData?['passportNumber'] as String?,
+      passportExpiration: memberData?['passportExpiration'] as String?,
+    );
+  }
+
   static GroupMemberDto fromMember(Member member, String groupId) {
     return GroupMemberDto(
       memberId: member.id,
@@ -33,35 +62,6 @@ class GroupMemberMapper {
     String groupId,
   ) {
     return members.map((member) => fromMember(member, groupId)).toList();
-  }
-
-  static GroupMemberDto fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> groupMemberDoc,
-    DocumentSnapshot<Map<String, dynamic>> memberDoc,
-  ) {
-    final groupMemberData = groupMemberDoc.data();
-    final memberData = memberDoc.data();
-    return GroupMemberDto(
-      memberId: memberDoc.id,
-      groupId: groupMemberData!['groupId'] as String,
-      isAdministrator: groupMemberData['isAdministrator'] as bool? ?? false,
-      accountId: memberData?['accountId'] as String?,
-      ownerId: memberData?['ownerId'] as String?,
-      hiraganaFirstName: memberData?['hiraganaFirstName'] as String?,
-      hiraganaLastName: memberData?['hiraganaLastName'] as String?,
-      kanjiFirstName: memberData?['kanjiFirstName'] as String?,
-      kanjiLastName: memberData?['kanjiLastName'] as String?,
-      firstName: memberData?['firstName'] as String?,
-      lastName: memberData?['lastName'] as String?,
-      displayName: memberData?['displayName'] as String? ?? '',
-      type: memberData?['type'] as String?,
-      birthday: (memberData?['birthday'] as Timestamp?)?.toDate(),
-      gender: memberData?['gender'] as String?,
-      email: memberData?['email'] as String?,
-      phoneNumber: memberData?['phoneNumber'] as String?,
-      passportNumber: memberData?['passportNumber'] as String?,
-      passportExpiration: memberData?['passportExpiration'] as String?,
-    );
   }
 
   static GroupMember toEntity(GroupMemberDto dto) {
