@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/application/mappers/group_member_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
@@ -78,19 +79,11 @@ class FirestoreGroupQueryService implements GroupQueryService {
         return null;
       }
 
-      final groupData = groupSnapshot.data()!;
       final members = await _getMembersForGroup(
         groupId,
         orderBy: membersOrderBy,
       );
-
-      return GroupDto(
-        id: groupId,
-        ownerId: groupData['ownerId'] as String? ?? '',
-        name: groupData['name'] as String,
-        memo: groupData['memo'] as String?,
-        members: members,
-      );
+      return GroupMapper.fromFirestore(groupSnapshot, members: members);
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupQueryService.getGroupWithMembersById: ${e.toString()}',
@@ -118,14 +111,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
     final snapshot = await query.get();
 
     return snapshot.docs.map((doc) {
-      final data = doc.data();
-      return GroupDto(
-        id: doc.id,
-        ownerId: data['ownerId'] as String? ?? '',
-        name: data['name'] as String,
-        memo: data['memo'] as String?,
-        members: const <GroupMemberDto>[],
-      );
+      final members = const <GroupMemberDto>[];
+      return GroupMapper.fromFirestore(doc, members: members);
     }).toList();
   }
 
@@ -145,16 +132,8 @@ class FirestoreGroupQueryService implements GroupQueryService {
           .get();
 
       if (groupSnapshot.exists) {
-        final groupData = groupSnapshot.data()!;
-        groups.add(
-          GroupDto(
-            id: groupId,
-            ownerId: groupData['ownerId'] as String? ?? '',
-            name: groupData['name'] as String,
-            memo: groupData['memo'] as String?,
-            members: const <GroupMemberDto>[],
-          ),
-        );
+        final members = const <GroupMemberDto>[];
+        groups.add(GroupMapper.fromFirestore(groupSnapshot, members: members));
       }
     }
 
@@ -218,15 +197,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
         group.id,
         orderBy: membersOrderBy,
       );
-      result.add(
-        GroupDto(
-          id: group.id,
-          ownerId: group.ownerId,
-          name: group.name,
-          memo: group.memo,
-          members: members,
-        ),
-      );
+      result.add(group.copyWith(members: members));
     }
 
     return result;

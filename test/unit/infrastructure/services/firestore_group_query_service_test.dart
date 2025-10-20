@@ -88,6 +88,7 @@ void main() {
       ).thenReturn(mockDocumentReference);
       when(mockDocumentReference.get()).thenAnswer((_) async => mockGroupDoc);
       when(mockGroupDoc.exists).thenReturn(true);
+      when(mockGroupDoc.id).thenReturn('group2');
       when(mockGroupDoc.data()).thenReturn({
         'name': 'メンバーグループ',
         'ownerId': 'other_owner',
