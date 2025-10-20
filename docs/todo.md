@@ -37,6 +37,9 @@
   - [x] グループIDでgroupsを取得し、その子エンティティであるgroup_membersを紐づけmember_idでmembersも紐づけて取得する
   - [x] 取得結果はGroupWithMembersDtoに格納する
 - [x] GroupDtoをEquatable化して、copyWithも追加する
+- [ ] TripEntryRepositoryのgetTripEntryById,getTripEntriesByGroupId,getTripEntriesByGroupIdAndYearをTripEntryQueryServiceに実装する（段階的に移行するので、この時点ではTripEntryRepositoryにも残しておく）
+- [ ] MemberRepositoryのgetMembers,getMemberById,getMemberByAccountId,getMembersByOwnerIdをMemberQueryServiceに実装する（段階的に移行するので、この時点ではMemberRepositoryにも残しておく）
+- [ ] MemberInvitationRepositoryのgetByInviteeId,getByInvitationCodeをMemberInvitationQueryServiceに実装する（段階的に移行するので、この時点ではMemberInvitationRepositoryにも残しておく）
 
 ## マップの表示
 
