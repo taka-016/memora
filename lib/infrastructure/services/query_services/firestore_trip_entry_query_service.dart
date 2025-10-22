@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/application/interfaces/trip_entry_query_service.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/trip_entry.dart';

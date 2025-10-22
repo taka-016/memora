@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/application/interfaces/query_services/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/application/interfaces/query_services/group_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';

@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/pin.dart';
 import 'package:memora/domain/entities/pin_detail.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/services/firestore_trip_entry_query_service.dart';
+import 'package:memora/infrastructure/services/query_services/firestore_trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 import 'firestore_trip_entry_query_service_test.mocks.dart';
 
 @GenerateMocks([

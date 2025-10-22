@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/application/interfaces/pin_query_service.dart';
+import 'package:memora/application/interfaces/query_services/pin_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final getPinsByMemberIdUsecaseProvider = Provider<GetPinsByMemberIdUsecase>((

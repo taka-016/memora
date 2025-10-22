@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/application/interfaces/member_invitation_query_service.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/member_invitation.dart';
 import 'package:memora/infrastructure/mappers/firestore_member_invitation_mapper.dart';
