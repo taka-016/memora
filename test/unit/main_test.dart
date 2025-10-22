@@ -4,15 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/query_services/group_query_service.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/application/interfaces/query_services/pin_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -21,19 +20,19 @@ import 'main_test.mocks.dart';
 
 @GenerateMocks([
   GroupQueryService,
-  MemberRepository,
+  MemberQueryService,
   AuthService,
   PinQueryService,
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
-    mockMemberRepository = MockMemberRepository();
+    mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
 
@@ -52,7 +51,7 @@ void main() {
 
     when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
     when(
-      mockMemberRepository.getMemberByAccountId(any),
+      mockMemberQueryService.getMemberByAccountId(any),
     ).thenAnswer((_) async => testMember);
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -72,7 +71,7 @@ void main() {
         authNotifierProvider.overrideWith((ref) {
           return FakeAuthNotifier.authenticated();
         }),
-        memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+        memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
         pinQueryServiceProvider.overrideWithValue(mockPinQueryService),

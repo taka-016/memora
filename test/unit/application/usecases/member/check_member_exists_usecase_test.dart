@@ -1,21 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'check_member_exists_usecase_test.mocks.dart';
-import '../../../../helpers/test_exception.dart';
 
-@GenerateMocks([MemberRepository])
+import '../../../../helpers/test_exception.dart';
+import 'check_member_exists_usecase_test.mocks.dart';
+
+@GenerateMocks([MemberQueryService])
 void main() {
   late CheckMemberExistsUseCase useCase;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
-    mockMemberRepository = MockMemberRepository();
-    useCase = CheckMemberExistsUseCase(mockMemberRepository);
+    mockMemberQueryService = MockMemberQueryService();
+    useCase = CheckMemberExistsUseCase(mockMemberQueryService);
   });
 
   group('CheckMemberExistsUseCase', () {
@@ -28,7 +29,7 @@ void main() {
       );
       const testMember = Member(id: 'member-id', displayName: 'Test User');
       when(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).thenAnswer((_) async => testMember);
 
       // Act
@@ -37,7 +38,7 @@ void main() {
       // Assert
       expect(result, isTrue);
       verify(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).called(1);
     });
 
@@ -49,7 +50,7 @@ void main() {
         isVerified: true,
       );
       when(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -58,7 +59,7 @@ void main() {
       // Assert
       expect(result, isFalse);
       verify(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).called(1);
     });
 
@@ -71,13 +72,13 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).thenThrow(TestException('Database error'));
 
       // Assert
       expect(() => useCase.execute(user), throwsException);
       verify(
-        mockMemberRepository.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).called(1);
     });
   });

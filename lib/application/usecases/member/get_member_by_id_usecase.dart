@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final getMemberByIdUsecaseProvider = Provider<GetMemberByIdUseCase>((ref) {
-  return GetMemberByIdUseCase(ref.watch(memberRepositoryProvider));
+  return GetMemberByIdUseCase(ref.watch(memberQueryServiceProvider));
 });
 
 class GetMemberByIdUseCase {
-  final MemberRepository _memberRepository;
+  final MemberQueryService _memberQueryService;
 
-  GetMemberByIdUseCase(this._memberRepository);
+  GetMemberByIdUseCase(this._memberQueryService);
 
   Future<Member?> execute(String id) async {
-    return await _memberRepository.getMemberById(id);
+    return await _memberQueryService.getMemberById(id);
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/interfaces/auth_service.dart';
 import 'package:memora/application/interfaces/query_services/group_query_service.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/application/interfaces/query_services/pin_query_service.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
@@ -11,18 +12,16 @@ import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'top_page_test.mocks.dart';
 import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/test_exception.dart';
+import 'top_page_test.mocks.dart';
 
 // テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
 class _TestNavigationNotifier extends NavigationNotifier {
@@ -44,14 +43,14 @@ class _TestGroupTimelineNavigationNotifier
 
 @GenerateMocks([
   GroupQueryService,
-  MemberRepository,
+  MemberQueryService,
   AuthService,
   AuthNotifier,
   PinQueryService,
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
@@ -59,7 +58,7 @@ void main() {
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
-    mockMemberRepository = MockMemberRepository();
+    mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
 
@@ -105,7 +104,7 @@ void main() {
   });
 
   Widget createTestWidget({
-    MockMemberRepository? memberRepository,
+    MockMemberQueryService? memberQueryService,
     MockAuthService? authService,
     MockAuthNotifier? authNotifier,
   }) {
@@ -116,7 +115,7 @@ void main() {
       kanjiFirstName: 'ユーザー',
     );
 
-    final testMemberRepository = memberRepository ?? mockMemberRepository;
+    final testMemberQueryService = memberQueryService ?? mockMemberQueryService;
     final testAuthService = authService ?? mockAuthService;
 
     const testUser = User(
@@ -126,7 +125,7 @@ void main() {
     );
 
     when(
-      testMemberRepository.getMemberByAccountId(any),
+      testMemberQueryService.getMemberByAccountId(any),
     ).thenAnswer((_) async => defaultMember);
     when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
     when(
@@ -142,7 +141,7 @@ void main() {
         authNotifierProvider.overrideWith((ref) {
           return FakeAuthNotifier.authenticated();
         }),
-        memberRepositoryProvider.overrideWithValue(testMemberRepository),
+        memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
         authServiceProvider.overrideWithValue(testAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
         pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
@@ -398,7 +397,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMemberByAccountId(any),
+        mockMemberQueryService.getMemberByAccountId(any),
       ).thenAnswer((_) async => currentMember);
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -433,7 +432,7 @@ void main() {
         ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
-        mockMemberRepository.getMemberByAccountId(any),
+        mockMemberQueryService.getMemberByAccountId(any),
       ).thenAnswer((_) async => testMember);
 
       final widget = createTestWidget();
@@ -468,7 +467,7 @@ void main() {
         ),
       ).thenAnswer((_) async => groupsWithMembers);
       when(
-        mockMemberRepository.getMemberByAccountId(any),
+        mockMemberQueryService.getMemberByAccountId(any),
       ).thenAnswer((_) async => testMember);
 
       final widget = createTestWidget();
@@ -600,7 +599,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMemberByAccountId(any),
+        mockMemberQueryService.getMemberByAccountId(any),
       ).thenAnswer((_) async => defaultMember);
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
@@ -623,7 +622,7 @@ void main() {
           groupTimelineNavigationNotifierProvider.overrideWith((ref) {
             return _TestGroupTimelineNavigationNotifier();
           }),
-          memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
           pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
@@ -662,7 +661,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMemberByAccountId(any),
+        mockMemberQueryService.getMemberByAccountId(any),
       ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
@@ -679,7 +678,7 @@ void main() {
       final widget = ProviderScope(
         overrides: [
           authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
-          memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
           pinQueryServiceProvider.overrideWithValue(mockPinQueryService),

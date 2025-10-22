@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/interfaces/query_services/group_query_service.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -21,14 +21,14 @@ import 'group_management_test.mocks.dart';
   GroupRepository,
   GroupEventRepository,
   GroupQueryService,
-  MemberRepository,
+  MemberQueryService,
   TripEntryRepository,
 ])
 void main() {
   late MockGroupRepository mockGroupRepository;
   late MockGroupEventRepository mockGroupEventRepository;
   late MockGroupQueryService mockGroupQueryService;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
   late MockTripEntryRepository mockTripEntryRepository;
   late Member testMember;
   late GroupDto groupWithMembers1;
@@ -39,7 +39,7 @@ void main() {
     mockGroupRepository = MockGroupRepository();
     mockGroupEventRepository = MockGroupEventRepository();
     mockGroupQueryService = MockGroupQueryService();
-    mockMemberRepository = MockMemberRepository();
+    mockMemberQueryService = MockMemberQueryService();
     mockTripEntryRepository = MockTripEntryRepository();
     testMember = Member(
       id: 'test-member-id',
@@ -77,7 +77,7 @@ void main() {
       groupRepositoryProvider.overrideWithValue(mockGroupRepository),
       groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-      memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+      memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
       tripEntryRepositoryProvider.overrideWithValue(mockTripEntryRepository),
     ];
   });
@@ -259,7 +259,7 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -293,7 +293,7 @@ void main() {
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),

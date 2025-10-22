@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -6,20 +7,28 @@ import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/member_invitation.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
+
 import 'accept_invitation_usecase_test.mocks.dart';
 
-@GenerateMocks([MemberInvitationRepository, MemberRepository])
+@GenerateMocks([
+  MemberInvitationRepository,
+  MemberRepository,
+  MemberQueryService,
+])
 void main() {
   late AcceptInvitationUseCase useCase;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     mockMemberRepository = MockMemberRepository();
+    mockMemberQueryService = MockMemberQueryService();
     useCase = AcceptInvitationUseCase(
       mockMemberInvitationRepository,
       mockMemberRepository,
+      mockMemberQueryService,
     );
   });
 
@@ -41,7 +50,7 @@ void main() {
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
-        mockMemberRepository.getMemberById('invitee-id'),
+        mockMemberQueryService.getMemberById('invitee-id'),
       ).thenAnswer((_) async => member);
       when(
         mockMemberRepository.updateMember(updatedMember),
@@ -55,7 +64,7 @@ void main() {
       verify(
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).called(1);
-      verify(mockMemberRepository.getMemberById('invitee-id')).called(1);
+      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verify(mockMemberRepository.updateMember(updatedMember)).called(1);
     });
 
@@ -75,7 +84,7 @@ void main() {
       verify(
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).called(1);
-      verifyNever(mockMemberRepository.getMemberById(any));
+      verifyNever(mockMemberQueryService.getMemberById(any));
       verifyNever(mockMemberRepository.saveMember(any));
     });
 
@@ -94,7 +103,7 @@ void main() {
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
-        mockMemberRepository.getMemberById('invitee-id'),
+        mockMemberQueryService.getMemberById('invitee-id'),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -105,7 +114,7 @@ void main() {
       verify(
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).called(1);
-      verify(mockMemberRepository.getMemberById('invitee-id')).called(1);
+      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verifyNever(mockMemberRepository.saveMember(any));
     });
 
@@ -129,7 +138,7 @@ void main() {
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
-        mockMemberRepository.getMemberById('invitee-id'),
+        mockMemberQueryService.getMemberById('invitee-id'),
       ).thenAnswer((_) async => member);
 
       // Act
@@ -140,7 +149,7 @@ void main() {
       verify(
         mockMemberInvitationRepository.getByInvitationCode(invitationCode),
       ).called(1);
-      verify(mockMemberRepository.getMemberById('invitee-id')).called(1);
+      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verifyNever(mockMemberRepository.updateMember(any));
     });
   });

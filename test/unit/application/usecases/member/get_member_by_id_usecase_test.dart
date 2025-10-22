@@ -1,20 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 
 import 'get_member_by_id_usecase_test.mocks.dart';
 
-@GenerateMocks([MemberRepository])
+@GenerateMocks([MemberQueryService])
 void main() {
   late GetMemberByIdUseCase useCase;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
-    mockMemberRepository = MockMemberRepository();
-    useCase = GetMemberByIdUseCase(mockMemberRepository);
+    mockMemberQueryService = MockMemberQueryService();
+    useCase = GetMemberByIdUseCase(mockMemberQueryService);
   });
 
   group('GetMemberByIdUseCase', () {
@@ -29,7 +29,7 @@ void main() {
     test('有効なIDでメンバー情報を正常に取得できる', () async {
       // Arrange
       when(
-        mockMemberRepository.getMemberById('member123'),
+        mockMemberQueryService.getMemberById('member123'),
       ).thenAnswer((_) async => testMember);
 
       // Act
@@ -37,13 +37,13 @@ void main() {
 
       // Assert
       expect(result, equals(testMember));
-      verify(mockMemberRepository.getMemberById('member123')).called(1);
+      verify(mockMemberQueryService.getMemberById('member123')).called(1);
     });
 
     test('存在しないIDを指定した場合、nullを返す', () async {
       // Arrange
       when(
-        mockMemberRepository.getMemberById('nonexistent'),
+        mockMemberQueryService.getMemberById('nonexistent'),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -51,13 +51,13 @@ void main() {
 
       // Assert
       expect(result, isNull);
-      verify(mockMemberRepository.getMemberById('nonexistent')).called(1);
+      verify(mockMemberQueryService.getMemberById('nonexistent')).called(1);
     });
 
     test('空のIDを指定した場合、nullを返す', () async {
       // Arrange
       when(
-        mockMemberRepository.getMemberById(''),
+        mockMemberQueryService.getMemberById(''),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -65,7 +65,7 @@ void main() {
 
       // Assert
       expect(result, isNull);
-      verify(mockMemberRepository.getMemberById('')).called(1);
+      verify(mockMemberQueryService.getMemberById('')).called(1);
     });
   });
 }

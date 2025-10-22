@@ -1,20 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
 
 import 'get_managed_members_usecase_test.mocks.dart';
 
-@GenerateMocks([MemberRepository])
+@GenerateMocks([MemberQueryService])
 void main() {
   late GetManagedMembersUsecase usecase;
-  late MockMemberRepository mockMemberRepository;
+  late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
-    mockMemberRepository = MockMemberRepository();
-    usecase = GetManagedMembersUsecase(mockMemberRepository);
+    mockMemberQueryService = MockMemberQueryService();
+    usecase = GetManagedMembersUsecase(mockMemberQueryService);
   });
 
   group('GetManagedMembersUsecase', () {
@@ -61,7 +61,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           'admin-member-id',
           orderBy: anyNamed('orderBy'),
         ),
@@ -73,7 +73,7 @@ void main() {
       // Assert
       expect(result, equals(expectedMembers));
       verify(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           'admin-member-id',
           orderBy: anyNamed('orderBy'),
         ),
@@ -96,7 +96,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           'admin-member-id',
           orderBy: anyNamed('orderBy'),
         ),
@@ -108,7 +108,7 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           'admin-member-id',
           orderBy: anyNamed('orderBy'),
         ),

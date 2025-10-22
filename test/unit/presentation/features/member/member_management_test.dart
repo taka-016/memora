@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member.dart';
@@ -20,12 +22,14 @@ import 'member_management_test.mocks.dart';
   GroupRepository,
   MemberEventRepository,
   MemberInvitationRepository,
+  MemberQueryService,
 ])
 void main() {
   late MockMemberRepository mockMemberRepository;
   late MockGroupRepository mockGroupRepository;
   late MockMemberEventRepository mockMemberEventRepository;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
+  late MockMemberQueryService mockMemberQueryService;
   late Member testMember;
   late List<Override> providerOverrides;
 
@@ -34,6 +38,7 @@ void main() {
     mockGroupRepository = MockGroupRepository();
     mockMemberEventRepository = MockMemberEventRepository();
     mockMemberInvitationRepository = MockMemberInvitationRepository();
+    mockMemberQueryService = MockMemberQueryService();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -56,7 +61,7 @@ void main() {
 
     // 共通的なモック設定: getMemberByIdはデフォルトでtestMemberを返す
     when(
-      mockMemberRepository.getMemberById(testMember.id),
+      mockMemberQueryService.getMemberById(testMember.id),
     ).thenAnswer((_) async => testMember);
 
     providerOverrides = [
@@ -68,6 +73,7 @@ void main() {
       memberInvitationRepositoryProvider.overrideWithValue(
         mockMemberInvitationRepository,
       ),
+      memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
     ];
   });
 
@@ -108,7 +114,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -125,7 +131,7 @@ void main() {
 
       // Assert - データ取得の確認
       verify(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -175,7 +181,7 @@ void main() {
     ) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -195,7 +201,7 @@ void main() {
     testWidgets('メンバー追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -214,7 +220,7 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -257,7 +263,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -278,7 +284,7 @@ void main() {
 
       // Assert
       verify(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -310,7 +316,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -357,7 +363,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -395,14 +401,14 @@ void main() {
 
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
 
       when(
-        mockMemberRepository.getMemberById(testMember.id),
+        mockMemberQueryService.getMemberById(testMember.id),
       ).thenAnswer((_) async => null); // nullを返すように設定
 
       // Act
@@ -437,7 +443,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -533,7 +539,7 @@ void main() {
       );
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -543,7 +549,7 @@ void main() {
 
       // 初期ロード時は元のメンバー情報を返し、更新後は更新されたメンバー情報を返す
       var callCount = 0;
-      when(mockMemberRepository.getMemberById(testMember.id)).thenAnswer((
+      when(mockMemberQueryService.getMemberById(testMember.id)).thenAnswer((
         _,
       ) async {
         callCount++;
@@ -581,7 +587,7 @@ void main() {
       verify(mockMemberRepository.updateMember(any)).called(1);
 
       // DBから最新情報を再取得していることを確認（初期ロード時 + 編集後のリロード時）
-      verify(mockMemberRepository.getMemberById(testMember.id)).called(2);
+      verify(mockMemberQueryService.getMemberById(testMember.id)).called(2);
 
       // 更新後のメンバー情報が表示されること
       expect(find.text('更新されたユーザー'), findsOneWidget);
@@ -600,7 +606,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -634,7 +640,7 @@ void main() {
       ];
 
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
@@ -676,7 +682,7 @@ void main() {
     testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {
       // Arrange
       when(
-        mockMemberRepository.getMembersByOwnerId(
+        mockMemberQueryService.getMembersByOwnerId(
           testMember.id,
           orderBy: anyNamed('orderBy'),
         ),
