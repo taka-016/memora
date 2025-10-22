@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/interfaces/group_query_service.dart';
+import 'package:memora/application/interfaces/query_services/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/mappers/group_mapper.dart';
 import 'package:memora/application/mappers/group_member_mapper.dart';

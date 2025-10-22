@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/services/firestore_group_query_service.dart';
+import 'package:memora/infrastructure/services/query_services/firestore_group_query_service.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
-import '../../../helpers/test_exception.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'firestore_group_query_service_test.mocks.dart';
 
 @GenerateMocks([
