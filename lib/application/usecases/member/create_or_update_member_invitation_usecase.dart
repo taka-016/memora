@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/domain/entities/member_invitation.dart';
 import 'package:memora/domain/repositories/member_invitation_repository.dart';
@@ -8,22 +10,26 @@ final createOrUpdateMemberInvitationUsecaseProvider =
     Provider<CreateOrUpdateMemberInvitationUsecase>((ref) {
       return CreateOrUpdateMemberInvitationUsecase(
         ref.watch(memberInvitationRepositoryProvider),
+        ref.watch(memberInvitationQueryServiceProvider),
       );
     });
 
 class CreateOrUpdateMemberInvitationUsecase {
   final MemberInvitationRepository _memberInvitationRepository;
+  final MemberInvitationQueryService _memberInvitationQueryService;
 
-  CreateOrUpdateMemberInvitationUsecase(this._memberInvitationRepository);
+  CreateOrUpdateMemberInvitationUsecase(
+    this._memberInvitationRepository,
+    this._memberInvitationQueryService,
+  );
 
   Future<String> execute({
     required String inviteeId,
     required String inviterId,
   }) async {
     // 既存の招待があるか確認
-    final existingInvitation = await _memberInvitationRepository.getByInviteeId(
-      inviteeId,
-    );
+    final existingInvitation = await _memberInvitationQueryService
+        .getByInviteeId(inviteeId);
 
     final invitationCode = const Uuid().v4().replaceAll('-', '');
 
@@ -33,7 +39,9 @@ class CreateOrUpdateMemberInvitationUsecase {
         invitationCode: invitationCode,
         inviterId: inviterId,
       );
-      await _memberInvitationRepository.saveMemberInvitation(updatedInvitation);
+      await _memberInvitationRepository.updateMemberInvitation(
+        updatedInvitation,
+      );
     } else {
       // 新規招待の作成
       final newInvitation = MemberInvitation(

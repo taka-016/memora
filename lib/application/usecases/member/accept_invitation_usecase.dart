@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
 import 'package:memora/application/interfaces/query_services/member_query_service.dart';
-import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -10,26 +10,26 @@ final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
   ref,
 ) {
   return AcceptInvitationUseCase(
-    ref.watch(memberInvitationRepositoryProvider),
+    ref.watch(memberInvitationQueryServiceProvider),
     ref.watch(memberRepositoryProvider),
     ref.watch(memberQueryServiceProvider),
   );
 });
 
 class AcceptInvitationUseCase {
-  final MemberInvitationRepository _memberInvitationRepository;
+  final MemberInvitationQueryService _memberInvitationQueryService;
   final MemberRepository _memberRepository;
   final MemberQueryService _memberQueryService;
 
   AcceptInvitationUseCase(
-    this._memberInvitationRepository,
+    this._memberInvitationQueryService,
     this._memberRepository,
     this._memberQueryService,
   );
 
   Future<bool> execute(String invitationCode, String userId) async {
     try {
-      final memberInvitation = await _memberInvitationRepository
+      final memberInvitation = await _memberInvitationQueryService
           .getByInvitationCode(invitationCode);
 
       if (memberInvitation == null) {

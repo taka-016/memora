@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
 import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -23,6 +24,7 @@ import 'member_management_test.mocks.dart';
   MemberEventRepository,
   MemberInvitationRepository,
   MemberQueryService,
+  MemberInvitationQueryService,
 ])
 void main() {
   late MockMemberRepository mockMemberRepository;
@@ -30,6 +32,7 @@ void main() {
   late MockMemberEventRepository mockMemberEventRepository;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late MockMemberQueryService mockMemberQueryService;
+  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
   late Member testMember;
   late List<Override> providerOverrides;
 
@@ -39,6 +42,7 @@ void main() {
     mockMemberEventRepository = MockMemberEventRepository();
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     mockMemberQueryService = MockMemberQueryService();
+    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
     testMember = Member(
       id: 'test-member-id',
       accountId: 'test-account-id',
@@ -74,6 +78,9 @@ void main() {
         mockMemberInvitationRepository,
       ),
       memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
+      memberInvitationQueryServiceProvider.overrideWithValue(
+        mockMemberInvitationQueryService,
+      ),
     ];
   });
 
@@ -647,7 +654,7 @@ void main() {
       ).thenAnswer((_) async => managedMembers);
 
       when(
-        mockMemberInvitationRepository.getByInviteeId('managed-member-1'),
+        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
       ).thenAnswer((_) async => null);
 
       when(

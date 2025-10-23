@@ -1,32 +1,32 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
 import 'package:memora/application/interfaces/query_services/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/domain/entities/member.dart';
 import 'package:memora/domain/entities/member_invitation.dart';
-import 'package:memora/domain/repositories/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member_repository.dart';
 
 import 'accept_invitation_usecase_test.mocks.dart';
 
 @GenerateMocks([
-  MemberInvitationRepository,
+  MemberInvitationQueryService,
   MemberRepository,
   MemberQueryService,
 ])
 void main() {
   late AcceptInvitationUseCase useCase;
-  late MockMemberInvitationRepository mockMemberInvitationRepository;
+  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
   late MockMemberRepository mockMemberRepository;
   late MockMemberQueryService mockMemberQueryService;
 
   setUp(() {
-    mockMemberInvitationRepository = MockMemberInvitationRepository();
+    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
     mockMemberRepository = MockMemberRepository();
     mockMemberQueryService = MockMemberQueryService();
     useCase = AcceptInvitationUseCase(
-      mockMemberInvitationRepository,
+      mockMemberInvitationQueryService,
       mockMemberRepository,
       mockMemberQueryService,
     );
@@ -47,7 +47,7 @@ void main() {
       final updatedMember = member.copyWith(accountId: userId);
 
       when(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
         mockMemberQueryService.getMemberById('invitee-id'),
@@ -62,7 +62,7 @@ void main() {
       // Assert
       expect(result, isTrue);
       verify(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).called(1);
       verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verify(mockMemberRepository.updateMember(updatedMember)).called(1);
@@ -73,7 +73,7 @@ void main() {
       const invitationCode = 'invalid-code';
       const userId = 'user-id';
       when(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -82,7 +82,7 @@ void main() {
       // Assert
       expect(result, isFalse);
       verify(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).called(1);
       verifyNever(mockMemberQueryService.getMemberById(any));
       verifyNever(mockMemberRepository.saveMember(any));
@@ -100,7 +100,7 @@ void main() {
       );
 
       when(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
         mockMemberQueryService.getMemberById('invitee-id'),
@@ -112,7 +112,7 @@ void main() {
       // Assert
       expect(result, isFalse);
       verify(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).called(1);
       verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verifyNever(mockMemberRepository.saveMember(any));
@@ -135,7 +135,7 @@ void main() {
       );
 
       when(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).thenAnswer((_) async => memberInvitation);
       when(
         mockMemberQueryService.getMemberById('invitee-id'),
@@ -147,7 +147,7 @@ void main() {
       // Assert
       expect(result, isFalse);
       verify(
-        mockMemberInvitationRepository.getByInvitationCode(invitationCode),
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).called(1);
       verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
       verifyNever(mockMemberRepository.updateMember(any));

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
@@ -7,15 +8,18 @@ import 'package:memora/domain/repositories/member_invitation_repository.dart';
 
 import 'create_or_update_member_invitation_usecase_test.mocks.dart';
 
-@GenerateMocks([MemberInvitationRepository])
+@GenerateMocks([MemberInvitationRepository, MemberInvitationQueryService])
 void main() {
   late MockMemberInvitationRepository mockMemberInvitationRepository;
+  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
   late CreateOrUpdateMemberInvitationUsecase usecase;
 
   setUp(() {
     mockMemberInvitationRepository = MockMemberInvitationRepository();
+    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
     usecase = CreateOrUpdateMemberInvitationUsecase(
       mockMemberInvitationRepository,
+      mockMemberInvitationQueryService,
     );
   });
 
@@ -26,7 +30,7 @@ void main() {
       const inviterId = 'inviter456';
 
       when(
-        mockMemberInvitationRepository.getByInviteeId(inviteeId),
+        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
       ).thenAnswer((_) async => null);
 
       // Act
@@ -39,7 +43,7 @@ void main() {
       expect(invitationCode, isNotNull);
       expect(invitationCode, isNotEmpty);
 
-      // 新規作成のsaveが呼ばれることを確認
+      // 新規作成処理が呼ばれることを確認
       verify(
         mockMemberInvitationRepository.saveMemberInvitation(any),
       ).called(1);
@@ -57,7 +61,7 @@ void main() {
       );
 
       when(
-        mockMemberInvitationRepository.getByInviteeId(inviteeId),
+        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
       ).thenAnswer((_) async => existingInvitation);
 
       // Act
@@ -71,9 +75,9 @@ void main() {
       expect(invitationCode, isNotEmpty);
       expect(invitationCode, isNot(equals('old_code'))); // 新しいコードが生成される
 
-      // 更新のsaveが呼ばれることを確認
+      // 更新処理が呼ばれることを確認
       verify(
-        mockMemberInvitationRepository.saveMemberInvitation(any),
+        mockMemberInvitationRepository.updateMemberInvitation(any),
       ).called(1);
     });
 
@@ -83,7 +87,7 @@ void main() {
       const inviterId = 'inviter456';
 
       when(
-        mockMemberInvitationRepository.getByInviteeId(inviteeId),
+        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
       ).thenAnswer((_) async => null);
 
       // Act

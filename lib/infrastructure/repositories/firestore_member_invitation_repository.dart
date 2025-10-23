@@ -13,53 +13,20 @@ class FirestoreMemberInvitationRepository
   @override
   Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {
     final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+    await _firestore.collection('member_invitations').add(data);
+  }
 
-    if (memberInvitation.id.isEmpty) {
-      // 新規作成
-      await _firestore.collection('member_invitations').add(data);
-    } else {
-      // 更新
-      await _firestore
-          .collection('member_invitations')
-          .doc(memberInvitation.id)
-          .set(data);
-    }
+  @override
+  Future<void> updateMemberInvitation(MemberInvitation memberInvitation) async {
+    final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+    await _firestore
+        .collection('member_invitations')
+        .doc(memberInvitation.id)
+        .update(data);
   }
 
   @override
   Future<void> deleteMemberInvitation(String id) async {
     await _firestore.collection('member_invitations').doc(id).delete();
-  }
-
-  @override
-  Future<MemberInvitation?> getByInviteeId(String inviteeId) async {
-    final querySnapshot = await _firestore
-        .collection('member_invitations')
-        .where('inviteeId', isEqualTo: inviteeId)
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      return null;
-    }
-
-    return FirestoreMemberInvitationMapper.fromFirestore(
-      querySnapshot.docs.first,
-    );
-  }
-
-  @override
-  Future<MemberInvitation?> getByInvitationCode(String invitationCode) async {
-    final querySnapshot = await _firestore
-        .collection('member_invitations')
-        .where('invitationCode', isEqualTo: invitationCode)
-        .get();
-
-    if (querySnapshot.docs.isEmpty) {
-      return null;
-    }
-
-    return FirestoreMemberInvitationMapper.fromFirestore(
-      querySnapshot.docs.first,
-    );
   }
 }
