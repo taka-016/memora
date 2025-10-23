@@ -83,26 +83,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   }
 
   @override
-  Future<List<TripEntry>> getTripEntriesByGroupId(String groupId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('trip_entries')
-          .where('groupId', isEqualTo: groupId)
-          .get();
-      return snapshot.docs
-          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreTripEntryQueryService.getTripEntriesByGroupId: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
-    }
-  }
-
-  @override
   Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {

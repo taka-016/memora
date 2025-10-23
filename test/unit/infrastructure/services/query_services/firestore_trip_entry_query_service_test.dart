@@ -155,42 +155,6 @@ void main() {
       expect(result, isNull);
     });
 
-    test('グループIDで旅行一覧を取得する', () async {
-      const groupId = 'group123';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(
-        mockTripEntriesCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.data()).thenReturn({
-        'groupId': groupId,
-        'tripName': '秋旅行',
-        'tripStartDate': Timestamp.fromDate(DateTime(2024, 10, 1)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2024, 10, 3)),
-        'tripMemo': '紅葉を楽しむ',
-      });
-      when(mockDoc.id).thenReturn('trip888');
-
-      final result = await service.getTripEntriesByGroupId(groupId);
-
-      expect(result, hasLength(1));
-      expect(result.first.tripName, '秋旅行');
-    });
-
-    test('グループIDで旅行取得時に例外が発生すると空のリストを返す', () async {
-      when(
-        mockTripEntriesCollection.where(any, isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('Firestore error'));
-
-      final result = await service.getTripEntriesByGroupId('group123');
-
-      expect(result, isEmpty);
-    });
-
     test('グループIDと年で旅行一覧を取得し、orderByを適用する', () async {
       const groupId = 'group001';
       const year = 2024;

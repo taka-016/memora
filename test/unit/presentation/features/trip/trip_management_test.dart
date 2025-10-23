@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/pin.dart';
@@ -12,15 +14,17 @@ import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository])
+@GenerateMocks([TripEntryRepository, TripEntryQueryService])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
+  late MockTripEntryQueryService mockTripEntryQueryService;
   late List<TripEntry> testTripEntries;
   late Pin testPin;
   late TripEntry detailedTripEntry;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
+    mockTripEntryQueryService = MockTripEntryQueryService();
     testPin = Pin(
       pinId: 'pin-1',
       tripId: 'trip-1',
@@ -58,11 +62,15 @@ void main() {
   Widget createApp({
     required Widget home,
     TripEntryRepository? tripEntryRepository,
+    TripEntryQueryService? tripEntryQueryService,
   }) {
     return ProviderScope(
       overrides: [
         tripEntryRepositoryProvider.overrideWithValue(
           tripEntryRepository ?? mockTripEntryRepository,
+        ),
+        tripEntryQueryServiceProvider.overrideWithValue(
+          tripEntryQueryService ?? mockTripEntryQueryService,
         ),
       ],
       child: MaterialApp(home: home),
@@ -76,7 +84,7 @@ void main() {
     testWidgets('初期化時に旅行リストが読み込まれること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -105,7 +113,7 @@ void main() {
 
       // Assert - データ取得の確認
       verify(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -128,7 +136,7 @@ void main() {
     testWidgets('旅行がない場合でも画面が表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -164,7 +172,7 @@ void main() {
     testWidgets('旅行追加ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -195,7 +203,7 @@ void main() {
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -228,7 +236,7 @@ void main() {
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -261,7 +269,7 @@ void main() {
 
       // Assert
       verify(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -272,14 +280,14 @@ void main() {
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -312,7 +320,7 @@ void main() {
       expect(find.text('札幌駅'), findsOneWidget);
 
       verify(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -323,14 +331,14 @@ void main() {
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -360,7 +368,7 @@ void main() {
       expect(find.text('旅行編集'), findsNothing);
       expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
       verify(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -371,14 +379,14 @@ void main() {
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
       when(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -421,7 +429,7 @@ void main() {
       // Assert - 更新処理が呼ばれることを確認
       verify(mockTripEntryRepository.updateTripEntry(any)).called(1);
       verify(
-        mockTripEntryRepository.getTripEntryById(
+        mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -432,7 +440,7 @@ void main() {
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -470,7 +478,7 @@ void main() {
     testWidgets('削除確認ダイアログが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -507,7 +515,7 @@ void main() {
     testWidgets('削除実行時にdeleteTripEntryが呼ばれること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -553,7 +561,7 @@ void main() {
       // Arrange
       bool backPressed = false;
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),
@@ -589,7 +597,7 @@ void main() {
     testWidgets('旅行新規作成時にsaveTripEntryが呼ばれること', (WidgetTester tester) async {
       // Arrange
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           testGroupId,
           testYear,
           orderBy: anyNamed('orderBy'),

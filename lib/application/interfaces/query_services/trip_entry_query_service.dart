@@ -8,8 +8,6 @@ abstract class TripEntryQueryService {
     List<OrderBy>? pinDetailsOrderBy,
   });
 
-  Future<List<TripEntry>> getTripEntriesByGroupId(String groupId);
-
   Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {

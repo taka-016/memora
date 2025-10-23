@@ -1,20 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final getTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
-  return GetTripEntriesUsecase(ref.watch(tripEntryRepositoryProvider));
+  return GetTripEntriesUsecase(ref.watch(tripEntryQueryServiceProvider));
 });
 
 class GetTripEntriesUsecase {
-  final TripEntryRepository _tripEntryRepository;
+  final TripEntryQueryService _tripEntryQueryService;
 
-  GetTripEntriesUsecase(this._tripEntryRepository);
+  GetTripEntriesUsecase(this._tripEntryQueryService);
 
   Future<List<TripEntry>> execute(String groupId, int year) async {
-    return await _tripEntryRepository.getTripEntriesByGroupIdAndYear(
+    return await _tripEntryQueryService.getTripEntriesByGroupIdAndYear(
       groupId,
       year,
       orderBy: [const OrderBy('tripStartDate', descending: false)],

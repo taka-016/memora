@@ -1,21 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
 
 import 'get_trip_entry_by_id_usecase_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository])
+@GenerateMocks([TripEntryQueryService])
 void main() {
   group('GetTripEntryByIdUsecase', () {
     late GetTripEntryByIdUsecase usecase;
-    late MockTripEntryRepository mockRepository;
+    late MockTripEntryQueryService mockQueryService;
 
     setUp(() {
-      mockRepository = MockTripEntryRepository();
-      usecase = GetTripEntryByIdUsecase(mockRepository);
+      mockQueryService = MockTripEntryQueryService();
+      usecase = GetTripEntryByIdUsecase(mockQueryService);
     });
 
     test('旅行詳細が取得できること', () async {
@@ -29,7 +29,7 @@ void main() {
       );
 
       when(
-        mockRepository.getTripEntryById(
+        mockQueryService.getTripEntryById(
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -40,7 +40,7 @@ void main() {
 
       expect(result, equals(tripEntry));
       verify(
-        mockRepository.getTripEntryById(
+        mockQueryService.getTripEntryById(
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -51,7 +51,7 @@ void main() {
     test('存在しない旅行IDの場合はnullを返すこと', () async {
       const tripId = 'unknown';
       when(
-        mockRepository.getTripEntryById(
+        mockQueryService.getTripEntryById(
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
@@ -62,7 +62,7 @@ void main() {
 
       expect(result, isNull);
       verify(
-        mockRepository.getTripEntryById(
+        mockQueryService.getTripEntryById(
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),

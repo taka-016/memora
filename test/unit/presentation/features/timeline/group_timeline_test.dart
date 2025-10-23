@@ -3,19 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 import 'group_timeline_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository])
+@GenerateMocks([TripEntryQueryService])
 void main() {
   late GroupDto testGroupWithMembers;
-  late MockTripEntryRepository mockTripEntryRepository;
+  late MockTripEntryQueryService mockTripEntryQueryService;
 
   setUp(() {
     testGroupWithMembers = GroupDto(
@@ -32,11 +32,11 @@ void main() {
       ],
     );
 
-    mockTripEntryRepository = MockTripEntryRepository();
+    mockTripEntryQueryService = MockTripEntryQueryService();
 
     // デフォルトの挙動を設定
     when(
-      mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+      mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
         any,
         any,
         orderBy: anyNamed('orderBy'),
@@ -44,11 +44,11 @@ void main() {
     ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget({TripEntryRepository? tripEntryRepository}) {
+  Widget createTestWidget({TripEntryQueryService? tripEntryQueryService}) {
     return ProviderScope(
       overrides: [
-        tripEntryRepositoryProvider.overrideWithValue(
-          tripEntryRepository ?? mockTripEntryRepository,
+        tripEntryQueryServiceProvider.overrideWithValue(
+          tripEntryQueryService ?? mockTripEntryQueryService,
         ),
       ],
       child: MaterialApp(
@@ -308,8 +308,8 @@ void main() {
       // Arrange
       final widget = ProviderScope(
         overrides: [
-          tripEntryRepositoryProvider.overrideWithValue(
-            mockTripEntryRepository,
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
           ),
         ],
         child: MaterialApp(
@@ -353,8 +353,8 @@ void main() {
 
       final widget = ProviderScope(
         overrides: [
-          tripEntryRepositoryProvider.overrideWithValue(
-            mockTripEntryRepository,
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
           ),
         ],
         child: MaterialApp(
@@ -393,8 +393,8 @@ void main() {
 
       final widget = ProviderScope(
         overrides: [
-          tripEntryRepositoryProvider.overrideWithValue(
-            mockTripEntryRepository,
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
           ),
         ],
         child: MaterialApp(
@@ -452,7 +452,7 @@ void main() {
       ];
 
       when(
-        mockTripEntryRepository.getTripEntriesByGroupIdAndYear(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           '1',
           currentYear,
           orderBy: anyNamed('orderBy'),
@@ -477,8 +477,8 @@ void main() {
 
       Widget widget = ProviderScope(
         overrides: [
-          tripEntryRepositoryProvider.overrideWithValue(
-            mockTripEntryRepository,
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
           ),
         ],
         child: MaterialApp(

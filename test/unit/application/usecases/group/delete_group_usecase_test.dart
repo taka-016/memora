@@ -35,9 +35,6 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => []);
-      when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
@@ -59,9 +56,6 @@ void main() {
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
-        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => []);
-      when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
       ).thenAnswer((_) async => {});
       when(
@@ -79,9 +73,6 @@ void main() {
       when(
         mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
       ).thenAnswer((_) async => {});
-      when(
-        mockTripEntryRepository.getTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => []);
       when(
         mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
       ).thenAnswer((_) async => {});

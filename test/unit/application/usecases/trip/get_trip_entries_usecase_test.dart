@@ -1,21 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
 
 import 'get_trip_entries_usecase_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository])
+@GenerateMocks([TripEntryQueryService])
 void main() {
   group('GetTripEntriesUsecase', () {
     late GetTripEntriesUsecase usecase;
-    late MockTripEntryRepository mockRepository;
+    late MockTripEntryQueryService mockQueryService;
 
     setUp(() {
-      mockRepository = MockTripEntryRepository();
-      usecase = GetTripEntriesUsecase(mockRepository);
+      mockQueryService = MockTripEntryQueryService();
+      usecase = GetTripEntriesUsecase(mockQueryService);
     });
 
     test('グループIDと年で旅行エントリが正常に取得されること', () async {
@@ -40,7 +40,7 @@ void main() {
       ];
 
       when(
-        mockRepository.getTripEntriesByGroupIdAndYear(
+        mockQueryService.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
           orderBy: anyNamed('orderBy'),
@@ -53,7 +53,7 @@ void main() {
       // Assert
       expect(result, equals(expectedTripEntries));
       verify(
-        mockRepository.getTripEntriesByGroupIdAndYear(
+        mockQueryService.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
           orderBy: anyNamed('orderBy'),
