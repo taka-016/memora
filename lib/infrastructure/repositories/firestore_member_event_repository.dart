@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/member_event_repository.dart';
 import 'package:memora/domain/entities/member_event.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/firestore_member_event_mapper.dart';
 
 class FirestoreMemberEventRepository implements MemberEventRepository {
@@ -18,45 +17,8 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   }
 
   @override
-  Future<List<MemberEvent>> getMemberEvents() async {
-    try {
-      final snapshot = await _firestore.collection('member_events').get();
-      return snapshot.docs
-          .map((doc) => FirestoreMemberEventMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreMemberEventRepository.getMemberEvents: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
-    }
-  }
-
-  @override
   Future<void> deleteMemberEvent(String memberEventId) async {
     await _firestore.collection('member_events').doc(memberEventId).delete();
-  }
-
-  @override
-  Future<List<MemberEvent>> getMemberEventsByMemberId(String memberId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('member_events')
-          .where('memberId', isEqualTo: memberId)
-          .get();
-      return snapshot.docs
-          .map((doc) => FirestoreMemberEventMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreMemberEventRepository.getMemberEventsByMemberId: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
-    }
   }
 
   @override

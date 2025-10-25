@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/group_event_repository.dart';
 import 'package:memora/domain/entities/group_event.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/firestore_group_event_mapper.dart';
 
 class FirestoreGroupEventRepository implements GroupEventRepository {
@@ -18,45 +17,8 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
   }
 
   @override
-  Future<List<GroupEvent>> getGroupEvents() async {
-    try {
-      final snapshot = await _firestore.collection('group_events').get();
-      return snapshot.docs
-          .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreGroupEventRepository.getGroupEvents: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
-    }
-  }
-
-  @override
   Future<void> deleteGroupEvent(String groupEventId) async {
     await _firestore.collection('group_events').doc(groupEventId).delete();
-  }
-
-  @override
-  Future<List<GroupEvent>> getGroupEventsByGroupId(String groupId) async {
-    try {
-      final snapshot = await _firestore
-          .collection('group_events')
-          .where('groupId', isEqualTo: groupId)
-          .get();
-      return snapshot.docs
-          .map((doc) => FirestoreGroupEventMapper.fromFirestore(doc))
-          .toList();
-    } catch (e, stack) {
-      logger.e(
-        'FirestoreGroupEventRepository.getGroupEventsByGroupId: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return [];
-    }
   }
 
   @override

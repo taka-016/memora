@@ -4,7 +4,6 @@ import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/repositories/firestore_group_event_repository.dart';
 import 'package:memora/domain/entities/group_event.dart';
-import '../../../helpers/test_exception.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -70,37 +69,6 @@ void main() {
       ).called(1);
     });
 
-    test('getGroupEventsがFirestoreからGroupEventのリストを返す', () async {
-      when(mockCollection.get()).thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
-      when(mockDoc1.id).thenReturn('groupevent001');
-      when(mockDoc1.data()).thenReturn({
-        'groupId': 'group001',
-        'type': 'meeting',
-        'name': 'テストイベント',
-        'startDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
-        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2)),
-        'memo': 'テストメモ',
-      });
-
-      final result = await repository.getGroupEvents();
-
-      expect(result.length, 1);
-      expect(result[0].id, 'groupevent001');
-      expect(result[0].groupId, 'group001');
-      expect(result[0].type, 'meeting');
-      expect(result[0].name, 'テストイベント');
-      expect(result[0].memo, 'テストメモ');
-    });
-
-    test('getGroupEventsがエラー時に空のリストを返す', () async {
-      when(mockCollection.get()).thenThrow(TestException('Firestore error'));
-
-      final result = await repository.getGroupEvents();
-
-      expect(result, isEmpty);
-    });
-
     test('deleteGroupEventがgroup_events collectionの該当ドキュメントを削除する', () async {
       const groupEventId = 'groupevent001';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
@@ -112,31 +80,6 @@ void main() {
 
       verify(mockCollection.doc(groupEventId)).called(1);
       verify(mockDocRef.delete()).called(1);
-    });
-
-    test('getGroupEventsByGroupIdが特定のグループのイベントリストを返す', () async {
-      const groupId = 'group001';
-
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
-      when(mockQuerySnapshot.docs).thenReturn([mockDoc1]);
-      when(mockDoc1.id).thenReturn('groupevent001');
-      when(mockDoc1.data()).thenReturn({
-        'groupId': groupId,
-        'type': 'meeting',
-        'name': 'テストイベント',
-        'startDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
-        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2)),
-        'memo': 'テストメモ',
-      });
-
-      final result = await repository.getGroupEventsByGroupId(groupId);
-
-      expect(result.length, 1);
-      expect(result[0].id, 'groupevent001');
-      expect(result[0].groupId, groupId);
     });
 
     test('deleteGroupEventsByGroupIdが指定したgroupIdの全イベントを削除する', () async {
