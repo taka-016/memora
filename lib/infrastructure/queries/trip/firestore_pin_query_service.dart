@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 
@@ -72,25 +73,7 @@ class FirestorePinQueryService implements PinQueryService {
         .get();
 
     return pinsSnapshot.docs.map((doc) {
-      final data = doc.data();
-      return PinDto(
-        pinId: data['pinId'] as String? ?? doc.id,
-        tripId: data['tripId'] as String?,
-        groupId: data['groupId'] as String? ?? groupId,
-        latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
-        longitude: (data['longitude'] as num?)?.toDouble() ?? 0.0,
-        locationName: data['locationName'] as String?,
-        visitStartDate: _timestampToDateTime(data['visitStartDate']),
-        visitEndDate: _timestampToDateTime(data['visitEndDate']),
-        visitMemo: data['visitMemo'] as String?,
-      );
+      return PinMapper.fromFirestore(doc);
     }).toList();
-  }
-
-  DateTime? _timestampToDateTime(dynamic value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    return null;
   }
 }

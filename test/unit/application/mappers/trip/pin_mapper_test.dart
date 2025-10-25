@@ -1,10 +1,89 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'pin_mapper_test.mocks.dart';
+
+@GenerateMocks([DocumentSnapshot])
 void main() {
   group('PinMapper', () {
+    test('FirestoreからPinDtoに正しく変換する', () {
+      // Arrange
+      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.data()).thenReturn({
+        'pinId': 'pin-123',
+        'tripId': 'trip-456',
+        'groupId': 'group-789',
+        'latitude': 35.6762,
+        'longitude': 139.6503,
+        'locationName': '東京駅',
+        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1, 10, 0)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2024, 1, 1, 12, 0)),
+        'visitMemo': '観光で訪問',
+      });
+
+      // Act
+      final dto = PinMapper.fromFirestore(mockDoc);
+
+      // Assert
+      expect(dto.pinId, 'pin-123');
+      expect(dto.tripId, 'trip-456');
+      expect(dto.groupId, 'group-789');
+      expect(dto.latitude, 35.6762);
+      expect(dto.longitude, 139.6503);
+      expect(dto.locationName, '東京駅');
+      expect(dto.visitStartDate, DateTime(2024, 1, 1, 10, 0));
+      expect(dto.visitEndDate, DateTime(2024, 1, 1, 12, 0));
+      expect(dto.visitMemo, '観光で訪問');
+    });
+
+    test('Firestoreのデータが一部nullの場合も正しく変換できる', () {
+      // Arrange
+      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.data()).thenReturn({
+        'pinId': 'pin-123',
+        'tripId': 'trip-456',
+        'latitude': 35.6762,
+        'longitude': 139.6503,
+      });
+
+      // Act
+      final dto = PinMapper.fromFirestore(mockDoc);
+
+      // Assert
+      expect(dto.pinId, 'pin-123');
+      expect(dto.tripId, 'trip-456');
+      expect(dto.latitude, 35.6762);
+      expect(dto.longitude, 139.6503);
+      expect(dto.locationName, isNull);
+      expect(dto.visitStartDate, isNull);
+      expect(dto.visitEndDate, isNull);
+      expect(dto.visitMemo, isNull);
+    });
+
+    test('pinIdが未設定の場合はデフォルト値を設定する', () {
+      // Arrange
+      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockDoc.data()).thenReturn({
+        'tripId': 'trip-456',
+        'latitude': 35.6762,
+        'longitude': 139.6503,
+      });
+
+      // Act
+      final dto = PinMapper.fromFirestore(mockDoc);
+
+      // Assert
+      expect(dto.pinId, '');
+      expect(dto.tripId, 'trip-456');
+      expect(dto.latitude, 35.6762);
+      expect(dto.longitude, 139.6503);
+    });
+
     test('PinエンティティをPinDtoに正しく変換する', () {
       // Arrange
       final pin = Pin(
