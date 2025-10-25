@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/application/mappers/pin_mapper.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';

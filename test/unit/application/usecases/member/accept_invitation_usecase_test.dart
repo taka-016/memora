@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
-import 'package:memora/application/interfaces/query_services/member_query_service.dart';
+import 'package:memora/application/queries/member/member_invitation_query_service.dart';
+import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/member_invitation.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
 
 import 'accept_invitation_usecase_test.mocks.dart';
 

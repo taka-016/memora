@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 
 void main() {

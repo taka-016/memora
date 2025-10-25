@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/domain/entities/group.dart';
+import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({

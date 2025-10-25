@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/user.dart';
-import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';

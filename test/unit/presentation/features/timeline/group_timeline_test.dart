@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
 import 'group_timeline_test.mocks.dart';

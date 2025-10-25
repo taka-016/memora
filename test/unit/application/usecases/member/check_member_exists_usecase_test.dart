@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/interfaces/query_services/member_query_service.dart';
+import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/entities/account/user.dart';
 
 import '../../../../helpers/test_exception.dart';
 import 'check_member_exists_usecase_test.mocks.dart';

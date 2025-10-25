@@ -8,7 +8,7 @@ import 'package:memora/application/usecases/member/create_member_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/member/member.dart';
 import 'member_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
 

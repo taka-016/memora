@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/account/user.dart';
 
 void main() {
   group('AuthState', () {

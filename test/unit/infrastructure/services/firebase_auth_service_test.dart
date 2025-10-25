@@ -3,7 +3,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:memora/domain/entities/user.dart' as domain;
+import 'package:memora/domain/entities/account/user.dart' as domain;
 import 'package:memora/infrastructure/services/firebase_auth_service.dart';
 
 import 'firebase_auth_service_test.mocks.dart';

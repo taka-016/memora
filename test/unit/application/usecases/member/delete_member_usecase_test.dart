@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/domain/repositories/member_event_repository.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/group/group_repository.dart';
+import 'package:memora/domain/repositories/member/member_event_repository.dart';
 
 import 'delete_member_usecase_test.mocks.dart';
 

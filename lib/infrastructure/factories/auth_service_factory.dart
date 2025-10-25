@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/interfaces/auth_service.dart';
+import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/config/auth_type.dart';
 import 'package:memora/infrastructure/config/auth_type_provider.dart';
 import 'package:memora/infrastructure/services/firebase_auth_service.dart';

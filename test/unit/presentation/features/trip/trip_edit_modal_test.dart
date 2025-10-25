@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 

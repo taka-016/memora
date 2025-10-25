@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
 import 'create_trip_entry_usecase_test.mocks.dart';
 

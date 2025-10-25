@@ -1,18 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/repositories/group_event_repository.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
-import 'package:memora/domain/repositories/member_event_repository.dart';
-import 'package:memora/domain/repositories/member_invitation_repository.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/repositories/group/group_event_repository.dart';
+import 'package:memora/domain/repositories/group/group_repository.dart';
+import 'package:memora/domain/repositories/member/member_event_repository.dart';
+import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
-import 'package:memora/infrastructure/repositories/firestore_group_event_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_group_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_event_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_invitation_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_member_repository.dart';
-import 'package:memora/infrastructure/repositories/firestore_trip_entry_repository.dart';
+import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
+import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
+import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
+import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
+import 'package:memora/infrastructure/repositories/member/firestore_member_repository.dart';
+import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
   return RepositoryFactory.create<GroupRepository>(ref: ref);

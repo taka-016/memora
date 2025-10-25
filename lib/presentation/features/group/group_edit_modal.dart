@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/mappers/group_mapper.dart';
-import 'package:memora/domain/entities/group.dart';
+import 'package:memora/application/mappers/group/group_mapper.dart';
+import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 
 class GroupEditModal extends StatefulWidget {

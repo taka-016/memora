@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/entities/user.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'create_member_from_user_usecase_test.mocks.dart';
 import '../../../../helpers/test_exception.dart';
 

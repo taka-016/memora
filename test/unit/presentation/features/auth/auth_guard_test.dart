@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/user.dart';
+import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';

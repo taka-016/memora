@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 class TripCell extends StatelessWidget {
   static const double _itemHeight = 32.0;

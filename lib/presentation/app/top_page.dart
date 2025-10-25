@@ -13,7 +13,7 @@ import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/core/app_logger.dart';
 

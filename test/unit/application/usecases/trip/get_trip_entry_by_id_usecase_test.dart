@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 import 'get_trip_entry_by_id_usecase_test.mocks.dart';
 

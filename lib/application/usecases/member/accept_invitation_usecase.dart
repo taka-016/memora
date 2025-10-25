@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
-import 'package:memora/application/interfaces/query_services/member_query_service.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/application/queries/member/member_invitation_query_service.dart';
+import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/app_logger.dart';

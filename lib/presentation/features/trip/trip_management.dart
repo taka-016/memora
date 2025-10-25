@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/mappers/pin_mapper.dart';
+import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'trip_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';

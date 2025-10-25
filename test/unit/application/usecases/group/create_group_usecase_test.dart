@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
-import 'package:memora/domain/entities/group.dart';
-import 'package:memora/domain/repositories/group_repository.dart';
+import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/domain/repositories/group/group_repository.dart';
 
 import 'create_group_usecase_test.mocks.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/location.dart' as domain;
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
-import 'package:memora/domain/interfaces/nearby_location_service.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
 import 'google_places_api_nearby_location_service_test.mocks.dart';

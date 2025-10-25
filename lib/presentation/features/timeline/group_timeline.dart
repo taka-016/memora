@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
 import 'package:memora/core/app_logger.dart';
 

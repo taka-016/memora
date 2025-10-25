@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:memora/domain/interfaces/nearby_location_service.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/domain/value_objects/location.dart' as domain;
 import 'package:http/http.dart' as http;
 import 'package:memora/core/app_logger.dart';

@@ -1,16 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/interfaces/query_services/group_query_service.dart';
-import 'package:memora/application/interfaces/query_services/member_invitation_query_service.dart';
-import 'package:memora/application/interfaces/query_services/member_query_service.dart';
-import 'package:memora/application/interfaces/query_services/pin_query_service.dart';
-import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_invitation_query_service.dart';
+import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
-import 'package:memora/infrastructure/services/query_services/firestore_group_query_service.dart';
-import 'package:memora/infrastructure/services/query_services/firestore_member_invitation_query_service.dart';
-import 'package:memora/infrastructure/services/query_services/firestore_member_query_service.dart';
-import 'package:memora/infrastructure/services/query_services/firestore_pin_query_service.dart';
-import 'package:memora/infrastructure/services/query_services/firestore_trip_entry_query_service.dart';
+import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
+import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
+import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
   return QueryServiceFactory.create<GroupQueryService>(ref: ref);

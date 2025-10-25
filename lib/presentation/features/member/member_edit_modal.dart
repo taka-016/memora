@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/entities/member.dart';
+import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class MemberEditModal extends StatefulWidget {

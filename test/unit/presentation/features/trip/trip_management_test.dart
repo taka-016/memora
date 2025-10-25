@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/interfaces/query_services/trip_entry_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/entities/pin.dart';
-import 'package:memora/domain/entities/trip_entry.dart';
-import 'package:memora/domain/repositories/trip_entry_repository.dart';
+import 'package:memora/domain/entities/trip/pin.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import '../../../../helpers/test_exception.dart';

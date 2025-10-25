@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/dtos/pin/pin_dto.dart';
-import 'package:memora/domain/interfaces/nearby_location_service.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 import 'package:memora/env/env.dart';

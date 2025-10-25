@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/interfaces/auth_service.dart';
-import 'package:memora/domain/entities/user.dart';
+import 'package:memora/application/services/auth_service.dart';
+import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';

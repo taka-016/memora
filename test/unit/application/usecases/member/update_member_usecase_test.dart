@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
-import 'package:memora/domain/entities/member.dart';
-import 'package:memora/domain/repositories/member_repository.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
 
 import 'update_member_usecase_test.mocks.dart';
 
