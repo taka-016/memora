@@ -40,6 +40,16 @@
 - [x] TripEntryRepositoryのgetTripEntryById,getTripEntriesByGroupId,getTripEntriesByGroupIdAndYearをTripEntryQueryServiceに実装する（段階的に移行するので、この時点ではTripEntryRepositoryにも残しておく）
 - [x] MemberRepositoryのgetMembers,getMemberById,getMemberByAccountId,getMembersByOwnerIdをMemberQueryServiceに実装する（段階的に移行するので、この時点ではMemberRepositoryにも残しておく）
 - [x] MemberInvitationRepositoryのgetByInviteeId,getByInvitationCodeをMemberInvitationQueryServiceに実装する（段階的に移行するので、この時点ではMemberInvitationRepositoryにも残しておく）
+- [x] TripEntryDtoを作成する
+- [x] PinDetailDtoを作成する
+- [x] MemberInvitationDtoを作成する
+- [x] GroupEventDtoを作成する
+- [x] MemberEventDtoを作成する
+- [ ] TripEntryMapperを作成する
+- [ ] PinDetailMapperを作成する
+- [ ] MemberInvitationMapperを作成する
+- [ ] GroupEventMapperを作成する
+- [ ] MemberEventMapperを作成する
 
 ## マップの表示
 
