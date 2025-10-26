@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 
 void main() {
@@ -26,6 +27,7 @@ void main() {
       expect(pinDto.visitStartDate, isNull);
       expect(pinDto.visitEndDate, isNull);
       expect(pinDto.visitMemo, isNull);
+      expect(pinDto.details, isNull);
     });
 
     test('全パラメータでコンストラクタが正しく動作する', () {
@@ -39,6 +41,10 @@ void main() {
       final visitStartDate = DateTime(2024, 1, 1, 10, 0);
       final visitEndDate = DateTime(2024, 1, 1, 12, 0);
       const visitMemo = '観光で訪問';
+      const details = [
+        PinDetailDto(pinId: pinId, memo: '詳細1'),
+        PinDetailDto(pinId: pinId, memo: '詳細2'),
+      ];
 
       // Act
       final pinDto = PinDto(
@@ -51,6 +57,7 @@ void main() {
         visitStartDate: visitStartDate,
         visitEndDate: visitEndDate,
         visitMemo: visitMemo,
+        details: details,
       );
 
       // Assert
@@ -63,6 +70,7 @@ void main() {
       expect(pinDto.visitStartDate, visitStartDate);
       expect(pinDto.visitEndDate, visitEndDate);
       expect(pinDto.visitMemo, visitMemo);
+      expect(pinDto.details, details);
     });
 
     test('copyWithメソッドで必須パラメータが正しく更新される', () {
@@ -94,12 +102,17 @@ void main() {
         longitude: 139.6503,
         locationName: '元の場所名',
         visitMemo: '元のメモ',
+        details: [
+          PinDetailDto(pinId: 'pin-123', memo: '詳細1'),
+          PinDetailDto(pinId: 'pin-123', memo: '詳細2'),
+        ],
       );
 
       // Act
       final copiedDto = originalDto.copyWith(
         locationName: '新しい場所名',
         visitMemo: '新しいメモ',
+        details: [PinDetailDto(pinId: 'pin-123', memo: '新しい詳細1')],
       );
 
       // Assert
@@ -108,6 +121,8 @@ void main() {
       expect(copiedDto.longitude, 139.6503);
       expect(copiedDto.locationName, '新しい場所名');
       expect(copiedDto.visitMemo, '新しいメモ');
+      expect(copiedDto.details!.length, 1);
+      expect(copiedDto.details![0].memo, '新しい詳細1');
     });
 
     test('copyWithメソッドでnullを指定しても元の値が保持される', () {
@@ -120,6 +135,7 @@ void main() {
         longitude: 139.6503,
         locationName: '東京駅',
         visitMemo: '観光で訪問',
+        details: [PinDetailDto(pinId: 'pin-123', memo: '詳細1')],
       );
 
       // Act
@@ -133,6 +149,8 @@ void main() {
       expect(copiedDto.longitude, 139.6503);
       expect(copiedDto.locationName, '東京駅');
       expect(copiedDto.visitMemo, '観光で訪問');
+      expect(copiedDto.details!.length, 1);
+      expect(copiedDto.details![0].memo, '詳細1');
     });
 
     test('同じ値を持つインスタンスは等しい', () {
@@ -146,6 +164,10 @@ void main() {
       final visitStartDate = DateTime(2024, 1, 1, 10, 0);
       final visitEndDate = DateTime(2024, 1, 1, 12, 0);
       const visitMemo = '観光で訪問';
+      const details = [
+        PinDetailDto(pinId: pinId, memo: '詳細1'),
+        PinDetailDto(pinId: pinId, memo: '詳細2'),
+      ];
 
       final dto1 = PinDto(
         pinId: pinId,
@@ -157,6 +179,7 @@ void main() {
         visitStartDate: visitStartDate,
         visitEndDate: visitEndDate,
         visitMemo: visitMemo,
+        details: details,
       );
 
       final dto2 = PinDto(
@@ -169,6 +192,7 @@ void main() {
         visitStartDate: visitStartDate,
         visitEndDate: visitEndDate,
         visitMemo: visitMemo,
+        details: details,
       );
 
       // Act & Assert
@@ -186,6 +210,7 @@ void main() {
         longitude: 139.6503,
         locationName: '東京駅',
         visitMemo: '観光で訪問',
+        details: [PinDetailDto(pinId: 'pin-123', memo: '詳細1')],
       );
 
       final dto2 = PinDto(
@@ -196,6 +221,7 @@ void main() {
         longitude: -118.2437,
         locationName: 'ロサンゼルス',
         visitMemo: '仕事で訪問',
+        details: [PinDetailDto(pinId: 'pin-124', memo: '詳細2')],
       );
 
       // Act & Assert
