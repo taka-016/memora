@@ -45,11 +45,11 @@
 - [x] MemberInvitationDtoを作成する
 - [x] GroupEventDtoを作成する
 - [x] MemberEventDtoを作成する
-- [ ] TripEntryMapperを作成する
-- [ ] PinDetailMapperを作成する
-- [ ] MemberInvitationMapperを作成する
-- [ ] GroupEventMapperを作成する
-- [ ] MemberEventMapperを作成する
+- [x] TripEntryMapperを作成する
+- [x] PinDetailMapperを作成する
+- [x] MemberInvitationMapperを作成する
+- [x] GroupEventMapperを作成する
+- [x] MemberEventMapperを作成する
 
 ## マップの表示
 
