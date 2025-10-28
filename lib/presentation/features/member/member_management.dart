@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
@@ -8,12 +9,11 @@ import 'package:memora/application/usecases/member/create_member_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'member_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
 class MemberManagement extends ConsumerStatefulWidget {
-  final Member member;
+  final MemberDto member;
 
   const MemberManagement({super.key, required this.member});
 
@@ -30,7 +30,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
   late final CreateOrUpdateMemberInvitationUsecase
   _createOrUpdateMemberInvitationUsecase;
 
-  List<Member> _managedMembers = [];
+  List<MemberDto> _managedMembers = [];
   bool _isLoading = true;
 
   @override
@@ -117,7 +117,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     );
   }
 
-  Future<void> _showEditMemberDialog(Member member) async {
+  Future<void> _showEditMemberDialog(MemberDto member) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await showDialog(
@@ -155,7 +155,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     );
   }
 
-  Future<void> _showDeleteConfirmDialog(Member member) async {
+  Future<void> _showDeleteConfirmDialog(MemberDto member) async {
     await DeleteConfirmDialog.show(
       context,
       title: 'メンバー削除',
@@ -164,7 +164,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     );
   }
 
-  Future<void> _deleteMember(Member member) async {
+  Future<void> _deleteMember(MemberDto member) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
@@ -237,7 +237,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     );
   }
 
-  Widget _buildMemberItem(Member member, int index) {
+  Widget _buildMemberItem(MemberDto member, int index) {
     final isCurrentUser = index == 0;
 
     return Card(
@@ -252,14 +252,14 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     );
   }
 
-  Widget? _buildMemberSubtitle(Member member) {
+  Widget? _buildMemberSubtitle(MemberDto member) {
     if (member.email != null || member.phoneNumber != null) {
       return Text(member.email ?? member.phoneNumber ?? '');
     }
     return null;
   }
 
-  Widget? _buildMemberTrailing(Member member, bool isCurrentUser) {
+  Widget? _buildMemberTrailing(MemberDto member, bool isCurrentUser) {
     if (!isCurrentUser && member.accountId == null) {
       return IconButton(
         icon: const Icon(Icons.delete, color: Colors.red),
@@ -269,7 +269,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     return null;
   }
 
-  Future<void> _handleMemberInvite(Member member) async {
+  Future<void> _handleMemberInvite(MemberDto member) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {

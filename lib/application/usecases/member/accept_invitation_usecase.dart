@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -48,7 +49,9 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      final updatedMember = member.copyWith(accountId: userId);
+      final updatedMember = MemberMapper.toEntity(
+        member.copyWith(accountId: userId),
+      );
       await _memberRepository.updateMember(updatedMember);
 
       return true;

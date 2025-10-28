@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class MemberEditModal extends StatefulWidget {
-  final Member? member;
+  final MemberDto? member;
   final Function(Member) onSave;
-  final Function(Member)? onInvite;
+  final Function(MemberDto)? onInvite;
 
   const MemberEditModal({
     super.key,

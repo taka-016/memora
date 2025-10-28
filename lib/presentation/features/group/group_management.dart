@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'group_edit_modal.dart';
 import 'package:memora/core/app_logger.dart';
 
 class GroupManagement extends ConsumerStatefulWidget {
-  final Member member;
+  final MemberDto member;
 
   const GroupManagement({super.key, required this.member});
 

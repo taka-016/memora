@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,12 +16,12 @@ import 'group_list_test.mocks.dart';
 @GenerateMocks([GroupQueryService])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
-  late Member testMember;
+  late MemberDto testMember;
   late GroupMemberDto testMemberDto;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
-    testMember = Member(
+    testMember = MemberDto(
       id: 'admin1',
       hiraganaFirstName: 'たろう',
       hiraganaLastName: 'やまだ',
@@ -42,7 +42,7 @@ void main() {
     );
   });
 
-  Widget createTestWidget({Member? member}) {
+  Widget createTestWidget({MemberDto? member}) {
     return ProviderScope(
       overrides: [
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),

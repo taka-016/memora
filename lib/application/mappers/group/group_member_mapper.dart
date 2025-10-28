@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
-import 'package:memora/domain/entities/member/member.dart';
 
 class GroupMemberMapper {
   static GroupMemberDto fromFirestore(
@@ -33,7 +33,7 @@ class GroupMemberMapper {
     );
   }
 
-  static GroupMemberDto fromMember(Member member, String groupId) {
+  static GroupMemberDto fromMember(MemberDto member, String groupId) {
     return GroupMemberDto(
       memberId: member.id,
       groupId: groupId,
@@ -58,7 +58,7 @@ class GroupMemberMapper {
   }
 
   static List<GroupMemberDto> fromMemberList(
-    List<Member> members,
+    List<MemberDto> members,
     String groupId,
   ) {
     return members.map((member) => fromMember(member, groupId)).toList();

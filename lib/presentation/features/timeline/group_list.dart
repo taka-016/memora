@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
 class GroupList extends ConsumerStatefulWidget {
-  final Member member;
+  final MemberDto member;
   final void Function(GroupDto)? onGroupSelected;
 
   const GroupList({super.key, required this.member, this.onGroupSelected});

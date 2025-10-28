@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:mockito/annotations.dart';
@@ -23,7 +23,7 @@ void main() {
   group('GetGroupsWithMembersUsecase', () {
     test('memberを引数に取り、リポジトリの単一メソッドを使用してグループと関連メンバーを取得できること', () async {
       // Arrange
-      final member = Member(
+      final member = MemberDto(
         id: 'member1',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
@@ -80,7 +80,7 @@ void main() {
 
     test('リポジトリが空のリストを返した場合、空のリストが返されること', () async {
       // Arrange
-      final member = Member(
+      final member = MemberDto(
         id: 'member1',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
@@ -118,7 +118,7 @@ void main() {
 
     test('リポジトリで例外が発生した場合、例外がそのまま伝播されること', () async {
       // Arrange
-      final member = Member(
+      final member = MemberDto(
         id: 'member1',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
@@ -147,7 +147,7 @@ void main() {
 
     test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
       // Arrange
-      final member = Member(
+      final member = MemberDto(
         id: 'member1',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',

@@ -3,9 +3,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/mappers/member/firestore_member_mapper.dart';
 
 class FirestoreMemberQueryService implements MemberQueryService {
   final FirebaseFirestore _firestore;
@@ -39,11 +37,11 @@ class FirestoreMemberQueryService implements MemberQueryService {
   }
 
   @override
-  Future<Member?> getMemberById(String memberId) async {
+  Future<MemberDto?> getMemberById(String memberId) async {
     try {
       final doc = await _firestore.collection('members').doc(memberId).get();
       if (doc.exists) {
-        return FirestoreMemberMapper.fromFirestore(doc);
+        return MemberMapper.fromFirestore(doc);
       }
       return null;
     } catch (e, stack) {
@@ -57,7 +55,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
   }
 
   @override
-  Future<Member?> getMemberByAccountId(String accountId) async {
+  Future<MemberDto?> getMemberByAccountId(String accountId) async {
     try {
       final querySnapshot = await _firestore
           .collection('members')
@@ -65,7 +63,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        return FirestoreMemberMapper.fromFirestore(querySnapshot.docs.first);
+        return MemberMapper.fromFirestore(querySnapshot.docs.first);
       }
       return null;
     } catch (e, stack) {
@@ -79,7 +77,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
   }
 
   @override
-  Future<List<Member>> getMembersByOwnerId(
+  Future<List<MemberDto>> getMembersByOwnerId(
     String ownerId, {
     List<OrderBy>? orderBy,
   }) async {
@@ -96,7 +94,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
+          .map((doc) => MemberMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(

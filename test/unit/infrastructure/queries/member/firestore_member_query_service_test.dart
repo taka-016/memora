@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:mockito/annotations.dart';
@@ -81,7 +81,7 @@ void main() {
       final result = await service.getMemberById(memberId);
 
       expect(result, isNotNull);
-      expect(result, isA<Member>());
+      expect(result, isA<MemberDto>());
       expect(result!.displayName, '鈴木花子');
     });
 

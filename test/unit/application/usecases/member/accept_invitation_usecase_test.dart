@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
@@ -43,8 +44,12 @@ void main() {
         inviterId: 'inviter-id',
         invitationCode: invitationCode,
       );
-      const member = Member(id: 'invitee-id', displayName: 'Invitee User');
-      final updatedMember = member.copyWith(accountId: userId);
+      const member = MemberDto(id: 'invitee-id', displayName: 'Invitee User');
+      final updatedMember = Member(
+        id: 'invitee-id',
+        displayName: 'Invitee User',
+        accountId: userId,
+      );
 
       when(
         mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
@@ -128,7 +133,7 @@ void main() {
         inviterId: 'inviter-id',
         invitationCode: invitationCode,
       );
-      const member = Member(
+      const member = MemberDto(
         id: 'invitee-id',
         displayName: 'Invitee User',
         accountId: 'existing-account-id',

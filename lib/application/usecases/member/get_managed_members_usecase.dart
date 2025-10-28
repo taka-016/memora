@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
@@ -15,7 +15,7 @@ class GetManagedMembersUsecase {
 
   GetManagedMembersUsecase(this._memberQueryService);
 
-  Future<List<Member>> execute(Member ownerMember) async {
+  Future<List<MemberDto>> execute(MemberDto ownerMember) async {
     return await _memberQueryService.getMembersByOwnerId(
       ownerMember.id,
       orderBy: [const OrderBy('displayName', descending: false)],

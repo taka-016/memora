@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -119,7 +119,7 @@ void main() {
     group('fromMember', () {
       test('MemberをGroupMemberDtoに変換できる', () {
         // Arrange
-        const member = Member(
+        const member = MemberDto(
           id: 'member1',
           accountId: 'account1',
           ownerId: 'owner1',
@@ -167,7 +167,7 @@ void main() {
 
       test('最小限のフィールドのみ持つMemberを変換できる', () {
         // Arrange
-        const member = Member(id: 'member2', displayName: '佐藤花子');
+        const member = MemberDto(id: 'member2', displayName: '佐藤花子');
         const groupId = 'group2';
 
         // Act
@@ -189,13 +189,17 @@ void main() {
       test('MemberのリストをGroupMemberDtoのリストに変換できる', () {
         // Arrange
         const members = [
-          Member(id: 'member1', displayName: '山田太郎', email: 'taro@example.com'),
-          Member(
+          MemberDto(
+            id: 'member1',
+            displayName: '山田太郎',
+            email: 'taro@example.com',
+          ),
+          MemberDto(
             id: 'member2',
             displayName: '佐藤花子',
             email: 'hanako@example.com',
           ),
-          Member(id: 'member3', displayName: '鈴木一郎'),
+          MemberDto(id: 'member3', displayName: '鈴木一郎'),
         ];
         const groupId = 'group1';
 
@@ -220,7 +224,7 @@ void main() {
 
       test('空のリストを変換できる', () {
         // Arrange
-        const members = <Member>[];
+        const members = <MemberDto>[];
         const groupId = 'group1';
 
         // Act

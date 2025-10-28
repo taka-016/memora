@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 
 import 'get_managed_members_usecase_test.mocks.dart';
 
@@ -20,7 +20,7 @@ void main() {
   group('GetManagedMembersUsecase', () {
     test('所有者メンバーが提供された時に管理されるメンバーのリストを返すこと', () async {
       // Arrange
-      final ownerMember = Member(
+      final ownerMember = MemberDto(
         id: 'admin-member-id',
         accountId: 'admin-account-id',
         ownerId: 'admin-owner-id',
@@ -34,7 +34,7 @@ void main() {
       );
 
       final expectedMembers = [
-        Member(
+        MemberDto(
           id: 'member-1',
           accountId: null,
           ownerId: 'admin-member-id',
@@ -46,7 +46,7 @@ void main() {
           gender: 'female',
           birthday: DateTime(1995, 5, 10),
         ),
-        Member(
+        MemberDto(
           id: 'member-2',
           accountId: null,
           ownerId: 'admin-member-id',
@@ -82,7 +82,7 @@ void main() {
 
     test('管理されるメンバーが存在しない場合に空のリストを返すこと', () async {
       // Arrange
-      final ownerMember = Member(
+      final ownerMember = MemberDto(
         id: 'admin-member-id',
         accountId: 'admin-account-id',
         ownerId: 'admin-owner-id',

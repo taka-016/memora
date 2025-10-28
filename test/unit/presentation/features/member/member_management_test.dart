@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
@@ -33,7 +33,7 @@ void main() {
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late MockMemberQueryService mockMemberQueryService;
   late MockMemberInvitationQueryService mockMemberInvitationQueryService;
-  late Member testMember;
+  late MemberDto testMember;
   late List<Override> providerOverrides;
 
   setUp(() {
@@ -43,7 +43,7 @@ void main() {
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     mockMemberQueryService = MockMemberQueryService();
     mockMemberInvitationQueryService = MockMemberInvitationQueryService();
-    testMember = Member(
+    testMember = MemberDto(
       id: 'test-member-id',
       accountId: 'test-account-id',
       ownerId: null,
@@ -84,7 +84,7 @@ void main() {
     ];
   });
 
-  Widget createApp({Member? member, Widget? home}) {
+  Widget createApp({MemberDto? member, Widget? home}) {
     final defaultHome = Scaffold(
       body: MemberManagement(member: member ?? testMember),
     );
@@ -99,7 +99,7 @@ void main() {
     testWidgets('初期化時にメンバーリストが読み込まれること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -248,7 +248,7 @@ void main() {
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -301,7 +301,7 @@ void main() {
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -348,7 +348,7 @@ void main() {
     testWidgets('メンバー情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -434,14 +434,14 @@ void main() {
       // Arrange
       final managedMembers = [
         // accountIdを持つメンバー（削除ボタンが表示されない）
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: 'account-id-1',
           ownerId: testMember.id,
           displayName: 'Account Linked Member',
         ),
         // accountIdを持たないメンバー（削除ボタンが表示される）
-        Member(
+        MemberDto(
           id: 'managed-member-2',
           accountId: null,
           ownerId: testMember.id,
@@ -503,7 +503,7 @@ void main() {
     ) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -525,7 +525,7 @@ void main() {
       ];
 
       // 更新後のログインユーザーメンバー
-      final updatedTestMember = Member(
+      final updatedTestMember = MemberDto(
         id: testMember.id,
         accountId: testMember.accountId,
         ownerId: testMember.ownerId,
@@ -604,7 +604,7 @@ void main() {
     testWidgets('既存メンバーの編集画面に招待ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,
@@ -638,7 +638,7 @@ void main() {
     ) async {
       // Arrange
       final managedMembers = [
-        Member(
+        MemberDto(
           id: 'managed-member-1',
           accountId: null,
           ownerId: testMember.id,

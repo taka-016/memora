@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/entities/account/user.dart';
 
 import '../../../../helpers/test_exception.dart';
@@ -27,7 +27,7 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-      const testMember = Member(id: 'member-id', displayName: 'Test User');
+      const testMember = MemberDto(id: 'member-id', displayName: 'Test User');
       when(
         mockMemberQueryService.getMemberByAccountId('test-user-id'),
       ).thenAnswer((_) async => testMember);

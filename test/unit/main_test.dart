@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -28,13 +28,11 @@ void main() {
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
-  late MockPinQueryService mockPinQueryService;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
-    mockPinQueryService = MockPinQueryService();
 
     const testUser = User(
       id: 'test_user_id',
@@ -42,7 +40,7 @@ void main() {
       isVerified: true,
     );
 
-    final testMember = Member(
+    final testMember = MemberDto(
       id: 'test_member_id',
       displayName: 'テストユーザー',
       kanjiLastName: 'テスト',
@@ -60,9 +58,6 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => []);
-    when(
-      mockPinQueryService.getPinsByMemberId(any),
-    ).thenAnswer((_) async => []);
   });
 
   Widget createTestApp() {
@@ -74,7 +69,7 @@ void main() {
         memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+        // pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       ],
       child: MaterialApp(
         title: 'memora',

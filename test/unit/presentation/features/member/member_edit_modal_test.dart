@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
@@ -23,7 +24,7 @@ void main() {
 
     testWidgets('編集モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       // Arrange
-      final existingMember = Member(
+      final existingMember = MemberDto(
         id: 'test-id',
         accountId: 'test-account',
         ownerId: null,
@@ -59,7 +60,7 @@ void main() {
 
     testWidgets('既存メンバーの情報がフォームに正しく表示されること', (WidgetTester tester) async {
       // Arrange
-      final existingMember = Member(
+      final existingMember = MemberDto(
         id: 'test-id',
         accountId: 'test-account',
         ownerId: null,

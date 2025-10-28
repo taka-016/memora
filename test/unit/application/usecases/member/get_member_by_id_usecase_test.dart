@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 
 import 'get_member_by_id_usecase_test.mocks.dart';
 
@@ -18,7 +18,7 @@ void main() {
   });
 
   group('GetMemberByIdUseCase', () {
-    final testMember = Member(
+    final testMember = MemberDto(
       id: 'member123',
       accountId: 'user123',
       displayName: 'テストユーザー',

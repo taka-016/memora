@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 
 import 'get_managed_groups_with_members_usecase_test.mocks.dart';
 
@@ -23,7 +23,7 @@ void main() {
     test('管理するグループとそのメンバーの一覧を返すこと', () async {
       // arrange
       const ownerId = 'admin123';
-      final ownerMember = Member(
+      final ownerMember = MemberDto(
         id: ownerId,
         displayName: 'Admin User',
         email: 'admin@example.com',
@@ -89,7 +89,7 @@ void main() {
     test('グループが見つからない場合に空のリストを返すこと', () async {
       // arrange
       const ownerId = 'admin123';
-      final ownerMember = Member(
+      final ownerMember = MemberDto(
         id: ownerId,
         displayName: 'Admin User',
         email: 'admin@example.com',
@@ -122,7 +122,7 @@ void main() {
     test('groupsのnameの昇順とmembersのdisplayNameの昇順でorderByパラメータが渡されること', () async {
       // arrange
       const ownerId = 'admin123';
-      final ownerMember = Member(
+      final ownerMember = MemberDto(
         id: ownerId,
         displayName: 'Admin User',
         email: 'admin@example.com',

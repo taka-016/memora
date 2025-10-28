@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
@@ -30,7 +30,7 @@ void main() {
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockTripEntryRepository mockTripEntryRepository;
-  late Member testMember;
+  late MemberDto testMember;
   late GroupDto groupWithMembers1;
   late GroupDto groupWithMembers2;
   late List<Override> providerOverrides;
@@ -41,7 +41,7 @@ void main() {
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockTripEntryRepository = MockTripEntryRepository();
-    testMember = Member(
+    testMember = MemberDto(
       id: 'test-member-id',
       accountId: 'test-account-id',
       ownerId: null,

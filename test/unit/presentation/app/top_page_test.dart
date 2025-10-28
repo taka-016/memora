@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -10,7 +11,6 @@ import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -54,7 +54,7 @@ void main() {
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
-  late Member testMember;
+  late MemberDto testMember;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
@@ -66,7 +66,7 @@ void main() {
       mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
 
-    testMember = Member(
+    testMember = MemberDto(
       id: 'admin1',
       hiraganaFirstName: 'たろう',
       hiraganaLastName: 'やまだ',
@@ -108,7 +108,7 @@ void main() {
     MockAuthService? authService,
     MockAuthNotifier? authNotifier,
   }) {
-    final defaultMember = Member(
+    final defaultMember = MemberDto(
       id: 'default_member',
       displayName: '表示名',
       kanjiLastName: 'デフォルト',
@@ -389,7 +389,7 @@ void main() {
 
     testWidgets('ログインユーザーのメールアドレスが表示される', (WidgetTester tester) async {
       // Arrange
-      final currentMember = Member(
+      final currentMember = MemberDto(
         id: 'current_member',
         displayName: 'ログインユーザー',
         kanjiLastName: '佐藤',
@@ -586,7 +586,7 @@ void main() {
 
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
       // Arrange
-      final defaultMember = Member(
+      final defaultMember = MemberDto(
         id: 'default_member',
         displayName: '表示名',
         kanjiLastName: 'デフォルト',

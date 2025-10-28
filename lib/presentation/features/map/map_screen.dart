@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/usecases/trip/get_pins_by_member_id_usecase.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class MapScreen extends ConsumerStatefulWidget {
-  final Member member;
+  final MemberDto member;
   final bool isTestEnvironment;
 
   const MapScreen({
