@@ -298,6 +298,31 @@ void main() {
       ).called(2);
     });
 
+    testWidgets('メンバー追加ボタンタップで新規作成画面に遷移すること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      // Act
+      await tester.pumpWidget(createApp());
+
+      await tester.pumpAndSettle();
+
+      // タップ前は新規作成モーダルが表示されていないことを確認
+      expect(find.text('メンバー新規作成'), findsNothing);
+
+      // メンバー追加ボタンをタップ
+      await tester.tap(find.text('メンバー追加'));
+      await tester.pumpAndSettle();
+
+      // 新規作成モーダルが開いていることを確認
+      expect(find.text('メンバー新規作成'), findsOneWidget);
+    });
+
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
@@ -343,6 +368,40 @@ void main() {
 
       // 編集モーダルが開いていることを確認
       expect(find.text('メンバー編集'), findsOneWidget);
+    });
+
+    testWidgets('メンバーの作成ができること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(createApp());
+
+      await tester.pumpAndSettle();
+
+      // メンバー追加ボタンをタップして新規作成モーダルを開く
+      await tester.tap(find.text('メンバー追加'));
+      await tester.pumpAndSettle();
+
+      // 表示名を入力
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '表示名'),
+        'New Member',
+      );
+
+      // 作成ボタンをタップ
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      // Assert - 作成処理が呼ばれることを確認
+      verify(mockMemberRepository.saveMember(any)).called(1);
     });
 
     testWidgets('メンバー情報の更新ができること', (WidgetTester tester) async {
@@ -498,9 +557,7 @@ void main() {
       );
     });
 
-    testWidgets('1行目のログインユーザーメンバーを編集後にDBから再取得されること', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メンバーを編集後にDBから再取得されること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
         MemberDto(
@@ -576,8 +633,8 @@ void main() {
       expect(find.text('Test User'), findsOneWidget);
       expect(find.text('更新されたユーザー'), findsNothing);
 
-      // 1行目のログインユーザーメンバーの行をタップ（編集）
-      await tester.tap(find.byType(ListTile).at(0));
+      // 管理メンバーの行をタップ（2番目のListTile）
+      await tester.tap(find.byType(ListTile).at(1));
       await tester.pump();
 
       // 編集モーダルが開いていることを確認
