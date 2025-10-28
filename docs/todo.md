@@ -50,6 +50,17 @@
 - [x] MemberInvitationMapperを作成する
 - [x] GroupEventMapperを作成する
 - [x] MemberEventMapperを作成する
+- [ ] FirestoreMemberQueryServiceのレスポンスはDtoを返すように変更する
+  - [x] getMembersの戻り値をMemberDtoに変更する
+  - [ ] getMemberByIdの戻り値をMemberDtoに変更する
+  - [ ] getMemberByAccountIdの戻り値をMemberDtoに変更する
+  - [ ] getMembersByOwnerIdの戻り値をMemberDtoに変更する
+- [ ] TripEntryQueryServiceのレスポンスはDtoを返すように変更する
+  - [ ] getTripEntryByIdの戻り値をTripEntryDtoに変更する
+  - [ ] getTripEntriesByGroupIdAndYearの戻り値をTripEntryDtoに変更する
+- [ ] MemberInvitationQueryServiceのレスポンスはDtoを返すように変更する
+  - [ ] getByInviteeIdの戻り値をMemberInvitationDtoに変更する
+  - [ ] getByInvitationCodeの戻り値をMemberInvitationDtoに変更する
 
 ## マップの表示
 

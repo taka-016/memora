@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/member/member.dart';
@@ -12,7 +14,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<List<Member>> getMembers({List<OrderBy>? orderBy}) async {
+  Future<List<MemberDto>> getMembers({List<OrderBy>? orderBy}) async {
     try {
       Query<Map<String, dynamic>> query = _firestore.collection('members');
 
@@ -24,7 +26,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
+          .map((doc) => MemberMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(
