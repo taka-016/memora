@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -52,7 +52,7 @@ void main() {
       final result = await service.getByInviteeId(inviteeId);
 
       expect(result, isNotNull);
-      expect(result, isA<MemberInvitation>());
+      expect(result, isA<MemberInvitationDto>());
       expect(result!.invitationCode, 'CODE123');
     });
 

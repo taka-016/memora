@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/mappers/member/member_invitation_mapper.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:uuid/uuid.dart';
@@ -40,7 +41,7 @@ class CreateOrUpdateMemberInvitationUsecase {
         inviterId: inviterId,
       );
       await _memberInvitationRepository.updateMemberInvitation(
-        updatedInvitation,
+        MemberInvitationMapper.toEntity(updatedInvitation),
       );
     } else {
       // 新規招待の作成

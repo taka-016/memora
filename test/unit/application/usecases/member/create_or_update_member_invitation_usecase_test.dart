@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
-import 'package:memora/domain/entities/member/member_invitation.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 
 import 'create_or_update_member_invitation_usecase_test.mocks.dart';
@@ -53,7 +53,7 @@ void main() {
       // Arrange
       const inviteeId = 'invitee123';
       const inviterId = 'inviter456';
-      const existingInvitation = MemberInvitation(
+      const existingInvitation = MemberInvitationDto(
         id: 'existing123',
         inviteeId: inviteeId,
         inviterId: 'old_inviter',

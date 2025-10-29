@@ -1,7 +1,7 @@
-import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 
 abstract class MemberInvitationQueryService {
-  Future<MemberInvitation?> getByInviteeId(String inviteeId);
+  Future<MemberInvitationDto?> getByInviteeId(String inviteeId);
 
-  Future<MemberInvitation?> getByInvitationCode(String invitationCode);
+  Future<MemberInvitationDto?> getByInvitationCode(String invitationCode);
 }

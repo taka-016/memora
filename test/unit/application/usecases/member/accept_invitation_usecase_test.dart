@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
-import 'package:memora/domain/entities/member/member_invitation.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 
 import 'accept_invitation_usecase_test.mocks.dart';
@@ -38,7 +38,7 @@ void main() {
       // Arrange
       const invitationCode = 'test-invitation-code';
       const userId = 'user-id';
-      const memberInvitation = MemberInvitation(
+      const memberInvitation = MemberInvitationDto(
         id: 'invitation-id',
         inviteeId: 'invitee-id',
         inviterId: 'inviter-id',
@@ -97,7 +97,7 @@ void main() {
       // Arrange
       const invitationCode = 'test-invitation-code';
       const userId = 'user-id';
-      const memberInvitation = MemberInvitation(
+      const memberInvitation = MemberInvitationDto(
         id: 'invitation-id',
         inviteeId: 'invitee-id',
         inviterId: 'inviter-id',
@@ -127,7 +127,7 @@ void main() {
       // Arrange
       const invitationCode = 'test-invitation-code';
       const userId = 'new-user-id';
-      const memberInvitation = MemberInvitation(
+      const memberInvitation = MemberInvitationDto(
         id: 'invitation-id',
         inviteeId: 'invitee-id',
         inviterId: 'inviter-id',
