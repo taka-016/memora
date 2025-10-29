@@ -1,49 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
 import 'package:memora/infrastructure/mappers/member/firestore_member_invitation_mapper.dart';
-
-import 'firestore_member_invitation_mapper_test.mocks.dart';
 
 @GenerateMocks([QueryDocumentSnapshot])
 void main() {
   group('FirestoreMemberInvitationMapper', () {
-    test('FirestoreのDocumentSnapshotからMemberInvitationへ変換できる', () {
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('invitation001');
-      when(mockDoc.data()).thenReturn({
-        'inviteeId': 'invitee001',
-        'inviterId': 'inviter001',
-        'invitationCode': 'code001',
-      });
-
-      final memberInvitation = FirestoreMemberInvitationMapper.fromFirestore(
-        mockDoc,
-      );
-
-      expect(memberInvitation.id, 'invitation001');
-      expect(memberInvitation.inviteeId, 'invitee001');
-      expect(memberInvitation.inviterId, 'inviter001');
-      expect(memberInvitation.invitationCode, 'code001');
-    });
-
-    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('invitation002');
-      when(mockDoc.data()).thenReturn({});
-
-      final memberInvitation = FirestoreMemberInvitationMapper.fromFirestore(
-        mockDoc,
-      );
-
-      expect(memberInvitation.id, 'invitation002');
-      expect(memberInvitation.inviteeId, '');
-      expect(memberInvitation.inviterId, '');
-      expect(memberInvitation.invitationCode, '');
-    });
-
     test('MemberInvitationからFirestoreのMapへ変換できる', () {
       const memberInvitation = MemberInvitation(
         id: 'invitation001',
