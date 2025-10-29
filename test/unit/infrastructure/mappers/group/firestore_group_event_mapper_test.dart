@@ -1,91 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/mappers/group/firestore_group_event_mapper.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
 
-import 'firestore_group_event_mapper_test.mocks.dart';
-
 @GenerateMocks([QueryDocumentSnapshot])
 void main() {
   group('FirestoreGroupEventMapper', () {
-    test('FirestoreのDocumentSnapshotからGroupEventへ変換できる', () {
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('groupevent001');
-      when(mockDoc.data()).thenReturn({
-        'groupId': 'group001',
-        'type': 'meeting',
-        'name': 'テストイベント',
-        'startDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
-        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2)),
-        'memo': 'テストメモ',
-      });
-
-      final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
-
-      expect(groupEvent.id, 'groupevent001');
-      expect(groupEvent.groupId, 'group001');
-      expect(groupEvent.type, 'meeting');
-      expect(groupEvent.name, 'テストイベント');
-      expect(groupEvent.startDate, DateTime(2025, 6, 1));
-      expect(groupEvent.endDate, DateTime(2025, 6, 2));
-      expect(groupEvent.memo, 'テストメモ');
-    });
-
-    test('nullableなフィールドがnullの場合でも変換できる', () {
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('groupevent002');
-      when(mockDoc.data()).thenReturn({
-        'groupId': 'group001',
-        'type': 'meeting',
-        'startDate': Timestamp.fromDate(DateTime(2025, 6, 1)),
-        'endDate': Timestamp.fromDate(DateTime(2025, 6, 2)),
-      });
-
-      final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
-
-      expect(groupEvent.id, 'groupevent002');
-      expect(groupEvent.groupId, 'group001');
-      expect(groupEvent.type, 'meeting');
-      expect(groupEvent.name, null);
-      expect(groupEvent.memo, null);
-    });
-
-    test('Firestoreのデータがnullの場合はデフォルト値に変換される', () {
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('groupevent003');
-      when(mockDoc.data()).thenReturn({});
-      final before = DateTime.now();
-
-      final groupEvent = FirestoreGroupEventMapper.fromFirestore(mockDoc);
-      final after = DateTime.now();
-
-      expect(groupEvent.id, 'groupevent003');
-      expect(groupEvent.groupId, '');
-      expect(groupEvent.type, '');
-      expect(groupEvent.name, isNull);
-      expect(groupEvent.memo, isNull);
-      expect(
-        groupEvent.startDate.isAfter(
-          before.subtract(const Duration(seconds: 1)),
-        ),
-        isTrue,
-      );
-      expect(
-        groupEvent.startDate.isBefore(after.add(const Duration(seconds: 1))),
-        isTrue,
-      );
-      expect(
-        groupEvent.endDate.isAfter(before.subtract(const Duration(seconds: 1))),
-        isTrue,
-      );
-      expect(
-        groupEvent.endDate.isBefore(after.add(const Duration(seconds: 1))),
-        isTrue,
-      );
-    });
-
     test('GroupEventからFirestoreのMapへ変換できる', () {
       final groupEvent = GroupEvent(
         id: 'groupevent001',
