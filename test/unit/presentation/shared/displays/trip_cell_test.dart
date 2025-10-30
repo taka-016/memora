@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
 void main() {
@@ -25,7 +25,7 @@ void main() {
     testWidgets('旅行名がある場合、日付と旅行名を2行で表示する', (WidgetTester tester) async {
       // Arrange
       final trips = [
-        TripEntry(
+        TripEntryDto(
           id: '1',
           groupId: 'group1',
           tripName: '北海道旅行',
@@ -51,7 +51,7 @@ void main() {
     testWidgets('旅行名がない場合、「旅行名未設定」と表示する', (WidgetTester tester) async {
       // Arrange
       final trips = [
-        TripEntry(
+        TripEntryDto(
           id: '1',
           groupId: 'group1',
           tripName: null,
@@ -77,14 +77,14 @@ void main() {
     testWidgets('複数の旅行がある場合、高さに収まる分だけ表示する', (WidgetTester tester) async {
       // Arrange
       final trips = [
-        TripEntry(
+        TripEntryDto(
           id: '1',
           groupId: 'group1',
           tripName: '北海道旅行',
           tripStartDate: DateTime(2023, 8, 15),
           tripEndDate: DateTime(2023, 8, 18),
         ),
-        TripEntry(
+        TripEntryDto(
           id: '2',
           groupId: 'group1',
           tripName: '沖縄旅行',
@@ -113,7 +113,7 @@ void main() {
       // Arrange
       final trips = List.generate(
         10,
-        (index) => TripEntry(
+        (index) => TripEntryDto(
           id: '$index',
           groupId: 'group1',
           tripName: '旅行$index',
@@ -142,7 +142,7 @@ void main() {
     testWidgets('利用可能な高さが0以下の場合、空のContainerを表示する', (WidgetTester tester) async {
       // Arrange
       final trips = [
-        TripEntry(
+        TripEntryDto(
           id: '1',
           groupId: 'group1',
           tripName: '北海道旅行',
@@ -170,7 +170,7 @@ void main() {
     testWidgets('日付フォーマットが正しく適用される', (WidgetTester tester) async {
       // Arrange
       final trips = [
-        TripEntry(
+        TripEntryDto(
           id: '1',
           groupId: 'group1',
           tripName: 'テスト旅行',

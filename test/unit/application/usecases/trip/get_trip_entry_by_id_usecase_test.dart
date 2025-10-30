@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 import 'get_trip_entry_by_id_usecase_test.mocks.dart';
 
@@ -20,7 +20,7 @@ void main() {
 
     test('旅行詳細が取得できること', () async {
       const tripId = 'trip-123';
-      final tripEntry = TripEntry(
+      final tripEntry = TripEntryDto(
         id: tripId,
         groupId: 'group-1',
         tripName: '春の旅行',

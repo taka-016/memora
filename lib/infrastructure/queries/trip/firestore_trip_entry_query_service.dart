@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/mappers/trip/pin_detail_mapper.dart';
+import 'package:memora/application/mappers/trip/pin_mapper.dart';
+import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_pin_detail_mapper.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 
 class FirestoreTripEntryQueryService implements TripEntryQueryService {
   final FirebaseFirestore _firestore;
@@ -15,7 +15,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<TripEntry?> getTripEntryById(
+  Future<TripEntryDto?> getTripEntryById(
     String tripId, {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? pinDetailsOrderBy,
@@ -40,7 +40,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       }
 
       final pinsSnapshot = await pinsQuery.get();
-      final pins = <Pin>[];
+      final pins = <PinDto>[];
 
       for (final pinDoc in pinsSnapshot.docs) {
         final pinId = pinDoc.data()['pinId'] as String? ?? '';
@@ -59,19 +59,14 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
         final pinDetailsSnapshot = await pinDetailsQuery.get();
         final pinDetails = pinDetailsSnapshot.docs
-            .map(
-              (detailDoc) => FirestorePinDetailMapper.fromFirestore(detailDoc),
-            )
+            .map((detailDoc) => PinDetailMapper.fromFirestore(detailDoc))
             .toList();
 
-        final Pin pin = FirestorePinMapper.fromFirestore(
-          pinDoc,
-          details: pinDetails,
-        );
+        final PinDto pin = PinMapper.fromFirestore(pinDoc, details: pinDetails);
         pins.add(pin);
       }
 
-      return FirestoreTripEntryMapper.fromFirestore(doc, pins: pins);
+      return TripEntryMapper.fromFirestore(doc, pins: pins);
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryQueryService.getTripEntryById: ${e.toString()}',
@@ -83,7 +78,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   }
 
   @override
-  Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
+  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {
     List<OrderBy>? orderBy,
@@ -109,7 +104,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
+          .map((doc) => TripEntryMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(

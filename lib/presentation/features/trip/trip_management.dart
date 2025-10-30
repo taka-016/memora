@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/mappers/trip/pin_mapper.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
@@ -36,7 +36,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
   late final DeleteTripEntryUsecase _deleteTripEntryUsecase;
   late final GetTripEntryByIdUsecase _getTripEntryByIdUsecase;
 
-  List<TripEntry> _tripEntries = [];
+  List<TripEntryDto> _tripEntries = [];
   bool _isLoading = true;
 
   @override
@@ -151,7 +151,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
     }
   }
 
-  Future<void> _showEditTripDialog(TripEntry tripEntry) async {
+  Future<void> _showEditTripDialog(TripEntryDto tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
@@ -170,14 +170,11 @@ class _TripManagementState extends ConsumerState<TripManagement> {
         return;
       }
 
-      final existingPins = PinMapper.toDtoList(detailedTripEntry.pins);
-
       await showDialog(
         context: context,
         builder: (context) => TripEditModal(
           groupId: widget.groupId,
           tripEntry: detailedTripEntry,
-          pins: existingPins,
           year: widget.year,
           isTestEnvironment: widget.isTestEnvironment,
           onSave: _handleEditTripSave,
@@ -198,7 +195,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
     }
   }
 
-  Future<void> _showDeleteConfirmDialog(TripEntry tripEntry) async {
+  Future<void> _showDeleteConfirmDialog(TripEntryDto tripEntry) async {
     await DeleteConfirmDialog.show(
       context,
       title: '旅行削除',
@@ -207,7 +204,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
     );
   }
 
-  Future<void> _deleteTripEntry(TripEntry tripEntry) async {
+  Future<void> _deleteTripEntry(TripEntryDto tripEntry) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     try {
@@ -352,7 +349,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
     );
   }
 
-  Widget _buildTripSubtitle(TripEntry tripEntry) {
+  Widget _buildTripSubtitle(TripEntryDto tripEntry) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

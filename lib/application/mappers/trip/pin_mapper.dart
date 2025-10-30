@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/mappers/trip/pin_detail_mapper.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 
 class PinMapper {
-  static PinDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  static PinDto fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc, {
+    List<PinDetailDto>? details,
+  }) {
     final data = doc.data();
     return PinDto(
       pinId: data?['pinId'] as String? ?? '',
@@ -15,19 +20,7 @@ class PinMapper {
       visitStartDate: (data?['visitStartDate'] as Timestamp?)?.toDate(),
       visitEndDate: (data?['visitEndDate'] as Timestamp?)?.toDate(),
       visitMemo: data?['visitMemo'] as String?,
-    );
-  }
-
-  static PinDto toDto(Pin entity) {
-    return PinDto(
-      pinId: entity.pinId,
-      tripId: entity.tripId,
-      latitude: entity.latitude,
-      longitude: entity.longitude,
-      locationName: entity.locationName,
-      visitStartDate: entity.visitStartDate,
-      visitEndDate: entity.visitEndDate,
-      visitMemo: entity.visitMemo,
+      details: details ?? [],
     );
   }
 
@@ -42,11 +35,8 @@ class PinMapper {
       visitStartDate: dto.visitStartDate,
       visitEndDate: dto.visitEndDate,
       visitMemo: dto.visitMemo,
+      details: PinDetailMapper.toEntityList(dto.details ?? []),
     );
-  }
-
-  static List<PinDto> toDtoList(List<Pin> entities) {
-    return entities.map(toDto).toList();
   }
 
   static List<Pin> toEntityList(List<PinDto> dtos) {

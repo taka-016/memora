@@ -55,9 +55,9 @@
   - [x] getMemberByIdの戻り値をMemberDtoに変更する
   - [x] getMemberByAccountIdの戻り値をMemberDtoに変更する
   - [x] getMembersByOwnerIdの戻り値をMemberDtoに変更する
-- [ ] TripEntryQueryServiceのレスポンスはDtoを返すように変更する
-  - [ ] getTripEntryByIdの戻り値をTripEntryDtoに変更する
-  - [ ] getTripEntriesByGroupIdAndYearの戻り値をTripEntryDtoに変更する
+- [x] TripEntryQueryServiceのレスポンスはDtoを返すように変更する
+  - [x] getTripEntryByIdの戻り値をTripEntryDtoに変更する
+  - [x] getTripEntriesByGroupIdAndYearの戻り値をTripEntryDtoに変更する
 - [x] MemberInvitationQueryServiceのレスポンスはDtoを返すように変更する
   - [x] getByInviteeIdの戻り値をMemberInvitationDtoに変更する
   - [x] getByInvitationCodeの戻り値をMemberInvitationDtoに変更する

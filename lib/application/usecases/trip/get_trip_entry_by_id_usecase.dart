@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
@@ -15,7 +15,7 @@ class GetTripEntryByIdUsecase {
 
   GetTripEntryByIdUsecase(this._tripEntryQueryService);
 
-  Future<TripEntry?> execute(String tripId) async {
+  Future<TripEntryDto?> execute(String tripId) async {
     return await _tripEntryQueryService.getTripEntryById(
       tripId,
       pinsOrderBy: [const OrderBy('visitStartDate', descending: false)],

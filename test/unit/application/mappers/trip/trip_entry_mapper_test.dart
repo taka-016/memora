@@ -106,41 +106,6 @@ void main() {
       );
     });
 
-    test('TripEntryエンティティからTripEntryDtoへ変換できる', () {
-      final entity = TripEntry(
-        id: 'trip-004',
-        groupId: 'group-004',
-        tripName: '秋の旅行',
-        tripStartDate: DateTime(2024, 10, 10),
-        tripEndDate: DateTime(2024, 10, 12),
-        pins: [
-          Pin(
-            pinId: 'pin-020',
-            tripId: 'trip-004',
-            groupId: 'group-004',
-            latitude: 36.0,
-            longitude: 140.0,
-          ),
-        ],
-      );
-
-      final dto = TripEntryMapper.toDto(entity);
-
-      expect(dto.id, 'trip-004');
-      expect(dto.groupId, 'group-004');
-      expect(dto.tripName, '秋の旅行');
-      expect(dto.tripStartDate, DateTime(2024, 10, 10));
-      expect(dto.tripEndDate, DateTime(2024, 10, 12));
-      expect(dto.pins, [
-        const PinDto(
-          pinId: 'pin-020',
-          tripId: 'trip-004',
-          latitude: 36.0,
-          longitude: 140.0,
-        ),
-      ]);
-    });
-
     test('TripEntryDtoのリストをエンティティリストに変換できる', () {
       final dtos = [
         TripEntryDto(
@@ -164,31 +129,6 @@ void main() {
       expect(entities[0].groupId, 'group-101');
       expect(entities[1].id, 'trip-102');
       expect(entities[1].groupId, 'group-102');
-    });
-
-    test('TripEntryエンティティのリストをDtoリストに変換できる', () {
-      final entities = [
-        TripEntry(
-          id: 'trip-201',
-          groupId: 'group-201',
-          tripStartDate: DateTime(2024, 6, 1),
-          tripEndDate: DateTime(2024, 6, 2),
-        ),
-        TripEntry(
-          id: 'trip-202',
-          groupId: 'group-202',
-          tripStartDate: DateTime(2024, 7, 1),
-          tripEndDate: DateTime(2024, 7, 3),
-        ),
-      ];
-
-      final dtos = TripEntryMapper.toDtoList(entities);
-
-      expect(dtos.length, 2);
-      expect(dtos[0].id, 'trip-201');
-      expect(dtos[0].groupId, 'group-201');
-      expect(dtos[1].id, 'trip-202');
-      expect(dtos[1].groupId, 'group-202');
     });
   });
 }

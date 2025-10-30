@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -24,7 +25,7 @@ void main() {
     });
 
     testWidgets('編集モードでタイトルが正しく表示されること', (WidgetTester tester) async {
-      final tripEntry = TripEntry(
+      final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
         tripName: 'テスト旅行',
@@ -50,7 +51,7 @@ void main() {
     });
 
     testWidgets('既存旅行の情報がフォームに正しく表示されること', (WidgetTester tester) async {
-      final tripEntry = TripEntry(
+      final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
         tripName: 'テスト旅行',
@@ -242,7 +243,7 @@ void main() {
     });
 
     testWidgets('編集時は「更新」ボタンが表示されること', (WidgetTester tester) async {
-      final tripEntry = TripEntry(
+      final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
         tripName: 'テスト旅行',
@@ -329,7 +330,7 @@ void main() {
     });
 
     testWidgets('更新ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
-      final existingTripEntry = TripEntry(
+      final existingTripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
         tripName: '既存旅行',
@@ -407,7 +408,7 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              tripEntry: TripEntry(
+              tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
                 tripName: 'テスト旅行',
@@ -449,7 +450,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               year: 2024,
-              tripEntry: TripEntry(
+              tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
                 tripName: 'テスト旅行',
@@ -487,7 +488,7 @@ void main() {
             body: TripEditModal(
               groupId: 'test-group-id',
               year: 2024,
-              tripEntry: TripEntry(
+              tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
                 tripName: 'テスト旅行',
@@ -576,15 +577,6 @@ void main() {
     testWidgets('作成ボタン押下時にonSaveコールバックでpinsが渡されること', (
       WidgetTester tester,
     ) async {
-      final initialPins = [
-        PinDto(
-          pinId: 'pin-1',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          visitMemo: '最初のメモ',
-        ),
-      ];
-
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
@@ -592,7 +584,6 @@ void main() {
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: initialPins,
               onSave: (TripEntry tripEntry) {
                 savedTripEntry = tripEntry;
               },
@@ -601,6 +592,28 @@ void main() {
           ),
         ),
       );
+
+      // テスト用のピンデータをセット
+      final testPins = [
+        PinDto(
+          pinId: 'test-pin-1',
+          tripId: 'test-trip-id',
+          latitude: 35.6762,
+          longitude: 139.6503,
+          locationName: '東京駅',
+        ),
+        PinDto(
+          pinId: 'test-pin-2',
+          tripId: 'test-trip-id',
+          latitude: 35.6585,
+          longitude: 139.7454,
+          locationName: '渋谷駅',
+        ),
+      ];
+
+      final state = tester.state(find.byType(TripEditModal)) as dynamic;
+      state.setPinsForTest(testPins);
+      await tester.pump();
 
       // 旅行名を入力
       await tester.enterText(find.byType(TextFormField).first, 'テスト旅行');
@@ -623,29 +636,40 @@ void main() {
 
       // onSaveコールバックでピンデータが正しく渡されることを確認
       expect(savedTripEntry, isNotNull);
-      expect(savedTripEntry!.pins.length, equals(1));
-      expect(savedTripEntry!.pins[0].pinId, equals('pin-1'));
+      expect(savedTripEntry!.pins.length, equals(2));
+      expect(savedTripEntry!.pins[0].pinId, equals('test-pin-1'));
+      expect(savedTripEntry!.pins[0].locationName, equals('東京駅'));
+      expect(savedTripEntry!.pins[1].pinId, equals('test-pin-2'));
+      expect(savedTripEntry!.pins[1].locationName, equals('渋谷駅'));
     });
 
     testWidgets('ピンが存在する場合、訪問場所一覧が表示されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-          visitStartDate: DateTime(2024, 1, 1, 10, 0),
-          visitEndDate: DateTime(2024, 1, 1, 12, 0),
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+            visitStartDate: DateTime(2024, 1, 1, 10, 0),
+            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -660,12 +684,21 @@ void main() {
     });
 
     testWidgets('ピンが存在しない場合、訪問場所一覧が表示されないこと', (WidgetTester tester) async {
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: [],
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -678,24 +711,32 @@ void main() {
     });
 
     testWidgets('locationNameが空の場合、空白で表示されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: null,
-          visitStartDate: DateTime(2024, 1, 1, 10, 0),
-          visitEndDate: DateTime(2024, 1, 1, 12, 0),
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: null,
+            visitStartDate: DateTime(2024, 1, 1, 10, 0),
+            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -711,33 +752,41 @@ void main() {
     });
 
     testWidgets('複数のピンが正しく表示されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-          visitStartDate: DateTime(2024, 1, 1, 10, 0),
-          visitEndDate: DateTime(2024, 1, 1, 12, 0),
-        ),
-        PinDto(
-          pinId: 'test-pin-2',
-          tripId: 'test-trip-id',
-          latitude: 35.6585,
-          longitude: 139.7454,
-          locationName: '渋谷駅',
-          visitStartDate: DateTime(2024, 1, 2, 14, 0),
-          visitEndDate: DateTime(2024, 1, 2, 16, 0),
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+            visitStartDate: DateTime(2024, 1, 1, 10, 0),
+            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+          ),
+          PinDto(
+            pinId: 'test-pin-2',
+            tripId: 'test-trip-id',
+            latitude: 35.6585,
+            longitude: 139.7454,
+            locationName: '渋谷駅',
+            visitStartDate: DateTime(2024, 1, 2, 14, 0),
+            visitEndDate: DateTime(2024, 1, 2, 16, 0),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -754,24 +803,32 @@ void main() {
     });
 
     testWidgets('ピンリストをタップするとボトムシートが表示されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-          visitStartDate: DateTime(2024, 1, 1, 10, 0),
-          visitEndDate: DateTime(2024, 1, 1, 12, 0),
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+            visitStartDate: DateTime(2024, 1, 1, 10, 0),
+            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -791,22 +848,30 @@ void main() {
     });
 
     testWidgets('削除ボタンがピンリストアイテムに表示されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -819,29 +884,37 @@ void main() {
     });
 
     testWidgets('削除ボタンをタップするとピンが一覧から削除されること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-        ),
-        PinDto(
-          pinId: 'test-pin-2',
-          tripId: 'test-trip-id',
-          latitude: 35.6585,
-          longitude: 139.7454,
-          locationName: '渋谷駅',
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+          ),
+          PinDto(
+            pinId: 'test-pin-2',
+            tripId: 'test-trip-id',
+            latitude: 35.6585,
+            longitude: 139.7454,
+            locationName: '渋谷駅',
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),
@@ -865,22 +938,30 @@ void main() {
     });
 
     testWidgets('全てのピンを削除すると訪問場所一覧が非表示になること', (WidgetTester tester) async {
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-        ),
-      ];
+      final tripEntry = TripEntryDto(
+        id: 'existing-trip-id',
+        groupId: 'test-group-id',
+        tripName: '既存旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: '既存メモ',
+        pins: [
+          PinDto(
+            pinId: 'test-pin-1',
+            tripId: 'test-trip-id',
+            latitude: 35.6762,
+            longitude: 139.6503,
+            locationName: '東京駅',
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
-              pins: testPins,
+              tripEntry: tripEntry,
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
             ),

@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
 import 'package:memora/core/app_logger.dart';
 
@@ -67,7 +67,7 @@ class _GroupTimelineState extends ConsumerState<GroupTimeline> {
 
   late List<double> _rowHeights;
 
-  final Map<int, List<TripEntry>> _tripsByYear = {};
+  final Map<int, List<TripEntryDto>> _tripsByYear = {};
 
   @override
   void initState() {

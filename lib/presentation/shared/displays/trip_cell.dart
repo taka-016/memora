@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 
 class TripCell extends StatelessWidget {
   static const double _itemHeight = 32.0;
 
-  final List<TripEntry> trips;
+  final List<TripEntryDto> trips;
   final double availableHeight;
   final double availableWidth;
 
@@ -78,7 +78,7 @@ class TripCell extends StatelessWidget {
     }
   }
 
-  Widget _buildTripItem(TripEntry trip, TextStyle textStyle) {
+  Widget _buildTripItem(TripEntryDto trip, TextStyle textStyle) {
     final year = trip.tripStartDate.year;
     final month = trip.tripStartDate.month.toString().padLeft(2, '0');
     final day = trip.tripStartDate.day.toString().padLeft(2, '0');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -12,8 +13,7 @@ import 'package:memora/core/app_logger.dart';
 
 class TripEditModal extends StatefulWidget {
   final String groupId;
-  final TripEntry? tripEntry;
-  final List<PinDto>? pins;
+  final TripEntryDto? tripEntry;
   final Function(TripEntry) onSave;
   final bool isTestEnvironment;
   final int? year;
@@ -22,7 +22,6 @@ class TripEditModal extends StatefulWidget {
     super.key,
     required this.groupId,
     this.tripEntry,
-    this.pins,
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
@@ -61,9 +60,7 @@ class _TripEditModalState extends State<TripEditModal> {
     _startDate = widget.tripEntry?.tripStartDate;
     _endDate = widget.tripEntry?.tripEndDate;
 
-    if (widget.pins != null) {
-      _pins = List.from(widget.pins!);
-    }
+    _pins = widget.tripEntry?.pins ?? [];
   }
 
   Future<void> _onMapLongTapped(Location location) async {
@@ -529,6 +526,13 @@ class _TripEditModalState extends State<TripEditModal> {
     setState(() {
       _startDate = start;
       _endDate = end;
+    });
+  }
+
+  @visibleForTesting
+  void setPinsForTest(List<PinDto> pins) {
+    setState(() {
+      _pins = pins;
     });
   }
 

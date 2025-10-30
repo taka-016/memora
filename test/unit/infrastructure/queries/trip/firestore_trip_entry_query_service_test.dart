@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/pin_detail.dart';
+import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
@@ -119,9 +119,9 @@ void main() {
       expect(result!.id, equals(tripId));
       expect(result.tripName, equals('夏旅行'));
       expect(result.pins, hasLength(1));
-      final Pin pin = result.pins.first;
+      final PinDto pin = result.pins!.first;
       expect(pin.details, hasLength(1));
-      final PinDetail detail = pin.details.first;
+      final PinDetailDto detail = pin.details!.first;
       expect(detail.name, equals('ランチ'));
       verify(
         mockPinsQuery.orderBy('visitStartDate', descending: false),

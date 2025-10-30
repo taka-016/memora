@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
@@ -18,14 +18,14 @@ import 'trip_management_test.mocks.dart';
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockTripEntryQueryService mockTripEntryQueryService;
-  late List<TripEntry> testTripEntries;
-  late Pin testPin;
-  late TripEntry detailedTripEntry;
+  late List<TripEntryDto> testTripEntries;
+  late PinDto testPin;
+  late TripEntryDto detailedTripEntry;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
-    testPin = Pin(
+    testPin = PinDto(
       pinId: 'pin-1',
       tripId: 'trip-1',
       groupId: 'test-group-id',
@@ -38,25 +38,27 @@ void main() {
     );
 
     testTripEntries = [
-      TripEntry(
+      TripEntryDto(
         id: 'trip-1',
         groupId: 'test-group-id',
         tripName: '北海道旅行',
         tripStartDate: DateTime(2025, 7, 1),
         tripEndDate: DateTime(2025, 7, 5),
         tripMemo: '夏の北海道を楽しむ',
+        pins: [testPin],
       ),
-      TripEntry(
+      TripEntryDto(
         id: 'trip-2',
         groupId: 'test-group-id',
         tripName: '沖縄旅行',
         tripStartDate: DateTime(2025, 9, 15),
         tripEndDate: DateTime(2025, 9, 18),
         tripMemo: null,
+        pins: [],
       ),
     ];
 
-    detailedTripEntry = testTripEntries.first.copyWith(pins: [testPin]);
+    detailedTripEntry = testTripEntries.first;
   });
 
   Widget createApp({

@@ -38,23 +38,7 @@ class TripEntryMapper {
     );
   }
 
-  static TripEntryDto toDto(TripEntry entity) {
-    return TripEntryDto(
-      id: entity.id,
-      groupId: entity.groupId,
-      tripName: entity.tripName,
-      tripStartDate: entity.tripStartDate,
-      tripEndDate: entity.tripEndDate,
-      tripMemo: entity.tripMemo,
-      pins: PinMapper.toDtoList(entity.pins),
-    );
-  }
-
   static List<TripEntry> toEntityList(List<TripEntryDto> dtos) {
     return dtos.map(toEntity).toList();
-  }
-
-  static List<TripEntryDto> toDtoList(List<TripEntry> entities) {
-    return entities.map(toDto).toList();
   }
 }

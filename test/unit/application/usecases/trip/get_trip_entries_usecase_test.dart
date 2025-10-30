@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 import 'get_trip_entries_usecase_test.mocks.dart';
 
@@ -23,14 +23,14 @@ void main() {
       const groupId = 'group-id';
       const year = 2024;
       final expectedTripEntries = [
-        TripEntry(
+        TripEntryDto(
           id: 'trip-1',
           groupId: groupId,
           tripName: '旅行1',
           tripStartDate: DateTime(2024, 1, 1),
           tripEndDate: DateTime(2024, 1, 3),
         ),
-        TripEntry(
+        TripEntryDto(
           id: 'trip-2',
           groupId: groupId,
           tripName: '旅行2',

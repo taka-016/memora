@@ -1,14 +1,14 @@
-import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 
 abstract class TripEntryQueryService {
-  Future<TripEntry?> getTripEntryById(
+  Future<TripEntryDto?> getTripEntryById(
     String tripId, {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? pinDetailsOrderBy,
   });
 
-  Future<List<TripEntry>> getTripEntriesByGroupIdAndYear(
+  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {
     List<OrderBy>? orderBy,
