@@ -5,7 +5,9 @@ import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/domain/services/route_information_service.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
@@ -17,6 +19,8 @@ class TripEditModal extends StatefulWidget {
   final Function(TripEntry) onSave;
   final bool isTestEnvironment;
   final int? year;
+  final List<PinDto>? initialPins;
+  final RouteInformationService? routeInformationService;
 
   const TripEditModal({
     super.key,
@@ -25,6 +29,8 @@ class TripEditModal extends StatefulWidget {
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
+    this.initialPins,
+    this.routeInformationService,
   });
 
   @override
@@ -60,7 +66,13 @@ class _TripEditModalState extends State<TripEditModal> {
     _startDate = widget.tripEntry?.tripStartDate;
     _endDate = widget.tripEntry?.tripEndDate;
 
-    _pins = widget.tripEntry?.pins ?? [];
+    if (widget.initialPins != null) {
+      _pins = List<PinDto>.from(widget.initialPins!);
+    } else {
+      _pins = widget.tripEntry?.pins != null
+          ? List<PinDto>.from(widget.tripEntry!.pins!)
+          : [];
+    }
   }
 
   Future<void> _onMapLongTapped(Location location) async {
@@ -207,6 +219,8 @@ class _TripEditModalState extends State<TripEditModal> {
             _buildPinsTitle(),
             const SizedBox(height: 8),
             _buildMapButton(),
+            const SizedBox(height: 8),
+            _buildRouteInfoButton(),
             const SizedBox(height: 16),
             _buildPinsList(),
             const SizedBox(height: 16),
@@ -284,6 +298,20 @@ class _TripEditModalState extends State<TripEditModal> {
           minimumSize: const Size(double.infinity, 48),
         ),
         child: const Text('地図で選択'),
+      ),
+    );
+  }
+
+  Widget _buildRouteInfoButton() {
+    final hasEnoughPins = _pins.length >= 2;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: hasEnoughPins ? _showRouteInfoDialog : null,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+        ),
+        child: const Text('経路情報'),
       ),
     );
   }
@@ -373,6 +401,16 @@ class _TripEditModalState extends State<TripEditModal> {
       onUpdate: _onPinUpdated,
       onDelete: _onPinDeleted,
       onClose: _hidePinDetailBottomSheet,
+    );
+  }
+
+  Future<void> _showRouteInfoDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) => RouteInfoDialog(
+        pins: List<PinDto>.from(_pins),
+        routeInformationService: widget.routeInformationService,
+      ),
     );
   }
 

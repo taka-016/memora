@@ -3,8 +3,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/services/route_information_service.dart';
+import 'package:memora/domain/value_objects/route/route_candidate.dart';
+import 'package:memora/domain/value_objects/route/route_leg.dart';
+import 'package:memora/domain/value_objects/route/route_location.dart';
+import 'package:memora/domain/value_objects/route/route_travel_mode.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+
+class _FakeRouteInformationService implements RouteInformationService {
+  int callCount = 0;
+
+  @override
+  Future<List<RouteCandidate>> fetchRoutes({
+    required List<RouteLocation> locations,
+    required RouteTravelMode travelMode,
+  }) async {
+    callCount++;
+    return const [
+      RouteCandidate(
+        description: 'テスト経路',
+        localizedDistanceText: '1 km',
+        localizedDurationText: '5分',
+        legs: [
+          RouteLeg(
+            localizedDistanceText: '1 km',
+            localizedDurationText: '5分',
+            primaryInstruction: 'まっすぐ進む',
+          ),
+        ],
+        warnings: [],
+      ),
+    ];
+  }
+}
 
 void main() {
   group('TripEditModal', () {
@@ -980,6 +1012,74 @@ void main() {
 
       // 訪問場所一覧が非表示になることを確認
       expect(find.text('東京駅'), findsNothing);
+    });
+
+    testWidgets('経路情報ボタンが表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('経路情報'), findsOneWidget);
+    });
+
+    testWidgets('訪問場所が2件未満の場合は経路情報ボタンが無効になること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      final button = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '経路情報'),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('訪問場所が2件以上で経路情報ダイアログを表示すること', (WidgetTester tester) async {
+      final fakeService = _FakeRouteInformationService();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+              initialPins: const [
+                PinDto(pinId: 'pin1', latitude: 35.0, longitude: 139.0),
+                PinDto(pinId: 'pin2', latitude: 35.1, longitude: 139.1),
+              ],
+              routeInformationService: fakeService,
+            ),
+          ),
+        ),
+      );
+
+      final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
+      final button = tester.widget<ElevatedButton>(buttonFinder);
+      expect(button.onPressed, isNotNull);
+
+      await tester.ensureVisible(buttonFinder);
+      await tester.tap(buttonFinder, warnIfMissed: false);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(find.text('テスト経路'), findsOneWidget);
+      expect(fakeService.callCount, 1);
     });
   });
 }
