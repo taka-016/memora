@@ -142,6 +142,27 @@ void main() {
       expect(fakeService.lastRequestedLocations!.last.id, 'pin3');
     });
 
+    testWidgets('移動手段はアイコンボタンで表示される', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RouteInfoDialog(
+            pins: pins,
+            routeInformationService: fakeService,
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.byType(ChoiceChip), findsNothing);
+      expect(find.byIcon(Icons.help_outline), findsOneWidget);
+      expect(find.byIcon(Icons.directions_car), findsOneWidget);
+      expect(find.byIcon(Icons.directions_walk), findsOneWidget);
+      expect(find.byIcon(Icons.directions_transit), findsOneWidget);
+      expect(find.byIcon(Icons.two_wheeler), findsOneWidget);
+      expect(find.byIcon(Icons.directions_bike), findsOneWidget);
+    });
+
     testWidgets('移動手段を切り替えると再取得し警告を表示する', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -155,7 +176,7 @@ void main() {
       await tester.pump();
       expect(fakeService.callCount, 1);
 
-      await tester.tap(find.text('徒歩'));
+      await tester.tap(find.byIcon(Icons.directions_walk));
       await tester.pump();
 
       expect(fakeService.callCount, 2);
@@ -262,7 +283,7 @@ void main() {
         RouteTravelMode.unspecified,
       );
 
-      await tester.tap(find.text('徒歩'));
+      await tester.tap(find.byIcon(Icons.directions_walk));
       await tester.pump();
 
       expect(sequencedService.callCount, 2);

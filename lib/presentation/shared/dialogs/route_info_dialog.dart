@@ -208,18 +208,47 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
 
   Widget _buildTravelModeSelector() {
     final modes = RouteTravelMode.values;
+    final theme = Theme.of(context);
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: modes
-          .map(
-            (mode) => ChoiceChip(
-              label: Text(mode.label),
-              selected: _selectedTravelMode == mode,
-              onSelected: (_) => _onTravelModeSelected(mode),
+      spacing: 16,
+      runSpacing: 16,
+      children: modes.map((mode) {
+        final isSelected = _selectedTravelMode == mode;
+        final icon = _iconForTravelMode(mode);
+        final foregroundColor = isSelected
+            ? theme.colorScheme.primary
+            : theme.colorScheme.onSurfaceVariant;
+        final backgroundColor = isSelected
+            ? theme.colorScheme.primary.withAlpha((0.12 * 255).round())
+            : Colors.transparent;
+        final borderColor = isSelected
+            ? theme.colorScheme.primary
+            : theme.dividerColor.withAlpha((0.6 * 255).round());
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: backgroundColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: borderColor),
+              ),
+              child: IconButton(
+                tooltip: mode.label,
+                onPressed: () => _onTravelModeSelected(mode),
+                icon: Icon(icon, color: foregroundColor),
+                splashRadius: 28,
+              ),
             ),
-          )
-          .toList(),
+            const SizedBox(height: 6),
+            Text(
+              mode.label,
+              style: TextStyle(fontSize: 12, color: foregroundColor),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 
@@ -397,5 +426,22 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
       return pin.locationName!;
     }
     return pin.pinId;
+  }
+
+  IconData _iconForTravelMode(RouteTravelMode mode) {
+    switch (mode) {
+      case RouteTravelMode.unspecified:
+        return Icons.help_outline;
+      case RouteTravelMode.drive:
+        return Icons.directions_car;
+      case RouteTravelMode.walk:
+        return Icons.directions_walk;
+      case RouteTravelMode.transit:
+        return Icons.directions_transit;
+      case RouteTravelMode.twoWheeler:
+        return Icons.two_wheeler;
+      case RouteTravelMode.bicycle:
+        return Icons.directions_bike;
+    }
   }
 }
