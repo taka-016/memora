@@ -123,7 +123,7 @@ void main() {
       ];
     });
 
-    testWidgets('初期表示で未選択の移動手段を使用してデータ取得する', (tester) async {
+    testWidgets('初期表示で自動車の移動手段を使用してデータ取得する', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: RouteInfoDialog(
@@ -136,7 +136,7 @@ void main() {
       await tester.pump();
 
       expect(fakeService.callCount, 1);
-      expect(fakeService.lastRequestedMode, RouteTravelMode.unspecified);
+      expect(fakeService.lastRequestedMode, RouteTravelMode.drive);
       expect(fakeService.lastRequestedLocations, isNotNull);
       expect(fakeService.lastRequestedLocations!.first.id, 'pin1');
       expect(fakeService.lastRequestedLocations!.last.id, 'pin3');
@@ -155,38 +155,9 @@ void main() {
       await tester.pump();
 
       expect(find.byType(ChoiceChip), findsNothing);
-      expect(find.byIcon(Icons.help_outline), findsOneWidget);
       expect(find.byIcon(Icons.directions_car), findsOneWidget);
       expect(find.byIcon(Icons.directions_walk), findsOneWidget);
       expect(find.byIcon(Icons.directions_transit), findsOneWidget);
-      expect(find.byIcon(Icons.two_wheeler), findsOneWidget);
-      expect(find.byIcon(Icons.directions_bike), findsOneWidget);
-    });
-
-    testWidgets('移動手段を切り替えると再取得し警告を表示する', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: fakeService,
-          ),
-        ),
-      );
-
-      await tester.pump();
-      expect(fakeService.callCount, 1);
-
-      await tester.tap(find.byIcon(Icons.directions_walk));
-      await tester.pump();
-
-      expect(fakeService.callCount, 2);
-      expect(fakeService.lastRequestedMode, RouteTravelMode.walk);
-      expect(
-        find.text(
-          '徒歩・自転車・バイクモードはすべての歩道や交通規制を反映していない可能性があります。必ず現地の状況を確認してください。',
-        ),
-        findsOneWidget,
-      );
     });
 
     testWidgets('複数候補がある場合にタブで切り替えられる', (tester) async {
@@ -278,10 +249,7 @@ void main() {
       await tester.pump();
 
       expect(sequencedService.callCount, 1);
-      expect(
-        sequencedService.requestedModes.first,
-        RouteTravelMode.unspecified,
-      );
+      expect(sequencedService.requestedModes.first, RouteTravelMode.drive);
 
       await tester.tap(find.byIcon(Icons.directions_walk));
       await tester.pump();

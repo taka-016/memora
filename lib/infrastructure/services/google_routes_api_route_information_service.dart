@@ -37,7 +37,6 @@ class GoogleRoutesApiRouteInformationService
       'computeAlternativeRoutes': true,
       'languageCode': 'ja',
       'units': 'METRIC',
-      'routingPreference': 'TRAFFIC_UNAWARE',
     };
 
     if (locations.length > 2) {
@@ -50,6 +49,11 @@ class GoogleRoutesApiRouteInformationService
     final travelModeValue = travelMode.apiValue;
     if (travelModeValue != null) {
       body['travelMode'] = travelModeValue;
+    }
+
+    if (travelMode == RouteTravelMode.drive ||
+        travelMode == RouteTravelMode.transit) {
+      body['routingPreference'] = 'TRAFFIC_UNAWARE';
     }
 
     final response = await httpClient.post(

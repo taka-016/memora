@@ -30,20 +30,12 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
   late final List<PinDto> _sortedPins;
   bool _isLoading = true;
   String? _errorMessage;
-  RouteTravelMode _selectedTravelMode = RouteTravelMode.unspecified;
+  RouteTravelMode _selectedTravelMode = RouteTravelMode.drive;
   List<RouteCandidate> _candidates = const [];
   int _currentTabIndex = 0;
   int _latestFetchToken = 0;
 
   bool get _hasSufficientPins => _sortedPins.length >= 2;
-
-  bool get _shouldShowWalkingWarning =>
-      _selectedTravelMode == RouteTravelMode.walk ||
-      _selectedTravelMode == RouteTravelMode.bicycle ||
-      _selectedTravelMode == RouteTravelMode.twoWheeler;
-
-  static const _travelModeWarningText =
-      '徒歩・自転車・バイクモードはすべての歩道や交通規制を反映していない可能性があります。必ず現地の状況を確認してください。';
 
   @override
   void initState() {
@@ -168,20 +160,15 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 520),
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 640),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               _buildTravelModeSelector(),
-              if (_shouldShowWalkingWarning) ...[
-                const SizedBox(height: 12),
-                _buildWarningBanner(),
-              ],
-              const SizedBox(height: 16),
               Expanded(child: _buildContent()),
             ],
           ),
@@ -242,37 +229,9 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              mode.label,
-              style: TextStyle(fontSize: 12, color: foregroundColor),
-            ),
           ],
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildWarningBanner() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _travelModeWarningText,
-              style: const TextStyle(color: Colors.orange, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -430,18 +389,12 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
 
   IconData _iconForTravelMode(RouteTravelMode mode) {
     switch (mode) {
-      case RouteTravelMode.unspecified:
-        return Icons.help_outline;
       case RouteTravelMode.drive:
         return Icons.directions_car;
       case RouteTravelMode.walk:
         return Icons.directions_walk;
       case RouteTravelMode.transit:
         return Icons.directions_transit;
-      case RouteTravelMode.twoWheeler:
-        return Icons.two_wheeler;
-      case RouteTravelMode.bicycle:
-        return Icons.directions_bike;
     }
   }
 }

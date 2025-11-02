@@ -46,34 +46,6 @@ void main() {
       expect(body['travelMode'], equals('DRIVE'));
     });
 
-    test('travelModeが未指定の場合はリクエストボディに含めないこと', () async {
-      final client = MockClient((request) async {
-        capturedRequests.add(request);
-        return http.Response(
-          jsonEncode({'routes': []}),
-          200,
-          headers: {'content-type': 'application/json'},
-        );
-      });
-
-      service = GoogleRoutesApiRouteInformationService(
-        apiKey: 'dummy-key',
-        httpClient: client,
-      );
-
-      await service.fetchRoutes(
-        locations: const [
-          RouteLocation(id: 'a', latitude: 35.0, longitude: 139.0),
-          RouteLocation(id: 'b', latitude: 36.0, longitude: 140.0),
-        ],
-        travelMode: RouteTravelMode.unspecified,
-      );
-
-      final body =
-          jsonDecode(capturedRequests.first.body) as Map<String, dynamic>;
-      expect(body.containsKey('travelMode'), isFalse);
-    });
-
     test('レスポンスをRouteCandidateへ変換すること', () async {
       final responseJson = {
         'routes': [
