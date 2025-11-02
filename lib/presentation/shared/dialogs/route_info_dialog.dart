@@ -33,6 +33,7 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
   RouteTravelMode _selectedTravelMode = RouteTravelMode.unspecified;
   List<RouteCandidate> _candidates = const [];
   int _currentTabIndex = 0;
+  int _latestFetchToken = 0;
 
   bool get _hasSufficientPins => _sortedPins.length >= 2;
 
@@ -77,6 +78,9 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
   }
 
   Future<void> _fetchRoutes() async {
+    final fetchToken = ++_latestFetchToken;
+    final requestedTravelMode = _selectedTravelMode;
+
     if (!_hasSufficientPins) {
       setState(() {
         _isLoading = false;
@@ -108,7 +112,7 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
         travelMode: _selectedTravelMode,
       );
 
-      if (!mounted) {
+      if (_shouldIgnoreResponse(fetchToken, requestedTravelMode)) {
         return;
       }
 
@@ -126,7 +130,7 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
         error: e,
         stackTrace: stack,
       );
-      if (!mounted) {
+      if (_shouldIgnoreResponse(fetchToken, requestedTravelMode)) {
         return;
       }
       setState(() {
@@ -135,6 +139,19 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
         _errorMessage = '経路情報の取得に失敗しました: $e';
       });
     }
+  }
+
+  bool _shouldIgnoreResponse(int token, RouteTravelMode requestedMode) {
+    if (!mounted) {
+      return true;
+    }
+    if (token != _latestFetchToken) {
+      return true;
+    }
+    if (_selectedTravelMode != requestedMode) {
+      return true;
+    }
+    return false;
   }
 
   void _onTravelModeSelected(RouteTravelMode mode) {

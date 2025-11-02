@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
@@ -23,6 +25,30 @@ class FakeRouteInformationService implements RouteInformationService {
     lastRequestedLocations = locations;
     callCount++;
     return response;
+  }
+}
+
+class SequencedRouteInformationService implements RouteInformationService {
+  SequencedRouteInformationService(this.responseQueue);
+
+  final List<Completer<List<RouteCandidate>>> responseQueue;
+  final List<RouteTravelMode> requestedModes = [];
+  final List<List<RouteLocation>> requestedLocations = [];
+  int callCount = 0;
+
+  @override
+  Future<List<RouteCandidate>> fetchRoutes({
+    required List<RouteLocation> locations,
+    required RouteTravelMode travelMode,
+  }) {
+    if (callCount >= responseQueue.length) {
+      throw StateError('レスポンスキューが不足しています');
+    }
+    requestedModes.add(travelMode);
+    requestedLocations.add(locations);
+    final completer = responseQueue[callCount];
+    callCount++;
+    return completer.future;
   }
 }
 
@@ -181,6 +207,79 @@ void main() {
       expect(find.byIcon(Icons.arrow_downward), findsNWidgets(2));
       expect(find.textContaining('5 km'), findsOneWidget);
       expect(find.textContaining('6 km'), findsOneWidget);
+    });
+
+    testWidgets('移動手段切り替え時に古いレスポンスを無視する', (tester) async {
+      final firstCompleter = Completer<List<RouteCandidate>>();
+      final secondCompleter = Completer<List<RouteCandidate>>();
+      final sequencedService = SequencedRouteInformationService([
+        firstCompleter,
+        secondCompleter,
+      ]);
+
+      final drivingCandidate = RouteCandidate(
+        description: '自動車推奨ルート',
+        localizedDistanceText: '15 km',
+        localizedDurationText: '25分',
+        legs: const [
+          RouteLeg(
+            localizedDistanceText: '15 km',
+            localizedDurationText: '25分',
+            primaryInstruction: '高速道路を利用',
+          ),
+        ],
+        warnings: const [],
+      );
+
+      final walkingCandidate = RouteCandidate(
+        description: '徒歩優先ルート',
+        localizedDistanceText: '2 km',
+        localizedDurationText: '18分',
+        legs: const [
+          RouteLeg(
+            localizedDistanceText: '2 km',
+            localizedDurationText: '18分',
+            primaryInstruction: '歩道を進む',
+          ),
+        ],
+        warnings: const [],
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RouteInfoDialog(
+            pins: pins,
+            routeInformationService: sequencedService,
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(sequencedService.callCount, 1);
+      expect(
+        sequencedService.requestedModes.first,
+        RouteTravelMode.unspecified,
+      );
+
+      await tester.tap(find.text('徒歩'));
+      await tester.pump();
+
+      expect(sequencedService.callCount, 2);
+      expect(sequencedService.requestedModes.last, RouteTravelMode.walk);
+
+      secondCompleter.complete([walkingCandidate]);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('徒歩優先ルート'), findsOneWidget);
+
+      firstCompleter.complete([drivingCandidate]);
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('徒歩優先ルート'), findsOneWidget);
+      expect(find.text('自動車推奨ルート'), findsNothing);
     });
   });
 }
