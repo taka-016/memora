@@ -53,11 +53,6 @@ class GoogleRoutesApiRouteInformationService
       body['travelMode'] = travelModeValue;
     }
 
-    if (travelMode == RouteTravelMode.drive ||
-        travelMode == RouteTravelMode.transit) {
-      body['routingPreference'] = 'TRAFFIC_UNAWARE';
-    }
-
     if (departureTime != null) {
       body['departureTime'] = departureTime.toUtc().toIso8601String();
     }

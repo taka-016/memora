@@ -112,7 +112,10 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
   }
 
   Widget _buildSearchControls() {
-    return Row(
+    return Wrap(
+      spacing: 16,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         ElevatedButton(
           key: const Key('route_search_button'),
@@ -126,8 +129,7 @@ class _RouteInfoDialogState extends State<RouteInfoDialog> {
                 )
               : const Text('経路検索'),
         ),
-        const SizedBox(width: 16),
-        if (_controller.isLoading) const Text('経路情報を取得中です...'),
+        if (_controller.isLoading) const Text('経路情報を取得中です...', softWrap: true),
       ],
     );
   }
