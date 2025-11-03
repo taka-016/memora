@@ -6,6 +6,7 @@ import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
@@ -207,12 +208,40 @@ class _TripEditModalState extends State<TripEditModal> {
             _buildPinsTitle(),
             const SizedBox(height: 8),
             _buildMapButton(),
+            const SizedBox(height: 8),
+            _buildRouteInfoButton(),
             const SizedBox(height: 16),
             _buildPinsList(),
             const SizedBox(height: 16),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildRouteInfoButton() {
+    final hasSufficientPins = _pins.length >= 2;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: hasSufficientPins ? _showRouteInfoDialog : null,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+        ),
+        child: const Text('経路情報'),
+      ),
+    );
+  }
+
+  Future<void> _showRouteInfoDialog() async {
+    if (_pins.length < 2) {
+      return;
+    }
+
+    await RouteInfoDialog.show(
+      context: context,
+      pins: _pins,
+      isTestEnvironment: widget.isTestEnvironment,
     );
   }
 

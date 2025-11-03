@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 void main() {
@@ -126,6 +127,48 @@ void main() {
       );
 
       expect(find.text('地図で選択'), findsOneWidget);
+    });
+
+    testWidgets('経路情報ボタンが表示され、タップで経路情報ダイアログが開くこと', (WidgetTester tester) async {
+      final pins = [
+        const PinDto(
+          pinId: 'pin-1',
+          latitude: 35.0,
+          longitude: 135.0,
+          locationName: '京都駅',
+        ),
+        const PinDto(
+          pinId: 'pin-2',
+          latitude: 35.1,
+          longitude: 135.1,
+          locationName: '清水寺',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      final state = tester.state(find.byType(TripEditModal)) as dynamic;
+      state.setPinsForTest(pins);
+      await tester.pumpAndSettle();
+
+      final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
+      expect(buttonFinder, findsOneWidget);
+
+      await tester.ensureVisible(buttonFinder);
+      await tester.tap(buttonFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(RouteInfoDialog), findsOneWidget);
     });
 
     testWidgets('地図で選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
