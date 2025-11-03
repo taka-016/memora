@@ -18,6 +18,7 @@ class _FakeRouteInformationService implements RouteInformationService {
   Future<List<RouteCandidate>> fetchRoutes({
     required List<RouteLocation> locations,
     required RouteTravelMode travelMode,
+    DateTime? departureTime,
   }) async {
     callCount++;
     return const [
@@ -1076,6 +1077,9 @@ void main() {
       await tester.ensureVisible(buttonFinder);
       await tester.tap(buttonFinder, warnIfMissed: false);
       await tester.pump();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('route_search_button')));
       await tester.pumpAndSettle();
 
       expect(find.text('テスト経路'), findsOneWidget);

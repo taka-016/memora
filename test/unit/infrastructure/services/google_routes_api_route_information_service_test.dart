@@ -46,6 +46,38 @@ void main() {
       expect(body['travelMode'], equals('DRIVE'));
     });
 
+    test('departureTimeが指定された場合はISO8601形式で含めること', () async {
+      final client = MockClient((request) async {
+        capturedRequests.add(request);
+        return http.Response(
+          jsonEncode({'routes': []}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      service = GoogleRoutesApiRouteInformationService(
+        apiKey: 'dummy-key',
+        httpClient: client,
+      );
+
+      final departureTime = DateTime(2024, 1, 1, 9, 30);
+
+      await service.fetchRoutes(
+        locations: const [
+          RouteLocation(id: 'a', latitude: 35.0, longitude: 139.0),
+          RouteLocation(id: 'b', latitude: 36.0, longitude: 140.0),
+        ],
+        travelMode: RouteTravelMode.drive,
+        departureTime: departureTime,
+      );
+
+      expect(capturedRequests.length, 1);
+      final body =
+          jsonDecode(capturedRequests.first.body) as Map<String, dynamic>;
+      expect(body['departureTime'], departureTime.toUtc().toIso8601String());
+    });
+
     test('レスポンスをRouteCandidateへ変換すること', () async {
       final responseJson = {
         'routes': [
@@ -62,6 +94,7 @@ void main() {
                   'distance': {'text': '5 km'},
                   'duration': {'text': '10分'},
                 },
+                'polyline': {'encodedPolyline': '_p~iF~ps|U_ulLnnqC_mqNvxq`@'},
                 'steps': [
                   {
                     'navigationInstruction': {'instructions': '国道1号線を北に進む'},
@@ -73,6 +106,7 @@ void main() {
                   'distance': {'text': '7 km'},
                   'duration': {'text': '15分'},
                 },
+                'polyline': {'encodedPolyline': '_ulLnnqC_mqNvxq`@_p~iF~ps|U'},
                 'steps': [
                   {
                     'navigationInstruction': {'instructions': '目的地は右側です'},
@@ -94,6 +128,7 @@ void main() {
                   'distance': {'text': '6 km'},
                   'duration': {'text': '12分'},
                 },
+                'polyline': {'encodedPolyline': '_p~iF~ps|U_ulLnnqC'},
                 'steps': [
                   {
                     'navigationInstruction': {'instructions': '高速道路に入る'},
@@ -105,6 +140,7 @@ void main() {
                   'distance': {'text': '5 km'},
                   'duration': {'text': '10分'},
                 },
+                'polyline': {'encodedPolyline': '_ulLnnqC_mqNvxq`@'},
                 'steps': [
                   {
                     'navigationInstruction': {'instructions': '出口で降りる'},
@@ -147,6 +183,7 @@ void main() {
       expect(result.first.legs.first.localizedDistanceText, '5 km');
       expect(result.first.legs.first.localizedDurationText, '10分');
       expect(result.first.legs.first.primaryInstruction, '国道1号線を北に進む');
+      expect(result.first.legs.first.polylinePoints, isNotEmpty);
     });
   });
 }

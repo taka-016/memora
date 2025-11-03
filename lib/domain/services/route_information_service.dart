@@ -6,5 +6,6 @@ abstract class RouteInformationService {
   Future<List<RouteCandidate>> fetchRoutes({
     required List<RouteLocation> locations,
     required RouteTravelMode travelMode,
+    DateTime? departureTime,
   });
 }

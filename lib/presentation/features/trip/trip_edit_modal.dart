@@ -410,6 +410,7 @@ class _TripEditModalState extends State<TripEditModal> {
       builder: (context) => RouteInfoDialog(
         pins: List<PinDto>.from(_pins),
         routeInformationService: widget.routeInformationService,
+        isTestEnvironment: widget.isTestEnvironment,
       ),
     );
   }

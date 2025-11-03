@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:memora/domain/services/route_information_service.dart';
 import 'package:memora/domain/value_objects/route/route_candidate.dart';
+import 'package:memora/domain/value_objects/route/route_geo_point.dart';
 import 'package:memora/domain/value_objects/route/route_leg.dart';
 import 'package:memora/domain/value_objects/route/route_location.dart';
 import 'package:memora/domain/value_objects/route/route_travel_mode.dart';
@@ -21,6 +22,7 @@ class GoogleRoutesApiRouteInformationService
   Future<List<RouteCandidate>> fetchRoutes({
     required List<RouteLocation> locations,
     required RouteTravelMode travelMode,
+    DateTime? departureTime,
   }) async {
     if (locations.length < 2) {
       return const [];
@@ -54,6 +56,10 @@ class GoogleRoutesApiRouteInformationService
     if (travelMode == RouteTravelMode.drive ||
         travelMode == RouteTravelMode.transit) {
       body['routingPreference'] = 'TRAFFIC_UNAWARE';
+    }
+
+    if (departureTime != null) {
+      body['departureTime'] = departureTime.toUtc().toIso8601String();
     }
 
     final response = await httpClient.post(
@@ -158,10 +164,20 @@ class GoogleRoutesApiRouteInformationService
 
     instruction ??= '経路概要情報が取得できませんでした';
 
+    final polylinePoints = <RouteGeoPoint>[];
+    final polyline = legMap['polyline'];
+    if (polyline is Map<String, dynamic>) {
+      final encoded = polyline['encodedPolyline'];
+      if (encoded is String && encoded.isNotEmpty) {
+        polylinePoints.addAll(_decodePolyline(encoded));
+      }
+    }
+
     return RouteLeg(
       localizedDistanceText: _extractLocalizedText(legMap, 'distance'),
       localizedDurationText: _extractLocalizedText(legMap, 'duration'),
       primaryInstruction: instruction,
+      polylinePoints: polylinePoints,
     );
   }
 
@@ -180,6 +196,42 @@ class GoogleRoutesApiRouteInformationService
   }
 }
 
+List<RouteGeoPoint> _decodePolyline(String encoded) {
+  var index = 0;
+  var lat = 0;
+  var lng = 0;
+  final coordinates = <RouteGeoPoint>[];
+
+  while (index < encoded.length) {
+    var result = 0;
+    var shift = 0;
+    int b;
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    final dLat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+    lat += dLat;
+
+    result = 0;
+    shift = 0;
+    do {
+      b = encoded.codeUnitAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+
+    final dLng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+    lng += dLng;
+
+    coordinates.add(RouteGeoPoint(latitude: lat / 1e5, longitude: lng / 1e5));
+  }
+
+  return coordinates;
+}
+
 const String _fieldMask =
     'routes.distanceMeters,'
     'routes.duration,'
@@ -191,4 +243,5 @@ const String _fieldMask =
     'routes.legs.duration,'
     'routes.legs.localizedValues.duration,'
     'routes.legs.localizedValues.distance,'
-    'routes.legs.steps.navigationInstruction.instructions';
+    'routes.legs.steps.navigationInstruction.instructions,'
+    'routes.legs.polyline.encodedPolyline';

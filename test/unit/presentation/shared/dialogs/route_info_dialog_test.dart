@@ -9,266 +9,273 @@ import 'package:memora/domain/value_objects/route/route_leg.dart';
 import 'package:memora/domain/value_objects/route/route_location.dart';
 import 'package:memora/domain/value_objects/route/route_travel_mode.dart';
 import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
+import 'package:memora/presentation/shared/dialogs/route_info_dialog_controller.dart';
 
-class FakeRouteInformationService implements RouteInformationService {
-  RouteTravelMode? lastRequestedMode;
-  List<RouteLocation>? lastRequestedLocations;
+class _RecordingRouteInformationService implements RouteInformationService {
+  final List<List<RouteLocation>> requestedLocations = [];
+  final List<RouteTravelMode> requestedModes = [];
+  final List<DateTime?> requestedDepartureTimes = [];
+  final List<List<RouteCandidate>> responseQueue = [];
   int callCount = 0;
-  List<RouteCandidate> response = const [];
+
+  Completer<void>? waitCompleter;
 
   @override
   Future<List<RouteCandidate>> fetchRoutes({
     required List<RouteLocation> locations,
     required RouteTravelMode travelMode,
+    DateTime? departureTime,
   }) async {
-    lastRequestedMode = travelMode;
-    lastRequestedLocations = locations;
+    requestedLocations.add(locations);
+    requestedModes.add(travelMode);
+    requestedDepartureTimes.add(departureTime);
     callCount++;
-    return response;
+    await waitCompleter?.future;
+    if (responseQueue.isEmpty) {
+      return const [];
+    }
+    return responseQueue.removeAt(0);
   }
 }
 
-class SequencedRouteInformationService implements RouteInformationService {
-  SequencedRouteInformationService(this.responseQueue);
+List<PinDto> _createPins() {
+  return [
+    PinDto(
+      pinId: 'pin1',
+      latitude: 35.0,
+      longitude: 139.0,
+      locationName: '那覇空港',
+      visitStartDate: DateTime(2024, 1, 1, 8),
+    ),
+    PinDto(
+      pinId: 'pin2',
+      latitude: 26.2,
+      longitude: 127.7,
+      locationName: '首里城',
+    ),
+    PinDto(
+      pinId: 'pin3',
+      latitude: 26.5,
+      longitude: 127.9,
+      locationName: '美ら海水族館',
+    ),
+  ];
+}
 
-  final List<Completer<List<RouteCandidate>>> responseQueue;
-  final List<RouteTravelMode> requestedModes = [];
-  final List<List<RouteLocation>> requestedLocations = [];
-  int callCount = 0;
+RouteCandidate _createCandidate({
+  required String description,
+  required String distance,
+  required String duration,
+}) {
+  return RouteCandidate(
+    description: description,
+    localizedDistanceText: distance,
+    localizedDurationText: duration,
+    legs: const [
+      RouteLeg(
+        localizedDistanceText: '5 km',
+        localizedDurationText: '10分',
+        primaryInstruction: '直進してください',
+      ),
+    ],
+    warnings: const [],
+  );
+}
 
-  @override
-  Future<List<RouteCandidate>> fetchRoutes({
-    required List<RouteLocation> locations,
-    required RouteTravelMode travelMode,
-  }) {
-    if (callCount >= responseQueue.length) {
-      throw StateError('レスポンスキューが不足しています');
-    }
-    requestedModes.add(travelMode);
-    requestedLocations.add(locations);
-    final completer = responseQueue[callCount];
-    callCount++;
-    return completer.future;
-  }
+Future<void> _pumpDialog(
+  WidgetTester tester, {
+  required RouteInformationService service,
+  required List<PinDto> pins,
+  DateTime Function()? nowProvider,
+  void Function(RouteInfoDialogController controller)? onControllerReady,
+}) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: RouteInfoDialog(
+        pins: pins,
+        routeInformationService: service,
+        isTestEnvironment: true,
+        nowProvider: nowProvider,
+        onControllerReady: onControllerReady,
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('RouteInfoDialog', () {
-    late FakeRouteInformationService fakeService;
+    late _RecordingRouteInformationService service;
     late List<PinDto> pins;
+    late DateTime now;
 
     setUp(() {
-      fakeService = FakeRouteInformationService();
-      pins = [
-        PinDto(
-          pinId: 'pin2',
-          latitude: 35.3,
-          longitude: 139.6,
-          locationName: 'B地点',
-          visitStartDate: DateTime(2024, 1, 2),
-        ),
-        PinDto(
-          pinId: 'pin1',
-          latitude: 35.2,
-          longitude: 139.5,
-          locationName: 'A地点',
-          visitStartDate: DateTime(2024, 1, 1),
-        ),
-        PinDto(
-          pinId: 'pin3',
-          latitude: 35.4,
-          longitude: 139.7,
-          locationName: 'C地点',
-          visitStartDate: DateTime(2024, 1, 3),
-        ),
-      ];
-
-      fakeService.response = [
-        RouteCandidate(
-          description: '主要道路経由',
-          localizedDistanceText: '11 km',
-          localizedDurationText: '22分',
-          legs: const [
-            RouteLeg(
-              localizedDistanceText: '5 km',
-              localizedDurationText: '10分',
-              primaryInstruction: '北に進む',
-            ),
-            RouteLeg(
-              localizedDistanceText: '6 km',
-              localizedDurationText: '12分',
-              primaryInstruction: '目的地は右側',
+      service = _RecordingRouteInformationService();
+      pins = _createPins();
+      now = DateTime(2024, 1, 5, 9, 30);
+      service.responseQueue
+        ..clear()
+        ..addAll([
+          [
+            _createCandidate(
+              description: '候補A',
+              distance: '12 km',
+              duration: '25分',
             ),
           ],
-          warnings: const [],
-        ),
-        RouteCandidate(
-          description: '高速道路優先',
-          localizedDistanceText: '10 km',
-          localizedDurationText: '20分',
-          legs: const [
-            RouteLeg(
-              localizedDistanceText: '4 km',
-              localizedDurationText: '8分',
-              primaryInstruction: '入口から高速道路へ',
-            ),
-            RouteLeg(
-              localizedDistanceText: '6 km',
-              localizedDurationText: '12分',
-              primaryInstruction: '出口で降りる',
+          [
+            _createCandidate(
+              description: '候補B',
+              distance: '30 km',
+              duration: '45分',
             ),
           ],
-          warnings: const [],
-        ),
-      ];
+        ]);
     });
 
-    testWidgets('初期表示で自動車の移動手段を使用してデータ取得する', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: fakeService,
-          ),
-        ),
+    testWidgets('経路検索ボタンを押すと区間ごとにRoutes APIが呼び出される', (tester) async {
+      RouteInfoDialogController? capturedController;
+      await _pumpDialog(
+        tester,
+        service: service,
+        pins: pins,
+        nowProvider: () => now,
+        onControllerReady: (controller) => capturedController = controller,
       );
 
-      await tester.pump();
+      expect(service.callCount, 0);
+      expect(capturedController, isNotNull);
+      capturedController!.updateTravelMode(1, RouteTravelMode.walk);
 
-      expect(fakeService.callCount, 1);
-      expect(fakeService.lastRequestedMode, RouteTravelMode.drive);
-      expect(fakeService.lastRequestedLocations, isNotNull);
-      expect(fakeService.lastRequestedLocations!.first.id, 'pin1');
-      expect(fakeService.lastRequestedLocations!.last.id, 'pin3');
-    });
-
-    testWidgets('移動手段はアイコンボタンで表示される', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: fakeService,
-          ),
-        ),
-      );
-
-      await tester.pump();
-
-      expect(find.byType(ChoiceChip), findsNothing);
-      expect(find.byIcon(Icons.directions_car), findsOneWidget);
-      expect(find.byIcon(Icons.directions_walk), findsOneWidget);
-      expect(find.byIcon(Icons.directions_transit), findsOneWidget);
-    });
-
-    testWidgets('複数候補がある場合にタブで切り替えられる', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: fakeService,
-          ),
-        ),
-      );
-
-      await tester.pump();
-
-      expect(find.text('候補1'), findsOneWidget);
-      expect(find.text('候補2'), findsOneWidget);
-
-      // デフォルトは候補1が表示される
-      expect(find.text('主要道路経由'), findsOneWidget);
-
-      await tester.tap(find.text('候補2'));
+      await tester.tap(find.byKey(const Key('route_search_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('高速道路優先'), findsOneWidget);
-    });
+      expect(capturedController!.segments[0].candidate, isNotNull);
+      expect(capturedController!.segments[1].candidate, isNotNull);
 
-    testWidgets('各区間の経路情報を矢印で表示する', (tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: fakeService,
-          ),
-        ),
-      );
-
-      await tester.pump();
-
-      expect(find.byIcon(Icons.arrow_downward), findsNWidgets(2));
-      expect(find.textContaining('5 km'), findsOneWidget);
-      expect(find.textContaining('6 km'), findsOneWidget);
-    });
-
-    testWidgets('移動手段切り替え時に古いレスポンスを無視する', (tester) async {
-      final firstCompleter = Completer<List<RouteCandidate>>();
-      final secondCompleter = Completer<List<RouteCandidate>>();
-      final sequencedService = SequencedRouteInformationService([
-        firstCompleter,
-        secondCompleter,
+      expect(service.callCount, 2);
+      expect(service.requestedModes, [
+        RouteTravelMode.drive,
+        RouteTravelMode.walk,
       ]);
+      expect(service.requestedDepartureTimes[0], pins[0].visitStartDate);
+      expect(service.requestedDepartureTimes[1], now);
+      expect(
+        find.textContaining('25分', findRichText: true, skipOffstage: false),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('45分', findRichText: true, skipOffstage: false),
+        findsOneWidget,
+      );
+    });
 
-      final drivingCandidate = RouteCandidate(
-        description: '自動車推奨ルート',
-        localizedDistanceText: '15 km',
-        localizedDurationText: '25分',
-        legs: const [
-          RouteLeg(
-            localizedDistanceText: '15 km',
-            localizedDurationText: '25分',
-            primaryInstruction: '高速道路を利用',
-          ),
-        ],
-        warnings: const [],
+    testWidgets('ピンをタップするとマップハイライトが更新される', (tester) async {
+      RouteInfoDialogController? controller;
+      await _pumpDialog(
+        tester,
+        service: service,
+        pins: pins,
+        nowProvider: () => now,
+        onControllerReady: (c) => controller = c,
       );
 
-      final walkingCandidate = RouteCandidate(
-        description: '徒歩優先ルート',
-        localizedDistanceText: '2 km',
-        localizedDurationText: '18分',
-        legs: const [
-          RouteLeg(
-            localizedDistanceText: '2 km',
-            localizedDurationText: '18分',
-            primaryInstruction: '歩道を進む',
-          ),
-        ],
-        warnings: const [],
-      );
+      await tester.tap(find.byKey(const Key('route_search_button')));
+      await tester.pumpAndSettle();
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: RouteInfoDialog(
-            pins: pins,
-            routeInformationService: sequencedService,
-          ),
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('route_info_map_placeholder')),
+          matching: find.textContaining('pin1 → pin2'),
         ),
+        findsOneWidget,
       );
 
+      controller!.selectPin('pin3');
       await tester.pump();
 
-      expect(sequencedService.callCount, 1);
-      expect(sequencedService.requestedModes.first, RouteTravelMode.drive);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('route_info_map_placeholder')),
+          matching: find.textContaining('pin2 → pin3'),
+        ),
+        findsOneWidget,
+      );
+    });
 
-      await tester.tap(find.byIcon(Icons.directions_walk));
+    testWidgets('マップ表示は+/-アイコンで切り替えられる', (tester) async {
+      await _pumpDialog(
+        tester,
+        service: service,
+        pins: pins,
+        nowProvider: () => now,
+      );
+
+      await tester.tap(find.byKey(const Key('route_search_button')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('route_info_map_placeholder')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byIcon(Icons.remove));
       await tester.pump();
 
-      expect(sequencedService.callCount, 2);
-      expect(sequencedService.requestedModes.last, RouteTravelMode.walk);
+      expect(find.byKey(const Key('route_info_map_placeholder')), findsNothing);
+      expect(find.byIcon(Icons.add), findsOneWidget);
 
-      secondCompleter.complete([walkingCandidate]);
-      await tester.pump();
-      await tester.pump();
-
-      expect(find.text('徒歩優先ルート'), findsOneWidget);
-
-      firstCompleter.complete([drivingCandidate]);
-      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
 
-      expect(find.text('徒歩優先ルート'), findsOneWidget);
-      expect(find.text('自動車推奨ルート'), findsNothing);
+      expect(
+        find.byKey(const Key('route_info_map_placeholder')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('ピンの並べ替えが検索結果に反映される', (tester) async {
+      RouteInfoDialogController? controller;
+      await _pumpDialog(
+        tester,
+        service: service,
+        pins: pins,
+        nowProvider: () => now,
+        onControllerReady: (c) => controller = c,
+      );
+
+      controller!.reorderPins(oldIndex: 0, newIndex: controller!.pins.length);
+      await tester.pump();
+
+      service.responseQueue
+        ..clear()
+        ..addAll([
+          [
+            _createCandidate(
+              description: '候補C',
+              distance: '8 km',
+              duration: '18分',
+            ),
+          ],
+          [
+            _createCandidate(
+              description: '候補D',
+              distance: '12 km',
+              duration: '25分',
+            ),
+          ],
+        ]);
+
+      await tester.tap(find.byKey(const Key('route_search_button')));
+      await tester.pumpAndSettle();
+
+      expect(service.requestedLocations.length, 2);
+      expect(service.requestedLocations[0].first.id, 'pin2');
+      expect(service.requestedLocations[0].last.id, 'pin3');
+      expect(service.requestedLocations[1].first.id, 'pin3');
+      expect(service.requestedLocations[1].last.id, 'pin1');
     });
   });
 }
