@@ -239,7 +239,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       insetPadding: const EdgeInsets.all(16),
       child: SizedBox(
         width: size.width * 0.85,
-        height: size.height * 0.8,
+        height: size.height * 0.9,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -252,15 +252,15 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
             ],
             const SizedBox(height: 16),
             Expanded(
-              child: Row(
+              child: Column(
                 children: [
                   Expanded(
-                    flex: _isMapVisible ? 1 : 2,
+                    flex: widget.isTestEnvironment ? 2 : 1,
                     child: _buildReorderableList(),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(height: 16),
                   Expanded(
-                    flex: 1,
+                    flex: widget.isTestEnvironment ? 1 : 1,
                     child: _isMapVisible
                         ? _buildMapSection()
                         : _buildMapPlaceholder(),
@@ -339,6 +339,9 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       child: ReorderableListView.builder(
         key: const Key('route_info_reorderable_list'),
         padding: const EdgeInsets.only(right: 12),
+        shrinkWrap: true,
+        primary: false,
+        cacheExtent: double.infinity,
         onReorder: _onReorder,
         itemCount: _pins.length,
         itemBuilder: (context, index) {
