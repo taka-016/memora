@@ -58,6 +58,9 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   Map<String, List<Location>> get segmentResults =>
       Map.unmodifiable(_segmentResults);
 
+  @visibleForTesting
+  int? get selectedPinIndex => _selectedPinIndex;
+
   @override
   void initState() {
     super.initState();
@@ -234,41 +237,28 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
-      child: SizedBox(
-        width: size.width * 0.85,
-        height: size.height * 0.9,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(context),
-            const SizedBox(height: 16),
-            _buildActionRow(),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
-              _buildErrorBanner(),
+      child: Material(
+        type: MaterialType.card,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context),
+              const SizedBox(height: 16),
+              _buildActionRow(),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 12),
+                _buildErrorBanner(),
+              ],
+              const SizedBox(height: 16),
+              Expanded(child: _buildBodyContent(context)),
             ],
-            const SizedBox(height: 16),
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: widget.isTestEnvironment ? 2 : 1,
-                    child: _buildReorderableList(),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    flex: widget.isTestEnvironment ? 1 : 1,
-                    child: _isMapVisible
-                        ? _buildMapSection()
-                        : _buildMapPlaceholder(),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -303,16 +293,42 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
                 )
               : const Text('経路検索'),
         ),
-        const SizedBox(width: 12),
-        IconButton(
-          key: const Key('route_info_map_toggle'),
-          onPressed: () {
-            setState(() {
-              _isMapVisible = !_isMapVisible;
-            });
-          },
-          icon: Icon(_isMapVisible ? Icons.remove : Icons.add),
+      ],
+    );
+  }
+
+  Widget _buildBodyContent(BuildContext context) {
+    const collapsedHeight = 56.0;
+    final expandedHeight = widget.isTestEnvironment
+        ? 200.0
+        : (MediaQuery.of(context).size.height * 0.32).clamp(180.0, 320.0);
+
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            key: const Key('route_info_list_area'),
+            children: [Positioned.fill(child: _buildReorderableList())],
+          ),
         ),
+        const SizedBox(height: 2),
+        Divider(height: 1),
+        AnimatedContainer(
+          key: const Key('route_info_map_area'),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          height: _isMapVisible ? expandedHeight : collapsedHeight,
+          child: _buildMapAccordionContent(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMapAccordionContent() {
+    return Column(
+      children: [
+        _buildMapToggleButton(),
+        if (_isMapVisible) ...[Expanded(child: _buildMapSection())],
       ],
     );
   }
@@ -413,10 +429,6 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
     if (widget.isTestEnvironment) {
       return Container(
         key: const Key('route_info_map'),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(8),
-        ),
         child: const Center(child: Text('マッププレビュー')),
       );
     }
@@ -440,13 +452,25 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
     );
   }
 
-  Widget _buildMapPlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(8),
+  Widget _buildMapToggleButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: TextButton.icon(
+        key: const Key('route_info_map_toggle'),
+        onPressed: () {
+          setState(() {
+            _isMapVisible = !_isMapVisible;
+          });
+        },
+        icon: Icon(_isMapVisible ? Icons.remove : Icons.add),
+        label: Text(_isMapVisible ? 'マップ非表示' : 'マップ表示'),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.black87,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        ),
       ),
-      child: const Center(child: Text('マップは非表示です')),
     );
   }
 
