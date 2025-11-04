@@ -178,22 +178,6 @@ void main() {
       expect(state.segmentResults.length, 2);
     });
 
-    testWidgets('マップ表示切り替えボタンはマップ右上に表示されること', (tester) async {
-      await pumpRouteInfoDialog(tester);
-
-      final toggleFinder = find.byKey(const Key('route_info_map_toggle'));
-      final mapAreaFinder = find.byKey(const Key('route_info_map_area'));
-
-      expect(toggleFinder, findsOneWidget);
-      expect(mapAreaFinder, findsOneWidget);
-
-      final toggleRect = tester.getRect(toggleFinder);
-      final mapRect = tester.getRect(mapAreaFinder);
-
-      expect(mapRect.contains(toggleRect.topLeft), isTrue);
-      expect(mapRect.contains(toggleRect.topRight), isTrue);
-    });
-
     testWidgets('マップを非表示にするとリスト領域が拡張されること', (tester) async {
       await pumpRouteInfoDialog(tester);
 

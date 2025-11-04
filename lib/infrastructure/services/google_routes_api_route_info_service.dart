@@ -25,6 +25,31 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
       'directions/v2:computeRoutes',
     );
 
+    final body = {
+      'origin': {
+        'location': {
+          'latLng': {
+            'latitude': origin.latitude,
+            'longitude': origin.longitude,
+          },
+        },
+      },
+      'destination': {
+        'location': {
+          'latLng': {
+            'latitude': destination.latitude,
+            'longitude': destination.longitude,
+          },
+        },
+      },
+      'travelMode': travelMode.apiValue,
+      'computeAlternativeRoutes': false,
+    };
+
+    if (travelMode == TravelMode.drive) {
+      body['routingPreference'] = 'TRAFFIC_AWARE';
+    }
+
     final response = await _httpClient.post(
       url,
       headers: {
@@ -32,29 +57,7 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
         'X-Goog-Api-Key': apiKey,
         'X-Goog-FieldMask': 'routes.polyline.encodedPolyline',
       },
-      body: jsonEncode({
-        'origin': {
-          'location': {
-            'latLng': {
-              'latitude': origin.latitude,
-              'longitude': origin.longitude,
-            },
-          },
-        },
-        'destination': {
-          'location': {
-            'latLng': {
-              'latitude': destination.latitude,
-              'longitude': destination.longitude,
-            },
-          },
-        },
-        'travelMode': travelMode.apiValue,
-        'routingPreference': travelMode == TravelMode.drive
-            ? 'TRAFFIC_AWARE'
-            : 'ROUTING_PREFERENCE_UNSPECIFIED',
-        'computeAlternativeRoutes': false,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode != 200) {
