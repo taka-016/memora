@@ -518,23 +518,20 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
                   padding: const EdgeInsets.only(left: 24, top: 8),
                   child: SizedBox(
                     height: maxDetailHeight,
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: instructions
-                              .map(
-                                (instruction) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 4),
-                                  child: Text(
-                                    instruction,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: instructions
+                            .map(
+                              (instruction) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  instruction,
+                                  style: const TextStyle(fontSize: 12),
                                 ),
-                              )
-                              .toList(),
-                        ),
+                              ),
+                            )
+                            .toList(),
                       ),
                     ),
                   ),
