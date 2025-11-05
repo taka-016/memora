@@ -1,8 +1,9 @@
 import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/domain/value_objects/travel_mode.dart';
 
 abstract class RouteInfoService {
-  Future<List<Location>> fetchRoute({
+  Future<RouteSegmentDetail> fetchRoute({
     required Location origin,
     required Location destination,
     required TravelMode travelMode,

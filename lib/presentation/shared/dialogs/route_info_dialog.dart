@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/domain/value_objects/travel_mode.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
@@ -43,7 +44,8 @@ class RouteInfoDialog extends StatefulWidget {
 class RouteInfoDialogState extends State<RouteInfoDialog> {
   late List<PinDto> _pins;
   late Map<String, TravelMode> _segmentModes;
-  Map<String, List<Location>> _segmentResults = {};
+  Map<String, RouteSegmentDetail> _segmentDetails = {};
+  Map<String, bool> _segmentExpansion = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMapVisible = true;
@@ -55,8 +57,8 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       GoogleRoutesApiRouteInfoService(apiKey: Env.googlePlacesApiKey);
 
   @visibleForTesting
-  Map<String, List<Location>> get segmentResults =>
-      Map.unmodifiable(_segmentResults);
+  Map<String, RouteSegmentDetail> get segmentDetails =>
+      Map.unmodifiable(_segmentDetails);
 
   @visibleForTesting
   int? get selectedPinIndex => _selectedPinIndex;
@@ -97,7 +99,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       _errorMessage = null;
     });
 
-    final nextResults = <String, List<Location>>{};
+    final nextResults = <String, RouteSegmentDetail>{};
 
     try {
       for (var i = 0; i < _pins.length - 1; i++) {
@@ -106,7 +108,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         final key = _segmentKey(origin, destination);
         final mode = _segmentModes[key] ?? TravelMode.drive;
 
-        final route = await _service.fetchRoute(
+        final detail = await _service.fetchRoute(
           origin: Location(
             latitude: origin.latitude,
             longitude: origin.longitude,
@@ -117,12 +119,15 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
           ),
           travelMode: mode,
         );
-        nextResults[key] = route;
+        nextResults[key] = detail;
       }
 
       if (!mounted) return;
       setState(() {
-        _segmentResults = nextResults;
+        _segmentDetails = nextResults;
+        _segmentExpansion = {
+          for (final entry in nextResults.entries) entry.key: false,
+        };
       });
       if (!widget.isTestEnvironment) {
         await _fitMapToRoutes();
@@ -147,11 +152,13 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   }
 
   Future<void> _fitMapToRoutes() async {
-    if (_segmentResults.isEmpty || _mapController == null) {
+    if (_segmentDetails.isEmpty || _mapController == null) {
       return;
     }
 
-    final points = _segmentResults.values.expand((value) => value).toList();
+    final points = _segmentDetails.values
+        .expand((value) => value.polyline)
+        .toList();
     if (points.isEmpty) {
       return;
     }
@@ -199,7 +206,8 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       final item = _pins.removeAt(oldIndex);
       _pins.insert(newIndex, item);
       _segmentModes = _buildSegmentModes(_segmentModes);
-      _segmentResults = {};
+      _segmentDetails = {};
+      _segmentExpansion = {};
       _selectedPinIndex = null;
     });
   }
@@ -210,9 +218,16 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
     });
   }
 
+  void _toggleSegmentExpansion(String key) {
+    setState(() {
+      final current = _segmentExpansion[key] ?? false;
+      _segmentExpansion = {..._segmentExpansion, key: !current};
+    });
+  }
+
   Set<String> _activeSegmentKeys() {
     if (_selectedPinIndex == null) {
-      return _segmentResults.keys.toSet();
+      return _segmentDetails.keys.toSet();
     }
     final set = <String>{};
     final index = _selectedPinIndex!;
@@ -376,47 +391,177 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
                 ),
               ),
               if (index < _pins.length - 1)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(width: 12),
-                      const Icon(Icons.arrow_downward),
-                      const SizedBox(width: 6),
-                      DropdownButton<TravelMode>(
-                        key: Key('route_segment_mode_$index'),
-                        value:
-                            _segmentModes[_segmentKey(
-                              _pins[index],
-                              _pins[index + 1],
-                            )] ??
-                            TravelMode.drive,
-                        underline: const SizedBox.shrink(),
-                        items: TravelMode.values
-                            .map(
-                              (mode) => DropdownMenuItem<TravelMode>(
-                                value: mode,
-                                child: Text(mode.label),
-                              ),
-                            )
-                            .toList(),
-                        onChanged: (mode) {
-                          if (mode == null) return;
-                          _onModeChanged(
-                            _segmentKey(_pins[index], _pins[index + 1]),
-                            mode,
-                          );
-                        },
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 12),
+                    const Icon(Icons.arrow_downward),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DropdownButton<TravelMode>(
+                            key: Key('route_segment_mode_$index'),
+                            value:
+                                _segmentModes[_segmentKey(
+                                  _pins[index],
+                                  _pins[index + 1],
+                                )] ??
+                                TravelMode.drive,
+                            underline: const SizedBox.shrink(),
+                            items: TravelMode.values
+                                .map(
+                                  (mode) => DropdownMenuItem<TravelMode>(
+                                    value: mode,
+                                    child: Text(mode.label),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (mode) {
+                              if (mode == null) return;
+                              _onModeChanged(
+                                _segmentKey(_pins[index], _pins[index + 1]),
+                                mode,
+                              );
+                            },
+                          ),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              key: Key('route_segment_container_$index'),
+                              child: _buildSegmentDetail(index),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
             ],
           );
         },
       ),
     );
+  }
+
+  Widget _buildSegmentDetail(int index) {
+    final key = _segmentKey(_pins[index], _pins[index + 1]);
+    final detail = _segmentDetails[key];
+
+    if (detail == null) {
+      return const SizedBox.shrink();
+    }
+
+    final hasData =
+        detail.distanceMeters > 0 ||
+        detail.durationSeconds > 0 ||
+        detail.instructions.isNotEmpty;
+
+    if (!hasData) {
+      return const SizedBox.shrink();
+    }
+
+    final isExpanded = _segmentExpansion[key] ?? false;
+    final instructions = detail.instructions;
+    final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
+    final durationMinutes = _durationMinutes(detail.durationSeconds);
+    final summaryText =
+        '距離: $distanceLabel'
+        'km 所要時間: $durationMinutes'
+        '分';
+    const double maxDetailHeight = 120.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          key: Key('route_segment_toggle_$index'),
+          onTap: () => _toggleSegmentExpansion(key),
+          child: Row(
+            key: Key('route_segment_summary_$index'),
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                instructions.isEmpty
+                    ? Icons.info_outline
+                    : (isExpanded ? Icons.expand_less : Icons.expand_more),
+                size: 20,
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  summaryText,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          transitionBuilder: (child, animation) {
+            return SizeTransition(
+              sizeFactor: animation,
+              axisAlignment: -1,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: isExpanded && instructions.isNotEmpty
+              ? Padding(
+                  key: ValueKey('route_segment_instructions_$index'),
+                  padding: const EdgeInsets.only(left: 24, top: 8),
+                  child: SizedBox(
+                    height: maxDetailHeight,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: instructions
+                            .map(
+                              (instruction) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  instruction,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(
+                  key: ValueKey('route_segment_instructions_collapsed'),
+                ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDistanceLabel(int meters) {
+    if (meters <= 0) {
+      return '0.0';
+    }
+    final distance = meters / 1000;
+    final formatted = distance >= 100
+        ? distance.toStringAsFixed(0)
+        : distance.toStringAsFixed(1);
+    return formatted.endsWith('.0')
+        ? formatted.substring(0, formatted.length - 2)
+        : formatted;
+  }
+
+  int _durationMinutes(int seconds) {
+    if (seconds <= 0) {
+      return 0;
+    }
+    return (seconds / 60).ceil();
   }
 
   Widget _buildMapSection() {
@@ -492,14 +637,14 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
     final polylines = <Polyline>{};
     final activeKeys = _activeSegmentKeys();
 
-    _segmentResults.forEach((key, locations) {
-      if (locations.isEmpty) {
+    _segmentDetails.forEach((key, detail) {
+      if (detail.polyline.isEmpty) {
         return;
       }
       polylines.add(
         Polyline(
           polylineId: PolylineId(key),
-          points: locations
+          points: detail.polyline
               .map((location) => LatLng(location.latitude, location.longitude))
               .toList(),
           color: activeKeys.contains(key) ? Colors.blueAccent : Colors.blueGrey,
