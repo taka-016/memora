@@ -377,19 +377,13 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
               ),
               if (index < _pins.length - 1)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 4),
-                            const Icon(Icons.arrow_downward),
-                          ],
-                        ),
-                      ),
                       const SizedBox(width: 12),
+                      const Icon(Icons.arrow_downward),
+                      const SizedBox(width: 6),
                       DropdownButton<TravelMode>(
                         key: Key('route_segment_mode_$index'),
                         value:
