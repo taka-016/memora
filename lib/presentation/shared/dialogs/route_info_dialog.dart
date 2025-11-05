@@ -391,21 +391,16 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
                 ),
               ),
               if (index < _pins.length - 1)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: AnimatedSize(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      key: Key('route_segment_container_$index'),
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 12),
+                    const Icon(Icons.arrow_downward),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(width: 12),
-                          const Icon(Icons.arrow_downward),
-                          const SizedBox(width: 6),
                           DropdownButton<TravelMode>(
                             key: Key('route_segment_mode_$index'),
                             value:
@@ -431,12 +426,19 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
                               );
                             },
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildSegmentDetail(index)),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 200),
+                            curve: Curves.easeInOut,
+                            alignment: Alignment.topCenter,
+                            child: Container(
+                              key: Key('route_segment_container_$index'),
+                              child: _buildSegmentDetail(index),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
             ],
           );
@@ -470,6 +472,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         '距離: $distanceLabel'
         'km 所要時間: $durationMinutes'
         '分';
+    const double maxDetailHeight = 120.0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -513,19 +516,27 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
               ? Padding(
                   key: ValueKey('route_segment_instructions_$index'),
                   padding: const EdgeInsets.only(left: 24, top: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: instructions
-                        .map(
-                          (instruction) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              instruction,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                  child: SizedBox(
+                    height: maxDetailHeight,
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: instructions
+                              .map(
+                                (instruction) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    instruction,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
                   ),
                 )
               : const SizedBox.shrink(
