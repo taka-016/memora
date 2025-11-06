@@ -255,6 +255,50 @@ void main() {
       expect(find.text('直進します'), findsNothing);
     });
 
+    testWidgets('中間のピンを選択した場合は前後の経路ハイライト色が異なること', (tester) async {
+      final fakeService = FakeRouteInfoService(
+        responses: {
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
+            polyline: const [
+              Location(latitude: 35.0, longitude: 135.0),
+              Location(latitude: 35.05, longitude: 135.05),
+              Location(latitude: 35.1, longitude: 135.1),
+            ],
+            distanceMeters: 3200,
+            durationSeconds: 900,
+            instructions: const [],
+          ),
+          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetail(
+            polyline: const [
+              Location(latitude: 35.1, longitude: 135.1),
+              Location(latitude: 35.15, longitude: 135.15),
+              Location(latitude: 35.2, longitude: 135.2),
+            ],
+            distanceMeters: 2100,
+            durationSeconds: 480,
+            instructions: const [],
+          ),
+        },
+      );
+
+      await pumpRouteInfoDialog(tester, service: fakeService);
+
+      await tester.tap(find.text('経路検索'));
+      await tester.pumpAndSettle();
+
+      final state =
+          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+
+      state.selectPinForTest(1);
+      await tester.pumpAndSettle();
+
+      expect(state.selectedPinIndex, 1);
+
+      final highlightColors = state.segmentHighlightColors;
+      expect(highlightColors['pin-1->pin-2'], Colors.blueAccent);
+      expect(highlightColors['pin-2->pin-3'], Colors.greenAccent);
+    });
+
     testWidgets('経路詳細は移動手段プルダウンの下に表示されること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
