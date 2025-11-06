@@ -63,6 +63,25 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   @visibleForTesting
   int? get selectedPinIndex => _selectedPinIndex;
 
+  @visibleForTesting
+  Map<String, Color> get segmentHighlightColors {
+    final polylines = _buildPolylines();
+    return {
+      for (final polyline in polylines)
+        polyline.polylineId.value: polyline.color,
+    };
+  }
+
+  @visibleForTesting
+  void selectPinForTest(int index) {
+    if (index < 0 || index >= _pins.length) {
+      return;
+    }
+    setState(() {
+      _selectedPinIndex = index;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -656,19 +675,24 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   Set<Polyline> _buildPolylines() {
     final polylines = <Polyline>{};
     final activeKeys = _activeSegmentKeys();
+    var activeIndex = 0;
 
     _segmentDetails.forEach((key, detail) {
       if (detail.polyline.isEmpty) {
         return;
       }
+      final isActive = activeKeys.contains(key);
+      final color = isActive
+          ? (activeIndex++ == 0 ? Colors.blueAccent : Colors.greenAccent)
+          : Colors.blueGrey;
       polylines.add(
         Polyline(
           polylineId: PolylineId(key),
           points: detail.polyline
               .map((location) => LatLng(location.latitude, location.longitude))
               .toList(),
-          color: activeKeys.contains(key) ? Colors.blueAccent : Colors.blueGrey,
-          width: activeKeys.contains(key) ? 6 : 4,
+          color: color,
+          width: isActive ? 6 : 4,
         ),
       );
     });
