@@ -381,69 +381,73 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
             key: ValueKey(pin.pinId),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Card(
-                child: ListTile(
-                  key: Key('route_info_pin_tile_${pin.pinId}'),
-                  title: Text(pin.locationName ?? ''),
-                  selected: _selectedPinIndex == index,
-                  onTap: () => _onPinTap(index),
-                  trailing: const Icon(Icons.drag_handle),
-                ),
-              ),
-              if (index < _pins.length - 1)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(width: 12),
-                    const Icon(Icons.arrow_downward),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          DropdownButton<TravelMode>(
-                            key: Key('route_segment_mode_$index'),
-                            value:
-                                _segmentModes[_segmentKey(
-                                  _pins[index],
-                                  _pins[index + 1],
-                                )] ??
-                                TravelMode.drive,
-                            underline: const SizedBox.shrink(),
-                            items: TravelMode.values
-                                .map(
-                                  (mode) => DropdownMenuItem<TravelMode>(
-                                    value: mode,
-                                    child: Text(mode.label),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (mode) {
-                              if (mode == null) return;
-                              _onModeChanged(
-                                _segmentKey(_pins[index], _pins[index + 1]),
-                                mode,
-                              );
-                            },
-                          ),
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 200),
-                            curve: Curves.easeInOut,
-                            alignment: Alignment.topCenter,
-                            child: Container(
-                              key: Key('route_segment_container_$index'),
-                              child: _buildSegmentDetail(index),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              _buildPinListItem(pin, index),
+              if (index < _pins.length - 1) _buildRouteSegment(index),
             ],
           );
         },
       ),
+    );
+  }
+
+  Widget _buildPinListItem(PinDto pin, int index) {
+    return Card(
+      child: ListTile(
+        key: Key('route_info_pin_tile_${pin.pinId}'),
+        title: Text(pin.locationName ?? ''),
+        selected: _selectedPinIndex == index,
+        onTap: () => _onPinTap(index),
+        trailing: const Icon(Icons.drag_handle),
+      ),
+    );
+  }
+
+  Widget _buildRouteSegment(int index) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(width: 12),
+        const Icon(Icons.arrow_downward),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTravelModeDropdown(index),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                alignment: Alignment.topCenter,
+                child: Container(
+                  key: Key('route_segment_container_$index'),
+                  child: _buildSegmentDetail(index),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTravelModeDropdown(int index) {
+    final key = _segmentKey(_pins[index], _pins[index + 1]);
+    return DropdownButton<TravelMode>(
+      key: Key('route_segment_mode_$index'),
+      value: _segmentModes[key] ?? TravelMode.drive,
+      underline: const SizedBox.shrink(),
+      items: TravelMode.values
+          .map(
+            (mode) => DropdownMenuItem<TravelMode>(
+              value: mode,
+              child: Text(mode.label),
+            ),
+          )
+          .toList(),
+      onChanged: (mode) {
+        if (mode == null) return;
+        _onModeChanged(key, mode);
+      },
     );
   }
 
@@ -464,6 +468,20 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       return const SizedBox.shrink();
     }
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSegmentSummary(index, key, detail),
+        _buildSegmentInstructions(index, key, detail),
+      ],
+    );
+  }
+
+  Widget _buildSegmentSummary(
+    int index,
+    String key,
+    RouteSegmentDetail detail,
+  ) {
     final isExpanded = _segmentExpansion[key] ?? false;
     final instructions = detail.instructions;
     final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
@@ -472,75 +490,77 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         '距離: $distanceLabel'
         'km 所要時間: $durationMinutes'
         '分';
+
+    return InkWell(
+      key: Key('route_segment_toggle_$index'),
+      onTap: () => _toggleSegmentExpansion(key),
+      child: Row(
+        key: Key('route_segment_summary_$index'),
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            instructions.isEmpty
+                ? Icons.info_outline
+                : (isExpanded ? Icons.expand_less : Icons.expand_more),
+            size: 20,
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              summaryText,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSegmentInstructions(
+    int index,
+    String key,
+    RouteSegmentDetail detail,
+  ) {
+    final isExpanded = _segmentExpansion[key] ?? false;
+    final instructions = detail.instructions;
     const double maxDetailHeight = 120.0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        InkWell(
-          key: Key('route_segment_toggle_$index'),
-          onTap: () => _toggleSegmentExpansion(key),
-          child: Row(
-            key: Key('route_segment_summary_$index'),
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(
-                instructions.isEmpty
-                    ? Icons.info_outline
-                    : (isExpanded ? Icons.expand_less : Icons.expand_more),
-                size: 20,
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  summaryText,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      transitionBuilder: (child, animation) {
+        return SizeTransition(
+          sizeFactor: animation,
+          axisAlignment: -1,
+          child: FadeTransition(opacity: animation, child: child),
+        );
+      },
+      child: isExpanded && instructions.isNotEmpty
+          ? Padding(
+              key: ValueKey('route_segment_instructions_$index'),
+              padding: const EdgeInsets.only(left: 24, top: 8),
+              child: SizedBox(
+                height: maxDetailHeight,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: instructions
+                        .map(
+                          (instruction) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Text(
+                              instruction,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          transitionBuilder: (child, animation) {
-            return SizeTransition(
-              sizeFactor: animation,
-              axisAlignment: -1,
-              child: FadeTransition(opacity: animation, child: child),
-            );
-          },
-          child: isExpanded && instructions.isNotEmpty
-              ? Padding(
-                  key: ValueKey('route_segment_instructions_$index'),
-                  padding: const EdgeInsets.only(left: 24, top: 8),
-                  child: SizedBox(
-                    height: maxDetailHeight,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: instructions
-                            .map(
-                              (instruction) => Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Text(
-                                  instruction,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(
-                  key: ValueKey('route_segment_instructions_collapsed'),
-                ),
-        ),
-      ],
+            )
+          : const SizedBox.shrink(
+              key: ValueKey('route_segment_instructions_collapsed'),
+            ),
     );
   }
 
