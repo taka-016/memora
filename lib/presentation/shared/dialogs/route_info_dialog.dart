@@ -345,8 +345,6 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
             children: [Positioned.fill(child: _buildReorderableList())],
           ),
         ),
-        const SizedBox(height: 2),
-        Divider(height: 1),
         AnimatedContainer(
           key: const Key('route_info_map_area'),
           duration: const Duration(milliseconds: 200),
