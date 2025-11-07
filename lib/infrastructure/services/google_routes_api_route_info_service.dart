@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/domain/value_objects/travel_mode.dart';
+import 'package:memora/core/enums/travel_mode.dart';
 
 class GoogleRoutesApiRouteInfoService implements RouteInfoService {
   GoogleRoutesApiRouteInfoService({

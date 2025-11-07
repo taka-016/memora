@@ -4,7 +4,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/domain/value_objects/travel_mode.dart';
+import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 
 class FakeRouteInfoService implements RouteInfoService {
