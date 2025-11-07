@@ -28,6 +28,21 @@ class FakeRouteInfoService implements RouteInfoService {
         travelMode: travelMode,
       ),
     );
+
+    if (travelMode == TravelMode.other) {
+      return RouteSegmentDetail(
+        polyline: [
+          Location(latitude: origin.latitude, longitude: origin.longitude),
+          Location(
+            latitude: destination.latitude,
+            longitude: destination.longitude,
+          ),
+        ],
+        distanceMeters: 0,
+        durationSeconds: 0,
+        instructions: const [],
+      );
+    }
     final key =
         '${origin.latitude},${origin.longitude}->${destination.latitude},${destination.longitude}-$travelMode';
     return responses[key] ?? const RouteSegmentDetail.empty();
@@ -136,6 +151,23 @@ void main() {
       );
     });
 
+    testWidgets('移動手段プルダウンにその他が表示され入力欄が出現すること', (tester) async {
+      await pumpRouteInfoDialog(tester);
+
+      await tester.tap(find.byKey(const Key('route_segment_mode_0')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('その他'), findsWidgets);
+
+      await tester.tap(find.text('その他').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('route_segment_other_input_0')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('ピンをタップすると選択状態になりハイライトされること', (tester) async {
       await pumpRouteInfoDialog(tester);
 
@@ -187,6 +219,45 @@ void main() {
       final state =
           tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
       expect(state.segmentDetails.length, 2);
+    });
+
+    testWidgets('その他を選択した区間もAPI経由で直線Polylineを取得し自由入力を案内に使用すること', (
+      tester,
+    ) async {
+      final fakeService = FakeRouteInfoService(responses: {});
+
+      await pumpRouteInfoDialog(tester, service: fakeService);
+
+      await tester.tap(find.byKey(const Key('route_segment_mode_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('その他').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('route_segment_other_input_0')),
+        '自転車と徒歩で移動',
+      );
+
+      await tester.tap(find.text('経路検索'));
+      await tester.pumpAndSettle();
+
+      expect(fakeService.callCount, 2);
+
+      final state =
+          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+      final segmentKey = 'pin-1->pin-2';
+      final detail = state.segmentDetails[segmentKey];
+      expect(detail, isNotNull);
+      expect(detail!.polyline.length, 2);
+      expect(
+        detail.polyline.first,
+        const Location(latitude: 35.0, longitude: 135.0),
+      );
+      expect(
+        detail.polyline.last,
+        const Location(latitude: 35.1, longitude: 135.1),
+      );
+      expect(detail.instructions, ['自転車と徒歩で移動']);
     });
 
     testWidgets('経路検索後に距離と時間および経路案内を折りたたみ表示できること', (tester) async {

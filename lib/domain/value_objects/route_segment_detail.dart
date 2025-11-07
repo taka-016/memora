@@ -20,6 +20,20 @@ class RouteSegmentDetail extends Equatable {
       durationSeconds = 0,
       instructions = const <String>[];
 
+  RouteSegmentDetail copyWith({
+    List<Location>? polyline,
+    int? distanceMeters,
+    int? durationSeconds,
+    List<String>? instructions,
+  }) {
+    return RouteSegmentDetail(
+      polyline: polyline ?? this.polyline,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      instructions: instructions ?? this.instructions,
+    );
+  }
+
   @override
   List<Object?> get props => [
     polyline,
