@@ -1,4 +1,4 @@
-enum TravelMode { drive, walk /*, transit*/ }
+enum TravelMode { drive, walk, other }
 
 extension TravelModeExtension on TravelMode {
   String get apiValue {
@@ -7,8 +7,8 @@ extension TravelModeExtension on TravelMode {
         return 'DRIVE';
       case TravelMode.walk:
         return 'WALK';
-      // case TravelMode.transit:
-      //   return 'TRANSIT';
+      case TravelMode.other:
+        return 'OTHER';
     }
   }
 
@@ -18,8 +18,8 @@ extension TravelModeExtension on TravelMode {
         return '自動車';
       case TravelMode.walk:
         return '徒歩';
-      // case TravelMode.transit:
-      //   return '公共交通機関';
+      case TravelMode.other:
+        return 'その他';
     }
   }
 }

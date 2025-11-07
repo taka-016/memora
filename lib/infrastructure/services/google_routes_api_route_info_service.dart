@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/domain/value_objects/travel_mode.dart';
+import 'package:memora/core/enums/travel_mode.dart';
 
 class GoogleRoutesApiRouteInfoService implements RouteInfoService {
   GoogleRoutesApiRouteInfoService({
@@ -21,6 +21,21 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     required Location destination,
     required TravelMode travelMode,
   }) async {
+    if (travelMode == TravelMode.other) {
+      return RouteSegmentDetail(
+        polyline: [
+          Location(latitude: origin.latitude, longitude: origin.longitude),
+          Location(
+            latitude: destination.latitude,
+            longitude: destination.longitude,
+          ),
+        ],
+        distanceMeters: 0,
+        durationSeconds: 0,
+        instructions: const <String>[],
+      );
+    }
+
     final url = Uri.https(
       'routes.googleapis.com',
       'directions/v2:computeRoutes',

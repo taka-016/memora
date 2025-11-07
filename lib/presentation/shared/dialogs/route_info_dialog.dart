@@ -5,7 +5,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/domain/value_objects/travel_mode.dart';
+import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
@@ -46,6 +46,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
   Map<String, bool> _segmentExpansion = {};
+  final Map<String, TextEditingController> _otherModeControllers = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMapVisible = true;
@@ -91,6 +92,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
 
   @override
   void dispose() {
+    _disposeAllOtherModeControllers();
     _mapController?.dispose();
     super.dispose();
   }
@@ -101,11 +103,38 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       final key = _segmentKey(_pins[i], _pins[i + 1]);
       map[key] = previous[key] ?? TravelMode.drive;
     }
+    _cleanupOtherModeControllers(map.keys);
     return map;
   }
 
   String _segmentKey(PinDto origin, PinDto destination) {
     return '${origin.pinId}->${destination.pinId}';
+  }
+
+  TextEditingController _ensureOtherModeController(String key) {
+    return _otherModeControllers.putIfAbsent(key, TextEditingController.new);
+  }
+
+  void _disposeOtherModeController(String key) {
+    final controller = _otherModeControllers.remove(key);
+    controller?.dispose();
+  }
+
+  void _disposeAllOtherModeControllers() {
+    for (final controller in _otherModeControllers.values) {
+      controller.dispose();
+    }
+    _otherModeControllers.clear();
+  }
+
+  void _cleanupOtherModeControllers(Iterable<String> validKeys) {
+    final validKeySet = validKeys.toSet();
+    final removeKeys = _otherModeControllers.keys
+        .where((key) => !validKeySet.contains(key))
+        .toList();
+    for (final key in removeKeys) {
+      _disposeOtherModeController(key);
+    }
   }
 
   Future<void> _searchRoutes() async {
@@ -127,7 +156,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         final key = _segmentKey(origin, destination);
         final mode = _segmentModes[key] ?? TravelMode.drive;
 
-        final detail = await _service.fetchRoute(
+        var detail = await _service.fetchRoute(
           origin: Location(
             latitude: origin.latitude,
             longitude: origin.longitude,
@@ -138,6 +167,15 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
           ),
           travelMode: mode,
         );
+
+        if (mode == TravelMode.other) {
+          final customNote = _otherModeControllers[key]?.text ?? '';
+          detail = detail.copyWith(
+            instructions: customNote.isEmpty
+                ? const <String>[]
+                : <String>[customNote],
+          );
+        }
         nextResults[key] = detail;
       }
 
@@ -235,6 +273,11 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
     setState(() {
       _segmentModes = {..._segmentModes, key: mode};
     });
+    if (mode == TravelMode.other) {
+      _ensureOtherModeController(key);
+    } else {
+      _disposeOtherModeController(key);
+    }
   }
 
   void _toggleSegmentExpansion(String key) {
@@ -449,9 +492,10 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
 
   Widget _buildTravelModeDropdown(int index) {
     final key = _segmentKey(_pins[index], _pins[index + 1]);
-    return DropdownButton<TravelMode>(
+    final currentMode = _segmentModes[key] ?? TravelMode.drive;
+    final dropdown = DropdownButton<TravelMode>(
       key: Key('route_segment_mode_$index'),
-      value: _segmentModes[key] ?? TravelMode.drive,
+      value: currentMode,
       underline: const SizedBox.shrink(),
       items: TravelMode.values
           .map(
@@ -465,6 +509,32 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         if (mode == null) return;
         _onModeChanged(key, mode);
       },
+    );
+
+    if (currentMode != TravelMode.other) {
+      return dropdown;
+    }
+
+    final controller = _ensureOtherModeController(key);
+
+    return Row(
+      children: [
+        Flexible(fit: FlexFit.loose, child: dropdown),
+        const SizedBox(width: 12),
+        Expanded(
+          child: TextField(
+            key: Key('route_segment_other_input_$index'),
+            controller: controller,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: '自由入力',
+              border: OutlineInputBorder(),
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
