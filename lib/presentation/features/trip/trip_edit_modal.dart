@@ -6,11 +6,13 @@ import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
+import 'package:memora/presentation/shared/views/route_info_view.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/core/app_logger.dart';
+
+enum TripEditExpandedSection { map, routeInfo }
 
 class TripEditModal extends StatefulWidget {
   final String groupId;
@@ -40,7 +42,7 @@ class _TripEditModalState extends State<TripEditModal> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _errorMessage;
-  bool _isMapExpanded = false;
+  TripEditExpandedSection? _expandedSection;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
 
@@ -123,7 +125,31 @@ class _TripEditModalState extends State<TripEditModal> {
 
   void _toggleMapExpansion() {
     setState(() {
-      _isMapExpanded = !_isMapExpanded;
+      if (_expandedSection == TripEditExpandedSection.map) {
+        _expandedSection = null;
+        _isBottomSheetVisible = false;
+        _selectedPin = null;
+      } else {
+        _expandedSection = TripEditExpandedSection.map;
+      }
+    });
+  }
+
+  void _showRouteInfoView() {
+    if (_pins.length < 2) {
+      return;
+    }
+
+    setState(() {
+      _expandedSection = TripEditExpandedSection.routeInfo;
+      _isBottomSheetVisible = false;
+      _selectedPin = null;
+    });
+  }
+
+  void _closeRouteInfoView() {
+    setState(() {
+      _expandedSection = null;
     });
   }
 
@@ -140,12 +166,21 @@ class _TripEditModalState extends State<TripEditModal> {
           width: MediaQuery.of(context).size.width * 0.95,
           height: MediaQuery.of(context).size.height * 0.8,
           padding: const EdgeInsets.all(24.0),
-          child: _isMapExpanded
-              ? _buildMapExpandedLayout()
-              : _buildNormalLayout(),
+          child: _buildDialogContent(),
         ),
       ),
     );
+  }
+
+  Widget _buildDialogContent() {
+    switch (_expandedSection) {
+      case TripEditExpandedSection.map:
+        return _buildMapExpandedLayout();
+      case TripEditExpandedSection.routeInfo:
+        return _buildRouteInfoExpandedLayout();
+      default:
+        return _buildNormalLayout();
+    }
   }
 
   Widget _buildNormalLayout() {
@@ -224,24 +259,12 @@ class _TripEditModalState extends State<TripEditModal> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: ElevatedButton(
-        onPressed: hasSufficientPins ? _showRouteInfoDialog : null,
+        onPressed: hasSufficientPins ? _showRouteInfoView : null,
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
         child: const Text('経路情報'),
       ),
-    );
-  }
-
-  Future<void> _showRouteInfoDialog() async {
-    if (_pins.length < 2) {
-      return;
-    }
-
-    await RouteInfoDialog.show(
-      context: context,
-      pins: _pins,
-      isTestEnvironment: widget.isTestEnvironment,
     );
   }
 
@@ -416,6 +439,14 @@ class _TripEditModalState extends State<TripEditModal> {
           child: Stack(children: [_buildMapView(), _buildBottomSheet()]),
         ),
       ],
+    );
+  }
+
+  Widget _buildRouteInfoExpandedLayout() {
+    return RouteInfoView(
+      pins: _pins,
+      isTestEnvironment: widget.isTestEnvironment,
+      onClose: _closeRouteInfoView,
     );
   }
 

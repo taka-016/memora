@@ -4,7 +4,6 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 void main() {
@@ -129,7 +128,9 @@ void main() {
       expect(find.text('地図で選択'), findsOneWidget);
     });
 
-    testWidgets('経路情報ボタンが表示され、タップで経路情報ダイアログが開くこと', (WidgetTester tester) async {
+    testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
+      WidgetTester tester,
+    ) async {
       final pins = [
         const PinDto(
           pinId: 'pin-1',
@@ -168,7 +169,18 @@ void main() {
       await tester.tap(buttonFinder);
       await tester.pumpAndSettle();
 
-      expect(find.byType(RouteInfoDialog), findsOneWidget);
+      expect(find.byKey(const Key('route_info_view_root')), findsOneWidget);
+
+      // 経路情報ビュー内の閉じるボタンで元の画面に戻れることを確認
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('route_info_view_root')),
+          matching: find.byIcon(Icons.close),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
     testWidgets('地図で選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
