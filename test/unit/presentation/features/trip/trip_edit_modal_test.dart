@@ -4,7 +4,6 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 void main() {
@@ -113,7 +112,7 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
-    testWidgets('地図で選択ボタンがメモの下に表示されること', (WidgetTester tester) async {
+    testWidgets('訪問場所を選択ボタンがメモの下に表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -126,10 +125,12 @@ void main() {
         ),
       );
 
-      expect(find.text('地図で選択'), findsOneWidget);
+      expect(find.text('訪問場所を選択'), findsOneWidget);
     });
 
-    testWidgets('経路情報ボタンが表示され、タップで経路情報ダイアログが開くこと', (WidgetTester tester) async {
+    testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
+      WidgetTester tester,
+    ) async {
       final pins = [
         const PinDto(
           pinId: 'pin-1',
@@ -168,10 +169,21 @@ void main() {
       await tester.tap(buttonFinder);
       await tester.pumpAndSettle();
 
-      expect(find.byType(RouteInfoDialog), findsOneWidget);
+      expect(find.byKey(const Key('route_info_view_root')), findsOneWidget);
+
+      // 経路情報ビュー内の閉じるボタンで元の画面に戻れることを確認
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('route_info_view_root')),
+          matching: find.byIcon(Icons.close),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
-    testWidgets('地図で選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
+    testWidgets('訪問場所を選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -187,8 +199,8 @@ void main() {
       // 初期状態では地図が表示されていないことを確認
       expect(find.byKey(const Key('map_view')), findsNothing);
 
-      // 初期状態では地図で選択ボタンが表示されることを確認
-      expect(find.text('地図で選択'), findsOneWidget);
+      // 初期状態では訪問場所を選択ボタンが表示されることを確認
+      expect(find.text('訪問場所を選択'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),
@@ -197,8 +209,8 @@ void main() {
         findsNothing,
       );
 
-      // 地図で選択ボタンを直接呼び出してテスト
-      final mapSelectionButton = find.widgetWithText(ElevatedButton, '地図で選択');
+      // 訪問場所を選択ボタンを直接呼び出してテスト
+      final mapSelectionButton = find.widgetWithText(ElevatedButton, '訪問場所を選択');
       await tester.ensureVisible(mapSelectionButton);
       await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
@@ -214,8 +226,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('地図で選択'), findsNothing);
-
       // 地図展開時はアクションボタンが非表示になることを確認
       expect(find.text('キャンセル'), findsNothing);
       expect(find.text('作成'), findsNothing);
@@ -235,8 +245,8 @@ void main() {
         ),
       );
 
-      // 地図で選択ボタンを直接呼び出して地図を展開
-      final mapSelectionButton = find.widgetWithText(ElevatedButton, '地図で選択');
+      // 訪問場所を選択ボタンを直接呼び出して地図を展開
+      final mapSelectionButton = find.widgetWithText(ElevatedButton, '訪問場所を選択');
       await tester.ensureVisible(mapSelectionButton);
       await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
@@ -255,7 +265,7 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsNothing);
 
       // 地図画面が閉じることを確認
-      expect(find.text('地図で選択'), findsOneWidget);
+      expect(find.text('訪問場所を選択'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),

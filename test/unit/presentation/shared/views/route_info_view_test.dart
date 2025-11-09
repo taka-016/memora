@@ -5,7 +5,7 @@ import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
+import 'package:memora/presentation/shared/views/route_info_view.dart';
 
 class FakeRouteInfoService implements RouteInfoService {
   final List<_RouteRequest> _requests = [];
@@ -85,43 +85,30 @@ void main() {
     ),
   ];
 
-  Future<void> pumpRouteInfoDialog(
+  Future<void> pumpRouteInfoView(
     WidgetTester tester, {
     RouteInfoService? service,
+    VoidCallback? onClose,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: Builder(
-            builder: (context) {
-              return Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (_) => RouteInfoDialog(
-                        pins: pins,
-                        routeInfoService: service,
-                        isTestEnvironment: true,
-                      ),
-                    );
-                  },
-                  child: const Text('開く'),
-                ),
-              );
-            },
+          body: RouteInfoView(
+            pins: pins,
+            routeInfoService: service,
+            isTestEnvironment: true,
+            onClose: onClose,
           ),
         ),
       ),
     );
 
-    await tester.tap(find.text('開く'));
     await tester.pumpAndSettle();
   }
 
-  group('RouteInfoDialog', () {
+  group('RouteInfoView', () {
     testWidgets('ピンのリストはlocationNameのみ表示すること', (tester) async {
-      await pumpRouteInfoDialog(tester);
+      await pumpRouteInfoView(tester);
 
       expect(find.text('京都駅'), findsOneWidget);
       await tester.dragUntilVisible(
@@ -141,7 +128,7 @@ void main() {
     });
 
     testWidgets('移動手段プルダウンの初期値が自動車であること', (tester) async {
-      await pumpRouteInfoDialog(tester);
+      await pumpRouteInfoView(tester);
 
       final dropdowns = find.byKey(const Key('route_segment_mode_0'));
       expect(dropdowns, findsOneWidget);
@@ -152,7 +139,7 @@ void main() {
     });
 
     testWidgets('移動手段プルダウンにその他が表示され入力欄が出現すること', (tester) async {
-      await pumpRouteInfoDialog(tester);
+      await pumpRouteInfoView(tester);
 
       await tester.tap(find.byKey(const Key('route_segment_mode_0')));
       await tester.pumpAndSettle();
@@ -169,14 +156,14 @@ void main() {
     });
 
     testWidgets('ピンをタップすると選択状態になりハイライトされること', (tester) async {
-      await pumpRouteInfoDialog(tester);
+      await pumpRouteInfoView(tester);
 
       final pinTileFinder = find.byKey(const Key('route_info_pin_tile_pin-1'));
       await tester.tap(pinTileFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
 
       final state =
-          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
       expect(state.selectedPinIndex, 0);
 
       final listTile = tester.widget<ListTile>(pinTileFinder);
@@ -209,7 +196,7 @@ void main() {
         },
       );
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
@@ -217,7 +204,7 @@ void main() {
       expect(fakeService.callCount, 2);
 
       final state =
-          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
       expect(state.segmentDetails.length, 2);
     });
 
@@ -226,7 +213,7 @@ void main() {
     ) async {
       final fakeService = FakeRouteInfoService(responses: {});
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.byKey(const Key('route_segment_mode_0')));
       await tester.pumpAndSettle();
@@ -244,7 +231,7 @@ void main() {
       expect(fakeService.callCount, 2);
 
       final state =
-          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
       final segmentKey = 'pin-1->pin-2';
       final detail = state.segmentDetails[segmentKey];
       expect(detail, isNotNull);
@@ -286,7 +273,7 @@ void main() {
         },
       );
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
@@ -352,13 +339,13 @@ void main() {
         },
       );
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
       final state =
-          tester.state(find.byType(RouteInfoDialog)) as RouteInfoDialogState;
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
 
       state.selectPinForTest(1);
       await tester.pumpAndSettle();
@@ -385,7 +372,7 @@ void main() {
         },
       );
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
@@ -425,7 +412,7 @@ void main() {
         },
       );
 
-      await pumpRouteInfoDialog(tester, service: fakeService);
+      await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
@@ -460,7 +447,7 @@ void main() {
     });
 
     testWidgets('マップを非表示にするとリスト領域が拡張されること', (tester) async {
-      await pumpRouteInfoDialog(tester);
+      await pumpRouteInfoView(tester);
 
       final listAreaFinder = find.byKey(const Key('route_info_list_area'));
       final toggleFinder = find.byKey(const Key('route_info_map_toggle'));

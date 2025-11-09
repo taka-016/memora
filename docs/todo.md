@@ -348,16 +348,20 @@
     - [x] 出発時間の指定は不要
     - [x] 中間地点は使用せず、各pin間の経路に設定された移動手段で1回ずつAPIを呼び出して取得する
     - [x] つまり、pinが3つある場合は、pin1→pin2、pin2→pin3の2回APIを呼び出す
-  - [x] ダイアログ画面の下半分にGoogleMapを表示し、取得した経路情報をMap上に表示する
-    - [x] 各Pinをタップで、GoogleMap上の対象となる経路をハイライト表示する
-    - [x] GoogleMapはmap_viewsは使用せず、このダイアログ用にMapを生成する
-    - [x] +/-アイコンでGoogleMapは表示/非表示を切り替えられるようにする
-    - [x] タップしたPinが中間点の場合、前後の経路のハイライトの色を変える
+- [x] ダイアログ画面の下半分にGoogleMapを表示し、取得した経路情報をMap上に表示する
+  - [x] 各Pinをタップで、GoogleMap上の対象となる経路をハイライト表示する
+  - [x] GoogleMapはmap_viewsは使用せず、このダイアログ用にMapを生成する
+  - [x] +/-アイコンでGoogleMapは表示/非表示を切り替えられるようにする
+  - [x] タップしたPinが中間点の場合、前後の経路のハイライトの色を変える
   - [x] Pinの下に経路詳細を表示する
     - [x] DropdownButtonの右に表示する
     - [x] Pin間の距離(km)と所要時間(分)、経路案内を表示する
     - [x] 経路詳細は折りたたみ表示とし、タップで展開/折りたたみできるようにする
     - [x] 経路詳細のボリュームに合わせてPin間の高さが変わるようにする
+- [x] 旅行編集画面の経路検索を「地図で選択」と同じダイアログ内の表示切り替えに変更し、ウィジェット名からdialogを外す
+- [x] 「地図で選択」ボタンを「訪問場所を選択」に名称変更する
+- [x] 旅行編集画面の「訪問場所を選択」の表示処理をselect_visit_location_view.dartに切り出す
+  - [x] _buildSelectVisitLocationExpandedLayoutが_buildRouteInfoExpandedLayoutと同様にreturn SelectVisitLocationViewになるようにする
 
 ## 地図画面
 

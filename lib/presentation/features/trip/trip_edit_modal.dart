@@ -5,12 +5,14 @@ import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/presentation/shared/views/select_visit_location_view.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/dialogs/route_info_dialog.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:memora/presentation/shared/views/route_info_view.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/core/app_logger.dart';
+
+enum TripEditExpandedSection { map, routeInfo }
 
 class TripEditModal extends StatefulWidget {
   final String groupId;
@@ -40,7 +42,7 @@ class _TripEditModalState extends State<TripEditModal> {
   DateTime? _startDate;
   DateTime? _endDate;
   String? _errorMessage;
-  bool _isMapExpanded = false;
+  TripEditExpandedSection? _expandedSection;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _mapIconKey = GlobalKey();
 
@@ -123,7 +125,31 @@ class _TripEditModalState extends State<TripEditModal> {
 
   void _toggleMapExpansion() {
     setState(() {
-      _isMapExpanded = !_isMapExpanded;
+      if (_expandedSection == TripEditExpandedSection.map) {
+        _expandedSection = null;
+        _isBottomSheetVisible = false;
+        _selectedPin = null;
+      } else {
+        _expandedSection = TripEditExpandedSection.map;
+      }
+    });
+  }
+
+  void _showRouteInfoView() {
+    if (_pins.length < 2) {
+      return;
+    }
+
+    setState(() {
+      _expandedSection = TripEditExpandedSection.routeInfo;
+      _isBottomSheetVisible = false;
+      _selectedPin = null;
+    });
+  }
+
+  void _closeRouteInfoView() {
+    setState(() {
+      _expandedSection = null;
     });
   }
 
@@ -140,12 +166,21 @@ class _TripEditModalState extends State<TripEditModal> {
           width: MediaQuery.of(context).size.width * 0.95,
           height: MediaQuery.of(context).size.height * 0.8,
           padding: const EdgeInsets.all(24.0),
-          child: _isMapExpanded
-              ? _buildMapExpandedLayout()
-              : _buildNormalLayout(),
+          child: _buildDialogContent(),
         ),
       ),
     );
+  }
+
+  Widget _buildDialogContent() {
+    switch (_expandedSection) {
+      case TripEditExpandedSection.map:
+        return _buildSelectVisitLocationExpandedLayout();
+      case TripEditExpandedSection.routeInfo:
+        return _buildRouteInfoExpandedLayout();
+      default:
+        return _buildNormalLayout();
+    }
   }
 
   Widget _buildNormalLayout() {
@@ -224,24 +259,12 @@ class _TripEditModalState extends State<TripEditModal> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: ElevatedButton(
-        onPressed: hasSufficientPins ? _showRouteInfoDialog : null,
+        onPressed: hasSufficientPins ? _showRouteInfoView : null,
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
         child: const Text('経路情報'),
       ),
-    );
-  }
-
-  Future<void> _showRouteInfoDialog() async {
-    if (_pins.length < 2) {
-      return;
-    }
-
-    await RouteInfoDialog.show(
-      context: context,
-      pins: _pins,
-      isTestEnvironment: widget.isTestEnvironment,
     );
   }
 
@@ -312,7 +335,7 @@ class _TripEditModalState extends State<TripEditModal> {
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
-        child: const Text('地図で選択'),
+        child: const Text('訪問場所を選択'),
       ),
     );
   }
@@ -405,66 +428,26 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
-  Widget _buildMapExpandedLayout() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildMapHeader(),
-        const SizedBox(height: 20),
-        Expanded(
-          child: Stack(children: [_buildMapView(), _buildBottomSheet()]),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMapHeader() {
-    return Row(
-      children: [
-        const Text(
-          '地図で場所を選択',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        ),
-        const Spacer(),
-        IconButton(
-          key: _mapIconKey,
-          onPressed: _toggleMapExpansion,
-          icon: const Icon(Icons.close),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMapView() {
-    return widget.isTestEnvironment
-        ? _buildTestMapView()
-        : _buildProductionMapView();
-  }
-
-  Widget _buildTestMapView() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
-        child: MapViewFactory.create(
-          MapViewType.placeholder,
-        ).createMapView(pins: []),
-      ),
-    );
-  }
-
-  Widget _buildProductionMapView() {
-    return MapViewFactory.create(MapViewType.google).createMapView(
+  Widget _buildSelectVisitLocationExpandedLayout() {
+    return SelectVisitLocationView(
       pins: _pins,
+      selectedPin: _selectedPin,
+      isTestEnvironment: widget.isTestEnvironment,
+      onClose: _toggleMapExpansion,
       onMapLongTapped: _onMapLongTapped,
       onMarkerTapped: _onPinTapped,
       onMarkerUpdated: _onPinUpdated,
       onMarkerDeleted: _onPinDeleted,
-      selectedPin: _selectedPin,
+      bottomSheet: _buildBottomSheet(),
+      closeButtonKey: _mapIconKey,
+    );
+  }
+
+  Widget _buildRouteInfoExpandedLayout() {
+    return RouteInfoView(
+      pins: _pins,
+      isTestEnvironment: widget.isTestEnvironment,
+      onClose: _closeRouteInfoView,
     );
   }
 

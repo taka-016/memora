@@ -9,39 +9,25 @@ import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
-class RouteInfoDialog extends StatefulWidget {
-  const RouteInfoDialog({
+class RouteInfoView extends StatefulWidget {
+  const RouteInfoView({
     super.key,
     required this.pins,
     this.routeInfoService,
+    this.onClose,
     this.isTestEnvironment = false,
   });
 
   final List<PinDto> pins;
   final RouteInfoService? routeInfoService;
+  final VoidCallback? onClose;
   final bool isTestEnvironment;
 
-  static Future<void> show({
-    required BuildContext context,
-    required List<PinDto> pins,
-    RouteInfoService? routeInfoService,
-    bool isTestEnvironment = false,
-  }) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => RouteInfoDialog(
-        pins: pins,
-        routeInfoService: routeInfoService,
-        isTestEnvironment: isTestEnvironment,
-      ),
-    );
-  }
-
   @override
-  RouteInfoDialogState createState() => RouteInfoDialogState();
+  RouteInfoViewState createState() => RouteInfoViewState();
 }
 
-class RouteInfoDialogState extends State<RouteInfoDialog> {
+class RouteInfoViewState extends State<RouteInfoView> {
   late List<PinDto> _pins;
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
@@ -56,6 +42,14 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
   RouteInfoService get _service =>
       widget.routeInfoService ??
       GoogleRoutesApiRouteInfoService(apiKey: Env.googlePlacesApiKey);
+
+  void _handleClose(BuildContext context) {
+    if (widget.onClose != null) {
+      widget.onClose!();
+      return;
+    }
+    Navigator.of(context).maybePop();
+  }
 
   @visibleForTesting
   Map<String, RouteSegmentDetail> get segmentDetails =>
@@ -191,7 +185,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
       }
     } catch (e, stackTrace) {
       logger.e(
-        'RouteInfoDialogState._searchRoutes: ${e.toString()}',
+        'RouteInfoViewState._searchRoutes: ${e.toString()}',
         error: e,
         stackTrace: stackTrace,
       );
@@ -314,29 +308,22 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      child: Material(
-        type: MaterialType.card,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.95,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 16),
-              _buildActionRow(),
-              if (_errorMessage != null) ...[
-                const SizedBox(height: 12),
-                _buildErrorBanner(),
-              ],
-              const SizedBox(height: 16),
-              Expanded(child: _buildBodyContent(context)),
-            ],
-          ),
-        ),
+    return SizedBox(
+      key: const Key('route_info_view_root'),
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context),
+          const SizedBox(height: 16),
+          _buildActionRow(),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 12),
+            _buildErrorBanner(),
+          ],
+          const SizedBox(height: 16),
+          Expanded(child: _buildBodyContent(context)),
+        ],
       ),
     );
   }
@@ -350,7 +337,7 @@ class RouteInfoDialogState extends State<RouteInfoDialog> {
         ),
         const Spacer(),
         IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => _handleClose(context),
           icon: const Icon(Icons.close),
         ),
       ],
