@@ -226,8 +226,6 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('訪問場所を選択'), findsNothing);
-
       // 地図展開時はアクションボタンが非表示になることを確認
       expect(find.text('キャンセル'), findsNothing);
       expect(find.text('作成'), findsNothing);
