@@ -308,10 +308,9 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       key: const Key('route_info_view_root'),
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
