@@ -175,7 +175,7 @@ class _TripEditModalState extends State<TripEditModal> {
   Widget _buildDialogContent() {
     switch (_expandedSection) {
       case TripEditExpandedSection.map:
-        return _buildMapExpandedLayout();
+        return _buildSelectVisitLocationExpandedLayout();
       case TripEditExpandedSection.routeInfo:
         return _buildRouteInfoExpandedLayout();
       default:
@@ -428,7 +428,7 @@ class _TripEditModalState extends State<TripEditModal> {
     );
   }
 
-  Widget _buildMapExpandedLayout() {
+  Widget _buildSelectVisitLocationExpandedLayout() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
