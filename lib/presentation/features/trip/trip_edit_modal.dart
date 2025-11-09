@@ -5,10 +5,10 @@ import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/presentation/shared/views/select_visit_location_view.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/views/route_info_view.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:memora/presentation/shared/views/route_info_view.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/core/app_logger.dart';
 
@@ -429,16 +429,17 @@ class _TripEditModalState extends State<TripEditModal> {
   }
 
   Widget _buildSelectVisitLocationExpandedLayout() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildMapHeader(),
-        const SizedBox(height: 20),
-        Expanded(
-          child: Stack(children: [_buildMapView(), _buildBottomSheet()]),
-        ),
-      ],
+    return SelectVisitLocationView(
+      pins: _pins,
+      selectedPin: _selectedPin,
+      isTestEnvironment: widget.isTestEnvironment,
+      onClose: _toggleMapExpansion,
+      onMapLongTapped: _onMapLongTapped,
+      onMarkerTapped: _onPinTapped,
+      onMarkerUpdated: _onPinUpdated,
+      onMarkerDeleted: _onPinDeleted,
+      bottomSheet: _buildBottomSheet(),
+      closeButtonKey: _mapIconKey,
     );
   }
 
@@ -447,55 +448,6 @@ class _TripEditModalState extends State<TripEditModal> {
       pins: _pins,
       isTestEnvironment: widget.isTestEnvironment,
       onClose: _closeRouteInfoView,
-    );
-  }
-
-  Widget _buildMapHeader() {
-    return Row(
-      children: [
-        const Text(
-          '訪問場所を選択',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-        ),
-        const Spacer(),
-        IconButton(
-          key: _mapIconKey,
-          onPressed: _toggleMapExpansion,
-          icon: const Icon(Icons.close),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMapView() {
-    return widget.isTestEnvironment
-        ? _buildTestMapView()
-        : _buildProductionMapView();
-  }
-
-  Widget _buildTestMapView() {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
-        child: MapViewFactory.create(
-          MapViewType.placeholder,
-        ).createMapView(pins: []),
-      ),
-    );
-  }
-
-  Widget _buildProductionMapView() {
-    return MapViewFactory.create(MapViewType.google).createMapView(
-      pins: _pins,
-      onMapLongTapped: _onMapLongTapped,
-      onMarkerTapped: _onPinTapped,
-      onMarkerUpdated: _onPinUpdated,
-      onMarkerDeleted: _onPinDeleted,
-      selectedPin: _selectedPin,
     );
   }
 

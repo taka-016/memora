@@ -360,6 +360,8 @@
     - [x] 経路詳細のボリュームに合わせてPin間の高さが変わるようにする
 - [x] 旅行編集画面の経路検索を「地図で選択」と同じダイアログ内の表示切り替えに変更し、ウィジェット名からdialogを外す
 - [x] 「地図で選択」ボタンを「訪問場所を選択」に名称変更する
+- [x] 旅行編集画面の「訪問場所を選択」の表示処理をselect_visit_location_view.dartに切り出す
+  - [x] _buildSelectVisitLocationExpandedLayoutが_buildRouteInfoExpandedLayoutと同様にreturn SelectVisitLocationViewになるようにする
 
 ## 地図画面
 
