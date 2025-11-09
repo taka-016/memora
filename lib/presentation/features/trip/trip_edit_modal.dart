@@ -335,7 +335,7 @@ class _TripEditModalState extends State<TripEditModal> {
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
-        child: const Text('地図で選択'),
+        child: const Text('訪問場所を選択'),
       ),
     );
   }
@@ -454,7 +454,7 @@ class _TripEditModalState extends State<TripEditModal> {
     return Row(
       children: [
         const Text(
-          '地図で場所を選択',
+          '訪問場所を選択',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
         ),
         const Spacer(),
