@@ -28,6 +28,21 @@ class RouteInfoView extends StatefulWidget {
 }
 
 class RouteInfoViewState extends State<RouteInfoView> {
+  @visibleForTesting
+  static const List<Color> polylineColorPalette = [
+    Color(0xFF3949AB),
+    Color(0xFF43A047),
+    Color(0xFFFB8C00),
+    Color(0xFF5E35B1),
+    Color(0xFFE53935),
+    Color(0xFF1E88E5),
+    Color(0xFF00897B),
+    Color(0xFFFDD835),
+    Color(0xFF8E24AA),
+    Color(0xFFD81B60),
+  ];
+  static const double _inactivePolylineOpacity = 0.4;
+
   late List<PinDto> _pins;
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
@@ -730,16 +745,16 @@ class RouteInfoViewState extends State<RouteInfoView> {
   Set<Polyline> _buildPolylines() {
     final polylines = <Polyline>{};
     final activeKeys = _activeSegmentKeys();
-    var activeIndex = 0;
+    final keys = _segmentDetails.keys.toList();
 
-    _segmentDetails.forEach((key, detail) {
-      if (detail.polyline.isEmpty) {
-        return;
+    for (var i = 0; i < keys.length; i++) {
+      final key = keys[i];
+      final detail = _segmentDetails[key];
+      if (detail == null || detail.polyline.isEmpty) {
+        continue;
       }
       final isActive = activeKeys.contains(key);
-      final color = isActive
-          ? (activeIndex++ == 0 ? Colors.blueAccent : Colors.greenAccent)
-          : Colors.blueGrey;
+      final color = _colorForPolylineIndex(i, isActive);
       polylines.add(
         Polyline(
           polylineId: PolylineId(key),
@@ -750,8 +765,20 @@ class RouteInfoViewState extends State<RouteInfoView> {
           width: isActive ? 6 : 4,
         ),
       );
-    });
+    }
 
     return polylines;
+  }
+
+  Color _colorForPolylineIndex(int index, bool isActive) {
+    final palette = RouteInfoViewState.polylineColorPalette;
+    final baseColor = palette[index % palette.length];
+    if (isActive) {
+      return baseColor;
+    }
+    final dimmedAlpha = (baseColor.a * 255.0 * _inactivePolylineOpacity)
+        .round();
+    final safeAlpha = dimmedAlpha.clamp(0, 255).toInt();
+    return baseColor.withAlpha(safeAlpha);
   }
 }
