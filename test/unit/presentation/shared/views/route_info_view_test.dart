@@ -89,12 +89,14 @@ void main() {
     WidgetTester tester, {
     RouteInfoService? service,
     VoidCallback? onClose,
+    List<PinDto>? overridePins,
   }) async {
+    final targetPins = overridePins ?? pins;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: RouteInfoView(
-            pins: pins,
+            pins: targetPins,
             routeInfoService: service,
             isTestEnvironment: true,
             onClose: onClose,
@@ -353,8 +355,71 @@ void main() {
       expect(state.selectedPinIndex, 1);
 
       final highlightColors = state.segmentHighlightColors;
-      expect(highlightColors['pin-1->pin-2'], Colors.blueAccent);
-      expect(highlightColors['pin-2->pin-3'], Colors.greenAccent);
+      expect(
+        highlightColors['pin-1->pin-2'],
+        RouteInfoViewState.polylineColorPalette[0],
+      );
+      expect(
+        highlightColors['pin-2->pin-3'],
+        RouteInfoViewState.polylineColorPalette[1],
+      );
+    });
+
+    testWidgets('Polylineカラーは10色でローテーションすること', (tester) async {
+      final extendedPins = List<PinDto>.generate(
+        12,
+        (index) => PinDto(
+          pinId: 'pin-${index + 1}',
+          latitude: 35.0 + index * 0.01,
+          longitude: 135.0 + index * 0.01,
+          locationName: 'スポット${index + 1}',
+        ),
+      );
+
+      final responses = <String, RouteSegmentDetail>{};
+      for (var i = 0; i < extendedPins.length - 1; i++) {
+        final origin = extendedPins[i];
+        final destination = extendedPins[i + 1];
+        responses['${origin.latitude},${origin.longitude}->${destination.latitude},${destination.longitude}-${TravelMode.drive}'] =
+            RouteSegmentDetail(
+              polyline: [
+                Location(
+                  latitude: origin.latitude,
+                  longitude: origin.longitude,
+                ),
+                Location(
+                  latitude: destination.latitude,
+                  longitude: destination.longitude,
+                ),
+              ],
+              distanceMeters: 1000,
+              durationSeconds: 600,
+              instructions: const [],
+            );
+      }
+
+      final fakeService = FakeRouteInfoService(responses: responses);
+
+      await pumpRouteInfoView(
+        tester,
+        service: fakeService,
+        overridePins: extendedPins,
+      );
+
+      await tester.tap(find.text('経路検索'));
+      await tester.pumpAndSettle();
+
+      final state =
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
+
+      final highlightColors = state.segmentHighlightColors;
+      for (var i = 0; i < extendedPins.length - 1; i++) {
+        final key = 'pin-${i + 1}->pin-${i + 2}';
+        final paletteColor =
+            RouteInfoViewState.polylineColorPalette[i %
+                RouteInfoViewState.polylineColorPalette.length];
+        expect(highlightColors[key], paletteColor);
+      }
     });
 
     testWidgets('経路詳細は移動手段プルダウンの下に表示されること', (tester) async {
