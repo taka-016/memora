@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/constants/color_constants.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
@@ -28,19 +29,6 @@ class RouteInfoView extends StatefulWidget {
 }
 
 class RouteInfoViewState extends State<RouteInfoView> {
-  @visibleForTesting
-  static const List<Color> polylineColorPalette = [
-    Color(0xFF3949AB),
-    Color(0xFF43A047),
-    Color(0xFFFB8C00),
-    Color(0xFF5E35B1),
-    Color(0xFFE53935),
-    Color(0xFF1E88E5),
-    Color(0xFF00897B),
-    Color(0xFFFDD835),
-    Color(0xFF8E24AA),
-    Color(0xFFD81B60),
-  ];
   static const double _inactivePolylineOpacity = 0.4;
 
   late List<PinDto> _pins;
@@ -771,14 +759,12 @@ class RouteInfoViewState extends State<RouteInfoView> {
   }
 
   Color _colorForPolylineIndex(int index, bool isActive) {
-    final palette = RouteInfoViewState.polylineColorPalette;
-    final baseColor = palette[index % palette.length];
     if (isActive) {
-      return baseColor;
+      return ColorConstants.getSequentialColor(index);
     }
-    final dimmedAlpha = (baseColor.a * 255.0 * _inactivePolylineOpacity)
-        .round();
-    final safeAlpha = dimmedAlpha.clamp(0, 255).toInt();
-    return baseColor.withAlpha(safeAlpha);
+    return ColorConstants.getSequentialColorWithOpacity(
+      index,
+      _inactivePolylineOpacity,
+    );
   }
 }

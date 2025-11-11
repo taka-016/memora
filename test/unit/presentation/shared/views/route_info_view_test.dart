@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/constants/color_constants.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
@@ -357,11 +358,11 @@ void main() {
       final highlightColors = state.segmentHighlightColors;
       expect(
         highlightColors['pin-1->pin-2'],
-        RouteInfoViewState.polylineColorPalette[0],
+        ColorConstants.getSequentialColor(0),
       );
       expect(
         highlightColors['pin-2->pin-3'],
-        RouteInfoViewState.polylineColorPalette[1],
+        ColorConstants.getSequentialColor(1),
       );
     });
 
@@ -415,9 +416,7 @@ void main() {
       final highlightColors = state.segmentHighlightColors;
       for (var i = 0; i < extendedPins.length - 1; i++) {
         final key = 'pin-${i + 1}->pin-${i + 2}';
-        final paletteColor =
-            RouteInfoViewState.polylineColorPalette[i %
-                RouteInfoViewState.polylineColorPalette.length];
+        final paletteColor = ColorConstants.getSequentialColor(i);
         expect(highlightColors[key], paletteColor);
       }
     });
