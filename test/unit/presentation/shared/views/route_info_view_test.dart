@@ -141,7 +141,7 @@ void main() {
       );
     });
 
-    testWidgets('移動手段プルダウンにその他が表示され入力欄が出現すること', (tester) async {
+    testWidgets('移動手段プルダウンでその他を選択すると経路入力アイコンが表示されること', (tester) async {
       await pumpRouteInfoView(tester);
 
       await tester.tap(find.byKey(const Key('route_segment_mode_0')));
@@ -153,8 +153,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const Key('route_segment_other_input_0')),
+        find.byKey(const Key('route_segment_other_route_icon_0')),
         findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('route_segment_other_input_0')),
+        findsNothing,
       );
     });
 
@@ -211,9 +215,7 @@ void main() {
       expect(state.segmentDetails.length, 2);
     });
 
-    testWidgets('その他を選択した区間もAPI経由で直線Polylineを取得し自由入力を案内に使用すること', (
-      tester,
-    ) async {
+    testWidgets('その他の経路入力はボトムシートから保存され経路情報に反映されること', (tester) async {
       final fakeService = FakeRouteInfoService(responses: {});
 
       await pumpRouteInfoView(tester, service: fakeService);
@@ -223,10 +225,27 @@ void main() {
       await tester.tap(find.text('その他').last);
       await tester.pumpAndSettle();
 
-      await tester.enterText(
-        find.byKey(const Key('route_segment_other_input_0')),
-        '自転車と徒歩で移動',
+      await tester.tap(
+        find.byKey(const Key('route_segment_other_route_icon_0')),
       );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('other_route_info_bottom_sheet')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('other_route_duration_field')),
+        '15',
+      );
+      await tester.enterText(
+        find.byKey(const Key('other_route_instructions_field')),
+        '自転車で移動\n徒歩で移動',
+      );
+
+      await tester.tap(find.byKey(const Key('other_route_sheet_close_button')));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
@@ -247,7 +266,8 @@ void main() {
         detail.polyline.last,
         const Location(latitude: 35.1, longitude: 135.1),
       );
-      expect(detail.instructions, ['自転車と徒歩で移動']);
+      expect(detail.instructions, ['自転車で移動', '徒歩で移動']);
+      expect(detail.durationSeconds, 900);
     });
 
     testWidgets('経路検索後に距離と時間および経路案内を折りたたみ表示できること', (tester) async {

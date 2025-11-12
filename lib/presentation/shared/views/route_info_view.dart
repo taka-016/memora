@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
@@ -9,6 +10,7 @@ import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
+import 'package:memora/presentation/shared/sheets/other_route_info_bottom_sheet.dart';
 
 class RouteInfoView extends StatefulWidget {
   const RouteInfoView({
@@ -35,7 +37,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
   Map<String, bool> _segmentExpansion = {};
-  final Map<String, TextEditingController> _otherModeControllers = {};
+  final Map<String, OtherRouteInfoFormValue> _otherRouteInfoInputs = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMapVisible = true;
@@ -89,7 +91,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   @override
   void dispose() {
-    _disposeAllOtherModeControllers();
     _mapController?.dispose();
     super.dispose();
   }
@@ -100,7 +101,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
       final key = _segmentKey(_pins[i], _pins[i + 1]);
       map[key] = previous[key] ?? TravelMode.drive;
     }
-    _cleanupOtherModeControllers(map.keys);
+    _cleanupOtherRouteInfoInputs(map.keys);
     return map;
   }
 
@@ -108,29 +109,74 @@ class RouteInfoViewState extends State<RouteInfoView> {
     return '${origin.pinId}->${destination.pinId}';
   }
 
-  TextEditingController _ensureOtherModeController(String key) {
-    return _otherModeControllers.putIfAbsent(key, TextEditingController.new);
+  OtherRouteInfoFormValue _ensureOtherRouteInfoValue(String key) {
+    return _otherRouteInfoInputs.putIfAbsent(
+      key,
+      () => const OtherRouteInfoFormValue.empty(),
+    );
   }
 
-  void _disposeOtherModeController(String key) {
-    final controller = _otherModeControllers.remove(key);
-    controller?.dispose();
-  }
-
-  void _disposeAllOtherModeControllers() {
-    for (final controller in _otherModeControllers.values) {
-      controller.dispose();
-    }
-    _otherModeControllers.clear();
-  }
-
-  void _cleanupOtherModeControllers(Iterable<String> validKeys) {
+  void _cleanupOtherRouteInfoInputs(Iterable<String> validKeys) {
     final validKeySet = validKeys.toSet();
-    final removeKeys = _otherModeControllers.keys
-        .where((key) => !validKeySet.contains(key))
-        .toList();
-    for (final key in removeKeys) {
-      _disposeOtherModeController(key);
+    _otherRouteInfoInputs.removeWhere((key, _) => !validKeySet.contains(key));
+  }
+
+  void _updateOtherRouteInfo(String key, OtherRouteInfoFormValue value) {
+    if (!mounted) {
+      return;
+    }
+    final sanitizedDuration =
+        value.durationMinutes != null && value.durationMinutes! > 0
+        ? value.durationMinutes
+        : null;
+    final sanitizedInstructions = value.instructions.trim();
+    final normalized = OtherRouteInfoFormValue(
+      durationMinutes: sanitizedDuration,
+      instructions: sanitizedInstructions,
+    );
+    void applyUpdate() {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        if (normalized.isEmpty) {
+          _otherRouteInfoInputs.remove(key);
+        } else {
+          _otherRouteInfoInputs[key] = normalized;
+        }
+      });
+    }
+
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      applyUpdate();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => applyUpdate());
+    }
+  }
+
+  Future<void> _openOtherRouteInfoSheet(String key) async {
+    final initialValue =
+        _otherRouteInfoInputs[key] ?? const OtherRouteInfoFormValue.empty();
+
+    final result = await showModalBottomSheet<OtherRouteInfoFormValue>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return OtherRouteInfoBottomSheet(
+          initialValue: initialValue,
+          onChanged: (value) => _updateOtherRouteInfo(key, value),
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result != null) {
+      _updateOtherRouteInfo(key, result);
     }
   }
 
@@ -166,11 +212,16 @@ class RouteInfoViewState extends State<RouteInfoView> {
         );
 
         if (mode == TravelMode.other) {
-          final customNote = _otherModeControllers[key]?.text ?? '';
+          final otherInfo = _otherRouteInfoInputs[key];
+          final customInstructions = _buildCustomInstructions(otherInfo);
+          final customDurationSeconds = _customDurationSeconds(otherInfo);
           detail = detail.copyWith(
-            instructions: customNote.isEmpty
-                ? const <String>[]
-                : <String>[customNote],
+            instructions: customInstructions.isEmpty
+                ? detail.instructions
+                : customInstructions,
+            durationSeconds: customDurationSeconds > 0
+                ? customDurationSeconds
+                : detail.durationSeconds,
           );
         }
         nextResults[key] = detail;
@@ -269,12 +320,12 @@ class RouteInfoViewState extends State<RouteInfoView> {
   void _onModeChanged(String key, TravelMode mode) {
     setState(() {
       _segmentModes = {..._segmentModes, key: mode};
+      if (mode == TravelMode.other) {
+        _ensureOtherRouteInfoValue(key);
+      } else {
+        _otherRouteInfoInputs.remove(key);
+      }
     });
-    if (mode == TravelMode.other) {
-      _ensureOtherModeController(key);
-    } else {
-      _disposeOtherModeController(key);
-    }
   }
 
   void _toggleSegmentExpansion(String key) {
@@ -505,24 +556,16 @@ class RouteInfoViewState extends State<RouteInfoView> {
       return dropdown;
     }
 
-    final controller = _ensureOtherModeController(key);
+    _ensureOtherRouteInfoValue(key);
 
     return Row(
       children: [
         Flexible(fit: FlexFit.loose, child: dropdown),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextField(
-            key: Key('route_segment_other_input_$index'),
-            controller: controller,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(
-              hintText: '自由入力',
-              border: OutlineInputBorder(),
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            ),
-          ),
+        IconButton(
+          key: Key('route_segment_other_route_icon_$index'),
+          onPressed: () => _openOtherRouteInfoSheet(key),
+          icon: const Icon(Icons.edit),
+          tooltip: '経路入力',
         ),
       ],
     );
@@ -639,6 +682,25 @@ class RouteInfoViewState extends State<RouteInfoView> {
               key: ValueKey('route_segment_instructions_collapsed'),
             ),
     );
+  }
+
+  List<String> _buildCustomInstructions(OtherRouteInfoFormValue? info) {
+    if (info == null || info.instructions.isEmpty) {
+      return const <String>[];
+    }
+    return info.instructions
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
+  int _customDurationSeconds(OtherRouteInfoFormValue? info) {
+    final minutes = info?.durationMinutes;
+    if (minutes == null || minutes <= 0) {
+      return 0;
+    }
+    return minutes * 60;
   }
 
   String _formatDistanceLabel(int meters) {
