@@ -362,6 +362,14 @@
 - [x] 「地図で選択」ボタンを「訪問場所を選択」に名称変更する
 - [x] 旅行編集画面の「訪問場所を選択」の表示処理をselect_visit_location_view.dartに切り出す
   - [x] _buildSelectVisitLocationExpandedLayoutが_buildRouteInfoExpandedLayoutと同様にreturn SelectVisitLocationViewになるようにする
+- [ ] 自由入力の入力欄を廃止し、「その他」選択時は右に経路入力用のアイコンを配置する（Editアイコン）
+- [ ] 経路入力用のアイコンをタップすると、経路入力用のボトムシートが表示されるようにする
+  - [ ] ボトムシートはlib/presentation/shared/sheets以下に新規作成し、名称はother_route_info_bottom_sheet.dartとする
+- [ ] ボトムシート内の項目は以下のとおり
+  - [ ] 所要時間(分)の入力欄（数字のみ）
+  - [ ] 経路案内の入力欄（複数行テキスト）
+  - [ ] 保存ボタンは用意せず、入力欄のフォーカスが外れたタイミングで内部保持する
+  - [ ] 入力内容は、「その他」で経路検索した時の経路情報に表示する
 
 ## 地図画面
 
