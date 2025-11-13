@@ -89,6 +89,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) => MemberEditModal(
         onSave: (member) async {
@@ -121,6 +122,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     await showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) => MemberEditModal(
         member: member,

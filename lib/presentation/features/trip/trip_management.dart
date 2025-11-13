@@ -115,6 +115,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
 
   Future<void> _showAddTripDialog() async {
     await showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (context) => TripEditModal(
         groupId: widget.groupId,
@@ -171,6 +172,7 @@ class _TripManagementState extends ConsumerState<TripManagement> {
       }
 
       await showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (context) => TripEditModal(
           groupId: widget.groupId,

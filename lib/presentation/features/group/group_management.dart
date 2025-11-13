@@ -97,6 +97,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       if (!mounted) return;
 
       await showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (context) => GroupEditModal(
           group: group,
@@ -154,6 +155,7 @@ class _GroupManagementState extends ConsumerState<GroupManagement> {
       if (!mounted) return;
 
       await showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (context) => GroupEditModal(
           group: groupWithMembers,
