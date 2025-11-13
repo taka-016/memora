@@ -46,7 +46,7 @@ class SelectVisitLocationView extends StatelessWidget {
     return Row(
       children: [
         const Text(
-          '訪問場所を選択',
+          '訪問場所',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
         ),
         const Spacer(),

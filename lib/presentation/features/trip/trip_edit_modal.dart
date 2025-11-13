@@ -242,28 +242,18 @@ class _TripEditModalState extends State<TripEditModal> {
             const SizedBox(height: 16),
             _buildPinsTitle(),
             const SizedBox(height: 8),
-            _buildMapButton(),
-            const SizedBox(height: 8),
-            _buildRouteInfoButton(),
+            Row(
+              children: [
+                Expanded(child: _buildMapButton()),
+                const SizedBox(width: 8),
+                Expanded(child: _buildRouteInfoButton()),
+              ],
+            ),
             const SizedBox(height: 16),
             _buildPinsList(),
             const SizedBox(height: 16),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRouteInfoButton() {
-    final hasSufficientPins = _pins.length >= 2;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: ElevatedButton(
-        onPressed: hasSufficientPins ? _showRouteInfoView : null,
-        style: ElevatedButton.styleFrom(
-          minimumSize: const Size(double.infinity, 48),
-        ),
-        child: const Text('経路情報'),
       ),
     );
   }
@@ -331,11 +321,40 @@ class _TripEditModalState extends State<TripEditModal> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: ElevatedButton(
+        key: _mapIconKey,
         onPressed: _toggleMapExpansion,
         style: ElevatedButton.styleFrom(
           minimumSize: const Size(double.infinity, 48),
         ),
-        child: const Text('訪問場所を選択'),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.add_location, size: 20),
+            SizedBox(width: 4),
+            Text('編集'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRouteInfoButton() {
+    final hasSufficientPins = _pins.length >= 2;
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      child: ElevatedButton(
+        onPressed: hasSufficientPins ? _showRouteInfoView : null,
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(double.infinity, 48),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            Icon(Icons.route, size: 20),
+            SizedBox(width: 4),
+            Text('経路情報'),
+          ],
+        ),
       ),
     );
   }

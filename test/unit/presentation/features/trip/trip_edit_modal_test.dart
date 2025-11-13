@@ -112,7 +112,7 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
-    testWidgets('訪問場所を選択ボタンがメモの下に表示されること', (WidgetTester tester) async {
+    testWidgets('編集ボタンがメモの下に表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -125,7 +125,7 @@ void main() {
         ),
       );
 
-      expect(find.text('訪問場所を選択'), findsOneWidget);
+      expect(find.text('編集'), findsOneWidget);
     });
 
     testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
@@ -183,7 +183,7 @@ void main() {
       expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
-    testWidgets('訪問場所を選択ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
+    testWidgets('編集ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -199,8 +199,8 @@ void main() {
       // 初期状態では地図が表示されていないことを確認
       expect(find.byKey(const Key('map_view')), findsNothing);
 
-      // 初期状態では訪問場所を選択ボタンが表示されることを確認
-      expect(find.text('訪問場所を選択'), findsOneWidget);
+      // 初期状態では編集ボタンが表示されることを確認
+      expect(find.text('編集'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),
@@ -209,8 +209,8 @@ void main() {
         findsNothing,
       );
 
-      // 訪問場所を選択ボタンを直接呼び出してテスト
-      final mapSelectionButton = find.widgetWithText(ElevatedButton, '訪問場所を選択');
+      // 編集ボタンを直接呼び出してテスト
+      final mapSelectionButton = find.widgetWithText(ElevatedButton, '編集');
       await tester.ensureVisible(mapSelectionButton);
       await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
@@ -245,8 +245,8 @@ void main() {
         ),
       );
 
-      // 訪問場所を選択ボタンを直接呼び出して地図を展開
-      final mapSelectionButton = find.widgetWithText(ElevatedButton, '訪問場所を選択');
+      // 編集ボタンを直接呼び出して地図を展開
+      final mapSelectionButton = find.widgetWithText(ElevatedButton, '編集');
       await tester.ensureVisible(mapSelectionButton);
       await tester.tap(mapSelectionButton);
       await tester.pumpAndSettle();
@@ -265,7 +265,7 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsNothing);
 
       // 地図画面が閉じることを確認
-      expect(find.text('訪問場所を選択'), findsOneWidget);
+      expect(find.text('訪問場所'), findsOneWidget);
       expect(
         find.descendant(
           of: find.byType(IconButton),
