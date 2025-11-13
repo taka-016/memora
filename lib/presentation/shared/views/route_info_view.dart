@@ -606,10 +606,9 @@ class RouteInfoViewState extends State<RouteInfoView> {
     final instructions = detail.instructions;
     final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
     final durationMinutes = _durationMinutes(detail.durationSeconds);
-    final summaryText =
-        '距離: $distanceLabel'
-        'km 所要時間: $durationMinutes'
-        '分';
+    final summaryText = distanceLabel == "0.0"
+        ? '所要時間: 約$durationMinutes分'
+        : '距離: 約${distanceLabel}km, 所要時間: 約$durationMinutes分';
 
     return InkWell(
       key: Key('route_segment_toggle_$index'),
