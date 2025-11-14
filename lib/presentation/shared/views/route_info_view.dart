@@ -199,7 +199,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
         final key = _segmentKey(origin, destination);
         final mode = _segmentModes[key] ?? TravelMode.drive;
 
-        var detail = await _service.fetchRoute(
+        RouteSegmentDetail detail = await _service.fetchRoute(
           origin: Location(
             latitude: origin.latitude,
             longitude: origin.longitude,
