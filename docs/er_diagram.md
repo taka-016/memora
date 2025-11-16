@@ -21,6 +21,9 @@ erDiagram
         timestamp visitStartDate
         timestamp visitEndDate
         string visitMemo
+        string routeMemo
+        string polyline
+
     }
     pin_details {
         string id PK
@@ -29,18 +32,6 @@ erDiagram
         timestamp startDate
         timestamp endDate
         string memo
-    }
-    routes {
-        string id PK
-        string tripId FK "NOT NULL"
-        string groupId FK "NOT NULL"
-        string departurePinId FK "NOT NULL"
-        string arrivalPinId FK "NOT NULL"
-        string travelMode "NOT NULL"
-        number distanceMeters
-        number durationSeconds
-        string instructions
-        string polyline
     }
     groups {
         string id PK
