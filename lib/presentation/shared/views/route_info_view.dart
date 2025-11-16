@@ -603,12 +603,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
     RouteSegmentDetail detail,
   ) {
     final isExpanded = _segmentExpansion[key] ?? false;
-    final instructions = detail.instructions;
-    final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
-    final durationMinutes = _durationMinutes(detail.durationSeconds);
-    final summaryText = distanceLabel == "0.0"
-        ? '所要時間: 約$durationMinutes分'
-        : '距離: 約${distanceLabel}km, 所要時間: 約$durationMinutes分';
 
     return InkWell(
       key: Key('route_segment_toggle_$index'),
@@ -617,17 +611,12 @@ class RouteInfoViewState extends State<RouteInfoView> {
         key: Key('route_segment_summary_$index'),
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(
-            instructions.isEmpty
-                ? Icons.info_outline
-                : (isExpanded ? Icons.expand_less : Icons.expand_more),
-            size: 20,
-          ),
+          Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 20),
           const SizedBox(width: 4),
-          Expanded(
+          const Expanded(
             child: Text(
-              summaryText,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+              'ルートメモ',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -641,8 +630,8 @@ class RouteInfoViewState extends State<RouteInfoView> {
     RouteSegmentDetail detail,
   ) {
     final isExpanded = _segmentExpansion[key] ?? false;
-    final instructions = detail.instructions;
     const double maxDetailHeight = 120.0;
+    final memoEntries = _buildSegmentMemoEntries(detail);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
@@ -653,26 +642,16 @@ class RouteInfoViewState extends State<RouteInfoView> {
           child: FadeTransition(opacity: animation, child: child),
         );
       },
-      child: isExpanded && instructions.isNotEmpty
+      child: isExpanded && memoEntries.isNotEmpty
           ? Padding(
-              key: ValueKey('route_segment_instructions_$index'),
+              key: ValueKey('route_segment_memo_$index'),
               padding: const EdgeInsets.only(left: 24, top: 8),
-              child: SizedBox(
-                height: maxDetailHeight,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: maxDetailHeight),
                 child: SingleChildScrollView(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: instructions
-                        .map(
-                          (instruction) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              instruction,
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    children: memoEntries,
                   ),
                 ),
               ),
@@ -680,6 +659,44 @@ class RouteInfoViewState extends State<RouteInfoView> {
           : const SizedBox.shrink(
               key: ValueKey('route_segment_instructions_collapsed'),
             ),
+    );
+  }
+
+  List<Widget> _buildSegmentMemoEntries(RouteSegmentDetail detail) {
+    final entries = <Widget>[];
+    final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
+    final durationMinutes = _durationMinutes(detail.durationSeconds);
+
+    if (detail.distanceMeters > 0) {
+      entries.add(_buildMemoLabel('距離: 約${distanceLabel}km'));
+    }
+    if (durationMinutes > 0) {
+      entries.add(_buildMemoLabel('所要時間: 約$durationMinutes分'));
+    }
+    if (detail.instructions.isNotEmpty) {
+      entries.add(_buildMemoLabel('経路案内'));
+      entries.addAll(
+        detail.instructions
+            .map(
+              (instruction) => Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 4),
+                child: Text(instruction, style: const TextStyle(fontSize: 12)),
+              ),
+            )
+            .toList(),
+      );
+    }
+
+    return entries;
+  }
+
+  Widget _buildMemoLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+      ),
     );
   }
 
