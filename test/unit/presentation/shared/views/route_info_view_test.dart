@@ -270,7 +270,7 @@ void main() {
       expect(detail.durationSeconds, 900);
     });
 
-    testWidgets('経路検索後に距離と時間および経路案内を折りたたみ表示できること', (tester) async {
+    testWidgets('経路検索後にルートメモとして距離と時間および経路案内を表示できること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
@@ -304,16 +304,15 @@ void main() {
       final summaryFinder = find.byKey(const Key('route_segment_summary_0'));
       expect(summaryFinder, findsOneWidget);
 
-      // サマリーテキストの存在確認（実際のフォーマットに依存しない）
+      // サマリーテキストが指定のラベルで表示されること
       final summaryRow = tester.widget<Row>(summaryFinder);
       final expandedWidget = summaryRow.children.whereType<Expanded>().first;
       final textWidget = expandedWidget.child as Text;
-      expect(textWidget.data, contains('距離:'));
-      expect(textWidget.data, contains('km'));
-      expect(textWidget.data, contains('所要時間:'));
-      expect(textWidget.data, contains('分'));
+      expect(textWidget.data, 'ルートメモ');
 
-      expect(find.text('直進します'), findsNothing);
+      expect(find.text('距離: 約3.2km'), findsNothing);
+      expect(find.text('所要時間: 約15分'), findsNothing);
+      expect(find.text('経路案内'), findsNothing);
 
       // トグルボタンを画面に表示させるためスクロール
       final toggleFinder = find.byKey(const Key('route_segment_toggle_0'));
@@ -327,12 +326,16 @@ void main() {
       await tester.tap(toggleFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
 
+      expect(find.text('距離: 約3.2km'), findsOneWidget);
+      expect(find.text('所要時間: 約15分'), findsOneWidget);
+      expect(find.text('経路案内'), findsOneWidget);
       expect(find.text('直進します'), findsOneWidget);
       expect(find.text('左折します'), findsOneWidget);
       expect(find.text('到着です'), findsOneWidget);
 
       await tester.tap(toggleFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
+      expect(find.text('距離: 約3.2km'), findsNothing);
       expect(find.text('直進します'), findsNothing);
     });
 
