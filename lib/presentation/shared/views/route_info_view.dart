@@ -36,7 +36,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
   late List<PinDto> _pins;
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
-  Map<String, bool> _segmentExpansion = {};
+  Map<String, bool> _routeMemoExpansion = {};
   final Map<String, OtherRouteInfoFormValue> _otherRouteInfoInputs = {};
   bool _isLoading = false;
   String? _errorMessage;
@@ -230,7 +230,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
       if (!mounted) return;
       setState(() {
         _segmentDetails = nextResults;
-        _segmentExpansion = {
+        _routeMemoExpansion = {
           for (final entry in nextResults.entries) entry.key: false,
         };
       });
@@ -312,7 +312,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
       _pins.insert(newIndex, item);
       _segmentModes = _buildSegmentModes(_segmentModes);
       _segmentDetails = {};
-      _segmentExpansion = {};
+      _routeMemoExpansion = {};
       _selectedPinIndex = null;
     });
   }
@@ -328,10 +328,10 @@ class RouteInfoViewState extends State<RouteInfoView> {
     });
   }
 
-  void _toggleSegmentExpansion(String key) {
+  void _toggleRouteMemoExpansion(String key) {
     setState(() {
-      final current = _segmentExpansion[key] ?? false;
-      _segmentExpansion = {..._segmentExpansion, key: !current};
+      final current = _routeMemoExpansion[key] ?? false;
+      _routeMemoExpansion = {..._routeMemoExpansion, key: !current};
     });
   }
 
@@ -521,7 +521,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
                 alignment: Alignment.topCenter,
                 child: Container(
                   key: Key('route_segment_container_$index'),
-                  child: _buildSegmentDetail(index),
+                  child: _buildRouteMemoView(index),
                 ),
               ),
             ],
@@ -571,44 +571,27 @@ class RouteInfoViewState extends State<RouteInfoView> {
     );
   }
 
-  Widget _buildSegmentDetail(int index) {
+  Widget _buildRouteMemoView(int index) {
     final key = _segmentKey(_pins[index], _pins[index + 1]);
     final detail = _segmentDetails[key];
-
-    if (detail == null) {
-      return const SizedBox.shrink();
-    }
-
-    final hasData =
-        detail.distanceMeters > 0 ||
-        detail.durationSeconds > 0 ||
-        detail.instructions.isNotEmpty;
-
-    if (!hasData) {
-      return const SizedBox.shrink();
-    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSegmentSummary(index, key, detail),
-        _buildSegmentInstructions(index, key, detail),
+        _buildRouteMemoToggle(index, key),
+        _buildRouteMemo(index, key, detail),
       ],
     );
   }
 
-  Widget _buildSegmentSummary(
-    int index,
-    String key,
-    RouteSegmentDetail detail,
-  ) {
-    final isExpanded = _segmentExpansion[key] ?? false;
+  Widget _buildRouteMemoToggle(int index, String key) {
+    final isExpanded = _routeMemoExpansion[key] ?? false;
 
     return InkWell(
-      key: Key('route_segment_toggle_$index'),
-      onTap: () => _toggleSegmentExpansion(key),
+      key: Key('route_memo_toggle_button_$index'),
+      onTap: () => _toggleRouteMemoExpansion(key),
       child: Row(
-        key: Key('route_segment_summary_$index'),
+        key: Key('route_memo_toggle_label_$index'),
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 20),
@@ -624,14 +607,12 @@ class RouteInfoViewState extends State<RouteInfoView> {
     );
   }
 
-  Widget _buildSegmentInstructions(
-    int index,
-    String key,
-    RouteSegmentDetail detail,
-  ) {
-    final isExpanded = _segmentExpansion[key] ?? false;
+  Widget _buildRouteMemo(int index, String key, RouteSegmentDetail? detail) {
+    final isExpanded = _routeMemoExpansion[key] ?? false;
     const double maxDetailHeight = 120.0;
-    final memoEntries = _buildSegmentMemoEntries(detail);
+    final memoEntries = detail == null
+        ? <Widget>[]
+        : _buildRouteMemoEntries(detail);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
@@ -642,9 +623,9 @@ class RouteInfoViewState extends State<RouteInfoView> {
           child: FadeTransition(opacity: animation, child: child),
         );
       },
-      child: isExpanded && memoEntries.isNotEmpty
+      child: isExpanded
           ? Padding(
-              key: ValueKey('route_segment_memo_$index'),
+              key: ValueKey('route_memo_$index'),
               padding: const EdgeInsets.only(left: 24, top: 8),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: maxDetailHeight),
@@ -656,13 +637,11 @@ class RouteInfoViewState extends State<RouteInfoView> {
                 ),
               ),
             )
-          : const SizedBox.shrink(
-              key: ValueKey('route_segment_instructions_collapsed'),
-            ),
+          : const SizedBox.shrink(key: ValueKey('route_memo_collapsed')),
     );
   }
 
-  List<Widget> _buildSegmentMemoEntries(RouteSegmentDetail detail) {
+  List<Widget> _buildRouteMemoEntries(RouteSegmentDetail detail) {
     final entries = <Widget>[];
     final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
     final durationMinutes = _durationMinutes(detail.durationSeconds);

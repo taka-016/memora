@@ -301,7 +301,7 @@ void main() {
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
-      final summaryFinder = find.byKey(const Key('route_segment_summary_0'));
+      final summaryFinder = find.byKey(const Key('route_memo_toggle_label_0'));
       expect(summaryFinder, findsOneWidget);
 
       // サマリーテキストが指定のラベルで表示されること
@@ -315,7 +315,7 @@ void main() {
       expect(find.text('経路案内'), findsNothing);
 
       // トグルボタンを画面に表示させるためスクロール
-      final toggleFinder = find.byKey(const Key('route_segment_toggle_0'));
+      final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
       await tester.dragUntilVisible(
         toggleFinder,
         find.byKey(const Key('route_info_reorderable_list')),
@@ -466,7 +466,7 @@ void main() {
 
       // 経路詳細を画面に表示させるためスクロール
       await tester.dragUntilVisible(
-        find.byKey(const Key('route_segment_summary_0')),
+        find.byKey(const Key('route_memo_toggle_label_0')),
         find.byKey(const Key('route_info_reorderable_list')),
         const Offset(0, -100),
       );
@@ -476,7 +476,7 @@ void main() {
         find.byKey(const Key('route_segment_mode_0')),
       );
       final summaryRect = tester.getRect(
-        find.byKey(const Key('route_segment_summary_0')),
+        find.byKey(const Key('route_memo_toggle_label_0')),
       );
 
       // プルダウンよりサマリーが下にあることを確認
@@ -507,7 +507,7 @@ void main() {
       expect(find.text('南東に進みます'), findsNothing);
 
       // トグルボタンを画面に表示させるためスクロール
-      final toggleFinder = find.byKey(const Key('route_segment_toggle_0'));
+      final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
       await tester.dragUntilVisible(
         toggleFinder,
         find.byKey(const Key('route_info_reorderable_list')),
