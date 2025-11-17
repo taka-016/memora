@@ -10,7 +10,7 @@ import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
-import 'package:memora/presentation/shared/sheets/other_route_info_bottom_sheet.dart';
+import 'package:memora/presentation/shared/sheets/route_memo_edit_bottom_sheet.dart';
 
 class RouteInfoView extends StatefulWidget {
   const RouteInfoView({
@@ -37,7 +37,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
   Map<String, bool> _routeMemoExpansion = {};
-  final Map<String, OtherRouteInfoFormValue> _otherRouteInfoInputs = {};
+  final Map<String, RouteMemoEditFormValue> _otherRouteInfoInputs = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMapVisible = true;
@@ -109,10 +109,10 @@ class RouteInfoViewState extends State<RouteInfoView> {
     return '${origin.pinId}->${destination.pinId}';
   }
 
-  OtherRouteInfoFormValue _ensureOtherRouteInfoValue(String key) {
+  RouteMemoEditFormValue _ensureOtherRouteInfoValue(String key) {
     return _otherRouteInfoInputs.putIfAbsent(
       key,
-      () => const OtherRouteInfoFormValue.empty(),
+      () => const RouteMemoEditFormValue.empty(),
     );
   }
 
@@ -121,7 +121,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
     _otherRouteInfoInputs.removeWhere((key, _) => !validKeySet.contains(key));
   }
 
-  void _updateOtherRouteInfo(String key, OtherRouteInfoFormValue value) {
+  void _updateOtherRouteInfo(String key, RouteMemoEditFormValue value) {
     if (!mounted) {
       return;
     }
@@ -130,7 +130,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
         ? value.durationMinutes
         : null;
     final sanitizedInstructions = value.instructions.trim();
-    final normalized = OtherRouteInfoFormValue(
+    final normalized = RouteMemoEditFormValue(
       durationMinutes: sanitizedDuration,
       instructions: sanitizedInstructions,
     );
@@ -158,13 +158,13 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   Future<void> _openOtherRouteInfoSheet(String key) async {
     final initialValue =
-        _otherRouteInfoInputs[key] ?? const OtherRouteInfoFormValue.empty();
+        _otherRouteInfoInputs[key] ?? const RouteMemoEditFormValue.empty();
 
-    final result = await showModalBottomSheet<OtherRouteInfoFormValue>(
+    final result = await showModalBottomSheet<RouteMemoEditFormValue>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return OtherRouteInfoBottomSheet(
+        return RouteMemoEditBottomSheet(
           initialValue: initialValue,
           onChanged: (value) => _updateOtherRouteInfo(key, value),
         );
@@ -679,7 +679,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
     );
   }
 
-  List<String> _buildCustomInstructions(OtherRouteInfoFormValue? info) {
+  List<String> _buildCustomInstructions(RouteMemoEditFormValue? info) {
     if (info == null || info.instructions.isEmpty) {
       return const <String>[];
     }
@@ -690,7 +690,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
         .toList();
   }
 
-  int _customDurationSeconds(OtherRouteInfoFormValue? info) {
+  int _customDurationSeconds(RouteMemoEditFormValue? info) {
     final minutes = info?.durationMinutes;
     if (minutes == null || minutes <= 0) {
       return 0;

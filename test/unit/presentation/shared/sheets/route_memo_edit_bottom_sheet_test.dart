@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/shared/sheets/other_route_info_bottom_sheet.dart';
+import 'package:memora/presentation/shared/sheets/route_memo_edit_bottom_sheet.dart';
 
 void main() {
   Future<void> pumpSheet(
     WidgetTester tester, {
-    OtherRouteInfoFormValue initialValue =
-        const OtherRouteInfoFormValue.empty(),
-    required ValueChanged<OtherRouteInfoFormValue> onChanged,
+    RouteMemoEditFormValue initialValue = const RouteMemoEditFormValue.empty(),
+    required ValueChanged<RouteMemoEditFormValue> onChanged,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: OtherRouteInfoBottomSheet(
+          body: RouteMemoEditBottomSheet(
             initialValue: initialValue,
             onChanged: onChanged,
           ),
@@ -22,9 +21,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  group('OtherRouteInfoBottomSheet', () {
+  group('RouteMemoEditBottomSheet', () {
     testWidgets('初期値が入力欄に反映されること', (tester) async {
-      const initial = OtherRouteInfoFormValue(
+      const initial = RouteMemoEditFormValue(
         durationMinutes: 20,
         instructions: '徒歩で移動',
       );
@@ -43,7 +42,7 @@ void main() {
     });
 
     testWidgets('フォーカスが外れたタイミングで入力値が正規化されて通知されること', (tester) async {
-      final changes = <OtherRouteInfoFormValue>[];
+      final changes = <RouteMemoEditFormValue>[];
 
       await pumpSheet(tester, onChanged: changes.add);
 
@@ -76,7 +75,7 @@ void main() {
     });
 
     testWidgets('フォーカスを外さずにウィジェットが破棄されても最新値が通知されること', (tester) async {
-      final changes = <OtherRouteInfoFormValue>[];
+      final changes = <RouteMemoEditFormValue>[];
 
       await pumpSheet(tester, onChanged: changes.add);
 

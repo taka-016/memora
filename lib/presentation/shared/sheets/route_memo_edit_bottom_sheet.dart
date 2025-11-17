@@ -2,21 +2,21 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class OtherRouteInfoFormValue extends Equatable {
+class RouteMemoEditFormValue extends Equatable {
   final int? durationMinutes;
   final String instructions;
 
-  const OtherRouteInfoFormValue({this.durationMinutes, this.instructions = ''});
+  const RouteMemoEditFormValue({this.durationMinutes, this.instructions = ''});
 
-  const OtherRouteInfoFormValue.empty()
+  const RouteMemoEditFormValue.empty()
     : durationMinutes = null,
       instructions = '';
 
-  OtherRouteInfoFormValue copyWith({
+  RouteMemoEditFormValue copyWith({
     int? durationMinutes,
     String? instructions,
   }) {
-    return OtherRouteInfoFormValue(
+    return RouteMemoEditFormValue(
       durationMinutes: durationMinutes ?? this.durationMinutes,
       instructions: instructions ?? this.instructions,
     );
@@ -32,27 +32,27 @@ class OtherRouteInfoFormValue extends Equatable {
   List<Object?> get props => [durationMinutes, instructions];
 }
 
-class OtherRouteInfoBottomSheet extends StatefulWidget {
-  const OtherRouteInfoBottomSheet({
+class RouteMemoEditBottomSheet extends StatefulWidget {
+  const RouteMemoEditBottomSheet({
     super.key,
     required this.initialValue,
     required this.onChanged,
   });
 
-  final OtherRouteInfoFormValue initialValue;
-  final ValueChanged<OtherRouteInfoFormValue> onChanged;
+  final RouteMemoEditFormValue initialValue;
+  final ValueChanged<RouteMemoEditFormValue> onChanged;
 
   @override
-  State<OtherRouteInfoBottomSheet> createState() =>
-      _OtherRouteInfoBottomSheetState();
+  State<RouteMemoEditBottomSheet> createState() =>
+      _RouteMemoEditBottomSheetState();
 }
 
-class _OtherRouteInfoBottomSheetState extends State<OtherRouteInfoBottomSheet> {
+class _RouteMemoEditBottomSheetState extends State<RouteMemoEditBottomSheet> {
   late final TextEditingController _durationController;
   late final TextEditingController _instructionsController;
   late final FocusNode _durationFocusNode;
   late final FocusNode _instructionsFocusNode;
-  late OtherRouteInfoFormValue _currentValue;
+  late RouteMemoEditFormValue _currentValue;
 
   @override
   void initState() {
@@ -94,7 +94,7 @@ class _OtherRouteInfoBottomSheetState extends State<OtherRouteInfoBottomSheet> {
         ? parsedDuration
         : null;
     final sanitizedInstructions = _instructionsController.text.trimRight();
-    final nextValue = OtherRouteInfoFormValue(
+    final nextValue = RouteMemoEditFormValue(
       durationMinutes: sanitizedDuration,
       instructions: sanitizedInstructions,
     );
