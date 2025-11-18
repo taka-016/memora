@@ -3,6 +3,7 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/application/queries/trip/route_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
@@ -10,6 +11,7 @@ import 'package:memora/infrastructure/queries/group/firestore_group_query_servic
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/firestore_route_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
@@ -22,6 +24,10 @@ final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
 
 final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
   return QueryServiceFactory.create<TripEntryQueryService>(ref: ref);
+});
+
+final routeQueryServiceProvider = Provider<RouteQueryService>((ref) {
+  return QueryServiceFactory.create<RouteQueryService>(ref: ref);
 });
 
 final memberQueryServiceProvider = Provider<MemberQueryService>((ref) {
@@ -59,6 +65,9 @@ class QueryServiceFactory {
     }
     if (T == TripEntryQueryService) {
       return FirestoreTripEntryQueryService() as T;
+    }
+    if (T == RouteQueryService) {
+      return FirestoreRouteQueryService() as T;
     }
     if (T == MemberQueryService) {
       return FirestoreMemberQueryService() as T;
