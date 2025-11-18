@@ -21,9 +21,18 @@ erDiagram
         timestamp visitStartDate
         timestamp visitEndDate
         string visitMemo
-        string routeMemo
+    }
+    routes {
+        string id PK
+        string tripId FK "NOT NULL"
+        number orderIndex "NOT NULL"
+        string departurePinId FK "NOT NULL"
+        string arrivalPinId FK "NOT NULL"
+        string travelMode "NOT NULL"
+        number distanceMeters
+        number durationSeconds
+        string instructions
         string polyline
-
     }
     pin_details {
         string id PK
@@ -90,7 +99,10 @@ erDiagram
     }
 
     trip_entries ||--o{ pins : "id → tripId"
+    trip_entries ||--o{ routes : "id → tripId"
     pins ||--o{ pin_details : "pinId → pinId"
+    pins ||--o{ routes : "id → departurePinId"
+    pins ||--o{ routes : "id → arrivalPinId"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"

@@ -61,6 +61,15 @@
 - [x] MemberInvitationQueryServiceのレスポンスはDtoを返すように変更する
   - [x] getByInviteeIdの戻り値をMemberInvitationDtoに変更する
   - [x] getByInvitationCodeの戻り値をMemberInvitationDtoに変更する
+- [ ] ER図のroutesテーブル定義を元にRouteエンティティを作成する
+  - [ ] lib/domain/entities/trip/route.dartの作成
+  - [ ] lib/application/dtos/trip/route_dto.dartの作成
+  - [ ] lib/domain/repositories/trip/route_repository.dartの作成
+  - [ ] lib/application/queries/trip/route_query_service.dartの作成
+  - [ ] lib/infrastructure/services/trip/firestore_route_query_service.dartの作成
+  - [ ] lib/infrastructure/repositories/trip/firestore_route_repository.dartの作成
+  - [ ] lib/infrastructure/mappers/trip/route_mapper.dartの作成
+  - [ ] lib/application/mappers/trip/route_mapper.dartの作成
 
 ## マップの表示
 
@@ -373,6 +382,7 @@
   - [x] 経路案内の入力欄（複数行テキスト）
   - [x] 保存ボタンは用意せず、入力欄のフォーカスが外れたタイミングで内部保持する
   - [x] 入力内容は、「その他」で経路検索した時の経路情報に表示する
+  - [ ] ボトムシートを閉じると、即時にルートメモに反映される（検索の有無にかかわらず表示）
 - [x] 「訪問場所を選択」と「経路情報」ボタンの配置を横並びにする
 - [x] 「訪問場所を選択」ボタンの名称を「編集」に変更する
 - [x] 「編集」と「経路情報」ボタンにアイコンを追加する
