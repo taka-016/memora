@@ -13,44 +13,20 @@ class FirestoreRouteRepository implements RouteRepository {
       _firestore.collection('routes');
 
   @override
-  Future<void> saveRoutes(String tripId, List<Route> routes) async {
-    if (routes.isEmpty) {
-      return;
-    }
-    final batch = _firestore.batch();
-    for (final route in routes) {
-      final docRef = _routesCollection.doc(route.id);
-      batch.set(docRef, FirestoreRouteMapper.toFirestore(route));
-    }
-    await batch.commit();
+  Future<void> saveRoute(Route route) async {
+    final docRef = _routesCollection.doc(route.id);
+    await docRef.set(FirestoreRouteMapper.toFirestore(route));
   }
 
   @override
-  Future<void> updateRoutes(String tripId, List<Route> routes) async {
-    final batch = _firestore.batch();
-    final snapshot = await _routesCollection
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-    for (final route in routes) {
-      final docRef = _routesCollection.doc(route.id);
-      batch.set(docRef, FirestoreRouteMapper.toFirestore(route));
-    }
-    await batch.commit();
+  Future<void> updateRoute(Route route) async {
+    final docRef = _routesCollection.doc(route.id);
+    await docRef.set(FirestoreRouteMapper.toFirestore(route));
   }
 
   @override
-  Future<void> deleteRoutes(String tripId) async {
-    final batch = _firestore.batch();
-    final snapshot = await _routesCollection
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final doc in snapshot.docs) {
-      batch.delete(doc.reference);
-    }
-    await batch.commit();
+  Future<void> deleteRoute(String routeId) async {
+    await _routesCollection.doc(routeId).delete();
   }
 
   @override

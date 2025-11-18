@@ -1,8 +1,8 @@
 import 'package:memora/domain/entities/trip/route.dart';
 
 abstract class RouteRepository {
-  Future<void> saveRoutes(String tripId, List<Route> routes);
-  Future<void> updateRoutes(String tripId, List<Route> routes);
-  Future<void> deleteRoutes(String tripId);
+  Future<void> saveRoute(Route route);
+  Future<void> updateRoute(Route route);
+  Future<void> deleteRoute(String routeId);
   Future<void> deleteRoutesByPinId(String pinId);
 }

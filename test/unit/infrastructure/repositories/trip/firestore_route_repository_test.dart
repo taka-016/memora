@@ -36,12 +36,11 @@ void main() {
       repository = FirestoreRouteRepository(firestore: mockFirestore);
     });
 
-    test('saveRoutesでルートを保存する', () async {
-      const tripId = 'trip001';
+    test('saveRouteでルートを保存する', () async {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
         id: 'route001',
-        tripId: tripId,
+        tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
         arrivalPinId: 'pinB',
@@ -49,71 +48,44 @@ void main() {
       );
 
       when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
-      when(mockBatch.set(any, any)).thenReturn(null);
-      when(mockBatch.commit()).thenAnswer((_) async {});
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
 
-      await repository.saveRoutes(tripId, [route]);
+      await repository.saveRoute(route);
 
       verify(mockRoutesCollection.doc(route.id)).called(1);
-      verify(mockBatch.set(mockDocRef, any)).called(1);
-      verify(mockBatch.commit()).called(1);
+      verify(mockDocRef.set(any)).called(1);
     });
 
-    test('updateRoutesで既存ルートを削除してから新規保存する', () async {
-      const tripId = 'trip001';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockExistingRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockNewDocRef = MockDocumentReference<Map<String, dynamic>>();
+    test('updateRouteで既存ルートを上書き保存する', () async {
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
         id: 'route001',
-        tripId: tripId,
+        tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
         arrivalPinId: 'pinB',
         travelMode: TravelMode.drive,
       );
 
-      when(
-        mockRoutesCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.reference).thenReturn(mockExistingRef);
-      when(mockRoutesCollection.doc(route.id)).thenReturn(mockNewDocRef);
-      when(mockBatch.delete(any)).thenReturn(null);
-      when(mockBatch.set(any, any)).thenReturn(null);
-      when(mockBatch.commit()).thenAnswer((_) async {});
+      when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
 
-      await repository.updateRoutes(tripId, [route]);
+      await repository.updateRoute(route);
 
-      verify(mockBatch.delete(mockExistingRef)).called(1);
       verify(mockRoutesCollection.doc(route.id)).called(1);
-      verify(mockBatch.set(mockNewDocRef, any)).called(1);
-      verify(mockBatch.commit()).called(1);
+      verify(mockDocRef.set(any)).called(1);
     });
 
-    test('deleteRoutesで関連ルートを削除する', () async {
-      const tripId = 'trip001';
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockRef = MockDocumentReference<Map<String, dynamic>>();
+    test('deleteRouteで単一ルートを削除する', () async {
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      when(
-        mockRoutesCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.reference).thenReturn(mockRef);
-      when(mockBatch.delete(any)).thenReturn(null);
-      when(mockBatch.commit()).thenAnswer((_) async {});
+      when(mockRoutesCollection.doc('route001')).thenReturn(mockDocRef);
+      when(mockDocRef.delete()).thenAnswer((_) async {});
 
-      await repository.deleteRoutes(tripId);
+      await repository.deleteRoute('route001');
 
-      verify(mockBatch.delete(mockRef)).called(1);
-      verify(mockBatch.commit()).called(1);
+      verify(mockRoutesCollection.doc('route001')).called(1);
+      verify(mockDocRef.delete()).called(1);
     });
 
     test('deleteRoutesByPinIdで出発・到着ピンのルートを削除する', () async {
@@ -153,14 +125,18 @@ void main() {
     });
 
     test('Firestore操作で例外が発生した場合はそのまま伝播する', () async {
-      when(
-        mockRoutesCollection.where('tripId', isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('firestore'));
+      when(mockRoutesCollection.doc(any)).thenThrow(TestException('firestore'));
 
-      expect(
-        () => repository.updateRoutes('trip001', const []),
-        throwsA(isA<TestException>()),
+      final route = Route(
+        id: 'route-error',
+        tripId: 'tripId',
+        orderIndex: 0,
+        departurePinId: 'pinA',
+        arrivalPinId: 'pinB',
+        travelMode: TravelMode.drive,
       );
+
+      expect(() => repository.saveRoute(route), throwsA(isA<TestException>()));
     });
   });
 }
