@@ -212,17 +212,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
         );
 
         if (mode == TravelMode.other) {
-          final otherInfo = _otherRouteInfoInputs[key];
-          final customInstructions = _buildCustomInstructions(otherInfo);
-          final customDurationSeconds = _customDurationSeconds(otherInfo);
-          detail = detail.copyWith(
-            instructions: customInstructions.isEmpty
-                ? detail.instructions
-                : customInstructions,
-            durationSeconds: customDurationSeconds > 0
-                ? customDurationSeconds
-                : detail.durationSeconds,
-          );
+          detail = _mergeWithOtherRouteInfo(key, detail) ?? detail;
         }
         nextResults[key] = detail;
       }
@@ -573,7 +563,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   Widget _buildRouteMemoView(int index) {
     final key = _segmentKey(_pins[index], _pins[index + 1]);
-    final detail = _segmentDetails[key];
+    final detail = _visibleRouteMemoDetail(key);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -667,6 +657,39 @@ class RouteInfoViewState extends State<RouteInfoView> {
     }
 
     return entries;
+  }
+
+  RouteSegmentDetail? _visibleRouteMemoDetail(String key) {
+    final baseDetail = _segmentDetails[key];
+    return _mergeWithOtherRouteInfo(key, baseDetail);
+  }
+
+  RouteSegmentDetail? _mergeWithOtherRouteInfo(
+    String key,
+    RouteSegmentDetail? baseDetail,
+  ) {
+    final otherInfo = _otherRouteInfoInputs[key];
+    if (otherInfo == null || otherInfo.isEmpty) {
+      return baseDetail;
+    }
+
+    final customInstructions = _buildCustomInstructions(otherInfo);
+    final customDurationSeconds = _customDurationSeconds(otherInfo);
+
+    if (customInstructions.isEmpty && customDurationSeconds == 0) {
+      return baseDetail;
+    }
+
+    final targetDetail = baseDetail ?? const RouteSegmentDetail.empty();
+
+    return targetDetail.copyWith(
+      instructions: customInstructions.isNotEmpty
+          ? customInstructions
+          : targetDetail.instructions,
+      durationSeconds: customDurationSeconds > 0
+          ? customDurationSeconds
+          : targetDetail.durationSeconds,
+    );
   }
 
   Widget _buildMemoLabel(String text) {
