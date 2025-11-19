@@ -4,6 +4,7 @@ import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/trip/route_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
@@ -12,6 +13,7 @@ import 'package:memora/infrastructure/repositories/group/firestore_group_reposit
 import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_repository.dart';
+import 'package:memora/infrastructure/repositories/trip/firestore_route_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
@@ -38,6 +40,10 @@ final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
 
 final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
   return RepositoryFactory.create<TripEntryRepository>(ref: ref);
+});
+
+final routeRepositoryProvider = Provider<RouteRepository>((ref) {
+  return RepositoryFactory.create<RouteRepository>(ref: ref);
 });
 
 class RepositoryFactory {
@@ -75,6 +81,9 @@ class RepositoryFactory {
     }
     if (T == TripEntryRepository) {
       return FirestoreTripEntryRepository() as T;
+    }
+    if (T == RouteRepository) {
+      return FirestoreRouteRepository() as T;
     }
     throw ArgumentError('Unknown repository type: $T');
   }

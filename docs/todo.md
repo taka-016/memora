@@ -61,15 +61,15 @@
 - [x] MemberInvitationQueryServiceのレスポンスはDtoを返すように変更する
   - [x] getByInviteeIdの戻り値をMemberInvitationDtoに変更する
   - [x] getByInvitationCodeの戻り値をMemberInvitationDtoに変更する
-- [ ] ER図のroutesテーブル定義を元にRouteエンティティを作成する
-  - [ ] lib/domain/entities/trip/route.dartの作成
-  - [ ] lib/application/dtos/trip/route_dto.dartの作成
-  - [ ] lib/domain/repositories/trip/route_repository.dartの作成
-  - [ ] lib/application/queries/trip/route_query_service.dartの作成
-  - [ ] lib/infrastructure/services/trip/firestore_route_query_service.dartの作成
-  - [ ] lib/infrastructure/repositories/trip/firestore_route_repository.dartの作成
-  - [ ] lib/infrastructure/mappers/trip/route_mapper.dartの作成
-  - [ ] lib/application/mappers/trip/route_mapper.dartの作成
+- [x] ER図のroutesテーブル定義を元にRouteエンティティを作成する
+  - [x] lib/domain/entities/trip/route.dartの作成
+  - [x] lib/application/dtos/trip/route_dto.dartの作成
+  - [x] lib/domain/repositories/trip/route_repository.dartの作成
+  - [x] lib/application/queries/trip/route_query_service.dartの作成
+  - [x] lib/infrastructure/repositories/trip/firestore_route_repository.dartの作成
+  - [x] lib/infrastructure/queries/trip/firestore_route_query_service.dartの作成
+  - [x] lib/infrastructure/mappers/trip/route_mapper.dartの作成
+  - [x] lib/application/mappers/trip/route_mapper.dartの作成
 
 ## マップの表示
 
