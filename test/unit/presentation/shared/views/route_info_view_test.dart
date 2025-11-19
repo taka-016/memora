@@ -270,6 +270,48 @@ void main() {
       expect(detail.durationSeconds, 900);
     });
 
+    testWidgets('ボトムシートを閉じると入力したルートメモが即時に表示されること', (tester) async {
+      await pumpRouteInfoView(tester);
+
+      await tester.tap(find.byKey(const Key('route_segment_mode_0')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('その他').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const Key('route_segment_other_route_icon_0')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('other_route_duration_field')),
+        '20',
+      );
+      await tester.enterText(
+        find.byKey(const Key('other_route_instructions_field')),
+        'ケーブルカー\n徒歩',
+      );
+
+      await tester.tap(find.byKey(const Key('other_route_sheet_close_button')));
+      await tester.pumpAndSettle();
+
+      final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
+      await tester.dragUntilVisible(
+        toggleFinder,
+        find.byKey(const Key('route_info_reorderable_list')),
+        const Offset(0, -100),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(toggleFinder, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(find.text('所要時間: 約20分'), findsOneWidget);
+      expect(find.text('経路案内'), findsOneWidget);
+      expect(find.text('ケーブルカー'), findsOneWidget);
+      expect(find.text('徒歩'), findsOneWidget);
+    });
+
     testWidgets('経路検索後にルートメモとして距離と時間および経路案内を表示できること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
