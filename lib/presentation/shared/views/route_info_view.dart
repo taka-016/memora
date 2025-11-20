@@ -37,7 +37,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
   late Map<String, TravelMode> _segmentModes;
   Map<String, RouteSegmentDetail> _segmentDetails = {};
   Map<String, bool> _routeMemoExpansion = {};
-  final Map<String, RouteMemoEditFormValue> _otherRouteInfoInputs = {};
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMapVisible = true;
@@ -97,11 +96,13 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   Map<String, TravelMode> _buildSegmentModes(Map<String, TravelMode> previous) {
     final map = <String, TravelMode>{};
+    final validKeys = <String>[];
     for (var i = 0; i < _pins.length - 1; i++) {
       final key = _segmentKey(_pins[i], _pins[i + 1]);
+      validKeys.add(key);
       map[key] = previous[key] ?? TravelMode.drive;
     }
-    _cleanupOtherRouteInfoInputs(map.keys);
+    _cleanupSegmentDetails(validKeys);
     return map;
   }
 
@@ -109,40 +110,58 @@ class RouteInfoViewState extends State<RouteInfoView> {
     return '${origin.pinId}->${destination.pinId}';
   }
 
-  RouteMemoEditFormValue _ensureOtherRouteInfoValue(String key) {
-    return _otherRouteInfoInputs.putIfAbsent(
-      key,
-      () => const RouteMemoEditFormValue.empty(),
+  void _cleanupSegmentDetails(Iterable<String> validKeys) {
+    final validKeySet = validKeys.toSet();
+    _segmentDetails.removeWhere((key, _) => !validKeySet.contains(key));
+  }
+
+  RouteSegmentDetail _sanitizeManualDetail(RouteSegmentDetail detail) {
+    final sanitizedInstructions = detail.instructions
+        .map((instruction) => instruction.trim())
+        .where((instruction) => instruction.isNotEmpty)
+        .toList();
+    final sanitizedDuration = detail.durationSeconds > 0
+        ? detail.durationSeconds
+        : 0;
+    return detail.copyWith(
+      durationSeconds: sanitizedDuration,
+      instructions: sanitizedInstructions,
     );
   }
 
-  void _cleanupOtherRouteInfoInputs(Iterable<String> validKeys) {
-    final validKeySet = validKeys.toSet();
-    _otherRouteInfoInputs.removeWhere((key, _) => !validKeySet.contains(key));
+  bool _hasManualContent(RouteSegmentDetail detail) {
+    return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
   }
 
-  void _updateOtherRouteInfo(String key, RouteMemoEditFormValue value) {
+  void _scheduleManualRouteUpdate(String key, RouteSegmentDetail detail) {
     if (!mounted) {
       return;
     }
-    final sanitizedDuration =
-        value.durationMinutes != null && value.durationMinutes! > 0
-        ? value.durationMinutes
-        : null;
-    final sanitizedInstructions = value.instructions.trim();
-    final normalized = RouteMemoEditFormValue(
-      durationMinutes: sanitizedDuration,
-      instructions: sanitizedInstructions,
-    );
+    final normalized = _sanitizeManualDetail(detail);
+
     void applyUpdate() {
       if (!mounted) {
         return;
       }
       setState(() {
-        if (normalized.isEmpty) {
-          _otherRouteInfoInputs.remove(key);
-        } else {
-          _otherRouteInfoInputs[key] = normalized;
+        final current = _segmentDetails[key];
+        if (_hasManualContent(normalized)) {
+          if (current == null) {
+            _segmentDetails = {..._segmentDetails, key: normalized};
+          } else {
+            _segmentDetails = {
+              ..._segmentDetails,
+              key: current.copyWith(
+                durationSeconds: normalized.durationSeconds,
+                instructions: normalized.instructions,
+              ),
+            };
+          }
+        } else if (current != null) {
+          _segmentDetails = {
+            ..._segmentDetails,
+            key: current.copyWith(durationSeconds: 0, instructions: const []),
+          };
         }
       });
     }
@@ -157,16 +176,16 @@ class RouteInfoViewState extends State<RouteInfoView> {
   }
 
   Future<void> _openOtherRouteInfoSheet(String key) async {
-    final initialValue =
-        _otherRouteInfoInputs[key] ?? const RouteMemoEditFormValue.empty();
+    final initialDetail =
+        _segmentDetails[key] ?? const RouteSegmentDetail.empty();
 
-    final result = await showModalBottomSheet<RouteMemoEditFormValue>(
+    final result = await showModalBottomSheet<RouteSegmentDetail>(
       context: context,
       isScrollControlled: true,
       builder: (context) {
         return RouteMemoEditBottomSheet(
-          initialValue: initialValue,
-          onChanged: (value) => _updateOtherRouteInfo(key, value),
+          initialDetail: initialDetail,
+          onChanged: (value) => _scheduleManualRouteUpdate(key, value),
         );
       },
     );
@@ -176,7 +195,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
     }
 
     if (result != null) {
-      _updateOtherRouteInfo(key, result);
+      _scheduleManualRouteUpdate(key, result);
     }
   }
 
@@ -210,6 +229,11 @@ class RouteInfoViewState extends State<RouteInfoView> {
           ),
           travelMode: mode,
         );
+        detail = _mergeRouteDetailForMode(
+          key: key,
+          mode: mode,
+          fetchedDetail: detail,
+        );
 
         nextResults[key] = detail;
       }
@@ -241,6 +265,24 @@ class RouteInfoViewState extends State<RouteInfoView> {
         });
       }
     }
+  }
+
+  RouteSegmentDetail _mergeRouteDetailForMode({
+    required String key,
+    required TravelMode mode,
+    required RouteSegmentDetail fetchedDetail,
+  }) {
+    if (mode != TravelMode.other) {
+      return fetchedDetail;
+    }
+    final existingDetail = _segmentDetails[key];
+    if (existingDetail == null || !_hasManualContent(existingDetail)) {
+      return fetchedDetail;
+    }
+    final updatedPolyline = fetchedDetail.polyline.isNotEmpty
+        ? fetchedDetail.polyline
+        : existingDetail.polyline;
+    return existingDetail.copyWith(polyline: updatedPolyline);
   }
 
   Future<void> _fitMapToRoutes() async {
@@ -295,22 +337,47 @@ class RouteInfoViewState extends State<RouteInfoView> {
     }
 
     setState(() {
+      final previousDetails = Map<String, RouteSegmentDetail>.from(
+        _segmentDetails,
+      );
       final item = _pins.removeAt(oldIndex);
       _pins.insert(newIndex, item);
       _segmentModes = _buildSegmentModes(_segmentModes);
-      _segmentDetails = {};
+      _segmentDetails = _retainManualDetails(previousDetails, _segmentModes);
       _routeMemoExpansion = {};
       _selectedPinIndex = null;
     });
   }
 
+  Map<String, RouteSegmentDetail> _retainManualDetails(
+    Map<String, RouteSegmentDetail> previousDetails,
+    Map<String, TravelMode> nextModes,
+  ) {
+    final retained = <String, RouteSegmentDetail>{};
+    for (final entry in nextModes.entries) {
+      if (entry.value != TravelMode.other) {
+        continue;
+      }
+      final detail = previousDetails[entry.key];
+      if (detail == null || !_hasManualContent(detail)) {
+        continue;
+      }
+      retained[entry.key] = detail;
+    }
+    return retained;
+  }
+
   void _onModeChanged(String key, TravelMode mode) {
+    final previousMode = _segmentModes[key];
+    if (previousMode == mode) {
+      return;
+    }
     setState(() {
       _segmentModes = {..._segmentModes, key: mode};
-      if (mode == TravelMode.other) {
-        _ensureOtherRouteInfoValue(key);
-      } else {
-        _otherRouteInfoInputs.remove(key);
+      if (mode == TravelMode.other || previousMode == TravelMode.other) {
+        final updated = Map<String, RouteSegmentDetail>.from(_segmentDetails);
+        updated.remove(key);
+        _segmentDetails = updated;
       }
     });
   }
@@ -543,8 +610,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
       return dropdown;
     }
 
-    _ensureOtherRouteInfoValue(key);
-
     return Row(
       children: [
         Flexible(fit: FlexFit.loose, child: dropdown),
@@ -560,7 +625,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   Widget _buildRouteMemoView(int index) {
     final key = _segmentKey(_pins[index], _pins[index + 1]);
-    final detail = _visibleRouteMemoDetail(key);
+    final detail = _segmentDetails[key];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -656,33 +721,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
     return entries;
   }
 
-  RouteSegmentDetail? _visibleRouteMemoDetail(String key) {
-    final baseDetail = _segmentDetails[key];
-
-    final otherInfo = _otherRouteInfoInputs[key];
-    if (otherInfo == null || otherInfo.isEmpty) {
-      return baseDetail;
-    }
-
-    final customInstructions = _buildCustomInstructions(otherInfo);
-    final customDurationSeconds = _customDurationSeconds(otherInfo);
-
-    if (customInstructions.isEmpty && customDurationSeconds == 0) {
-      return baseDetail;
-    }
-
-    final targetDetail = baseDetail ?? const RouteSegmentDetail.empty();
-
-    return targetDetail.copyWith(
-      instructions: customInstructions.isNotEmpty
-          ? customInstructions
-          : targetDetail.instructions,
-      durationSeconds: customDurationSeconds > 0
-          ? customDurationSeconds
-          : targetDetail.durationSeconds,
-    );
-  }
-
   Widget _buildMemoLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
@@ -691,25 +729,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
         style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
       ),
     );
-  }
-
-  List<String> _buildCustomInstructions(RouteMemoEditFormValue? info) {
-    if (info == null || info.instructions.isEmpty) {
-      return const <String>[];
-    }
-    return info.instructions
-        .split('\n')
-        .map((line) => line.trim())
-        .where((line) => line.isNotEmpty)
-        .toList();
-  }
-
-  int _customDurationSeconds(RouteMemoEditFormValue? info) {
-    final minutes = info?.durationMinutes;
-    if (minutes == null || minutes <= 0) {
-      return 0;
-    }
-    return minutes * 60;
   }
 
   String _formatDistanceLabel(int meters) {

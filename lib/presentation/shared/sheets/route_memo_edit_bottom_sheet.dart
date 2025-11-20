@@ -1,46 +1,16 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-class RouteMemoEditFormValue extends Equatable {
-  final int? durationMinutes;
-  final String instructions;
-
-  const RouteMemoEditFormValue({this.durationMinutes, this.instructions = ''});
-
-  const RouteMemoEditFormValue.empty()
-    : durationMinutes = null,
-      instructions = '';
-
-  RouteMemoEditFormValue copyWith({
-    int? durationMinutes,
-    String? instructions,
-  }) {
-    return RouteMemoEditFormValue(
-      durationMinutes: durationMinutes ?? this.durationMinutes,
-      instructions: instructions ?? this.instructions,
-    );
-  }
-
-  bool get isEmpty {
-    final hasDuration = durationMinutes != null && durationMinutes! > 0;
-    final hasInstruction = instructions.trim().isNotEmpty;
-    return !hasDuration && !hasInstruction;
-  }
-
-  @override
-  List<Object?> get props => [durationMinutes, instructions];
-}
+import 'package:memora/domain/value_objects/route_segment_detail.dart';
 
 class RouteMemoEditBottomSheet extends StatefulWidget {
   const RouteMemoEditBottomSheet({
     super.key,
-    required this.initialValue,
+    this.initialDetail = const RouteSegmentDetail.empty(),
     required this.onChanged,
   });
 
-  final RouteMemoEditFormValue initialValue;
-  final ValueChanged<RouteMemoEditFormValue> onChanged;
+  final RouteSegmentDetail initialDetail;
+  final ValueChanged<RouteSegmentDetail> onChanged;
 
   @override
   State<RouteMemoEditBottomSheet> createState() =>
@@ -52,17 +22,17 @@ class _RouteMemoEditBottomSheetState extends State<RouteMemoEditBottomSheet> {
   late final TextEditingController _instructionsController;
   late final FocusNode _durationFocusNode;
   late final FocusNode _instructionsFocusNode;
-  late RouteMemoEditFormValue _currentValue;
+  late RouteSegmentDetail _currentDetail;
 
   @override
   void initState() {
     super.initState();
-    _currentValue = widget.initialValue;
+    _currentDetail = widget.initialDetail;
     _durationController = TextEditingController(
-      text: widget.initialValue.durationMinutes?.toString() ?? '',
+      text: _initialDurationText(widget.initialDetail),
     );
     _instructionsController = TextEditingController(
-      text: widget.initialValue.instructions,
+      text: widget.initialDetail.instructions.join('\n'),
     );
     _durationFocusNode = FocusNode();
     _instructionsFocusNode = FocusNode();
@@ -91,20 +61,38 @@ class _RouteMemoEditBottomSheetState extends State<RouteMemoEditBottomSheet> {
   void _notifyChange() {
     final parsedDuration = int.tryParse(_durationController.text);
     final sanitizedDuration = parsedDuration != null && parsedDuration > 0
-        ? parsedDuration
-        : null;
-    final sanitizedInstructions = _instructionsController.text.trimRight();
-    final nextValue = RouteMemoEditFormValue(
-      durationMinutes: sanitizedDuration,
+        ? parsedDuration * 60
+        : 0;
+    final sanitizedInstructions = _sanitizeInstructions(
+      _instructionsController.text,
+    );
+    final nextValue = _currentDetail.copyWith(
+      durationSeconds: sanitizedDuration,
       instructions: sanitizedInstructions,
     );
-    _currentValue = nextValue;
+    _currentDetail = nextValue;
     widget.onChanged(nextValue);
   }
 
   void _handleClose() {
     _notifyChange();
-    Navigator.of(context).maybePop(_currentValue);
+    Navigator.of(context).maybePop(_currentDetail);
+  }
+
+  String _initialDurationText(RouteSegmentDetail detail) {
+    if (detail.durationSeconds <= 0) {
+      return '';
+    }
+    final minutes = (detail.durationSeconds / 60).ceil();
+    return minutes.toString();
+  }
+
+  List<String> _sanitizeInstructions(String raw) {
+    return raw
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
   }
 
   @override
