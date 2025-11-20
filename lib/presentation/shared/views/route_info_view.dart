@@ -211,9 +211,6 @@ class RouteInfoViewState extends State<RouteInfoView> {
           travelMode: mode,
         );
 
-        if (mode == TravelMode.other) {
-          detail = _mergeWithOtherRouteInfo(key, detail) ?? detail;
-        }
         nextResults[key] = detail;
       }
 
@@ -661,13 +658,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
 
   RouteSegmentDetail? _visibleRouteMemoDetail(String key) {
     final baseDetail = _segmentDetails[key];
-    return _mergeWithOtherRouteInfo(key, baseDetail);
-  }
 
-  RouteSegmentDetail? _mergeWithOtherRouteInfo(
-    String key,
-    RouteSegmentDetail? baseDetail,
-  ) {
     final otherInfo = _otherRouteInfoInputs[key];
     if (otherInfo == null || otherInfo.isEmpty) {
       return baseDetail;
