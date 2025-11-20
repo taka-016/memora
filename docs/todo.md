@@ -386,6 +386,10 @@
 - [x] 「訪問場所を選択」と「経路情報」ボタンの配置を横並びにする
 - [x] 「訪問場所を選択」ボタンの名称を「編集」に変更する
 - [x] 「編集」と「経路情報」ボタンにアイコンを追加する
+- [x] RouteMemoEditBottomSheetで入力した内容はRouteMemoEditFormValueではなく、
+RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
+  - [x] _searchRoutesでotherの場合はRouteMemoEditBottomSheetでRouteSegmentDetailを作成しているため、
+  polylineの内容のみマージする
 
 ## 地図画面
 
