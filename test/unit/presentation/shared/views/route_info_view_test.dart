@@ -295,6 +295,13 @@ void main() {
       await tester.tap(find.byKey(const Key('other_route_sheet_close_button')));
       await tester.pumpAndSettle();
 
+      final state =
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
+      final manualDetail = state.segmentDetails['pin-1->pin-2'];
+      expect(manualDetail, isNotNull);
+      expect(manualDetail!.instructions, ['ケーブルカー', '徒歩']);
+      expect(manualDetail.durationSeconds, 1200);
+
       final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
       await tester.dragUntilVisible(
         toggleFinder,
