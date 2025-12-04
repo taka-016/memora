@@ -70,6 +70,10 @@
   - [x] lib/infrastructure/queries/trip/firestore_route_query_service.dartの作成
   - [x] lib/infrastructure/mappers/trip/route_mapper.dartの作成
   - [x] lib/application/mappers/trip/route_mapper.dartの作成
+- [ ] RouteエンティティはTripEntryエンティティの集約に加える
+  - [ ] TripEntryRepository、TripEntryQueryService、FirestoreTripEntryRepository、FirestoreTripEntryQueryServiceを対応させる
+  - [ ] TripEntryMapper、TripEntryDtoを対応させる
+  - [ ] Routeエンティティクラスにidは含めない（関連処理もあわせて修正する）
 
 ## マップの表示
 
