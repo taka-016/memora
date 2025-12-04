@@ -43,7 +43,6 @@ void main() {
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.id).thenReturn('route001');
       when(mockDoc.data()).thenReturn({
         'tripId': tripId,
         'orderIndex': 0,
@@ -59,7 +58,6 @@ void main() {
 
       expect(result, hasLength(1));
       expect(result.first, isA<RouteDto>());
-      expect(result.first.id, 'route001');
       verify(mockQuery.orderBy('orderIndex', descending: false)).called(1);
     });
 

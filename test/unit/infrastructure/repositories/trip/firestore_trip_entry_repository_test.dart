@@ -77,6 +77,12 @@ void main() {
         final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
         final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
         final mockPinDocRef = MockDocumentReference<Map<String, dynamic>>();
+        final mockRoutesCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockRoutesQuery = MockQuery<Map<String, dynamic>>();
+        final mockRoutesSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+        final mockRouteDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+        final mockRouteDocRef = MockDocumentReference<Map<String, dynamic>>();
         final mockPinDetailsCollection =
             MockCollectionReference<Map<String, dynamic>>();
         final mockPinDetailsQuery = MockQuery<Map<String, dynamic>>();
@@ -110,6 +116,16 @@ void main() {
         when(mockPinDetailsSnapshot.docs).thenReturn([mockPinDetailDoc]);
         when(mockPinDetailDoc.reference).thenReturn(mockPinDetailDocRef);
 
+        when(
+          mockFirestore.collection('routes'),
+        ).thenReturn(mockRoutesCollection);
+        when(
+          mockRoutesCollection.where('tripId', isEqualTo: tripId),
+        ).thenReturn(mockRoutesQuery);
+        when(mockRoutesQuery.get()).thenAnswer((_) async => mockRoutesSnapshot);
+        when(mockRoutesSnapshot.docs).thenReturn([mockRouteDoc]);
+        when(mockRouteDoc.reference).thenReturn(mockRouteDocRef);
+
         when(mockBatch.commit()).thenAnswer((_) async {});
 
         await repository.deleteTripEntry(tripId);
@@ -118,6 +134,7 @@ void main() {
         verify(mockFirestore.batch()).called(1);
         verify(mockBatch.delete(mockPinDetailDocRef)).called(1);
         verify(mockBatch.delete(mockPinDocRef)).called(1);
+        verify(mockBatch.delete(mockRouteDocRef)).called(1);
         verify(mockBatch.delete(mockDocRef)).called(1);
         verify(mockBatch.commit()).called(1);
       },
@@ -138,6 +155,14 @@ void main() {
         final mockPinsSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
         final mockPinDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
         final mockPinDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+        final mockRoutesCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockRoutesQuery1 = MockQuery<Map<String, dynamic>>();
+        final mockRoutesQuery2 = MockQuery<Map<String, dynamic>>();
+        final mockRoutesSnapshot1 = MockQuerySnapshot<Map<String, dynamic>>();
+        final mockRoutesSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
+        final mockRouteDoc1 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+        final mockRouteDocRef1 = MockDocumentReference<Map<String, dynamic>>();
         final mockPinDetailsCollection =
             MockCollectionReference<Map<String, dynamic>>();
         final mockPinDetailsQuery = MockQuery<Map<String, dynamic>>();
@@ -159,6 +184,9 @@ void main() {
         when(mockDoc2.reference).thenReturn(mockDocRef2);
         when(mockFirestore.batch()).thenReturn(mockBatch);
         when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+        when(
+          mockFirestore.collection('routes'),
+        ).thenReturn(mockRoutesCollection);
 
         // trip001のpins
         when(
@@ -169,12 +197,31 @@ void main() {
         when(mockPinDoc1.data()).thenReturn({'pinId': 'pin001'});
         when(mockPinDoc1.reference).thenReturn(mockPinDocRef1);
 
+        // trip001のroutes
+        when(
+          mockRoutesCollection.where('tripId', isEqualTo: 'trip001'),
+        ).thenReturn(mockRoutesQuery1);
+        when(
+          mockRoutesQuery1.get(),
+        ).thenAnswer((_) async => mockRoutesSnapshot1);
+        when(mockRoutesSnapshot1.docs).thenReturn([mockRouteDoc1]);
+        when(mockRouteDoc1.reference).thenReturn(mockRouteDocRef1);
+
         // trip002のpins（なし）
         when(
           mockPinsCollection.where('tripId', isEqualTo: 'trip002'),
         ).thenReturn(mockPinsQuery2);
         when(mockPinsQuery2.get()).thenAnswer((_) async => mockPinsSnapshot2);
         when(mockPinsSnapshot2.docs).thenReturn([]);
+
+        // trip002のroutes（なし）
+        when(
+          mockRoutesCollection.where('tripId', isEqualTo: 'trip002'),
+        ).thenReturn(mockRoutesQuery2);
+        when(
+          mockRoutesQuery2.get(),
+        ).thenAnswer((_) async => mockRoutesSnapshot2);
+        when(mockRoutesSnapshot2.docs).thenReturn([]);
 
         // pin001のpin_details
         when(
@@ -198,6 +245,7 @@ void main() {
         verify(mockFirestore.batch()).called(1);
         verify(mockBatch.delete(mockPinDetailDocRef1)).called(1);
         verify(mockBatch.delete(mockPinDocRef1)).called(1);
+        verify(mockBatch.delete(mockRouteDocRef1)).called(1);
         verify(mockBatch.delete(mockDocRef1)).called(1);
         verify(mockBatch.delete(mockDocRef2)).called(1);
         verify(mockBatch.commit()).called(1);

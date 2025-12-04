@@ -7,7 +7,6 @@ class RouteMapper {
   static RouteDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
     return RouteDto(
-      id: doc.id,
       tripId: data['tripId'] as String? ?? '',
       orderIndex: _asInt(data['orderIndex']),
       departurePinId: data['departurePinId'] as String? ?? '',
@@ -22,7 +21,6 @@ class RouteMapper {
 
   static entity.Route toEntity(RouteDto dto) {
     return entity.Route(
-      id: dto.id,
       tripId: dto.tripId,
       orderIndex: dto.orderIndex,
       departurePinId: dto.departurePinId,

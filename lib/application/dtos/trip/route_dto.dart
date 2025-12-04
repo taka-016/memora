@@ -3,7 +3,6 @@ import 'package:memora/core/enums/travel_mode.dart';
 
 class RouteDto extends Equatable {
   const RouteDto({
-    required this.id,
     required this.tripId,
     required this.orderIndex,
     required this.departurePinId,
@@ -15,7 +14,6 @@ class RouteDto extends Equatable {
     this.polyline,
   });
 
-  final String id;
   final String tripId;
   final int orderIndex;
   final String departurePinId;
@@ -27,7 +25,6 @@ class RouteDto extends Equatable {
   final String? polyline;
 
   RouteDto copyWith({
-    String? id,
     String? tripId,
     int? orderIndex,
     String? departurePinId,
@@ -39,7 +36,6 @@ class RouteDto extends Equatable {
     String? polyline,
   }) {
     return RouteDto(
-      id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
       departurePinId: departurePinId ?? this.departurePinId,
@@ -54,7 +50,6 @@ class RouteDto extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
     tripId,
     orderIndex,
     departurePinId,

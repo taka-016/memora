@@ -8,7 +8,6 @@ void main() {
   group('FirestoreRouteMapper', () {
     test('RouteエンティティをFirestoreマップへ変換できる', () {
       final route = Route(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',

@@ -14,7 +14,6 @@ void main() {
   group('RouteMapper', () {
     test('FirestoreドキュメントからRouteDtoへ変換できる', () {
       final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('route001');
       when(mockDoc.data()).thenReturn({
         'tripId': 'trip001',
         'orderIndex': 1,
@@ -29,7 +28,6 @@ void main() {
 
       final dto = RouteMapper.fromFirestore(mockDoc);
 
-      expect(dto.id, 'route001');
       expect(dto.tripId, 'trip001');
       expect(dto.orderIndex, 1);
       expect(dto.travelMode, TravelMode.walk);
@@ -40,7 +38,6 @@ void main() {
 
     test('Firestoreの欠損値はデフォルトで補完される', () {
       final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('route001');
       when(mockDoc.data()).thenReturn({});
 
       final dto = RouteMapper.fromFirestore(mockDoc);
@@ -54,7 +51,6 @@ void main() {
 
     test('RouteDtoからRouteエンティティへ変換できる', () {
       final dto = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -71,7 +67,6 @@ void main() {
       expect(
         entityRoute,
         entity.Route(
-          id: 'route001',
           tripId: 'trip001',
           orderIndex: 0,
           departurePinId: 'pinA',
@@ -88,7 +83,6 @@ void main() {
     test('RouteDtoのリストをエンティティリストに変換できる', () {
       final dtos = [
         RouteDto(
-          id: 'route001',
           tripId: 'trip001',
           orderIndex: 0,
           departurePinId: 'pinA',
@@ -96,7 +90,6 @@ void main() {
           travelMode: TravelMode.drive,
         ),
         RouteDto(
-          id: 'route002',
           tripId: 'trip001',
           orderIndex: 1,
           departurePinId: 'pinB',
@@ -108,7 +101,6 @@ void main() {
       final entities = RouteMapper.toEntityList(dtos);
 
       expect(entities, hasLength(2));
-      expect(entities.first.id, 'route001');
       expect(entities.last.orderIndex, 1);
     });
   });

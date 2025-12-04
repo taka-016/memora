@@ -293,6 +293,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
       // Act
@@ -326,6 +327,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).called(1);
     });
@@ -344,6 +346,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).thenAnswer((_) async => null);
 
@@ -374,6 +377,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).called(1);
     });
@@ -392,6 +396,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
       when(
@@ -435,6 +440,7 @@ void main() {
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          routesOrderBy: anyNamed('routesOrderBy'),
         ),
       ).called(1);
     });

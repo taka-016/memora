@@ -14,14 +14,27 @@ class FirestoreRouteRepository implements RouteRepository {
 
   @override
   Future<void> saveRoute(Route route) async {
-    final docRef = _routesCollection.doc(route.id);
+    final docRef = _routesCollection.doc();
     await docRef.set(FirestoreRouteMapper.toFirestore(route));
   }
 
   @override
   Future<void> updateRoute(Route route) async {
-    final docRef = _routesCollection.doc(route.id);
-    await docRef.set(FirestoreRouteMapper.toFirestore(route));
+    final snapshot = await _routesCollection
+        .where('tripId', isEqualTo: route.tripId)
+        .where('orderIndex', isEqualTo: route.orderIndex)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) {
+      final docRef = _routesCollection.doc();
+      await docRef.set(FirestoreRouteMapper.toFirestore(route));
+      return;
+    }
+
+    await snapshot.docs.first.reference.set(
+      FirestoreRouteMapper.toFirestore(route),
+    );
   }
 
   @override

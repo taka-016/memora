@@ -6,7 +6,6 @@ void main() {
   group('RouteDto', () {
     test('必須パラメータのみで生成できる', () {
       final dto = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -14,7 +13,6 @@ void main() {
         travelMode: TravelMode.walk,
       );
 
-      expect(dto.id, 'route001');
       expect(dto.tripId, 'trip001');
       expect(dto.orderIndex, 0);
       expect(dto.departurePinId, 'pinA');
@@ -28,7 +26,6 @@ void main() {
 
     test('copyWithで任意の値を更新できる', () {
       final dto = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -55,7 +52,6 @@ void main() {
 
     test('同じ値を持つDtoは等価となる', () {
       final dto1 = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -64,7 +60,6 @@ void main() {
       );
 
       final dto2 = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -78,7 +73,6 @@ void main() {
 
     test('異なる値を持つDtoは等価ではない', () {
       final dto1 = RouteDto(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -87,7 +81,6 @@ void main() {
       );
 
       final dto2 = RouteDto(
-        id: 'route002',
         tripId: 'trip002',
         orderIndex: 1,
         departurePinId: 'pinB',

@@ -39,7 +39,6 @@ void main() {
     test('saveRouteでルートを保存する', () async {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -47,19 +46,21 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
+      when(mockRoutesCollection.doc()).thenReturn(mockDocRef);
       when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveRoute(route);
 
-      verify(mockRoutesCollection.doc(route.id)).called(1);
+      verify(mockRoutesCollection.doc()).called(1);
       verify(mockDocRef.set(any)).called(1);
     });
 
     test('updateRouteで既存ルートを上書き保存する', () async {
+      final mockQuery = MockQuery<Map<String, dynamic>>();
+      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -67,12 +68,23 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
+      when(
+        mockRoutesCollection.where('tripId', isEqualTo: route.tripId),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.where('orderIndex', isEqualTo: route.orderIndex),
+      ).thenReturn(mockQuery);
+      when(mockQuery.limit(1)).thenReturn(mockQuery);
+      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
+      when(mockSnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.reference).thenReturn(mockDocRef);
       when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.updateRoute(route);
 
-      verify(mockRoutesCollection.doc(route.id)).called(1);
+      verify(
+        mockQuery.where('orderIndex', isEqualTo: route.orderIndex),
+      ).called(1);
       verify(mockDocRef.set(any)).called(1);
     });
 
@@ -125,10 +137,9 @@ void main() {
     });
 
     test('Firestore操作で例外が発生した場合はそのまま伝播する', () async {
-      when(mockRoutesCollection.doc(any)).thenThrow(TestException('firestore'));
+      when(mockRoutesCollection.doc()).thenThrow(TestException('firestore'));
 
       final route = Route(
-        id: 'route-error',
         tripId: 'tripId',
         orderIndex: 0,
         departurePinId: 'pinA',

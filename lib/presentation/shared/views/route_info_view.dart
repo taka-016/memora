@@ -211,6 +211,22 @@ class RouteInfoViewState extends State<RouteInfoView> {
           travelMode: mode,
         );
 
+        final otherInfo = _otherRouteInfoInputs[key];
+        if (mode == TravelMode.other &&
+            otherInfo != null &&
+            !otherInfo.isEmpty) {
+          final customInstructions = _buildCustomInstructions(otherInfo);
+          final customDurationSeconds = _customDurationSeconds(otherInfo);
+          detail = detail.copyWith(
+            instructions: customInstructions.isNotEmpty
+                ? customInstructions
+                : detail.instructions,
+            durationSeconds: customDurationSeconds > 0
+                ? customDurationSeconds
+                : detail.durationSeconds,
+          );
+        }
+
         nextResults[key] = detail;
       }
 

@@ -6,6 +6,7 @@ abstract class TripEntryQueryService {
     String tripId, {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? pinDetailsOrderBy,
+    List<OrderBy>? routesOrderBy,
   });
 
   Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
