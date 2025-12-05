@@ -12,15 +12,20 @@ class FirestoreRouteRepository implements RouteRepository {
   CollectionReference<Map<String, dynamic>> get _routesCollection =>
       _firestore.collection('routes');
 
+  DocumentReference<Map<String, dynamic>> _docRefForRoute(Route route) {
+    final docId = '${route.tripId}_${route.orderIndex}';
+    return _routesCollection.doc(docId);
+  }
+
   @override
   Future<void> saveRoute(Route route) async {
-    final docRef = _routesCollection.doc(route.id);
+    final docRef = _docRefForRoute(route);
     await docRef.set(FirestoreRouteMapper.toFirestore(route));
   }
 
   @override
   Future<void> updateRoute(Route route) async {
-    final docRef = _routesCollection.doc(route.id);
+    final docRef = _docRefForRoute(route);
     await docRef.set(FirestoreRouteMapper.toFirestore(route));
   }
 

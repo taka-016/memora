@@ -22,7 +22,6 @@ class RouteMapper {
 
   static entity.Route toEntity(RouteDto dto) {
     return entity.Route(
-      id: dto.id,
       tripId: dto.tripId,
       orderIndex: dto.orderIndex,
       departurePinId: dto.departurePinId,

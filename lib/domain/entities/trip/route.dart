@@ -4,7 +4,6 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class Route extends Equatable {
   Route({
-    required this.id,
     required this.tripId,
     required this.orderIndex,
     required this.departurePinId,
@@ -18,7 +17,6 @@ class Route extends Equatable {
     _validate();
   }
 
-  final String id;
   final String tripId;
   final int orderIndex;
   final String departurePinId;
@@ -30,7 +28,6 @@ class Route extends Equatable {
   final String? polyline;
 
   Route copyWith({
-    String? id,
     String? tripId,
     int? orderIndex,
     String? departurePinId,
@@ -42,7 +39,6 @@ class Route extends Equatable {
     String? polyline,
   }) {
     return Route(
-      id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
       departurePinId: departurePinId ?? this.departurePinId,
@@ -72,7 +68,6 @@ class Route extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
     tripId,
     orderIndex,
     departurePinId,

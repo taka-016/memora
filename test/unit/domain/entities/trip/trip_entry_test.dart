@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/entities/trip/pin_detail.dart';
+import 'package:memora/domain/entities/trip/route.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
@@ -36,6 +38,15 @@ void main() {
             ],
           ),
         ],
+        routes: [
+          Route(
+            tripId: 'abc123',
+            orderIndex: 0,
+            departurePinId: 'pin1',
+            arrivalPinId: 'pin2',
+            travelMode: TravelMode.drive,
+          ),
+        ],
       );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
@@ -47,6 +58,8 @@ void main() {
       expect(entry.pins.first.locationName, 'パリ');
       expect(entry.pins.first.visitMemo, 'エッフェル塔');
       expect(entry.pins.first.details, hasLength(1));
+      expect(entry.routes, hasLength(1));
+      expect(entry.routes.first.orderIndex, 0);
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
@@ -74,6 +87,7 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
+        routes: const [],
       );
       final entry2 = TripEntry(
         id: 'abc123',
@@ -83,6 +97,7 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
+        routes: const [],
       );
       expect(entry1, equals(entry2));
     });
@@ -96,6 +111,7 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
+        routes: const [],
       );
       final updatedEntry = entry.copyWith(
         tripName: '新しい旅行',
@@ -112,6 +128,15 @@ void main() {
             visitEndDate: DateTime(2025, 6, 14),
           ),
         ],
+        routes: [
+          Route(
+            tripId: 'abc123',
+            orderIndex: 1,
+            departurePinId: 'pin2',
+            arrivalPinId: 'pin3',
+            travelMode: TravelMode.walk,
+          ),
+        ],
       );
       expect(updatedEntry.id, 'abc123');
       expect(updatedEntry.groupId, 'group456');
@@ -120,6 +145,8 @@ void main() {
       expect(updatedEntry.tripEndDate, DateTime(2025, 6, 15));
       expect(updatedEntry.tripMemo, 'テストメモ');
       expect(updatedEntry.pins, hasLength(1));
+      expect(updatedEntry.routes, hasLength(1));
+      expect(updatedEntry.routes.first.orderIndex, 1);
     });
 
     test('旅行期間外の訪問場所を含むと例外が発生する', () {
@@ -143,6 +170,34 @@ void main() {
         ),
         throwsA(isA<ValidationException>()),
       );
+    });
+
+    test('routesに含まれるRouteの順序が保持される', () {
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        tripStartDate: DateTime(2025, 6, 1),
+        tripEndDate: DateTime(2025, 6, 10),
+        routes: [
+          Route(
+            tripId: 'trip123',
+            orderIndex: 1,
+            departurePinId: 'pinB',
+            arrivalPinId: 'pinC',
+            travelMode: TravelMode.walk,
+          ),
+          Route(
+            tripId: 'trip123',
+            orderIndex: 0,
+            departurePinId: 'pinA',
+            arrivalPinId: 'pinB',
+            travelMode: TravelMode.drive,
+          ),
+        ],
+      );
+
+      expect(entry.routes[0].orderIndex, 1);
+      expect(entry.routes[1].orderIndex, 0);
     });
   });
 }

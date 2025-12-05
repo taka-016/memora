@@ -39,7 +39,6 @@ void main() {
     test('saveRouteでルートを保存する', () async {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -47,19 +46,18 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
+      when(mockRoutesCollection.doc('trip001_0')).thenReturn(mockDocRef);
       when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveRoute(route);
 
-      verify(mockRoutesCollection.doc(route.id)).called(1);
+      verify(mockRoutesCollection.doc('trip001_0')).called(1);
       verify(mockDocRef.set(any)).called(1);
     });
 
     test('updateRouteで既存ルートを上書き保存する', () async {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final route = Route(
-        id: 'route001',
         tripId: 'trip001',
         orderIndex: 0,
         departurePinId: 'pinA',
@@ -67,12 +65,12 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      when(mockRoutesCollection.doc(route.id)).thenReturn(mockDocRef);
+      when(mockRoutesCollection.doc('trip001_0')).thenReturn(mockDocRef);
       when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.updateRoute(route);
 
-      verify(mockRoutesCollection.doc(route.id)).called(1);
+      verify(mockRoutesCollection.doc('trip001_0')).called(1);
       verify(mockDocRef.set(any)).called(1);
     });
 
@@ -128,7 +126,6 @@ void main() {
       when(mockRoutesCollection.doc(any)).thenThrow(TestException('firestore'));
 
       final route = Route(
-        id: 'route-error',
         tripId: 'tripId',
         orderIndex: 0,
         departurePinId: 'pinA',
