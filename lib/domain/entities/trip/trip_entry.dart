@@ -21,6 +21,12 @@ class TripEntry extends Equatable {
     for (final pin in this.pins) {
       _validatePinPeriod(pin);
     }
+    final orderIndexes = <int>{};
+    for (final route in this.routes) {
+      if (!orderIndexes.add(route.orderIndex)) {
+        throw ValidationException('各ルートのorderIndexは一意でなければなりません');
+      }
+    }
   }
 
   final String id;

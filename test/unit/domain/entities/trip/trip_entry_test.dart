@@ -199,5 +199,33 @@ void main() {
       expect(entry.routes[0].orderIndex, 1);
       expect(entry.routes[1].orderIndex, 0);
     });
+
+    test('routesのorderIndexが重複していると例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripStartDate: DateTime(2025, 6, 1),
+          tripEndDate: DateTime(2025, 6, 10),
+          routes: [
+            Route(
+              tripId: 'trip123',
+              orderIndex: 0,
+              departurePinId: 'pinA',
+              arrivalPinId: 'pinB',
+              travelMode: TravelMode.drive,
+            ),
+            Route(
+              tripId: 'trip123',
+              orderIndex: 0,
+              departurePinId: 'pinB',
+              arrivalPinId: 'pinC',
+              travelMode: TravelMode.walk,
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
   });
 }
