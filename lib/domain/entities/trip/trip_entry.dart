@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
+import 'package:memora/domain/entities/trip/route.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class TripEntry extends Equatable {
@@ -11,12 +12,20 @@ class TripEntry extends Equatable {
     required this.tripEndDate,
     this.tripMemo,
     List<Pin>? pins,
-  }) : pins = List.unmodifiable(pins ?? const []) {
+    List<Route>? routes,
+  }) : pins = List.unmodifiable(pins ?? const []),
+       routes = List.unmodifiable(routes ?? const []) {
     if (tripEndDate.isBefore(tripStartDate)) {
       throw ValidationException('旅行の終了日は開始日以降でなければなりません');
     }
     for (final pin in this.pins) {
       _validatePinPeriod(pin);
+    }
+    final orderIndexes = <int>{};
+    for (final route in this.routes) {
+      if (!orderIndexes.add(route.orderIndex)) {
+        throw ValidationException('各ルートのorderIndexは一意でなければなりません');
+      }
     }
   }
 
@@ -27,6 +36,7 @@ class TripEntry extends Equatable {
   final DateTime tripEndDate;
   final String? tripMemo;
   final List<Pin> pins;
+  final List<Route> routes;
 
   TripEntry copyWith({
     String? id,
@@ -36,6 +46,7 @@ class TripEntry extends Equatable {
     DateTime? tripEndDate,
     String? tripMemo,
     List<Pin>? pins,
+    List<Route>? routes,
   }) {
     return TripEntry(
       id: id ?? this.id,
@@ -45,6 +56,7 @@ class TripEntry extends Equatable {
       tripEndDate: tripEndDate ?? this.tripEndDate,
       tripMemo: tripMemo ?? this.tripMemo,
       pins: pins ?? this.pins,
+      routes: routes ?? this.routes,
     );
   }
 
@@ -72,5 +84,6 @@ class TripEntry extends Equatable {
     tripEndDate,
     tripMemo,
     pins,
+    routes,
   ];
 }

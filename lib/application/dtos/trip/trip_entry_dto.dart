@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/route_dto.dart';
 
 class TripEntryDto extends Equatable {
   const TripEntryDto({
@@ -10,6 +11,7 @@ class TripEntryDto extends Equatable {
     required this.tripEndDate,
     this.tripMemo,
     this.pins,
+    this.routes,
   });
 
   final String id;
@@ -19,6 +21,7 @@ class TripEntryDto extends Equatable {
   final DateTime tripEndDate;
   final String? tripMemo;
   final List<PinDto>? pins;
+  final List<RouteDto>? routes;
 
   TripEntryDto copyWith({
     String? id,
@@ -28,6 +31,7 @@ class TripEntryDto extends Equatable {
     DateTime? tripEndDate,
     String? tripMemo,
     List<PinDto>? pins,
+    List<RouteDto>? routes,
   }) {
     return TripEntryDto(
       id: id ?? this.id,
@@ -37,6 +41,7 @@ class TripEntryDto extends Equatable {
       tripEndDate: tripEndDate ?? this.tripEndDate,
       tripMemo: tripMemo ?? this.tripMemo,
       pins: pins ?? this.pins,
+      routes: routes ?? this.routes,
     );
   }
 
@@ -49,5 +54,6 @@ class TripEntryDto extends Equatable {
     tripEndDate,
     tripMemo,
     pins,
+    routes,
   ];
 }

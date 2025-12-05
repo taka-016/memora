@@ -71,7 +71,6 @@ void main() {
       expect(
         entityRoute,
         entity.Route(
-          id: 'route001',
           tripId: 'trip001',
           orderIndex: 0,
           departurePinId: 'pinA',
@@ -108,7 +107,6 @@ void main() {
       final entities = RouteMapper.toEntityList(dtos);
 
       expect(entities, hasLength(2));
-      expect(entities.first.id, 'route001');
       expect(entities.last.orderIndex, 1);
     });
   });
