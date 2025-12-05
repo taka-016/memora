@@ -40,9 +40,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     }
 
     for (final Route route in tripEntry.routes) {
-      final routeDocRef = _firestore
-          .collection('routes')
-          .doc('${tripDocRef.id}_${route.orderIndex}');
+      final routeDocRef = _firestore.collection('routes').doc();
       batch.set(
         routeDocRef,
         FirestoreRouteMapper.toFirestore(route.copyWith(tripId: tripDocRef.id)),
@@ -109,9 +107,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     }
 
     for (final Route route in tripEntry.routes) {
-      final routeDocRef = _firestore
-          .collection('routes')
-          .doc('${tripEntry.id}_${route.orderIndex}');
+      final routeDocRef = _firestore.collection('routes').doc();
       batch.set(
         routeDocRef,
         FirestoreRouteMapper.toFirestore(route.copyWith(tripId: tripEntry.id)),

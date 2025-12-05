@@ -71,14 +71,13 @@ void main() {
         when(mockCollection.doc()).thenReturn(mockDocRef);
         when(mockFirestore.batch()).thenReturn(mockBatch);
         when(mockBatch.commit()).thenAnswer((_) async {});
-        when(
-          mockRoutesCollection.doc('generated-doc-id_0'),
-        ).thenReturn(mockRouteDocRef);
+        when(mockRoutesCollection.doc()).thenReturn(mockRouteDocRef);
 
         final result = await repository.saveTripEntry(tripEntry);
 
         expect(result, equals('generated-doc-id'));
         verify(mockFirestore.batch()).called(1);
+        verify(mockRoutesCollection.doc()).called(1);
         verify(mockBatch.set(mockRouteDocRef, any)).called(1);
         verify(mockBatch.commit()).called(1);
       },
