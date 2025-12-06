@@ -395,7 +395,7 @@
 RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] _searchRoutesでotherの場合はRouteMemoEditBottomSheetでRouteSegmentDetailを作成しているため、
   polylineの内容のみマージする
-- [ ] 経路マップを閉じている場合に「経路検索」を実行するとエラーが発生する不具合を修正
+- [x] 経路マップを閉じている場合に「経路検索」を実行するとエラーが発生する不具合を修正
 
 ## 地図画面
 
