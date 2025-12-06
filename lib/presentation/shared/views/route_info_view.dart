@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -42,6 +44,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
   bool _isMapVisible = true;
   int? _selectedPinIndex;
   GoogleMapController? _mapController;
+  bool _shouldFitMapToRoutesWhenVisible = false;
 
   RouteInfoService get _service =>
       widget.routeInfoService ??
@@ -70,6 +73,9 @@ class RouteInfoViewState extends State<RouteInfoView> {
         polyline.polylineId.value: polyline.color,
     };
   }
+
+  @visibleForTesting
+  bool get shouldFitMapToRoutesWhenVisible => _shouldFitMapToRoutesWhenVisible;
 
   @visibleForTesting
   void selectPinForTest(int index) {
@@ -245,9 +251,7 @@ class RouteInfoViewState extends State<RouteInfoView> {
           for (final entry in nextResults.entries) entry.key: false,
         };
       });
-      if (!widget.isTestEnvironment) {
-        await _fitMapToRoutes();
-      }
+      await _handleFitMapToRoutesRequest();
     } catch (e, stackTrace) {
       logger.e(
         'RouteInfoViewState._searchRoutes: ${e.toString()}',
@@ -329,6 +333,38 @@ class RouteInfoViewState extends State<RouteInfoView> {
     await _mapController!.animateCamera(
       CameraUpdate.newLatLngBounds(bounds, 60),
     );
+  }
+
+  Future<void> _handleFitMapToRoutesRequest() async {
+    if (_segmentDetails.isEmpty) {
+      _shouldFitMapToRoutesWhenVisible = false;
+      return;
+    }
+
+    if (widget.isTestEnvironment) {
+      _shouldFitMapToRoutesWhenVisible = !_isMapVisible;
+      return;
+    }
+
+    if (!_isMapVisible || _mapController == null) {
+      _shouldFitMapToRoutesWhenVisible = true;
+      return;
+    }
+
+    _shouldFitMapToRoutesWhenVisible = false;
+    await _fitMapToRoutes();
+  }
+
+  void _scheduleFitMapCameraUpdate() {
+    if (!mounted) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(_handleFitMapToRoutesRequest());
+    });
   }
 
   void _onReorder(int oldIndex, int newIndex) {
@@ -764,7 +800,11 @@ class RouteInfoViewState extends State<RouteInfoView> {
       child: GoogleMap(
         key: const Key('route_info_map'),
         onMapCreated: (controller) {
+          _mapController?.dispose();
           _mapController = controller;
+          if (_shouldFitMapToRoutesWhenVisible) {
+            _scheduleFitMapCameraUpdate();
+          }
         },
         initialCameraPosition: CameraPosition(
           target: _initialCameraPosition(),
@@ -784,9 +824,20 @@ class RouteInfoViewState extends State<RouteInfoView> {
       child: TextButton.icon(
         key: const Key('route_info_map_toggle'),
         onPressed: () {
+          final nextVisibility = !_isMapVisible;
           setState(() {
-            _isMapVisible = !_isMapVisible;
+            _isMapVisible = nextVisibility;
+            if (!nextVisibility) {
+              _mapController?.dispose();
+              _mapController = null;
+              if (_segmentDetails.isNotEmpty) {
+                _shouldFitMapToRoutesWhenVisible = true;
+              }
+            }
           });
+          if (nextVisibility) {
+            _scheduleFitMapCameraUpdate();
+          }
         },
         icon: Icon(_isMapVisible ? Icons.remove : Icons.add),
         label: Text(_isMapVisible ? 'マップ非表示' : 'マップ表示'),

@@ -607,5 +607,38 @@ void main() {
 
       expect(find.byKey(const Key('route_info_map')), findsOneWidget);
     });
+
+    testWidgets('マップ非表示時の経路検索ではカメラ調整を保留すること', (tester) async {
+      final fakeService = FakeRouteInfoService(
+        responses: {
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
+            polyline: [
+              Location(latitude: 35.0, longitude: 135.0),
+              Location(latitude: 35.1, longitude: 135.1),
+            ],
+            distanceMeters: 1200,
+            durationSeconds: 600,
+            instructions: const ['移動テスト'],
+          ),
+        },
+      );
+
+      await pumpRouteInfoView(tester, service: fakeService);
+
+      await tester.tap(find.byKey(const Key('route_info_map_toggle')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('経路検索'));
+      await tester.pumpAndSettle();
+
+      final state =
+          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
+      expect(state.shouldFitMapToRoutesWhenVisible, isTrue);
+
+      await tester.tap(find.byKey(const Key('route_info_map_toggle')));
+      await tester.pumpAndSettle();
+
+      expect(state.shouldFitMapToRoutesWhenVisible, isFalse);
+    });
   });
 }
