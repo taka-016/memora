@@ -5,16 +5,22 @@ import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
 import 'package:memora/core/app_logger.dart';
 
-final locationProvider = StateNotifierProvider<LocationNotifier, LocationState>(
-  (ref) {
-    return LocationNotifier(GeolocatorCurrentLocationService());
-  },
+final currentLocationServiceProvider = Provider<CurrentLocationService>((ref) {
+  return GeolocatorCurrentLocationService();
+});
+
+final locationProvider = NotifierProvider<LocationNotifier, LocationState>(
+  LocationNotifier.new,
 );
 
-class LocationNotifier extends StateNotifier<LocationState> {
-  final CurrentLocationService _currentLocationService;
+class LocationNotifier extends Notifier<LocationState> {
+  CurrentLocationService get _currentLocationService =>
+      ref.read(currentLocationServiceProvider);
 
-  LocationNotifier(this._currentLocationService) : super(const LocationState());
+  @override
+  LocationState build() {
+    return const LocationState();
+  }
 
   Future<void> getCurrentLocation() async {
     try {

@@ -66,8 +66,8 @@ void main() {
       // locationProviderにnullを設定
       final container = ProviderContainer(
         overrides: [
-          locationProvider.overrideWith(
-            (ref) => LocationNotifier(MockLocationService()),
+          currentLocationServiceProvider.overrideWithValue(
+            MockLocationService(),
           ),
         ],
       );
@@ -96,14 +96,17 @@ void main() {
     ) async {
       // locationProviderに大阪の位置を設定
       final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
-      final locationNotifier = LocationNotifier(MockLocationService());
-      // setLocationで位置を設定
-      locationNotifier.setLocation(testLocation);
-
       final container = ProviderContainer(
-        overrides: [locationProvider.overrideWith((ref) => locationNotifier)],
+        overrides: [
+          currentLocationServiceProvider.overrideWithValue(
+            MockLocationService(),
+          ),
+        ],
       );
       addTearDown(container.dispose);
+
+      final locationNotifier = container.read(locationProvider.notifier);
+      locationNotifier.setLocation(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -140,13 +143,17 @@ void main() {
 
       // locationProviderにも位置を設定（こちらは使われない）
       final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
-      final locationNotifier = LocationNotifier(MockLocationService());
-      locationNotifier.setLocation(testLocation);
-
       final container = ProviderContainer(
-        overrides: [locationProvider.overrideWith((ref) => locationNotifier)],
+        overrides: [
+          currentLocationServiceProvider.overrideWithValue(
+            MockLocationService(),
+          ),
+        ],
       );
       addTearDown(container.dispose);
+
+      final locationNotifier = container.read(locationProvider.notifier);
+      locationNotifier.setLocation(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

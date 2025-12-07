@@ -14,10 +14,11 @@ void main() {
     Widget createTestWidget({AuthState? authState, Widget? child}) {
       return ProviderScope(
         overrides: [
-          authNotifierProvider.overrideWith((ref) {
-            final state = authState ?? const AuthState.unauthenticated('');
-            return FakeAuthNotifier(state);
-          }),
+          authNotifierProvider.overrideWith(
+            () => FakeAuthNotifier(
+              authState ?? const AuthState.unauthenticated(''),
+            ),
+          ),
         ],
         child: MaterialApp(
           home: AuthGuard(child: child ?? const Text('Protected Content')),

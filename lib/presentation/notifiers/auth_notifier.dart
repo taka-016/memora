@@ -9,43 +9,24 @@ import 'package:memora/application/usecases/member/create_member_from_user_useca
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((
-  ref,
-) {
-  final authService = ref.watch(authServiceProvider);
-  final checkMemberExistsUseCase = ref.watch(checkMemberExistsUseCaseProvider);
-  final createMemberFromUserUseCase = ref.watch(
-    createMemberFromUserUseCaseProvider,
-  );
-  final acceptInvitationUseCase = ref.watch(acceptInvitationUseCaseProvider);
+final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
 
-  final authNotifier = AuthNotifier(
-    authService: authService,
-    checkMemberExistsUseCase: checkMemberExistsUseCase,
-    createMemberFromUserUseCase: createMemberFromUserUseCase,
-    acceptInvitationUseCase: acceptInvitationUseCase,
-  );
-
-  authNotifier.initialize();
-
-  return authNotifier;
-});
-
-class AuthNotifier extends StateNotifier<AuthState> {
-  AuthNotifier({
-    required this.authService,
-    required this.checkMemberExistsUseCase,
-    required this.createMemberFromUserUseCase,
-    required this.acceptInvitationUseCase,
-  }) : super(const AuthState.loading());
-
-  final AuthService authService;
-  final CheckMemberExistsUseCase checkMemberExistsUseCase;
-  final CreateMemberFromUserUseCase createMemberFromUserUseCase;
-  final AcceptInvitationUseCase acceptInvitationUseCase;
+class AuthNotifier extends Notifier<AuthState> {
   StreamSubscription<User?>? _authStateSubscription;
 
-  Future<void> initialize() async {
+  AuthService get authService => ref.read(authServiceProvider);
+  CheckMemberExistsUseCase get checkMemberExistsUseCase =>
+      ref.read(checkMemberExistsUseCaseProvider);
+  CreateMemberFromUserUseCase get createMemberFromUserUseCase =>
+      ref.read(createMemberFromUserUseCaseProvider);
+  AcceptInvitationUseCase get acceptInvitationUseCase =>
+      ref.read(acceptInvitationUseCaseProvider);
+
+  @override
+  AuthState build() {
+    _authStateSubscription?.cancel();
     _authStateSubscription = authService.authStateChanges.listen((user) async {
       if (user == null) {
         await _handleUnauthenticatedUser();
@@ -53,6 +34,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       await _handleAuthenticatedUser(user);
     });
+
+    ref.onDispose(() {
+      _authStateSubscription?.cancel();
+      _authStateSubscription = null;
+    });
+
+    return const AuthState.loading();
   }
 
   Future<void> _handleAuthenticatedUser(User user) async {
@@ -228,11 +216,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void clearError() {
     state = state.copyWith(message: '');
-  }
-
-  @override
-  void dispose() {
-    _authStateSubscription?.cancel();
-    super.dispose();
   }
 }
