@@ -462,6 +462,11 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] GroupManagementで実装
 - [x] UseCase Providerを利用するようにリポジトリDIをリファクタリングする
   - [x] 全機能に展開する
+- [ ] 以下、StateNotifierになっている箇所をNotifierに変更する
+  - [ ] AuthNotifier
+  - [ ] LocationNotifier
+  - [ ] NavigationNotifier
+  - [ ] GroupTimelineNavigationNotifier
 
 ## 全体
 
