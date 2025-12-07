@@ -25,15 +25,17 @@ import 'top_page_test.mocks.dart';
 
 // テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
 class _TestNavigationNotifier extends NavigationNotifier {
-  _TestNavigationNotifier() : super() {
-    state = const NavigationState(selectedItem: NavigationItem.settings);
+  @override
+  NavigationState build() {
+    return const NavigationState(selectedItem: NavigationItem.settings);
   }
 }
 
 class _TestGroupTimelineNavigationNotifier
     extends GroupTimelineNavigationNotifier {
-  _TestGroupTimelineNavigationNotifier() : super() {
-    state = const GroupTimelineNavigationState(
+  @override
+  GroupTimelineNavigationState build() {
+    return const GroupTimelineNavigationState(
       currentScreen: GroupTimelineScreenState.timeline,
       selectedGroupId: 'g1',
       selectedYear: 2024,
@@ -138,9 +140,7 @@ void main() {
 
     return ProviderScope(
       overrides: [
-        authNotifierProvider.overrideWith((ref) {
-          return FakeAuthNotifier.authenticated();
-        }),
+        authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
         memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
         authServiceProvider.overrideWithValue(testAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
@@ -613,15 +613,13 @@ void main() {
       // Providerをオーバーライドして、非デフォルト状態から開始
       final widget = ProviderScope(
         overrides: [
-          authNotifierProvider.overrideWith((ref) {
-            return FakeAuthNotifier.authenticated();
-          }),
-          navigationNotifierProvider.overrideWith((ref) {
-            return _TestNavigationNotifier();
-          }),
-          groupTimelineNavigationNotifierProvider.overrideWith((ref) {
-            return _TestGroupTimelineNavigationNotifier();
-          }),
+          authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
+          navigationNotifierProvider.overrideWith(
+            () => _TestNavigationNotifier(),
+          ),
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _TestGroupTimelineNavigationNotifier(),
+          ),
           memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
@@ -677,7 +675,7 @@ void main() {
       );
       final widget = ProviderScope(
         overrides: [
-          authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
+          authNotifierProvider.overrideWith(() => fakeAuthNotifier),
           memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),

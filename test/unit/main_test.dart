@@ -63,9 +63,7 @@ void main() {
   Widget createTestApp() {
     return ProviderScope(
       overrides: [
-        authNotifierProvider.overrideWith((ref) {
-          return FakeAuthNotifier.authenticated();
-        }),
+        authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
         memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),

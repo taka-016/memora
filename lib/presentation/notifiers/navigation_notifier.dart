@@ -10,9 +10,9 @@ enum NavigationItem {
 }
 
 final navigationNotifierProvider =
-    StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-      return NavigationNotifier();
-    });
+    NotifierProvider<NavigationNotifier, NavigationState>(
+      NavigationNotifier.new,
+    );
 
 class NavigationState {
   final NavigationItem selectedItem;
@@ -24,9 +24,11 @@ class NavigationState {
   }
 }
 
-class NavigationNotifier extends StateNotifier<NavigationState> {
-  NavigationNotifier()
-    : super(const NavigationState(selectedItem: NavigationItem.groupTimeline));
+class NavigationNotifier extends Notifier<NavigationState> {
+  @override
+  NavigationState build() {
+    return const NavigationState(selectedItem: NavigationItem.groupTimeline);
+  }
 
   void selectItem(NavigationItem item) {
     state = state.copyWith(selectedItem: item);

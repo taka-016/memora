@@ -6,12 +6,10 @@ import 'package:memora/presentation/features/timeline/group_timeline.dart';
 enum GroupTimelineScreenState { groupList, timeline, tripManagement }
 
 final groupTimelineNavigationNotifierProvider =
-    StateNotifierProvider<
+    NotifierProvider<
       GroupTimelineNavigationNotifier,
       GroupTimelineNavigationState
-    >((ref) {
-      return GroupTimelineNavigationNotifier();
-    });
+    >(GroupTimelineNavigationNotifier.new);
 
 class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
@@ -56,13 +54,13 @@ class GroupTimelineNavigationState {
 }
 
 class GroupTimelineNavigationNotifier
-    extends StateNotifier<GroupTimelineNavigationState> {
-  GroupTimelineNavigationNotifier()
-    : super(
-        const GroupTimelineNavigationState(
-          currentScreen: GroupTimelineScreenState.groupList,
-        ),
-      );
+    extends Notifier<GroupTimelineNavigationState> {
+  @override
+  GroupTimelineNavigationState build() {
+    return const GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.groupList,
+    );
+  }
 
   void showGroupList() {
     state = state.copyWith(

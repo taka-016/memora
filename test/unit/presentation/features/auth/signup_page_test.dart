@@ -12,10 +12,11 @@ void main() {
     Widget createTestWidget({AuthState? authState}) {
       return ProviderScope(
         overrides: [
-          authNotifierProvider.overrideWith((ref) {
-            final state = authState ?? const AuthState.unauthenticated('');
-            return FakeAuthNotifier(state);
-          }),
+          authNotifierProvider.overrideWith(
+            () => FakeAuthNotifier(
+              authState ?? const AuthState.unauthenticated(''),
+            ),
+          ),
         ],
         child: const MaterialApp(home: SignupPage()),
       );
@@ -91,7 +92,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            authNotifierProvider.overrideWith((ref) => fakeAuthNotifier),
+            authNotifierProvider.overrideWith(() => fakeAuthNotifier),
           ],
           child: const MaterialApp(home: SignupPage()),
         ),
