@@ -470,10 +470,10 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
 - [x] GroupTimelineのConsumerStatefulWidgetを廃止し、HookConsumerWidgetにする
 - [ ] 以下の画面のStatefulWidget(またはConsumerStatefulWidget)をHookWidget(またはHookConsumerWidget)に変更する
   - [ ] TopPage
-  - [ ] AccountDeleteModal
-  - [ ] EmailChangeModal
-  - [ ] PasswordChangeModal
-  - [ ] ReauthenticateModal
+  - [x] AccountDeleteModal
+  - [x] EmailChangeModal
+  - [x] PasswordChangeModal
+  - [x] ReauthenticateModal
   - [ ] LoginPage
   - [ ] SignUpPage
   - [ ] GroupEditModal
