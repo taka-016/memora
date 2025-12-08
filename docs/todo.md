@@ -468,6 +468,31 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] NavigationNotifier
   - [x] GroupTimelineNavigationNotifier
 - [x] GroupTimelineのConsumerStatefulWidgetを廃止し、HookConsumerWidgetにする
+- [ ] 以下の画面のStatefulWidget(またはConsumerStatefulWidget)をHookWidget(またはHookConsumerWidget)に変更する
+  - [ ] TopPage
+  - [ ] AccountDeleteModal
+  - [ ] EmailChangeModal
+  - [ ] PasswordChangeModal
+  - [ ] ReauthenticateModal
+  - [ ] LoginPage
+  - [ ] SignUpPage
+  - [ ] GroupEditModal
+  - [ ] GroupManagement
+  - [ ] MapScreen
+  - [ ] MemberEditModal
+  - [ ] MemberManagement
+  - [ ] TripEditModal
+  - [ ] TripManagement
+  - [ ] GroupList
+  - [ ] TripEditModal
+  - [ ] TripManagement
+  - [ ] CustomDatePickerDialog
+  - [ ] InvitationCodeModal
+  - [ ] CustomSearchBar
+  - [ ] GoogleMapView
+  - [ ] PinDetailBottomSheet
+  - [ ] RouteMemoEditBottomSheet
+  - [ ] RouteInfoView
 
 ## 全体
 
