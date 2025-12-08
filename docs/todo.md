@@ -467,6 +467,7 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] LocationNotifier
   - [x] NavigationNotifier
   - [x] GroupTimelineNavigationNotifier
+- [ ] GroupTimelineのConsumerStatefulWidgetを廃止し、HookConsumerWidgetにする
 
 ## 全体
 
