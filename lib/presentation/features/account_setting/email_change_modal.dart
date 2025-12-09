@@ -1,144 +1,113 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/core/app_logger.dart';
 
-class EmailChangeModal extends StatefulWidget {
+class EmailChangeModal extends HookWidget {
   final Function(String) onEmailChange;
 
   const EmailChangeModal({super.key, required this.onEmailChange});
 
   @override
-  State<EmailChangeModal> createState() => _EmailChangeModalState();
-}
+  Widget build(BuildContext context) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final newEmailController = useTextEditingController();
+    final isLoading = useState(false);
 
-class _EmailChangeModalState extends State<EmailChangeModal> {
-  final _formKey = GlobalKey<FormState>();
-  final _newEmailController = TextEditingController();
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _newEmailController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _updateEmail() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await widget.onEmailChange(_newEmailController.text.trim());
-      if (mounted) {
-        Navigator.of(context).pop();
+    Future<void> updateEmail() async {
+      final currentState = formKey.currentState;
+      if (currentState == null || !currentState.validate()) {
+        return;
       }
-    } catch (e, stack) {
-      logger.e(
-        'EmailChangeModal._updateEmail: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+
+      isLoading.value = true;
+
+      try {
+        await onEmailChange(newEmailController.text.trim());
+        if (context.mounted) {
+          Navigator.of(context).pop();
+        }
+      } catch (e, stack) {
+        logger.e(
+          'EmailChangeModal._updateEmail: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+      } finally {
+        if (context.mounted) {
+          isLoading.value = false;
+        }
       }
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
         horizontal: 16.0,
         vertical: 24.0,
       ),
-      child: _buildDialogContent(),
-    );
-  }
-
-  Widget _buildDialogContent() {
-    return Material(
-      type: MaterialType.card,
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.95,
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTitle(),
-            const SizedBox(height: 20),
-            _buildEmailForm(),
-            const SizedBox(height: 24),
-            _buildActionButtons(),
-          ],
+      child: Material(
+        type: MaterialType.card,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.95,
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'メールアドレス変更',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 20),
+              Form(
+                key: formKey,
+                child: TextFormField(
+                  key: const Key('newEmailField'),
+                  controller: newEmailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: '新しいメールアドレス',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'メールアドレスを入力してください';
+                    }
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
+                      return '正しいメールアドレスを入力してください';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: isLoading.value
+                        ? null
+                        : () => Navigator.of(context).pop(),
+                    child: const Text('キャンセル'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: isLoading.value ? null : updateEmail,
+                    child: isLoading.value
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('更新'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return const Text(
-      'メールアドレス変更',
-      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-    );
-  }
-
-  Widget _buildEmailForm() {
-    return Form(
-      key: _formKey,
-      child: TextFormField(
-        key: const Key('newEmailField'),
-        controller: _newEmailController,
-        keyboardType: TextInputType.emailAddress,
-        decoration: const InputDecoration(
-          labelText: '新しいメールアドレス',
-          border: OutlineInputBorder(),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'メールアドレスを入力してください';
-          }
-          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-            return '正しいメールアドレスを入力してください';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        _buildCancelButton(),
-        const SizedBox(width: 8),
-        _buildUpdateButton(),
-      ],
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return TextButton(
-      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-      child: const Text('キャンセル'),
-    );
-  }
-
-  Widget _buildUpdateButton() {
-    return ElevatedButton(
-      onPressed: _isLoading ? null : _updateEmail,
-      child: _isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Text('更新'),
     );
   }
 }
