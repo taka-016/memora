@@ -474,11 +474,11 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] EmailChangeModal
   - [x] PasswordChangeModal
   - [x] ReauthenticateModal
-  - [ ] LoginPage
-  - [ ] SignUpPage
+  - [x] LoginPage
+  - [x] SignUpPage
   - [ ] GroupEditModal
   - [ ] GroupManagement
-  - [ ] MapScreen
+  - [x] MapScreen
   - [ ] MemberEditModal
   - [ ] MemberManagement
   - [ ] TripEditModal
@@ -486,11 +486,11 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [ ] GroupList
   - [ ] TripEditModal
   - [ ] TripManagement
-  - [ ] CustomDatePickerDialog
-  - [ ] InvitationCodeModal
-  - [ ] CustomSearchBar
-  - [ ] GoogleMapView
-  - [ ] PinDetailBottomSheet
+  - [x] CustomDatePickerDialog
+  - [x] InvitationCodeModal
+  - [x] CustomSearchBar
+  - [x] GoogleMapView
+  - [x] PinDetailBottomSheet
   - [ ] RouteMemoEditBottomSheet
   - [ ] RouteInfoView
 
