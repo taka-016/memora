@@ -1,44 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 
-class InvitationCodeInputModal extends StatefulWidget {
+class InvitationCodeInputModal extends HookWidget {
   final String? errorMessage;
 
   const InvitationCodeInputModal({super.key, this.errorMessage});
 
   @override
-  State<InvitationCodeInputModal> createState() =>
-      _InvitationCodeInputModalState();
-}
-
-class _InvitationCodeInputModalState extends State<InvitationCodeInputModal> {
-  final _formKey = GlobalKey<FormState>();
-  final _invitationCodeController = TextEditingController();
-
-  @override
-  void dispose() {
-    _invitationCodeController.dispose();
-    super.dispose();
-  }
-
-  void _submitInvitationCode() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.of(context).pop(_invitationCodeController.text.trim());
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final invitationCodeController = useTextEditingController();
+
+    void submitInvitationCode() {
+      if (formKey.currentState!.validate()) {
+        Navigator.of(context).pop(invitationCodeController.text.trim());
+      }
+    }
+
     return AlertDialog(
       title: const Text('招待コード入力'),
       content: Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text('招待コードを入力してください。'),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _invitationCodeController,
+              controller: invitationCodeController,
               decoration: const InputDecoration(
                 labelText: '招待コード',
                 hintText: '招待コードを入力',
@@ -50,11 +39,10 @@ class _InvitationCodeInputModalState extends State<InvitationCodeInputModal> {
                 return null;
               },
             ),
-            if (widget.errorMessage != null &&
-                widget.errorMessage!.isNotEmpty) ...[
+            if (errorMessage != null && errorMessage!.isNotEmpty) ...[
               const SizedBox(height: 16),
               Text(
-                widget.errorMessage!,
+                errorMessage!,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.error,
                   fontSize: 14,
@@ -69,7 +57,7 @@ class _InvitationCodeInputModalState extends State<InvitationCodeInputModal> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('キャンセル'),
         ),
-        TextButton(onPressed: _submitInvitationCode, child: const Text('確定')),
+        TextButton(onPressed: submitInvitationCode, child: const Text('確定')),
       ],
     );
   }
