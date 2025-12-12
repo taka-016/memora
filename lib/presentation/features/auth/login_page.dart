@@ -24,9 +24,11 @@ class LoginPage extends HookConsumerWidget {
               email: emailController.text.trim(),
               password: passwordController.text,
             );
-        final authState = ref.read(authNotifierProvider);
-        if (context.mounted && authState.isAuthenticated) {
-          TextInput.finishAutofillContext();
+        if (context.mounted) {
+          final authState = ref.read(authNotifierProvider);
+          if (authState.isAuthenticated) {
+            TextInput.finishAutofillContext();
+          }
         }
       }
     }
