@@ -146,6 +146,8 @@ void main() {
         ),
       ];
 
+      final testHandle = TripEditModalTestHandle();
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -153,13 +155,13 @@ void main() {
               groupId: 'test-group-id',
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
       );
 
-      final state = tester.state(find.byType(TripEditModal)) as dynamic;
-      state.setPinsForTest(pins);
+      testHandle.setPinsForTest(pins);
       await tester.pumpAndSettle();
 
       final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
@@ -184,6 +186,8 @@ void main() {
     });
 
     testWidgets('編集ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
+      final testHandle = TripEditModalTestHandle();
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -191,6 +195,7 @@ void main() {
               groupId: 'test-group-id',
               onSave: (TripEntry tripEntry) {},
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
@@ -340,6 +345,8 @@ void main() {
     testWidgets('作成ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
 
+      final testHandle = TripEditModalTestHandle();
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -349,6 +356,7 @@ void main() {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
@@ -425,6 +433,7 @@ void main() {
 
     testWidgets('日付未入力時にエラーメッセージが表示されること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
+      final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -435,6 +444,7 @@ void main() {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
@@ -456,6 +466,8 @@ void main() {
     testWidgets('開始日が終了日より後の場合にエラーメッセージが表示されること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
 
+      final testHandle = TripEditModalTestHandle();
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -473,13 +485,16 @@ void main() {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
       );
 
-      final state = tester.state(find.byType(TripEditModal)) as dynamic;
-      state.setDateRangeForTest(DateTime(2024, 1, 3), DateTime(2024, 1, 1));
+      testHandle.setDateRangeForTest(
+        DateTime(2024, 1, 3),
+        DateTime(2024, 1, 1),
+      );
       await tester.pump();
 
       // 更新ボタンをタップ
@@ -496,6 +511,8 @@ void main() {
       WidgetTester tester,
     ) async {
       TripEntry? savedTripEntry;
+
+      final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -515,9 +532,15 @@ void main() {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
+      );
+
+      testHandle.setDateRangeForTest(
+        DateTime(2023, 6, 1),
+        DateTime(2024, 6, 10),
       );
 
       // 更新ボタンをタップ
@@ -631,6 +654,7 @@ void main() {
       WidgetTester tester,
     ) async {
       TripEntry? savedTripEntry;
+      final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
         MaterialApp(
@@ -641,6 +665,7 @@ void main() {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
+              testHandle: testHandle,
             ),
           ),
         ),
@@ -664,8 +689,7 @@ void main() {
         ),
       ];
 
-      final state = tester.state(find.byType(TripEditModal)) as dynamic;
-      state.setPinsForTest(testPins);
+      testHandle.setPinsForTest(testPins);
       await tester.pump();
 
       // 旅行名を入力
