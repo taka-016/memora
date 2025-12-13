@@ -1,292 +1,95 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/usecases/member/create_member_usecase.dart';
+import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
+import 'package:memora/application/usecases/member/delete_member_usecase.dart';
+import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
+import 'package:memora/application/usecases/member/update_member_usecase.dart';
+import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
-import 'package:memora/application/usecases/member/create_member_usecase.dart';
-import 'package:memora/application/usecases/member/update_member_usecase.dart';
-import 'package:memora/application/usecases/member/delete_member_usecase.dart';
-import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
-import 'member_edit_modal.dart';
-import 'package:memora/core/app_logger.dart';
 
-class MemberManagement extends ConsumerStatefulWidget {
+class MemberManagement extends HookConsumerWidget {
   final MemberDto member;
 
   const MemberManagement({super.key, required this.member});
 
   @override
-  ConsumerState<MemberManagement> createState() => _MemberManagementState();
-}
-
-class _MemberManagementState extends ConsumerState<MemberManagement> {
-  late final GetManagedMembersUsecase _getManagedMembersUsecase;
-  late final CreateMemberUsecase _createMemberUsecase;
-  late final UpdateMemberUsecase _updateMemberUsecase;
-  late final DeleteMemberUsecase _deleteMemberUsecase;
-  late final GetMemberByIdUseCase _getMemberByIdUseCase;
-  late final CreateOrUpdateMemberInvitationUsecase
-  _createOrUpdateMemberInvitationUsecase;
-
-  List<MemberDto> _managedMembers = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
-    _createMemberUsecase = ref.read(createMemberUsecaseProvider);
-    _updateMemberUsecase = ref.read(updateMemberUsecaseProvider);
-    _deleteMemberUsecase = ref.read(deleteMemberUsecaseProvider);
-    _getMemberByIdUseCase = ref.read(getMemberByIdUsecaseProvider);
-    _createOrUpdateMemberInvitationUsecase = ref.read(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
+    final createMemberUsecase = ref.read(createMemberUsecaseProvider);
+    final updateMemberUsecase = ref.read(updateMemberUsecaseProvider);
+    final deleteMemberUsecase = ref.read(deleteMemberUsecaseProvider);
+    final getMemberByIdUseCase = ref.read(getMemberByIdUsecaseProvider);
+    final createOrUpdateMemberInvitationUsecase = ref.read(
       createOrUpdateMemberInvitationUsecaseProvider,
     );
 
-    _loadData();
-  }
+    final managedMembers = useState<List<MemberDto>>([]);
+    final isLoading = useState(true);
 
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    Future<void> loadData() async {
+      isLoading.value = true;
 
-    try {
-      final managedMembers = await _getManagedMembersUsecase.execute(
-        widget.member,
-      );
-      final currentMember = await _getMemberByIdUseCase.execute(
-        widget.member.id,
-      );
-      if (currentMember == null) {
-        throw Exception('ログインユーザーメンバーの最新情報の取得に失敗しました');
-      }
-      _managedMembers = [currentMember, ...managedMembers];
-    } catch (e, stack) {
-      logger.e(
-        'MemberManagement._loadData: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (mounted) {
+      try {
+        final managedMembersResult = await getManagedMembersUsecase.execute(
+          member,
+        );
+        final currentMember = await getMemberByIdUseCase.execute(member.id);
+        if (currentMember == null) {
+          throw Exception('ログインユーザーメンバーの最新情報の取得に失敗しました');
+        }
+        managedMembers.value = List<MemberDto>.from([
+          currentMember,
+          ...managedMembersResult,
+        ]);
+      } catch (e, stack) {
+        logger.e(
+          'MemberManagement.loadData: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!context.mounted) {
+          return;
+        }
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('データの読み込みに失敗しました: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      } finally {
+        if (context.mounted) {
+          isLoading.value = false;
+        }
       }
     }
-  }
 
-  Future<void> _showAddMemberDialog() async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    useEffect(() {
+      loadData();
+      return null;
+    }, const []);
 
-    await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => MemberEditModal(
-        onSave: (member) async {
-          try {
-            await _createMemberUsecase.execute(member, widget.member.id);
-            if (mounted) {
-              await _loadData();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('メンバーを作成しました')),
-              );
-            }
-          } catch (e, stack) {
-            logger.e(
-              'MemberManagement._showAddMemberDialog: ${e.toString()}',
-              error: e,
-              stackTrace: stack,
-            );
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('作成に失敗しました: $e')),
-              );
-            }
-          }
-        },
-      ),
-    );
-  }
+    Future<void> handleMemberInvite(MemberDto targetMember) async {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-  Future<void> _showEditMemberDialog(MemberDto member) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
+      try {
+        final invitationCode = await createOrUpdateMemberInvitationUsecase
+            .execute(inviteeId: targetMember.id, inviterId: member.id);
 
-    await showDialog(
-      barrierDismissible: false,
-      context: context,
-      builder: (context) => MemberEditModal(
-        member: member,
-        onSave: (updatedMember) async {
-          try {
-            await _updateMemberUsecase.execute(updatedMember);
-            if (mounted) {
-              await _loadData();
-              scaffoldMessenger.showSnackBar(
-                const SnackBar(content: Text('メンバーを更新しました')),
-              );
-            }
-          } catch (e, stack) {
-            logger.e(
-              'MemberManagement._showEditMemberDialog: ${e.toString()}',
-              error: e,
-              stackTrace: stack,
-            );
-            if (mounted) {
-              scaffoldMessenger.showSnackBar(
-                SnackBar(content: Text('更新に失敗しました: $e')),
-              );
-            }
-          }
-        },
-        onInvite: member.id != widget.member.id
-            ? (member) async {
-                await _handleMemberInvite(member);
-              }
-            : null,
-      ),
-    );
-  }
+        if (!context.mounted) {
+          return;
+        }
 
-  Future<void> _showDeleteConfirmDialog(MemberDto member) async {
-    await DeleteConfirmDialog.show(
-      context,
-      title: 'メンバー削除',
-      content: '${member.displayName}を削除しますか？',
-      onConfirm: () => _deleteMember(member),
-    );
-  }
-
-  Future<void> _deleteMember(MemberDto member) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    try {
-      await _deleteMemberUsecase.execute(member.id);
-      if (mounted) {
-        await _loadData();
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('メンバーを削除しました')),
-        );
-      }
-    } catch (e, stack) {
-      logger.e(
-        'MemberManagement._deleteMember: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('削除に失敗しました: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      key: const Key('member_settings'),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [_buildHeader(), const Divider(), _buildMemberList()],
-            ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const SizedBox(width: 16),
-          const Text(
-            'メンバー管理',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const Spacer(),
-          ElevatedButton.icon(
-            onPressed: _showAddMemberDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('メンバー追加'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberList() {
-    return Expanded(
-      child: RefreshIndicator(
-        onRefresh: _loadData,
-        child: ListView.builder(
-          itemCount: _managedMembers.length,
-          itemBuilder: (context, index) {
-            final member = _managedMembers[index];
-            return _buildMemberItem(member, index);
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMemberItem(MemberDto member, int index) {
-    final isCurrentUser = index == 0;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: ListTile(
-        leading: CircleAvatar(child: Text(member.displayName.substring(0, 1))),
-        title: Text(member.displayName),
-        subtitle: _buildMemberSubtitle(member),
-        onTap: () => _showEditMemberDialog(member),
-        trailing: _buildMemberTrailing(member, isCurrentUser),
-      ),
-    );
-  }
-
-  Widget? _buildMemberSubtitle(MemberDto member) {
-    if (member.email != null || member.phoneNumber != null) {
-      return Text(member.email ?? member.phoneNumber ?? '');
-    }
-    return null;
-  }
-
-  Widget? _buildMemberTrailing(MemberDto member, bool isCurrentUser) {
-    if (!isCurrentUser && member.accountId == null) {
-      return IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red),
-        onPressed: () => _showDeleteConfirmDialog(member),
-      );
-    }
-    return null;
-  }
-
-  Future<void> _handleMemberInvite(MemberDto member) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    try {
-      final invitationCode = await _createOrUpdateMemberInvitationUsecase
-          .execute(inviteeId: member.id, inviterId: widget.member.id);
-
-      if (mounted) {
-        showDialog(
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (dialogContext) => AlertDialog(
             title: const Text('招待コード'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${member.displayName}さんの招待コードが生成されました。'),
+                Text('${targetMember.displayName}さんの招待コードが生成されました。'),
                 const SizedBox(height: 16),
                 SelectableText(
                   invitationCode,
@@ -304,7 +107,7 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
                     );
                   } catch (e, stack) {
                     logger.e(
-                      'MemberManagement._handleMemberInvite.shareDialog: ${e.toString()}',
+                      'MemberManagement.handleMemberInvite.share: ${e.toString()}',
                       error: e,
                       stackTrace: stack,
                     );
@@ -316,24 +119,241 @@ class _MemberManagementState extends ConsumerState<MemberManagement> {
                 child: const Text('共有'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('閉じる'),
               ),
             ],
           ),
         );
-      }
-    } catch (e, stack) {
-      logger.e(
-        'MemberManagement._handleMemberInvite: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (mounted) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('招待コードの生成に失敗しました: $e')),
+      } catch (e, stack) {
+        logger.e(
+          'MemberManagement.handleMemberInvite: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
         );
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('招待コードの生成に失敗しました: $e')),
+          );
+        }
       }
     }
+
+    Future<void> deleteMember(MemberDto targetMember) async {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      try {
+        await deleteMemberUsecase.execute(targetMember.id);
+        if (!context.mounted) {
+          return;
+        }
+        await loadData();
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('メンバーを削除しました')),
+        );
+      } catch (e, stack) {
+        logger.e(
+          'MemberManagement.deleteMember: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (context.mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(content: Text('削除に失敗しました: $e')),
+          );
+        }
+      }
+    }
+
+    Future<void> showDeleteConfirmDialog(MemberDto targetMember) async {
+      await DeleteConfirmDialog.show(
+        context,
+        title: 'メンバー削除',
+        content: '${targetMember.displayName}を削除しますか？',
+        onConfirm: () => deleteMember(targetMember),
+      );
+    }
+
+    Future<void> showAddMemberDialog() async {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      await showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (dialogContext) => MemberEditModal(
+          onSave: (newMember) async {
+            try {
+              await createMemberUsecase.execute(newMember, member.id);
+              if (!dialogContext.mounted) {
+                return;
+              }
+              await loadData();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('メンバーを作成しました')),
+              );
+            } catch (e, stack) {
+              logger.e(
+                'MemberManagement.showAddMemberDialog: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
+              if (dialogContext.mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('作成に失敗しました: $e')),
+                );
+              }
+            }
+          },
+        ),
+      );
+    }
+
+    Future<void> showEditMemberDialog(MemberDto targetMember) async {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      await showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (dialogContext) => MemberEditModal(
+          member: targetMember,
+          onSave: (updatedMember) async {
+            try {
+              await updateMemberUsecase.execute(updatedMember);
+              if (!dialogContext.mounted) {
+                return;
+              }
+              await loadData();
+              scaffoldMessenger.showSnackBar(
+                const SnackBar(content: Text('メンバーを更新しました')),
+              );
+            } catch (e, stack) {
+              logger.e(
+                'MemberManagement.showEditMemberDialog: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
+              if (dialogContext.mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('更新に失敗しました: $e')),
+                );
+              }
+            }
+          },
+          onInvite: targetMember.id != member.id
+              ? (memberDto) async {
+                  await handleMemberInvite(memberDto);
+                }
+              : null,
+        ),
+      );
+    }
+
+    Widget buildHeader() {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            const SizedBox(width: 16),
+            const Text(
+              'メンバー管理',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: showAddMemberDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('メンバー追加'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildEmptyState() {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people_outline, size: 100, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              '管理しているメンバーがいません',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'メンバーを追加してください',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildMemberListView() {
+      return ListView.builder(
+        itemCount: managedMembers.value.length,
+        itemBuilder: (context, index) {
+          final targetMember = managedMembers.value[index];
+          final isCurrentUser = index == 0;
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: CircleAvatar(
+                child: Text(targetMember.displayName.substring(0, 1)),
+              ),
+              title: Text(targetMember.displayName),
+              subtitle:
+                  (targetMember.email != null ||
+                      targetMember.phoneNumber != null)
+                  ? Text(targetMember.email ?? targetMember.phoneNumber ?? '')
+                  : null,
+              onTap: () => showEditMemberDialog(targetMember),
+              trailing: (!isCurrentUser && targetMember.accountId == null)
+                  ? IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => showDeleteConfirmDialog(targetMember),
+                    )
+                  : null,
+            ),
+          );
+        },
+      );
+    }
+
+    Widget buildMemberListContent() {
+      if (managedMembers.value.isEmpty) {
+        return buildEmptyState();
+      }
+      return RefreshIndicator(
+        onRefresh: loadData,
+        child: buildMemberListView(),
+      );
+    }
+
+    Widget buildLoadingState() {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    Widget buildBody() {
+      if (isLoading.value) {
+        return buildLoadingState();
+      }
+
+      return Column(
+        children: [
+          buildHeader(),
+          const Divider(),
+          Expanded(child: buildMemberListContent()),
+        ],
+      );
+    }
+
+    return Container(key: const Key('member_settings'), child: buildBody());
   }
 }

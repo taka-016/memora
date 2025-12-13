@@ -476,16 +476,14 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] ReauthenticateModal
   - [x] LoginPage
   - [x] SignUpPage
-  - [ ] GroupEditModal
-  - [ ] GroupManagement
+  - [x] GroupEditModal
+  - [x] GroupManagement
   - [x] MapScreen
-  - [ ] MemberEditModal
-  - [ ] MemberManagement
-  - [ ] TripEditModal
-  - [ ] TripManagement
+  - [x] MemberEditModal
+  - [x] MemberManagement
+  - [x] TripEditModal
+  - [x] TripManagement
   - [ ] GroupList
-  - [ ] TripEditModal
-  - [ ] TripManagement
   - [x] CustomDatePickerDialog
   - [x] InvitationCodeModal
   - [x] CustomSearchBar

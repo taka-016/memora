@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
-class MemberEditModal extends StatefulWidget {
+class MemberEditModal extends HookWidget {
   final MemberDto? member;
   final Function(Member) onSave;
   final Function(MemberDto)? onInvite;
@@ -16,72 +17,308 @@ class MemberEditModal extends StatefulWidget {
   });
 
   @override
-  State<MemberEditModal> createState() => _MemberEditModalState();
-}
-
-class _MemberEditModalState extends State<MemberEditModal> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _displayNameController;
-  late TextEditingController _kanjiLastNameController;
-  late TextEditingController _kanjiFirstNameController;
-  late TextEditingController _hiraganaLastNameController;
-  late TextEditingController _hiraganaFirstNameController;
-  late TextEditingController _firstNameController;
-  late TextEditingController _lastNameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneNumberController;
-  String? _gender;
-  DateTime? _birthday;
-
-  @override
-  void initState() {
-    super.initState();
-    _displayNameController = TextEditingController(
-      text: widget.member?.displayName ?? '',
-    );
-    _kanjiLastNameController = TextEditingController(
-      text: widget.member?.kanjiLastName ?? '',
-    );
-    _kanjiFirstNameController = TextEditingController(
-      text: widget.member?.kanjiFirstName ?? '',
-    );
-    _hiraganaLastNameController = TextEditingController(
-      text: widget.member?.hiraganaLastName ?? '',
-    );
-    _hiraganaFirstNameController = TextEditingController(
-      text: widget.member?.hiraganaFirstName ?? '',
-    );
-    _firstNameController = TextEditingController(
-      text: widget.member?.firstName ?? '',
-    );
-    _lastNameController = TextEditingController(
-      text: widget.member?.lastName ?? '',
-    );
-    _emailController = TextEditingController(text: widget.member?.email ?? '');
-    _phoneNumberController = TextEditingController(
-      text: widget.member?.phoneNumber ?? '',
-    );
-    _gender = widget.member?.gender;
-    _birthday = widget.member?.birthday;
-  }
-
-  @override
-  void dispose() {
-    _displayNameController.dispose();
-    _kanjiLastNameController.dispose();
-    _kanjiFirstNameController.dispose();
-    _hiraganaLastNameController.dispose();
-    _hiraganaFirstNameController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _phoneNumberController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final isEditing = widget.member != null;
+    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final displayNameController = useTextEditingController(
+      text: member?.displayName ?? '',
+    );
+    final kanjiLastNameController = useTextEditingController(
+      text: member?.kanjiLastName ?? '',
+    );
+    final kanjiFirstNameController = useTextEditingController(
+      text: member?.kanjiFirstName ?? '',
+    );
+    final hiraganaLastNameController = useTextEditingController(
+      text: member?.hiraganaLastName ?? '',
+    );
+    final hiraganaFirstNameController = useTextEditingController(
+      text: member?.hiraganaFirstName ?? '',
+    );
+    final firstNameController = useTextEditingController(
+      text: member?.firstName ?? '',
+    );
+    final lastNameController = useTextEditingController(
+      text: member?.lastName ?? '',
+    );
+    final emailController = useTextEditingController(text: member?.email ?? '');
+    final phoneNumberController = useTextEditingController(
+      text: member?.phoneNumber ?? '',
+    );
+    final gender = useState<String?>(member?.gender);
+    final birthday = useState<DateTime?>(member?.birthday);
+
+    final isEditing = member != null;
+
+    Widget buildHeader() {
+      return Text(
+        isEditing ? 'メンバー編集' : 'メンバー新規作成',
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+      );
+    }
+
+    Widget buildDisplayNameField() {
+      return TextFormField(
+        controller: displayNameController,
+        decoration: const InputDecoration(
+          labelText: '表示名',
+          border: OutlineInputBorder(),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return '表示名を入力してください';
+          }
+          return null;
+        },
+      );
+    }
+
+    Widget buildKanjiNameFields() {
+      return Column(
+        children: [
+          TextFormField(
+            controller: kanjiLastNameController,
+            decoration: const InputDecoration(
+              labelText: '姓（漢字）',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: kanjiFirstNameController,
+            decoration: const InputDecoration(
+              labelText: '名（漢字）',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    Widget buildHiraganaNameFields() {
+      return Column(
+        children: [
+          TextFormField(
+            controller: hiraganaLastNameController,
+            decoration: const InputDecoration(
+              labelText: '姓（ひらがな）',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: hiraganaFirstNameController,
+            decoration: const InputDecoration(
+              labelText: '名（ひらがな）',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    Widget buildEnglishNameFields() {
+      return Column(
+        children: [
+          TextFormField(
+            controller: firstNameController,
+            decoration: const InputDecoration(
+              labelText: 'First Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: lastNameController,
+            decoration: const InputDecoration(
+              labelText: 'Last Name',
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ],
+      );
+    }
+
+    Widget buildGenderField() {
+      return DropdownButtonFormField<String>(
+        initialValue: gender.value,
+        decoration: const InputDecoration(
+          labelText: '性別',
+          border: OutlineInputBorder(),
+        ),
+        items: const [
+          DropdownMenuItem(value: '男性', child: Text('男性')),
+          DropdownMenuItem(value: '女性', child: Text('女性')),
+          DropdownMenuItem(value: 'その他', child: Text('その他')),
+        ],
+        onChanged: (value) {
+          gender.value = value;
+        },
+      );
+    }
+
+    Widget buildBirthdayField() {
+      return InkWell(
+        onTap: () async {
+          final selectedDate = await DatePickerHelper.showCustomDatePicker(
+            context,
+            initialDate: birthday.value ?? DateTime.now(),
+            firstDate: DateTime(1900),
+            lastDate: DateTime.now(),
+          );
+          if (selectedDate != null) {
+            birthday.value = selectedDate;
+          }
+        },
+        child: InputDecorator(
+          decoration: const InputDecoration(
+            labelText: '生年月日',
+            border: OutlineInputBorder(),
+          ),
+          child: Text(
+            birthday.value != null
+                ? '${birthday.value!.year}/${birthday.value!.month}/${birthday.value!.day}'
+                : '選択してください',
+          ),
+        ),
+      );
+    }
+
+    Widget buildContactFields() {
+      return Column(
+        children: [
+          TextFormField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              labelText: 'メールアドレス',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: phoneNumberController,
+            decoration: const InputDecoration(
+              labelText: '電話番号',
+              border: OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.phone,
+          ),
+        ],
+      );
+    }
+
+    Widget buildForm() {
+      return Expanded(
+        child: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                buildDisplayNameField(),
+                const SizedBox(height: 16),
+                buildKanjiNameFields(),
+                const SizedBox(height: 16),
+                buildHiraganaNameFields(),
+                const SizedBox(height: 16),
+                buildEnglishNameFields(),
+                const SizedBox(height: 16),
+                buildGenderField(),
+                const SizedBox(height: 16),
+                buildBirthdayField(),
+                const SizedBox(height: 16),
+                buildContactFields(),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    void handleInvite() {
+      if (member != null && onInvite != null) {
+        onInvite!(member!);
+      }
+    }
+
+    void handleSave() {
+      if (formKey.currentState!.validate()) {
+        final savedMember = Member(
+          id: member?.id ?? '',
+          accountId: member?.accountId,
+          ownerId: member?.ownerId,
+          displayName: displayNameController.text,
+          kanjiLastName: kanjiLastNameController.text.isEmpty
+              ? null
+              : kanjiLastNameController.text,
+          kanjiFirstName: kanjiFirstNameController.text.isEmpty
+              ? null
+              : kanjiFirstNameController.text,
+          hiraganaLastName: hiraganaLastNameController.text.isEmpty
+              ? null
+              : hiraganaLastNameController.text,
+          hiraganaFirstName: hiraganaFirstNameController.text.isEmpty
+              ? null
+              : hiraganaFirstNameController.text,
+          firstName: firstNameController.text.isEmpty
+              ? null
+              : firstNameController.text,
+          lastName: lastNameController.text.isEmpty
+              ? null
+              : lastNameController.text,
+          gender: gender.value,
+          birthday: birthday.value,
+          email: emailController.text.isEmpty ? null : emailController.text,
+          phoneNumber: phoneNumberController.text.isEmpty
+              ? null
+              : phoneNumberController.text,
+          type: member?.type,
+          passportNumber: member?.passportNumber,
+          passportExpiration: member?.passportExpiration,
+        );
+
+        onSave(savedMember);
+        Navigator.of(context).pop();
+      }
+    }
+
+    Widget buildActionButtons() {
+      return Column(
+        children: [
+          if (isEditing && onInvite != null) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: handleInvite,
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('招待'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('キャンセル'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: handleSave,
+                child: Text(isEditing ? '更新' : '作成'),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
@@ -98,290 +335,15 @@ class _MemberEditModalState extends State<MemberEditModal> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(isEditing),
+              buildHeader(),
               const SizedBox(height: 20),
-              _buildForm(),
+              buildForm(),
               const SizedBox(height: 24),
-              _buildActionButtons(isEditing),
+              buildActionButtons(),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildHeader(bool isEditing) {
-    return Text(
-      isEditing ? 'メンバー編集' : 'メンバー新規作成',
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-    );
-  }
-
-  Widget _buildForm() {
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDisplayNameField(),
-              const SizedBox(height: 16),
-              _buildKanjiNameFields(),
-              const SizedBox(height: 16),
-              _buildHiraganaNameFields(),
-              const SizedBox(height: 16),
-              _buildEnglishNameFields(),
-              const SizedBox(height: 16),
-              _buildGenderField(),
-              const SizedBox(height: 16),
-              _buildBirthdayField(),
-              const SizedBox(height: 16),
-              _buildContactFields(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDisplayNameField() {
-    return TextFormField(
-      controller: _displayNameController,
-      decoration: const InputDecoration(
-        labelText: '表示名',
-        border: OutlineInputBorder(),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return '表示名を入力してください';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildKanjiNameFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _kanjiLastNameController,
-          decoration: const InputDecoration(
-            labelText: '姓（漢字）',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _kanjiFirstNameController,
-          decoration: const InputDecoration(
-            labelText: '名（漢字）',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHiraganaNameFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _hiraganaLastNameController,
-          decoration: const InputDecoration(
-            labelText: '姓（ひらがな）',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _hiraganaFirstNameController,
-          decoration: const InputDecoration(
-            labelText: '名（ひらがな）',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEnglishNameFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _firstNameController,
-          decoration: const InputDecoration(
-            labelText: 'First Name',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _lastNameController,
-          decoration: const InputDecoration(
-            labelText: 'Last Name',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGenderField() {
-    return DropdownButtonFormField<String>(
-      initialValue: _gender,
-      decoration: const InputDecoration(
-        labelText: '性別',
-        border: OutlineInputBorder(),
-      ),
-      items: const [
-        DropdownMenuItem(value: '男性', child: Text('男性')),
-        DropdownMenuItem(value: '女性', child: Text('女性')),
-        DropdownMenuItem(value: 'その他', child: Text('その他')),
-      ],
-      onChanged: (value) {
-        setState(() {
-          _gender = value;
-        });
-      },
-    );
-  }
-
-  Widget _buildBirthdayField() {
-    return InkWell(
-      onTap: () async {
-        final selectedDate = await DatePickerHelper.showCustomDatePicker(
-          context,
-          initialDate: _birthday ?? DateTime.now(),
-          firstDate: DateTime(1900),
-          lastDate: DateTime.now(),
-        );
-        if (selectedDate != null) {
-          setState(() {
-            _birthday = selectedDate;
-          });
-        }
-      },
-      child: InputDecorator(
-        decoration: const InputDecoration(
-          labelText: '生年月日',
-          border: OutlineInputBorder(),
-        ),
-        child: Text(
-          _birthday != null
-              ? '${_birthday!.year}/${_birthday!.month}/${_birthday!.day}'
-              : '選択してください',
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactFields() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _emailController,
-          decoration: const InputDecoration(
-            labelText: 'メールアドレス',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.emailAddress,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _phoneNumberController,
-          decoration: const InputDecoration(
-            labelText: '電話番号',
-            border: OutlineInputBorder(),
-          ),
-          keyboardType: TextInputType.phone,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(bool isEditing) {
-    return Column(
-      children: [
-        if (isEditing && widget.onInvite != null) ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _handleInvite,
-                icon: const Icon(Icons.person_add),
-                label: const Text('招待'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-        ],
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('キャンセル'),
-            ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () => _handleSave(isEditing),
-              child: Text(isEditing ? '更新' : '作成'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _handleInvite() {
-    if (widget.member != null && widget.onInvite != null) {
-      widget.onInvite!(widget.member!);
-    }
-  }
-
-  void _handleSave(bool isEditing) {
-    if (_formKey.currentState!.validate()) {
-      final member = Member(
-        id: widget.member?.id ?? '',
-        accountId: widget.member?.accountId,
-        ownerId: widget.member?.ownerId,
-        displayName: _displayNameController.text,
-        kanjiLastName: _kanjiLastNameController.text.isEmpty
-            ? null
-            : _kanjiLastNameController.text,
-        kanjiFirstName: _kanjiFirstNameController.text.isEmpty
-            ? null
-            : _kanjiFirstNameController.text,
-        hiraganaLastName: _hiraganaLastNameController.text.isEmpty
-            ? null
-            : _hiraganaLastNameController.text,
-        hiraganaFirstName: _hiraganaFirstNameController.text.isEmpty
-            ? null
-            : _hiraganaFirstNameController.text,
-        firstName: _firstNameController.text.isEmpty
-            ? null
-            : _firstNameController.text,
-        lastName: _lastNameController.text.isEmpty
-            ? null
-            : _lastNameController.text,
-        gender: _gender,
-        birthday: _birthday,
-        email: _emailController.text.isEmpty ? null : _emailController.text,
-        phoneNumber: _phoneNumberController.text.isEmpty
-            ? null
-            : _phoneNumberController.text,
-        type: widget.member?.type,
-        passportNumber: widget.member?.passportNumber,
-        passportExpiration: widget.member?.passportExpiration,
-      );
-
-      widget.onSave(member);
-      Navigator.of(context).pop();
-    }
   }
 }
