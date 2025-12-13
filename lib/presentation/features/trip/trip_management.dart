@@ -303,7 +303,7 @@ class TripManagement extends HookConsumerWidget {
       );
     }
 
-    Widget buildTripList() {
+    Widget buildTripListView() {
       return ListView.builder(
         itemCount: tripEntries.value.length,
         itemBuilder: (context, index) {
@@ -324,26 +324,34 @@ class TripManagement extends HookConsumerWidget {
       );
     }
 
-    Widget buildBody() {
-      if (isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+    Widget buildTripListContent() {
+      if (tripEntries.value.isEmpty) {
+        return buildEmptyState();
       }
-
       return RefreshIndicator(
         onRefresh: loadTripEntries,
-        child: tripEntries.value.isEmpty ? buildEmptyState() : buildTripList(),
+        child: buildTripListView(),
       );
     }
 
-    return Container(
-      key: const Key('trip_management'),
-      child: Column(
+    Widget buildLoadingState() {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    Widget buildContent() {
+      if (isLoading.value) {
+        return buildLoadingState();
+      }
+
+      return Column(
         children: [
           buildHeader(),
           const Divider(),
-          Expanded(child: buildBody()),
+          Expanded(child: buildTripListContent()),
         ],
-      ),
-    );
+      );
+    }
+
+    return Container(key: const Key('trip_management'), child: buildContent());
   }
 }

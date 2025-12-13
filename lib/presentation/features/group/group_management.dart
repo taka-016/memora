@@ -283,23 +283,27 @@ class GroupManagement extends HookConsumerWidget {
       );
     }
 
-    Widget buildGroupList() {
-      return RefreshIndicator(
-        onRefresh: loadData,
-        child: ListView.builder(
-          itemCount: managedGroups.value.length,
-          itemBuilder: (context, index) => buildGroupCard(index),
-        ),
+    Widget buildGroupListView() {
+      return ListView.builder(
+        itemCount: managedGroups.value.length,
+        itemBuilder: (context, index) => buildGroupCard(index),
       );
     }
 
     Widget buildGroupListContent() {
-      return managedGroups.value.isEmpty ? buildEmptyState() : buildGroupList();
+      if (managedGroups.value.isEmpty) {
+        return buildEmptyState();
+      }
+      return RefreshIndicator(onRefresh: loadData, child: buildGroupListView());
     }
 
-    Widget buildContent() {
+    Widget buildLoadingState() {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    Widget buildBody() {
       if (isLoading.value) {
-        return const Center(child: CircularProgressIndicator());
+        return buildLoadingState();
       }
 
       return Column(
@@ -311,6 +315,6 @@ class GroupManagement extends HookConsumerWidget {
       );
     }
 
-    return Container(key: const Key('group_settings'), child: buildContent());
+    return Container(key: const Key('group_settings'), child: buildBody());
   }
 }

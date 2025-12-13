@@ -269,53 +269,91 @@ class MemberManagement extends HookConsumerWidget {
       );
     }
 
-    Widget buildMemberList() {
-      return Expanded(
-        child: RefreshIndicator(
-          onRefresh: loadData,
-          child: ListView.builder(
-            itemCount: managedMembers.value.length,
-            itemBuilder: (context, index) {
-              final targetMember = managedMembers.value[index];
-              final isCurrentUser = index == 0;
-
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    child: Text(targetMember.displayName.substring(0, 1)),
-                  ),
-                  title: Text(targetMember.displayName),
-                  subtitle:
-                      (targetMember.email != null ||
-                          targetMember.phoneNumber != null)
-                      ? Text(
-                          targetMember.email ?? targetMember.phoneNumber ?? '',
-                        )
-                      : null,
-                  onTap: () => showEditMemberDialog(targetMember),
-                  trailing: (!isCurrentUser && targetMember.accountId == null)
-                      ? IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () =>
-                              showDeleteConfirmDialog(targetMember),
-                        )
-                      : null,
-                ),
-              );
-            },
-          ),
+    Widget buildEmptyState() {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.people_outline, size: 100, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              '管理しているメンバーがいません',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'メンバーを追加してください',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
         ),
       );
     }
 
-    return Scaffold(
-      key: const Key('member_settings'),
-      body: isLoading.value
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [buildHeader(), const Divider(), buildMemberList()],
+    Widget buildMemberListView() {
+      return ListView.builder(
+        itemCount: managedMembers.value.length,
+        itemBuilder: (context, index) {
+          final targetMember = managedMembers.value[index];
+          final isCurrentUser = index == 0;
+
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: ListTile(
+              leading: CircleAvatar(
+                child: Text(targetMember.displayName.substring(0, 1)),
+              ),
+              title: Text(targetMember.displayName),
+              subtitle:
+                  (targetMember.email != null ||
+                      targetMember.phoneNumber != null)
+                  ? Text(targetMember.email ?? targetMember.phoneNumber ?? '')
+                  : null,
+              onTap: () => showEditMemberDialog(targetMember),
+              trailing: (!isCurrentUser && targetMember.accountId == null)
+                  ? IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => showDeleteConfirmDialog(targetMember),
+                    )
+                  : null,
             ),
-    );
+          );
+        },
+      );
+    }
+
+    Widget buildMemberListContent() {
+      if (managedMembers.value.isEmpty) {
+        return buildEmptyState();
+      }
+      return RefreshIndicator(
+        onRefresh: loadData,
+        child: buildMemberListView(),
+      );
+    }
+
+    Widget buildLoadingState() {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    Widget buildBody() {
+      if (isLoading.value) {
+        return buildLoadingState();
+      }
+
+      return Column(
+        children: [
+          buildHeader(),
+          const Divider(),
+          Expanded(child: buildMemberListContent()),
+        ],
+      );
+    }
+
+    return Container(key: const Key('member_settings'), child: buildBody());
   }
 }
