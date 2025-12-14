@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/shared/views/select_visit_location_view.dart';
+import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 
 void main() {
   Widget buildTestApp(Widget child) {

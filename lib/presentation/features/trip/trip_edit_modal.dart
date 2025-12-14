@@ -9,8 +9,8 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
-import 'package:memora/presentation/shared/views/route_info_view.dart';
-import 'package:memora/presentation/shared/views/select_visit_location_view.dart';
+import 'package:memora/presentation/features/trip/route_info_view.dart';
+import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:uuid/uuid.dart';
 
 enum TripEditExpandedSection { map, routeInfo }

@@ -6,7 +6,7 @@ import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/presentation/shared/views/route_info_view.dart';
+import 'package:memora/presentation/features/trip/route_info_view.dart';
 
 class FakeRouteInfoService implements RouteInfoService {
   final List<_RouteRequest> _requests = [];
