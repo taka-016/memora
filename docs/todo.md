@@ -483,13 +483,13 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] MemberManagement
   - [x] TripEditModal
   - [x] TripManagement
-  - [ ] GroupList
+  - [x] GroupList
   - [x] CustomDatePickerDialog
   - [x] InvitationCodeModal
   - [x] CustomSearchBar
   - [x] GoogleMapView
   - [x] PinDetailBottomSheet
-  - [ ] RouteMemoEditBottomSheet
+  - [x] RouteMemoEditBottomSheet
   - [ ] RouteInfoView
 
 ## 全体
