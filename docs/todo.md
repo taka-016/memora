@@ -491,7 +491,7 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] GoogleMapView
   - [x] PinDetailBottomSheet
   - [x] RouteMemoEditBottomSheet
-  - [ ] RouteInfoView
+  - [x] RouteInfoView
 
 ## 全体
 
