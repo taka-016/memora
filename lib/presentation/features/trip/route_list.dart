@@ -1,42 +1,154 @@
 part of 'route_info_view.dart';
 
-class RouteListSection extends StatelessWidget {
-  const RouteListSection({
+class RouteList extends HookWidget {
+  const RouteList({
     super.key,
-    required this.pins,
-    required this.segmentModes,
-    required this.segmentDetails,
-    required this.routeMemoExpansion,
-    required this.selectedPinIndex,
-    required this.onReorder,
-    required this.onPinTap,
-    required this.onModeChanged,
-    required this.onToggleRouteMemo,
-    required this.onOpenOtherRouteInfoSheet,
-    required this.segmentKeyBuilder,
+    required this.pinsState,
+    required this.segmentModesState,
+    required this.segmentDetailsState,
+    required this.routeMemoExpansionState,
+    required this.selectedPinIndexState,
   });
 
-  final List<PinDto> pins;
-  final Map<String, TravelMode> segmentModes;
-  final Map<String, RouteSegmentDetail> segmentDetails;
-  final Map<String, bool> routeMemoExpansion;
-  final int? selectedPinIndex;
-  final void Function(int oldIndex, int newIndex) onReorder;
-  final void Function(int index) onPinTap;
-  final void Function(String key, TravelMode mode) onModeChanged;
-  final void Function(String key) onToggleRouteMemo;
-  final Future<void> Function(String key) onOpenOtherRouteInfoSheet;
-  final String Function(PinDto origin, PinDto destination) segmentKeyBuilder;
+  final ValueNotifier<List<PinDto>> pinsState;
+  final ValueNotifier<Map<String, TravelMode>> segmentModesState;
+  final ValueNotifier<Map<String, RouteSegmentDetail>> segmentDetailsState;
+  final ValueNotifier<Map<String, bool>> routeMemoExpansionState;
+  final ValueNotifier<int?> selectedPinIndexState;
 
   @override
   Widget build(BuildContext context) {
+    useListenable(pinsState);
+    useListenable(segmentModesState);
+    useListenable(segmentDetailsState);
+    useListenable(routeMemoExpansionState);
+    useListenable(selectedPinIndexState);
+
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        segmentModesState.value = _buildSegmentModes({});
+      });
+      return null;
+    }, const []);
+
+    final pins = pinsState.value;
+    final segmentModes = segmentModesState.value;
+    final segmentDetails = segmentDetailsState.value;
+    final routeMemoExpansion = routeMemoExpansionState.value;
+    final selectedPinIndex = selectedPinIndexState.value;
+
+    void onReorder(int oldIndex, int newIndex) {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final updatedPins = List<PinDto>.from(pinsState.value);
+      final previousDetails = Map<String, RouteSegmentDetail>.from(
+        segmentDetailsState.value,
+      );
+      final item = updatedPins.removeAt(oldIndex);
+      updatedPins.insert(newIndex, item);
+      pinsState.value = updatedPins;
+      final nextModes = _buildSegmentModes(segmentModesState.value);
+      segmentModesState.value = nextModes;
+      segmentDetailsState.value = _retainManualDetails(
+        previousDetails,
+        nextModes,
+      );
+      routeMemoExpansionState.value = {};
+      selectedPinIndexState.value = null;
+    }
+
+    void onPinTap(int index) {
+      if (selectedPinIndexState.value == index) {
+        selectedPinIndexState.value = null;
+      } else {
+        selectedPinIndexState.value = index;
+      }
+    }
+
+    void onModeChanged(String key, TravelMode mode) {
+      final previousMode = segmentModesState.value[key];
+      if (previousMode == mode) {
+        return;
+      }
+      segmentModesState.value = {...segmentModesState.value, key: mode};
+      if (mode == TravelMode.other || previousMode == TravelMode.other) {
+        final updated = Map<String, RouteSegmentDetail>.from(
+          segmentDetailsState.value,
+        )..remove(key);
+        segmentDetailsState.value = updated;
+      }
+    }
+
+    void toggleRouteMemoExpansion(String key) {
+      final current = routeMemoExpansionState.value[key] ?? false;
+      routeMemoExpansionState.value = {
+        ...routeMemoExpansionState.value,
+        key: !current,
+      };
+    }
+
+    Future<void> openOtherRouteInfoSheet(String key) async {
+      final initialDetail =
+          segmentDetailsState.value[key] ?? const RouteSegmentDetail.empty();
+
+      final result = await showModalBottomSheet<RouteSegmentDetail>(
+        context: context,
+        isScrollControlled: true,
+        builder: (context) {
+          return RouteMemoEditBottomSheet(
+            initialDetail: initialDetail,
+            onChanged: (value) =>
+                _scheduleManualRouteUpdate(context, key, value),
+          );
+        },
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+
+      if (result != null) {
+        _scheduleManualRouteUpdate(context, key, result);
+      }
+    }
+
     return Stack(
       key: const Key('route_info_list_area'),
-      children: [Positioned.fill(child: _buildReorderableList())],
+      children: [
+        Positioned.fill(
+          child: _buildReorderableList(
+            pins: pins,
+            selectedPinIndex: selectedPinIndex,
+            segmentModes: segmentModes,
+            segmentDetails: segmentDetails,
+            routeMemoExpansion: routeMemoExpansion,
+            onReorder: onReorder,
+            onPinTap: onPinTap,
+            onModeChanged: onModeChanged,
+            onToggleRouteMemo: toggleRouteMemoExpansion,
+            onOpenOtherRouteInfoSheet: openOtherRouteInfoSheet,
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildReorderableList() {
+  Widget _buildReorderableList({
+    required List<PinDto> pins,
+    required int? selectedPinIndex,
+    required Map<String, TravelMode> segmentModes,
+    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, bool> routeMemoExpansion,
+    required void Function(int oldIndex, int newIndex) onReorder,
+    required void Function(int index) onPinTap,
+    required void Function(String key, TravelMode mode) onModeChanged,
+    required void Function(String key) onToggleRouteMemo,
+    required Future<void> Function(String key) onOpenOtherRouteInfoSheet,
+  }) {
     return Material(
       color: Colors.transparent,
       child: ReorderableListView.builder(
@@ -53,8 +165,19 @@ class RouteListSection extends StatelessWidget {
             key: ValueKey(pin.pinId),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildPinListItem(pin, index),
-              if (index < pins.length - 1) _buildRouteSegment(index),
+              _buildPinListItem(pin, index, selectedPinIndex, onPinTap),
+              if (index < pins.length - 1)
+                _buildRouteSegment(
+                  context: context,
+                  index: index,
+                  pins: pins,
+                  segmentModes: segmentModes,
+                  segmentDetails: segmentDetails,
+                  routeMemoExpansion: routeMemoExpansion,
+                  onModeChanged: onModeChanged,
+                  onToggleRouteMemo: onToggleRouteMemo,
+                  onOpenOtherRouteInfoSheet: onOpenOtherRouteInfoSheet,
+                ),
             ],
           );
         },
@@ -62,7 +185,12 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildPinListItem(PinDto pin, int index) {
+  Widget _buildPinListItem(
+    PinDto pin,
+    int index,
+    int? selectedPinIndex,
+    void Function(int index) onPinTap,
+  ) {
     return Card(
       child: ListTile(
         key: Key('route_info_pin_tile_${pin.pinId}'),
@@ -74,7 +202,17 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteSegment(int index) {
+  Widget _buildRouteSegment({
+    required BuildContext context,
+    required int index,
+    required List<PinDto> pins,
+    required Map<String, TravelMode> segmentModes,
+    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, bool> routeMemoExpansion,
+    required void Function(String key, TravelMode mode) onModeChanged,
+    required void Function(String key) onToggleRouteMemo,
+    required Future<void> Function(String key) onOpenOtherRouteInfoSheet,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -85,14 +223,27 @@ class RouteListSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTravelModeDropdown(index),
+              _buildTravelModeDropdown(
+                context: context,
+                index: index,
+                pins: pins,
+                segmentModes: segmentModes,
+                onModeChanged: onModeChanged,
+                onOpenOtherRouteInfoSheet: onOpenOtherRouteInfoSheet,
+              ),
               AnimatedSize(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 alignment: Alignment.topCenter,
                 child: Container(
                   key: Key('route_segment_container_$index'),
-                  child: _buildRouteMemoView(index),
+                  child: _buildRouteMemoView(
+                    index: index,
+                    pins: pins,
+                    segmentDetails: segmentDetails,
+                    routeMemoExpansion: routeMemoExpansion,
+                    onToggleRouteMemo: onToggleRouteMemo,
+                  ),
                 ),
               ),
             ],
@@ -102,8 +253,15 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildTravelModeDropdown(int index) {
-    final key = segmentKeyBuilder(pins[index], pins[index + 1]);
+  Widget _buildTravelModeDropdown({
+    required BuildContext context,
+    required int index,
+    required List<PinDto> pins,
+    required Map<String, TravelMode> segmentModes,
+    required void Function(String key, TravelMode mode) onModeChanged,
+    required Future<void> Function(String key) onOpenOtherRouteInfoSheet,
+  }) {
+    final key = _segmentKey(pins[index], pins[index + 1]);
     final currentMode = segmentModes[key] ?? TravelMode.drive;
     final dropdown = DropdownButton<TravelMode>(
       key: Key('route_segment_mode_$index'),
@@ -118,7 +276,9 @@ class RouteListSection extends StatelessWidget {
           )
           .toList(),
       onChanged: (mode) {
-        if (mode == null) return;
+        if (mode == null) {
+          return;
+        }
         onModeChanged(key, mode);
       },
     );
@@ -140,20 +300,36 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteMemoView(int index) {
-    final key = segmentKeyBuilder(pins[index], pins[index + 1]);
+  Widget _buildRouteMemoView({
+    required int index,
+    required List<PinDto> pins,
+    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, bool> routeMemoExpansion,
+    required void Function(String key) onToggleRouteMemo,
+  }) {
+    final key = _segmentKey(pins[index], pins[index + 1]);
     final detail = segmentDetails[key];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRouteMemoToggle(index, key),
-        _buildRouteMemo(index, key, detail),
+        _buildRouteMemoToggle(
+          index,
+          key,
+          routeMemoExpansion,
+          onToggleRouteMemo,
+        ),
+        _buildRouteMemo(index, key, detail, routeMemoExpansion),
       ],
     );
   }
 
-  Widget _buildRouteMemoToggle(int index, String key) {
+  Widget _buildRouteMemoToggle(
+    int index,
+    String key,
+    Map<String, bool> routeMemoExpansion,
+    void Function(String key) onToggleRouteMemo,
+  ) {
     final isExpanded = routeMemoExpansion[key] ?? false;
 
     return InkWell(
@@ -176,7 +352,12 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteMemo(int index, String key, RouteSegmentDetail? detail) {
+  Widget _buildRouteMemo(
+    int index,
+    String key,
+    RouteSegmentDetail? detail,
+    Map<String, bool> routeMemoExpansion,
+  ) {
     final isExpanded = routeMemoExpansion[key] ?? false;
     const double maxDetailHeight = 120.0;
     final memoEntries = detail == null
@@ -248,6 +429,100 @@ class RouteListSection extends StatelessWidget {
     );
   }
 
+  Map<String, TravelMode> _buildSegmentModes(Map<String, TravelMode> previous) {
+    final map = <String, TravelMode>{};
+    final validKeys = <String>[];
+    final currentPins = pinsState.value;
+    for (var i = 0; i < currentPins.length - 1; i++) {
+      final key = _segmentKey(currentPins[i], currentPins[i + 1]);
+      validKeys.add(key);
+      map[key] = previous[key] ?? TravelMode.drive;
+    }
+    _cleanupSegmentDetails(validKeys);
+    return map;
+  }
+
+  void _cleanupSegmentDetails(Iterable<String> validKeys) {
+    final validKeySet = validKeys.toSet();
+    segmentDetailsState.value = Map<String, RouteSegmentDetail>.from(
+      segmentDetailsState.value,
+    )..removeWhere((key, _) => !validKeySet.contains(key));
+  }
+
+  Map<String, RouteSegmentDetail> _retainManualDetails(
+    Map<String, RouteSegmentDetail> previousDetails,
+    Map<String, TravelMode> nextModes,
+  ) {
+    final retained = <String, RouteSegmentDetail>{};
+    for (final entry in nextModes.entries) {
+      if (entry.value != TravelMode.other) {
+        continue;
+      }
+      final detail = previousDetails[entry.key];
+      if (detail == null || !hasManualContent(detail)) {
+        continue;
+      }
+      retained[entry.key] = detail;
+    }
+    return retained;
+  }
+
+  void _scheduleManualRouteUpdate(
+    BuildContext context,
+    String key,
+    RouteSegmentDetail detail,
+  ) {
+    final normalized = _sanitizeManualDetail(detail);
+
+    void applyUpdate() {
+      if (!context.mounted) {
+        return;
+      }
+      final current = segmentDetailsState.value[key];
+      final updated = Map<String, RouteSegmentDetail>.from(
+        segmentDetailsState.value,
+      );
+      if (hasManualContent(normalized)) {
+        if (current == null) {
+          updated[key] = normalized;
+        } else {
+          updated[key] = current.copyWith(
+            durationSeconds: normalized.durationSeconds,
+            instructions: normalized.instructions,
+          );
+        }
+      } else if (current != null) {
+        updated[key] = current.copyWith(
+          durationSeconds: 0,
+          instructions: const [],
+        );
+      }
+      segmentDetailsState.value = updated;
+    }
+
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      applyUpdate();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) => applyUpdate());
+    }
+  }
+
+  RouteSegmentDetail _sanitizeManualDetail(RouteSegmentDetail detail) {
+    final sanitizedInstructions = detail.instructions
+        .map((instruction) => instruction.trim())
+        .where((instruction) => instruction.isNotEmpty)
+        .toList();
+    final sanitizedDuration = detail.durationSeconds > 0
+        ? detail.durationSeconds
+        : 0;
+    return detail.copyWith(
+      durationSeconds: sanitizedDuration,
+      instructions: sanitizedInstructions,
+    );
+  }
+
   String _formatDistanceLabel(int meters) {
     if (meters <= 0) {
       return '0.0';
@@ -267,4 +542,8 @@ class RouteListSection extends StatelessWidget {
     }
     return (seconds / 60).ceil();
   }
+}
+
+String _segmentKey(PinDto origin, PinDto destination) {
+  return routeSegmentKey(origin, destination);
 }

@@ -20,6 +20,14 @@ part 'route_map.dart';
 
 const double _inactivePolylineOpacity = 0.4;
 
+String routeSegmentKey(PinDto origin, PinDto destination) {
+  return '${origin.pinId}->${destination.pinId}';
+}
+
+bool hasManualContent(RouteSegmentDetail detail) {
+  return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
+}
+
 class RouteInfoViewTestHandle {
   Map<String, RouteSegmentDetail> Function()? _getSegmentDetails;
   int? Function()? _getSelectedPinIndex;
@@ -75,112 +83,6 @@ class RouteInfoView extends HookWidget {
     final mapControllerState = useState<GoogleMapController?>(null);
     final shouldFitMapState = useState(false);
 
-    String segmentKey(PinDto origin, PinDto destination) {
-      return '${origin.pinId}->${destination.pinId}';
-    }
-
-    void cleanupSegmentDetails(Iterable<String> validKeys) {
-      final validKeySet = validKeys.toSet();
-      segmentDetailsState.value = Map<String, RouteSegmentDetail>.from(
-        segmentDetailsState.value,
-      )..removeWhere((key, _) => !validKeySet.contains(key));
-    }
-
-    Map<String, TravelMode> buildSegmentModes(
-      Map<String, TravelMode> previous,
-    ) {
-      final map = <String, TravelMode>{};
-      final validKeys = <String>[];
-      final currentPins = pinsState.value;
-      for (var i = 0; i < currentPins.length - 1; i++) {
-        final key = segmentKey(currentPins[i], currentPins[i + 1]);
-        validKeys.add(key);
-        map[key] = previous[key] ?? TravelMode.drive;
-      }
-      cleanupSegmentDetails(validKeys);
-      return map;
-    }
-
-    RouteSegmentDetail sanitizeManualDetail(RouteSegmentDetail detail) {
-      final sanitizedInstructions = detail.instructions
-          .map((instruction) => instruction.trim())
-          .where((instruction) => instruction.isNotEmpty)
-          .toList();
-      final sanitizedDuration = detail.durationSeconds > 0
-          ? detail.durationSeconds
-          : 0;
-      return detail.copyWith(
-        durationSeconds: sanitizedDuration,
-        instructions: sanitizedInstructions,
-      );
-    }
-
-    bool hasManualContent(RouteSegmentDetail detail) {
-      return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
-    }
-
-    void scheduleManualRouteUpdate(String key, RouteSegmentDetail detail) {
-      final normalized = sanitizeManualDetail(detail);
-
-      void applyUpdate() {
-        if (!context.mounted) {
-          return;
-        }
-        final current = segmentDetailsState.value[key];
-        final updated = Map<String, RouteSegmentDetail>.from(
-          segmentDetailsState.value,
-        );
-        if (hasManualContent(normalized)) {
-          if (current == null) {
-            updated[key] = normalized;
-          } else {
-            updated[key] = current.copyWith(
-              durationSeconds: normalized.durationSeconds,
-              instructions: normalized.instructions,
-            );
-          }
-        } else if (current != null) {
-          updated[key] = current.copyWith(
-            durationSeconds: 0,
-            instructions: const [],
-          );
-        }
-        segmentDetailsState.value = updated;
-      }
-
-      final phase = SchedulerBinding.instance.schedulerPhase;
-      if (phase == SchedulerPhase.idle ||
-          phase == SchedulerPhase.postFrameCallbacks) {
-        applyUpdate();
-      } else {
-        WidgetsBinding.instance.addPostFrameCallback((_) => applyUpdate());
-      }
-    }
-
-    Future<void> openOtherRouteInfoSheet(String key) async {
-      final initialDetail =
-          segmentDetailsState.value[key] ?? const RouteSegmentDetail.empty();
-
-      final result = await showModalBottomSheet<RouteSegmentDetail>(
-        context: context,
-        isScrollControlled: true,
-        builder: (context) {
-          return RouteMemoEditBottomSheet(
-            initialDetail: initialDetail,
-            onChanged: (value) => scheduleManualRouteUpdate(key, value),
-          );
-        },
-      );
-
-      if (!context.mounted) {
-        return;
-      }
-
-      if (result != null) {
-        scheduleManualRouteUpdate(key, result);
-      }
-    }
-
     RouteSegmentDetail mergeRouteDetailForMode({
       required String key,
       required TravelMode mode,
@@ -199,101 +101,6 @@ class RouteInfoView extends HookWidget {
       return existingDetail.copyWith(polyline: updatedPolyline);
     }
 
-    Future<void> fitMapToRoutes() async {
-      final controller = mapControllerState.value;
-      if (segmentDetailsState.value.isEmpty || controller == null) {
-        return;
-      }
-      final points = segmentDetailsState.value.values
-          .expand((value) => value.polyline)
-          .toList();
-      if (points.isEmpty) {
-        return;
-      }
-
-      double? south;
-      double? west;
-      double? north;
-      double? east;
-
-      for (final point in points) {
-        south = south == null
-            ? point.latitude
-            : (south < point.latitude ? south : point.latitude);
-        north = north == null
-            ? point.latitude
-            : (north > point.latitude ? north : point.latitude);
-        west = west == null
-            ? point.longitude
-            : (west < point.longitude ? west : point.longitude);
-        east = east == null
-            ? point.longitude
-            : (east > point.longitude ? east : point.longitude);
-      }
-
-      if (south == null || north == null || west == null || east == null) {
-        return;
-      }
-
-      final bounds = LatLngBounds(
-        southwest: LatLng(south, west),
-        northeast: LatLng(north, east),
-      );
-
-      await controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
-    }
-
-    Future<void> handleFitMapToRoutesRequest() async {
-      if (segmentDetailsState.value.isEmpty) {
-        shouldFitMapState.value = false;
-        return;
-      }
-
-      if (isTestEnvironment) {
-        shouldFitMapState.value = !isMapVisibleState.value;
-        return;
-      }
-
-      final controller = mapControllerState.value;
-      if (!isMapVisibleState.value || controller == null) {
-        shouldFitMapState.value = true;
-        return;
-      }
-
-      shouldFitMapState.value = false;
-      await fitMapToRoutes();
-    }
-
-    void scheduleFitMapCameraUpdate() {
-      if (!context.mounted) {
-        return;
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
-        }
-        unawaited(handleFitMapToRoutesRequest());
-      });
-    }
-
-    Map<String, RouteSegmentDetail> retainManualDetails(
-      Map<String, RouteSegmentDetail> previousDetails,
-      Map<String, TravelMode> nextModes,
-    ) {
-      final retained = <String, RouteSegmentDetail>{};
-      for (final entry in nextModes.entries) {
-        if (entry.value != TravelMode.other) {
-          continue;
-        }
-        final detail = previousDetails[entry.key];
-        if (detail == null || !hasManualContent(detail)) {
-          continue;
-        }
-        retained[entry.key] = detail;
-      }
-      return retained;
-    }
-
     Future<void> searchRoutes() async {
       if (pinsState.value.length < 2) {
         return;
@@ -309,7 +116,7 @@ class RouteInfoView extends HookWidget {
         for (var i = 0; i < currentPins.length - 1; i++) {
           final origin = currentPins[i];
           final destination = currentPins[i + 1];
-          final key = segmentKey(origin, destination);
+          final key = routeSegmentKey(origin, destination);
           final mode = segmentModesState.value[key] ?? TravelMode.drive;
 
           RouteSegmentDetail detail = await service.fetchRoute(
@@ -339,7 +146,7 @@ class RouteInfoView extends HookWidget {
         routeMemoExpansionState.value = {
           for (final entry in nextResults.entries) entry.key: false,
         };
-        await handleFitMapToRoutesRequest();
+        shouldFitMapState.value = true;
       } catch (e, stackTrace) {
         logger.e(
           'RouteInfoView.searchRoutes: ${e.toString()}',
@@ -355,154 +162,6 @@ class RouteInfoView extends HookWidget {
           isLoadingState.value = false;
         }
       }
-    }
-
-    void onReorder(int oldIndex, int newIndex) {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final updatedPins = List<PinDto>.from(pinsState.value);
-      final previousDetails = Map<String, RouteSegmentDetail>.from(
-        segmentDetailsState.value,
-      );
-      final item = updatedPins.removeAt(oldIndex);
-      updatedPins.insert(newIndex, item);
-      pinsState.value = updatedPins;
-      final nextModes = buildSegmentModes(segmentModesState.value);
-      segmentModesState.value = nextModes;
-      segmentDetailsState.value = retainManualDetails(
-        previousDetails,
-        nextModes,
-      );
-      routeMemoExpansionState.value = {};
-      selectedPinIndexState.value = null;
-    }
-
-    void onModeChanged(String key, TravelMode mode) {
-      final previousMode = segmentModesState.value[key];
-      if (previousMode == mode) {
-        return;
-      }
-      segmentModesState.value = {...segmentModesState.value, key: mode};
-      if (mode == TravelMode.other || previousMode == TravelMode.other) {
-        final updated = Map<String, RouteSegmentDetail>.from(
-          segmentDetailsState.value,
-        )..remove(key);
-        segmentDetailsState.value = updated;
-      }
-    }
-
-    void toggleRouteMemoExpansion(String key) {
-      final current = routeMemoExpansionState.value[key] ?? false;
-      routeMemoExpansionState.value = {
-        ...routeMemoExpansionState.value,
-        key: !current,
-      };
-    }
-
-    Set<String> activeSegmentKeys() {
-      if (selectedPinIndexState.value == null) {
-        return segmentDetailsState.value.keys.toSet();
-      }
-      final set = <String>{};
-      final index = selectedPinIndexState.value!;
-      if (index - 1 >= 0) {
-        set.add(segmentKey(pinsState.value[index - 1], pinsState.value[index]));
-      }
-      if (index + 1 < pinsState.value.length) {
-        set.add(segmentKey(pinsState.value[index], pinsState.value[index + 1]));
-      }
-      return set;
-    }
-
-    void onPinTap(int index) {
-      if (selectedPinIndexState.value == index) {
-        selectedPinIndexState.value = null;
-      } else {
-        selectedPinIndexState.value = index;
-      }
-    }
-
-    void toggleMapVisibility() {
-      final nextVisibility = !isMapVisibleState.value;
-      isMapVisibleState.value = nextVisibility;
-      if (!nextVisibility) {
-        mapControllerState.value?.dispose();
-        mapControllerState.value = null;
-        if (segmentDetailsState.value.isNotEmpty) {
-          shouldFitMapState.value = true;
-        }
-      } else {
-        scheduleFitMapCameraUpdate();
-      }
-    }
-
-    LatLng initialCameraPosition() {
-      if (pinsState.value.isNotEmpty) {
-        final pin = pinsState.value.first;
-        return LatLng(pin.latitude, pin.longitude);
-      }
-      return const LatLng(35.681236, 139.767125);
-    }
-
-    Set<Marker> buildMarkers() {
-      return pinsState.value
-          .map(
-            (pin) => Marker(
-              markerId: MarkerId(pin.pinId),
-              position: LatLng(pin.latitude, pin.longitude),
-              infoWindow: InfoWindow(title: pin.locationName ?? ''),
-            ),
-          )
-          .toSet();
-    }
-
-    Color colorForPolylineIndex(int index, bool isActive) {
-      if (isActive) {
-        return ColorConstants.getSequentialColor(index);
-      }
-      return ColorConstants.getSequentialColorWithOpacity(
-        index,
-        _inactivePolylineOpacity,
-      );
-    }
-
-    Set<Polyline> createPolylines() {
-      final polylines = <Polyline>{};
-      final activeKeys = activeSegmentKeys();
-      final keys = segmentDetailsState.value.keys.toList();
-
-      for (var i = 0; i < keys.length; i++) {
-        final key = keys[i];
-        final detail = segmentDetailsState.value[key];
-        if (detail == null || detail.polyline.isEmpty) {
-          continue;
-        }
-        final isActive = activeKeys.contains(key);
-        final color = colorForPolylineIndex(i, isActive);
-        polylines.add(
-          Polyline(
-            polylineId: PolylineId(key),
-            points: detail.polyline
-                .map(
-                  (location) => LatLng(location.latitude, location.longitude),
-                )
-                .toList(),
-            color: color,
-            width: isActive ? 6 : 4,
-          ),
-        );
-      }
-
-      return polylines;
-    }
-
-    Map<String, Color> computeSegmentHighlightColors() {
-      final colors = <String, Color>{};
-      for (final polyline in createPolylines()) {
-        colors[polyline.polylineId.value] = polyline.color;
-      }
-      return colors;
     }
 
     void handleClose() {
@@ -559,42 +218,6 @@ class RouteInfoView extends HookWidget {
       );
     }
 
-    Widget buildMapSection() {
-      if (isTestEnvironment) {
-        return Container(
-          key: const Key('route_info_map'),
-          child: const Center(child: Text('マッププレビュー')),
-        );
-      }
-
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: GoogleMap(
-          key: const Key('route_info_map'),
-          onMapCreated: (controller) {
-            mapControllerState.value?.dispose();
-            mapControllerState.value = controller;
-            if (shouldFitMapState.value) {
-              scheduleFitMapCameraUpdate();
-            }
-          },
-          initialCameraPosition: CameraPosition(
-            target: initialCameraPosition(),
-            zoom: 12,
-          ),
-          polylines: createPolylines(),
-          markers: buildMarkers(),
-          myLocationButtonEnabled: false,
-          zoomControlsEnabled: false,
-        ),
-      );
-    }
-
-    useEffect(() {
-      segmentModesState.value = buildSegmentModes({});
-      return null;
-    }, []);
-
     useEffect(() {
       return () {
         mapControllerState.value?.dispose();
@@ -611,7 +234,11 @@ class RouteInfoView extends HookWidget {
             segmentDetailsState.value,
           );
       handle._getSelectedPinIndex = () => selectedPinIndexState.value;
-      handle._getSegmentHighlightColors = () => computeSegmentHighlightColors();
+      handle._getSegmentHighlightColors = () => computeSegmentHighlightColors(
+        segmentDetails: segmentDetailsState.value,
+        pins: pinsState.value,
+        selectedPinIndex: selectedPinIndexState.value,
+      );
       handle._getShouldFitMap = () => shouldFitMapState.value;
       handle._selectPin = (index) {
         if (index < 0 || index >= pinsState.value.length) {
@@ -650,25 +277,22 @@ class RouteInfoView extends HookWidget {
             child: Column(
               children: [
                 Expanded(
-                  child: RouteListSection(
-                    pins: pinsState.value,
-                    segmentModes: segmentModesState.value,
-                    segmentDetails: segmentDetailsState.value,
-                    routeMemoExpansion: routeMemoExpansionState.value,
-                    selectedPinIndex: selectedPinIndexState.value,
-                    onReorder: onReorder,
-                    onPinTap: onPinTap,
-                    onModeChanged: onModeChanged,
-                    onToggleRouteMemo: toggleRouteMemoExpansion,
-                    onOpenOtherRouteInfoSheet: openOtherRouteInfoSheet,
-                    segmentKeyBuilder: segmentKey,
+                  child: RouteList(
+                    pinsState: pinsState,
+                    segmentModesState: segmentModesState,
+                    segmentDetailsState: segmentDetailsState,
+                    routeMemoExpansionState: routeMemoExpansionState,
+                    selectedPinIndexState: selectedPinIndexState,
                   ),
                 ),
-                RouteMapSection(
-                  isMapVisible: isMapVisibleState.value,
+                RouteMap(
+                  pinsState: pinsState,
+                  segmentDetailsState: segmentDetailsState,
+                  selectedPinIndexState: selectedPinIndexState,
+                  isMapVisibleState: isMapVisibleState,
+                  mapControllerState: mapControllerState,
+                  shouldFitMapState: shouldFitMapState,
                   isTestEnvironment: isTestEnvironment,
-                  onToggleVisibility: toggleMapVisibility,
-                  mapBuilder: (_) => buildMapSection(),
                 ),
               ],
             ),
