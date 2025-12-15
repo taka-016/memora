@@ -86,12 +86,13 @@ void main() {
     ),
   ];
 
-  Future<void> pumpRouteInfoView(
+  Future<RouteInfoViewTestHandle> pumpRouteInfoView(
     WidgetTester tester, {
     RouteInfoService? service,
     VoidCallback? onClose,
     List<PinDto>? overridePins,
   }) async {
+    final handle = RouteInfoViewTestHandle();
     final targetPins = overridePins ?? pins;
     await tester.pumpWidget(
       MaterialApp(
@@ -101,12 +102,14 @@ void main() {
             routeInfoService: service,
             isTestEnvironment: true,
             onClose: onClose,
+            testHandle: handle,
           ),
         ),
       ),
     );
 
     await tester.pumpAndSettle();
+    return handle;
   }
 
   group('RouteInfoView', () {
@@ -163,15 +166,13 @@ void main() {
     });
 
     testWidgets('ピンをタップすると選択状態になりハイライトされること', (tester) async {
-      await pumpRouteInfoView(tester);
+      final handle = await pumpRouteInfoView(tester);
 
       final pinTileFinder = find.byKey(const Key('route_info_pin_tile_pin-1'));
       await tester.tap(pinTileFinder, warnIfMissed: false);
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-      expect(state.selectedPinIndex, 0);
+      expect(handle.selectedPinIndex, 0);
 
       final listTile = tester.widget<ListTile>(pinTileFinder);
       expect(listTile.selected, isTrue);
@@ -203,22 +204,19 @@ void main() {
         },
       );
 
-      await pumpRouteInfoView(tester, service: fakeService);
+      final handle = await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
       expect(fakeService.callCount, 2);
-
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-      expect(state.segmentDetails.length, 2);
+      expect(handle.segmentDetails.length, 2);
     });
 
     testWidgets('その他の経路入力はボトムシートから保存され経路情報に反映されること', (tester) async {
       final fakeService = FakeRouteInfoService(responses: {});
 
-      await pumpRouteInfoView(tester, service: fakeService);
+      final handle = await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.byKey(const Key('route_segment_mode_0')));
       await tester.pumpAndSettle();
@@ -251,11 +249,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(fakeService.callCount, 2);
-
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
       final segmentKey = 'pin-1->pin-2';
-      final detail = state.segmentDetails[segmentKey];
+      final detail = handle.segmentDetails[segmentKey];
       expect(detail, isNotNull);
       expect(detail!.polyline.length, 2);
       expect(
@@ -271,7 +266,7 @@ void main() {
     });
 
     testWidgets('ボトムシートを閉じると入力したルートメモが即時に表示されること', (tester) async {
-      await pumpRouteInfoView(tester);
+      final handle = await pumpRouteInfoView(tester);
 
       await tester.tap(find.byKey(const Key('route_segment_mode_0')));
       await tester.pumpAndSettle();
@@ -295,9 +290,7 @@ void main() {
       await tester.tap(find.byKey(const Key('other_route_sheet_close_button')));
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-      final manualDetail = state.segmentDetails['pin-1->pin-2'];
+      final manualDetail = handle.segmentDetails['pin-1->pin-2'];
       expect(manualDetail, isNotNull);
       expect(manualDetail!.instructions, ['ケーブルカー', '徒歩']);
       expect(manualDetail.durationSeconds, 1200);
@@ -353,7 +346,6 @@ void main() {
       final summaryFinder = find.byKey(const Key('route_memo_toggle_label_0'));
       expect(summaryFinder, findsOneWidget);
 
-      // サマリーテキストが指定のラベルで表示されること
       final summaryRow = tester.widget<Row>(summaryFinder);
       final expandedWidget = summaryRow.children.whereType<Expanded>().first;
       final textWidget = expandedWidget.child as Text;
@@ -363,7 +355,6 @@ void main() {
       expect(find.text('所要時間: 約15分'), findsNothing);
       expect(find.text('経路案内'), findsNothing);
 
-      // トグルボタンを画面に表示させるためスクロール
       final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
       await tester.dragUntilVisible(
         toggleFinder,
@@ -414,20 +405,17 @@ void main() {
         },
       );
 
-      await pumpRouteInfoView(tester, service: fakeService);
+      final handle = await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-
-      state.selectPinForTest(1);
+      handle.selectPinForTest(1);
       await tester.pumpAndSettle();
 
-      expect(state.selectedPinIndex, 1);
+      expect(handle.selectedPinIndex, 1);
 
-      final highlightColors = state.segmentHighlightColors;
+      final highlightColors = handle.segmentHighlightColors;
       expect(
         highlightColors['pin-1->pin-2'],
         ColorConstants.getSequentialColor(0),
@@ -473,7 +461,7 @@ void main() {
 
       final fakeService = FakeRouteInfoService(responses: responses);
 
-      await pumpRouteInfoView(
+      final handle = await pumpRouteInfoView(
         tester,
         service: fakeService,
         overridePins: extendedPins,
@@ -482,10 +470,7 @@ void main() {
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-
-      final highlightColors = state.segmentHighlightColors;
+      final highlightColors = handle.segmentHighlightColors;
       for (var i = 0; i < extendedPins.length - 1; i++) {
         final key = 'pin-${i + 1}->pin-${i + 2}';
         final paletteColor = ColorConstants.getSequentialColor(i);
@@ -513,7 +498,6 @@ void main() {
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
-      // 経路詳細を画面に表示させるためスクロール
       await tester.dragUntilVisible(
         find.byKey(const Key('route_memo_toggle_label_0')),
         find.byKey(const Key('route_info_reorderable_list')),
@@ -528,7 +512,6 @@ void main() {
         find.byKey(const Key('route_memo_toggle_label_0')),
       );
 
-      // プルダウンよりサマリーが下にあることを確認
       expect(summaryRect.top, greaterThanOrEqualTo(dropdownRect.bottom));
     });
 
@@ -555,7 +538,6 @@ void main() {
 
       expect(find.text('南東に進みます'), findsNothing);
 
-      // トグルボタンを画面に表示させるためスクロール
       final toggleFinder = find.byKey(const Key('route_memo_toggle_button_0'));
       await tester.dragUntilVisible(
         toggleFinder,
@@ -564,7 +546,6 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 折りたたまれた状態の高さを取得
       final containerFinder = find.byKey(
         const Key('route_segment_container_0'),
       );
@@ -577,7 +558,6 @@ void main() {
       expect(find.text('交差点で左折します'), findsOneWidget);
       expect(find.text('目的地は左側です'), findsOneWidget);
 
-      // 展開後の高さを取得し、増加していることを確認
       final expandedHeight = tester.getSize(containerFinder).height;
       expect(expandedHeight, greaterThan(collapsedHeight));
     });
@@ -601,7 +581,6 @@ void main() {
       final hiddenSize = tester.getSize(listAreaFinder);
       expect(hiddenSize.height, greaterThan(visibleSize.height));
 
-      // マップを再表示できることも確認
       await tester.tap(toggleFinder);
       await tester.pumpAndSettle();
 
@@ -623,7 +602,7 @@ void main() {
         },
       );
 
-      await pumpRouteInfoView(tester, service: fakeService);
+      final handle = await pumpRouteInfoView(tester, service: fakeService);
 
       await tester.tap(find.byKey(const Key('route_info_map_toggle')));
       await tester.pumpAndSettle();
@@ -631,14 +610,12 @@ void main() {
       await tester.tap(find.text('経路検索'));
       await tester.pumpAndSettle();
 
-      final state =
-          tester.state(find.byType(RouteInfoView)) as RouteInfoViewState;
-      expect(state.shouldFitMapToRoutesWhenVisible, isTrue);
+      expect(handle.shouldFitMapToRoutesWhenVisible, isTrue);
 
       await tester.tap(find.byKey(const Key('route_info_map_toggle')));
       await tester.pumpAndSettle();
 
-      expect(state.shouldFitMapToRoutesWhenVisible, isFalse);
+      expect(handle.shouldFitMapToRoutesWhenVisible, isFalse);
     });
   });
 }
