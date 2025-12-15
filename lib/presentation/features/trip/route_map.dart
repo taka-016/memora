@@ -136,13 +136,13 @@ class RouteMap extends HookWidget {
       key: const Key('route_info_map_area'),
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
-      height: isMapVisible ? _expandedHeight(context) : 56.0,
+      height: isMapVisible ? expandedHeight(context) : 56.0,
       child: Column(
         children: [
-          _buildMapToggleButton(isMapVisible, toggleMapVisibility),
+          buildMapToggleButton(isMapVisible, toggleMapVisibility),
           if (isMapVisible)
             Expanded(
-              child: _buildMapView(
+              child: buildMapView(
                 context,
                 pins,
                 segmentDetails,
@@ -155,7 +155,7 @@ class RouteMap extends HookWidget {
     );
   }
 
-  double _expandedHeight(BuildContext context) {
+  double expandedHeight(BuildContext context) {
     if (isTestEnvironment) {
       return 200.0;
     }
@@ -163,7 +163,7 @@ class RouteMap extends HookWidget {
     return height.clamp(180.0, 320.0);
   }
 
-  Widget _buildMapToggleButton(
+  Widget buildMapToggleButton(
     bool isMapVisible,
     VoidCallback onToggleVisibility,
   ) {
@@ -184,7 +184,7 @@ class RouteMap extends HookWidget {
     );
   }
 
-  Widget _buildMapView(
+  Widget buildMapView(
     BuildContext context,
     List<PinDto> pins,
     Map<String, RouteSegmentDetail> segmentDetails,
@@ -220,14 +220,14 @@ class RouteMap extends HookWidget {
           pins: pins,
           selectedPinIndex: selectedPinIndex,
         ),
-        markers: _buildMarkers(pins),
+        markers: buildMarkers(pins),
         myLocationButtonEnabled: false,
         zoomControlsEnabled: false,
       ),
     );
   }
 
-  Set<Marker> _buildMarkers(List<PinDto> pins) {
+  Set<Marker> buildMarkers(List<PinDto> pins) {
     return pins
         .map(
           (pin) => Marker(
@@ -246,7 +246,7 @@ Set<Polyline> buildRoutePolylines({
   required int? selectedPinIndex,
 }) {
   final polylines = <Polyline>{};
-  final activeKeys = _activeSegmentKeys(pins, selectedPinIndex);
+  final activeKeys = activeSegmentKeys(pins, selectedPinIndex);
   final keys = segmentDetails.keys.toList();
 
   for (var i = 0; i < keys.length; i++) {
@@ -256,7 +256,7 @@ Set<Polyline> buildRoutePolylines({
       continue;
     }
     final isActive = activeKeys.contains(key);
-    final color = _colorForPolylineIndex(i, isActive);
+    final color = colorForPolylineIndex(i, isActive);
     polylines.add(
       Polyline(
         polylineId: PolylineId(key),
@@ -288,7 +288,7 @@ Map<String, Color> computeSegmentHighlightColors({
   return colors;
 }
 
-Set<String> _activeSegmentKeys(List<PinDto> pins, int? selectedPinIndex) {
+Set<String> activeSegmentKeys(List<PinDto> pins, int? selectedPinIndex) {
   if (selectedPinIndex == null) {
     final keys = <String>{};
     for (var i = 0; i < pins.length - 1; i++) {
@@ -307,7 +307,7 @@ Set<String> _activeSegmentKeys(List<PinDto> pins, int? selectedPinIndex) {
   return set;
 }
 
-Color _colorForPolylineIndex(int index, bool isActive) {
+Color colorForPolylineIndex(int index, bool isActive) {
   if (isActive) {
     return ColorConstants.getSequentialColor(index);
   }

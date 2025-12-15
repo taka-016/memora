@@ -29,7 +29,7 @@ class RouteList extends HookWidget {
         if (!context.mounted) {
           return;
         }
-        segmentModesState.value = _buildSegmentModes({});
+        segmentModesState.value = buildSegmentModes({});
       });
       return null;
     }, const []);
@@ -51,9 +51,9 @@ class RouteList extends HookWidget {
       final item = updatedPins.removeAt(oldIndex);
       updatedPins.insert(newIndex, item);
       pinsState.value = updatedPins;
-      final nextModes = _buildSegmentModes(segmentModesState.value);
+      final nextModes = buildSegmentModes(segmentModesState.value);
       segmentModesState.value = nextModes;
-      segmentDetailsState.value = _retainManualDetails(
+      segmentDetailsState.value = retainManualDetails(
         previousDetails,
         nextModes,
       );
@@ -102,7 +102,7 @@ class RouteList extends HookWidget {
           return RouteMemoEditBottomSheet(
             initialDetail: initialDetail,
             onChanged: (value) =>
-                _scheduleManualRouteUpdate(context, key, value),
+                scheduleManualRouteUpdate(context, key, value),
           );
         },
       );
@@ -112,7 +112,7 @@ class RouteList extends HookWidget {
       }
 
       if (result != null) {
-        _scheduleManualRouteUpdate(context, key, result);
+        scheduleManualRouteUpdate(context, key, result);
       }
     }
 
@@ -120,7 +120,7 @@ class RouteList extends HookWidget {
       key: const Key('route_info_list_area'),
       children: [
         Positioned.fill(
-          child: _buildReorderableList(
+          child: buildReorderableList(
             pins: pins,
             selectedPinIndex: selectedPinIndex,
             segmentModes: segmentModes,
@@ -137,7 +137,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildReorderableList({
+  Widget buildReorderableList({
     required List<PinDto> pins,
     required int? selectedPinIndex,
     required Map<String, TravelMode> segmentModes,
@@ -165,9 +165,9 @@ class RouteList extends HookWidget {
             key: ValueKey(pin.pinId),
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildPinListItem(pin, index, selectedPinIndex, onPinTap),
+              buildPinListItem(pin, index, selectedPinIndex, onPinTap),
               if (index < pins.length - 1)
-                _buildRouteSegment(
+                buildRouteSegment(
                   context: context,
                   index: index,
                   pins: pins,
@@ -185,7 +185,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildPinListItem(
+  Widget buildPinListItem(
     PinDto pin,
     int index,
     int? selectedPinIndex,
@@ -202,7 +202,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildRouteSegment({
+  Widget buildRouteSegment({
     required BuildContext context,
     required int index,
     required List<PinDto> pins,
@@ -223,7 +223,7 @@ class RouteList extends HookWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTravelModeDropdown(
+              buildTravelModeDropdown(
                 context: context,
                 index: index,
                 pins: pins,
@@ -237,7 +237,7 @@ class RouteList extends HookWidget {
                 alignment: Alignment.topCenter,
                 child: Container(
                   key: Key('route_segment_container_$index'),
-                  child: _buildRouteMemoView(
+                  child: buildRouteMemoView(
                     index: index,
                     pins: pins,
                     segmentDetails: segmentDetails,
@@ -253,7 +253,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildTravelModeDropdown({
+  Widget buildTravelModeDropdown({
     required BuildContext context,
     required int index,
     required List<PinDto> pins,
@@ -261,7 +261,7 @@ class RouteList extends HookWidget {
     required void Function(String key, TravelMode mode) onModeChanged,
     required Future<void> Function(String key) onOpenOtherRouteInfoSheet,
   }) {
-    final key = _segmentKey(pins[index], pins[index + 1]);
+    final key = segmentKey(pins[index], pins[index + 1]);
     final currentMode = segmentModes[key] ?? TravelMode.drive;
     final dropdown = DropdownButton<TravelMode>(
       key: Key('route_segment_mode_$index'),
@@ -300,31 +300,26 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildRouteMemoView({
+  Widget buildRouteMemoView({
     required int index,
     required List<PinDto> pins,
     required Map<String, RouteSegmentDetail> segmentDetails,
     required Map<String, bool> routeMemoExpansion,
     required void Function(String key) onToggleRouteMemo,
   }) {
-    final key = _segmentKey(pins[index], pins[index + 1]);
+    final key = segmentKey(pins[index], pins[index + 1]);
     final detail = segmentDetails[key];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildRouteMemoToggle(
-          index,
-          key,
-          routeMemoExpansion,
-          onToggleRouteMemo,
-        ),
-        _buildRouteMemo(index, key, detail, routeMemoExpansion),
+        buildRouteMemoToggle(index, key, routeMemoExpansion, onToggleRouteMemo),
+        buildRouteMemo(index, key, detail, routeMemoExpansion),
       ],
     );
   }
 
-  Widget _buildRouteMemoToggle(
+  Widget buildRouteMemoToggle(
     int index,
     String key,
     Map<String, bool> routeMemoExpansion,
@@ -352,7 +347,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  Widget _buildRouteMemo(
+  Widget buildRouteMemo(
     int index,
     String key,
     RouteSegmentDetail? detail,
@@ -362,7 +357,7 @@ class RouteList extends HookWidget {
     const double maxDetailHeight = 120.0;
     final memoEntries = detail == null
         ? <Widget>[]
-        : _buildRouteMemoEntries(detail);
+        : buildRouteMemoEntries(detail);
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),
@@ -391,19 +386,19 @@ class RouteList extends HookWidget {
     );
   }
 
-  List<Widget> _buildRouteMemoEntries(RouteSegmentDetail detail) {
+  List<Widget> buildRouteMemoEntries(RouteSegmentDetail detail) {
     final entries = <Widget>[];
-    final distanceLabel = _formatDistanceLabel(detail.distanceMeters);
-    final durationMinutes = _durationMinutes(detail.durationSeconds);
+    final distanceLabel = formatDistanceLabel(detail.distanceMeters);
+    final dMinutes = durationMinutes(detail.durationSeconds);
 
     if (detail.distanceMeters > 0) {
-      entries.add(_buildMemoLabel('距離: 約${distanceLabel}km'));
+      entries.add(buildMemoLabel('距離: 約${distanceLabel}km'));
     }
-    if (durationMinutes > 0) {
-      entries.add(_buildMemoLabel('所要時間: 約$durationMinutes分'));
+    if (dMinutes > 0) {
+      entries.add(buildMemoLabel('所要時間: 約$dMinutes分'));
     }
     if (detail.instructions.isNotEmpty) {
-      entries.add(_buildMemoLabel('経路案内'));
+      entries.add(buildMemoLabel('経路案内'));
       entries.addAll(
         detail.instructions
             .map(
@@ -419,7 +414,7 @@ class RouteList extends HookWidget {
     return entries;
   }
 
-  Widget _buildMemoLabel(String text) {
+  Widget buildMemoLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
@@ -429,27 +424,27 @@ class RouteList extends HookWidget {
     );
   }
 
-  Map<String, TravelMode> _buildSegmentModes(Map<String, TravelMode> previous) {
+  Map<String, TravelMode> buildSegmentModes(Map<String, TravelMode> previous) {
     final map = <String, TravelMode>{};
     final validKeys = <String>[];
     final currentPins = pinsState.value;
     for (var i = 0; i < currentPins.length - 1; i++) {
-      final key = _segmentKey(currentPins[i], currentPins[i + 1]);
+      final key = segmentKey(currentPins[i], currentPins[i + 1]);
       validKeys.add(key);
       map[key] = previous[key] ?? TravelMode.drive;
     }
-    _cleanupSegmentDetails(validKeys);
+    cleanupSegmentDetails(validKeys);
     return map;
   }
 
-  void _cleanupSegmentDetails(Iterable<String> validKeys) {
+  void cleanupSegmentDetails(Iterable<String> validKeys) {
     final validKeySet = validKeys.toSet();
     segmentDetailsState.value = Map<String, RouteSegmentDetail>.from(
       segmentDetailsState.value,
     )..removeWhere((key, _) => !validKeySet.contains(key));
   }
 
-  Map<String, RouteSegmentDetail> _retainManualDetails(
+  Map<String, RouteSegmentDetail> retainManualDetails(
     Map<String, RouteSegmentDetail> previousDetails,
     Map<String, TravelMode> nextModes,
   ) {
@@ -467,12 +462,12 @@ class RouteList extends HookWidget {
     return retained;
   }
 
-  void _scheduleManualRouteUpdate(
+  void scheduleManualRouteUpdate(
     BuildContext context,
     String key,
     RouteSegmentDetail detail,
   ) {
-    final normalized = _sanitizeManualDetail(detail);
+    final normalized = sanitizeManualDetail(detail);
 
     void applyUpdate() {
       if (!context.mounted) {
@@ -509,7 +504,7 @@ class RouteList extends HookWidget {
     }
   }
 
-  RouteSegmentDetail _sanitizeManualDetail(RouteSegmentDetail detail) {
+  RouteSegmentDetail sanitizeManualDetail(RouteSegmentDetail detail) {
     final sanitizedInstructions = detail.instructions
         .map((instruction) => instruction.trim())
         .where((instruction) => instruction.isNotEmpty)
@@ -523,7 +518,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  String _formatDistanceLabel(int meters) {
+  String formatDistanceLabel(int meters) {
     if (meters <= 0) {
       return '0.0';
     }
@@ -536,7 +531,7 @@ class RouteList extends HookWidget {
         : formatted;
   }
 
-  int _durationMinutes(int seconds) {
+  int durationMinutes(int seconds) {
     if (seconds <= 0) {
       return 0;
     }
@@ -544,6 +539,6 @@ class RouteList extends HookWidget {
   }
 }
 
-String _segmentKey(PinDto origin, PinDto destination) {
+String segmentKey(PinDto origin, PinDto destination) {
   return routeSegmentKey(origin, destination);
 }
