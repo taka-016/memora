@@ -471,8 +471,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
 - [x] GroupTimelineのConsumerStatefulWidgetを廃止し、HookConsumerWidgetにする
 - [x] route_info_view.dartをroute_info_view.dart,route_list.dart,route_map.dartに分割する
 - [x] RouteList/RouteMapウィジェット側に関連ロジックも集約する
-- [ ] 以下の画面のStatefulWidget(またはConsumerStatefulWidget)をHookWidget(またはHookConsumerWidget)に変更する
-  - [ ] TopPage
+- [x] 以下の画面のStatefulWidget(またはConsumerStatefulWidget)をHookWidget(またはHookConsumerWidget)に変更する
+  - [x] TopPage
   - [x] AccountDeleteModal
   - [x] EmailChangeModal
   - [x] PasswordChangeModal

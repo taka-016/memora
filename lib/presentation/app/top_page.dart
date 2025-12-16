@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -17,64 +18,71 @@ import 'package:memora/application/usecases/member/get_current_member_usecase.da
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/core/app_logger.dart';
 
-class TopPage extends ConsumerStatefulWidget {
+class TopPage extends HookConsumerWidget {
   final bool isTestEnvironment;
 
   const TopPage({super.key, this.isTestEnvironment = false});
 
   @override
-  ConsumerState<TopPage> createState() => _TopPageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = useState<MemberDto?>(null);
+    final getCurrentMemberUseCase = ref.read(getCurrentMemberUsecaseProvider);
+    Future<void> loadCurrentMember() async {
+      try {
+        final member = await getCurrentMemberUseCase.execute();
+        if (!context.mounted) {
+          return;
+        }
+        currentMember.value = member;
+      } catch (e, stack) {
+        logger.e(
+          'TopPage.loadCurrentMember: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
 
-class _TopPageState extends ConsumerState<TopPage> {
-  late final GetCurrentMemberUseCase _getCurrentMemberUseCase;
-  MemberDto? _currentMember;
+        if (!context.mounted) {
+          return;
+        }
 
-  @override
-  void initState() {
-    super.initState();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('メンバー情報の取得に失敗しました。再度ログインしてください。')),
+          );
+          ref.read(authNotifierProvider.notifier).logout();
+        });
+      }
+    }
 
-    _getCurrentMemberUseCase = ref.read(getCurrentMemberUsecaseProvider);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
         ref.read(navigationNotifierProvider.notifier).resetToDefault();
         ref
             .read(groupTimelineNavigationNotifierProvider.notifier)
             .resetToGroupList();
-        _loadCurrentMember();
-      }
-    });
+        loadCurrentMember();
+      });
+      return null;
+    }, const []);
+
+    return Scaffold(
+      appBar: _buildAppBar(context),
+      drawer: _buildDrawer(context, ref),
+      body: _buildBody(context, ref, currentMember.value),
+    );
   }
 
-  Future<void> _loadCurrentMember() async {
-    try {
-      final member = await _getCurrentMemberUseCase.execute();
-      if (mounted) {
-        setState(() {
-          _currentMember = member;
-        });
-      }
-    } catch (e, stack) {
-      logger.e(
-        '_TopPageState._loadCurrentMember: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('メンバー情報の取得に失敗しました。再度ログインしてください。')),
-            );
-            ref.read(authNotifierProvider.notifier).logout();
-          }
-        });
-      }
-    }
-  }
-
-  void _onNavigationItemSelected(NavigationItem item) {
+  void _onNavigationItemSelected(
+    BuildContext context,
+    WidgetRef ref,
+    NavigationItem item,
+  ) {
     ref.read(navigationNotifierProvider.notifier).selectItem(item);
     if (item != NavigationItem.groupTimeline) {
       ref
@@ -84,14 +92,18 @@ class _TopPageState extends ConsumerState<TopPage> {
     Navigator.of(context).pop();
   }
 
-  void _onGroupSelected(GroupDto groupWithMembers) {
+  void _onGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
         .showGroupTimeline(groupWithMembers);
   }
 
-  Widget _buildGroupTimelineStack() {
-    if (_currentMember == null) {
+  Widget _buildGroupTimelineStack(
+    BuildContext context,
+    WidgetRef ref,
+    MemberDto? currentMember,
+  ) {
+    if (currentMember == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -103,11 +115,11 @@ class _TopPageState extends ConsumerState<TopPage> {
           .getStackIndex(),
       children: [
         GroupList(
-          member: _currentMember!,
-          onGroupSelected: (group) => _onGroupSelected(group),
+          member: currentMember,
+          onGroupSelected: (group) => _onGroupSelected(ref, group),
         ),
-        widget.isTestEnvironment
-            ? _buildTestGroupTimeline()
+        isTestEnvironment
+            ? _buildTestGroupTimeline(ref)
             : timelineState.groupTimelineInstance ?? Container(),
         timelineState.selectedGroupId != null &&
                 timelineState.selectedYear != null
@@ -123,7 +135,7 @@ class _TopPageState extends ConsumerState<TopPage> {
     );
   }
 
-  Widget _buildTestGroupTimeline() {
+  Widget _buildTestGroupTimeline(WidgetRef ref) {
     return Container(
       key: const Key('group_timeline'),
       child: Column(
@@ -153,44 +165,48 @@ class _TopPageState extends ConsumerState<TopPage> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    MemberDto? currentMember,
+  ) {
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
-        return _buildGroupTimelineStack();
+        return _buildGroupTimelineStack(context, ref, currentMember);
       case NavigationItem.mapDisplay:
-        if (_currentMember == null) {
+        if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
         return MapScreen(
-          member: _currentMember!,
-          isTestEnvironment: widget.isTestEnvironment,
+          member: currentMember,
+          isTestEnvironment: isTestEnvironment,
         );
       case NavigationItem.groupManagement:
-        if (_currentMember == null) {
+        if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return widget.isTestEnvironment
+        return isTestEnvironment
             ? _buildTestPlaceholder(
                 key: 'group_settings',
                 icon: Icons.group_work,
                 title: 'グループ管理',
                 subtitle: 'グループ管理画面',
               )
-            : GroupManagement(member: _currentMember!);
+            : GroupManagement(member: currentMember);
       case NavigationItem.memberManagement:
-        if (_currentMember == null) {
+        if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return widget.isTestEnvironment
+        return isTestEnvironment
             ? _buildTestPlaceholder(
                 key: 'member_settings',
                 icon: Icons.people,
                 title: 'メンバー管理',
                 subtitle: 'メンバー管理画面',
               )
-            : MemberManagement(member: _currentMember!);
+            : MemberManagement(member: currentMember);
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:
@@ -231,15 +247,6 @@ class _TopPageState extends ConsumerState<TopPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      drawer: _buildDrawer(context),
-      body: _buildBody(),
-    );
-  }
-
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(title: const Text('memora'), leading: _buildMenuButton());
   }
@@ -254,21 +261,21 @@ class _TopPageState extends ConsumerState<TopPage> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
+  Drawer _buildDrawer(BuildContext context, WidgetRef ref) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildDrawerHeader(context),
-          ..._buildDrawerItems(),
+          _buildDrawerHeader(context, ref),
+          ..._buildDrawerItems(context, ref),
           const Divider(),
-          _buildLogoutItem(),
+          _buildLogoutItem(ref),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerHeader(BuildContext context) {
+  Widget _buildDrawerHeader(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
     if (authState.status == AuthStatus.authenticated) {
       return _buildUserDrawerHeader(context, authState.user!.loginId);
@@ -314,18 +321,46 @@ class _TopPageState extends ConsumerState<TopPage> {
     );
   }
 
-  List<Widget> _buildDrawerItems() {
+  List<Widget> _buildDrawerItems(BuildContext context, WidgetRef ref) {
     return [
-      _buildDrawerItem(Icons.timeline, 'グループ年表', NavigationItem.groupTimeline),
-      _buildDrawerItem(Icons.map, '地図表示', NavigationItem.mapDisplay),
-      _buildDrawerItem(Icons.people, 'メンバー管理', NavigationItem.memberManagement),
       _buildDrawerItem(
+        context,
+        ref,
+        Icons.timeline,
+        'グループ年表',
+        NavigationItem.groupTimeline,
+      ),
+      _buildDrawerItem(
+        context,
+        ref,
+        Icons.map,
+        '地図表示',
+        NavigationItem.mapDisplay,
+      ),
+      _buildDrawerItem(
+        context,
+        ref,
+        Icons.people,
+        'メンバー管理',
+        NavigationItem.memberManagement,
+      ),
+      _buildDrawerItem(
+        context,
+        ref,
         Icons.group_work,
         'グループ管理',
         NavigationItem.groupManagement,
       ),
-      _buildDrawerItem(Icons.settings, '設定', NavigationItem.settings),
       _buildDrawerItem(
+        context,
+        ref,
+        Icons.settings,
+        '設定',
+        NavigationItem.settings,
+      ),
+      _buildDrawerItem(
+        context,
+        ref,
         Icons.account_circle,
         'アカウント設定',
         NavigationItem.accountSettings,
@@ -333,18 +368,24 @@ class _TopPageState extends ConsumerState<TopPage> {
     ];
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, NavigationItem item) {
+  Widget _buildDrawerItem(
+    BuildContext context,
+    WidgetRef ref,
+    IconData icon,
+    String title,
+    NavigationItem item,
+  ) {
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
 
     return ListTile(
       leading: Icon(icon),
       title: Text(title),
       selected: selectedItem == item,
-      onTap: () => _onNavigationItemSelected(item),
+      onTap: () => _onNavigationItemSelected(context, ref, item),
     );
   }
 
-  Widget _buildLogoutItem() {
+  Widget _buildLogoutItem(WidgetRef ref) {
     return ListTile(
       leading: const Icon(Icons.logout),
       title: const Text('ログアウト'),
