@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-class InvitationCodeInputModal extends HookWidget {
+class InvitationCodeInputDialog extends HookWidget {
   final String? errorMessage;
 
-  const InvitationCodeInputModal({super.key, this.errorMessage});
+  const InvitationCodeInputDialog({super.key, this.errorMessage});
 
   @override
   Widget build(BuildContext context) {
