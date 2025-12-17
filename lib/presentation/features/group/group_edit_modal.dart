@@ -118,13 +118,13 @@ class GroupEditModal extends HookWidget {
             expand: false,
             builder: (context, scrollController) => Column(
               children: [
-                buildMemberSelectionModalHandle(),
-                buildMemberSelectionModalHeader(context),
+                _buildMemberSelectionModalHandle(),
+                _buildMemberSelectionModalHeader(context),
                 const Divider(height: 1),
                 Expanded(
                   child: candidates.isEmpty
-                      ? buildMemberSelectionEmptyState()
-                      : buildMemberSelectionList(candidates, scrollController),
+                      ? _buildMemberSelectionEmptyState()
+                      : _buildMemberSelectionList(candidates, scrollController),
                 ),
                 const SizedBox(height: 16),
               ],
@@ -456,7 +456,7 @@ class GroupEditModal extends HookWidget {
     );
   }
 
-  Widget buildMemberSelectionModalHandle() {
+  Widget _buildMemberSelectionModalHandle() {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       width: 40,
@@ -468,7 +468,7 @@ class GroupEditModal extends HookWidget {
     );
   }
 
-  Widget buildMemberSelectionModalHeader(BuildContext context) {
+  Widget _buildMemberSelectionModalHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -491,7 +491,7 @@ class GroupEditModal extends HookWidget {
     );
   }
 
-  Widget buildMemberSelectionEmptyState() {
+  Widget _buildMemberSelectionEmptyState() {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -507,7 +507,7 @@ class GroupEditModal extends HookWidget {
     );
   }
 
-  Widget buildMemberSelectionList(
+  Widget _buildMemberSelectionList(
     List<GroupMemberDto> candidates,
     ScrollController scrollController,
   ) {

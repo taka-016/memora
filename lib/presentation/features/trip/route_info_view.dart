@@ -20,11 +20,11 @@ part 'route_map.dart';
 
 const double _inactivePolylineOpacity = 0.4;
 
-String routeSegmentKey(PinDto origin, PinDto destination) {
+String _routeSegmentKey(PinDto origin, PinDto destination) {
   return '${origin.pinId}->${destination.pinId}';
 }
 
-bool hasManualContent(RouteSegmentDetail detail) {
+bool _hasManualContent(RouteSegmentDetail detail) {
   return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
 }
 
@@ -92,7 +92,7 @@ class RouteInfoView extends HookWidget {
         return fetchedDetail;
       }
       final existingDetail = segmentDetailsState.value[key];
-      if (existingDetail == null || !hasManualContent(existingDetail)) {
+      if (existingDetail == null || !_hasManualContent(existingDetail)) {
         return fetchedDetail;
       }
       final updatedPolyline = fetchedDetail.polyline.isNotEmpty
@@ -116,7 +116,7 @@ class RouteInfoView extends HookWidget {
         for (var i = 0; i < currentPins.length - 1; i++) {
           final origin = currentPins[i];
           final destination = currentPins[i + 1];
-          final key = routeSegmentKey(origin, destination);
+          final key = _routeSegmentKey(origin, destination);
           final mode = segmentModesState.value[key] ?? TravelMode.drive;
 
           RouteSegmentDetail detail = await service.fetchRoute(
@@ -234,7 +234,7 @@ class RouteInfoView extends HookWidget {
             segmentDetailsState.value,
           );
       handle._getSelectedPinIndex = () => selectedPinIndexState.value;
-      handle._getSegmentHighlightColors = () => computeSegmentHighlightColors(
+      handle._getSegmentHighlightColors = () => _computeSegmentHighlightColors(
         segmentDetails: segmentDetailsState.value,
         pins: pinsState.value,
         selectedPinIndex: selectedPinIndexState.value,

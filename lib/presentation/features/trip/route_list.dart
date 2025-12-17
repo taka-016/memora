@@ -261,7 +261,7 @@ class RouteList extends HookWidget {
     required void Function(String key, TravelMode mode) onModeChanged,
     required Future<void> Function(String key) onOpenOtherRouteInfoSheet,
   }) {
-    final key = segmentKey(pins[index], pins[index + 1]);
+    final key = _segmentKey(pins[index], pins[index + 1]);
     final currentMode = segmentModes[key] ?? TravelMode.drive;
     final dropdown = DropdownButton<TravelMode>(
       key: Key('route_segment_mode_$index'),
@@ -307,7 +307,7 @@ class RouteList extends HookWidget {
     required Map<String, bool> routeMemoExpansion,
     required void Function(String key) onToggleRouteMemo,
   }) {
-    final key = segmentKey(pins[index], pins[index + 1]);
+    final key = _segmentKey(pins[index], pins[index + 1]);
     final detail = segmentDetails[key];
 
     return Column(
@@ -429,7 +429,7 @@ class RouteList extends HookWidget {
     final validKeys = <String>[];
     final currentPins = pinsState.value;
     for (var i = 0; i < currentPins.length - 1; i++) {
-      final key = segmentKey(currentPins[i], currentPins[i + 1]);
+      final key = _segmentKey(currentPins[i], currentPins[i + 1]);
       validKeys.add(key);
       map[key] = previous[key] ?? TravelMode.drive;
     }
@@ -454,7 +454,7 @@ class RouteList extends HookWidget {
         continue;
       }
       final detail = previousDetails[entry.key];
-      if (detail == null || !hasManualContent(detail)) {
+      if (detail == null || !_hasManualContent(detail)) {
         continue;
       }
       retained[entry.key] = detail;
@@ -477,7 +477,7 @@ class RouteList extends HookWidget {
       final updated = Map<String, RouteSegmentDetail>.from(
         segmentDetailsState.value,
       );
-      if (hasManualContent(normalized)) {
+      if (_hasManualContent(normalized)) {
         if (current == null) {
           updated[key] = normalized;
         } else {
@@ -539,6 +539,6 @@ class RouteList extends HookWidget {
   }
 }
 
-String segmentKey(PinDto origin, PinDto destination) {
-  return routeSegmentKey(origin, destination);
+String _segmentKey(PinDto origin, PinDto destination) {
+  return _routeSegmentKey(origin, destination);
 }
