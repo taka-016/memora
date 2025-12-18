@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/account_setting/account_delete_modal.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';
@@ -12,6 +19,7 @@ import '../../../../helpers/test_exception.dart';
 
 class _TestAuthService implements AuthService {
   _TestAuthService({
+    this.currentUser,
     List<Future<void> Function()>? updateEmailBehaviors,
     List<Future<void> Function()>? updatePasswordBehaviors,
     List<Future<void> Function()>? deleteUserBehaviors,
@@ -19,6 +27,7 @@ class _TestAuthService implements AuthService {
        _updatePasswordBehaviors = updatePasswordBehaviors ?? [() async {}],
        _deleteUserBehaviors = deleteUserBehaviors ?? [() async {}];
 
+  final User? currentUser;
   final List<Future<void> Function()> _updateEmailBehaviors;
   final List<Future<void> Function()> _updatePasswordBehaviors;
   final List<Future<void> Function()> _deleteUserBehaviors;
@@ -42,7 +51,7 @@ class _TestAuthService implements AuthService {
   Stream<User?> get authStateChanges => Stream<User?>.empty();
 
   @override
-  Future<User?> getCurrentUser() async => null;
+  Future<User?> getCurrentUser() async => currentUser;
 
   @override
   Future<void> deleteUser() async {
@@ -96,10 +105,60 @@ class _TestAuthService implements AuthService {
   Future<void> validateCurrentUserToken() async {}
 }
 
-Widget _buildTestApp(Widget child, {_TestAuthService? authService}) {
+class _TestMemberQueryService implements MemberQueryService {
+  _TestMemberQueryService({this.memberDto});
+
+  final MemberDto? memberDto;
+
+  @override
+  Future<MemberDto?> getMemberByAccountId(String accountId) async => memberDto;
+
+  @override
+  Future<MemberDto?> getMemberById(String memberId) async => memberDto;
+
+  @override
+  Future<List<MemberDto>> getMembers({List<OrderBy>? orderBy}) async => [];
+
+  @override
+  Future<List<MemberDto>> getMembersByOwnerId(
+    String ownerId, {
+    List<OrderBy>? orderBy,
+  }) async => [];
+}
+
+class _TestMemberRepository implements MemberRepository {
+  int nullifyAccountIdCallCount = 0;
+
+  @override
+  Future<void> deleteMember(String memberId) async {}
+
+  @override
+  Future<void> saveMember(Member member) async {}
+
+  @override
+  Future<void> updateMember(Member member) async {}
+
+  @override
+  Future<void> nullifyAccountId(String memberId) async {
+    nullifyAccountIdCallCount++;
+  }
+}
+
+Widget _buildTestApp(
+  Widget child, {
+  _TestAuthService? authService,
+  _TestMemberQueryService? memberQueryService,
+  _TestMemberRepository? memberRepository,
+}) {
   return ProviderScope(
     overrides: [
       authServiceProvider.overrideWithValue(authService ?? _TestAuthService()),
+      memberQueryServiceProvider.overrideWithValue(
+        memberQueryService ?? _TestMemberQueryService(),
+      ),
+      memberRepositoryProvider.overrideWithValue(
+        memberRepository ?? _TestMemberRepository(),
+      ),
     ],
     child: MaterialApp(home: child),
   );
@@ -159,10 +218,28 @@ void main() {
     });
 
     testWidgets('アカウント削除が成功するとスナックバーが表示される', (WidgetTester tester) async {
-      final authService = _TestAuthService();
+      final currentUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final authService = _TestAuthService(currentUser: currentUser);
+      final memberQueryService = _TestMemberQueryService(
+        memberDto: MemberDto(
+          id: 'member123',
+          accountId: 'user123',
+          displayName: 'テストユーザー',
+        ),
+      );
+      final memberRepository = _TestMemberRepository();
 
       await tester.pumpWidget(
-        _buildTestApp(const AccountSettings(), authService: authService),
+        _buildTestApp(
+          const AccountSettings(),
+          authService: authService,
+          memberQueryService: memberQueryService,
+          memberRepository: memberRepository,
+        ),
       );
 
       await tester.tap(find.text('アカウント削除'));
@@ -171,6 +248,7 @@ void main() {
       await tester.tap(find.text('削除'));
       await tester.pumpAndSettle();
 
+      expect(memberRepository.nullifyAccountIdCallCount, 1);
       expect(authService.deleteUserCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsNothing);
       expect(find.text('アカウントを削除しました'), findsOneWidget);
@@ -250,16 +328,35 @@ void main() {
     });
 
     testWidgets('アカウント削除で再認証が必要な場合は再認証モーダルが表示される', (WidgetTester tester) async {
+      final currentUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
       final authService = _TestAuthService(
+        currentUser: currentUser,
         deleteUserBehaviors: [
           () async =>
               throw TestException('[firebase_auth/requires-recent-login]'),
           () async {},
         ],
       );
+      final memberQueryService = _TestMemberQueryService(
+        memberDto: MemberDto(
+          id: 'member123',
+          accountId: 'user123',
+          displayName: 'テストユーザー',
+        ),
+      );
+      final memberRepository = _TestMemberRepository();
 
       await tester.pumpWidget(
-        _buildTestApp(const AccountSettings(), authService: authService),
+        _buildTestApp(
+          const AccountSettings(),
+          authService: authService,
+          memberQueryService: memberQueryService,
+          memberRepository: memberRepository,
+        ),
       );
 
       await tester.tap(find.text('アカウント削除'));
@@ -277,6 +374,7 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pumpAndSettle();
 
+      expect(memberRepository.nullifyAccountIdCallCount, 2);
       expect(authService.deleteUserCallCount, 2);
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsNothing);
@@ -378,7 +476,13 @@ void main() {
     testWidgets('アカウント削除で再認証後もエラーの場合はエラースナックバーが表示されダイアログが残る', (
       WidgetTester tester,
     ) async {
+      final currentUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
       final authService = _TestAuthService(
+        currentUser: currentUser,
         deleteUserBehaviors: [
           () async =>
               throw TestException('[firebase_auth/requires-recent-login]'),
@@ -386,9 +490,22 @@ void main() {
               throw TestException('[firebase_auth/requires-recent-login]'),
         ],
       );
+      final memberQueryService = _TestMemberQueryService(
+        memberDto: MemberDto(
+          id: 'member123',
+          accountId: 'user123',
+          displayName: 'テストユーザー',
+        ),
+      );
+      final memberRepository = _TestMemberRepository();
 
       await tester.pumpWidget(
-        _buildTestApp(const AccountSettings(), authService: authService),
+        _buildTestApp(
+          const AccountSettings(),
+          authService: authService,
+          memberQueryService: memberQueryService,
+          memberRepository: memberRepository,
+        ),
       );
 
       await tester.tap(find.text('アカウント削除'));
@@ -403,6 +520,7 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pumpAndSettle();
 
+      expect(memberRepository.nullifyAccountIdCallCount, 2);
       expect(authService.deleteUserCallCount, 2);
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsOneWidget);
@@ -501,12 +619,31 @@ void main() {
     testWidgets('アカウント削除で再認証不要のエラー時はエラースナックバーが表示されダイアログが残る', (
       WidgetTester tester,
     ) async {
+      final currentUser = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
       final authService = _TestAuthService(
+        currentUser: currentUser,
         deleteUserBehaviors: [() async => throw TestException('削除に失敗しました')],
       );
+      final memberQueryService = _TestMemberQueryService(
+        memberDto: MemberDto(
+          id: 'member123',
+          accountId: 'user123',
+          displayName: 'テストユーザー',
+        ),
+      );
+      final memberRepository = _TestMemberRepository();
 
       await tester.pumpWidget(
-        _buildTestApp(const AccountSettings(), authService: authService),
+        _buildTestApp(
+          const AccountSettings(),
+          authService: authService,
+          memberQueryService: memberQueryService,
+          memberRepository: memberRepository,
+        ),
       );
 
       await tester.tap(find.text('アカウント削除'));

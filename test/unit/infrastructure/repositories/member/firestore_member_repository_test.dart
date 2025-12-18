@@ -84,5 +84,23 @@ void main() {
       verify(mockCollection.doc(memberId)).called(1);
       verify(mockDocRef.delete()).called(1);
     });
+
+    test(
+      'nullifyAccountIdがmembers collectionの該当ドキュメントのaccountIdをnullにする',
+      () async {
+        const memberId = 'member001';
+        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+        when(mockCollection.doc(memberId)).thenReturn(mockDocRef);
+        when(mockDocRef.update(any)).thenAnswer((_) async {});
+
+        await repository.nullifyAccountId(memberId);
+
+        verify(mockCollection.doc(memberId)).called(1);
+        verify(
+          mockDocRef.update(argThat(containsPair('accountId', null))),
+        ).called(1);
+      },
+    );
   });
 }

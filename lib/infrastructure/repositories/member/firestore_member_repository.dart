@@ -28,4 +28,11 @@ class FirestoreMemberRepository implements MemberRepository {
   Future<void> deleteMember(String memberId) async {
     await _firestore.collection('members').doc(memberId).delete();
   }
+
+  @override
+  Future<void> nullifyAccountId(String memberId) async {
+    await _firestore.collection('members').doc(memberId).update({
+      'accountId': null,
+    });
+  }
 }
