@@ -5,9 +5,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -15,8 +13,13 @@ import 'package:memora/presentation/features/account_setting/account_delete_moda
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';
 import 'package:memora/presentation/features/account_setting/password_change_modal.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import '../../../../helpers/test_exception.dart';
 
+import 'account_settings_test.mocks.dart';
+
+@GenerateMocks([MemberQueryService, MemberRepository])
 class _TestAuthService implements AuthService {
   _TestAuthService({
     this.currentUser,
@@ -105,60 +108,19 @@ class _TestAuthService implements AuthService {
   Future<void> validateCurrentUserToken() async {}
 }
 
-class _TestMemberQueryService implements MemberQueryService {
-  _TestMemberQueryService({this.memberDto});
-
-  final MemberDto? memberDto;
-
-  @override
-  Future<MemberDto?> getMemberByAccountId(String accountId) async => memberDto;
-
-  @override
-  Future<MemberDto?> getMemberById(String memberId) async => memberDto;
-
-  @override
-  Future<List<MemberDto>> getMembers({List<OrderBy>? orderBy}) async => [];
-
-  @override
-  Future<List<MemberDto>> getMembersByOwnerId(
-    String ownerId, {
-    List<OrderBy>? orderBy,
-  }) async => [];
-}
-
-class _TestMemberRepository implements MemberRepository {
-  int nullifyAccountIdCallCount = 0;
-
-  @override
-  Future<void> deleteMember(String memberId) async {}
-
-  @override
-  Future<void> saveMember(Member member) async {}
-
-  @override
-  Future<void> updateMember(Member member) async {}
-
-  @override
-  Future<void> nullifyAccountId(String memberId) async {
-    nullifyAccountIdCallCount++;
-  }
-}
-
 Widget _buildTestApp(
   Widget child, {
   _TestAuthService? authService,
-  _TestMemberQueryService? memberQueryService,
-  _TestMemberRepository? memberRepository,
+  MemberQueryService? memberQueryService,
+  MemberRepository? memberRepository,
 }) {
   return ProviderScope(
     overrides: [
       authServiceProvider.overrideWithValue(authService ?? _TestAuthService()),
-      memberQueryServiceProvider.overrideWithValue(
-        memberQueryService ?? _TestMemberQueryService(),
-      ),
-      memberRepositoryProvider.overrideWithValue(
-        memberRepository ?? _TestMemberRepository(),
-      ),
+      if (memberQueryService != null)
+        memberQueryServiceProvider.overrideWithValue(memberQueryService),
+      if (memberRepository != null)
+        memberRepositoryProvider.overrideWithValue(memberRepository),
     ],
     child: MaterialApp(home: child),
   );
@@ -224,14 +186,19 @@ void main() {
         isVerified: true,
       );
       final authService = _TestAuthService(currentUser: currentUser);
-      final memberQueryService = _TestMemberQueryService(
-        memberDto: MemberDto(
+      final memberQueryService = MockMemberQueryService();
+      final memberRepository = MockMemberRepository();
+
+      when(memberQueryService.getMemberByAccountId('user123')).thenAnswer(
+        (_) async => MemberDto(
           id: 'member123',
           accountId: 'user123',
           displayName: 'テストユーザー',
         ),
       );
-      final memberRepository = _TestMemberRepository();
+      when(
+        memberRepository.nullifyAccountId('member123'),
+      ).thenAnswer((_) async {});
 
       await tester.pumpWidget(
         _buildTestApp(
@@ -248,7 +215,8 @@ void main() {
       await tester.tap(find.text('削除'));
       await tester.pumpAndSettle();
 
-      expect(memberRepository.nullifyAccountIdCallCount, 1);
+      verify(memberQueryService.getMemberByAccountId('user123')).called(1);
+      verify(memberRepository.nullifyAccountId('member123')).called(1);
       expect(authService.deleteUserCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsNothing);
       expect(find.text('アカウントを削除しました'), findsOneWidget);
@@ -341,14 +309,19 @@ void main() {
           () async {},
         ],
       );
-      final memberQueryService = _TestMemberQueryService(
-        memberDto: MemberDto(
+      final memberQueryService = MockMemberQueryService();
+      final memberRepository = MockMemberRepository();
+
+      when(memberQueryService.getMemberByAccountId('user123')).thenAnswer(
+        (_) async => MemberDto(
           id: 'member123',
           accountId: 'user123',
           displayName: 'テストユーザー',
         ),
       );
-      final memberRepository = _TestMemberRepository();
+      when(
+        memberRepository.nullifyAccountId('member123'),
+      ).thenAnswer((_) async {});
 
       await tester.pumpWidget(
         _buildTestApp(
@@ -374,7 +347,8 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pumpAndSettle();
 
-      expect(memberRepository.nullifyAccountIdCallCount, 2);
+      verify(memberQueryService.getMemberByAccountId('user123')).called(2);
+      verify(memberRepository.nullifyAccountId('member123')).called(2);
       expect(authService.deleteUserCallCount, 2);
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsNothing);
@@ -490,14 +464,19 @@ void main() {
               throw TestException('[firebase_auth/requires-recent-login]'),
         ],
       );
-      final memberQueryService = _TestMemberQueryService(
-        memberDto: MemberDto(
+      final memberQueryService = MockMemberQueryService();
+      final memberRepository = MockMemberRepository();
+
+      when(memberQueryService.getMemberByAccountId('user123')).thenAnswer(
+        (_) async => MemberDto(
           id: 'member123',
           accountId: 'user123',
           displayName: 'テストユーザー',
         ),
       );
-      final memberRepository = _TestMemberRepository();
+      when(
+        memberRepository.nullifyAccountId('member123'),
+      ).thenAnswer((_) async {});
 
       await tester.pumpWidget(
         _buildTestApp(
@@ -520,7 +499,8 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pumpAndSettle();
 
-      expect(memberRepository.nullifyAccountIdCallCount, 2);
+      verify(memberQueryService.getMemberByAccountId('user123')).called(2);
+      verify(memberRepository.nullifyAccountId('member123')).called(2);
       expect(authService.deleteUserCallCount, 2);
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsOneWidget);
@@ -628,14 +608,19 @@ void main() {
         currentUser: currentUser,
         deleteUserBehaviors: [() async => throw TestException('削除に失敗しました')],
       );
-      final memberQueryService = _TestMemberQueryService(
-        memberDto: MemberDto(
+      final memberQueryService = MockMemberQueryService();
+      final memberRepository = MockMemberRepository();
+
+      when(memberQueryService.getMemberByAccountId('user123')).thenAnswer(
+        (_) async => MemberDto(
           id: 'member123',
           accountId: 'user123',
           displayName: 'テストユーザー',
         ),
       );
-      final memberRepository = _TestMemberRepository();
+      when(
+        memberRepository.nullifyAccountId('member123'),
+      ).thenAnswer((_) async {});
 
       await tester.pumpWidget(
         _buildTestApp(
