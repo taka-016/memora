@@ -45,10 +45,6 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      if (member.accountId != null) {
-        return false;
-      }
-
       final updatedMember = MemberMapper.toEntity(
         member.copyWith(accountId: userId),
       );

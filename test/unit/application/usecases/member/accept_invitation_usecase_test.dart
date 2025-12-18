@@ -123,10 +123,10 @@ void main() {
       verifyNever(mockMemberRepository.saveMember(any));
     });
 
-    test('招待対象メンバーにaccountIdが既に存在する場合、更新せずfalseを返す', () async {
+    test('招待対象メンバーにaccountIdが既に存在する場合でも更新する', () async {
       // Arrange
       const invitationCode = 'test-invitation-code';
-      const userId = 'new-user-id';
+      const userId = 'user-id';
       const memberInvitation = MemberInvitationDto(
         id: 'invitation-id',
         inviteeId: 'invitee-id',
@@ -138,6 +138,11 @@ void main() {
         displayName: 'Invitee User',
         accountId: 'existing-account-id',
       );
+      final updatedMember = Member(
+        id: 'invitee-id',
+        displayName: 'Invitee User',
+        accountId: userId,
+      );
 
       when(
         mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
@@ -145,17 +150,20 @@ void main() {
       when(
         mockMemberQueryService.getMemberById('invitee-id'),
       ).thenAnswer((_) async => member);
+      when(
+        mockMemberRepository.updateMember(updatedMember),
+      ).thenAnswer((_) async {});
 
       // Act
       final result = await useCase.execute(invitationCode, userId);
 
       // Assert
-      expect(result, isFalse);
+      expect(result, isTrue);
       verify(
         mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
       ).called(1);
       verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
-      verifyNever(mockMemberRepository.updateMember(any));
+      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
     });
   });
 }

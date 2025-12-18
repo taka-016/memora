@@ -437,7 +437,9 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
     - [x] 招待コード入力の場合は、入力されたコードでMemberInvitationを紐づけ、accountIdにuser.idをセットして更新する
     - [x] 入力された招待コードで紐づかない場合はエラー表示（新規作成はしない。）
 - [x] 招待受諾時、inviteeIdでmembers.idを取得し、accountIdがnullでない場合は無効と判定して更新しない
-- [ ] アカウント削除時に、membersのaccountIdをnullにする（現状これができていないため、再招待ができない）
+  - [x] この仕様を廃止する（accountIdがnullでない場合でも更新する）
+  - [ ] 招待コードで紐づけたmemberを更新した後、使用済み招待コードのレコードは削除する
+- [ ] 作成から24時間経過した招待コードは無効とする
 
 ## デザイン
 
