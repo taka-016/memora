@@ -98,6 +98,70 @@ void main() {
       expect(find.text('旅行期間 To'), findsOneWidget);
     });
 
+    testWidgets('旅行期間Fromのクリアボタンで開始日をクリアできること', (WidgetTester tester) async {
+      final tripEntry = TripEntryDto(
+        id: 'trip-entry-1',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        tripStartDate: DateTime(2024, 5, 1),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              tripEntry: tripEntry,
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('2024/05/01'), findsOneWidget);
+
+      final clearButton = find.byTooltip('旅行開始日をクリア');
+      expect(clearButton, findsOneWidget);
+
+      await tester.tap(clearButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行期間 From'), findsOneWidget);
+    });
+
+    testWidgets('旅行期間Toのクリアボタンで終了日をクリアできること', (WidgetTester tester) async {
+      final tripEntry = TripEntryDto(
+        id: 'trip-entry-1',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        tripEndDate: DateTime(2024, 5, 3),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              tripEntry: tripEntry,
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('2024/05/03'), findsOneWidget);
+
+      final clearButton = find.byTooltip('旅行終了日をクリア');
+      expect(clearButton, findsOneWidget);
+
+      await tester.tap(clearButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行期間 To'), findsOneWidget);
+    });
+
     testWidgets('メモの入力フィールドが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(

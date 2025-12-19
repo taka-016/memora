@@ -400,6 +400,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] trip_entryにtripYear("NOT NULL")を追加し、年での紐づけはすべてtripYearで行う
   - [x] エンティティ、リポジトリ、ユースケース、マッパー、DTO、画面の修正
   - [x] エンティティでのpinの訪問開始日、訪問終了日のチェックはtripStartDate、tripEndDateが存在する場合は日付を含めてチェックし、存在しない場合は年のみでチェックする
+- [x] 旅行編集画面の旅行開始日、旅行終了日をクリア可能にする
+  - [x] CopyWithでnull代入を可能にする必要あり
 
 ## 地図画面
 

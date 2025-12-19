@@ -138,6 +138,24 @@ void main() {
       expect(copiedDto.routes?.first.id, 'route-2');
     });
 
+    test('copyWithで開始日と終了日をnullにできる', () {
+      final originalDto = TripEntryDto(
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+        tripStartDate: DateTime(2024, 5, 1),
+        tripEndDate: DateTime(2024, 5, 3),
+      );
+
+      final copiedDto = originalDto.copyWith(
+        tripStartDate: null,
+        tripEndDate: null,
+      );
+
+      expect(copiedDto.tripStartDate, isNull);
+      expect(copiedDto.tripEndDate, isNull);
+    });
+
     test('copyWithで何も指定しなければ元の値を保持する', () {
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
       final routes = [

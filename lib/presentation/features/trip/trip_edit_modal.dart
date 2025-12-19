@@ -301,6 +301,8 @@ class TripEditModal extends HookWidget {
       required String labelText,
       required DateTime? selectedDate,
       required Function(DateTime) onDateSelected,
+      VoidCallback? onClear,
+      String? clearTooltip,
     }) {
       return InkWell(
         onTap: () async {
@@ -323,15 +325,36 @@ class TripEditModal extends HookWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                selectedDate != null
-                    ? '${selectedDate.year}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.day.toString().padLeft(2, '0')}'
-                    : labelText,
-                style: const TextStyle(color: Colors.black, fontSize: 16),
+              Expanded(
+                child: Text(
+                  selectedDate != null
+                      ? '${selectedDate.year}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.day.toString().padLeft(2, '0')}'
+                      : labelText,
+                  style: const TextStyle(color: Colors.black, fontSize: 16),
+                ),
               ),
-              const Icon(Icons.calendar_today, color: Colors.black54),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (selectedDate != null && onClear != null)
+                    Tooltip(
+                      message: clearTooltip ?? '日付をクリア',
+                      child: IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.black54),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints(),
+                        splashRadius: 18,
+                        onPressed: () {
+                          onClear();
+                          errorMessage.value = null;
+                        },
+                      ),
+                    ),
+                  const Icon(Icons.calendar_today, color: Colors.black54),
+                ],
+              ),
             ],
           ),
         ),
@@ -394,12 +417,16 @@ class TripEditModal extends HookWidget {
                               labelText: '旅行期間 From',
                               selectedDate: startDate.value,
                               onDateSelected: (date) => startDate.value = date,
+                              onClear: () => startDate.value = null,
+                              clearTooltip: '旅行開始日をクリア',
                             ),
                             const SizedBox(height: 16),
                             buildDatePickerField(
                               labelText: '旅行期間 To',
                               selectedDate: endDate.value,
                               onDateSelected: (date) => endDate.value = date,
+                              onClear: () => endDate.value = null,
+                              clearTooltip: '旅行終了日をクリア',
                             ),
                           ],
                         ),

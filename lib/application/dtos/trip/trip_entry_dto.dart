@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/route_dto.dart';
 
+const _copyWithPlaceholder = Object();
+
 class TripEntryDto extends Equatable {
   const TripEntryDto({
     required this.id,
@@ -29,23 +31,35 @@ class TripEntryDto extends Equatable {
     String? id,
     String? groupId,
     int? tripYear,
-    String? tripName,
-    DateTime? tripStartDate,
-    DateTime? tripEndDate,
-    String? tripMemo,
-    List<PinDto>? pins,
-    List<RouteDto>? routes,
+    Object? tripName = _copyWithPlaceholder,
+    Object? tripStartDate = _copyWithPlaceholder,
+    Object? tripEndDate = _copyWithPlaceholder,
+    Object? tripMemo = _copyWithPlaceholder,
+    Object? pins = _copyWithPlaceholder,
+    Object? routes = _copyWithPlaceholder,
   }) {
     return TripEntryDto(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       tripYear: tripYear ?? this.tripYear,
-      tripName: tripName ?? this.tripName,
-      tripStartDate: tripStartDate ?? this.tripStartDate,
-      tripEndDate: tripEndDate ?? this.tripEndDate,
-      tripMemo: tripMemo ?? this.tripMemo,
-      pins: pins ?? this.pins,
-      routes: routes ?? this.routes,
+      tripName: identical(tripName, _copyWithPlaceholder)
+          ? this.tripName
+          : tripName as String?,
+      tripStartDate: identical(tripStartDate, _copyWithPlaceholder)
+          ? this.tripStartDate
+          : tripStartDate as DateTime?,
+      tripEndDate: identical(tripEndDate, _copyWithPlaceholder)
+          ? this.tripEndDate
+          : tripEndDate as DateTime?,
+      tripMemo: identical(tripMemo, _copyWithPlaceholder)
+          ? this.tripMemo
+          : tripMemo as String?,
+      pins: identical(pins, _copyWithPlaceholder)
+          ? this.pins
+          : pins as List<PinDto>?,
+      routes: identical(routes, _copyWithPlaceholder)
+          ? this.routes
+          : routes as List<RouteDto>?,
     );
   }
 
