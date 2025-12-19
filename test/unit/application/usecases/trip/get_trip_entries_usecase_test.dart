@@ -26,6 +26,7 @@ void main() {
         TripEntryDto(
           id: 'trip-1',
           groupId: groupId,
+          tripYear: year,
           tripName: '旅行1',
           tripStartDate: DateTime(2024, 1, 1),
           tripEndDate: DateTime(2024, 1, 3),
@@ -33,6 +34,7 @@ void main() {
         TripEntryDto(
           id: 'trip-2',
           groupId: groupId,
+          tripYear: year,
           tripName: '旅行2',
           tripStartDate: DateTime(2024, 6, 1),
           tripEndDate: DateTime(2024, 6, 5),

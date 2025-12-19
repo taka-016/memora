@@ -79,10 +79,7 @@ class TripCell extends StatelessWidget {
   }
 
   Widget _buildTripItem(TripEntryDto trip, TextStyle textStyle) {
-    final year = trip.tripStartDate.year;
-    final month = trip.tripStartDate.month.toString().padLeft(2, '0');
-    final day = trip.tripStartDate.day.toString().padLeft(2, '0');
-    final formattedDate = '$year/$month/$day';
+    final formattedDate = _formatTripDate(trip);
 
     return SizedBox(
       height: _itemHeight,
@@ -112,5 +109,15 @@ class TripCell extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatTripDate(TripEntryDto trip) {
+    final startDate = trip.tripStartDate;
+    if (startDate == null) {
+      return '${trip.tripYear}年 (期間未設定)';
+    }
+    final month = startDate.month.toString().padLeft(2, '0');
+    final day = startDate.day.toString().padLeft(2, '0');
+    return '${startDate.year}/$month/$day';
   }
 }

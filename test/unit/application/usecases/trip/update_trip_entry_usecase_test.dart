@@ -23,6 +23,7 @@ void main() {
       final tripEntry = TripEntry(
         id: 'trip-id',
         groupId: 'group-id',
+        tripYear: 2024,
         tripName: '更新された旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),

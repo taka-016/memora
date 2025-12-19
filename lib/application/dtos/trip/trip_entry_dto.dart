@@ -6,9 +6,10 @@ class TripEntryDto extends Equatable {
   const TripEntryDto({
     required this.id,
     required this.groupId,
+    required this.tripYear,
     this.tripName,
-    required this.tripStartDate,
-    required this.tripEndDate,
+    this.tripStartDate,
+    this.tripEndDate,
     this.tripMemo,
     this.pins,
     this.routes,
@@ -16,9 +17,10 @@ class TripEntryDto extends Equatable {
 
   final String id;
   final String groupId;
+  final int tripYear;
   final String? tripName;
-  final DateTime tripStartDate;
-  final DateTime tripEndDate;
+  final DateTime? tripStartDate;
+  final DateTime? tripEndDate;
   final String? tripMemo;
   final List<PinDto>? pins;
   final List<RouteDto>? routes;
@@ -26,6 +28,7 @@ class TripEntryDto extends Equatable {
   TripEntryDto copyWith({
     String? id,
     String? groupId,
+    int? tripYear,
     String? tripName,
     DateTime? tripStartDate,
     DateTime? tripEndDate,
@@ -36,6 +39,7 @@ class TripEntryDto extends Equatable {
     return TripEntryDto(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      tripYear: tripYear ?? this.tripYear,
       tripName: tripName ?? this.tripName,
       tripStartDate: tripStartDate ?? this.tripStartDate,
       tripEndDate: tripEndDate ?? this.tripEndDate,
@@ -49,6 +53,7 @@ class TripEntryDto extends Equatable {
   List<Object?> get props => [
     id,
     groupId,
+    tripYear,
     tripName,
     tripStartDate,
     tripEndDate,

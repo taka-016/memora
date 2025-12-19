@@ -158,19 +158,19 @@ class TripEditModal extends HookWidget {
 
     Future<void> handleSave() async {
       errorMessage.value = null;
+      final selectedStart = startDate.value;
+      final selectedEnd = endDate.value;
+      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
 
-      if (startDate.value == null || endDate.value == null) {
-        errorMessage.value = '開始日と終了日を選択してください';
-        return;
-      }
-
-      if (startDate.value!.isAfter(endDate.value!)) {
+      if (selectedStart != null &&
+          selectedEnd != null &&
+          selectedStart.isAfter(selectedEnd)) {
         errorMessage.value = '開始日は終了日より前の日付を選択してください';
         return;
       }
 
-      if (year != null && startDate.value!.year != year) {
-        errorMessage.value = '開始日は$year年の日付を選択してください';
+      if (selectedStart != null && selectedStart.year != tripYearValue) {
+        errorMessage.value = '開始日は$tripYearValue年の日付を選択してください';
         return;
       }
 
@@ -179,9 +179,10 @@ class TripEditModal extends HookWidget {
           final trip = TripEntry(
             id: tripEntry?.id ?? '',
             groupId: groupId,
+            tripYear: tripYearValue,
             tripName: nameController.text.isEmpty ? null : nameController.text,
-            tripStartDate: startDate.value!,
-            tripEndDate: endDate.value!,
+            tripStartDate: selectedStart,
+            tripEndDate: selectedEnd,
             tripMemo: memoController.text.isEmpty ? null : memoController.text,
             pins: PinMapper.toEntityList(pins.value),
           );
@@ -211,10 +212,10 @@ class TripEditModal extends HookWidget {
         return DateTime(startDate.value!.year, startDate.value!.month, 1);
       }
 
-      if (year != null && year != DateTime.now().year) {
-        return DateTime(year!, 1, 1);
+      final configuredYear = tripEntry?.tripYear ?? year;
+      if (configuredYear != null) {
+        return DateTime(configuredYear, 1, 1);
       }
-
       return DateTime.now();
     }
 

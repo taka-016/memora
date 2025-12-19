@@ -69,6 +69,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "tripYear",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "tripStartDate",
           "order": "ASCENDING"
         }

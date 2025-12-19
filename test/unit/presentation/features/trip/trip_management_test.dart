@@ -21,6 +21,8 @@ void main() {
   late List<TripEntryDto> testTripEntries;
   late PinDto testPin;
   late TripEntryDto detailedTripEntry;
+  const testGroupId = 'test-group-id';
+  const testYear = 2025;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
@@ -41,6 +43,7 @@ void main() {
       TripEntryDto(
         id: 'trip-1',
         groupId: 'test-group-id',
+        tripYear: testYear,
         tripName: '北海道旅行',
         tripStartDate: DateTime(2025, 7, 1),
         tripEndDate: DateTime(2025, 7, 5),
@@ -50,6 +53,7 @@ void main() {
       TripEntryDto(
         id: 'trip-2',
         groupId: 'test-group-id',
+        tripYear: testYear,
         tripName: '沖縄旅行',
         tripStartDate: DateTime(2025, 9, 15),
         tripEndDate: DateTime(2025, 9, 18),
@@ -80,9 +84,6 @@ void main() {
   }
 
   group('TripManagement', () {
-    const testGroupId = 'test-group-id';
-    const testYear = 2025;
-
     testWidgets('初期化時に旅行リストが読み込まれること', (WidgetTester tester) async {
       // Arrange
       when(
@@ -128,11 +129,11 @@ void main() {
 
       // 1つ目の旅行の確認
       expect(find.text('北海道旅行'), findsOneWidget);
-      expect(find.text('2025/7/1 - 2025/7/5'), findsOneWidget);
 
       // 2つ目の旅行の確認
       expect(find.text('沖縄旅行'), findsOneWidget);
-      expect(find.text('2025/9/15 - 2025/9/18'), findsOneWidget);
+      expect(find.text('2025/07/01 - 2025/07/05'), findsOneWidget);
+      expect(find.text('2025/09/15 - 2025/09/18'), findsOneWidget);
     });
 
     testWidgets('旅行がない場合でも画面が表示されること', (WidgetTester tester) async {

@@ -28,6 +28,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: '北海道旅行',
           tripStartDate: DateTime(2023, 8, 15),
           tripEndDate: DateTime(2023, 8, 18),
@@ -54,6 +55,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: null,
           tripStartDate: DateTime(2023, 8, 15),
           tripEndDate: DateTime(2023, 8, 18),
@@ -80,6 +82,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: '北海道旅行',
           tripStartDate: DateTime(2023, 8, 15),
           tripEndDate: DateTime(2023, 8, 18),
@@ -87,6 +90,7 @@ void main() {
         TripEntryDto(
           id: '2',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: '沖縄旅行',
           tripStartDate: DateTime(2023, 12, 25),
           tripEndDate: DateTime(2023, 12, 27),
@@ -116,6 +120,7 @@ void main() {
         (index) => TripEntryDto(
           id: '$index',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: '旅行$index',
           tripStartDate: DateTime(2023, index + 1, 1),
           tripEndDate: DateTime(2023, index + 1, 3),
@@ -145,6 +150,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: '北海道旅行',
           tripStartDate: DateTime(2023, 8, 15),
           tripEndDate: DateTime(2023, 8, 18),
@@ -173,6 +179,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
+          tripYear: 2023,
           tripName: 'テスト旅行',
           tripStartDate: DateTime(2023, 1, 5), // 1桁の月・日をテスト
           tripEndDate: DateTime(2023, 1, 7),
@@ -191,6 +198,28 @@ void main() {
       // Assert
       expect(find.text('2023/01/05'), findsOneWidget); // ゼロパディングされている
       expect(find.text('テスト旅行'), findsOneWidget);
+    });
+
+    testWidgets('旅行期間未設定の場合は年と共に未設定表示を行う', (WidgetTester tester) async {
+      final trips = [
+        TripEntryDto(
+          id: '1',
+          groupId: 'group1',
+          tripYear: 2023,
+          tripName: '期間未設定の旅行',
+        ),
+      ];
+
+      final widget = TripCell(
+        trips: trips,
+        availableHeight: 100.0,
+        availableWidth: 200.0,
+      );
+
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: widget)));
+
+      expect(find.text('2023年 (期間未設定)'), findsOneWidget);
+      expect(find.text('期間未設定の旅行'), findsOneWidget);
     });
   });
 }

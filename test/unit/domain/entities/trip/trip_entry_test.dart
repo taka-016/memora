@@ -12,6 +12,7 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
+        tripYear: 2025,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -55,6 +56,7 @@ void main() {
       expect(entry.tripEndDate, DateTime(2025, 6, 10));
       expect(entry.tripMemo, 'テストメモ');
       expect(entry.pins, hasLength(1));
+      expect(entry.tripYear, 2025);
       expect(entry.pins.first.locationName, 'パリ');
       expect(entry.pins.first.visitMemo, 'エッフェル塔');
       expect(entry.pins.first.details, hasLength(1));
@@ -66,6 +68,7 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
+        tripYear: 2025,
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
       );
@@ -75,6 +78,7 @@ void main() {
       expect(entry.tripStartDate, DateTime(2025, 6, 1));
       expect(entry.tripEndDate, DateTime(2025, 6, 10));
       expect(entry.tripMemo, null);
+      expect(entry.tripYear, 2025);
       expect(entry.pins, isEmpty);
     });
 
@@ -82,6 +86,7 @@ void main() {
       final entry1 = TripEntry(
         id: 'abc123',
         groupId: 'group456',
+        tripYear: 2025,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -92,6 +97,7 @@ void main() {
       final entry2 = TripEntry(
         id: 'abc123',
         groupId: 'group456',
+        tripYear: 2025,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -106,6 +112,7 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
+        tripYear: 2025,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -154,6 +161,7 @@ void main() {
         () => TripEntry(
           id: 'abc123',
           groupId: 'group456',
+          tripYear: 2025,
           tripStartDate: DateTime(2025, 6, 1),
           tripEndDate: DateTime(2025, 6, 10),
           pins: [
@@ -176,6 +184,7 @@ void main() {
       final entry = TripEntry(
         id: 'trip123',
         groupId: 'group456',
+        tripYear: 2025,
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
         routes: [
@@ -205,6 +214,7 @@ void main() {
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
+          tripYear: 2025,
           tripStartDate: DateTime(2025, 6, 1),
           tripEndDate: DateTime(2025, 6, 10),
           routes: [
@@ -226,6 +236,60 @@ void main() {
         ),
         throwsA(isA<ValidationException>()),
       );
+    });
+
+    test('tripStartDateとtripEndDateが未設定でもtripYearが必須で生成できる', () {
+      final entry = TripEntry(
+        id: 'trip789',
+        groupId: 'group456',
+        tripYear: 2025,
+      );
+
+      expect(entry.tripStartDate, isNull);
+      expect(entry.tripEndDate, isNull);
+      expect(entry.tripYear, 2025);
+    });
+
+    test('旅行期間未設定時はpinの訪問日時がtripYearと異なると例外', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          pins: [
+            Pin(
+              pinId: 'pin1',
+              tripId: 'trip123',
+              groupId: 'group456',
+              latitude: 0,
+              longitude: 0,
+              visitStartDate: DateTime(2024, 6, 1),
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('旅行期間未設定時でもpinの訪問日時がtripYearと一致すれば生成可能', () {
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        tripYear: 2025,
+        pins: [
+          Pin(
+            pinId: 'pin1',
+            tripId: 'trip123',
+            groupId: 'group456',
+            latitude: 0,
+            longitude: 0,
+            visitStartDate: DateTime(2025, 6, 1),
+            visitEndDate: DateTime(2025, 6, 2),
+          ),
+        ],
+      );
+
+      expect(entry.pins, hasLength(1));
     });
   });
 }

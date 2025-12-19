@@ -7,15 +7,18 @@ class TripEntry extends Equatable {
   TripEntry({
     required this.id,
     required this.groupId,
+    required this.tripYear,
     this.tripName,
-    required this.tripStartDate,
-    required this.tripEndDate,
+    this.tripStartDate,
+    this.tripEndDate,
     this.tripMemo,
     List<Pin>? pins,
     List<Route>? routes,
   }) : pins = List.unmodifiable(pins ?? const []),
        routes = List.unmodifiable(routes ?? const []) {
-    if (tripEndDate.isBefore(tripStartDate)) {
+    if (tripStartDate != null &&
+        tripEndDate != null &&
+        tripEndDate!.isBefore(tripStartDate!)) {
       throw ValidationException('旅行の終了日は開始日以降でなければなりません');
     }
     for (final pin in this.pins) {
@@ -31,9 +34,10 @@ class TripEntry extends Equatable {
 
   final String id;
   final String groupId;
+  final int tripYear;
   final String? tripName;
-  final DateTime tripStartDate;
-  final DateTime tripEndDate;
+  final DateTime? tripStartDate;
+  final DateTime? tripEndDate;
   final String? tripMemo;
   final List<Pin> pins;
   final List<Route> routes;
@@ -41,6 +45,7 @@ class TripEntry extends Equatable {
   TripEntry copyWith({
     String? id,
     String? groupId,
+    int? tripYear,
     String? tripName,
     DateTime? tripStartDate,
     DateTime? tripEndDate,
@@ -51,6 +56,7 @@ class TripEntry extends Equatable {
     return TripEntry(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
+      tripYear: tripYear ?? this.tripYear,
       tripName: tripName ?? this.tripName,
       tripStartDate: tripStartDate ?? this.tripStartDate,
       tripEndDate: tripEndDate ?? this.tripEndDate,
@@ -61,16 +67,25 @@ class TripEntry extends Equatable {
   }
 
   void _validatePinPeriod(Pin pin) {
-    if (pin.visitStartDate != null) {
-      if (pin.visitStartDate!.isBefore(tripStartDate) ||
-          pin.visitStartDate!.isAfter(tripEndDate)) {
-        throw ValidationException('訪問開始日時は旅行期間内でなければなりません');
+    if (tripStartDate != null && tripEndDate != null) {
+      if (pin.visitStartDate != null) {
+        if (pin.visitStartDate!.isBefore(tripStartDate!) ||
+            pin.visitStartDate!.isAfter(tripEndDate!)) {
+          throw ValidationException('訪問開始日時は旅行期間内でなければなりません');
+        }
       }
-    }
-    if (pin.visitEndDate != null) {
-      if (pin.visitEndDate!.isBefore(tripStartDate) ||
-          pin.visitEndDate!.isAfter(tripEndDate)) {
-        throw ValidationException('訪問終了日時は旅行期間内でなければなりません');
+      if (pin.visitEndDate != null) {
+        if (pin.visitEndDate!.isBefore(tripStartDate!) ||
+            pin.visitEndDate!.isAfter(tripEndDate!)) {
+          throw ValidationException('訪問終了日時は旅行期間内でなければなりません');
+        }
+      }
+    } else {
+      if (pin.visitStartDate != null && pin.visitStartDate!.year != tripYear) {
+        throw ValidationException('訪問開始日時はtripYearと同じ年にしてください');
+      }
+      if (pin.visitEndDate != null && pin.visitEndDate!.year != tripYear) {
+        throw ValidationException('訪問終了日時はtripYearと同じ年にしてください');
       }
     }
   }
@@ -79,6 +94,7 @@ class TripEntry extends Equatable {
   List<Object?> get props => [
     id,
     groupId,
+    tripYear,
     tripName,
     tripStartDate,
     tripEndDate,

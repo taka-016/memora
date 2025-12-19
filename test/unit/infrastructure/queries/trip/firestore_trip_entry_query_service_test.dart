@@ -184,7 +184,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('グループIDと年で旅行一覧を取得し、orderByを適用する', () async {
+    test('グループIDとtripYearで旅行一覧を取得し、orderByを適用する', () async {
       const groupId = 'group001';
       const year = 2024;
       final mockQuery = MockQuery<Map<String, dynamic>>();
@@ -194,15 +194,7 @@ void main() {
       when(
         mockTripEntriesCollection.where('groupId', isEqualTo: groupId),
       ).thenReturn(mockQuery);
-      when(
-        mockQuery.where(
-          'tripStartDate',
-          isGreaterThanOrEqualTo: anyNamed('isGreaterThanOrEqualTo'),
-        ),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.where('tripStartDate', isLessThan: anyNamed('isLessThan')),
-      ).thenReturn(mockQuery);
+      when(mockQuery.where('tripYear', isEqualTo: year)).thenReturn(mockQuery);
       when(
         mockQuery.orderBy('tripStartDate', descending: false),
       ).thenReturn(mockQuery);
@@ -212,6 +204,7 @@ void main() {
       when(mockDoc.data()).thenReturn({
         'groupId': groupId,
         'tripName': '冬旅行',
+        'tripYear': year,
         'tripStartDate': Timestamp.fromDate(DateTime(2024, 12, 20)),
         'tripEndDate': Timestamp.fromDate(DateTime(2024, 12, 25)),
         'tripMemo': '温泉巡り',

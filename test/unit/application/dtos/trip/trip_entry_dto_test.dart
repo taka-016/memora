@@ -6,40 +6,41 @@ import 'package:memora/core/enums/travel_mode.dart';
 
 void main() {
   group('TripEntryDto', () {
-    test('必須パラメータでコンストラクタが正しく動作する', () {
-      // Arrange
-      const id = 'trip-entry-123';
-      const groupId = 'group-456';
-      final tripStartDate = DateTime(2024, 5, 1);
-      final tripEndDate = DateTime(2024, 5, 3);
-
-      // Act
-      final dto = TripEntryDto(
-        id: id,
-        groupId: groupId,
-        tripStartDate: tripStartDate,
-        tripEndDate: tripEndDate,
+    test('必須パラメータのみでコンストラクタが正しく動作する', () {
+      const dto = TripEntryDto(
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
       );
 
-      // Assert
-      expect(dto.id, id);
-      expect(dto.groupId, groupId);
+      expect(dto.id, 'trip-entry-123');
+      expect(dto.groupId, 'group-456');
+      expect(dto.tripYear, 2024);
       expect(dto.tripName, isNull);
-      expect(dto.tripStartDate, tripStartDate);
-      expect(dto.tripEndDate, tripEndDate);
+      expect(dto.tripStartDate, isNull);
+      expect(dto.tripEndDate, isNull);
       expect(dto.tripMemo, isNull);
       expect(dto.pins, isNull);
       expect(dto.routes, isNull);
     });
 
-    test('全パラメータでコンストラクタが正しく動作する', () {
-      // Arrange
-      const id = 'trip-entry-123';
-      const groupId = 'group-456';
-      const tripName = '春の旅行';
+    test('期間を指定すると開始日/終了日が保持される', () {
       final tripStartDate = DateTime(2024, 5, 1);
       final tripEndDate = DateTime(2024, 5, 3);
-      const tripMemo = '家族旅行のメモ';
+
+      final dto = TripEntryDto(
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+        tripStartDate: tripStartDate,
+        tripEndDate: tripEndDate,
+      );
+
+      expect(dto.tripStartDate, tripStartDate);
+      expect(dto.tripEndDate, tripEndDate);
+    });
+
+    test('全パラメータでコンストラクタが正しく動作する', () {
       final pins = [
         PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0),
         PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0),
@@ -47,7 +48,7 @@ void main() {
       final routes = [
         RouteDto(
           id: 'route-1',
-          tripId: id,
+          tripId: 'trip-entry-123',
           orderIndex: 0,
           departurePinId: 'pin-1',
           arrivalPinId: 'pin-2',
@@ -55,67 +56,52 @@ void main() {
         ),
       ];
 
-      // Act
       final dto = TripEntryDto(
-        id: id,
-        groupId: groupId,
-        tripName: tripName,
-        tripStartDate: tripStartDate,
-        tripEndDate: tripEndDate,
-        tripMemo: tripMemo,
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+        tripName: '春の旅行',
+        tripStartDate: DateTime(2024, 5, 1),
+        tripEndDate: DateTime(2024, 5, 3),
+        tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
       );
 
-      // Assert
-      expect(dto.id, id);
-      expect(dto.groupId, groupId);
-      expect(dto.tripName, tripName);
-      expect(dto.tripStartDate, tripStartDate);
-      expect(dto.tripEndDate, tripEndDate);
-      expect(dto.tripMemo, tripMemo);
+      expect(dto.tripName, '春の旅行');
+      expect(dto.tripMemo, '家族旅行のメモ');
       expect(dto.pins, pins);
-      expect(dto.pins!.length, 2);
-      expect(dto.pins![0].pinId, 'pin-1');
       expect(dto.routes, routes);
     });
 
-    test('copyWithメソッドで必須パラメータが正しく更新される', () {
-      // Arrange
+    test('copyWithで必須パラメータを更新できる', () {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
+        tripYear: 2024,
       );
 
-      // Act
       final copiedDto = originalDto.copyWith(
         id: 'trip-entry-999',
         groupId: 'group-888',
-        tripStartDate: DateTime(2024, 6, 1),
-        tripEndDate: DateTime(2024, 6, 3),
+        tripYear: 2025,
+        tripStartDate: DateTime(2025, 1, 1),
+        tripEndDate: DateTime(2025, 1, 5),
       );
 
-      // Assert
       expect(copiedDto.id, 'trip-entry-999');
       expect(copiedDto.groupId, 'group-888');
-      expect(copiedDto.tripStartDate, DateTime(2024, 6, 1));
-      expect(copiedDto.tripEndDate, DateTime(2024, 6, 3));
-      expect(copiedDto.tripName, isNull);
-      expect(copiedDto.tripMemo, isNull);
-      expect(copiedDto.pins, isNull);
-      expect(copiedDto.routes, isNull);
+      expect(copiedDto.tripYear, 2025);
+      expect(copiedDto.tripStartDate, DateTime(2025, 1, 1));
+      expect(copiedDto.tripEndDate, DateTime(2025, 1, 5));
     });
 
-    test('copyWithメソッドでオプショナルパラメータが正しく更新される', () {
-      // Arrange
+    test('copyWithでオプショナルパラメータを更新できる', () {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
+        tripYear: 2024,
         tripName: '元の旅行名',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
         tripMemo: '元のメモ',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
         routes: [
@@ -130,40 +116,29 @@ void main() {
         ],
       );
 
-      // Act
-      final newPins = [
-        PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0),
-      ];
-      final newRoutes = [
-        RouteDto(
-          id: 'route-2',
-          tripId: 'trip-entry-123',
-          orderIndex: 1,
-          departurePinId: 'pin-1b',
-          arrivalPinId: 'pin-2',
-          travelMode: TravelMode.drive,
-        ),
-      ];
       final copiedDto = originalDto.copyWith(
         tripName: '新しい旅行名',
         tripMemo: '新しいメモ',
-        pins: newPins,
-        routes: newRoutes,
+        pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
+        routes: [
+          RouteDto(
+            id: 'route-2',
+            tripId: 'trip-entry-123',
+            orderIndex: 1,
+            departurePinId: 'pin-1b',
+            arrivalPinId: 'pin-2',
+            travelMode: TravelMode.drive,
+          ),
+        ],
       );
 
-      // Assert
-      expect(copiedDto.id, 'trip-entry-123');
-      expect(copiedDto.groupId, 'group-456');
       expect(copiedDto.tripName, '新しい旅行名');
       expect(copiedDto.tripMemo, '新しいメモ');
-      expect(copiedDto.pins, newPins);
-      expect(copiedDto.pins!.length, 1);
-      expect(copiedDto.pins![0].pinId, 'pin-2');
-      expect(copiedDto.routes, newRoutes);
+      expect(copiedDto.pins?.first.pinId, 'pin-2');
+      expect(copiedDto.routes?.first.id, 'route-2');
     });
 
-    test('copyWithメソッドでnullを指定しても元の値が保持される', () {
-      // Arrange
+    test('copyWithで何も指定しなければ元の値を保持する', () {
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
       final routes = [
         RouteDto(
@@ -178,6 +153,7 @@ void main() {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
+        tripYear: 2024,
         tripName: '旅行名',
         tripStartDate: DateTime(2024, 5, 1),
         tripEndDate: DateTime(2024, 5, 3),
@@ -186,33 +162,17 @@ void main() {
         routes: routes,
       );
 
-      // Act
       final copiedDto = originalDto.copyWith();
 
-      // Assert
-      expect(copiedDto.id, 'trip-entry-123');
-      expect(copiedDto.groupId, 'group-456');
-      expect(copiedDto.tripName, '旅行名');
-      expect(copiedDto.tripStartDate, DateTime(2024, 5, 1));
-      expect(copiedDto.tripEndDate, DateTime(2024, 5, 3));
-      expect(copiedDto.tripMemo, '旅行のメモ');
-      expect(copiedDto.pins, pins);
-      expect(copiedDto.routes, routes);
+      expect(copiedDto, equals(originalDto));
     });
 
     test('同じ値を持つインスタンスは等しい', () {
-      // Arrange
-      const id = 'trip-entry-123';
-      const groupId = 'group-456';
-      const tripName = '春の旅行';
-      final tripStartDate = DateTime(2024, 5, 1);
-      final tripEndDate = DateTime(2024, 5, 3);
-      const tripMemo = '家族旅行のメモ';
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
       final routes = [
         RouteDto(
           id: 'route-1',
-          tripId: id,
+          tripId: 'trip-entry-123',
           orderIndex: 0,
           departurePinId: 'pin-1',
           arrivalPinId: 'pin-2',
@@ -221,37 +181,38 @@ void main() {
       ];
 
       final dto1 = TripEntryDto(
-        id: id,
-        groupId: groupId,
-        tripName: tripName,
-        tripStartDate: tripStartDate,
-        tripEndDate: tripEndDate,
-        tripMemo: tripMemo,
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+        tripName: '春の旅行',
+        tripStartDate: DateTime(2024, 5, 1),
+        tripEndDate: DateTime(2024, 5, 3),
+        tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
       );
 
       final dto2 = TripEntryDto(
-        id: id,
-        groupId: groupId,
-        tripName: tripName,
-        tripStartDate: tripStartDate,
-        tripEndDate: tripEndDate,
-        tripMemo: tripMemo,
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+        tripName: '春の旅行',
+        tripStartDate: DateTime(2024, 5, 1),
+        tripEndDate: DateTime(2024, 5, 3),
+        tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
       );
 
-      // Act & Assert
       expect(dto1, equals(dto2));
       expect(dto1.hashCode, equals(dto2.hashCode));
     });
 
     test('異なる値を持つインスタンスは等しくない', () {
-      // Arrange
       final dto1 = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
+        tripYear: 2024,
         tripName: '旅行A',
         tripStartDate: DateTime(2024, 5, 1),
         tripEndDate: DateTime(2024, 5, 3),
@@ -272,6 +233,7 @@ void main() {
       final dto2 = TripEntryDto(
         id: 'trip-entry-999',
         groupId: 'group-888',
+        tripYear: 2025,
         tripName: '旅行B',
         tripStartDate: DateTime(2024, 6, 1),
         tripEndDate: DateTime(2024, 6, 3),
@@ -289,7 +251,6 @@ void main() {
         ],
       );
 
-      // Act & Assert
       expect(dto1, isNot(equals(dto2)));
       expect(dto1.hashCode, isNot(equals(dto2.hashCode)));
     });

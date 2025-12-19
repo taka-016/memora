@@ -104,17 +104,10 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
     List<OrderBy>? orderBy,
   }) async {
     try {
-      final startOfYear = DateTime(year, 1, 1);
-      final endOfYear = DateTime(year + 1, 1, 1);
-
       Query<Map<String, dynamic>> query = _firestore
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
-          .where(
-            'tripStartDate',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfYear),
-          )
-          .where('tripStartDate', isLessThan: Timestamp.fromDate(endOfYear));
+          .where('tripYear', isEqualTo: year);
 
       if (orderBy != null && orderBy.isNotEmpty) {
         for (final order in orderBy) {
