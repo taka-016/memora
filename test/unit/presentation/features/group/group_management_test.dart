@@ -338,6 +338,48 @@ void main() {
       expect(find.text('Test User'), findsOneWidget);
     });
 
+    testWidgets('編集時にオーナーIDのメンバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      final ownerMember = testMember.copyWith(
+        id: 'owner-id',
+        displayName: 'Owner Member',
+      );
+      final managedGroupsWithMembers = [
+        groupWithMembers1.copyWith(ownerId: ownerMember.id),
+      ];
+
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
+
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      when(
+        mockMemberQueryService.getMemberById(ownerMember.id),
+      ).thenAnswer((_) async => ownerMember);
+
+      // Act
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+
+      // Assert
+      verify(mockMemberQueryService.getMemberById(ownerMember.id)).called(1);
+      expect(find.text('グループ編集'), findsOneWidget);
+      expect(find.text('Owner Member'), findsOneWidget);
+    });
+
     testWidgets('グループ情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];

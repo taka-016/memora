@@ -9,6 +9,7 @@ import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
+import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
@@ -28,6 +29,7 @@ class GroupManagement extends HookConsumerWidget {
     final createGroupUsecase = ref.read(createGroupUsecaseProvider);
     final updateGroupUsecase = ref.read(updateGroupUsecaseProvider);
     final getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
+    final getMemberByIdUsecase = ref.read(getMemberByIdUsecaseProvider);
 
     final managedGroups = useState<List<GroupDto>>([]);
     final isLoading = useState(true);
@@ -96,38 +98,48 @@ class GroupManagement extends HookConsumerWidget {
       );
     }
 
-    GroupMemberDto buildOwnerMember(String groupId) {
-      return GroupMemberMapper.fromMember(member, groupId);
+    Future<MemberDto?> resolveOwnerMember(String ownerId) async {
+      if (ownerId == member.id) {
+        return member;
+      }
+      return await getMemberByIdUsecase.execute(ownerId);
     }
 
     List<GroupMemberDto> ensureOwnerInMembers(
       List<GroupMemberDto> members,
       String groupId,
+      MemberDto? ownerMember,
     ) {
+      if (ownerMember == null) {
+        return members;
+      }
       final hasOwner = members.any(
-        (groupMember) => groupMember.memberId == member.id,
+        (groupMember) => groupMember.memberId == ownerMember.id,
       );
       if (hasOwner) {
         return members;
       }
-      return [buildOwnerMember(groupId), ...members];
+      return [GroupMemberMapper.fromMember(ownerMember, groupId), ...members];
     }
 
     Future<void> showAddGroupDialog() async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        final ownerMember = buildOwnerMember('');
+        final ownerMember = await resolveOwnerMember(member.id);
         final group = GroupDto(
           id: '',
           ownerId: member.id,
           name: '',
-          members: [ownerMember],
+          members: ownerMember == null
+              ? const []
+              : [GroupMemberMapper.fromMember(ownerMember, '')],
         );
         final availableMembers = await getManagedMembersUsecase.execute(member);
         final availableMemberDtos = ensureOwnerInMembers(
           GroupMemberMapper.fromMemberList(availableMembers, group.id),
           group.id,
+          ownerMember,
         );
 
         if (!context.mounted) {
@@ -183,6 +195,7 @@ class GroupManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
+        final ownerMember = await resolveOwnerMember(groupWithMembers.ownerId);
         final availableMembers = await getManagedMembersUsecase.execute(member);
         final availableMemberDtos = ensureOwnerInMembers(
           GroupMemberMapper.fromMemberList(
@@ -190,11 +203,13 @@ class GroupManagement extends HookConsumerWidget {
             groupWithMembers.id,
           ),
           groupWithMembers.id,
+          ownerMember,
         );
         final groupWithOwner = groupWithMembers.copyWith(
           members: ensureOwnerInMembers(
             groupWithMembers.members,
             groupWithMembers.id,
+            ownerMember,
           ),
         );
         if (!context.mounted) {
