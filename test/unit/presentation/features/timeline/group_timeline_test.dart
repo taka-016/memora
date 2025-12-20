@@ -184,6 +184,40 @@ void main() {
       }
     });
 
+    testWidgets('メンバー行の各年に年齢が表示される', (WidgetTester tester) async {
+      // Arrange
+      final birthday = DateTime(1990, 6, 1);
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
+      );
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      final currentYear = DateTime.now().year;
+      final currentAge = currentYear - birthday.year;
+      final futureAge = currentYear + 5 - birthday.year;
+
+      // Assert
+      expect(find.text('$currentAge歳'), findsOneWidget);
+      expect(find.text('$futureAge歳'), findsOneWidget);
+    });
+
+    testWidgets('生年月日未設定のメンバーには年齢を表示しない', (WidgetTester tester) async {
+      // Arrange
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [testGroupWithMembers.members.first.copyWith(birthday: null)],
+      );
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.textContaining('歳'), findsNothing);
+    });
+
     testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
       // Arrange
       tester.view.physicalSize = const Size(800, 600);

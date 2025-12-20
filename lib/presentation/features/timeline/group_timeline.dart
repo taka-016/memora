@@ -248,6 +248,38 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
+    bool isMemberRow(int rowIndex) => rowIndex >= 2;
+
+    Widget buildMemberCellContent(int rowIndex, int columnIndex) {
+      if (!isMemberRow(rowIndex)) {
+        return const SizedBox.shrink();
+      }
+
+      final memberIndex = rowIndex - 2;
+      if (memberIndex >= groupWithMembers.members.length) {
+        return const SizedBox.shrink();
+      }
+
+      final birthday = groupWithMembers.members[memberIndex].birthday;
+      if (birthday == null) {
+        return const SizedBox.shrink();
+      }
+
+      final yearIndex = columnIndex - 1;
+      final currentYear = DateTime.now().year;
+      final targetYear = currentYear + startYearOffset.value + yearIndex;
+      final age = targetYear - birthday.year;
+
+      if (age < 0) {
+        return const SizedBox.shrink();
+      }
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 8, top: 4),
+        child: Text('$age歳'),
+      );
+    }
+
     Widget buildScrollableDataCells(int rowIndex) {
       final columnCount = 2 + (endYearOffset.value - startYearOffset.value + 1);
 
@@ -270,7 +302,7 @@ class GroupTimeline extends HookConsumerWidget {
                   ? () => onTripCellTapped(columnIndex)
                   : null,
               child: Container(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.topLeft,
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(color: borderColor, width: _borderWidth),
@@ -282,7 +314,9 @@ class GroupTimeline extends HookConsumerWidget {
                 ),
                 child: isTripRow && isYearColumn
                     ? buildTripCellContent(columnIndex)
-                    : const Text(''),
+                    : isYearColumn
+                    ? buildMemberCellContent(rowIndex, columnIndex)
+                    : const SizedBox.shrink(),
               ),
             ),
           );
