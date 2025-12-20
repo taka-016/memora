@@ -167,6 +167,35 @@ void main() {
       expect(find.byIcon(Icons.add), findsOneWidget);
     });
 
+    testWidgets('新規作成時にオーナーがメンバー一覧に表示されること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      // Act
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ追加'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('グループ新規作成'), findsOneWidget);
+      expect(find.text('Test User'), findsOneWidget);
+    });
+
     testWidgets('データ読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
@@ -276,6 +305,37 @@ void main() {
 
       // Assert - 編集モーダルが開かれることを期待
       expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('編集時にオーナーがメンバー一覧に表示されること', (WidgetTester tester) async {
+      // Arrange
+      final managedGroupsWithMembers = [groupWithMembers1];
+
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => managedGroupsWithMembers);
+
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      // Act
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('グループ編集'), findsOneWidget);
+      expect(find.text('Test User'), findsOneWidget);
     });
 
     testWidgets('グループ情報の更新ができること', (WidgetTester tester) async {

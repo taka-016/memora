@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
@@ -95,19 +96,37 @@ class GroupManagement extends HookConsumerWidget {
       );
     }
 
+    GroupMemberDto buildOwnerMember(String groupId) {
+      return GroupMemberMapper.fromMember(member, groupId);
+    }
+
+    List<GroupMemberDto> ensureOwnerInMembers(
+      List<GroupMemberDto> members,
+      String groupId,
+    ) {
+      final hasOwner = members.any(
+        (groupMember) => groupMember.memberId == member.id,
+      );
+      if (hasOwner) {
+        return members;
+      }
+      return [buildOwnerMember(groupId), ...members];
+    }
+
     Future<void> showAddGroupDialog() async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
+        final ownerMember = buildOwnerMember('');
         final group = GroupDto(
           id: '',
           ownerId: member.id,
           name: '',
-          members: const [],
+          members: [ownerMember],
         );
         final availableMembers = await getManagedMembersUsecase.execute(member);
-        final availableMemberDtos = GroupMemberMapper.fromMemberList(
-          availableMembers,
+        final availableMemberDtos = ensureOwnerInMembers(
+          GroupMemberMapper.fromMemberList(availableMembers, group.id),
           group.id,
         );
 
@@ -165,9 +184,18 @@ class GroupManagement extends HookConsumerWidget {
 
       try {
         final availableMembers = await getManagedMembersUsecase.execute(member);
-        final availableMemberDtos = GroupMemberMapper.fromMemberList(
-          availableMembers,
+        final availableMemberDtos = ensureOwnerInMembers(
+          GroupMemberMapper.fromMemberList(
+            availableMembers,
+            groupWithMembers.id,
+          ),
           groupWithMembers.id,
+        );
+        final groupWithOwner = groupWithMembers.copyWith(
+          members: ensureOwnerInMembers(
+            groupWithMembers.members,
+            groupWithMembers.id,
+          ),
         );
         if (!context.mounted) {
           return;
@@ -177,7 +205,7 @@ class GroupManagement extends HookConsumerWidget {
           barrierDismissible: false,
           context: context,
           builder: (_) => GroupEditModal(
-            group: groupWithMembers,
+            group: groupWithOwner,
             availableMembers: availableMemberDtos,
             onSave: (updatedGroup) async {
               try {
