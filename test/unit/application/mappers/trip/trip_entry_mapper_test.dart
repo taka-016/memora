@@ -21,6 +21,7 @@ void main() {
       when(mockDoc.id).thenReturn('trip-001');
       when(mockDoc.data()).thenReturn({
         'groupId': 'group-001',
+        'tripYear': 2024,
         'tripName': '春の旅行',
         'tripStartDate': Timestamp.fromDate(DateTime(2024, 3, 20)),
         'tripEndDate': Timestamp.fromDate(DateTime(2024, 3, 25)),
@@ -56,6 +57,7 @@ void main() {
 
       expect(dto.id, 'trip-001');
       expect(dto.groupId, 'group-001');
+      expect(dto.tripYear, 2024);
       expect(dto.tripName, '春の旅行');
       expect(dto.tripStartDate, DateTime(2024, 3, 20));
       expect(dto.tripEndDate, DateTime(2024, 3, 25));
@@ -73,10 +75,11 @@ void main() {
 
       expect(dto.id, 'trip-002');
       expect(dto.groupId, 'group-002');
+      expect(dto.tripYear, DateTime.now().year);
       expect(dto.tripName, isNull);
       expect(dto.tripMemo, isNull);
-      expect(dto.tripStartDate, DateTime.fromMillisecondsSinceEpoch(0));
-      expect(dto.tripEndDate, DateTime.fromMillisecondsSinceEpoch(0));
+      expect(dto.tripStartDate, isNull);
+      expect(dto.tripEndDate, isNull);
       expect(dto.pins, isEmpty);
       expect(dto.routes, isEmpty);
     });
@@ -85,6 +88,7 @@ void main() {
       final dto = TripEntryDto(
         id: 'trip-003',
         groupId: 'group-003',
+        tripYear: 2024,
         tripName: '夏の旅行',
         tripStartDate: DateTime(2024, 7, 1),
         tripEndDate: DateTime(2024, 7, 5),
@@ -119,6 +123,7 @@ void main() {
         TripEntry(
           id: 'trip-003',
           groupId: 'group-003',
+          tripYear: 2024,
           tripName: '夏の旅行',
           tripStartDate: DateTime(2024, 7, 1),
           tripEndDate: DateTime(2024, 7, 5),
@@ -152,12 +157,14 @@ void main() {
         TripEntryDto(
           id: 'trip-101',
           groupId: 'group-101',
+          tripYear: 2024,
           tripStartDate: DateTime(2024, 4, 1),
           tripEndDate: DateTime(2024, 4, 3),
         ),
         TripEntryDto(
           id: 'trip-102',
           groupId: 'group-102',
+          tripYear: 2024,
           tripStartDate: DateTime(2024, 5, 1),
           tripEndDate: DateTime(2024, 5, 5),
         ),

@@ -11,6 +11,7 @@ void main() {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
+        tripYear: 2025,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2025, 6, 1),
         tripEndDate: DateTime(2025, 6, 10),
@@ -20,6 +21,7 @@ void main() {
       final data = FirestoreTripEntryMapper.toFirestore(tripEntry);
 
       expect(data['groupId'], 'group001');
+      expect(data['tripYear'], 2025);
       expect(data['tripName'], 'テスト旅行');
       expect(data['tripStartDate'], isA<Timestamp>());
       expect(data['tripEndDate'], isA<Timestamp>());
@@ -27,20 +29,20 @@ void main() {
       expect(data['createdAt'], isA<FieldValue>());
     });
 
-    test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
+    test('旅行期間が未設定の場合はtripYearのみで保存できる', () {
       final tripEntry = TripEntry(
         id: 'trip002',
         groupId: 'group002',
-        tripStartDate: DateTime(2025, 7, 1),
-        tripEndDate: DateTime(2025, 7, 5),
+        tripYear: 2025,
       );
 
       final data = FirestoreTripEntryMapper.toFirestore(tripEntry);
 
       expect(data['groupId'], 'group002');
+      expect(data['tripYear'], 2025);
       expect(data['tripName'], null);
-      expect(data['tripStartDate'], isA<Timestamp>());
-      expect(data['tripEndDate'], isA<Timestamp>());
+      expect(data['tripStartDate'], isNull);
+      expect(data['tripEndDate'], isNull);
       expect(data['tripMemo'], null);
       expect(data['createdAt'], isA<FieldValue>());
     });

@@ -49,6 +49,7 @@ void main() {
         final tripEntry = TripEntry(
           id: 'trip001',
           groupId: 'group001',
+          tripYear: 2025,
           tripName: 'テスト旅行',
           tripStartDate: DateTime(2025, 6, 1),
           tripEndDate: DateTime(2025, 6, 10),

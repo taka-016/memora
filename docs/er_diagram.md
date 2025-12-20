@@ -6,8 +6,9 @@ erDiagram
         string id PK
         string groupId FK "NOT NULL"
         string tripName
-        timestamp tripStartDate "NOT NULL"
-        timestamp tripEndDate "NOT NULL"
+        number tripYear "NOT NULL"
+        timestamp tripStartDate
+        timestamp tripEndDate
         string tripMemo
     }
     pins {
@@ -115,3 +116,5 @@ erDiagram
     members ||--o{ member_invitations : "id → inviterId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
+
+- `trip_entries.tripStartDate`と`trip_entries.tripEndDate`は任意項目であり、年での集計や関連付けは`tripYear`を基準に行う。

@@ -66,8 +66,24 @@ class TripManagement extends HookConsumerWidget {
       return null;
     }, [groupId, year]);
 
-    String formatDate(DateTime date) {
-      return '${date.year}/${date.month}/${date.day}';
+    String formatDate(DateTime? date) {
+      if (date == null) {
+        return '未設定';
+      }
+      final month = date.month.toString().padLeft(2, '0');
+      final day = date.day.toString().padLeft(2, '0');
+      return '${date.year}/$month/$day';
+    }
+
+    String buildTripPeriodLabel(TripEntryDto tripEntry) {
+      final hasStart = tripEntry.tripStartDate != null;
+      final hasEnd = tripEntry.tripEndDate != null;
+      if (!hasStart && !hasEnd) {
+        return '${tripEntry.tripYear}年 (期間未設定)';
+      }
+      final startLabel = hasStart ? formatDate(tripEntry.tripStartDate) : '未設定';
+      final endLabel = hasEnd ? formatDate(tripEntry.tripEndDate) : '未設定';
+      return '$startLabel - $endLabel';
     }
 
     Future<void> handleAddTripSave(TripEntry tripEntry) async {
@@ -290,9 +306,7 @@ class TripManagement extends HookConsumerWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${formatDate(tripEntry.tripStartDate)} - ${formatDate(tripEntry.tripEndDate)}',
-          ),
+          Text(buildTripPeriodLabel(tripEntry)),
           if (tripEntry.tripMemo != null)
             Text(
               tripEntry.tripMemo!,

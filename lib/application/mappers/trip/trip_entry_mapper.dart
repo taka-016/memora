@@ -7,22 +7,26 @@ import 'package:memora/application/mappers/trip/route_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 class TripEntryMapper {
-  static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
-
   static TripEntryDto fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     List<PinDto> pins = const [],
     List<RouteDto> routes = const [],
   }) {
     final data = doc.data() ?? {};
+    final tripStartTimestamp = data['tripStartDate'] as Timestamp?;
+    final tripEndTimestamp = data['tripEndDate'] as Timestamp?;
+    final tripStartDate = tripStartTimestamp?.toDate();
+    final tripEndDate = tripEndTimestamp?.toDate();
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
+      tripYear:
+          data['tripYear'] as int? ??
+          tripStartDate?.year ??
+          DateTime.now().year,
       tripName: data['tripName'] as String?,
-      tripStartDate:
-          (data['tripStartDate'] as Timestamp?)?.toDate() ?? _defaultDate,
-      tripEndDate:
-          (data['tripEndDate'] as Timestamp?)?.toDate() ?? _defaultDate,
+      tripStartDate: tripStartDate,
+      tripEndDate: tripEndDate,
       tripMemo: data['tripMemo'] as String?,
       pins: pins,
       routes: routes,
@@ -35,6 +39,7 @@ class TripEntryMapper {
     return TripEntry(
       id: dto.id,
       groupId: dto.groupId,
+      tripYear: dto.tripYear,
       tripName: dto.tripName,
       tripStartDate: dto.tripStartDate,
       tripEndDate: dto.tripEndDate,

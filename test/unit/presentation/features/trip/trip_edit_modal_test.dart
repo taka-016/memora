@@ -28,6 +28,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -54,6 +55,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -93,6 +95,70 @@ void main() {
       );
 
       expect(find.text('旅行期間 From'), findsOneWidget);
+      expect(find.text('旅行期間 To'), findsOneWidget);
+    });
+
+    testWidgets('旅行期間Fromのクリアボタンで開始日をクリアできること', (WidgetTester tester) async {
+      final tripEntry = TripEntryDto(
+        id: 'trip-entry-1',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        tripStartDate: DateTime(2024, 5, 1),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              tripEntry: tripEntry,
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('2024/05/01'), findsOneWidget);
+
+      final clearButton = find.byTooltip('旅行開始日をクリア');
+      expect(clearButton, findsOneWidget);
+
+      await tester.tap(clearButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行期間 From'), findsOneWidget);
+    });
+
+    testWidgets('旅行期間Toのクリアボタンで終了日をクリアできること', (WidgetTester tester) async {
+      final tripEntry = TripEntryDto(
+        id: 'trip-entry-1',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        tripEndDate: DateTime(2024, 5, 3),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TripEditModal(
+              groupId: 'test-group-id',
+              tripEntry: tripEntry,
+              onSave: (TripEntry tripEntry) {},
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('2024/05/03'), findsOneWidget);
+
+      final clearButton = find.byTooltip('旅行終了日をクリア');
+      expect(clearButton, findsOneWidget);
+
+      await tester.tap(clearButton);
+      await tester.pumpAndSettle();
+
       expect(find.text('旅行期間 To'), findsOneWidget);
     });
 
@@ -304,6 +370,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: 'テスト旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -394,6 +461,7 @@ void main() {
       final existingTripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -431,36 +499,33 @@ void main() {
       expect(updatedTripEntry!.tripName, equals('更新された旅行'));
     });
 
-    testWidgets('日付未入力時にエラーメッセージが表示されること', (WidgetTester tester) async {
+    testWidgets('日付未設定でも保存できること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
-      final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: TripEditModal(
               groupId: 'test-group-id',
+              year: 2024,
               onSave: (TripEntry tripEntry) {
                 savedTripEntry = tripEntry;
               },
               isTestEnvironment: true,
-              testHandle: testHandle,
             ),
           ),
         ),
       );
 
-      // 旅行名を入力
       await tester.enterText(find.byType(TextFormField).first, 'テスト旅行');
 
-      // 作成ボタンをタップ（日付は未入力）
       await tester.tap(find.text('作成'));
       await tester.pumpAndSettle();
 
-      // エラーメッセージが表示されることを確認
-      expect(find.text('開始日と終了日を選択してください'), findsOneWidget);
-      // onSaveコールバックが呼ばれないことを確認
-      expect(savedTripEntry, isNull);
+      expect(savedTripEntry, isNotNull);
+      expect(savedTripEntry!.tripStartDate, isNull);
+      expect(savedTripEntry!.tripEndDate, isNull);
+      expect(savedTripEntry!.tripYear, 2024);
     });
 
     testWidgets('開始日が終了日より後の場合にエラーメッセージが表示されること', (WidgetTester tester) async {
@@ -476,6 +541,7 @@ void main() {
               tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
+                tripYear: 2024,
                 tripName: 'テスト旅行',
                 tripStartDate: DateTime(2024, 1, 1),
                 tripEndDate: DateTime(2024, 1, 3),
@@ -523,6 +589,7 @@ void main() {
               tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
+                tripYear: 2024,
                 tripName: 'テスト旅行',
                 tripStartDate: DateTime(2023, 6, 1), // 2024年以外
                 tripEndDate: DateTime(2024, 6, 10),
@@ -567,6 +634,7 @@ void main() {
               tripEntry: TripEntryDto(
                 id: 'test-id',
                 groupId: 'test-group-id',
+                tripYear: 2024,
                 tripName: 'テスト旅行',
                 tripStartDate: DateTime(2024, 12, 30),
                 tripEndDate: DateTime(2025, 1, 3), // 年またぎ
@@ -724,6 +792,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -764,6 +833,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -791,6 +861,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -832,6 +903,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -883,6 +955,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -928,6 +1001,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -964,6 +1038,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),
@@ -1018,6 +1093,7 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
+        tripYear: 2024,
         tripName: '既存旅行',
         tripStartDate: DateTime(2024, 1, 1),
         tripEndDate: DateTime(2024, 1, 3),

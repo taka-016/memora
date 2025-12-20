@@ -438,6 +438,7 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: '1',
+          tripYear: currentYear,
           tripName: '北海道旅行',
           tripStartDate: DateTime(currentYear, 8, 15),
           tripEndDate: DateTime(currentYear, 8, 18),
@@ -445,6 +446,7 @@ void main() {
         TripEntryDto(
           id: '2',
           groupId: '1',
+          tripYear: currentYear,
           tripName: null,
           tripStartDate: DateTime(currentYear, 12, 25),
           tripEndDate: DateTime(currentYear, 12, 27),
