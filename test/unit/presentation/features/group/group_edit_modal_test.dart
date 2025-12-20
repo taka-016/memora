@@ -8,7 +8,7 @@ import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({
   String id = '',
-  String ownerId = '',
+  String ownerId = 'owner-id',
   String name = '',
   String? memo,
   List<GroupMemberDto> members = const [],
@@ -19,6 +19,14 @@ GroupDto createGroupDto({
     name: name,
     memo: memo,
     members: members,
+  );
+}
+
+GroupMemberDto createCurrentMember({String groupId = ''}) {
+  return createGroupMemberDto(
+    memberId: 'owner-id',
+    groupId: groupId,
+    displayName: 'オーナー',
   );
 }
 
@@ -72,9 +80,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -85,7 +94,7 @@ void main() {
     testWidgets('編集時にタイトルが正しく表示される', (WidgetTester tester) async {
       final group = createGroupDto(
         id: 'test-id',
-        ownerId: 'admin-id',
+        ownerId: 'owner-id',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
@@ -96,6 +105,7 @@ void main() {
             group: group,
             onSave: (group) {},
             availableMembers: const [],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -107,9 +117,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', name: '', memo: ''),
             onSave: (group) {},
             availableMembers: const [],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -127,11 +138,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
             availableMembers: const [],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -193,7 +205,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'group1',
-              ownerId: 'owner1',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
@@ -202,12 +214,89 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
 
       expect(find.text('メンバー1'), findsOneWidget);
       expect(find.text('メンバー2'), findsOneWidget);
+    });
+
+    testWidgets('オーナーが先頭に固定表示される', (WidgetTester tester) async {
+      final availableMembers = [
+        createGroupMemberDto(
+          memberId: 'owner-id',
+          groupId: 'group1',
+          displayName: 'オーナー',
+        ),
+        createGroupMemberDto(
+          memberId: 'member1',
+          groupId: 'group1',
+          displayName: 'メンバー1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: createGroupDto(
+              id: 'group1',
+              ownerId: 'owner-id',
+              name: 'テストグループ',
+              members: [
+                createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
+                createGroupMemberDto(groupId: 'group1', memberId: 'owner-id'),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+            member: createCurrentMember(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('member_row_0')),
+          matching: find.text('オーナー'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('オーナーの操作メニューが表示されず管理者が固定される', (WidgetTester tester) async {
+      final availableMembers = [
+        createGroupMemberDto(
+          memberId: 'owner-id',
+          groupId: '',
+          displayName: 'オーナー',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: createGroupDto(
+              id: '',
+              ownerId: 'owner-id',
+              name: '',
+              members: const [],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+            member: createCurrentMember(),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('オーナー'), findsOneWidget);
+      expect(find.text('管理者'), findsOneWidget);
+      expect(find.byKey(const Key('member_action_menu_0')), findsNothing);
     });
 
     testWidgets('追加ボタンから未選択メンバーを追加できる', (WidgetTester tester) async {
@@ -237,7 +326,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
@@ -245,6 +334,7 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -304,7 +394,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
@@ -312,12 +402,13 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
-      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
+      await tester.tap(find.byKey(const Key('member_action_menu_1')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('メンバーを変更'));
@@ -356,7 +447,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
@@ -364,12 +455,13 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
-      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
+      await tester.tap(find.byKey(const Key('member_action_menu_1')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('メンバーを削除'));
@@ -405,7 +497,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
@@ -413,16 +505,17 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
-      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
+      await tester.tap(find.byKey(const Key('member_action_menu_1')));
       await tester.pumpAndSettle();
 
       final changeMenuItem = tester.widget<PopupMenuItem>(
-        find.byKey(const Key('member_change_action_0')),
+        find.byKey(const Key('member_change_action_1')),
       );
 
       expect(changeMenuItem.enabled, isFalse);
@@ -436,7 +529,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: [
                 createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
@@ -463,6 +556,7 @@ void main() {
                 type: 'member',
               ),
             ],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -501,11 +595,12 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: GroupEditModal(
-            group: createGroupDto(id: '', ownerId: '', name: '', memo: ''),
+            group: createGroupDto(id: '', name: '', memo: ''),
             onSave: (group) {
               savedGroup = group;
             },
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -538,12 +633,13 @@ void main() {
                   builder: (context) => GroupEditModal(
                     group: createGroupDto(
                       id: '',
-                      ownerId: '',
+                      ownerId: 'owner-id',
                       name: '',
                       memo: '',
                     ),
                     onSave: (group) {},
                     availableMembers: const [],
+                    member: createCurrentMember(),
                   ),
                 ),
                 child: const Text('Open Modal'),
@@ -597,7 +693,7 @@ void main() {
           home: GroupEditModal(
             group: createGroupDto(
               id: 'test-id',
-              ownerId: 'admin-id',
+              ownerId: 'owner-id',
               name: 'テストグループ',
               members: availableMembers
                   .take(5)
@@ -611,6 +707,7 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -625,7 +722,7 @@ void main() {
     testWidgets('既存の選択されたメンバーが正しく表示される', (WidgetTester tester) async {
       final group = createGroupDto(
         id: 'test-id',
-        ownerId: 'admin-id',
+        ownerId: 'owner-id',
         name: 'テストグループ',
         memo: 'テストメモ',
         members: [
@@ -678,6 +775,7 @@ void main() {
             group: group,
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -692,7 +790,7 @@ void main() {
     testWidgets('編集モードで既存グループ情報が正しく表示される', (WidgetTester tester) async {
       final group = createGroupDto(
         id: 'test-id',
-        ownerId: 'admin-id',
+        ownerId: 'owner-id',
         name: 'テストグループ',
         memo: 'テストメモ',
       );
@@ -703,6 +801,7 @@ void main() {
             group: group,
             onSave: (group) {},
             availableMembers: const [],
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -779,6 +878,7 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -786,11 +886,25 @@ void main() {
       await tester.pumpAndSettle();
 
       // 管理者バッジが表示されることを確認
-      expect(find.text('管理者'), findsOneWidget);
+      expect(find.text('管理者'), findsNWidgets(2));
       // 管理者メンバー名が表示されることを確認
       expect(find.text('管理者メンバー'), findsOneWidget);
       // 一般メンバー名が表示されることを確認
       expect(find.text('一般メンバー'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('admin_badge_slot_1')),
+          matching: find.text('管理者'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('admin_badge_slot_2')),
+          matching: find.text('管理者'),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('管理者バッジの表示位置が固定される', (WidgetTester tester) async {
@@ -855,6 +969,7 @@ void main() {
             ),
             onSave: (group) {},
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
@@ -865,7 +980,7 @@ void main() {
         find.byKey(const Key('admin_badge_slot_0')),
       );
       final normalSlot = tester.widget<SizedBox>(
-        find.byKey(const Key('admin_badge_slot_1')),
+        find.byKey(const Key('admin_badge_slot_2')),
       );
 
       expect(adminSlot.width, equals(normalSlot.width));
@@ -879,7 +994,7 @@ void main() {
       );
       expect(
         find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_1')),
+          of: find.byKey(const Key('admin_badge_slot_2')),
           matching: find.text('管理者'),
         ),
         findsNothing,
@@ -929,24 +1044,25 @@ void main() {
               savedGroup = group;
             },
             availableMembers: availableMembers,
+            member: createCurrentMember(),
           ),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      // 初期状態では管理者バッジが表示されないことを確認
-      expect(find.text('管理者'), findsNothing);
+      // 初期状態ではオーナーのみ管理者バッジが表示されることを確認
+      expect(find.text('管理者'), findsOneWidget);
 
       // 操作メニューから管理者権限を付与
-      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_1')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('管理者に設定'));
       await tester.pumpAndSettle();
 
-      // 管理者バッジが表示されることを確認
-      expect(find.text('管理者'), findsOneWidget);
+      // 管理者バッジが追加で表示されることを確認
+      expect(find.text('管理者'), findsNWidgets(2));
 
       // グループ名を入力して保存
       await tester.enterText(find.byType(TextFormField).first, 'テストグループ');
@@ -955,7 +1071,10 @@ void main() {
 
       // 保存されたグループの管理者権限が更新されていることを確認
       expect(savedGroup, isNotNull);
-      expect(savedGroup!.members.first.isAdministrator, isTrue);
+      final updatedMember = savedGroup!.members.firstWhere(
+        (member) => member.memberId == 'member1',
+      );
+      expect(updatedMember.isAdministrator, isTrue);
     });
   });
 }

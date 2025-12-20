@@ -121,6 +121,7 @@ class GroupManagement extends HookConsumerWidget {
           builder: (_) => GroupEditModal(
             group: group,
             availableMembers: availableMemberDtos,
+            member: GroupMemberMapper.fromMember(member, group.id),
             onSave: (createdGroup) async {
               try {
                 await createGroupUsecase.execute(createdGroup);
@@ -179,6 +180,7 @@ class GroupManagement extends HookConsumerWidget {
           builder: (_) => GroupEditModal(
             group: groupWithMembers,
             availableMembers: availableMemberDtos,
+            member: GroupMemberMapper.fromMember(member, groupWithMembers.id),
             onSave: (updatedGroup) async {
               try {
                 await updateGroupUsecase.execute(updatedGroup);
