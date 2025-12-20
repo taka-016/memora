@@ -12,12 +12,14 @@ class GroupEditModal extends HookWidget {
   final GroupDto group;
   final Function(Group) onSave;
   final List<GroupMemberDto> availableMembers;
+  final GroupMemberDto member;
 
   const GroupEditModal({
     super.key,
     required this.group,
     required this.onSave,
     required this.availableMembers,
+    required this.member,
   });
 
   @override
@@ -25,8 +27,6 @@ class GroupEditModal extends HookWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(text: group.name);
     final memoController = useTextEditingController(text: group.memo ?? '');
-    final groupState = useState<GroupDto>(group);
-    final isEditing = group.id.isNotEmpty;
 
     GroupMemberDto? findMemberById(String memberId) {
       for (final member in availableMembers) {
@@ -36,6 +36,44 @@ class GroupEditModal extends HookWidget {
       }
       return null;
     }
+
+    List<GroupMemberDto> normalizeMembers(
+      String ownerId,
+      String groupId,
+      List<GroupMemberDto> members,
+    ) {
+      if (ownerId.isEmpty) {
+        return members;
+      }
+
+      final ownerFromMembers = members
+          .where((member) => member.memberId == ownerId)
+          .toList();
+      final resolvedOwner = ownerFromMembers.isNotEmpty
+          ? ownerFromMembers.first
+          : (member.memberId == ownerId ? member : null);
+
+      if (resolvedOwner == null) {
+        return members;
+      }
+
+      final normalizedOwner = resolvedOwner.copyWith(
+        groupId: groupId,
+        isAdministrator: true,
+      );
+      final filteredMembers = members
+          .where((member) => member.memberId != ownerId)
+          .toList();
+
+      return [normalizedOwner, ...filteredMembers];
+    }
+
+    final groupState = useState<GroupDto>(
+      group.copyWith(
+        members: normalizeMembers(group.ownerId, group.id, group.members),
+      ),
+    );
+    final isEditing = group.id.isNotEmpty;
 
     List<GroupMemberDto> getAddableMembers() {
       final selectedIds = groupState.value.members
@@ -74,7 +112,12 @@ class GroupEditModal extends HookWidget {
     }
 
     void updateGroupMembers(List<GroupMemberDto> members) {
-      groupState.value = groupState.value.copyWith(members: members);
+      final normalizedMembers = normalizeMembers(
+        groupState.value.ownerId,
+        groupState.value.id,
+        members,
+      );
+      groupState.value = groupState.value.copyWith(members: normalizedMembers);
     }
 
     void removeMemberAt(int index) {
@@ -274,6 +317,7 @@ class GroupEditModal extends HookWidget {
     Widget buildMemberContainer(int index) {
       final groupMember = groupState.value.members[index];
       final member = findMemberById(groupMember.memberId);
+      final isOwner = groupMember.memberId == groupState.value.ownerId;
       final displayName = groupMember.displayName.isNotEmpty
           ? groupMember.displayName
           : member?.displayName ?? '不明なメンバー';
@@ -294,8 +338,10 @@ class GroupEditModal extends HookWidget {
             ),
             const SizedBox(width: 12),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
-            const SizedBox(width: 8),
-            buildMemberActionMenu(index, groupMember, changeCandidates),
+            if (!isOwner) ...[
+              const SizedBox(width: 8),
+              buildMemberActionMenu(index, groupMember, changeCandidates),
+            ],
           ],
         ),
       );
