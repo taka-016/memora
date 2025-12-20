@@ -298,6 +298,7 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => availableMembers);
+      when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
 
       // Act
       await tester.pumpWidget(createGroupManagementApp());
@@ -320,6 +321,66 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockGroupRepository.updateGroup(any)).called(1);
+    });
+
+    testWidgets('グループ編集後に一覧が最新情報で再取得されること', (WidgetTester tester) async {
+      // Arrange
+      final managedGroupsWithMembers = [groupWithMembers1];
+      final updatedGroups = [
+        groupWithMembers1.copyWith(name: 'Updated Group Name'),
+      ];
+      final availableMembers = [testMember];
+
+      var callCount = 0;
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async {
+        callCount++;
+        return callCount == 1 ? managedGroupsWithMembers : updatedGroups;
+      });
+
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => availableMembers);
+
+      when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      // 初期状態の確認
+      expect(find.text('Test Group 1'), findsOneWidget);
+      expect(find.text('Updated Group Name'), findsNothing);
+
+      // 編集モーダルを開いて更新
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'グループ名').first,
+        'Updated Group Name',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      verify(mockGroupRepository.updateGroup(any)).called(1);
+      verify(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(2);
+      expect(find.text('Updated Group Name'), findsOneWidget);
+      expect(find.text('Test Group 1'), findsNothing);
     });
 
     testWidgets('グループ削除時にエラーが発生した場合、エラーメッセージが表示されること', (

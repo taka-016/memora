@@ -460,6 +460,74 @@ void main() {
       verify(mockMemberRepository.updateMember(any)).called(1);
     });
 
+    testWidgets('メンバー編集後に一覧が最新情報で再取得されること', (WidgetTester tester) async {
+      // Arrange
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      final updatedManagedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Updated Managed User',
+        ),
+      ];
+
+      var callCount = 0;
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async {
+        callCount++;
+        return callCount == 1 ? managedMembers : updatedManagedMembers;
+      });
+
+      when(
+        mockMemberQueryService.getMemberById(testMember.id),
+      ).thenAnswer((_) async => testMember);
+
+      when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
+
+      // Act
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+
+      // 初期状態の確認
+      expect(find.text('Managed User 1'), findsOneWidget);
+      expect(find.text('Updated Managed User'), findsNothing);
+
+      // 管理メンバーの行をタップして編集モーダルを開く（2番目のListTile）
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+
+      // 表示名を変更して更新
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Managed User 1'),
+        'Updated Managed User',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      verify(mockMemberRepository.updateMember(any)).called(1);
+      verify(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(2);
+      expect(find.text('Updated Managed User'), findsOneWidget);
+      expect(find.text('Managed User 1'), findsNothing);
+    });
+
     testWidgets('ログインユーザーメンバーの取得に失敗した場合、エラーが表示されること', (
       WidgetTester tester,
     ) async {

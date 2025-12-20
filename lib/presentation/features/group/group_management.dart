@@ -118,13 +118,13 @@ class GroupManagement extends HookConsumerWidget {
         await showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (dialogContext) => GroupEditModal(
+          builder: (_) => GroupEditModal(
             group: group,
             availableMembers: availableMemberDtos,
             onSave: (createdGroup) async {
               try {
                 await createGroupUsecase.execute(createdGroup);
-                if (!dialogContext.mounted) {
+                if (!context.mounted) {
                   return;
                 }
                 await loadData();
@@ -137,7 +137,7 @@ class GroupManagement extends HookConsumerWidget {
                   error: e,
                   stackTrace: stack,
                 );
-                if (dialogContext.mounted) {
+                if (context.mounted) {
                   scaffoldMessenger.showSnackBar(
                     SnackBar(content: Text('作成に失敗しました: $e')),
                   );
@@ -176,13 +176,13 @@ class GroupManagement extends HookConsumerWidget {
         await showDialog(
           barrierDismissible: false,
           context: context,
-          builder: (dialogContext) => GroupEditModal(
+          builder: (_) => GroupEditModal(
             group: groupWithMembers,
             availableMembers: availableMemberDtos,
             onSave: (updatedGroup) async {
               try {
                 await updateGroupUsecase.execute(updatedGroup);
-                if (!dialogContext.mounted) {
+                if (!context.mounted) {
                   return;
                 }
                 await loadData();
@@ -195,7 +195,7 @@ class GroupManagement extends HookConsumerWidget {
                   error: e,
                   stackTrace: stack,
                 );
-                if (dialogContext.mounted) {
+                if (context.mounted) {
                   scaffoldMessenger.showSnackBar(
                     SnackBar(content: Text('更新に失敗しました: $e')),
                   );
