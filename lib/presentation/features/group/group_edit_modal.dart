@@ -25,7 +25,6 @@ class GroupEditModal extends HookWidget {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(text: group.name);
     final memoController = useTextEditingController(text: group.memo ?? '');
-    final groupState = useState<GroupDto>(group);
     final isEditing = group.id.isNotEmpty;
 
     GroupMemberDto? findMemberById(String memberId) {
@@ -36,6 +35,32 @@ class GroupEditModal extends HookWidget {
       }
       return null;
     }
+
+    bool isOwnerMember(GroupMemberDto member) {
+      return member.memberId == group.ownerId;
+    }
+
+    List<GroupMemberDto> ensureOwnerFirst(List<GroupMemberDto> members) {
+      GroupMemberDto? ownerMember;
+      for (final member in members) {
+        if (isOwnerMember(member)) {
+          ownerMember = member;
+          break;
+        }
+      }
+      ownerMember ??= findMemberById(group.ownerId);
+      if (ownerMember == null) {
+        return members;
+      }
+      final otherMembers = members
+          .where((member) => !isOwnerMember(member))
+          .toList();
+      return [ownerMember, ...otherMembers];
+    }
+
+    final groupState = useState<GroupDto>(
+      group.copyWith(members: ensureOwnerFirst(group.members)),
+    );
 
     List<GroupMemberDto> getAddableMembers() {
       final selectedIds = groupState.value.members
@@ -74,10 +99,15 @@ class GroupEditModal extends HookWidget {
     }
 
     void updateGroupMembers(List<GroupMemberDto> members) {
-      groupState.value = groupState.value.copyWith(members: members);
+      groupState.value = groupState.value.copyWith(
+        members: ensureOwnerFirst(members),
+      );
     }
 
     void removeMemberAt(int index) {
+      if (isOwnerMember(groupState.value.members[index])) {
+        return;
+      }
       final updatedMembers = List<GroupMemberDto>.from(
         groupState.value.members,
       );
@@ -143,6 +173,11 @@ class GroupEditModal extends HookWidget {
       _MemberAction action,
       List<GroupMemberDto> changeCandidates,
     ) {
+      final targetMember = groupState.value.members[index];
+      if (isOwnerMember(targetMember) &&
+          action != _MemberAction.toggleAdministrator) {
+        return;
+      }
       switch (action) {
         case _MemberAction.toggleAdministrator:
           toggleAdministrator(index);
@@ -214,6 +249,7 @@ class GroupEditModal extends HookWidget {
       GroupMemberDto groupMember,
       List<GroupMemberDto> changeCandidates,
     ) {
+      final isOwner = isOwnerMember(groupMember);
       final hasAlternative = changeCandidates
           .where((candidate) => candidate.memberId != groupMember.memberId)
           .isNotEmpty;
@@ -234,12 +270,14 @@ class GroupEditModal extends HookWidget {
           PopupMenuItem<_MemberAction>(
             key: Key('member_change_action_$index'),
             value: _MemberAction.changeMember,
-            enabled: hasAlternative,
+            enabled: hasAlternative && !isOwner,
             child: const Text('メンバーを変更'),
           ),
-          const PopupMenuItem<_MemberAction>(
+          PopupMenuItem<_MemberAction>(
+            key: Key('member_remove_action_$index'),
             value: _MemberAction.removeMember,
-            child: Text('メンバーを削除'),
+            enabled: !isOwner,
+            child: const Text('メンバーを削除'),
           ),
         ],
       );

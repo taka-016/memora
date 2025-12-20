@@ -196,6 +196,8 @@
   - [x] GroupMemberはmemberを引数に取るようにする
   - [x] getGroupsWithMembersUsecase.executeにmemberを渡す
   - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す
+- [x] グループオーナーは必ずグループメンバーに含める
+  - [x] グループ新規/編集画面のメンバー一覧の先頭にデフォルトでグループオーナーを表示し、削除不可とする
 
 ## メンバー管理画面
 

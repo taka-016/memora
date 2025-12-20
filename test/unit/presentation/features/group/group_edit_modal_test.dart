@@ -210,6 +210,151 @@ void main() {
       expect(find.text('メンバー2'), findsOneWidget);
     });
 
+    testWidgets('オーナーが先頭に表示される', (WidgetTester tester) async {
+      final availableMembers = [
+        createGroupMemberDto(
+          memberId: 'owner',
+          groupId: '',
+          accountId: 'account-owner',
+          ownerId: 'owner',
+          displayName: 'オーナー',
+          kanjiLastName: '代表',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'だいひょう',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Owner',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'owner@example.com',
+          phoneNumber: '090-0000-0000',
+          type: 'member',
+        ),
+        createGroupMemberDto(
+          memberId: 'member2',
+          groupId: '',
+          accountId: 'account2',
+          ownerId: 'owner',
+          displayName: 'メンバー2',
+          kanjiLastName: '鈴木',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'すずき',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Suzuki',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-8765-4321',
+          type: 'member',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: createGroupDto(
+              id: 'group1',
+              ownerId: 'owner',
+              name: 'テストグループ',
+              members: [
+                createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('member_row_0')),
+          matching: find.text('オーナー'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('member_row_1')),
+          matching: find.text('メンバー2'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('オーナーは削除できない', (WidgetTester tester) async {
+      final availableMembers = [
+        createGroupMemberDto(
+          memberId: 'owner',
+          groupId: '',
+          accountId: 'account-owner',
+          ownerId: 'owner',
+          displayName: 'オーナー',
+          kanjiLastName: '代表',
+          kanjiFirstName: '太郎',
+          hiraganaLastName: 'だいひょう',
+          hiraganaFirstName: 'たろう',
+          firstName: 'Taro',
+          lastName: 'Owner',
+          gender: '男性',
+          birthday: DateTime(1990, 1, 1),
+          email: 'owner@example.com',
+          phoneNumber: '090-0000-0000',
+          type: 'member',
+        ),
+        createGroupMemberDto(
+          memberId: 'member2',
+          groupId: '',
+          accountId: 'account2',
+          ownerId: 'owner',
+          displayName: 'メンバー2',
+          kanjiLastName: '鈴木',
+          kanjiFirstName: '花子',
+          hiraganaLastName: 'すずき',
+          hiraganaFirstName: 'はなこ',
+          firstName: 'Hanako',
+          lastName: 'Suzuki',
+          gender: '女性',
+          birthday: DateTime(1992, 5, 15),
+          email: 'hanako@example.com',
+          phoneNumber: '090-8765-4321',
+          type: 'member',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: createGroupDto(
+              id: 'group1',
+              ownerId: 'owner',
+              name: 'テストグループ',
+              members: [
+                createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
+                createGroupMemberDto(groupId: 'group1', memberId: 'owner'),
+              ],
+            ),
+            onSave: (group) {},
+            availableMembers: availableMembers,
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
+      await tester.pumpAndSettle();
+
+      final removeMenuItem = tester.widget<PopupMenuItem>(
+        find.byKey(const Key('member_remove_action_0')),
+      );
+
+      expect(removeMenuItem.enabled, isFalse);
+    });
+
     testWidgets('追加ボタンから未選択メンバーを追加できる', (WidgetTester tester) async {
       final availableMembers = [
         createGroupMemberDto(
