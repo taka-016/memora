@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
@@ -11,15 +10,19 @@ import 'package:memora/application/usecases/group/update_group_usecase.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class GroupManagement extends HookConsumerWidget {
-  final MemberDto member;
-
-  const GroupManagement({super.key, required this.member});
+  const GroupManagement({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = ref.watch(currentMemberNotifierProvider).member;
+    if (currentMember == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final getManagedGroupsWithMembersUsecase = ref.read(
       getManagedGroupsWithMembersUsecaseProvider,
     );
@@ -35,7 +38,9 @@ class GroupManagement extends HookConsumerWidget {
       isLoading.value = true;
 
       try {
-        final data = await getManagedGroupsWithMembersUsecase.execute(member);
+        final data = await getManagedGroupsWithMembersUsecase.execute(
+          currentMember,
+        );
         managedGroups.value = List<GroupDto>.from(data);
       } catch (e, stack) {
         logger.e(
@@ -58,7 +63,7 @@ class GroupManagement extends HookConsumerWidget {
     useEffect(() {
       loadData();
       return null;
-    }, [member.id]);
+    }, [currentMember.id]);
 
     Future<void> deleteGroup(GroupDto groupWithMembers) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -101,11 +106,13 @@ class GroupManagement extends HookConsumerWidget {
       try {
         final group = GroupDto(
           id: '',
-          ownerId: member.id,
+          ownerId: currentMember.id,
           name: '',
           members: const [],
         );
-        final availableMembers = await getManagedMembersUsecase.execute(member);
+        final availableMembers = await getManagedMembersUsecase.execute(
+          currentMember,
+        );
         final availableMemberDtos = GroupMemberMapper.fromMemberList(
           availableMembers,
           group.id,
@@ -121,7 +128,7 @@ class GroupManagement extends HookConsumerWidget {
           builder: (_) => GroupEditModal(
             group: group,
             availableMembers: availableMemberDtos,
-            member: GroupMemberMapper.fromMember(member, group.id),
+            member: GroupMemberMapper.fromMember(currentMember, group.id),
             onSave: (createdGroup) async {
               try {
                 await createGroupUsecase.execute(createdGroup);
@@ -165,7 +172,9 @@ class GroupManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        final availableMembers = await getManagedMembersUsecase.execute(member);
+        final availableMembers = await getManagedMembersUsecase.execute(
+          currentMember,
+        );
         final availableMemberDtos = GroupMemberMapper.fromMemberList(
           availableMembers,
           groupWithMembers.id,
@@ -180,7 +189,10 @@ class GroupManagement extends HookConsumerWidget {
           builder: (_) => GroupEditModal(
             group: groupWithMembers,
             availableMembers: availableMemberDtos,
-            member: GroupMemberMapper.fromMember(member, groupWithMembers.id),
+            member: GroupMemberMapper.fromMember(
+              currentMember,
+              groupWithMembers.id,
+            ),
             onSave: (updatedGroup) async {
               try {
                 await updateGroupUsecase.execute(updatedGroup);

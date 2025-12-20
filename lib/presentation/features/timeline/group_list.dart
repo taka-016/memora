@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 enum GroupListState { loading, groupList, empty, error }
 
 class GroupList extends HookConsumerWidget {
-  final MemberDto member;
   final void Function(GroupDto)? onGroupSelected;
 
-  const GroupList({super.key, required this.member, this.onGroupSelected});
+  const GroupList({super.key, this.onGroupSelected});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = ref.watch(currentMemberNotifierProvider).member;
+    if (currentMember == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final getGroupsWithMembersUsecase = ref.read(
       getGroupsWithMembersUsecaseProvider,
     );
@@ -27,7 +31,9 @@ class GroupList extends HookConsumerWidget {
     final loadData = useCallback(() async {
       try {
         state.value = GroupListState.loading;
-        final fetchedGroups = await getGroupsWithMembersUsecase.execute(member);
+        final fetchedGroups = await getGroupsWithMembersUsecase.execute(
+          currentMember,
+        );
 
         if (!context.mounted) return;
 
@@ -45,7 +51,7 @@ class GroupList extends HookConsumerWidget {
         errorMessage.value = 'エラーが発生しました';
         state.value = GroupListState.error;
       }
-    }, [context, getGroupsWithMembersUsecase, member]);
+    }, [context, getGroupsWithMembersUsecase, currentMember]);
 
     useEffect(() {
       Future.microtask(loadData);

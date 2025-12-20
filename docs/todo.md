@@ -462,9 +462,6 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
 - [x] GroupDtoを作成する
   - [x] GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - [x] マッパーも用意する
-- [ ] TopPageで取得しているcurrentMemberをRiverpodでグローバル管理する
-  - [ ] currentMemberの取得責務をNotifier/Providerに移す
-  - [ ] 各画面へのmember引数受け渡しを廃止する
 - [x] Repository Factoryパターンを導入してDB切り替えを可能にする
   - [x] DatabaseTypeのenumとRiverpod Providerを作成
   - [x] RepositoryFactoryを実装
@@ -510,6 +507,9 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] PinDetailBottomSheet
   - [x] RouteMemoEditBottomSheet
   - [x] RouteInfoView
+- [x] TopPageで取得しているcurrentMemberをRiverpodでグローバル管理する
+  - [x] currentMemberの取得責務をNotifier/Providerに移す
+  - [x] 各画面へのmember引数受け渡しを廃止する
 
 ## 不具合修正
 

@@ -16,11 +16,12 @@ import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../helpers/fake_auth_notifier.dart';
-import '../../../helpers/test_exception.dart';
+import '../../../helpers/fake_current_member_notifier.dart';
 import 'top_page_test.mocks.dart';
 
 // テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
@@ -109,6 +110,7 @@ void main() {
     MockMemberQueryService? memberQueryService,
     MockAuthService? authService,
     MockAuthNotifier? authNotifier,
+    MemberDto? currentMember,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -141,6 +143,10 @@ void main() {
     return ProviderScope(
       overrides: [
         authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
+        currentMemberNotifierProvider.overrideWith(
+          () =>
+              FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember),
+        ),
         memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
         authServiceProvider.overrideWithValue(testAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
@@ -620,6 +626,9 @@ void main() {
           groupTimelineNavigationNotifierProvider.overrideWith(
             () => _TestGroupTimelineNavigationNotifier(),
           ),
+          currentMemberNotifierProvider.overrideWith(
+            () => FakeCurrentMemberNotifier.loaded(defaultMember),
+          ),
           memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
@@ -659,10 +668,6 @@ void main() {
       );
 
       when(
-        mockMemberQueryService.getMemberByAccountId(any),
-      ).thenThrow(TestException('メンバー情報の取得に失敗しました'));
-      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
-      when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
           groupsOrderBy: anyNamed('groupsOrderBy'),
@@ -676,6 +681,11 @@ void main() {
       final widget = ProviderScope(
         overrides: [
           authNotifierProvider.overrideWith(() => fakeAuthNotifier),
+          currentMemberNotifierProvider.overrideWith(
+            () => FakeCurrentMemberNotifier.error(
+              'メンバー情報の取得に失敗しました。再度ログインしてください。',
+            ),
+          ),
           memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),

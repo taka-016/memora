@@ -10,16 +10,20 @@ import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
 class MemberManagement extends HookConsumerWidget {
-  final MemberDto member;
-
-  const MemberManagement({super.key, required this.member});
+  const MemberManagement({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = ref.watch(currentMemberNotifierProvider).member;
+    if (currentMember == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
     final createMemberUsecase = ref.read(createMemberUsecaseProvider);
     final updateMemberUsecase = ref.read(updateMemberUsecaseProvider);
@@ -37,14 +41,16 @@ class MemberManagement extends HookConsumerWidget {
 
       try {
         final managedMembersResult = await getManagedMembersUsecase.execute(
-          member,
+          currentMember,
         );
-        final currentMember = await getMemberByIdUseCase.execute(member.id);
-        if (currentMember == null) {
+        final refreshedMember = await getMemberByIdUseCase.execute(
+          currentMember.id,
+        );
+        if (refreshedMember == null) {
           throw Exception('ログインユーザーメンバーの最新情報の取得に失敗しました');
         }
         managedMembers.value = List<MemberDto>.from([
-          currentMember,
+          refreshedMember,
           ...managedMembersResult,
         ]);
       } catch (e, stack) {
@@ -76,7 +82,7 @@ class MemberManagement extends HookConsumerWidget {
 
       try {
         final invitationCode = await createOrUpdateMemberInvitationUsecase
-            .execute(inviteeId: targetMember.id, inviterId: member.id);
+            .execute(inviteeId: targetMember.id, inviterId: currentMember.id);
 
         if (!context.mounted) {
           return;
@@ -183,7 +189,7 @@ class MemberManagement extends HookConsumerWidget {
         builder: (_) => MemberEditModal(
           onSave: (newMember) async {
             try {
-              await createMemberUsecase.execute(newMember, member.id);
+              await createMemberUsecase.execute(newMember, currentMember.id);
               if (!context.mounted) {
                 return;
               }
@@ -239,7 +245,7 @@ class MemberManagement extends HookConsumerWidget {
               }
             }
           },
-          onInvite: targetMember.id != member.id
+          onInvite: targetMember.id != currentMember.id
               ? (memberDto) async {
                   await handleMemberInvite(memberDto);
                 }
