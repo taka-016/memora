@@ -180,11 +180,11 @@ class MemberManagement extends HookConsumerWidget {
       await showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (dialogContext) => MemberEditModal(
+        builder: (_) => MemberEditModal(
           onSave: (newMember) async {
             try {
               await createMemberUsecase.execute(newMember, member.id);
-              if (!dialogContext.mounted) {
+              if (!context.mounted) {
                 return;
               }
               await loadData();
@@ -197,7 +197,7 @@ class MemberManagement extends HookConsumerWidget {
                 error: e,
                 stackTrace: stack,
               );
-              if (dialogContext.mounted) {
+              if (context.mounted) {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text('作成に失敗しました: $e')),
                 );
@@ -214,12 +214,12 @@ class MemberManagement extends HookConsumerWidget {
       await showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (dialogContext) => MemberEditModal(
+        builder: (_) => MemberEditModal(
           member: targetMember,
           onSave: (updatedMember) async {
             try {
               await updateMemberUsecase.execute(updatedMember);
-              if (!dialogContext.mounted) {
+              if (!context.mounted) {
                 return;
               }
               await loadData();
@@ -232,7 +232,7 @@ class MemberManagement extends HookConsumerWidget {
                 error: e,
                 stackTrace: stack,
               );
-              if (dialogContext.mounted) {
+              if (context.mounted) {
                 scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text('更新に失敗しました: $e')),
                 );
