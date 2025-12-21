@@ -160,6 +160,39 @@ void main() {
       expect(savedGroup!.name, 'テストグループ');
     });
 
+    testWidgets('メモを空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
+      Group? savedGroup;
+
+      final group = createGroupDto(
+        id: 'test-id',
+        ownerId: 'owner-id',
+        name: 'テストグループ',
+        memo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupEditModal(
+            group: group,
+            onSave: (group) {
+              savedGroup = group;
+            },
+            availableMembers: const [],
+            member: createCurrentMember(),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextFormField).at(1), '');
+      await tester.pump();
+
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      expect(savedGroup, isNotNull);
+      expect(savedGroup!.memo, '');
+    });
+
     testWidgets('既存メンバーが一覧表示される', (WidgetTester tester) async {
       final availableMembers = [
         createGroupMemberDto(

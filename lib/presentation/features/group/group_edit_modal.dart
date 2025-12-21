@@ -456,9 +456,7 @@ class GroupEditModal extends HookWidget {
               if (formKey.currentState!.validate()) {
                 final updatedGroup = groupState.value.copyWith(
                   name: nameController.text,
-                  memo: memoController.text.isEmpty
-                      ? null
-                      : memoController.text,
+                  memo: memoController.text,
                 );
                 onSave(GroupMapper.toEntity(updatedGroup));
                 Navigator.of(context).pop();
