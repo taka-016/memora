@@ -14,9 +14,8 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 class TopPage extends HookConsumerWidget {
   final bool isTestEnvironment;
@@ -25,38 +24,6 @@ class TopPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentMember = useState<MemberDto?>(null);
-    final getCurrentMemberUseCase = ref.read(getCurrentMemberUsecaseProvider);
-    Future<void> loadCurrentMember() async {
-      try {
-        final member = await getCurrentMemberUseCase.execute();
-        if (!context.mounted) {
-          return;
-        }
-        currentMember.value = member;
-      } catch (e, stack) {
-        logger.e(
-          'TopPage.loadCurrentMember: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (!context.mounted) {
-          return;
-        }
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) {
-            return;
-          }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('メンバー情報の取得に失敗しました。再度ログインしてください。')),
-          );
-          ref.read(authNotifierProvider.notifier).logout();
-        });
-      }
-    }
-
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
@@ -66,15 +33,34 @@ class TopPage extends HookConsumerWidget {
         ref
             .read(groupTimelineNavigationNotifierProvider.notifier)
             .resetToGroupList();
-        loadCurrentMember();
       });
       return null;
     }, const []);
 
+    final currentMemberState = ref.watch(currentMemberNotifierProvider);
+    final currentMember = currentMemberState.member;
+
+    useEffect(() {
+      if (currentMemberState.status != CurrentMemberStatus.error) {
+        return null;
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(currentMemberState.message)));
+        ref.read(authNotifierProvider.notifier).logout();
+      });
+      return null;
+    }, [currentMemberState.status, currentMemberState.message]);
+
     return Scaffold(
       appBar: _buildAppBar(context),
       drawer: _buildDrawer(context, ref),
-      body: _buildBody(context, ref, currentMember.value),
+      body: _buildBody(context, ref, currentMember),
     );
   }
 
@@ -114,10 +100,7 @@ class TopPage extends HookConsumerWidget {
           .read(groupTimelineNavigationNotifierProvider.notifier)
           .getStackIndex(),
       children: [
-        GroupList(
-          member: currentMember,
-          onGroupSelected: (group) => _onGroupSelected(ref, group),
-        ),
+        GroupList(onGroupSelected: (group) => _onGroupSelected(ref, group)),
         isTestEnvironment
             ? _buildTestGroupTimeline(ref)
             : timelineState.groupTimelineInstance ?? Container(),
@@ -179,10 +162,7 @@ class TopPage extends HookConsumerWidget {
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return MapScreen(
-          member: currentMember,
-          isTestEnvironment: isTestEnvironment,
-        );
+        return MapScreen(isTestEnvironment: isTestEnvironment);
       case NavigationItem.groupManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
@@ -194,7 +174,7 @@ class TopPage extends HookConsumerWidget {
                 title: 'グループ管理',
                 subtitle: 'グループ管理画面',
               )
-            : GroupManagement(member: currentMember);
+            : const GroupManagement();
       case NavigationItem.memberManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
@@ -206,7 +186,7 @@ class TopPage extends HookConsumerWidget {
                 title: 'メンバー管理',
                 subtitle: 'メンバー管理画面',
               )
-            : MemberManagement(member: currentMember);
+            : const MemberManagement();
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:

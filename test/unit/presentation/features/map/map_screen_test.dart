@@ -6,10 +6,12 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
+import '../../../../helpers/fake_current_member_notifier.dart';
 import 'map_screen_test.mocks.dart';
 
 @GenerateMocks([PinQueryService])
@@ -27,11 +29,12 @@ void main() {
         ProviderScope(
           overrides: [
             pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+            currentMemberNotifierProvider.overrideWith(
+              () => FakeCurrentMemberNotifier.loaded(testMember),
+            ),
           ],
           child: MaterialApp(
-            home: Scaffold(
-              body: MapScreen(member: testMember, isTestEnvironment: true),
-            ),
+            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
           ),
         ),
       );
@@ -67,11 +70,12 @@ void main() {
         ProviderScope(
           overrides: [
             pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+            currentMemberNotifierProvider.overrideWith(
+              () => FakeCurrentMemberNotifier.loaded(testMember),
+            ),
           ],
           child: MaterialApp(
-            home: Scaffold(
-              body: MapScreen(member: testMember, isTestEnvironment: true),
-            ),
+            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
           ),
         ),
       );

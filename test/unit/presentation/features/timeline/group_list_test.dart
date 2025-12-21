@@ -8,9 +8,11 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/group_list.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
 
+import '../../../../helpers/fake_current_member_notifier.dart';
 import 'group_list_test.mocks.dart';
 
 @GenerateMocks([GroupQueryService])
@@ -46,10 +48,11 @@ void main() {
     return ProviderScope(
       overrides: [
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        currentMemberNotifierProvider.overrideWith(
+          () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
+        ),
       ],
-      child: MaterialApp(
-        home: Scaffold(body: GroupList(member: member ?? testMember)),
-      ),
+      child: MaterialApp(home: const Scaffold(body: GroupList())),
     );
   }
 
@@ -210,11 +213,13 @@ void main() {
         ProviderScope(
           overrides: [
             groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+            currentMemberNotifierProvider.overrideWith(
+              () => FakeCurrentMemberNotifier.loaded(testMember),
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(
               body: GroupList(
-                member: testMember,
                 onGroupSelected: (groupWithMembers) {
                   selectedGroup = groupWithMembers;
                 },

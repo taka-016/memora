@@ -14,8 +14,10 @@ import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';
 
+import '../../../../helpers/fake_current_member_notifier.dart';
 import 'member_management_test.mocks.dart';
 
 @GenerateMocks([
@@ -81,13 +83,14 @@ void main() {
       memberInvitationQueryServiceProvider.overrideWithValue(
         mockMemberInvitationQueryService,
       ),
+      currentMemberNotifierProvider.overrideWith(
+        () => FakeCurrentMemberNotifier.loaded(testMember),
+      ),
     ];
   });
 
-  Widget createApp({MemberDto? member, Widget? home}) {
-    final defaultHome = Scaffold(
-      body: MemberManagement(member: member ?? testMember),
-    );
+  Widget createApp({Widget? home}) {
+    final defaultHome = const Scaffold(body: MemberManagement());
 
     return ProviderScope(
       overrides: providerOverrides,
