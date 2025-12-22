@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -10,12 +11,14 @@ void main() {
   group('TripEditModal', () {
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -36,13 +39,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -63,13 +68,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -83,12 +90,14 @@ void main() {
 
     testWidgets('旅行期間From、旅行期間Toの入力フィールドが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -107,13 +116,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -139,13 +150,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -164,12 +177,14 @@ void main() {
 
     testWidgets('メモの入力フィールドが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -180,12 +195,14 @@ void main() {
 
     testWidgets('編集ボタンがメモの下に表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -215,13 +232,15 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
-              testHandle: testHandle,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+                testHandle: testHandle,
+              ),
             ),
           ),
         ),
@@ -255,13 +274,15 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
-              testHandle: testHandle,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+                testHandle: testHandle,
+              ),
             ),
           ),
         ),
@@ -305,12 +326,14 @@ void main() {
 
     testWidgets('×アイコンをタップで地図が閉じること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -352,12 +375,14 @@ void main() {
 
     testWidgets('新規作成時は「作成」ボタンが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -378,13 +403,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -395,12 +422,14 @@ void main() {
 
     testWidgets('キャンセルボタンが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -415,15 +444,17 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
-              testHandle: testHandle,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+                testHandle: testHandle,
+              ),
             ),
           ),
         ),
@@ -471,15 +502,17 @@ void main() {
       TripEntry? updatedTripEntry;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: existingTripEntry,
-              onSave: (TripEntry tripEntry) {
-                updatedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: existingTripEntry,
+                onSave: (TripEntry tripEntry) {
+                  updatedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -503,15 +536,17 @@ void main() {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              year: 2024,
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                year: 2024,
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -534,24 +569,26 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: TripEntryDto(
-                id: 'test-id',
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
                 groupId: 'test-group-id',
-                tripYear: 2024,
-                tripName: 'テスト旅行',
-                tripStartDate: DateTime(2024, 1, 1),
-                tripEndDate: DateTime(2024, 1, 3),
-                tripMemo: 'テストメモ',
+                tripEntry: TripEntryDto(
+                  id: 'test-id',
+                  groupId: 'test-group-id',
+                  tripYear: 2024,
+                  tripName: 'テスト旅行',
+                  tripStartDate: DateTime(2024, 1, 1),
+                  tripEndDate: DateTime(2024, 1, 3),
+                  tripMemo: 'テストメモ',
+                ),
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+                testHandle: testHandle,
               ),
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
-              testHandle: testHandle,
             ),
           ),
         ),
@@ -581,25 +618,27 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              year: 2024,
-              tripEntry: TripEntryDto(
-                id: 'test-id',
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
                 groupId: 'test-group-id',
-                tripYear: 2024,
-                tripName: 'テスト旅行',
-                tripStartDate: DateTime(2023, 6, 1), // 2024年以外
-                tripEndDate: DateTime(2024, 6, 10),
-                tripMemo: 'テストメモ',
+                year: 2024,
+                tripEntry: TripEntryDto(
+                  id: 'test-id',
+                  groupId: 'test-group-id',
+                  tripYear: 2024,
+                  tripName: 'テスト旅行',
+                  tripStartDate: DateTime(2023, 6, 1), // 2024年以外
+                  tripEndDate: DateTime(2024, 6, 10),
+                  tripMemo: 'テストメモ',
+                ),
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+                testHandle: testHandle,
               ),
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
-              testHandle: testHandle,
             ),
           ),
         ),
@@ -626,24 +665,26 @@ void main() {
       TripEntry? savedTripEntry;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              year: 2024,
-              tripEntry: TripEntryDto(
-                id: 'test-id',
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
                 groupId: 'test-group-id',
-                tripYear: 2024,
-                tripName: 'テスト旅行',
-                tripStartDate: DateTime(2024, 12, 30),
-                tripEndDate: DateTime(2025, 1, 3), // 年またぎ
-                tripMemo: 'テストメモ',
+                year: 2024,
+                tripEntry: TripEntryDto(
+                  id: 'test-id',
+                  groupId: 'test-group-id',
+                  tripYear: 2024,
+                  tripName: 'テスト旅行',
+                  tripStartDate: DateTime(2024, 12, 30),
+                  tripEndDate: DateTime(2025, 1, 3), // 年またぎ
+                  tripMemo: 'テストメモ',
+                ),
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
               ),
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
             ),
           ),
         ),
@@ -667,16 +708,18 @@ void main() {
       const groupId = 'test-group-id';
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) {
-                return TripEditModal(
-                  groupId: groupId,
-                  onSave: (TripEntry tripEntry) {},
-                  isTestEnvironment: true,
-                );
-              },
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  return TripEditModal(
+                    groupId: groupId,
+                    onSave: (TripEntry tripEntry) {},
+                    isTestEnvironment: true,
+                  );
+                },
+              ),
             ),
           ),
         ),
@@ -725,15 +768,17 @@ void main() {
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              onSave: (TripEntry tripEntry) {
-                savedTripEntry = tripEntry;
-              },
-              isTestEnvironment: true,
-              testHandle: testHandle,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {
+                  savedTripEntry = tripEntry;
+                },
+                isTestEnvironment: true,
+                testHandle: testHandle,
+              ),
             ),
           ),
         ),
@@ -811,13 +856,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -841,13 +888,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -880,13 +929,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -931,13 +982,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -974,13 +1027,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -1018,13 +1073,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -1062,13 +1119,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
@@ -1110,13 +1169,15 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: TripEditModal(
-              groupId: 'test-group-id',
-              tripEntry: tripEntry,
-              onSave: (TripEntry tripEntry) {},
-              isTestEnvironment: true,
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                tripEntry: tripEntry,
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
             ),
           ),
         ),
