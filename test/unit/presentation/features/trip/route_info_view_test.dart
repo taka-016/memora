@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/enums/travel_mode.dart';
+import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/constants/color_constants.dart';
 import 'package:memora/domain/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class FakeRouteInfoService implements RouteInfoService {
   final List<_RouteRequest> _requests = [];
@@ -89,20 +91,25 @@ void main() {
   Future<RouteInfoViewTestHandle> pumpRouteInfoView(
     WidgetTester tester, {
     RouteInfoService? service,
+    FetchRouteInfoUsecase? usecase,
     VoidCallback? onClose,
     List<PinDto>? overridePins,
   }) async {
     final handle = RouteInfoViewTestHandle();
     final targetPins = overridePins ?? pins;
+    final effectiveService = service ?? FakeRouteInfoService(responses: {});
+    final effectiveUsecase = usecase ?? FetchRouteInfoUsecase(effectiveService);
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: RouteInfoView(
-            pins: targetPins,
-            routeInfoService: service,
-            isTestEnvironment: true,
-            onClose: onClose,
-            testHandle: handle,
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: RouteInfoView(
+              pins: targetPins,
+              fetchRouteInfoUsecase: effectiveUsecase,
+              isTestEnvironment: true,
+              onClose: onClose,
+              testHandle: handle,
+            ),
           ),
         ),
       ),

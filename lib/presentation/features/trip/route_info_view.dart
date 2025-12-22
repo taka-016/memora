@@ -4,15 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/constants/color_constants.dart';
-import 'package:memora/domain/services/route_info_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/env/env.dart';
-import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 import 'package:memora/presentation/shared/sheets/route_memo_edit_bottom_sheet.dart';
 
 part 'route_list.dart';
@@ -50,27 +48,26 @@ class RouteInfoViewTestHandle {
   }
 }
 
-class RouteInfoView extends HookWidget {
+class RouteInfoView extends HookConsumerWidget {
   const RouteInfoView({
     super.key,
     required this.pins,
-    this.routeInfoService,
+    this.fetchRouteInfoUsecase,
     this.onClose,
     this.isTestEnvironment = false,
     this.testHandle,
   });
 
   final List<PinDto> pins;
-  final RouteInfoService? routeInfoService;
+  final FetchRouteInfoUsecase? fetchRouteInfoUsecase;
   final VoidCallback? onClose;
   final bool isTestEnvironment;
   final RouteInfoViewTestHandle? testHandle;
 
   @override
-  Widget build(BuildContext context) {
-    final service =
-        routeInfoService ??
-        GoogleRoutesApiRouteInfoService(apiKey: Env.googlePlacesApiKey);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final FetchRouteInfoUsecase usecase =
+        fetchRouteInfoUsecase ?? ref.read(fetchRouteInfoUsecaseProvider);
 
     final pinsState = useState<List<PinDto>>(List<PinDto>.from(pins));
     final segmentModesState = useState<Map<String, TravelMode>>({});
@@ -83,24 +80,6 @@ class RouteInfoView extends HookWidget {
     final mapControllerState = useState<GoogleMapController?>(null);
     final shouldFitMapState = useState(false);
 
-    RouteSegmentDetail mergeRouteDetailForMode({
-      required String key,
-      required TravelMode mode,
-      required RouteSegmentDetail fetchedDetail,
-    }) {
-      if (mode != TravelMode.other) {
-        return fetchedDetail;
-      }
-      final existingDetail = segmentDetailsState.value[key];
-      if (existingDetail == null || !_hasManualContent(existingDetail)) {
-        return fetchedDetail;
-      }
-      final updatedPolyline = fetchedDetail.polyline.isNotEmpty
-          ? fetchedDetail.polyline
-          : existingDetail.polyline;
-      return existingDetail.copyWith(polyline: updatedPolyline);
-    }
-
     Future<void> searchRoutes() async {
       if (pinsState.value.length < 2) {
         return;
@@ -112,32 +91,13 @@ class RouteInfoView extends HookWidget {
       final nextResults = <String, RouteSegmentDetail>{};
 
       try {
-        final currentPins = pinsState.value;
-        for (var i = 0; i < currentPins.length - 1; i++) {
-          final origin = currentPins[i];
-          final destination = currentPins[i + 1];
-          final key = _routeSegmentKey(origin, destination);
-          final mode = segmentModesState.value[key] ?? TravelMode.drive;
-
-          RouteSegmentDetail detail = await service.fetchRoute(
-            origin: Location(
-              latitude: origin.latitude,
-              longitude: origin.longitude,
-            ),
-            destination: Location(
-              latitude: destination.latitude,
-              longitude: destination.longitude,
-            ),
-            travelMode: mode,
-          );
-          detail = mergeRouteDetailForMode(
-            key: key,
-            mode: mode,
-            fetchedDetail: detail,
-          );
-
-          nextResults[key] = detail;
-        }
+        nextResults.addAll(
+          await usecase.execute(
+            pins: pinsState.value,
+            segmentModes: segmentModesState.value,
+            existingDetails: segmentDetailsState.value,
+          ),
+        );
 
         if (!context.mounted) {
           return;
