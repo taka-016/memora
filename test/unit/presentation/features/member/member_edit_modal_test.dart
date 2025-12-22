@@ -196,6 +196,36 @@ void main() {
       expect(find.text('生年月日'), findsOneWidget);
     });
 
+    testWidgets('生年月日に未来日付を入力できること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MemberEditModal(member: null, onSave: (member) {}),
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.text('選択してください'));
+      await tester.tap(find.text('選択してください'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('date_header')));
+      await tester.pumpAndSettle();
+
+      final futureDate = DateTime.now().add(const Duration(days: 30));
+      final inputText =
+          '${futureDate.year.toString().padLeft(4, '0')}${futureDate.month.toString().padLeft(2, '0')}${futureDate.day.toString().padLeft(2, '0')}';
+      await tester.enterText(find.byKey(const Key('date_field')), inputText);
+      await tester.tap(find.text('確定'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('date_field')), findsNothing);
+      expect(
+        find.text('${futureDate.year}/${futureDate.month}/${futureDate.day}'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('キャンセルボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(

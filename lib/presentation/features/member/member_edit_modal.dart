@@ -163,7 +163,7 @@ class MemberEditModal extends HookWidget {
             context,
             initialDate: birthday.value ?? DateTime.now(),
             firstDate: DateTime(1900),
-            lastDate: DateTime.now(),
+            lastDate: DateTime(2100),
           );
           if (selectedDate != null) {
             birthday.value = selectedDate;
