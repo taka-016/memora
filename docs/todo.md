@@ -227,6 +227,7 @@
 - [x] accountIdを持っているメンバーは削除不可とする（削除ボタンを表示しない）
 - [x] メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
 - [x] メール認証の有効化
+- [x] 生年月日は未来日付も入力可能にする
 
 ## グループ管理画面
 

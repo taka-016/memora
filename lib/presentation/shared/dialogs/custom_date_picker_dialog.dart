@@ -178,6 +178,7 @@ class CustomDatePickerDialog extends HookWidget {
           child: GestureDetector(
             onTap: switchToInputMode,
             child: Text(
+              key: const Key('date_header'),
               _formatDateWithWeekday(selectedDate.value),
               style: const TextStyle(
                 color: Colors.white,
