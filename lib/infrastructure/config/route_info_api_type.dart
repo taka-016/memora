@@ -1,0 +1,1 @@
+enum RouteInfoApiType { googleRoutes, local }
