@@ -201,8 +201,8 @@ void main() {
       final futureAge = currentYear + 5 - birthday.year;
 
       // Assert
-      expect(find.text('$currentAge歳'), findsOneWidget);
-      expect(find.text('$futureAge歳'), findsOneWidget);
+      expect(find.textContaining('$currentAge歳'), findsOneWidget);
+      expect(find.textContaining('$futureAge歳'), findsOneWidget);
     });
 
     testWidgets('生年月日未設定のメンバーには年齢を表示しない', (WidgetTester tester) async {

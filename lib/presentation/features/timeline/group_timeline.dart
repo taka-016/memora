@@ -5,6 +5,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
+import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
@@ -49,6 +51,12 @@ class GroupTimeline extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
+    final calculateSchoolGradeUsecase = ref.read(
+      calculateSchoolGradeUsecaseProvider,
+    );
+    final calculateYakudoshiUsecase = ref.read(
+      calculateYakudoshiUsecaseProvider,
+    );
     final totalDataRows = 2 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
 
@@ -260,23 +268,35 @@ class GroupTimeline extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
-      final birthday = groupWithMembers.members[memberIndex].birthday;
-      if (birthday == null) {
-        return const SizedBox.shrink();
-      }
+      final member = groupWithMembers.members[memberIndex];
+      final birthday = member.birthday;
 
       final yearIndex = columnIndex - 1;
       final currentYear = DateTime.now().year;
       final targetYear = currentYear + startYearOffset.value + yearIndex;
-      final age = targetYear - birthday.year;
+      final ageLabel = _buildAgeLabel(birthday, targetYear);
+      final gradeLabel = calculateSchoolGradeUsecase.execute(
+        birthday,
+        targetYear,
+      );
+      final yakudoshiLabel = calculateYakudoshiUsecase.execute(
+        birthday,
+        member.gender,
+        targetYear,
+      );
 
-      if (age < 0) {
+      if (ageLabel == null && gradeLabel == null && yakudoshiLabel == null) {
         return const SizedBox.shrink();
       }
 
+      final lines = <String?>[ageLabel, gradeLabel, yakudoshiLabel]
+          .where((label) => label != null && label.isNotEmpty)
+          .cast<String>()
+          .toList();
+
       return Padding(
         padding: const EdgeInsets.only(left: 8, top: 4),
-        child: Text('$age歳'),
+        child: Text(lines.join('\n')),
       );
     }
 
@@ -600,5 +620,18 @@ class GroupTimeline extends HookConsumerWidget {
         ],
       ),
     );
+  }
+
+  String? _buildAgeLabel(DateTime? birthday, int targetYear) {
+    if (birthday == null) {
+      return null;
+    }
+
+    final age = targetYear - birthday.year;
+    if (age < 0) {
+      return null;
+    }
+
+    return '$age歳';
   }
 }
