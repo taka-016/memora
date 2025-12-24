@@ -16,7 +16,7 @@ class CalculateSchoolGradeUsecase {
     }
 
     if (targetYear == birthday.year) {
-      if (birthday.month < 3 || (birthday.month == 3 && birthday.day <= 31)) {
+      if (birthday.month <= 3) {
         return '新生児/0歳児';
       }
       return '新生児';
@@ -68,7 +68,7 @@ class CalculateSchoolGradeUsecase {
 
   int _calculateAgeOnMarch31(DateTime birthday, int targetYear) {
     var age = targetYear - birthday.year;
-    if (birthday.month > 3 || (birthday.month == 3 && birthday.day > 31)) {
+    if (birthday.month > 3) {
       age -= 1;
     }
     return age;
