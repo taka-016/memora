@@ -5,9 +5,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
+import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
+import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/shared/displays/trip_cell.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
@@ -49,6 +52,12 @@ class GroupTimeline extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
+    final calculateSchoolGradeUsecase = ref.read(
+      calculateSchoolGradeUsecaseProvider,
+    );
+    final calculateYakudoshiUsecase = ref.read(
+      calculateYakudoshiUsecaseProvider,
+    );
     final totalDataRows = 2 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
 
@@ -59,12 +68,22 @@ class GroupTimeline extends HookConsumerWidget {
     final rowHeightsState = useState<List<double>>(
       List.filled(totalDataRows, _dataRowHeight),
     );
+    final displaySettingsState = useState(TimelineDisplaySettings.defaults);
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final rowScrollControllers = useMemoized(
       () => List.generate(totalDataRows + 1, (_) => ScrollController()),
       [totalDataRows],
     );
     final isSyncingRef = useRef(false);
+
+    useEffect(() {
+      Future.microtask(() async {
+        final loaded = await TimelineDisplaySettings.load();
+        if (!context.mounted) return;
+        displaySettingsState.value = loaded;
+      });
+      return null;
+    }, []);
 
     useEffect(() {
       final current = rowHeightsState.value;
@@ -79,6 +98,71 @@ class GroupTimeline extends HookConsumerWidget {
     }, [totalDataRows]);
 
     final rowHeights = rowHeightsState.value;
+    final displaySettings = displaySettingsState.value;
+
+    void updateDisplaySettings(TimelineDisplaySettings settings) {
+      displaySettingsState.value = settings;
+      unawaited(settings.save());
+    }
+
+    void showDisplaySettingsSheet() {
+      var localSettings = displaySettingsState.value;
+      showModalBottomSheet<void>(
+        context: context,
+        builder: (sheetContext) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile(
+                      key: const Key('toggle_show_age'),
+                      title: const Text('年齢を表示'),
+                      value: localSettings.showAge,
+                      onChanged: (value) {
+                        setState(() {
+                          localSettings = localSettings.copyWith(
+                            showAge: value,
+                          );
+                        });
+                        updateDisplaySettings(localSettings);
+                      },
+                    ),
+                    SwitchListTile(
+                      key: const Key('toggle_show_grade'),
+                      title: const Text('学年を表示'),
+                      value: localSettings.showGrade,
+                      onChanged: (value) {
+                        setState(() {
+                          localSettings = localSettings.copyWith(
+                            showGrade: value,
+                          );
+                        });
+                        updateDisplaySettings(localSettings);
+                      },
+                    ),
+                    SwitchListTile(
+                      key: const Key('toggle_show_yakudoshi'),
+                      title: const Text('厄年を表示'),
+                      value: localSettings.showYakudoshi,
+                      onChanged: (value) {
+                        setState(() {
+                          localSettings = localSettings.copyWith(
+                            showYakudoshi: value,
+                          );
+                        });
+                        updateDisplaySettings(localSettings);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
+      );
+    }
 
     void syncScrollControllers(int sourceIndex) {
       if (isSyncingRef.value) return;
@@ -260,23 +344,38 @@ class GroupTimeline extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
-      final birthday = groupWithMembers.members[memberIndex].birthday;
-      if (birthday == null) {
-        return const SizedBox.shrink();
-      }
+      final member = groupWithMembers.members[memberIndex];
+      final birthday = member.birthday;
 
       final yearIndex = columnIndex - 1;
       final currentYear = DateTime.now().year;
       final targetYear = currentYear + startYearOffset.value + yearIndex;
-      final age = targetYear - birthday.year;
+      final ageLabel = displaySettings.showAge
+          ? _buildAgeLabel(birthday, targetYear)
+          : null;
+      final gradeLabel = displaySettings.showGrade
+          ? calculateSchoolGradeUsecase.execute(birthday, targetYear)
+          : null;
+      final yakudoshiLabel = displaySettings.showYakudoshi
+          ? calculateYakudoshiUsecase.execute(
+              birthday,
+              member.gender,
+              targetYear,
+            )
+          : null;
 
-      if (age < 0) {
+      if (ageLabel == null && gradeLabel == null && yakudoshiLabel == null) {
         return const SizedBox.shrink();
       }
 
+      final lines = <String?>[ageLabel, gradeLabel, yakudoshiLabel]
+          .where((label) => label != null && label.isNotEmpty)
+          .cast<String>()
+          .toList();
+
       return Padding(
         padding: const EdgeInsets.only(left: 8, top: 4),
-        child: Text('$age歳'),
+        child: Text(lines.join('\n')),
       );
     }
 
@@ -526,7 +625,7 @@ class GroupTimeline extends HookConsumerWidget {
     Widget buildBackButton() {
       return Positioned(
         left: 0,
-        top: 0,
+        top: -4,
         child: IconButton(
           key: const Key('back_button'),
           icon: const Icon(Icons.arrow_back),
@@ -544,6 +643,18 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
+    Widget buildSettingsButton() {
+      return Positioned(
+        right: 0,
+        top: -4,
+        child: IconButton(
+          key: const Key('timeline_settings_button'),
+          icon: const Icon(Icons.settings_input_composite),
+          onPressed: showDisplaySettingsSheet,
+        ),
+      );
+    }
+
     Widget buildHeader() {
       return Container(
         padding: const EdgeInsets.all(16),
@@ -551,6 +662,7 @@ class GroupTimeline extends HookConsumerWidget {
           children: [
             if (onBackPressed != null) buildBackButton(),
             buildGroupTitle(),
+            buildSettingsButton(),
           ],
         ),
       );
@@ -600,5 +712,18 @@ class GroupTimeline extends HookConsumerWidget {
         ],
       ),
     );
+  }
+
+  String? _buildAgeLabel(DateTime? birthday, int targetYear) {
+    if (birthday == null) {
+      return null;
+    }
+
+    final age = targetYear - birthday.year;
+    if (age < 0) {
+      return null;
+    }
+
+    return '$age歳';
   }
 }

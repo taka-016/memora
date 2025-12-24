@@ -9,6 +9,8 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'group_timeline_test.mocks.dart';
 
@@ -18,6 +20,7 @@ void main() {
   late MockTripEntryQueryService mockTripEntryQueryService;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     testGroupWithMembers = GroupDto(
       id: '1',
       ownerId: 'owner1',
@@ -80,6 +83,16 @@ void main() {
 
       // Assert
       expect(find.text('テストグループ'), findsOneWidget);
+    });
+
+    testWidgets('右上に設定アイコンが表示される', (WidgetTester tester) async {
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('timeline_settings_button')), findsOneWidget);
+      expect(find.byIcon(Icons.settings_input_composite), findsOneWidget);
     });
 
     testWidgets('年表のヘッダー行に年の列が表示される', (WidgetTester tester) async {
@@ -201,8 +214,8 @@ void main() {
       final futureAge = currentYear + 5 - birthday.year;
 
       // Assert
-      expect(find.text('$currentAge歳'), findsOneWidget);
-      expect(find.text('$futureAge歳'), findsOneWidget);
+      expect(find.textContaining('$currentAge歳'), findsOneWidget);
+      expect(find.textContaining('$futureAge歳'), findsOneWidget);
     });
 
     testWidgets('生年月日未設定のメンバーには年齢を表示しない', (WidgetTester tester) async {
@@ -216,6 +229,99 @@ void main() {
 
       // Assert
       expect(find.textContaining('歳'), findsNothing);
+    });
+
+    testWidgets('保存された表示設定が年齢・学年・厄年の表示に反映される', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final gradeBirthday = DateTime(currentYear - 6, 1, 1);
+      final yakudoshiBirthday = DateTime(currentYear - 24, 1, 1);
+
+      SharedPreferences.setMockInitialValues({
+        TimelineDisplaySettings.showAgeKey: false,
+        TimelineDisplaySettings.showGradeKey: true,
+        TimelineDisplaySettings.showYakudoshiKey: false,
+      });
+
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(
+            birthday: gradeBirthday,
+            gender: '男性',
+          ),
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ジロちゃん',
+            email: 'jiro@example.com',
+            birthday: yakudoshiBirthday,
+            gender: '男性',
+          ),
+        ],
+      );
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      final expectedAgeLabel = '${currentYear - gradeBirthday.year}歳';
+      expect(find.textContaining(expectedAgeLabel), findsNothing);
+      expect(find.textContaining('小学1年生'), findsOneWidget);
+      expect(find.textContaining('本厄'), findsNothing);
+    });
+
+    testWidgets('設定から年齢・学年・厄年の表示を切り替えて保存できる', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final gradeBirthday = DateTime(currentYear - 6, 1, 1);
+      final yakudoshiBirthday = DateTime(currentYear - 24, 1, 1);
+
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(
+            birthday: gradeBirthday,
+            gender: '男性',
+          ),
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ジロちゃん',
+            email: 'jiro@example.com',
+            birthday: yakudoshiBirthday,
+            gender: '男性',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      final expectedAgeLabel = '${currentYear - gradeBirthday.year}歳';
+      expect(find.textContaining(expectedAgeLabel), findsWidgets);
+      expect(find.textContaining('小学1年生'), findsOneWidget);
+      expect(find.textContaining('本厄'), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byKey(const Key('timeline_settings_button')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('toggle_show_age')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('toggle_show_grade')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('toggle_show_yakudoshi')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.textContaining(expectedAgeLabel), findsNothing);
+      expect(find.textContaining('小学1年生'), findsNothing);
+      expect(find.textContaining('本厄'), findsNothing);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool(TimelineDisplaySettings.showAgeKey), isFalse);
+      expect(prefs.getBool(TimelineDisplaySettings.showGradeKey), isFalse);
+      expect(prefs.getBool(TimelineDisplaySettings.showYakudoshiKey), isFalse);
     });
 
     testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
