@@ -75,6 +75,10 @@
   - [x] TripEntryMapper、TripEntryDtoを対応させる
   - [x] Routeエンティティクラスにidは含めない（関連処理もあわせて修正する）
   - [x] RouteRepositoryを廃止し、関連実装・テスト・DIから除去する
+- [ ] tasksテーブル定義を元にTaskエンティティを作成する
+  - [ ] TaskエンティティはTripEntryエンティティの集約に加える
+  - [ ] TaskRepository、TaskQueryService、FirestoreTaskRepository、FirestoreTaskQueryServiceを作成する
+  - [ ] TaskMapper、TaskDtoを作成する
 
 ## マップの表示
 
