@@ -23,6 +23,14 @@ erDiagram
         timestamp visitEndDate
         string visitMemo
     }
+    pin_details {
+        string id PK
+        string pinId FK "NOT NULL"
+        string name
+        timestamp startDate
+        timestamp endDate
+        string memo
+    }
     routes {
         string id PK
         string tripId FK "NOT NULL"
@@ -35,13 +43,16 @@ erDiagram
         string instructions
         string polyline
     }
-    pin_details {
+    tasks {
         string id PK
-        string pinId FK "NOT NULL"
-        string name
-        timestamp startDate
-        timestamp endDate
+        string tripId FK "NOT NULL"
+        number orderIndex "NOT NULL"
+        string parentTaskId FK
+        string name "NOT NULL"
+        boolean isCompleted "NOT NULL"
+        timestamp dueDate
         string memo
+        string assignedMemberId FK
     }
     groups {
         string id PK
@@ -101,9 +112,12 @@ erDiagram
 
     trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ routes : "id → tripId"
+    trip_entries ||--o{ tasks : "id → tripId"
     pins ||--o{ pin_details : "pinId → pinId"
     pins ||--o{ routes : "id → departurePinId"
     pins ||--o{ routes : "id → arrivalPinId"
+    tasks ||--o{ tasks : "id → parentTaskId"
+    tasks ||--|| members : "assignedMemberId → id"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
@@ -116,5 +130,3 @@ erDiagram
     members ||--o{ member_invitations : "id → inviterId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
-
-- `trip_entries.tripStartDate`と`trip_entries.tripEndDate`は任意項目であり、年での集計や関連付けは`tripYear`を基準に行う。
