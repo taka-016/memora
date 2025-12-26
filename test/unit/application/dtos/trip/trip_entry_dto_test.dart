@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/route_dto.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 
@@ -22,6 +23,7 @@ void main() {
       expect(dto.tripMemo, isNull);
       expect(dto.pins, isNull);
       expect(dto.routes, isNull);
+      expect(dto.tasks, isNull);
     });
 
     test('期間を指定すると開始日/終了日が保持される', () {
@@ -55,6 +57,15 @@ void main() {
           travelMode: TravelMode.drive,
         ),
       ];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '持ち物準備',
+          isCompleted: false,
+        ),
+      ];
 
       final dto = TripEntryDto(
         id: 'trip-entry-123',
@@ -66,12 +77,14 @@ void main() {
         tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
+        tasks: tasks,
       );
 
       expect(dto.tripName, '春の旅行');
       expect(dto.tripMemo, '家族旅行のメモ');
       expect(dto.pins, pins);
       expect(dto.routes, routes);
+      expect(dto.tasks, tasks);
     });
 
     test('copyWithで必須パラメータを更新できる', () {
@@ -114,6 +127,15 @@ void main() {
             travelMode: TravelMode.walk,
           ),
         ],
+        tasks: [
+          TaskDto(
+            id: 'task-1',
+            tripId: 'trip-entry-123',
+            orderIndex: 0,
+            name: '準備',
+            isCompleted: false,
+          ),
+        ],
       );
 
       final copiedDto = originalDto.copyWith(
@@ -130,12 +152,22 @@ void main() {
             travelMode: TravelMode.drive,
           ),
         ],
+        tasks: [
+          TaskDto(
+            id: 'task-2',
+            tripId: 'trip-entry-123',
+            orderIndex: 1,
+            name: '予約確認',
+            isCompleted: true,
+          ),
+        ],
       );
 
       expect(copiedDto.tripName, '新しい旅行名');
       expect(copiedDto.tripMemo, '新しいメモ');
       expect(copiedDto.pins?.first.pinId, 'pin-2');
       expect(copiedDto.routes?.first.id, 'route-2');
+      expect(copiedDto.tasks?.first.id, 'task-2');
     });
 
     test('copyWithで開始日と終了日をnullにできる', () {
@@ -168,6 +200,15 @@ void main() {
           travelMode: TravelMode.drive,
         ),
       ];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+      ];
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
@@ -178,6 +219,7 @@ void main() {
         tripMemo: '旅行のメモ',
         pins: pins,
         routes: routes,
+        tasks: tasks,
       );
 
       final copiedDto = originalDto.copyWith();
@@ -197,6 +239,15 @@ void main() {
           travelMode: TravelMode.drive,
         ),
       ];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+      ];
 
       final dto1 = TripEntryDto(
         id: 'trip-entry-123',
@@ -208,6 +259,7 @@ void main() {
         tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
+        tasks: tasks,
       );
 
       final dto2 = TripEntryDto(
@@ -220,6 +272,7 @@ void main() {
         tripMemo: '家族旅行のメモ',
         pins: pins,
         routes: routes,
+        tasks: tasks,
       );
 
       expect(dto1, equals(dto2));
@@ -246,6 +299,15 @@ void main() {
             travelMode: TravelMode.drive,
           ),
         ],
+        tasks: [
+          TaskDto(
+            id: 'task-1',
+            tripId: 'trip-entry-123',
+            orderIndex: 0,
+            name: '準備',
+            isCompleted: false,
+          ),
+        ],
       );
 
       final dto2 = TripEntryDto(
@@ -265,6 +327,15 @@ void main() {
             departurePinId: 'pin-2',
             arrivalPinId: 'pin-3',
             travelMode: TravelMode.walk,
+          ),
+        ],
+        tasks: [
+          TaskDto(
+            id: 'task-2',
+            tripId: 'trip-entry-999',
+            orderIndex: 1,
+            name: '予約確認',
+            isCompleted: true,
           ),
         ],
       );

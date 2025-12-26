@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/route.dart';
+import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class TripEntry extends Equatable {
@@ -14,8 +15,10 @@ class TripEntry extends Equatable {
     this.tripMemo,
     List<Pin>? pins,
     List<Route>? routes,
+    List<Task>? tasks,
   }) : pins = List.unmodifiable(pins ?? const []),
-       routes = List.unmodifiable(routes ?? const []) {
+       routes = List.unmodifiable(routes ?? const []),
+       tasks = List.unmodifiable(tasks ?? const []) {
     if (tripStartDate != null &&
         tripEndDate != null &&
         tripEndDate!.isBefore(tripStartDate!)) {
@@ -30,6 +33,12 @@ class TripEntry extends Equatable {
         throw ValidationException('各ルートのorderIndexは一意でなければなりません');
       }
     }
+    final taskOrderIndexes = <int>{};
+    for (final task in this.tasks) {
+      if (!taskOrderIndexes.add(task.orderIndex)) {
+        throw ValidationException('各タスクのorderIndexは一意でなければなりません');
+      }
+    }
   }
 
   final String id;
@@ -41,6 +50,7 @@ class TripEntry extends Equatable {
   final String? tripMemo;
   final List<Pin> pins;
   final List<Route> routes;
+  final List<Task> tasks;
 
   TripEntry copyWith({
     String? id,
@@ -52,6 +62,7 @@ class TripEntry extends Equatable {
     String? tripMemo,
     List<Pin>? pins,
     List<Route>? routes,
+    List<Task>? tasks,
   }) {
     return TripEntry(
       id: id ?? this.id,
@@ -63,6 +74,7 @@ class TripEntry extends Equatable {
       tripMemo: tripMemo ?? this.tripMemo,
       pins: pins ?? this.pins,
       routes: routes ?? this.routes,
+      tasks: tasks ?? this.tasks,
     );
   }
 
@@ -101,5 +113,6 @@ class TripEntry extends Equatable {
     tripMemo,
     pins,
     routes,
+    tasks,
   ];
 }

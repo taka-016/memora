@@ -34,6 +34,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).thenAnswer((_) async => tripEntry);
 
@@ -45,6 +46,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);
     });
@@ -56,6 +58,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).thenAnswer((_) async => null);
 
@@ -67,6 +70,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
+          tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);
     });

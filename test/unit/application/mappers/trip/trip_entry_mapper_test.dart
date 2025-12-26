@@ -2,11 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/route_dto.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/route.dart';
+import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -48,11 +50,21 @@ void main() {
           travelMode: TravelMode.drive,
         ),
       ];
+      final taskDtos = [
+        TaskDto(
+          id: 'task-001',
+          tripId: 'trip-001',
+          orderIndex: 0,
+          name: '持ち物準備',
+          isCompleted: false,
+        ),
+      ];
 
       final dto = TripEntryMapper.fromFirestore(
         mockDoc,
         pins: pinDtos,
         routes: routeDtos,
+        tasks: taskDtos,
       );
 
       expect(dto.id, 'trip-001');
@@ -64,6 +76,7 @@ void main() {
       expect(dto.tripMemo, '家族旅行');
       expect(dto.pins, pinDtos);
       expect(dto.routes, routeDtos);
+      expect(dto.tasks, taskDtos);
     });
 
     test('Firestoreの必須フィールドが欠けていてもデフォルト値で変換できる', () {
@@ -82,6 +95,7 @@ void main() {
       expect(dto.tripEndDate, isNull);
       expect(dto.pins, isEmpty);
       expect(dto.routes, isEmpty);
+      expect(dto.tasks, isEmpty);
     });
 
     test('TripEntryDtoからTripEntryエンティティへ変換できる', () {
@@ -112,6 +126,15 @@ void main() {
             arrivalPinId: 'pin-011',
             travelMode: TravelMode.walk,
             durationSeconds: 600,
+          ),
+        ],
+        tasks: [
+          TaskDto(
+            id: 'task-010',
+            tripId: 'trip-003',
+            orderIndex: 0,
+            name: '準備',
+            isCompleted: false,
           ),
         ],
       );
@@ -146,6 +169,14 @@ void main() {
               arrivalPinId: 'pin-011',
               travelMode: TravelMode.walk,
               durationSeconds: 600,
+            ),
+          ],
+          tasks: [
+            Task(
+              tripId: 'trip-003',
+              orderIndex: 0,
+              name: '準備',
+              isCompleted: false,
             ),
           ],
         ),

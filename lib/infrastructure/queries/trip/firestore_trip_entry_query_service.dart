@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_detail_mapper.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/mappers/trip/route_mapper.dart';
+import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
@@ -21,6 +22,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? pinDetailsOrderBy,
     List<OrderBy>? routesOrderBy,
+    List<OrderBy>? tasksOrderBy,
   }) async {
     try {
       final doc = await _firestore.collection('trip_entries').doc(tripId).get();
@@ -86,7 +88,30 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .map((routeDoc) => RouteMapper.fromFirestore(routeDoc))
           .toList();
 
-      return TripEntryMapper.fromFirestore(doc, pins: pins, routes: routes);
+      Query<Map<String, dynamic>> tasksQuery = _firestore
+          .collection('tasks')
+          .where('tripId', isEqualTo: tripId);
+
+      if (tasksOrderBy != null && tasksOrderBy.isNotEmpty) {
+        for (final order in tasksOrderBy) {
+          tasksQuery = tasksQuery.orderBy(
+            order.field,
+            descending: order.descending,
+          );
+        }
+      }
+
+      final tasksSnapshot = await tasksQuery.get();
+      final tasks = tasksSnapshot.docs
+          .map((taskDoc) => TaskMapper.fromFirestore(taskDoc))
+          .toList();
+
+      return TripEntryMapper.fromFirestore(
+        doc,
+        pins: pins,
+        routes: routes,
+        tasks: tasks,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryQueryService.getTripEntryById: ${e.toString()}',

@@ -3,6 +3,7 @@ import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/pin_detail.dart';
 import 'package:memora/domain/entities/trip/route.dart';
+import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
@@ -48,6 +49,14 @@ void main() {
             travelMode: TravelMode.drive,
           ),
         ],
+        tasks: [
+          Task(
+            tripId: 'abc123',
+            orderIndex: 0,
+            name: '持ち物準備',
+            isCompleted: false,
+          ),
+        ],
       );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
@@ -62,6 +71,8 @@ void main() {
       expect(entry.pins.first.details, hasLength(1));
       expect(entry.routes, hasLength(1));
       expect(entry.routes.first.orderIndex, 0);
+      expect(entry.tasks, hasLength(1));
+      expect(entry.tasks.first.name, '持ち物準備');
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
@@ -80,6 +91,7 @@ void main() {
       expect(entry.tripMemo, null);
       expect(entry.tripYear, 2025);
       expect(entry.pins, isEmpty);
+      expect(entry.tasks, isEmpty);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
@@ -93,6 +105,7 @@ void main() {
         tripMemo: 'テストメモ',
         pins: const [],
         routes: const [],
+        tasks: const [],
       );
       final entry2 = TripEntry(
         id: 'abc123',
@@ -104,6 +117,7 @@ void main() {
         tripMemo: 'テストメモ',
         pins: const [],
         routes: const [],
+        tasks: const [],
       );
       expect(entry1, equals(entry2));
     });
@@ -119,6 +133,7 @@ void main() {
         tripMemo: 'テストメモ',
         pins: const [],
         routes: const [],
+        tasks: const [],
       );
       final updatedEntry = entry.copyWith(
         tripName: '新しい旅行',
@@ -144,6 +159,14 @@ void main() {
             travelMode: TravelMode.walk,
           ),
         ],
+        tasks: [
+          Task(
+            tripId: 'abc123',
+            orderIndex: 1,
+            name: 'ホテル予約',
+            isCompleted: true,
+          ),
+        ],
       );
       expect(updatedEntry.id, 'abc123');
       expect(updatedEntry.groupId, 'group456');
@@ -154,6 +177,8 @@ void main() {
       expect(updatedEntry.pins, hasLength(1));
       expect(updatedEntry.routes, hasLength(1));
       expect(updatedEntry.routes.first.orderIndex, 1);
+      expect(updatedEntry.tasks, hasLength(1));
+      expect(updatedEntry.tasks.first.name, 'ホテル予約');
     });
 
     test('旅行期間外の訪問場所を含むと例外が発生する', () {
@@ -231,6 +256,33 @@ void main() {
               departurePinId: 'pinB',
               arrivalPinId: 'pinC',
               travelMode: TravelMode.walk,
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('tasksのorderIndexが重複していると例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tripStartDate: DateTime(2025, 6, 1),
+          tripEndDate: DateTime(2025, 6, 10),
+          tasks: [
+            Task(
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '準備',
+              isCompleted: false,
+            ),
+            Task(
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '確認',
+              isCompleted: true,
             ),
           ],
         ),
