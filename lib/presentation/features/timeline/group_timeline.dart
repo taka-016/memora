@@ -11,7 +11,7 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
-import 'package:memora/presentation/shared/displays/trip_cell.dart';
+import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
 class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
   @override

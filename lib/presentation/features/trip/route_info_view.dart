@@ -11,7 +11,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/constants/color_constants.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/presentation/shared/sheets/route_memo_edit_bottom_sheet.dart';
+import 'package:memora/presentation/features/trip/route_memo_edit_bottom_sheet.dart';
 
 part 'route_list.dart';
 part 'route_map.dart';

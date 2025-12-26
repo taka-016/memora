@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/presentation/shared/displays/trip_cell.dart';
+import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
 void main() {
   group('TripCell', () {

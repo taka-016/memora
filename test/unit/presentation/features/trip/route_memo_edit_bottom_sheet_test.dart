@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/route_segment_detail.dart';
-import 'package:memora/presentation/shared/sheets/route_memo_edit_bottom_sheet.dart';
+import 'package:memora/presentation/features/trip/route_memo_edit_bottom_sheet.dart';
 
 void main() {
   Future<void> pumpSheet(
