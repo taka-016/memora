@@ -481,7 +481,6 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
 ## デザイン
 
 - [x] ベースカラーを青系統に変更する
-- [ ] メニュー名がシステム的なので、名称を変更する
   
 ## リファクタリング
 
