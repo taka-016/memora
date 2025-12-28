@@ -1,7 +1,7 @@
 {
     "editor.formatOnSave": true,
     "[markdown]": {
-        "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one"
     },
     "dart.openDevTools": "flutter"
 }
