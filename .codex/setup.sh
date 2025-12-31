@@ -62,9 +62,8 @@ flutter config --no-analytics \
   --no-enable-macos-desktop \
   --no-enable-windows-desktop
 
-# PATH永続化
-echo 'export PATH="/opt/flutter/bin:$PATH"' >> ~/.bashrc
-echo 'export PATH="$PATH:$HOME/.pub-cache/bin"' >> ~/.bashrc
+# PATH永続化 (.bashrc先頭に追加)
+sed -i '1iexport PATH="/opt/flutter/bin:$PATH"\nexport PATH="$PATH:$HOME/.pub-cache/bin"' ~/.bashrc
 
 # 作業ディレクトリへ移動
 cd /workspace/memora
