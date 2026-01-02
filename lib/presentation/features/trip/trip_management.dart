@@ -79,12 +79,15 @@ class TripManagement extends HookConsumerWidget {
           error: e,
           stackTrace: stack,
         );
-        if (!context.mounted) {
-          return;
+        if (context.mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('メンバー取得に失敗しました: $e')));
+            }
+          });
         }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('メンバー取得に失敗しました: $e')));
       }
     }
 

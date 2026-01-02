@@ -61,6 +61,10 @@ class TaskView extends HookConsumerWidget {
       },
       [assignableMembers],
     );
+    final parentTaskMap = useMemoized(
+      () => {for (final task in tasksState.value) task.id: task},
+      [tasksState.value],
+    );
 
     void publish(List<EditableTask> updated) {
       final next = _reindexTasks(updated);
@@ -181,18 +185,9 @@ class TaskView extends HookConsumerWidget {
       final assignedName = task.assignedMemberId != null
           ? memberNameMap[task.assignedMemberId]
           : null;
-      EditableTask? parentTask;
-      if (task.parentTaskId != null) {
-        for (final candidate in tasksState.value) {
-          if (candidate.id == task.parentTaskId) {
-            parentTask = candidate;
-            break;
-          }
-        }
-      }
-      final parentLabel =
-          parentTask?.task.name ??
-          (task.parentTaskId != null ? '(削除済み)' : null);
+      final parentLabel = task.parentTaskId != null
+          ? (parentTaskMap[task.parentTaskId]?.task.name ?? '(削除済み)')
+          : null;
 
       return Card(
         key: ValueKey(editable.id),

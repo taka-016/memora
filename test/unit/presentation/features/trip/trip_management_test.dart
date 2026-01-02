@@ -265,6 +265,45 @@ void main() {
       );
     });
 
+    testWidgets('メンバー取得失敗時にスナックバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('Group load error'));
+
+      // Act
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.text('メンバー取得に失敗しました: TestException: Group load error'),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       when(
