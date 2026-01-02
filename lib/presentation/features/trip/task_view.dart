@@ -137,7 +137,7 @@ class TaskView extends HookConsumerWidget {
         testHandle!._reorder = onReorder;
       }
       return null;
-    }, [testHandle, tasksState.value]);
+    }, [testHandle]);
 
     Widget buildHeader() {
       return Row(
@@ -181,15 +181,18 @@ class TaskView extends HookConsumerWidget {
       final assignedName = task.assignedMemberId != null
           ? memberNameMap[task.assignedMemberId]
           : null;
-      final parentLabel = task.parentTaskId != null
-          ? tasksState.value
-                .firstWhere(
-                  (candidate) => candidate.id == task.parentTaskId,
-                  orElse: () => editable,
-                )
-                .task
-                .name
-          : null;
+      EditableTask? parentTask;
+      if (task.parentTaskId != null) {
+        for (final candidate in tasksState.value) {
+          if (candidate.id == task.parentTaskId) {
+            parentTask = candidate;
+            break;
+          }
+        }
+      }
+      final parentLabel =
+          parentTask?.task.name ??
+          (task.parentTaskId != null ? '(削除済み)' : null);
 
       return Card(
         key: ValueKey(editable.id),
@@ -319,7 +322,16 @@ class _TaskFormSheet extends HookWidget {
       if (normalized.isEmpty) {
         return null;
       }
-      return DateTime.tryParse(normalized.replaceAll('/', '-'));
+      var candidate = normalized.replaceAll('/', '-');
+      final parts = candidate.split(' ');
+      if (parts.length == 2) {
+        final timePart = parts[1];
+        final hhMmPattern = RegExp(r'^\d{1,2}:\d{2}$');
+        if (hhMmPattern.hasMatch(timePart)) {
+          candidate = '${parts[0]} $timePart:00';
+        }
+      }
+      return DateTime.tryParse(candidate);
     }
 
     void handleSubmit() {
@@ -327,7 +339,7 @@ class _TaskFormSheet extends HookWidget {
       final dueDateText = dueDateController.text.trim();
       final dueDate = parseDueDate(dueDateText);
       if (dueDateText.isNotEmpty && dueDate == null) {
-        errorMessage.value = '締切日時の形式が正しくありません (例: 2024-05-20 10:00)';
+        errorMessage.value = '締切日時の形式が正しくありません (例: 2024/05/20 10:00)';
         return;
       }
 
@@ -452,7 +464,7 @@ class _TaskFormSheet extends HookWidget {
             TextFormField(
               controller: dueDateController,
               decoration: const InputDecoration(
-                labelText: '締切日時 (例: 2024-05-20 10:00)',
+                labelText: '締切日時 (例: 2024/05/20 10:00)',
                 border: OutlineInputBorder(),
               ),
             ),

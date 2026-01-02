@@ -77,7 +77,7 @@ class TripEditModal extends HookWidget {
     final pins = useState<List<PinDto>>(
       List<PinDto>.from(tripEntry?.pins ?? []),
     );
-    List<EditableTask> buildInitialTasks() {
+    final tasks = useState<List<EditableTask>>(() {
       final dtoTasks = tripEntry?.tasks ?? <TaskDto>[];
       return dtoTasks
           .map(
@@ -87,9 +87,7 @@ class TripEditModal extends HookWidget {
             ),
           )
           .toList();
-    }
-
-    final tasks = useState<List<EditableTask>>(buildInitialTasks());
+    }());
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
