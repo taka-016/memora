@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
+import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:uuid/uuid.dart';
 
-enum TripEditExpandedSection { map, routeInfo }
+enum TripEditExpandedSection { map, routeInfo, tasks }
 
 class TripEditModalTestHandle {
   void Function(DateTime?, DateTime?)? _setDateRange;
   void Function(List<PinDto>)? _setPins;
+  void Function(List<Task>)? _setTasks;
 
   @visibleForTesting
   void setDateRangeForTest(DateTime? start, DateTime? end) {
@@ -28,6 +34,11 @@ class TripEditModalTestHandle {
   void setPinsForTest(List<PinDto> pins) {
     _setPins?.call(pins);
   }
+
+  @visibleForTesting
+  void setTasksForTest(List<Task> tasks) {
+    _setTasks?.call(tasks);
+  }
 }
 
 class TripEditModal extends HookWidget {
@@ -37,6 +48,7 @@ class TripEditModal extends HookWidget {
   final bool isTestEnvironment;
   final int? year;
   final TripEditModalTestHandle? testHandle;
+  final List<GroupMemberDto> assignableMembers;
 
   const TripEditModal({
     super.key,
@@ -46,6 +58,7 @@ class TripEditModal extends HookWidget {
     this.isTestEnvironment = false,
     this.year,
     this.testHandle,
+    this.assignableMembers = const [],
   });
 
   @override
@@ -64,6 +77,19 @@ class TripEditModal extends HookWidget {
     final pins = useState<List<PinDto>>(
       List<PinDto>.from(tripEntry?.pins ?? []),
     );
+    List<EditableTask> buildInitialTasks() {
+      final dtoTasks = tripEntry?.tasks ?? <TaskDto>[];
+      return dtoTasks
+          .map(
+            (taskDto) => EditableTask(
+              id: taskDto.id,
+              task: TaskMapper.toEntity(taskDto),
+            ),
+          )
+          .toList();
+    }
+
+    final tasks = useState<List<EditableTask>>(buildInitialTasks());
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
@@ -78,11 +104,24 @@ class TripEditModal extends HookWidget {
         testHandle!._setPins = (List<PinDto> newPins) {
           pins.value = List<PinDto>.from(newPins);
         };
+        testHandle!._setTasks = (List<Task> newTasks) {
+          tasks.value = newTasks
+              .asMap()
+              .entries
+              .map(
+                (entry) => EditableTask(
+                  id: const Uuid().v4(),
+                  task: entry.value.copyWith(orderIndex: entry.key),
+                ),
+              )
+              .toList();
+        };
       }
       return () {
         if (testHandle != null) {
           testHandle!._setDateRange = null;
           testHandle!._setPins = null;
+          testHandle!._setTasks = null;
         }
       };
     }, [testHandle]);
@@ -148,6 +187,15 @@ class TripEditModal extends HookWidget {
       expandedSection.value = null;
     }
 
+    void showTaskView() {
+      expandedSection.value = TripEditExpandedSection.tasks;
+      hideBottomSheet();
+    }
+
+    void closeTaskView() {
+      expandedSection.value = null;
+    }
+
     String formatDateTime(DateTime dateTime) {
       final month = dateTime.month.toString().padLeft(2, '0');
       final day = dateTime.day.toString().padLeft(2, '0');
@@ -176,6 +224,11 @@ class TripEditModal extends HookWidget {
 
       if (formKey.currentState!.validate()) {
         try {
+          final taskEntities = tasks.value
+              .asMap()
+              .entries
+              .map((entry) => entry.value.task.copyWith(orderIndex: entry.key))
+              .toList();
           final trip = TripEntry(
             id: tripEntry?.id ?? '',
             groupId: groupId,
@@ -185,6 +238,7 @@ class TripEditModal extends HookWidget {
             tripEndDate: selectedEnd,
             tripMemo: memoController.text.isEmpty ? null : memoController.text,
             pins: PinMapper.toEntityList(pins.value),
+            tasks: taskEntities,
           );
           onSave(trip);
           if (context.mounted) {
@@ -505,6 +559,31 @@ class TripEditModal extends HookWidget {
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: showTaskView,
+                                  style: ElevatedButton.styleFrom(
+                                    minimumSize: const Size(
+                                      double.infinity,
+                                      48,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.checklist, size: 20),
+                                      SizedBox(width: 4),
+                                      Text('タスク管理'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -557,6 +636,14 @@ class TripEditModal extends HookWidget {
             pins: pins.value,
             isTestEnvironment: isTestEnvironment,
             onClose: closeRouteInfoView,
+          );
+        case TripEditExpandedSection.tasks:
+          return TaskView(
+            tripId: tripEntry?.id ?? '',
+            tasks: tasks.value,
+            assignableMembers: assignableMembers,
+            onChanged: (updated) => tasks.value = updated,
+            onClose: closeTaskView,
           );
         default:
           return buildNormalLayout();

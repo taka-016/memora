@@ -270,6 +270,42 @@ void main() {
       expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
+    testWidgets('タスク管理ボタンでタスクビューに切り替えられること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TripEditModal(
+                groupId: 'test-group-id',
+                onSave: (TripEntry tripEntry) {},
+                isTestEnvironment: true,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final taskButton = find.widgetWithText(ElevatedButton, 'タスク管理');
+      expect(taskButton, findsOneWidget);
+
+      await tester.ensureVisible(taskButton);
+      await tester.tap(taskButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('task_view_root')), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('task_view_root')),
+          matching: find.byIcon(Icons.close),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('task_view_root')), findsNothing);
+      expect(find.text('旅行名'), findsOneWidget);
+    });
+
     testWidgets('編集ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
       final testHandle = TripEditModalTestHandle();
 

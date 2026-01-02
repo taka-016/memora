@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
@@ -8,9 +9,11 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 class TripManagement extends HookConsumerWidget {
   final String groupId;
@@ -33,9 +36,11 @@ class TripManagement extends HookConsumerWidget {
     final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
     final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
+    final groupQueryService = ref.read(groupQueryServiceProvider);
 
     final tripEntries = useState<List<TripEntryDto>>([]);
     final isLoading = useState(true);
+    final assignableMembers = useState<List<GroupMemberDto>>([]);
 
     Future<void> loadTripEntries() async {
       isLoading.value = true;
@@ -61,8 +66,31 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
+    Future<void> loadGroupMembers() async {
+      try {
+        final group = await groupQueryService.getGroupWithMembersById(
+          groupId,
+          membersOrderBy: [const OrderBy('displayName', descending: false)],
+        );
+        assignableMembers.value = group?.members ?? [];
+      } catch (e, stack) {
+        logger.e(
+          'TripManagement.loadGroupMembers: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('メンバー取得に失敗しました: $e')));
+      }
+    }
+
     useEffect(() {
       loadTripEntries();
+      loadGroupMembers();
       return null;
     }, [groupId, year]);
 
@@ -120,6 +148,7 @@ class TripManagement extends HookConsumerWidget {
           groupId: groupId,
           year: year,
           isTestEnvironment: isTestEnvironment,
+          assignableMembers: assignableMembers.value,
           onSave: (tripEntry) async {
             await handleAddTripSave(tripEntry);
           },
@@ -180,6 +209,7 @@ class TripManagement extends HookConsumerWidget {
             tripEntry: detailedTripEntry,
             year: year,
             isTestEnvironment: isTestEnvironment,
+            assignableMembers: assignableMembers.value,
             onSave: (updatedTrip) async {
               await handleEditTripSave(updatedTrip);
             },

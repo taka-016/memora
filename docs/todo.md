@@ -430,14 +430,14 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] エンティティでのpinの訪問開始日、訪問終了日のチェックはtripStartDate、tripEndDateが存在する場合は日付を含めてチェックし、存在しない場合は年のみでチェックする
 - [x] 旅行編集画面の旅行開始日、旅行終了日をクリア可能にする
   - [x] CopyWithでnull代入を可能にする必要あり
-- [ ] 旅行編集画面にタスク管理機能を追加する
-  - [ ] trip_edit_modalに「タスク管理」ボタンを追加し、select_visit_location_viewやroute_info_viewと同様に同一ダイアログ内の表示切り替えで遷移できるようにする
-  - [ ] TaskViewウィジェットを新設し、expandedSectionに追加して切り替え表示できるようにする（閉じる/戻る操作も含む）
-  - [ ] TaskViewのUIレイアウトを設計する（タスク名・完了チェック・締切・担当メンバー・メモ有無・並び替えハンドルをorderIndex順にリスト表示）
-  - [ ] タスクの追加/編集フォームを実装する（必須/任意入力欄を用意し、完了状態切替・担当メンバー選択・親タスク選択・締切日時入力・メモ入力をサポート、保存時はTaskエンティティの検証結果をエラー表示に反映）
-  - [ ] タスクの並び替えをドラッグ&ドロップで行い、変更後に連番のorderIndexを再採番する処理を用意する
-  - [ ] 追加/更新/削除/並び替え/完了状態変更の各操作はTaskエンティティで扱い、結果をコールバックでtrip_managementに通知する（TaskViewはローカルUI状態管理のみ）
-  - [ ] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（TaskQueryService/TripEntryRepository経由）
+- [x] 旅行編集画面にタスク管理機能を追加する
+  - [x] trip_edit_modalに「タスク管理」ボタンを追加し、select_visit_location_viewやroute_info_viewと同様に同一ダイアログ内の表示切り替えで遷移できるようにする
+  - [x] TaskViewウィジェットを新設し、expandedSectionに追加して切り替え表示できるようにする（閉じる/戻る操作も含む）
+  - [x] TaskViewのUIレイアウトを設計する（タスク名・完了チェック・締切・担当メンバー・メモ有無・並び替えハンドルをorderIndex順にリスト表示）
+  - [x] タスクの追加/編集フォームを実装する（必須/任意入力欄を用意し、完了状態切替・担当メンバー選択・親タスク選択・締切日時入力・メモ入力をサポート、保存時はTaskエンティティの検証結果をエラー表示に反映）
+  - [x] タスクの並び替えをドラッグ&ドロップで行い、変更後に連番のorderIndexを再採番する処理を用意する
+  - [x] 追加/更新/削除/並び替え/完了状態変更の各操作はTaskエンティティで扱い、結果をコールバックでtrip_managementに通知する（TaskViewはローカルUI状態管理のみ）
+  - [x] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（TaskQueryService/TripEntryRepository経由）
 
 ## 地図画面
 

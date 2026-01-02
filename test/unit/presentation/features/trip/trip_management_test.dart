@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
@@ -14,10 +17,11 @@ import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, TripEntryQueryService])
+@GenerateMocks([TripEntryRepository, TripEntryQueryService, GroupQueryService])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockTripEntryQueryService mockTripEntryQueryService;
+  late MockGroupQueryService mockGroupQueryService;
   late List<TripEntryDto> testTripEntries;
   late PinDto testPin;
   late TripEntryDto detailedTripEntry;
@@ -27,6 +31,7 @@ void main() {
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
+    mockGroupQueryService = MockGroupQueryService();
     testPin = PinDto(
       pinId: 'pin-1',
       tripId: 'trip-1',
@@ -63,12 +68,33 @@ void main() {
     ];
 
     detailedTripEntry = testTripEntries.first;
+
+    when(
+      mockGroupQueryService.getGroupWithMembersById(
+        testGroupId,
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer(
+      (_) async => GroupDto(
+        id: testGroupId,
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+        members: const [
+          GroupMemberDto(
+            memberId: 'member-1',
+            groupId: testGroupId,
+            displayName: 'メンバー1',
+          ),
+        ],
+      ),
+    );
   });
 
   Widget createApp({
     required Widget home,
     TripEntryRepository? tripEntryRepository,
     TripEntryQueryService? tripEntryQueryService,
+    GroupQueryService? groupQueryService,
   }) {
     return ProviderScope(
       overrides: [
@@ -77,6 +103,9 @@ void main() {
         ),
         tripEntryQueryServiceProvider.overrideWithValue(
           tripEntryQueryService ?? mockTripEntryQueryService,
+        ),
+        groupQueryServiceProvider.overrideWithValue(
+          groupQueryService ?? mockGroupQueryService,
         ),
       ],
       child: MaterialApp(home: home),
