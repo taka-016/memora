@@ -437,7 +437,7 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [ ] タスクの追加/編集フォームを実装する（必須/任意入力欄を用意し、完了状態切替・担当メンバー選択・親タスク選択・締切日時入力・メモ入力をサポート、保存時はTaskエンティティの検証結果をエラー表示に反映）
   - [ ] タスクの並び替えをドラッグ&ドロップで行い、変更後に連番のorderIndexを再採番する処理を用意する
   - [ ] 追加/更新/削除/並び替え/完了状態変更の各操作はTaskエンティティで扱い、結果をコールバックでtrip_managementに通知する（TaskViewはローカルUI状態管理のみ）
-  - [ ] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（TaskQuery/Repository経由）
+  - [ ] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（TaskQueryService/TripEntryRepository経由）
 
 ## 地図画面
 
