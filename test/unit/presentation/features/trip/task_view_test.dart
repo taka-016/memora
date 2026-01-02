@@ -213,5 +213,204 @@ void main() {
       expect(updatedTasks, isNotNull);
       expect(updatedTasks!.first.task.isCompleted, isTrue);
     });
+
+    testWidgets('正しい日付形式（YYYY/MM/DD HH:MM）で締切を設定できること', (
+      WidgetTester tester,
+    ) async {
+      final tasks = <EditableTask>[];
+      List<EditableTask>? updatedTasks;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TaskView(
+                tripId: 'trip-1',
+                tasks: tasks,
+                onChanged: (value) => updatedTasks = value,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('タスク追加'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('task_name_field')),
+        'テストタスク',
+      );
+      await tester.enterText(
+        find.byKey(const Key('task_due_date_field')),
+        '2024/05/20 10:00',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(updatedTasks, isNotNull);
+      expect(updatedTasks!.length, 1);
+      expect(updatedTasks!.first.task.name, 'テストタスク');
+      expect(updatedTasks!.first.task.dueDate, DateTime(2024, 5, 20, 10, 0));
+    });
+
+    testWidgets('正しい日付形式（YYYY-MM-DD HH:MM）で締切を設定できること', (
+      WidgetTester tester,
+    ) async {
+      final tasks = <EditableTask>[];
+      List<EditableTask>? updatedTasks;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TaskView(
+                tripId: 'trip-1',
+                tasks: tasks,
+                onChanged: (value) => updatedTasks = value,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('タスク追加'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('task_name_field')),
+        'テストタスク',
+      );
+      await tester.enterText(
+        find.byKey(const Key('task_due_date_field')),
+        '2024-05-20 10:00',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(updatedTasks, isNotNull);
+      expect(updatedTasks!.length, 1);
+      expect(updatedTasks!.first.task.dueDate, DateTime(2024, 5, 20, 10, 0));
+    });
+
+    testWidgets('誤った日付形式（DD/MM/YYYY）の場合はエラーメッセージが表示されること', (
+      WidgetTester tester,
+    ) async {
+      final tasks = <EditableTask>[];
+      List<EditableTask>? updatedTasks;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TaskView(
+                tripId: 'trip-1',
+                tasks: tasks,
+                onChanged: (value) => updatedTasks = value,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('タスク追加'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('task_name_field')),
+        'テストタスク',
+      );
+      await tester.enterText(
+        find.byKey(const Key('task_due_date_field')),
+        '20/05/2024',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(updatedTasks, isNull);
+      expect(find.text('締切日時の形式が正しくありません (例: 2024/05/20 10:00)'), findsOneWidget);
+    });
+
+    testWidgets('誤った日付形式（MM/DD/YYYY）の場合はエラーメッセージが表示されること', (
+      WidgetTester tester,
+    ) async {
+      final tasks = <EditableTask>[];
+      List<EditableTask>? updatedTasks;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TaskView(
+                tripId: 'trip-1',
+                tasks: tasks,
+                onChanged: (value) => updatedTasks = value,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('タスク追加'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('task_name_field')),
+        'テストタスク',
+      );
+      await tester.enterText(
+        find.byKey(const Key('task_due_date_field')),
+        '05/20/2024',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(updatedTasks, isNull);
+      expect(find.text('締切日時の形式が正しくありません (例: 2024/05/20 10:00)'), findsOneWidget);
+    });
+
+    testWidgets('日付のみ（時刻なし）の形式でも締切を設定できること', (
+      WidgetTester tester,
+    ) async {
+      final tasks = <EditableTask>[];
+      List<EditableTask>? updatedTasks;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: TaskView(
+                tripId: 'trip-1',
+                tasks: tasks,
+                onChanged: (value) => updatedTasks = value,
+                onClose: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('タスク追加'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('task_name_field')),
+        'テストタスク',
+      );
+      await tester.enterText(
+        find.byKey(const Key('task_due_date_field')),
+        '2024/05/20',
+      );
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(updatedTasks, isNotNull);
+      expect(updatedTasks!.length, 1);
+      expect(updatedTasks!.first.task.dueDate, DateTime(2024, 5, 20));
+    });
   });
 }

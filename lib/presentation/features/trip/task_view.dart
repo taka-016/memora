@@ -317,15 +317,35 @@ class _TaskFormSheet extends HookWidget {
       if (normalized.isEmpty) {
         return null;
       }
-      var candidate = normalized.replaceAll('/', '-');
-      final parts = candidate.split(' ');
+      
+      // Split into date and optional time parts
+      final parts = normalized.split(RegExp(r'\s+'));
+      if (parts.isEmpty || parts.length > 2) {
+        return null;
+      }
+
+      final datePart = parts[0];
+      // Enforce a year-first date format: YYYY/MM/DD or YYYY-MM-DD
+      final datePattern = RegExp(r'^\d{4}[-/]\d{1,2}[-/]\d{1,2}$');
+      if (!datePattern.hasMatch(datePart)) {
+        return null;
+      }
+
+      // Normalise date separators for DateTime.parse
+      final normalizedDate = datePart.replaceAll('/', '-');
+      String candidate;
+
       if (parts.length == 2) {
         final timePart = parts[1];
+        // If time is HH:MM, append seconds to make HH:MM:00
         final hhMmPattern = RegExp(r'^\d{1,2}:\d{2}$');
-        if (hhMmPattern.hasMatch(timePart)) {
-          candidate = '${parts[0]} $timePart:00';
-        }
+        final normalizedTime =
+            hhMmPattern.hasMatch(timePart) ? '$timePart:00' : timePart;
+        candidate = '$normalizedDate $normalizedTime';
+      } else {
+        candidate = normalizedDate;
       }
+
       return DateTime.tryParse(candidate);
     }
 
