@@ -155,6 +155,7 @@ void main() {
 
       expect(lastChanged.first.id, 'task-2');
       expect(lastChanged.first.orderIndex, 0);
+      expect(lastChanged.last.id, 'task-1');
       expect(lastChanged.last.orderIndex, 1);
     });
 

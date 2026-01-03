@@ -262,6 +262,13 @@ void main() {
         ),
         '',
       );
+      await tester.pump();
+
+      final memoField = find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.labelText == 'メモ',
+      );
+      final memoTextField = tester.widget<TextField>(memoField);
+      expect(memoTextField.controller?.text, isEmpty);
 
       await tester.tap(find.text('保存'));
       await tester.pumpAndSettle();

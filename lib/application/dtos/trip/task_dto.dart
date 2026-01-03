@@ -40,18 +40,24 @@ class TaskDto extends Equatable {
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
-      parentTaskId: identical(parentTaskId, _copyWithPlaceholder)
-          ? this.parentTaskId
-          : parentTaskId as String?,
+      parentTaskId: _resolveCopyWithValue<String>(
+        parentTaskId,
+        this.parentTaskId,
+        'parentTaskId',
+      ),
       name: name ?? this.name,
       isCompleted: isCompleted ?? this.isCompleted,
-      dueDate: identical(dueDate, _copyWithPlaceholder)
-          ? this.dueDate
-          : dueDate as DateTime?,
-      memo: identical(memo, _copyWithPlaceholder) ? this.memo : memo as String?,
-      assignedMemberId: identical(assignedMemberId, _copyWithPlaceholder)
-          ? this.assignedMemberId
-          : assignedMemberId as String?,
+      dueDate: _resolveCopyWithValue<DateTime>(
+        dueDate,
+        this.dueDate,
+        'dueDate',
+      ),
+      memo: _resolveCopyWithValue<String>(memo, this.memo, 'memo'),
+      assignedMemberId: _resolveCopyWithValue<String>(
+        assignedMemberId,
+        this.assignedMemberId,
+        'assignedMemberId',
+      ),
     );
   }
 
@@ -67,4 +73,20 @@ class TaskDto extends Equatable {
     memo,
     assignedMemberId,
   ];
+}
+
+T? _resolveCopyWithValue<T>(Object? value, T? currentValue, String fieldName) {
+  if (identical(value, _copyWithPlaceholder)) {
+    return currentValue;
+  }
+
+  if (value == null || value is T) {
+    return value as T?;
+  }
+
+  throw ArgumentError.value(
+    value,
+    fieldName,
+    '型が不正です。${T.toString()}? 型を指定してください。',
+  );
 }
