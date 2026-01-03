@@ -318,6 +318,7 @@ void main() {
     });
 
     testWidgets('子タスクは他の親タスクより上に移動できないこと', (tester) async {
+      bool onChangedCalled = false;
       List<TaskDto> lastChanged = [];
       final tasks = [
         TaskDto(
@@ -351,7 +352,6 @@ void main() {
           parentTaskId: 'parent-2',
         ),
       ];
-      lastChanged = tasks;
 
       await tester.pumpWidget(
         _wrapWithApp(
@@ -359,6 +359,7 @@ void main() {
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
+              onChangedCalled = true;
               lastChanged = updated;
             },
           ),
@@ -369,14 +370,8 @@ void main() {
       await tester.drag(dragHandle, const Offset(0, -400));
       await tester.pumpAndSettle();
 
-      expect(lastChanged.map((task) => task.id).toList(), [
-        'parent-1',
-        'child-1',
-        'parent-2',
-        'child-2',
-      ]);
-      expect(lastChanged[3].parentTaskId, 'parent-2');
-      expect(lastChanged[3].orderIndex, 0);
+      expect(onChangedCalled, isFalse);
+      expect(lastChanged, isEmpty);
     });
   });
 }
