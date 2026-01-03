@@ -106,6 +106,9 @@ class TripEditModal extends HookConsumerWidget {
             groupId,
             membersOrderBy: [const OrderBy('displayName')],
           );
+          if (!context.mounted) {
+            return;
+          }
           groupMembers.value = result?.members ?? [];
         } catch (e, stack) {
           logger.e(
@@ -491,10 +494,10 @@ class TripEditModal extends HookConsumerWidget {
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.checklist, size: 20),
-                                SizedBox(width: 4),
-                                Text('タスク管理'),
+                              children: [
+                                const Icon(Icons.checklist, size: 20),
+                                const SizedBox(width: 4),
+                                const Text('タスク管理'),
                               ],
                             ),
                           ),

@@ -107,12 +107,12 @@ void main() {
       );
 
       await tester.enterText(find.byType(TextField).first, '移動手段検討');
-      await tester.tap(find.text('担当者'));
+      await tester.tap(find.byKey(const Key('assigned_member_dropdown')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('佐藤花子').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('親タスク'));
+      await tester.tap(find.byKey(const Key('parent_task_dropdown')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('下見').last);
       await tester.pumpAndSettle();
@@ -124,6 +124,182 @@ void main() {
       expect(saved!.name, '移動手段検討');
       expect(saved!.assignedMemberId, 'member-2');
       expect(saved!.parentTaskId, 'parent-1');
+    });
+
+    testWidgets('タスク名未入力の場合はエラーが表示されること', (tester) async {
+      var called = false;
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (_) {
+          called = true;
+        },
+      );
+
+      await tester.enterText(find.byType(TextField).first, '');
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('タスク名を入力してください'), findsOneWidget);
+      expect(called, isFalse);
+    });
+
+    testWidgets('子タスクを持つタスクは親タスクを変更できないこと', (tester) async {
+      TaskDto? saved;
+      final grandParent = TaskDto(
+        id: 'grand-parent',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '全体調整',
+        isCompleted: false,
+      );
+      final editingTask = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 1,
+        name: '下見',
+        isCompleted: false,
+        parentTaskId: 'grand-parent',
+      );
+      final childTask = TaskDto(
+        id: 'task-2',
+        tripId: 'trip-1',
+        orderIndex: 2,
+        name: 'ルート確認',
+        isCompleted: false,
+        parentTaskId: 'task-1',
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: editingTask,
+        tasks: [grandParent, editingTask, childTask],
+        members: members,
+        onSaved: (task) {
+          saved = task;
+        },
+      );
+
+      final parentDropdown = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownButtonFormField<String?> &&
+            widget.decoration.labelText == '親タスク',
+      );
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String?>>(parentDropdown)
+            .onChanged,
+        isNull,
+      );
+      expect(find.text('子タスクがあるため親タスクは変更できません'), findsOneWidget);
+
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(saved, isNotNull);
+      expect(saved!.parentTaskId, 'grand-parent');
+    });
+
+    testWidgets('任意項目をクリアして保存できること', (tester) async {
+      TaskDto? saved;
+      final parentTask = TaskDto(
+        id: 'parent-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '下見',
+        isCompleted: false,
+      );
+      final editingTask = TaskDto(
+        id: 'task-2',
+        tripId: 'trip-1',
+        orderIndex: 1,
+        name: '移動手段',
+        isCompleted: false,
+        memo: 'メモあり',
+        dueDate: DateTime(2025, 1, 10),
+        assignedMemberId: 'member-1',
+        parentTaskId: 'parent-1',
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: editingTask,
+        tasks: [parentTask, editingTask],
+        members: members,
+        onSaved: (task) {
+          saved = task;
+        },
+      );
+
+      await tester.enterText(find.byType(TextField).first, '移動手段再検討');
+      await tester.tap(find.byKey(const Key('assigned_member_dropdown')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('未選択').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('parent_task_dropdown')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('なし').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('締切日をクリア'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField && widget.decoration?.labelText == 'メモ',
+        ),
+        '',
+      );
+
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(saved, isNotNull);
+      expect(saved!.name, '移動手段再検討');
+      expect(saved!.assignedMemberId, isNull);
+      expect(saved!.parentTaskId, isNull);
+      expect(saved!.dueDate, isNull);
+      expect(saved!.memo, isNull);
+    });
+
+    testWidgets('キャンセルで変更が破棄されること', (tester) async {
+      var called = false;
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (_) {
+          called = true;
+        },
+      );
+
+      await tester.enterText(find.byType(TextField).first, '変更後の名前');
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(called, isFalse);
+      expect(find.byType(TaskEditBottomSheet), findsNothing);
     });
   });
 }

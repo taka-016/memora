@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+const _copyWithPlaceholder = Object();
+
 class TaskDto extends Equatable {
   const TaskDto({
     required this.id,
@@ -27,23 +29,29 @@ class TaskDto extends Equatable {
     String? id,
     String? tripId,
     int? orderIndex,
-    String? parentTaskId,
+    Object? parentTaskId = _copyWithPlaceholder,
     String? name,
     bool? isCompleted,
-    DateTime? dueDate,
-    String? memo,
-    String? assignedMemberId,
+    Object? dueDate = _copyWithPlaceholder,
+    Object? memo = _copyWithPlaceholder,
+    Object? assignedMemberId = _copyWithPlaceholder,
   }) {
     return TaskDto(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
-      parentTaskId: parentTaskId ?? this.parentTaskId,
+      parentTaskId: identical(parentTaskId, _copyWithPlaceholder)
+          ? this.parentTaskId
+          : parentTaskId as String?,
       name: name ?? this.name,
       isCompleted: isCompleted ?? this.isCompleted,
-      dueDate: dueDate ?? this.dueDate,
-      memo: memo ?? this.memo,
-      assignedMemberId: assignedMemberId ?? this.assignedMemberId,
+      dueDate: identical(dueDate, _copyWithPlaceholder)
+          ? this.dueDate
+          : dueDate as DateTime?,
+      memo: identical(memo, _copyWithPlaceholder) ? this.memo : memo as String?,
+      assignedMemberId: identical(assignedMemberId, _copyWithPlaceholder)
+          ? this.assignedMemberId
+          : assignedMemberId as String?,
     );
   }
 

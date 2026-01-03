@@ -36,7 +36,8 @@ class TaskEditBottomSheet extends HookWidget {
         if (candidate.id == task.id) {
           return false;
         }
-        if (candidate.parentTaskId != null) {
+        if (candidate.parentTaskId != null &&
+            candidate.id != task.parentTaskId) {
           return false;
         }
         return true;
@@ -62,12 +63,15 @@ class TaskEditBottomSheet extends HookWidget {
         return;
       }
 
+      final parentTaskId = hasChildren(task.id)
+          ? task.parentTaskId
+          : parentTaskState.value;
       final updated = task.copyWith(
         name: trimmedName,
         memo: memoController.text.isEmpty ? null : memoController.text,
         dueDate: dueDateState.value,
         assignedMemberId: assignedMemberState.value,
-        parentTaskId: hasChildren(task.id) ? null : parentTaskState.value,
+        parentTaskId: parentTaskId,
       );
       onSaved(updated);
       Navigator.of(context).pop();
@@ -123,6 +127,7 @@ class TaskEditBottomSheet extends HookWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
+              key: const Key('assigned_member_dropdown'),
               initialValue: assignedMemberState.value,
               decoration: const InputDecoration(
                 labelText: '担当者',
@@ -146,6 +151,7 @@ class TaskEditBottomSheet extends HookWidget {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
+              key: const Key('parent_task_dropdown'),
               initialValue: parentTaskState.value,
               decoration: const InputDecoration(
                 labelText: '親タスク',
