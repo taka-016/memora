@@ -352,7 +352,7 @@ List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
   parents.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
   final normalized = <TaskDto>[];
   for (var i = 0; i < parents.length; i++) {
-    final parent = parents[i].copyWith(orderIndex: i, parentTaskId: null);
+    final parent = parents[i].copyWith(orderIndex: i);
     normalized.add(parent);
     final children = List<TaskDto>.from(childrenMap[parent.id] ?? [])
       ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
