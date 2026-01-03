@@ -319,7 +319,7 @@ void main() {
 
     testWidgets('子タスクは他の親タスクより上に移動できないこと', (tester) async {
       bool onChangedCalled = false;
-      List<TaskDto> lastChanged = [];
+      List<TaskDto>? lastChanged;
       final tasks = [
         TaskDto(
           id: 'parent-1',
@@ -371,7 +371,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(onChangedCalled, isFalse);
-      expect(lastChanged, isEmpty);
+      expect(lastChanged, isNull);
     });
   });
 }

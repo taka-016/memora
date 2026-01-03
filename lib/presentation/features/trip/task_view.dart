@@ -375,7 +375,7 @@ List<TaskDto>? _reorderParentGroup(
   if (oldIndex < 0 || oldIndex >= tasks.length) {
     return null;
   }
-  if (adjustedNewIndex < 0 || adjustedNewIndex > tasks.length) {
+  if (adjustedNewIndex < 0 || adjustedNewIndex >= tasks.length) {
     return null;
   }
 
@@ -402,7 +402,7 @@ List<TaskDto>? _reorderParentGroup(
   final insertIndex = targetParentIndex.clamp(0, parentsWithoutMoving.length);
 
   final reorderedParents = List<TaskDto>.from(parentsWithoutMoving)
-    ..insert(insertIndex, moving.copyWith(orderIndex: insertIndex));
+    ..insert(insertIndex, moving);
   for (var i = 0; i < reorderedParents.length; i++) {
     reorderedParents[i] = reorderedParents[i].copyWith(orderIndex: i);
   }
@@ -419,7 +419,7 @@ List<TaskDto>? _reorderChildTask(
   if (oldIndex < 0 || oldIndex >= tasks.length) {
     return null;
   }
-  if (adjustedNewIndex < 0 || adjustedNewIndex > tasks.length) {
+  if (adjustedNewIndex < 0 || adjustedNewIndex >= tasks.length) {
     return null;
   }
 
@@ -430,9 +430,6 @@ List<TaskDto>? _reorderChildTask(
   }
 
   final listWithoutChild = List<TaskDto>.from(tasks)..removeAt(oldIndex);
-  if (adjustedNewIndex < 0 || adjustedNewIndex > listWithoutChild.length) {
-    return null;
-  }
 
   final parentIndexByItem = _buildParentIndexByItem(listWithoutChild);
   final movingParentIndex = _buildParentIndexByItem(tasks)[oldIndex];
@@ -480,9 +477,13 @@ List<TaskDto>? _reorderChildTask(
 
   final reorderedSiblings = List<TaskDto>.from(siblingsWithoutMoving)
     ..insert(insertionIndex, moving);
+  final reorderedSiblingsWithUpdatedOrder = [
+    for (var i = 0; i < reorderedSiblings.length; i++)
+      reorderedSiblings[i].copyWith(orderIndex: i),
+  ];
   final parents = tasks.where((task) => task.parentTaskId == null).toList();
   final childrenMap = _collectChildren(tasks);
-  childrenMap[parentId] = reorderedSiblings;
+  childrenMap[parentId] = reorderedSiblingsWithUpdatedOrder;
   return _mergeParentsAndChildren(parents, childrenMap);
 }
 
