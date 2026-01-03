@@ -45,6 +45,25 @@ void main() {
       expect(copied.memo, '持ち物確認済み');
     });
 
+    test('copyWithで不正な型を渡すとArgumentErrorが発生する', () {
+      const dto = TaskDto(
+        id: 'task001',
+        tripId: 'trip001',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+      );
+
+      expect(
+        () => dto.copyWith(parentTaskId: 1),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => dto.copyWith(dueDate: '2025/01/01'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('同じ値を持つDtoは等価となる', () {
       const dto1 = TaskDto(
         id: 'task001',

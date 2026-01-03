@@ -131,26 +131,17 @@ class TaskView extends HookWidget {
       collapsedParents.value = next;
     }
 
-    List<TaskDto> sortedTasks() {
-      final copied = List<TaskDto>.from(tasksState.value);
-      copied.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-      return copied;
-    }
-
     String? memberName(String? memberId) {
       if (memberId == null) {
         return null;
       }
-      return groupMembers
-          .firstWhere(
-            (member) => member.memberId == memberId,
-            orElse: () => GroupMemberDto(
-              memberId: memberId,
-              groupId: '',
-              displayName: '',
-            ),
-          )
-          .displayName;
+      final matched = groupMembers.where(
+        (member) => member.memberId == memberId,
+      );
+      if (matched.isEmpty) {
+        return memberId;
+      }
+      return matched.first.displayName;
     }
 
     Widget buildHeader() {
@@ -321,7 +312,7 @@ class TaskView extends HookWidget {
               notifyChange(updated);
             },
             itemBuilder: (context, index) {
-              final task = sortedTasks()[index];
+              final task = tasksState.value[index];
               return KeyedSubtree(
                 key: Key('task_item_${task.id}'),
                 child: buildTaskTile(task),
