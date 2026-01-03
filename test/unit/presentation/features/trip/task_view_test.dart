@@ -193,8 +193,39 @@ void main() {
       expect(find.text('チケット手配'), findsOneWidget);
     });
 
-    testWidgets('親タスク削除で子タスクも削除されること', (tester) async {
+    testWidgets('子タスクを持たないタスクを削除できること', (tester) async {
       List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.delete).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('準備'), findsNothing);
+      expect(lastChanged, isEmpty);
+    });
+
+    testWidgets('子タスクがある親タスクには削除ボタンが表示されないこと', (tester) async {
+      bool onChangedCalled = false;
       final tasks = [
         TaskDto(
           id: 'parent',
@@ -218,19 +249,23 @@ void main() {
           TaskView(
             tasks: tasks,
             groupMembers: members,
-            onChanged: (updated) {
-              lastChanged = updated;
+            onChanged: (_) {
+              onChangedCalled = true;
             },
           ),
         ),
       );
 
-      await tester.tap(find.byIcon(Icons.delete).first);
-      await tester.pumpAndSettle();
-
-      expect(find.text('準備'), findsNothing);
-      expect(find.text('チケット手配'), findsNothing);
-      expect(lastChanged, isEmpty);
+      expect(
+        find.descendant(
+          of: find.text('準備'),
+          matching: find.byIcon(Icons.delete),
+        ),
+        findsNothing,
+      );
+      expect(onChangedCalled, isFalse);
+      expect(find.text('準備'), findsOneWidget);
+      expect(find.text('チケット手配'), findsOneWidget);
     });
 
     testWidgets('担当者が不明な場合はIDを表示すること', (tester) async {
@@ -252,6 +287,127 @@ void main() {
       );
 
       expect(find.text('担当: unknown-member'), findsOneWidget);
+    });
+
+    testWidgets('親タスクのドラッグで子タスクのまとまりを保ったまま並び替えられること', (tester) async {
+      List<TaskDto> reorderedTasks = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '手続き',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'parent-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '移動',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット購入',
+          isCompleted: false,
+          parentTaskId: 'parent-2',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              reorderedTasks = updated;
+            },
+          ),
+        ),
+      );
+
+      final dragHandle = find.byIcon(Icons.drag_handle).at(2);
+      await tester.drag(dragHandle, const Offset(0, -300));
+      await tester.pumpAndSettle();
+
+      expect(reorderedTasks.map((task) => task.id).toList(), [
+        'parent-2',
+        'child-2',
+        'parent-1',
+        'child-1',
+      ]);
+      // orderIndexは親・子で別スコープ。子タスクのorderIndexは親内の並び順。
+      expect(reorderedTasks[0].orderIndex, 0);
+      expect(reorderedTasks[1].orderIndex, 0);
+      expect(reorderedTasks[2].orderIndex, 1);
+      expect(reorderedTasks[3].orderIndex, 0);
+    });
+
+    testWidgets('子タスクは他の親タスクより上に移動できないこと', (tester) async {
+      bool onChangedCalled = false;
+      List<TaskDto>? lastChanged;
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '手続き',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'parent-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '移動',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット購入',
+          isCompleted: false,
+          parentTaskId: 'parent-2',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              onChangedCalled = true;
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      final dragHandle = find.byIcon(Icons.drag_handle).at(3);
+      await tester.drag(dragHandle, const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      expect(onChangedCalled, isFalse);
+      expect(lastChanged, isNull);
     });
   });
 }

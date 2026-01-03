@@ -31,16 +31,8 @@ class TaskView extends HookWidget {
       return null;
     }, [tasks]);
 
-    List<TaskDto> assignOrderIndexes(List<TaskDto> items) {
-      return items
-          .asMap()
-          .entries
-          .map((entry) => entry.value.copyWith(orderIndex: entry.key))
-          .toList();
-    }
-
     void notifyChange(List<TaskDto> updated) {
-      final normalized = assignOrderIndexes(updated);
+      final normalized = _normalizeOrder(updated);
       tasksState.value = normalized;
       onChanged(normalized);
     }
@@ -83,15 +75,10 @@ class TaskView extends HookWidget {
     }
 
     void deleteTask(TaskDto task) {
-      final updated = tasksState.value.where((t) {
-        if (t.id == task.id) {
-          return false;
-        }
-        if (t.parentTaskId == task.id) {
-          return false;
-        }
-        return true;
-      }).toList();
+      if (hasChildren(task.id)) {
+        return;
+      }
+      final updated = tasksState.value.where((t) => t.id != task.id).toList();
       collapsedParents.value = {
         for (final id in collapsedParents.value)
           if (id != task.id) id,
@@ -106,12 +93,15 @@ class TaskView extends HookWidget {
         return;
       }
       final uuid = const Uuid().v4();
+      final parentCount = tasksState.value
+          .where((task) => task.parentTaskId == null)
+          .length;
       final updated = [
         ...tasksState.value,
         TaskDto(
           id: uuid,
           tripId: '',
-          orderIndex: tasksState.value.length,
+          orderIndex: parentCount,
           name: trimmed,
           isCompleted: false,
         ),
@@ -258,10 +248,11 @@ class TaskView extends HookWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => deleteTask(task),
-              ),
+              if (!hasChildren(task.id))
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => deleteTask(task),
+                ),
               ReorderableDragStartListener(
                 index: tasksState.value.indexWhere((t) => t.id == task.id),
                 child: const Icon(Icons.drag_handle),
@@ -303,13 +294,28 @@ class TaskView extends HookWidget {
             buildDefaultDragHandles: false,
             itemCount: tasksState.value.length,
             onReorder: (oldIndex, newIndex) {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
+              final moving = tasksState.value[oldIndex];
+              if (moving.parentTaskId == null) {
+                final updated = _reorderParentGroup(
+                  tasksState.value,
+                  oldIndex,
+                  newIndex,
+                );
+                if (updated != null &&
+                    !_isSameOrder(tasksState.value, updated)) {
+                  notifyChange(updated);
+                }
+                return;
               }
-              final updated = List<TaskDto>.from(tasksState.value);
-              final task = updated.removeAt(oldIndex);
-              updated.insert(newIndex, task);
-              notifyChange(updated);
+
+              final updated = _reorderChildTask(
+                tasksState.value,
+                oldIndex,
+                newIndex,
+              );
+              if (updated != null && !_isSameOrder(tasksState.value, updated)) {
+                notifyChange(updated);
+              }
             },
             itemBuilder: (context, index) {
               final task = tasksState.value[index];
@@ -326,11 +332,214 @@ class TaskView extends HookWidget {
 }
 
 List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
-  final sorted = List<TaskDto>.from(tasks)
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-  return sorted
-      .asMap()
-      .entries
-      .map((entry) => entry.value.copyWith(orderIndex: entry.key))
+  final idSet = tasks.map((task) => task.id).toSet();
+  final parents = <TaskDto>[];
+  final childrenMap = <String, List<TaskDto>>{};
+
+  for (final task in tasks) {
+    final parentId = task.parentTaskId;
+    if (parentId != null && idSet.contains(parentId)) {
+      childrenMap.putIfAbsent(parentId, () => []).add(task);
+    } else {
+      if (parentId != null && !idSet.contains(parentId)) {
+        debugPrint(
+          'TaskView._normalizeOrder: 孤立した子タスク${task.id}が存在します '
+          '(親タスク: $parentId)。トップレベルに昇格して表示します。',
+        );
+      }
+      parents.add(task.copyWith(parentTaskId: null));
+    }
+  }
+
+  parents.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  final normalized = <TaskDto>[];
+  for (var i = 0; i < parents.length; i++) {
+    final parent = parents[i].copyWith(orderIndex: i, parentTaskId: null);
+    normalized.add(parent);
+    final children = List<TaskDto>.from(childrenMap[parent.id] ?? [])
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    for (var j = 0; j < children.length; j++) {
+      normalized.add(
+        children[j].copyWith(parentTaskId: parent.id, orderIndex: j),
+      );
+    }
+  }
+
+  return normalized;
+}
+
+List<TaskDto>? _reorderParentGroup(
+  List<TaskDto> tasks,
+  int oldIndex,
+  int newIndex,
+) {
+  final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+  if (oldIndex < 0 || oldIndex >= tasks.length) {
+    return null;
+  }
+  if (adjustedNewIndex < 0 || adjustedNewIndex >= tasks.length) {
+    return null;
+  }
+
+  final moving = tasks[oldIndex];
+  if (moving.parentTaskId != null) {
+    return null;
+  }
+
+  final parents = tasks.where((task) => task.parentTaskId == null).toList();
+  final parentIndexByItem = _buildParentIndexByItem(tasks);
+  final movingParentIndex = parentIndexByItem[oldIndex];
+  var targetParentIndex = adjustedNewIndex >= tasks.length
+      ? parents.length
+      : parentIndexByItem[adjustedNewIndex];
+  if (targetParentIndex == movingParentIndex) {
+    return null;
+  }
+
+  if (targetParentIndex > movingParentIndex) {
+    targetParentIndex -= 1;
+  }
+  final parentsWithoutMoving = List<TaskDto>.from(parents)
+    ..removeAt(movingParentIndex);
+  // List.insertはlengthと同じ位置への挿入（末尾追加）を許容するため、範囲外を防ぐ目的でclampする。
+  final insertIndex = targetParentIndex.clamp(0, parentsWithoutMoving.length);
+
+  final reorderedParents = List<TaskDto>.from(parentsWithoutMoving)
+    ..insert(insertIndex, moving);
+  for (var i = 0; i < reorderedParents.length; i++) {
+    reorderedParents[i] = reorderedParents[i].copyWith(orderIndex: i);
+  }
+  final childrenMap = _collectChildren(tasks);
+  return _mergeParentsAndChildren(reorderedParents, childrenMap);
+}
+
+List<TaskDto>? _reorderChildTask(
+  List<TaskDto> tasks,
+  int oldIndex,
+  int newIndex,
+) {
+  final adjustedNewIndex = newIndex > oldIndex ? newIndex - 1 : newIndex;
+  if (oldIndex < 0 || oldIndex >= tasks.length) {
+    return null;
+  }
+  if (adjustedNewIndex < 0 || adjustedNewIndex >= tasks.length) {
+    return null;
+  }
+
+  final moving = tasks[oldIndex];
+  final parentId = moving.parentTaskId;
+  if (parentId == null) {
+    return null;
+  }
+
+  final listWithoutChild = List<TaskDto>.from(tasks)..removeAt(oldIndex);
+
+  final parentIndexByItem = _buildParentIndexByItem(listWithoutChild);
+  final movingParentIndex = _buildParentIndexByItem(tasks)[oldIndex];
+  final targetParentIndex = adjustedNewIndex >= listWithoutChild.length
+      ? parentIndexByItem.isEmpty
+            ? movingParentIndex
+            : parentIndexByItem.last
+      : parentIndexByItem[adjustedNewIndex];
+  if (targetParentIndex != movingParentIndex) {
+    return null;
+  }
+
+  final parentPosition = listWithoutChild.indexWhere(
+    (task) => task.id == parentId,
+  );
+  if (parentPosition == -1) {
+    return null;
+  }
+  if (adjustedNewIndex <= parentPosition) {
+    return null;
+  }
+  final siblings = tasks
+      .where((task) => task.parentTaskId == parentId)
       .toList();
+  final oldSiblingIndex = siblings.indexWhere((task) => task.id == moving.id);
+  if (oldSiblingIndex == -1) {
+    return null;
+  }
+  final firstChildPosition = parentPosition + 1;
+  final maxChildPosition = parentPosition + siblings.length;
+  if (adjustedNewIndex < firstChildPosition ||
+      adjustedNewIndex > maxChildPosition) {
+    return null;
+  }
+
+  final siblingsWithoutMoving = List<TaskDto>.from(siblings)
+    ..removeAt(oldSiblingIndex);
+  final insertionIndex = (adjustedNewIndex - firstChildPosition).clamp(
+    0,
+    siblingsWithoutMoving.length,
+  );
+  if (insertionIndex == oldSiblingIndex) {
+    return null;
+  }
+
+  final reorderedSiblings = List<TaskDto>.from(siblingsWithoutMoving)
+    ..insert(insertionIndex, moving);
+  final reorderedSiblingsWithUpdatedOrder = [
+    for (var i = 0; i < reorderedSiblings.length; i++)
+      reorderedSiblings[i].copyWith(orderIndex: i),
+  ];
+  final parents = tasks.where((task) => task.parentTaskId == null).toList();
+  final childrenMap = _collectChildren(tasks);
+  childrenMap[parentId] = reorderedSiblingsWithUpdatedOrder;
+  return _mergeParentsAndChildren(parents, childrenMap);
+}
+
+Map<String, List<TaskDto>> _collectChildren(List<TaskDto> tasks) {
+  final childrenMap = <String, List<TaskDto>>{};
+  for (final task in tasks) {
+    final parentId = task.parentTaskId;
+    if (parentId == null) {
+      continue;
+    }
+    childrenMap.putIfAbsent(parentId, () => []).add(task);
+  }
+  for (final children in childrenMap.values) {
+    children.sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  }
+  return childrenMap;
+}
+
+List<TaskDto> _mergeParentsAndChildren(
+  List<TaskDto> parents,
+  Map<String, List<TaskDto>> childrenMap,
+) {
+  final merged = <TaskDto>[];
+  for (final parent in parents) {
+    merged.add(parent);
+    merged.addAll(childrenMap[parent.id] ?? []);
+  }
+  return merged;
+}
+
+List<int> _buildParentIndexByItem(List<TaskDto> tasks) {
+  var currentParentIndex = -1;
+  // 親タスクを先に並べておく前提で、子タスクは直前の親インデックスを引き継ぐ。
+  // 親が存在しない場合は-1を返すため、呼び出し側で範囲チェックを行う。
+  return tasks
+      .map((task) {
+        if (task.parentTaskId == null) {
+          currentParentIndex += 1;
+        }
+        return currentParentIndex;
+      })
+      .toList(growable: false);
+}
+
+bool _isSameOrder(List<TaskDto> current, List<TaskDto> updated) {
+  if (current.length != updated.length) {
+    return false;
+  }
+  for (var i = 0; i < current.length; i++) {
+    if (current[i].id != updated[i].id ||
+        current[i].parentTaskId != updated[i].parentTaskId) {
+      return false;
+    }
+  }
+  return true;
 }

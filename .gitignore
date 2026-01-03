@@ -59,3 +59,4 @@ repomix-output.xml
 mcp.json
 .github/prompts
 *.bk
+test/.test_optimizer.dart
