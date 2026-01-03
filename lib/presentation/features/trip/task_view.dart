@@ -253,10 +253,11 @@ class TaskView extends HookWidget {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => deleteTask(task),
-              ),
+              if (!isParent)
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => deleteTask(task),
+                ),
               ReorderableDragStartListener(
                 index: tasksState.value.indexWhere((t) => t.id == task.id),
                 child: const Icon(Icons.drag_handle),

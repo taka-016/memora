@@ -193,46 +193,6 @@ void main() {
       expect(find.text('チケット手配'), findsOneWidget);
     });
 
-    testWidgets('親タスク削除で子タスクも削除されること', (tester) async {
-      List<TaskDto> lastChanged = [];
-      final tasks = [
-        TaskDto(
-          id: 'parent',
-          tripId: 'trip-1',
-          orderIndex: 0,
-          name: '準備',
-          isCompleted: false,
-        ),
-        TaskDto(
-          id: 'child',
-          tripId: 'trip-1',
-          orderIndex: 1,
-          name: 'チケット手配',
-          isCompleted: false,
-          parentTaskId: 'parent',
-        ),
-      ];
-
-      await tester.pumpWidget(
-        _wrapWithApp(
-          TaskView(
-            tasks: tasks,
-            groupMembers: members,
-            onChanged: (updated) {
-              lastChanged = updated;
-            },
-          ),
-        ),
-      );
-
-      await tester.tap(find.byIcon(Icons.delete).first);
-      await tester.pumpAndSettle();
-
-      expect(find.text('準備'), findsNothing);
-      expect(find.text('チケット手配'), findsNothing);
-      expect(lastChanged, isEmpty);
-    });
-
     testWidgets('担当者が不明な場合はIDを表示すること', (tester) async {
       final tasks = [
         TaskDto(
@@ -252,6 +212,81 @@ void main() {
       );
 
       expect(find.text('担当: unknown-member'), findsOneWidget);
+    });
+
+    testWidgets('親が存在しない子タスクは親タスクとして表示されること', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'orphan',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '単独タスク',
+          isCompleted: false,
+          parentTaskId: 'missing-parent',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final card = tester.widget<Card>(
+        find.descendant(
+          of: find.byKey(const Key('task_item_orphan')),
+          matching: find.byType(Card),
+        ),
+      );
+      final margin = card.margin as EdgeInsets;
+
+      expect(margin.left, 4);
+    });
+
+    testWidgets('子タスクがある場合は削除ボタンを表示しないこと', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '手続き',
+          isCompleted: false,
+          parentTaskId: 'parent',
+        ),
+        TaskDto(
+          id: 'solo',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '単独タスク',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final parentDeleteButton = find.descendant(
+        of: find.byKey(const Key('task_item_parent')),
+        matching: find.byIcon(Icons.delete),
+      );
+      final soloDeleteButton = find.descendant(
+        of: find.byKey(const Key('task_item_solo')),
+        matching: find.byIcon(Icons.delete),
+      );
+
+      expect(parentDeleteButton, findsNothing);
+      expect(soloDeleteButton, findsOneWidget);
+      expect(find.byIcon(Icons.delete), findsNWidgets(2));
     });
 
     testWidgets('親タスクのドラッグで子タスクのまとまりを保ったまま並び替えられること', (tester) async {
