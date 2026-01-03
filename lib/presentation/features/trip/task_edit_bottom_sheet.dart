@@ -44,6 +44,20 @@ class TaskEditBottomSheet extends HookWidget {
       }).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     }
 
+    final filteredParentCandidates = parentCandidates();
+    final selectedAssignedMemberId =
+        groupMembers.any(
+          (member) => member.memberId == assignedMemberState.value,
+        )
+        ? assignedMemberState.value
+        : null;
+    final selectedParentTaskId =
+        filteredParentCandidates.any(
+          (candidate) => candidate.id == parentTaskState.value,
+        )
+        ? parentTaskState.value
+        : null;
+
     Future<void> pickDueDate() async {
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
@@ -65,12 +79,12 @@ class TaskEditBottomSheet extends HookWidget {
 
       final parentTaskId = hasChildren(task.id)
           ? task.parentTaskId
-          : parentTaskState.value;
+          : selectedParentTaskId;
       final updated = task.copyWith(
         name: trimmedName,
         memo: memoController.text.isEmpty ? null : memoController.text,
         dueDate: dueDateState.value,
-        assignedMemberId: assignedMemberState.value,
+        assignedMemberId: selectedAssignedMemberId,
         parentTaskId: parentTaskId,
       );
       onSaved(updated);
@@ -128,7 +142,7 @@ class TaskEditBottomSheet extends HookWidget {
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               key: const Key('assigned_member_dropdown'),
-              initialValue: assignedMemberState.value,
+              initialValue: selectedAssignedMemberId,
               decoration: const InputDecoration(
                 labelText: '担当者',
                 border: OutlineInputBorder(),
@@ -152,14 +166,14 @@ class TaskEditBottomSheet extends HookWidget {
             const SizedBox(height: 16),
             DropdownButtonFormField<String?>(
               key: const Key('parent_task_dropdown'),
-              initialValue: parentTaskState.value,
+              initialValue: selectedParentTaskId,
               decoration: const InputDecoration(
                 labelText: '親タスク',
                 border: OutlineInputBorder(),
               ),
               items: [
                 const DropdownMenuItem<String?>(value: null, child: Text('なし')),
-                ...parentCandidates().map(
+                ...filteredParentCandidates.map(
                   (candidate) => DropdownMenuItem<String?>(
                     value: candidate.id,
                     child: Text(candidate.name),

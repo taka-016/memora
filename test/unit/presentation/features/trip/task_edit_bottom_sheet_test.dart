@@ -79,6 +79,53 @@ void main() {
       expect(find.text('担当者'), findsOneWidget);
     });
 
+    testWidgets('担当者と親タスクが存在しない場合は未選択として扱われること', (tester) async {
+      TaskDto? saved;
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: 'ホテル予約',
+        isCompleted: false,
+        assignedMemberId: 'missing-member',
+        parentTaskId: 'missing-parent',
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (updated) {
+          saved = updated;
+        },
+      );
+
+      final assignedDropdown = find.byKey(
+        const Key('assigned_member_dropdown'),
+      );
+      final parentDropdown = find.byKey(const Key('parent_task_dropdown'));
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String?>>(assignedDropdown)
+            .initialValue,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<DropdownButtonFormField<String?>>(parentDropdown)
+            .initialValue,
+        isNull,
+      );
+
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+
+      expect(saved, isNotNull);
+      expect(saved!.assignedMemberId, isNull);
+      expect(saved!.parentTaskId, isNull);
+    });
+
     testWidgets('保存で入力値がコールバックされること', (tester) async {
       TaskDto? saved;
       final parentTask = TaskDto(
