@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
+import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
+import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:uuid/uuid.dart';
 
-enum TripEditExpandedSection { map, routeInfo }
+enum TripEditExpandedSection { map, routeInfo, tasks }
 
 class TripEditModalTestHandle {
   void Function(DateTime?, DateTime?)? _setDateRange;
@@ -30,7 +37,7 @@ class TripEditModalTestHandle {
   }
 }
 
-class TripEditModal extends HookWidget {
+class TripEditModal extends HookConsumerWidget {
   final String groupId;
   final TripEntryDto? tripEntry;
   final Function(TripEntry) onSave;
@@ -49,7 +56,7 @@ class TripEditModal extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(
       text: tripEntry?.tripName ?? '',
@@ -64,6 +71,10 @@ class TripEditModal extends HookWidget {
     final pins = useState<List<PinDto>>(
       List<PinDto>.from(tripEntry?.pins ?? []),
     );
+    final tasks = useState<List<TaskDto>>(
+      List<TaskDto>.from(tripEntry?.tasks ?? []),
+    );
+    final groupMembers = useState<List<GroupMemberDto>>([]);
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
@@ -86,6 +97,28 @@ class TripEditModal extends HookWidget {
         }
       };
     }, [testHandle]);
+
+    useEffect(() {
+      Future<void> loadGroupMembers() async {
+        try {
+          final service = ref.read(groupQueryServiceProvider);
+          final result = await service.getGroupWithMembersById(
+            groupId,
+            membersOrderBy: [const OrderBy('displayName')],
+          );
+          groupMembers.value = result?.members ?? [];
+        } catch (e, stack) {
+          logger.e(
+            'TripEditModal.loadGroupMembers: ${e.toString()}',
+            error: e,
+            stackTrace: stack,
+          );
+        }
+      }
+
+      loadGroupMembers();
+      return null;
+    }, [groupId, ref]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
@@ -144,6 +177,11 @@ class TripEditModal extends HookWidget {
       hideBottomSheet();
     }
 
+    void showTaskView() {
+      expandedSection.value = TripEditExpandedSection.tasks;
+      hideBottomSheet();
+    }
+
     void closeRouteInfoView() {
       expandedSection.value = null;
     }
@@ -176,6 +214,8 @@ class TripEditModal extends HookWidget {
 
       if (formKey.currentState!.validate()) {
         try {
+          final sortedTasks = List<TaskDto>.from(tasks.value)
+            ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
           final trip = TripEntry(
             id: tripEntry?.id ?? '',
             groupId: groupId,
@@ -185,6 +225,7 @@ class TripEditModal extends HookWidget {
             tripEndDate: selectedEnd,
             tripMemo: memoController.text.isEmpty ? null : memoController.text,
             pins: PinMapper.toEntityList(pins.value),
+            tasks: TaskMapper.toEntityList(sortedTasks),
           );
           onSave(trip);
           if (context.mounted) {
@@ -440,6 +481,25 @@ class TripEditModal extends HookWidget {
                           maxLines: 3,
                         ),
                         const SizedBox(height: 16),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: showTaskView,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 48),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.checklist, size: 20),
+                                SizedBox(width: 4),
+                                Text('タスク管理'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
                         const Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
@@ -557,6 +617,15 @@ class TripEditModal extends HookWidget {
             pins: pins.value,
             isTestEnvironment: isTestEnvironment,
             onClose: closeRouteInfoView,
+          );
+        case TripEditExpandedSection.tasks:
+          return TaskView(
+            tasks: tasks.value,
+            groupMembers: groupMembers.value,
+            onChanged: (updatedTasks) {
+              tasks.value = List<TaskDto>.from(updatedTasks);
+            },
+            onClose: () => expandedSection.value = null,
           );
         default:
           return buildNormalLayout();
