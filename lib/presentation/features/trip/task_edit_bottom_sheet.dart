@@ -44,7 +44,11 @@ class TaskEditBottomSheet extends HookWidget {
       }).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     }
 
-    final filteredParentCandidates = parentCandidates();
+    final filteredParentCandidates = useMemoized(() => parentCandidates(), [
+      tasks,
+      task.id,
+      task.parentTaskId,
+    ]);
     final selectedAssignedMemberId =
         groupMembers.any(
           (member) => member.memberId == assignedMemberState.value,
