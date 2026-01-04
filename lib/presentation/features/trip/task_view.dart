@@ -432,9 +432,9 @@ List<TaskDto>? _reorderChildTask(
 
   final listWithoutChild = List<TaskDto>.from(tasks)..removeAt(oldIndex);
 
-  final parentIndexByItemOriginal = _buildParentIndexByItem(tasks);
+  final parentIndexByItemWithChild = _buildParentIndexByItem(tasks);
   final parentIndexByItem = _buildParentIndexByItem(listWithoutChild);
-  final movingParentIndex = parentIndexByItemOriginal[oldIndex];
+  final movingParentIndex = parentIndexByItemWithChild[oldIndex];
   if (parentIndexByItem.isEmpty) {
     // The parent should still exist in listWithoutChild; if not, treat as invalid.
     return null;
