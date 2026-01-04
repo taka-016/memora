@@ -31,22 +31,24 @@ class TaskView extends HookWidget {
       return null;
     }, [tasks]);
 
-    List<TaskDto> assignOrderIndexes(List<TaskDto> items) {
-      return items
-          .asMap()
-          .entries
-          .map((entry) => entry.value.copyWith(orderIndex: entry.key))
-          .toList();
+    List<TaskDto> parentTasks() {
+      return tasksState.value
+          .where((task) => task.parentTaskId == null)
+          .toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    }
+
+    List<TaskDto> childrenOf(String parentId) {
+      return tasksState.value
+          .where((task) => task.parentTaskId == parentId)
+          .toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     }
 
     void notifyChange(List<TaskDto> updated) {
-      final normalized = assignOrderIndexes(updated);
+      final normalized = _normalizeOrder(updated);
       tasksState.value = normalized;
       onChanged(normalized);
-    }
-
-    bool hasChildren(String taskId) {
-      return tasksState.value.any((task) => task.parentTaskId == taskId);
     }
 
     Future<void> showEditBottomSheet(TaskDto task) async {
@@ -111,7 +113,7 @@ class TaskView extends HookWidget {
         TaskDto(
           id: uuid,
           tripId: '',
-          orderIndex: tasksState.value.length,
+          orderIndex: parentTasks().length,
           name: trimmed,
           isCompleted: false,
         ),
@@ -185,68 +187,47 @@ class TaskView extends HookWidget {
       );
     }
 
-    Widget buildTaskTile(TaskDto task) {
-      final isParent = hasChildren(task.id);
-      final isCollapsed = collapsedParents.value.contains(task.id);
-      final shouldHide =
-          task.parentTaskId != null &&
-          collapsedParents.value.contains(task.parentTaskId);
-      if (shouldHide) {
-        return const SizedBox.shrink();
-      }
-
+    List<String> subtitleParts(TaskDto task) {
       final assigned = memberName(task.assignedMemberId);
-      final hasParent = task.parentTaskId != null;
       final dueDateLabel = task.dueDate != null
           ? '${task.dueDate!.year}/${task.dueDate!.month.toString().padLeft(2, '0')}/${task.dueDate!.day.toString().padLeft(2, '0')}'
           : null;
-      final subtitleParts = <String>[];
+      final result = <String>[];
       if (assigned != null && assigned.isNotEmpty) {
-        subtitleParts.add('担当: $assigned');
+        result.add('担当: $assigned');
       }
       if (dueDateLabel != null) {
-        subtitleParts.add('締切: $dueDateLabel');
+        result.add('締切: $dueDateLabel');
       }
       if (task.memo != null && task.memo!.isNotEmpty) {
-        subtitleParts.add(task.memo!);
+        result.add(task.memo!);
       }
+      return result;
+    }
 
+    Widget buildChildTile(TaskDto task, int childIndex) {
+      final parts = subtitleParts(task);
       return Card(
-        margin: EdgeInsets.fromLTRB(hasParent ? 32 : 4, 4, 4, 4),
+        key: Key('child_item_${task.id}'),
+        margin: const EdgeInsets.symmetric(vertical: 4),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           leading: Checkbox(
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
           ),
-          title: Row(
-            children: [
-              if (isParent)
-                IconButton(
-                  icon: Icon(
-                    isCollapsed ? Icons.expand_more : Icons.expand_less,
-                  ),
-                  onPressed: () => toggleCollapse(task.id),
-                  visualDensity: VisualDensity.compact,
-                ),
-              Expanded(
-                child: Text(
-                  task.name,
-                  style: TextStyle(
-                    decoration: task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null,
-                  ),
-                ),
-              ),
-            ],
+          title: Text(
+            task.name,
+            style: TextStyle(
+              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+            ),
           ),
-          subtitle: subtitleParts.isNotEmpty
+          subtitle: parts.isNotEmpty
               ? Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: subtitleParts
+                    children: parts
                         .map(
                           (text) =>
                               Text(text, style: const TextStyle(fontSize: 12)),
@@ -259,11 +240,13 @@ class TaskView extends HookWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
+                key: Key('delete_task_${task.id}'),
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () => deleteTask(task),
               ),
               ReorderableDragStartListener(
-                index: tasksState.value.indexWhere((t) => t.id == task.id),
+                key: Key('child_drag_${task.id}'),
+                index: childIndex,
                 child: const Icon(Icons.drag_handle),
               ),
             ],
@@ -272,6 +255,127 @@ class TaskView extends HookWidget {
         ),
       );
     }
+
+    Widget buildParentCard(TaskDto task, int parentIndex) {
+      final children = childrenOf(task.id);
+      final isCollapsed = collapsedParents.value.contains(task.id);
+      final parts = subtitleParts(task);
+      return Card(
+        key: Key('parent_item_${task.id}'),
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                leading: Checkbox(
+                  value: task.isCompleted,
+                  onChanged: (value) => toggleCompletion(task, value),
+                ),
+                title: Row(
+                  children: [
+                    if (children.isNotEmpty)
+                      IconButton(
+                        icon: Icon(
+                          isCollapsed ? Icons.expand_more : Icons.expand_less,
+                        ),
+                        onPressed: () => toggleCollapse(task.id),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    Expanded(
+                      child: Text(
+                        task.name,
+                        style: TextStyle(
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: parts.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: parts
+                              .map(
+                                (text) => Text(
+                                  text,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      )
+                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (children.isEmpty)
+                      IconButton(
+                        key: Key('delete_task_${task.id}'),
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => deleteTask(task),
+                      ),
+                    ReorderableDragStartListener(
+                      key: Key('parent_drag_${task.id}'),
+                      index: parentIndex,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                  ],
+                ),
+                onTap: () => showEditBottomSheet(task),
+              ),
+              if (children.isNotEmpty && !isCollapsed)
+                Padding(
+                  padding: const EdgeInsets.only(left: 32, right: 4, top: 4),
+                  child: ReorderableListView.builder(
+                    key: Key('child_list_${task.id}'),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    buildDefaultDragHandles: false,
+                    itemCount: children.length,
+                    onReorder: (oldIndex, newIndex) {
+                      if (newIndex > oldIndex) {
+                        newIndex -= 1;
+                      }
+                      final updatedChildren = List<TaskDto>.from(children);
+                      final moved = updatedChildren.removeAt(oldIndex);
+                      updatedChildren.insert(newIndex, moved);
+                      final normalizedChildren = updatedChildren
+                          .asMap()
+                          .entries
+                          .map(
+                            (entry) =>
+                                entry.value.copyWith(orderIndex: entry.key),
+                          )
+                          .toList();
+                      notifyChange([
+                        ...tasksState.value.where(
+                          (t) => t.parentTaskId != task.id,
+                        ),
+                        ...normalizedChildren,
+                      ]);
+                    },
+                    itemBuilder: (context, index) {
+                      final child = children[index];
+                      return KeyedSubtree(
+                        key: Key('child_key_${child.id}'),
+                        child: buildChildTile(child, index),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final parents = parentTasks();
 
     return Column(
       key: const Key('task_view_root'),
@@ -300,22 +404,33 @@ class TaskView extends HookWidget {
         const SizedBox(height: 16),
         Expanded(
           child: ReorderableListView.builder(
+            key: const Key('parent_list'),
             buildDefaultDragHandles: false,
-            itemCount: tasksState.value.length,
+            itemCount: parents.length,
             onReorder: (oldIndex, newIndex) {
               if (newIndex > oldIndex) {
                 newIndex -= 1;
               }
-              final updated = List<TaskDto>.from(tasksState.value);
-              final task = updated.removeAt(oldIndex);
-              updated.insert(newIndex, task);
-              notifyChange(updated);
+              final updatedParents = List<TaskDto>.from(parents);
+              final moved = updatedParents.removeAt(oldIndex);
+              updatedParents.insert(newIndex, moved);
+              final normalizedParents = updatedParents
+                  .asMap()
+                  .entries
+                  .map((entry) => entry.value.copyWith(orderIndex: entry.key))
+                  .toList();
+              final merged = <TaskDto>[];
+              for (final parent in normalizedParents) {
+                merged.add(parent);
+                merged.addAll(childrenOf(parent.id));
+              }
+              notifyChange(merged);
             },
             itemBuilder: (context, index) {
-              final task = tasksState.value[index];
+              final task = parents[index];
               return KeyedSubtree(
-                key: Key('task_item_${task.id}'),
-                child: buildTaskTile(task),
+                key: Key('parent_card_${task.id}'),
+                child: buildParentCard(task, index),
               );
             },
           ),
@@ -326,11 +441,41 @@ class TaskView extends HookWidget {
 }
 
 List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
-  final sorted = List<TaskDto>.from(tasks)
+  final parents = tasks.where((task) => task.parentTaskId == null).toList()
     ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-  return sorted
-      .asMap()
-      .entries
-      .map((entry) => entry.value.copyWith(orderIndex: entry.key))
-      .toList();
+
+  final normalized = <TaskDto>[];
+
+  for (var i = 0; i < parents.length; i++) {
+    final parent = parents[i].copyWith(orderIndex: i);
+    normalized.add(parent);
+
+    final children =
+        tasks.where((task) => task.parentTaskId == parent.id).toList()
+          ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+    normalized.addAll(
+      children.asMap().entries.map(
+        (entry) => entry.value.copyWith(orderIndex: entry.key),
+      ),
+    );
+  }
+
+  final orphanChildren =
+      tasks
+          .where(
+            (task) =>
+                task.parentTaskId != null &&
+                !parents.any((parent) => parent.id == task.parentTaskId),
+          )
+          .toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+  normalized.addAll(
+    orphanChildren.asMap().entries.map(
+      (entry) => entry.value.copyWith(orderIndex: entry.key),
+    ),
+  );
+
+  return normalized;
 }
