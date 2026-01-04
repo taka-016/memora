@@ -394,8 +394,12 @@ void main() {
       // 孤立した子タスクが親タスクとして表示される
       expect(find.text('孤立した子タスク'), findsOneWidget);
 
-      // onChangedで渡されるリストでは、孤立した子タスクのparentTaskIdがnullになっている
+      // チェックボックスをタップしてonChangedをトリガー
+      final checkboxes = find.byType(Checkbox);
+      await tester.tap(checkboxes.first);
       await tester.pumpAndSettle();
+
+      // onChangedで渡されるリストでは、孤立した子タスクのparentTaskIdがnullになっている
       expect(lastChanged.length, 2);
       final orphanTask = lastChanged.firstWhere((t) => t.id == 'task-2');
       expect(orphanTask.parentTaskId, isNull);
