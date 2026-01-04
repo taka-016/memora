@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+const _copyWithPlaceholder = Object();
+
 class TaskDto extends Equatable {
   const TaskDto({
     required this.id,
@@ -27,23 +29,35 @@ class TaskDto extends Equatable {
     String? id,
     String? tripId,
     int? orderIndex,
-    String? parentTaskId,
+    Object? parentTaskId = _copyWithPlaceholder,
     String? name,
     bool? isCompleted,
-    DateTime? dueDate,
-    String? memo,
-    String? assignedMemberId,
+    Object? dueDate = _copyWithPlaceholder,
+    Object? memo = _copyWithPlaceholder,
+    Object? assignedMemberId = _copyWithPlaceholder,
   }) {
     return TaskDto(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
-      parentTaskId: parentTaskId ?? this.parentTaskId,
+      parentTaskId: _resolveCopyWithValue<String>(
+        parentTaskId,
+        this.parentTaskId,
+        'parentTaskId',
+      ),
       name: name ?? this.name,
       isCompleted: isCompleted ?? this.isCompleted,
-      dueDate: dueDate ?? this.dueDate,
-      memo: memo ?? this.memo,
-      assignedMemberId: assignedMemberId ?? this.assignedMemberId,
+      dueDate: _resolveCopyWithValue<DateTime>(
+        dueDate,
+        this.dueDate,
+        'dueDate',
+      ),
+      memo: _resolveCopyWithValue<String>(memo, this.memo, 'memo'),
+      assignedMemberId: _resolveCopyWithValue<String>(
+        assignedMemberId,
+        this.assignedMemberId,
+        'assignedMemberId',
+      ),
     );
   }
 
@@ -59,4 +73,20 @@ class TaskDto extends Equatable {
     memo,
     assignedMemberId,
   ];
+}
+
+T? _resolveCopyWithValue<T>(Object? value, T? currentValue, String fieldName) {
+  if (identical(value, _copyWithPlaceholder)) {
+    return currentValue;
+  }
+
+  if (value == null || value is T) {
+    return value as T?;
+  }
+
+  throw ArgumentError.value(
+    value,
+    fieldName,
+    '型が不正です。${T.toString()}? 型を指定してください。',
+  );
 }
