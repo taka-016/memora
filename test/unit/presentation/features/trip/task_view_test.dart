@@ -358,5 +358,48 @@ void main() {
 
       expect(find.text('担当: unknown-member'), findsOneWidget);
     });
+
+    testWidgets('孤立した子タスクが親タスクとして表示されること', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '親タスク',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'task-2',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '孤立した子タスク',
+          isCompleted: false,
+          parentTaskId: 'non-existent-parent',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (changed) {
+              lastChanged = changed;
+            },
+          ),
+        ),
+      );
+
+      // 孤立した子タスクが親タスクとして表示される
+      expect(find.text('孤立した子タスク'), findsOneWidget);
+
+      // onChangedで渡されるリストでは、孤立した子タスクのparentTaskIdがnullになっている
+      await tester.pumpAndSettle();
+      expect(lastChanged.length, 2);
+      final orphanTask = lastChanged.firstWhere((t) => t.id == 'task-2');
+      expect(orphanTask.parentTaskId, isNull);
+      expect(orphanTask.name, '孤立した子タスク');
+    });
   });
 }
