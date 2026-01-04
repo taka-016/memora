@@ -471,9 +471,13 @@ List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
           .toList()
         ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 
+  // 孤立した子タスクを親タスクに変換（parentTaskIdをnullに設定）
   normalized.addAll(
     orphanChildren.asMap().entries.map(
-      (entry) => entry.value.copyWith(orderIndex: entry.key),
+      (entry) => entry.value.copyWith(
+        orderIndex: parents.length + entry.key,
+        parentTaskId: null,
+      ),
     ),
   );
 
