@@ -434,6 +434,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] タスクの並び替えをドラッグ&ドロップで行い、変更後に連番のorderIndexを再採番する処理を用意する
   - [x] バリデーションはTaskエンティティの責務ではあるが、保存処理が遠いため、UIでも行う
   - [x] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（ユースケース経由のTaskQueryService/TripEntryRepository）
+  - [x] 並び替えは親タスクは親タスク間で、子タスクは子タスク間で行えるようにする（親タスクと子タスクでorderIndex重複可）
+  - [x] 子タスクがある場合、親タスクの削除ボタンを非表示にする
 
 ## 地図画面
 
