@@ -263,31 +263,32 @@ void main() {
       );
     });
 
-    test('tasksのorderIndexが重複していると例外が発生する', () {
-      expect(
-        () => TripEntry(
-          id: 'trip123',
-          groupId: 'group456',
-          tripYear: 2025,
-          tripStartDate: DateTime(2025, 6, 1),
-          tripEndDate: DateTime(2025, 6, 10),
-          tasks: [
-            Task(
-              tripId: 'trip123',
-              orderIndex: 0,
-              name: '準備',
-              isCompleted: false,
-            ),
-            Task(
-              tripId: 'trip123',
-              orderIndex: 0,
-              name: '確認',
-              isCompleted: true,
-            ),
-          ],
-        ),
-        throwsA(isA<ValidationException>()),
+    test('タスクのorderIndexが重複していても生成できる', () {
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        tripYear: 2025,
+        tripStartDate: DateTime(2025, 6, 1),
+        tripEndDate: DateTime(2025, 6, 10),
+        tasks: [
+          Task(
+            id: 'task-1',
+            tripId: 'trip123',
+            orderIndex: 0,
+            name: '準備',
+            isCompleted: false,
+          ),
+          Task(
+            id: 'task-2',
+            tripId: 'trip123',
+            orderIndex: 0,
+            name: '確認',
+            isCompleted: true,
+          ),
+        ],
       );
+
+      expect(entry.tasks, hasLength(2));
     });
 
     test('tripStartDateとtripEndDateが未設定でもtripYearが必須で生成できる', () {
@@ -342,6 +343,34 @@ void main() {
       );
 
       expect(entry.pins, hasLength(1));
+    });
+
+    test('存在しない親タスクが設定されていると例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tasks: [
+            Task(
+              id: 'task-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '親タスク',
+              isCompleted: false,
+            ),
+            Task(
+              id: 'task-2',
+              tripId: 'trip123',
+              orderIndex: 1,
+              name: '子タスク',
+              isCompleted: false,
+              parentTaskId: 'missing-parent',
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
     });
   });
 }

@@ -79,6 +79,8 @@
 - [x] TaskエンティティはTripEntryエンティティの集約に加える
   - [x] TripEntryRepository、TripEntryQueryService、FirestoreTripEntryRepository、FirestoreTripEntryQueryServiceを対応させる
   - [x] TripEntryMapper、TripEntryDtoを対応させる
+- [x] trip_entryのエンティティのtaskのエラーチェックから、orderindexの重複チェックを廃止する
+- [x] 存在しない親タスクidが設定されている場合、エラーとする(タスクidの検索範囲は、trip_entryに紐づくタスク内)
 
 ## マップの表示
 

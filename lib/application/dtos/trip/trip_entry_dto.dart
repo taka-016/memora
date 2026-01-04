@@ -4,7 +4,6 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 
-
 class TripEntryDto extends Equatable {
   const TripEntryDto({
     required this.id,
@@ -66,21 +65,13 @@ class TripEntryDto extends Equatable {
         this.tripMemo,
         'tripMemo',
       ),
-      pins: resolveCopyWithValue<List<PinDto>>(
-        pins,
-        this.pins,
-        'pins',
-      ),
+      pins: resolveCopyWithValue<List<PinDto>>(pins, this.pins, 'pins'),
       routes: resolveCopyWithValue<List<RouteDto>>(
         routes,
         this.routes,
         'routes',
       ),
-      tasks: resolveCopyWithValue<List<TaskDto>>(
-        tasks,
-        this.tasks,
-        'tasks',
-      ),
+      tasks: resolveCopyWithValue<List<TaskDto>>(tasks, this.tasks, 'tasks'),
     );
   }
 

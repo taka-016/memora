@@ -173,6 +173,7 @@ void main() {
           ],
           tasks: [
             Task(
+              id: 'task-010',
               tripId: 'trip-003',
               orderIndex: 0,
               name: '準備',
