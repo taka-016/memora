@@ -5,8 +5,8 @@ const copyWithPlaceholder = Object();
 /// copyWithメソッドで使用する値解決のヘルパー関数
 ///
 /// [value] が [copyWithPlaceholder] と同一の場合、[currentValue] を返す。
-/// それ以外の場合、[value] を型 [T] にキャストして返す。
-/// [value] の型が [T] でない場合は [ArgumentError] をスローする。
+/// それ以外の場合、[value] の型を検証し、型 [T] にキャストして返す。
+/// 型が一致しない場合は [ArgumentError] をスローする。
 ///
 /// [fieldName] はエラーメッセージで使用されるフィールド名。
 T? resolveCopyWithValue<T>(Object? value, T? currentValue, String fieldName) {
