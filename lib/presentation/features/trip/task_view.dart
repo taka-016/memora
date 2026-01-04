@@ -72,6 +72,10 @@ class TaskView extends HookWidget {
           );
         },
       );
+
+      if (!context.mounted) {
+        return;
+      }
     }
 
     void toggleCompletion(TaskDto task, bool? value) {
