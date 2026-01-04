@@ -69,6 +69,7 @@ void main() {
       expect(
         task,
         entity.Task(
+          id: 'task001',
           tripId: 'trip001',
           orderIndex: 0,
           parentTaskId: 'task-parent',

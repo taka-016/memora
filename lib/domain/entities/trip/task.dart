@@ -3,6 +3,7 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 class Task extends Equatable {
   Task({
+    this.id,
     required this.tripId,
     required this.orderIndex,
     required this.name,
@@ -15,6 +16,7 @@ class Task extends Equatable {
     _validate();
   }
 
+  final String? id;
   final String tripId;
   final int orderIndex;
   final String? parentTaskId;
@@ -25,6 +27,7 @@ class Task extends Equatable {
   final String? assignedMemberId;
 
   Task copyWith({
+    String? id,
     String? tripId,
     int? orderIndex,
     String? parentTaskId,
@@ -35,6 +38,7 @@ class Task extends Equatable {
     String? assignedMemberId,
   }) {
     return Task(
+      id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
       parentTaskId: parentTaskId ?? this.parentTaskId,
@@ -57,6 +61,7 @@ class Task extends Equatable {
 
   @override
   List<Object?> get props => [
+    id,
     tripId,
     orderIndex,
     parentTaskId,

@@ -15,11 +15,7 @@ void main() {
 
     test('nullが渡された場合はnullを返す', () {
       const currentValue = 'current';
-      final result = resolveCopyWithValue<String>(
-        null,
-        currentValue,
-        'field',
-      );
+      final result = resolveCopyWithValue<String>(null, currentValue, 'field');
       expect(result, isNull);
     });
 
@@ -37,11 +33,7 @@ void main() {
     test('不正な型の値が渡された場合はArgumentErrorをスローする', () {
       const currentValue = 'current';
       expect(
-        () => resolveCopyWithValue<String>(
-          123,
-          currentValue,
-          'testField',
-        ),
+        () => resolveCopyWithValue<String>(123, currentValue, 'testField'),
         throwsA(
           isA<ArgumentError>().having(
             (e) => e.message,
@@ -88,11 +80,7 @@ void main() {
 
     test('nullable型で新しいnullを明示的に設定できる', () {
       const currentValue = 'current';
-      final result = resolveCopyWithValue<String>(
-        null,
-        currentValue,
-        'field',
-      );
+      final result = resolveCopyWithValue<String>(null, currentValue, 'field');
       expect(result, isNull);
     });
   });
