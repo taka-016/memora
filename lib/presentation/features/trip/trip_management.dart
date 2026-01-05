@@ -97,8 +97,20 @@ class TripManagement extends HookConsumerWidget {
     }
 
     useEffect(() {
-      loadTripEntries();
-      loadGroupMembers();
+      isLoading.value = true;
+
+      Future<void> initialize() async {
+        await Future.wait([
+          loadTripEntries(),
+          loadGroupMembers(),
+        ]);
+        if (!context.mounted) {
+          return;
+        }
+        isLoading.value = false;
+      }
+
+      initialize();
       return null;
     }, [groupId, year]);
 
