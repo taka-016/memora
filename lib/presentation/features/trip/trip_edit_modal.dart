@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
@@ -35,7 +34,7 @@ class TripEditModalTestHandle {
   }
 }
 
-class TripEditModal extends HookConsumerWidget {
+class TripEditModal extends HookWidget {
   final String groupId;
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
@@ -56,7 +55,7 @@ class TripEditModal extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(
       text: tripEntry?.tripName ?? '',

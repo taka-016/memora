@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -8,13 +7,10 @@ import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
-// ProviderScopeはHookConsumerWidgetをテストするために必要
 Widget _createApp({
   required Widget child,
 }) {
-  return ProviderScope(
-    child: MaterialApp(home: Scaffold(body: child)),
-  );
+  return MaterialApp(home: Scaffold(body: child));
 }
 
 void main() {
