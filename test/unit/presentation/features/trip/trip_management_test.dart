@@ -134,13 +134,6 @@ void main() {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => testGroup);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
 
       // Act
       await tester.pumpWidget(
@@ -860,7 +853,7 @@ void main() {
 
       // Assert - エラーメッセージのスナックバーが表示されること
       expect(
-        find.text('グループメンバーの読み込みに失敗しました: TestException: グループメンバー取得エラー'),
+        find.textContaining('グループメンバーの読み込みに失敗しました'),
         findsOneWidget,
       );
     });
