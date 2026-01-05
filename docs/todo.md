@@ -542,6 +542,7 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
 - [x] TopPageで取得しているcurrentMemberをRiverpodでグローバル管理する
   - [x] currentMemberの取得責務をNotifier/Providerに移す
   - [x] 各画面へのmember引数受け渡しを廃止する
+- [x] TaskViewのbuildParentCardを分割する
 
 ## 不具合修正
 
