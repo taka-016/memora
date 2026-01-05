@@ -33,12 +33,7 @@ class TripEntry extends Equatable {
         throw ValidationException('各ルートのorderIndexは一意でなければなりません');
       }
     }
-    final taskIds = <String>{};
-    for (final task in this.tasks) {
-      if (task.id != null) {
-        taskIds.add(task.id!);
-      }
-    }
+    final taskIds = {for (final task in this.tasks) task.id};
     for (final task in this.tasks) {
       final parentId = task.parentTaskId;
       if (parentId != null && !taskIds.contains(parentId)) {

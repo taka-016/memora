@@ -51,6 +51,7 @@ void main() {
         ],
         tasks: [
           Task(
+            id: 'task-1',
             tripId: 'abc123',
             orderIndex: 0,
             name: '持ち物準備',
@@ -161,6 +162,7 @@ void main() {
         ],
         tasks: [
           Task(
+            id: 'task-2',
             tripId: 'abc123',
             orderIndex: 1,
             name: 'ホテル予約',

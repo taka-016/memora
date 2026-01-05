@@ -6,6 +6,7 @@ void main() {
   group('Task', () {
     test('必須パラメータでインスタンス化できる', () {
       final task = Task(
+        id: 'task001',
         tripId: 'trip001',
         orderIndex: 0,
         name: '持ち物準備',
@@ -25,6 +26,7 @@ void main() {
     test('orderIndexが負の場合はValidationExceptionを投げる', () {
       expect(
         () => Task(
+          id: 'task001',
           tripId: 'trip001',
           orderIndex: -1,
           name: '準備',
@@ -37,6 +39,7 @@ void main() {
     test('nameが空の場合はValidationExceptionを投げる', () {
       expect(
         () => Task(
+          id: 'task001',
           tripId: 'trip001',
           orderIndex: 0,
           name: '  ',
@@ -48,6 +51,7 @@ void main() {
 
     test('copyWithで値を更新できる', () {
       final task = Task(
+        id: 'task001',
         tripId: 'trip001',
         orderIndex: 0,
         name: '準備',
