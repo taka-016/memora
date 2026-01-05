@@ -8,6 +8,7 @@ import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
+// ProviderScopeはHookConsumerWidgetをテストするために必要
 Widget _createApp({
   required Widget child,
 }) {
@@ -661,9 +662,8 @@ void main() {
           child: Builder(
             builder: (context) {
               return TripEditModal(
-            groupId: groupId,
-
-            groupMembers: const [],
+                groupId: groupId,
+                groupMembers: const [],
                 onSave: (TripEntry tripEntry) {},
                 isTestEnvironment: true,
               );
