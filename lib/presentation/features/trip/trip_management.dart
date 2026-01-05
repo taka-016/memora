@@ -84,6 +84,15 @@ class TripManagement extends HookConsumerWidget {
           error: e,
           stackTrace: stack,
         );
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(
+            SnackBar(
+              content: Text('グループメンバーの読み込みに失敗しました: $e'),
+            ),
+          );
+        }
       }
     }
 
