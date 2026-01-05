@@ -205,6 +205,25 @@ class TaskView extends HookWidget {
       return result;
     }
 
+    List<TaskDto> reorderChildren(
+      List<TaskDto> children,
+      int oldIndex,
+      int newIndex,
+    ) {
+      var targetIndex = newIndex;
+      if (targetIndex > oldIndex) {
+        targetIndex -= 1;
+      }
+      final updatedChildren = List<TaskDto>.from(children);
+      final moved = updatedChildren.removeAt(oldIndex);
+      updatedChildren.insert(targetIndex, moved);
+      return updatedChildren
+          .asMap()
+          .entries
+          .map((entry) => entry.value.copyWith(orderIndex: entry.key))
+          .toList();
+    }
+
     Widget buildChildTile(TaskDto task, int childIndex) {
       final parts = subtitleParts(task);
       return Card(
@@ -222,20 +241,7 @@ class TaskView extends HookWidget {
               decoration: task.isCompleted ? TextDecoration.lineThrough : null,
             ),
           ),
-          subtitle: parts.isNotEmpty
-              ? Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: parts
-                        .map(
-                          (text) =>
-                              Text(text, style: const TextStyle(fontSize: 12)),
-                        )
-                        .toList(),
-                  ),
-                )
-              : null,
+          subtitle: parts.isNotEmpty ? _TaskSubtitle(parts: parts) : null,
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -263,114 +269,28 @@ class TaskView extends HookWidget {
       return Card(
         key: Key('parent_item_${task.id}'),
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                leading: Checkbox(
-                  value: task.isCompleted,
-                  onChanged: (value) => toggleCompletion(task, value),
-                ),
-                title: Row(
-                  children: [
-                    if (children.isNotEmpty)
-                      IconButton(
-                        icon: Icon(
-                          isCollapsed ? Icons.expand_more : Icons.expand_less,
-                        ),
-                        onPressed: () => toggleCollapse(task.id),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    Expanded(
-                      child: Text(
-                        task.name,
-                        style: TextStyle(
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                subtitle: parts.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: parts
-                              .map(
-                                (text) => Text(
-                                  text,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      )
-                    : null,
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (children.isEmpty)
-                      IconButton(
-                        key: Key('delete_task_${task.id}'),
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteTask(task),
-                      ),
-                    ReorderableDragStartListener(
-                      key: Key('parent_drag_${task.id}'),
-                      index: parentIndex,
-                      child: const Icon(Icons.drag_handle),
-                    ),
-                  ],
-                ),
-                onTap: () => showEditBottomSheet(task),
-              ),
-              if (children.isNotEmpty && !isCollapsed)
-                Padding(
-                  padding: const EdgeInsets.only(left: 32, right: 4, top: 4),
-                  child: ReorderableListView.builder(
-                    key: Key('child_list_${task.id}'),
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    buildDefaultDragHandles: false,
-                    itemCount: children.length,
-                    onReorder: (oldIndex, newIndex) {
-                      if (newIndex > oldIndex) {
-                        newIndex -= 1;
-                      }
-                      final updatedChildren = List<TaskDto>.from(children);
-                      final moved = updatedChildren.removeAt(oldIndex);
-                      updatedChildren.insert(newIndex, moved);
-                      final normalizedChildren = updatedChildren
-                          .asMap()
-                          .entries
-                          .map(
-                            (entry) =>
-                                entry.value.copyWith(orderIndex: entry.key),
-                          )
-                          .toList();
-                      notifyChange([
-                        ...tasksState.value.where(
-                          (t) => t.parentTaskId != task.id,
-                        ),
-                        ...normalizedChildren,
-                      ]);
-                    },
-                    itemBuilder: (context, index) {
-                      final child = children[index];
-                      return KeyedSubtree(
-                        key: Key('child_key_${child.id}'),
-                        child: buildChildTile(child, index),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
+        child: _ParentTaskCard(
+          task: task,
+          subtitleParts: parts,
+          children: children,
+          isCollapsed: isCollapsed,
+          parentIndex: parentIndex,
+          onToggleCompletion: (value) => toggleCompletion(task, value),
+          onToggleCollapse: () => toggleCollapse(task.id),
+          onTap: () => showEditBottomSheet(task),
+          onDelete: children.isEmpty ? () => deleteTask(task) : null,
+          onReorderChildren: (oldIndex, newIndex) {
+            final normalizedChildren = reorderChildren(
+              children,
+              oldIndex,
+              newIndex,
+            );
+            notifyChange([
+              ...tasksState.value.where((t) => t.parentTaskId != task.id),
+              ...normalizedChildren,
+            ]);
+          },
+          buildChildTile: buildChildTile,
         ),
       );
     }
@@ -436,6 +356,190 @@ class TaskView extends HookWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ParentTaskCard extends StatelessWidget {
+  const _ParentTaskCard({
+    required this.task,
+    required this.subtitleParts,
+    required this.children,
+    required this.isCollapsed,
+    required this.parentIndex,
+    required this.onToggleCompletion,
+    required this.onToggleCollapse,
+    required this.onTap,
+    required this.onReorderChildren,
+    required this.buildChildTile,
+    this.onDelete,
+  });
+
+  final TaskDto task;
+  final List<String> subtitleParts;
+  final List<TaskDto> children;
+  final bool isCollapsed;
+  final int parentIndex;
+  final ValueChanged<bool?> onToggleCompletion;
+  final VoidCallback onToggleCollapse;
+  final VoidCallback onTap;
+  final void Function(int oldIndex, int newIndex) onReorderChildren;
+  final Widget Function(TaskDto task, int index) buildChildTile;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: [
+          _ParentTaskTile(
+            task: task,
+            subtitleParts: subtitleParts,
+            childrenExist: children.isNotEmpty,
+            isCollapsed: isCollapsed,
+            parentIndex: parentIndex,
+            onToggleCompletion: onToggleCompletion,
+            onToggleCollapse: onToggleCollapse,
+            onTap: onTap,
+            onDelete: onDelete,
+          ),
+          if (children.isNotEmpty && !isCollapsed)
+            _ChildTaskList(
+              parentId: task.id,
+              children: children,
+              onReorderChildren: onReorderChildren,
+              buildChildTile: buildChildTile,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ParentTaskTile extends StatelessWidget {
+  const _ParentTaskTile({
+    required this.task,
+    required this.subtitleParts,
+    required this.childrenExist,
+    required this.isCollapsed,
+    required this.parentIndex,
+    required this.onToggleCompletion,
+    required this.onToggleCollapse,
+    required this.onTap,
+    this.onDelete,
+  });
+
+  final TaskDto task;
+  final List<String> subtitleParts;
+  final bool childrenExist;
+  final bool isCollapsed;
+  final int parentIndex;
+  final ValueChanged<bool?> onToggleCompletion;
+  final VoidCallback onToggleCollapse;
+  final VoidCallback onTap;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      leading: Checkbox(value: task.isCompleted, onChanged: onToggleCompletion),
+      title: Row(
+        children: [
+          if (childrenExist)
+            IconButton(
+              icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
+              onPressed: onToggleCollapse,
+              visualDensity: VisualDensity.compact,
+            ),
+          Expanded(
+            child: Text(
+              task.name,
+              style: TextStyle(
+                decoration: task.isCompleted
+                    ? TextDecoration.lineThrough
+                    : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: subtitleParts.isNotEmpty
+          ? _TaskSubtitle(parts: subtitleParts)
+          : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (!childrenExist && onDelete != null)
+            IconButton(
+              key: Key('delete_task_${task.id}'),
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: onDelete,
+            ),
+          ReorderableDragStartListener(
+            key: Key('parent_drag_${task.id}'),
+            index: parentIndex,
+            child: const Icon(Icons.drag_handle),
+          ),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+}
+
+class _ChildTaskList extends StatelessWidget {
+  const _ChildTaskList({
+    required this.parentId,
+    required this.children,
+    required this.onReorderChildren,
+    required this.buildChildTile,
+  });
+
+  final String parentId;
+  final List<TaskDto> children;
+  final void Function(int oldIndex, int newIndex) onReorderChildren;
+  final Widget Function(TaskDto task, int index) buildChildTile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 32, right: 4, top: 4),
+      child: ReorderableListView.builder(
+        key: Key('child_list_$parentId'),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        buildDefaultDragHandles: false,
+        itemCount: children.length,
+        onReorder: onReorderChildren,
+        itemBuilder: (context, index) {
+          final child = children[index];
+          return KeyedSubtree(
+            key: Key('child_key_${child.id}'),
+            child: buildChildTile(child, index),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _TaskSubtitle extends StatelessWidget {
+  const _TaskSubtitle({required this.parts});
+
+  final List<String> parts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: parts
+            .map((text) => Text(text, style: const TextStyle(fontSize: 12)))
+            .toList(),
+      ),
     );
   }
 }
