@@ -1,64 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
-class _FakeGroupQueryService implements GroupQueryService {
-  _FakeGroupQueryService({this.members = const []});
-
-  final List<GroupMemberDto> members;
-
-  @override
-  Future<GroupDto?> getGroupWithMembersById(
-    String groupId, {
-    List<OrderBy>? membersOrderBy,
-  }) async {
-    return GroupDto(
-      id: groupId,
-      ownerId: 'owner-1',
-      name: 'グループ',
-      members: members,
-    );
-  }
-
-  @override
-  Future<List<GroupDto>> getManagedGroupsWithMembersByOwnerId(
-    String ownerId, {
-    List<OrderBy>? groupsOrderBy,
-    List<OrderBy>? membersOrderBy,
-  }) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<GroupDto>> getGroupsWithMembersByMemberId(
-    String memberId, {
-    List<OrderBy>? groupsOrderBy,
-    List<OrderBy>? membersOrderBy,
-  }) {
-    throw UnimplementedError();
-  }
-}
-
 Widget _createApp({
   required Widget child,
-  List<GroupMemberDto> members = const [],
 }) {
   return ProviderScope(
-    overrides: [
-      groupQueryServiceProvider.overrideWithValue(
-        _FakeGroupQueryService(members: members),
-      ),
-    ],
     child: MaterialApp(home: Scaffold(body: child)),
   );
 }
@@ -70,6 +23,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -94,6 +48,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -119,6 +74,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -137,6 +93,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -159,6 +116,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -189,6 +147,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -212,6 +171,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -226,6 +186,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -259,6 +220,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
             testHandle: testHandle,
@@ -297,6 +259,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
             testHandle: testHandle,
@@ -345,6 +308,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -390,6 +354,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -414,6 +379,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -429,6 +395,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
           ),
@@ -447,6 +414,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {
               savedTripEntry = tripEntry;
             },
@@ -501,6 +469,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: existingTripEntry,
             onSave: (TripEntry tripEntry) {
               updatedTripEntry = tripEntry;
@@ -531,6 +500,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             year: 2024,
             onSave: (TripEntry tripEntry) {
               savedTripEntry = tripEntry;
@@ -560,6 +530,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
@@ -605,6 +576,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             year: 2024,
             tripEntry: TripEntryDto(
               id: 'test-id',
@@ -648,6 +620,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             year: 2024,
             tripEntry: TripEntryDto(
               id: 'test-id',
@@ -688,7 +661,9 @@ void main() {
           child: Builder(
             builder: (context) {
               return TripEditModal(
-                groupId: groupId,
+            groupId: groupId,
+
+            groupMembers: const [],
                 onSave: (TripEntry tripEntry) {},
                 isTestEnvironment: true,
               );
@@ -743,6 +718,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             onSave: (TripEntry tripEntry) {
               savedTripEntry = tripEntry;
             },
@@ -827,6 +803,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -855,6 +832,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -892,6 +870,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -941,6 +920,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -982,6 +962,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -1024,6 +1005,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -1066,6 +1048,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,
@@ -1112,6 +1095,7 @@ void main() {
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
+            groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (TripEntry tripEntry) {},
             isTestEnvironment: true,

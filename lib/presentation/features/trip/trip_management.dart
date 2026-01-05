@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
@@ -9,6 +11,7 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
@@ -33,8 +36,12 @@ class TripManagement extends HookConsumerWidget {
     final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
     final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
+    final getGroupWithMembersByIdUsecase = ref.read(
+      getGroupWithMembersByIdUsecaseProvider,
+    );
 
     final tripEntries = useState<List<TripEntryDto>>([]);
+    final groupMembers = useState<List<GroupMemberDto>>([]);
     final isLoading = useState(true);
 
     Future<void> loadTripEntries() async {
@@ -61,8 +68,28 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
+    Future<void> loadGroupMembers() async {
+      try {
+        final result = await getGroupWithMembersByIdUsecase.execute(
+          groupId,
+          membersOrderBy: [const OrderBy('displayName')],
+        );
+        if (!context.mounted) {
+          return;
+        }
+        groupMembers.value = result?.members ?? [];
+      } catch (e, stack) {
+        logger.e(
+          'TripManagement.loadGroupMembers: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+      }
+    }
+
     useEffect(() {
       loadTripEntries();
+      loadGroupMembers();
       return null;
     }, [groupId, year]);
 
@@ -118,6 +145,7 @@ class TripManagement extends HookConsumerWidget {
         context: context,
         builder: (dialogContext) => TripEditModal(
           groupId: groupId,
+          groupMembers: groupMembers.value,
           year: year,
           isTestEnvironment: isTestEnvironment,
           onSave: (tripEntry) async {
@@ -177,6 +205,7 @@ class TripManagement extends HookConsumerWidget {
           context: context,
           builder: (dialogContext) => TripEditModal(
             groupId: groupId,
+            groupMembers: groupMembers.value,
             tripEntry: detailedTripEntry,
             year: year,
             isTestEnvironment: isTestEnvironment,

@@ -11,8 +11,6 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
@@ -39,6 +37,7 @@ class TripEditModalTestHandle {
 
 class TripEditModal extends HookConsumerWidget {
   final String groupId;
+  final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
   final Function(TripEntry) onSave;
   final bool isTestEnvironment;
@@ -48,6 +47,7 @@ class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
     super.key,
     required this.groupId,
+    required this.groupMembers,
     this.tripEntry,
     required this.onSave,
     this.isTestEnvironment = false,
@@ -74,7 +74,6 @@ class TripEditModal extends HookConsumerWidget {
     final tasks = useState<List<TaskDto>>(
       List<TaskDto>.from(tripEntry?.tasks ?? []),
     );
-    final groupMembers = useState<List<GroupMemberDto>>([]);
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
@@ -97,31 +96,6 @@ class TripEditModal extends HookConsumerWidget {
         }
       };
     }, [testHandle]);
-
-    useEffect(() {
-      Future<void> loadGroupMembers() async {
-        try {
-          final service = ref.read(groupQueryServiceProvider);
-          final result = await service.getGroupWithMembersById(
-            groupId,
-            membersOrderBy: [const OrderBy('displayName')],
-          );
-          if (!context.mounted) {
-            return;
-          }
-          groupMembers.value = result?.members ?? [];
-        } catch (e, stack) {
-          logger.e(
-            'TripEditModal.loadGroupMembers: ${e.toString()}',
-            error: e,
-            stackTrace: stack,
-          );
-        }
-      }
-
-      loadGroupMembers();
-      return null;
-    }, [groupId, ref]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
@@ -624,7 +598,7 @@ class TripEditModal extends HookConsumerWidget {
         case TripEditExpandedSection.tasks:
           return TaskView(
             tasks: tasks.value,
-            groupMembers: groupMembers.value,
+            groupMembers: groupMembers,
             onChanged: (updatedTasks) {
               tasks.value = List<TaskDto>.from(updatedTasks);
             },
