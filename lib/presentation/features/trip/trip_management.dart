@@ -47,6 +47,7 @@ class TripManagement extends HookConsumerWidget {
     Future<void> loadTripEntries() async {
       try {
         final data = await getTripEntriesUsecase.execute(groupId, year);
+        if (!context.mounted) return;
         tripEntries.value = data;
       } catch (e, stack) {
         logger.e(
