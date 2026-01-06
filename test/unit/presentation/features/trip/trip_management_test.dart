@@ -34,7 +34,7 @@ void main() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
     mockGroupQueryService = MockGroupQueryService();
-    
+
     testGroupMembers = [
       GroupMemberDto(
         memberId: 'member-1',
@@ -56,7 +56,7 @@ void main() {
       name: 'テストグループ',
       members: testGroupMembers,
     );
-    
+
     // デフォルトのグループメンバー取得モック設定
     when(
       mockGroupQueryService.getGroupWithMembersById(
@@ -64,7 +64,7 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => testGroup);
-    
+
     testPin = PinDto(
       pinId: 'pin-1',
       tripId: 'trip-1',
@@ -737,7 +737,7 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
+
       when(
         mockGroupQueryService.getGroupWithMembersById(
           testGroupId,
@@ -761,10 +761,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - エラーメッセージのスナックバーが表示されること
-      expect(
-        find.textContaining('グループメンバーの読み込みに失敗しました'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('グループメンバーの読み込みに失敗しました'), findsOneWidget);
     });
 
     testWidgets('グループメンバーが存在しない場合でも正常に動作すること', (WidgetTester tester) async {
@@ -776,7 +773,7 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
+
       when(
         mockGroupQueryService.getGroupWithMembersById(
           testGroupId,
@@ -800,7 +797,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - 画面が正常に表示されること
-      expect(find.text('${testYear}年の旅行管理'), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsOneWidget);
       expect(find.text('旅行追加'), findsOneWidget);
     });
   });

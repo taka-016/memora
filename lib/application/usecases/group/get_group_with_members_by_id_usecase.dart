@@ -6,8 +6,10 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final getGroupWithMembersByIdUsecaseProvider =
     Provider<GetGroupWithMembersByIdUsecase>((ref) {
-  return GetGroupWithMembersByIdUsecase(ref.watch(groupQueryServiceProvider));
-});
+      return GetGroupWithMembersByIdUsecase(
+        ref.watch(groupQueryServiceProvider),
+      );
+    });
 
 class GetGroupWithMembersByIdUsecase {
   final GroupQueryService _groupQueryService;
