@@ -7,6 +7,7 @@ void main() {
   group('FirestoreTaskMapper', () {
     test('TaskエンティティをFirestoreマップへ変換できる', () {
       final task = Task(
+        id: 'task001',
         tripId: 'trip001',
         orderIndex: 0,
         parentTaskId: 'task-parent',
