@@ -57,6 +57,14 @@ void main() {
       members: testGroupMembers,
     );
     
+    // デフォルトのグループメンバー取得モック設定
+    when(
+      mockGroupQueryService.getGroupWithMembersById(
+        testGroupId,
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => testGroup);
+    
     testPin = PinDto(
       pinId: 'pin-1',
       tripId: 'trip-1',
@@ -127,14 +135,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -186,14 +186,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -229,14 +221,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -300,14 +284,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -351,13 +327,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
@@ -411,13 +380,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
@@ -468,13 +430,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
@@ -538,14 +493,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -583,14 +530,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -627,13 +566,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
       when(
         mockTripEntryRepository.deleteTripEntry(any),
       ).thenAnswer((_) async {});
@@ -680,14 +612,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -723,13 +647,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
       when(
         mockTripEntryRepository.saveTripEntry(any),
       ).thenAnswer((_) async => 'generated-id');
@@ -787,14 +704,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => testGroup);
-
       // Act
       await tester.pumpWidget(
         createApp(
