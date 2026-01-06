@@ -12,6 +12,7 @@ ENV TZ="$TZ"
 RUN apt-get update && apt-get install -y --no-install-recommends \
   tzdata \
   git \
+  openssh-client \
   curl \
   nano \
   vim \
@@ -20,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   gnupg \
   ca-certificates && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh
 
 # Node.jsとnpmのインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
