@@ -233,6 +233,44 @@ void main() {
       expect(child3.orderIndex, 0);
     });
 
+    testWidgets('子タスクの有無で親タスク名の位置がずれないこと', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'parent-with-child',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '子タスクありの親',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-of-parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '子タスク',
+          isCompleted: false,
+          parentTaskId: 'parent-with-child',
+        ),
+        TaskDto(
+          id: 'parent-without-child',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '子タスクなしの親',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final withChildOffset = tester.getTopLeft(find.text('子タスクありの親'));
+      final withoutChildOffset = tester.getTopLeft(find.text('子タスクなしの親'));
+
+      expect(withChildOffset.dx, equals(withoutChildOffset.dx));
+    });
+
     testWidgets('親子タスクの折り畳みが動作すること', (tester) async {
       final tasks = [
         TaskDto(
@@ -336,6 +374,37 @@ void main() {
       );
 
       expect(find.byKey(const Key('delete_task_parent')), findsNothing);
+    });
+
+    testWidgets('チェックボックスとタスク名の間隔が詰められていること', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'spacing-parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'スペース確認タスク',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final parentCard = find.byKey(const Key('parent_item_spacing-parent'));
+      final checkboxFinder = find.descendant(
+        of: parentCard,
+        matching: find.byType(Checkbox),
+      );
+      final textFinder = find.text('スペース確認タスク');
+
+      final checkboxRect = tester.getRect(checkboxFinder);
+      final textRect = tester.getRect(textFinder);
+      final gap = textRect.left - checkboxRect.right;
+
+      expect(gap, lessThanOrEqualTo(12));
     });
 
     testWidgets('担当者が不明な場合はIDを表示すること', (tester) async {

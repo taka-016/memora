@@ -82,11 +82,7 @@ class TripManagement extends HookConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(
-            SnackBar(
-              content: Text('グループメンバーの読み込みに失敗しました: $e'),
-            ),
-          );
+          ).showSnackBar(SnackBar(content: Text('グループメンバーの読み込みに失敗しました: $e')));
         }
       }
     }
@@ -95,10 +91,7 @@ class TripManagement extends HookConsumerWidget {
       isLoading.value = true;
 
       Future<void> initialize() async {
-        await Future.wait([
-          loadTripEntries(),
-          loadGroupMembers(),
-        ]);
+        await Future.wait([loadTripEntries(), loadGroupMembers()]);
         if (!context.mounted) {
           return;
         }

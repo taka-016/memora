@@ -414,6 +414,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] _searchRoutesでotherの場合はRouteMemoEditBottomSheetでRouteSegmentDetailを作成しているため、
   polylineの内容のみマージする
 - [x] 経路マップを閉じている場合に「経路検索」を実行するとエラーが発生する不具合を修正
+- [x] 子タスクの開閉ボタンの領域はあらかじめ確保しておき、子タスクの有無で親タスク名の位置が右にずれないようにする
+- [x] チェックボックスとタスク名の間が広く空いているため、詰める
 - [x] trip_entryのtripStartDate(旅行開始日)とtripEndDate(旅行終了日)は任意入力とする
   - [x] trip_entryにtripYear("NOT NULL")を追加し、年での紐づけはすべてtripYearで行う
   - [x] エンティティ、リポジトリ、ユースケース、マッパー、DTO、画面の修正
