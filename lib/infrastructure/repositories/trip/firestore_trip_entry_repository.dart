@@ -54,9 +54,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
-        FirestoreTaskMapper.toFirestore(
-          task.copyWith(tripId: tripDocRef.id),
-        ),
+        FirestoreTaskMapper.toFirestore(task),
       );
     }
 
@@ -139,7 +137,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
-        FirestoreTaskMapper.toFirestore(task.copyWith(tripId: tripEntry.id)),
+        FirestoreTaskMapper.toFirestore(task),
       );
     }
 
