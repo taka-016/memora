@@ -45,8 +45,6 @@ class TripManagement extends HookConsumerWidget {
     final isLoading = useState(true);
 
     Future<void> loadTripEntries() async {
-      isLoading.value = true;
-
       try {
         final data = await getTripEntriesUsecase.execute(groupId, year);
         tripEntries.value = data;
@@ -60,10 +58,6 @@ class TripManagement extends HookConsumerWidget {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('旅行一覧の読み込みに失敗しました: $e')));
-        }
-      } finally {
-        if (context.mounted) {
-          isLoading.value = false;
         }
       }
     }
