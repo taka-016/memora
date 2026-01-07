@@ -235,6 +235,7 @@ class TaskView extends HookWidget {
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
           ),
+          minLeadingWidth: 24,
           title: Text(
             task.name,
             style: TextStyle(
@@ -258,7 +259,7 @@ class TaskView extends HookWidget {
             ],
           ),
           onTap: () => showEditBottomSheet(task),
-          horizontalTitleGap: 8,
+          horizontalTitleGap: 4,
         ),
       );
     }
@@ -455,8 +456,8 @@ class _ParentTaskTile extends StatelessWidget {
             maintainState: true,
             child: IconButton(
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              iconSize: 20,
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+              iconSize: 18,
               icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
               onPressed: onToggleCollapse,
               visualDensity: VisualDensity.compact,
@@ -465,6 +466,7 @@ class _ParentTaskTile extends StatelessWidget {
           Checkbox(value: task.isCompleted, onChanged: onToggleCompletion),
         ],
       ),
+      minLeadingWidth: 24,
       title: Text(
         task.name,
         style: TextStyle(
@@ -491,7 +493,7 @@ class _ParentTaskTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      horizontalTitleGap: 8,
+      horizontalTitleGap: 4,
     );
   }
 }
