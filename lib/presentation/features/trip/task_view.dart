@@ -235,6 +235,7 @@ class TaskView extends HookWidget {
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
           ),
+          minLeadingWidth: 24,
           title: Text(
             task.name,
             style: TextStyle(
@@ -258,7 +259,7 @@ class TaskView extends HookWidget {
             ],
           ),
           onTap: () => showEditBottomSheet(task),
-          horizontalTitleGap: 8,
+          horizontalTitleGap: 4,
         ),
       );
     }
@@ -465,6 +466,7 @@ class _ParentTaskTile extends StatelessWidget {
           Checkbox(value: task.isCompleted, onChanged: onToggleCompletion),
         ],
       ),
+      minLeadingWidth: 24,
       title: Text(
         task.name,
         style: TextStyle(
@@ -491,7 +493,7 @@ class _ParentTaskTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      horizontalTitleGap: 8,
+      horizontalTitleGap: 4,
     );
   }
 }
