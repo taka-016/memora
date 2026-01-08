@@ -231,6 +231,7 @@ class TaskView extends HookWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          minLeadingWidth: 0,
           leading: Checkbox(
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
@@ -258,7 +259,7 @@ class TaskView extends HookWidget {
             ],
           ),
           onTap: () => showEditBottomSheet(task),
-          horizontalTitleGap: 8,
+          horizontalTitleGap: 2,
         ),
       );
     }
@@ -445,6 +446,7 @@ class _ParentTaskTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      minLeadingWidth: 0,
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -455,7 +457,7 @@ class _ParentTaskTile extends StatelessWidget {
             maintainState: true,
             child: IconButton(
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
               iconSize: 20,
               icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
               onPressed: onToggleCollapse,
@@ -491,7 +493,7 @@ class _ParentTaskTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      horizontalTitleGap: 8,
+      horizontalTitleGap: 2,
     );
   }
 }
