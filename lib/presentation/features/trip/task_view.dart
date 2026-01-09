@@ -232,9 +232,12 @@ class TaskView extends HookWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           minLeadingWidth: 0,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: 0),
           leading: Checkbox(
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
           ),
           title: Text(
             task.name,
@@ -259,7 +262,7 @@ class TaskView extends HookWidget {
             ],
           ),
           onTap: () => showEditBottomSheet(task),
-          horizontalTitleGap: 2,
+          horizontalTitleGap: 0,
         ),
       );
     }
@@ -447,6 +450,7 @@ class _ParentTaskTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       minLeadingWidth: 0,
+      visualDensity: const VisualDensity(horizontal: -4, vertical: 0),
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -464,7 +468,12 @@ class _ParentTaskTile extends StatelessWidget {
               visualDensity: VisualDensity.compact,
             ),
           ),
-          Checkbox(value: task.isCompleted, onChanged: onToggleCompletion),
+          Checkbox(
+            value: task.isCompleted,
+            onChanged: onToggleCompletion,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
         ],
       ),
       title: Text(
@@ -493,7 +502,7 @@ class _ParentTaskTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      horizontalTitleGap: 2,
+      horizontalTitleGap: 0,
     );
   }
 }
