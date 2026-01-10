@@ -188,6 +188,27 @@ void main() {
       expect(copiedDto.tripEndDate, isNull);
     });
 
+    test('copyWithで不正な型を渡すとArgumentErrorが発生する', () {
+      const originalDto = TripEntryDto(
+        id: 'trip-entry-123',
+        groupId: 'group-456',
+        tripYear: 2024,
+      );
+
+      expect(
+        () => originalDto.copyWith(tripName: 123),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => originalDto.copyWith(tripStartDate: '2025/01/01'),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(
+        () => originalDto.copyWith(pins: 'invalid'),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('copyWithで何も指定しなければ元の値を保持する', () {
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
       final routes = [

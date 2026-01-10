@@ -21,6 +21,7 @@ class TaskMapper {
 
   static entity.Task toEntity(TaskDto dto) {
     return entity.Task(
+      id: dto.id,
       tripId: dto.tripId,
       orderIndex: dto.orderIndex,
       parentTaskId: dto.parentTaskId,

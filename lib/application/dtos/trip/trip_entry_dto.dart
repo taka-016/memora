@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/application/dtos/copy_with_helper.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
-
-const _copyWithPlaceholder = Object();
 
 class TripEntryDto extends Equatable {
   const TripEntryDto({
@@ -34,39 +33,45 @@ class TripEntryDto extends Equatable {
     String? id,
     String? groupId,
     int? tripYear,
-    Object? tripName = _copyWithPlaceholder,
-    Object? tripStartDate = _copyWithPlaceholder,
-    Object? tripEndDate = _copyWithPlaceholder,
-    Object? tripMemo = _copyWithPlaceholder,
-    Object? pins = _copyWithPlaceholder,
-    Object? routes = _copyWithPlaceholder,
-    Object? tasks = _copyWithPlaceholder,
+    Object? tripName = copyWithPlaceholder,
+    Object? tripStartDate = copyWithPlaceholder,
+    Object? tripEndDate = copyWithPlaceholder,
+    Object? tripMemo = copyWithPlaceholder,
+    Object? pins = copyWithPlaceholder,
+    Object? routes = copyWithPlaceholder,
+    Object? tasks = copyWithPlaceholder,
   }) {
     return TripEntryDto(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       tripYear: tripYear ?? this.tripYear,
-      tripName: identical(tripName, _copyWithPlaceholder)
-          ? this.tripName
-          : tripName as String?,
-      tripStartDate: identical(tripStartDate, _copyWithPlaceholder)
-          ? this.tripStartDate
-          : tripStartDate as DateTime?,
-      tripEndDate: identical(tripEndDate, _copyWithPlaceholder)
-          ? this.tripEndDate
-          : tripEndDate as DateTime?,
-      tripMemo: identical(tripMemo, _copyWithPlaceholder)
-          ? this.tripMemo
-          : tripMemo as String?,
-      pins: identical(pins, _copyWithPlaceholder)
-          ? this.pins
-          : pins as List<PinDto>?,
-      routes: identical(routes, _copyWithPlaceholder)
-          ? this.routes
-          : routes as List<RouteDto>?,
-      tasks: identical(tasks, _copyWithPlaceholder)
-          ? this.tasks
-          : tasks as List<TaskDto>?,
+      tripName: resolveCopyWithValue<String>(
+        tripName,
+        this.tripName,
+        'tripName',
+      ),
+      tripStartDate: resolveCopyWithValue<DateTime>(
+        tripStartDate,
+        this.tripStartDate,
+        'tripStartDate',
+      ),
+      tripEndDate: resolveCopyWithValue<DateTime>(
+        tripEndDate,
+        this.tripEndDate,
+        'tripEndDate',
+      ),
+      tripMemo: resolveCopyWithValue<String>(
+        tripMemo,
+        this.tripMemo,
+        'tripMemo',
+      ),
+      pins: resolveCopyWithValue<List<PinDto>>(pins, this.pins, 'pins'),
+      routes: resolveCopyWithValue<List<RouteDto>>(
+        routes,
+        this.routes,
+        'routes',
+      ),
+      tasks: resolveCopyWithValue<List<TaskDto>>(tasks, this.tasks, 'tasks'),
     );
   }
 
