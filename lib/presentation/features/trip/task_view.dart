@@ -232,7 +232,7 @@ class TaskView extends HookWidget {
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           minLeadingWidth: 0,
-          visualDensity: const VisualDensity(horizontal: -4, vertical: 0),
+          visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
           leading: Checkbox(
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
@@ -450,7 +450,7 @@ class _ParentTaskTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.only(left: 4, right: 12),
       minLeadingWidth: 0,
-      visualDensity: const VisualDensity(horizontal: -4, vertical: 0),
+      visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -461,8 +461,8 @@ class _ParentTaskTile extends StatelessWidget {
             maintainState: true,
             child: IconButton(
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 20, height: 20),
-              iconSize: 20,
+              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+              iconSize: 32,
               icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
               onPressed: onToggleCollapse,
               visualDensity: VisualDensity.compact,
