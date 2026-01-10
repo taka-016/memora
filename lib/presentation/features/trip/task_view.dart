@@ -231,9 +231,13 @@ class TaskView extends HookWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          minLeadingWidth: 0,
+          visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
           leading: Checkbox(
             value: task.isCompleted,
             onChanged: (value) => toggleCompletion(task, value),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
           ),
           title: Text(
             task.name,
@@ -258,7 +262,7 @@ class TaskView extends HookWidget {
             ],
           ),
           onTap: () => showEditBottomSheet(task),
-          horizontalTitleGap: 4,
+          horizontalTitleGap: 0,
         ),
       );
     }
@@ -444,7 +448,9 @@ class _ParentTaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      contentPadding: const EdgeInsets.only(left: 4, right: 12),
+      minLeadingWidth: 0,
+      visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
       leading: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -455,14 +461,19 @@ class _ParentTaskTile extends StatelessWidget {
             maintainState: true,
             child: IconButton(
               padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              iconSize: 20,
+              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+              iconSize: 32,
               icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
               onPressed: onToggleCollapse,
               visualDensity: VisualDensity.compact,
             ),
           ),
-          Checkbox(value: task.isCompleted, onChanged: onToggleCompletion),
+          Checkbox(
+            value: task.isCompleted,
+            onChanged: onToggleCompletion,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            visualDensity: VisualDensity.compact,
+          ),
         ],
       ),
       title: Text(
@@ -491,7 +502,7 @@ class _ParentTaskTile extends StatelessWidget {
         ],
       ),
       onTap: onTap,
-      horizontalTitleGap: 4,
+      horizontalTitleGap: 0,
     );
   }
 }
