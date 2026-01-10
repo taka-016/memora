@@ -233,11 +233,18 @@ class TaskView extends HookWidget {
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
           minLeadingWidth: 0,
           visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
-          leading: Checkbox(
-            value: task.isCompleted,
-            onChanged: (value) => toggleCompletion(task, value),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
+          leading: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Checkbox(
+              value: task.isCompleted,
+              onChanged: (value) => toggleCompletion(task, value),
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
           title: Text(
             task.name,
@@ -459,20 +466,37 @@ class _ParentTaskTile extends StatelessWidget {
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-              iconSize: 32,
-              icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
-              onPressed: onToggleCollapse,
-              visualDensity: VisualDensity.compact,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.blue.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 32,
+                  height: 32,
+                ),
+                iconSize: 32,
+                icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
+                onPressed: onToggleCollapse,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
-          Checkbox(
-            value: task.isCompleted,
-            onChanged: onToggleCompletion,
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            visualDensity: VisualDensity.compact,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Checkbox(
+              value: task.isCompleted,
+              onChanged: onToggleCompletion,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
           ),
         ],
       ),
