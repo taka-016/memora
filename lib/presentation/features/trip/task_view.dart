@@ -448,7 +448,7 @@ class _ParentTaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      contentPadding: const EdgeInsets.only(left: 4, right: 12),
       minLeadingWidth: 0,
       visualDensity: const VisualDensity(horizontal: -4, vertical: 0),
       leading: Row(
@@ -459,19 +459,13 @@ class _ParentTaskTile extends StatelessWidget {
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
-            child: Transform.translate(
-              offset: const Offset(-4, 0),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints.tightFor(
-                  width: 20,
-                  height: 20,
-                ),
-                iconSize: 20,
-                icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
-                onPressed: onToggleCollapse,
-                visualDensity: VisualDensity.compact,
-              ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints.tightFor(width: 20, height: 20),
+              iconSize: 20,
+              icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
+              onPressed: onToggleCollapse,
+              visualDensity: VisualDensity.compact,
             ),
           ),
           Checkbox(
