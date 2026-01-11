@@ -459,13 +459,19 @@ class _ParentTaskTile extends StatelessWidget {
             maintainSize: true,
             maintainAnimation: true,
             maintainState: true,
-            child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
-              iconSize: 32,
-              icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
-              onPressed: onToggleCollapse,
-              visualDensity: VisualDensity.compact,
+            child: Transform.scale(
+              scale: 1.3,
+              child: IconButton(
+                style: IconButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                iconSize: 32,
+                icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
+                onPressed: onToggleCollapse,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
           Checkbox(
