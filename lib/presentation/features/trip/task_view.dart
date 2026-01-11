@@ -210,6 +210,20 @@ class TaskView extends HookWidget {
       int oldIndex,
       int newIndex,
     ) {
+      if (oldIndex < 0 || oldIndex >= children.length) {
+        return children
+            .asMap()
+            .entries
+            .map((entry) => entry.value.copyWith(orderIndex: entry.key))
+            .toList();
+      }
+      if (newIndex < 0 || newIndex > children.length) {
+        return children
+            .asMap()
+            .entries
+            .map((entry) => entry.value.copyWith(orderIndex: entry.key))
+            .toList();
+      }
       var targetIndex = newIndex;
       if (targetIndex > oldIndex) {
         targetIndex -= 1;
