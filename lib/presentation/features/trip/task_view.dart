@@ -460,7 +460,7 @@ class _ParentTaskTile extends StatelessWidget {
             maintainAnimation: true,
             maintainState: true,
             child: Transform.scale(
-              scale: 1.2,
+              scale: 1.5,
               child: IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints.tightFor(
