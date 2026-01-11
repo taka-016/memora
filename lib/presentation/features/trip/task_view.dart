@@ -460,8 +460,11 @@ class _ParentTaskTile extends StatelessWidget {
             maintainAnimation: true,
             maintainState: true,
             child: IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+              style: IconButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               iconSize: 32,
               icon: Icon(isCollapsed ? Icons.expand_more : Icons.expand_less),
               onPressed: onToggleCollapse,
