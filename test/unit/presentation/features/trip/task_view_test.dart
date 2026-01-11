@@ -271,6 +271,58 @@ void main() {
       expect(withChildOffset.dx, equals(withoutChildOffset.dx));
     });
 
+    testWidgets('子タスクの並び替えで範囲外インデックスの場合は変更されないこと', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: false,
+          parentTaskId: 'parent',
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '宿泊先予約',
+          isCompleted: false,
+          parentTaskId: 'parent',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      final childList = tester.widget<ReorderableListView>(
+        find.byKey(const Key('child_list_parent')),
+      );
+      childList.onReorder(0, 99);
+      await tester.pumpAndSettle();
+
+      final child1 = lastChanged.firstWhere((task) => task.id == 'child-1');
+      final child2 = lastChanged.firstWhere((task) => task.id == 'child-2');
+      expect(child1.orderIndex, 0);
+      expect(child2.orderIndex, 1);
+    });
+
     testWidgets('親子タスクの折り畳みが動作すること', (tester) async {
       final tasks = [
         TaskDto(
