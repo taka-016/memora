@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
@@ -47,8 +48,10 @@ class TaskView extends HookWidget {
 
     void notifyChange(List<TaskDto> updated) {
       final normalized = _normalizeOrder(updated);
+      logger.d('タスク一覧更新開始');
       tasksState.value = normalized;
       onChanged(normalized);
+      logger.d('タスク一覧更新完了');
     }
 
     Future<void> showEditBottomSheet(TaskDto task) async {
@@ -214,9 +217,11 @@ class TaskView extends HookWidget {
       if (targetIndex > oldIndex) {
         targetIndex -= 1;
       }
+      logger.d('子タスク並び替え計算開始');
       final updatedChildren = List<TaskDto>.from(children);
       final moved = updatedChildren.removeAt(oldIndex);
       updatedChildren.insert(targetIndex, moved);
+      logger.d('子タスク並び替え計算完了');
       return updatedChildren
           .asMap()
           .entries
@@ -285,6 +290,7 @@ class TaskView extends HookWidget {
           onTap: () => showEditBottomSheet(task),
           onDelete: children.isEmpty ? () => deleteTask(task) : null,
           onReorderChildren: (oldIndex, newIndex) {
+            logger.d('子タスク並び替え開始');
             final normalizedChildren = reorderChildren(
               children,
               oldIndex,
@@ -294,6 +300,7 @@ class TaskView extends HookWidget {
               ...tasksState.value.where((t) => t.parentTaskId != task.id),
               ...normalizedChildren,
             ]);
+            logger.d('子タスク並び替え完了');
           },
           buildChildTile: buildChildTile,
         ),
@@ -333,6 +340,7 @@ class TaskView extends HookWidget {
             buildDefaultDragHandles: false,
             itemCount: parents.length,
             onReorder: (oldIndex, newIndex) {
+              logger.d('親タスク並び替え開始');
               if (newIndex > oldIndex) {
                 newIndex -= 1;
               }
@@ -350,6 +358,7 @@ class TaskView extends HookWidget {
                 merged.addAll(childrenOf(parent.id));
               }
               notifyChange(merged);
+              logger.d('親タスク並び替え完了');
             },
             itemBuilder: (context, index) {
               final task = parents[index];
