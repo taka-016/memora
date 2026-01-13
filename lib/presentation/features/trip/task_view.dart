@@ -530,20 +530,23 @@ class _ChildTaskList extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(left: 32, right: 4, top: 4),
-      child: ReorderableListView.builder(
-        key: Key('child_list_$parentId'),
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        buildDefaultDragHandles: false,
-        itemCount: children.length,
-        onReorder: onReorderChildren,
-        itemBuilder: (context, index) {
-          final child = children[index];
-          return KeyedSubtree(
-            key: Key('child_key_${child.id}'),
-            child: buildChildTile(child, index),
-          );
-        },
+      child: DragBoundary(
+        child: ReorderableListView.builder(
+          key: Key('child_list_$parentId'),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false,
+          dragBoundaryProvider: DragBoundary.forRectOf,
+          itemCount: children.length,
+          onReorder: onReorderChildren,
+          itemBuilder: (context, index) {
+            final child = children[index];
+            return KeyedSubtree(
+              key: Key('child_key_${child.id}'),
+              child: buildChildTile(child, index),
+            );
+          },
+        ),
       ),
     );
   }

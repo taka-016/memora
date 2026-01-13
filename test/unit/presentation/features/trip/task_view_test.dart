@@ -233,6 +233,42 @@ void main() {
       expect(child3.orderIndex, 0);
     });
 
+    testWidgets('子タスクリストのドラッグ境界が設定されていること', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final childListFinder = find.byKey(const Key('child_list_parent-1'));
+      expect(childListFinder, findsOneWidget);
+      expect(
+        find.ancestor(of: childListFinder, matching: find.byType(DragBoundary)),
+        findsOneWidget,
+      );
+
+      final listView = tester.widget<ReorderableListView>(childListFinder);
+      expect(listView.dragBoundaryProvider, isNotNull);
+    });
+
     testWidgets('子タスクの有無で親タスク名の位置がずれないこと', (tester) async {
       final tasks = [
         TaskDto(
