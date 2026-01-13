@@ -233,6 +233,46 @@ void main() {
       expect(child3.orderIndex, 0);
     });
 
+    testWidgets('子タスクを親タスク領域外にドラッグしても例外が発生しないこと', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'parent',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: false,
+          parentTaskId: 'parent',
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '荷造り',
+          isCompleted: false,
+          parentTaskId: 'parent',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+        ),
+      );
+
+      final dragHandle = find.byKey(const Key('child_drag_child-2'));
+      await tester.drag(dragHandle, const Offset(0, 800));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('子タスクの有無で親タスク名の位置がずれないこと', (tester) async {
       final tasks = [
         TaskDto(

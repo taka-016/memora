@@ -533,6 +533,7 @@ class _ChildTaskList extends StatelessWidget {
       child: ReorderableListView.builder(
         key: Key('child_list_$parentId'),
         shrinkWrap: true,
+        primary: false,
         physics: const NeverScrollableScrollPhysics(),
         buildDefaultDragHandles: false,
         itemCount: children.length,
