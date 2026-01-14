@@ -440,6 +440,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] TripManagementでタスク読み込み/保存のI/O責務を担い、TripEntryとTaskの相互変換・永続化を行う（ユースケース経由のTaskQueryService/TripEntryRepository）
   - [x] 並び替えは親タスクは親タスク間で、子タスクは子タスク間で行えるようにする（親タスクと子タスクでorderIndex重複可）
   - [x] 子タスクがある場合、親タスクの削除ボタンを非表示にする
+  - [x] 親タスクに完了チェックをオンにしたら自動的にすべての子タスクを完了にする
+  - [x] 親タスクが完了かつ子タスクが未完了の場合はエラーとする
 
 ## 地図画面
 

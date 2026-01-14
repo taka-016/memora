@@ -374,5 +374,33 @@ void main() {
         throwsA(isA<ValidationException>()),
       );
     });
+
+    test('親タスクが完了で子タスクが未完了の場合は例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tasks: [
+            Task(
+              id: 'task-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '親タスク',
+              isCompleted: true,
+            ),
+            Task(
+              id: 'task-2',
+              tripId: 'trip123',
+              orderIndex: 1,
+              name: '子タスク',
+              isCompleted: false,
+              parentTaskId: 'task-1',
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
   });
 }

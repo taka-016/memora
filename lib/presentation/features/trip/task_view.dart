@@ -75,12 +75,21 @@ class TaskView extends HookWidget {
     }
 
     void toggleCompletion(TaskDto task, bool? value) {
+      final isCompleted = value ?? false;
       final updated = List<TaskDto>.from(tasksState.value);
       final index = updated.indexWhere((t) => t.id == task.id);
       if (index == -1) {
         return;
       }
-      updated[index] = task.copyWith(isCompleted: value ?? false);
+      updated[index] = task.copyWith(isCompleted: isCompleted);
+      if (task.parentTaskId == null && isCompleted) {
+        for (var i = 0; i < updated.length; i++) {
+          final candidate = updated[i];
+          if (candidate.parentTaskId == task.id && !candidate.isCompleted) {
+            updated[i] = candidate.copyWith(isCompleted: true);
+          }
+        }
+      }
       notifyChange(updated);
     }
 
