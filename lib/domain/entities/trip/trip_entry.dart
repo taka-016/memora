@@ -33,10 +33,17 @@ class TripEntry extends Equatable {
         throw ValidationException('各ルートのorderIndexは一意でなければなりません');
       }
     }
-    final taskOrderIndexes = <int>{};
+    final taskById = {for (final task in this.tasks) task.id: task};
     for (final task in this.tasks) {
-      if (!taskOrderIndexes.add(task.orderIndex)) {
-        throw ValidationException('各タスクのorderIndexは一意でなければなりません');
+      final parentId = task.parentTaskId;
+      if (parentId != null) {
+        final parentTask = taskById[parentId];
+        if (parentTask == null) {
+          throw ValidationException('存在しない親タスクが設定されています');
+        }
+        if (parentTask.isCompleted && !task.isCompleted) {
+          throw ValidationException('親タスクが完了の場合は子タスクも完了が必要です');
+        }
       }
     }
   }

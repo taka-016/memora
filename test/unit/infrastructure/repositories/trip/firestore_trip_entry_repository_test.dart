@@ -69,6 +69,7 @@ void main() {
           ],
           tasks: [
             Task(
+              id: 'task-001',
               tripId: 'trip001',
               orderIndex: 0,
               name: '準備',
@@ -82,23 +83,84 @@ void main() {
         final mockRouteDocRef = MockDocumentReference<Map<String, dynamic>>();
         final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
         when(mockDocRef.id).thenReturn('generated-doc-id');
-        when(mockCollection.doc()).thenReturn(mockDocRef);
+        when(mockCollection.doc('trip001')).thenReturn(mockDocRef);
         when(mockFirestore.batch()).thenReturn(mockBatch);
         when(mockBatch.commit()).thenAnswer((_) async {});
         when(mockRoutesCollection.doc()).thenReturn(mockRouteDocRef);
-        when(mockTasksCollection.doc()).thenReturn(mockTaskDocRef);
+        when(mockTasksCollection.doc('task-001')).thenReturn(mockTaskDocRef);
 
         final result = await repository.saveTripEntry(tripEntry);
 
         expect(result, equals('generated-doc-id'));
         verify(mockFirestore.batch()).called(1);
+        verify(mockCollection.doc('trip001')).called(1);
         verify(mockRoutesCollection.doc()).called(1);
         verify(mockBatch.set(mockRouteDocRef, any)).called(1);
-        verify(mockTasksCollection.doc()).called(1);
+        verify(mockTasksCollection.doc('task-001')).called(1);
         verify(mockBatch.set(mockTaskDocRef, any)).called(1);
         verify(mockBatch.commit()).called(1);
       },
     );
+
+    test('updateTripEntryが既存タスクのidを保持したまま更新する', () async {
+      final tripEntry = TripEntry(
+        id: 'trip001',
+        groupId: 'group001',
+        tripYear: 2025,
+        tasks: [
+          Task(
+            id: 'task-uuid',
+            tripId: 'trip001',
+            orderIndex: 0,
+            name: '準備',
+            isCompleted: false,
+          ),
+        ],
+      );
+
+      final mockTripDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
+      final mockPinsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockRoutesQuery = MockQuery<Map<String, dynamic>>();
+      final mockRoutesSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockTasksQuery = MockQuery<Map<String, dynamic>>();
+      final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockTaskDocRefWithId =
+          MockDocumentReference<Map<String, dynamic>>();
+
+      when(mockCollection.doc('trip001')).thenReturn(mockTripDocRef);
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockPinsQuery);
+      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([]);
+
+      when(
+        mockRoutesCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockRoutesQuery);
+      when(mockRoutesQuery.get()).thenAnswer((_) async => mockRoutesSnapshot);
+      when(mockRoutesSnapshot.docs).thenReturn([]);
+
+      when(
+        mockTasksCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockTasksQuery);
+      when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
+      when(mockTasksSnapshot.docs).thenReturn([]);
+
+      when(
+        mockTasksCollection.doc('task-uuid'),
+      ).thenReturn(mockTaskDocRefWithId);
+      when(mockBatch.commit()).thenAnswer((_) async {});
+
+      await repository.updateTripEntry(tripEntry);
+
+      verify(mockTasksCollection.doc('task-uuid')).called(1);
+    });
 
     test(
       'deleteTripEntryがtrip_entries collectionの該当ドキュメントとpinsとpin_detailsを削除する',

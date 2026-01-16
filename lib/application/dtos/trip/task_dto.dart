@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/application/dtos/copy_with_helper.dart';
 
 class TaskDto extends Equatable {
   const TaskDto({
@@ -27,23 +28,31 @@ class TaskDto extends Equatable {
     String? id,
     String? tripId,
     int? orderIndex,
-    String? parentTaskId,
+    Object? parentTaskId = copyWithPlaceholder,
     String? name,
     bool? isCompleted,
-    DateTime? dueDate,
-    String? memo,
-    String? assignedMemberId,
+    Object? dueDate = copyWithPlaceholder,
+    Object? memo = copyWithPlaceholder,
+    Object? assignedMemberId = copyWithPlaceholder,
   }) {
     return TaskDto(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
       orderIndex: orderIndex ?? this.orderIndex,
-      parentTaskId: parentTaskId ?? this.parentTaskId,
+      parentTaskId: resolveCopyWithValue<String>(
+        parentTaskId,
+        this.parentTaskId,
+        'parentTaskId',
+      ),
       name: name ?? this.name,
       isCompleted: isCompleted ?? this.isCompleted,
-      dueDate: dueDate ?? this.dueDate,
-      memo: memo ?? this.memo,
-      assignedMemberId: assignedMemberId ?? this.assignedMemberId,
+      dueDate: resolveCopyWithValue<DateTime>(dueDate, this.dueDate, 'dueDate'),
+      memo: resolveCopyWithValue<String>(memo, this.memo, 'memo'),
+      assignedMemberId: resolveCopyWithValue<String>(
+        assignedMemberId,
+        this.assignedMemberId,
+        'assignedMemberId',
+      ),
     );
   }
 

@@ -20,8 +20,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   Future<String> saveTripEntry(TripEntry tripEntry) async {
     final batch = _firestore.batch();
 
-    final tripDocRef = _firestore.collection('trip_entries').doc();
+    final tripDocRef = _firestore.collection('trip_entries').doc(tripEntry.id);
     batch.set(tripDocRef, FirestoreTripEntryMapper.toFirestore(tripEntry));
+    final tasksCollection = _firestore.collection('tasks');
 
     for (final Pin pin in tripEntry.pins) {
       final pinDocRef = _firestore.collection('pins').doc();
@@ -50,7 +51,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     }
 
     for (final Task task in tripEntry.tasks) {
-      final taskDocRef = _firestore.collection('tasks').doc();
+      final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
         FirestoreTaskMapper.toFirestore(task.copyWith(tripId: tripDocRef.id)),
@@ -64,6 +65,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   @override
   Future<void> updateTripEntry(TripEntry tripEntry) async {
     final batch = _firestore.batch();
+    final tasksCollection = _firestore.collection('tasks');
 
     batch.update(
       _firestore.collection('trip_entries').doc(tripEntry.id),
@@ -96,8 +98,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       batch.delete(routeDoc.reference);
     }
 
-    final tasksSnapshot = await _firestore
-        .collection('tasks')
+    final tasksSnapshot = await tasksCollection
         .where('tripId', isEqualTo: tripEntry.id)
         .get();
     for (final taskDoc in tasksSnapshot.docs) {
@@ -133,7 +134,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     }
 
     for (final Task task in tripEntry.tasks) {
-      final taskDocRef = _firestore.collection('tasks').doc();
+      final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
         FirestoreTaskMapper.toFirestore(task.copyWith(tripId: tripEntry.id)),

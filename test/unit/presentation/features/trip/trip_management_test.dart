@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
@@ -14,19 +17,54 @@ import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, TripEntryQueryService])
+@GenerateMocks([TripEntryRepository, TripEntryQueryService, GroupQueryService])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockTripEntryQueryService mockTripEntryQueryService;
+  late MockGroupQueryService mockGroupQueryService;
   late List<TripEntryDto> testTripEntries;
   late PinDto testPin;
   late TripEntryDto detailedTripEntry;
+  late List<GroupMemberDto> testGroupMembers;
+  late GroupDto testGroup;
   const testGroupId = 'test-group-id';
   const testYear = 2025;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
+    mockGroupQueryService = MockGroupQueryService();
+
+    testGroupMembers = [
+      GroupMemberDto(
+        memberId: 'member-1',
+        groupId: testGroupId,
+        displayName: '太郎',
+        email: 'taro@example.com',
+      ),
+      GroupMemberDto(
+        memberId: 'member-2',
+        groupId: testGroupId,
+        displayName: '花子',
+        email: 'hanako@example.com',
+      ),
+    ];
+
+    testGroup = GroupDto(
+      id: testGroupId,
+      ownerId: 'owner-1',
+      name: 'テストグループ',
+      members: testGroupMembers,
+    );
+
+    // デフォルトのグループメンバー取得モック設定
+    when(
+      mockGroupQueryService.getGroupWithMembersById(
+        testGroupId,
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => testGroup);
+
     testPin = PinDto(
       pinId: 'pin-1',
       tripId: 'trip-1',
@@ -69,6 +107,7 @@ void main() {
     required Widget home,
     TripEntryRepository? tripEntryRepository,
     TripEntryQueryService? tripEntryQueryService,
+    GroupQueryService? groupQueryService,
   }) {
     return ProviderScope(
       overrides: [
@@ -77,6 +116,9 @@ void main() {
         ),
         tripEntryQueryServiceProvider.overrideWithValue(
           tripEntryQueryService ?? mockTripEntryQueryService,
+        ),
+        groupQueryServiceProvider.overrideWithValue(
+          groupQueryService ?? mockGroupQueryService,
         ),
       ],
       child: MaterialApp(home: home),
@@ -93,7 +135,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -145,7 +186,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -181,7 +221,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -245,7 +284,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -455,7 +493,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -493,7 +530,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -576,7 +612,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-
       // Act
       await tester.pumpWidget(
         createApp(
@@ -658,6 +693,112 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
+    });
+
+    testWidgets('初期化時にグループメンバーが読み込まれること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+      // Act
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert - グループメンバー取得の確認
+      verify(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('グループメンバー読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('グループメンバー取得エラー'));
+
+      // Act
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert - エラーメッセージのスナックバーが表示されること
+      expect(find.textContaining('グループメンバーの読み込みに失敗しました'), findsOneWidget);
+    });
+
+    testWidgets('グループメンバーが存在しない場合でも正常に動作すること', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      // Act
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Assert - 画面が正常に表示されること
+      expect(find.text('$testYear年の旅行管理'), findsOneWidget);
+      expect(find.text('旅行追加'), findsOneWidget);
     });
   });
 }
