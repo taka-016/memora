@@ -374,5 +374,105 @@ void main() {
         throwsA(isA<ValidationException>()),
       );
     });
+
+    test('親タスクが完了で子タスクが未完了の場合は例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tasks: [
+            Task(
+              id: 'task-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '親タスク',
+              isCompleted: true,
+            ),
+            Task(
+              id: 'task-2',
+              tripId: 'trip123',
+              orderIndex: 1,
+              name: '子タスク',
+              isCompleted: false,
+              parentTaskId: 'task-1',
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('親タスクと子タスクが両方とも完了している場合は正常にインスタンスが生成される', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tasks: [
+            Task(
+              id: 'task-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '親タスク',
+              isCompleted: true,
+            ),
+            Task(
+              id: 'task-2',
+              tripId: 'trip123',
+              orderIndex: 1,
+              name: '子タスク',
+              isCompleted: true,
+              parentTaskId: 'task-1',
+            ),
+          ],
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('親タスクが完了で複数の子タスクのうち一つでも未完了の場合は例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          tripYear: 2025,
+          tasks: [
+            Task(
+              id: 'task-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '親タスク',
+              isCompleted: true,
+            ),
+            Task(
+              id: 'task-2',
+              tripId: 'trip123',
+              orderIndex: 1,
+              name: '子タスク1（完了）',
+              isCompleted: true,
+              parentTaskId: 'task-1',
+            ),
+            Task(
+              id: 'task-3',
+              tripId: 'trip123',
+              orderIndex: 2,
+              name: '子タスク2（未完了）',
+              isCompleted: false,
+              parentTaskId: 'task-1',
+            ),
+            Task(
+              id: 'task-4',
+              tripId: 'trip123',
+              orderIndex: 3,
+              name: '子タスク3（完了）',
+              isCompleted: true,
+              parentTaskId: 'task-1',
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
   });
 }

@@ -95,6 +95,205 @@ void main() {
       expect(lastChanged.first.isCompleted, isTrue);
     });
 
+    testWidgets('親タスクを完了にすると子タスクも完了になること', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+
+      final parent = lastChanged.firstWhere((task) => task.id == 'parent-1');
+      final child = lastChanged.firstWhere((task) => task.id == 'child-1');
+
+      expect(parent.isCompleted, isTrue);
+      expect(child.isCompleted, isTrue);
+    });
+
+    testWidgets('親タスクを完了にすると複数の子タスク（一部完了済み）が全て完了になること',
+        (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: true,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: 'ホテル予約',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'child-3',
+          tripId: 'trip-1',
+          orderIndex: 2,
+          name: '交通手段確保',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+
+      final parent = lastChanged.firstWhere((task) => task.id == 'parent-1');
+      final child1 = lastChanged.firstWhere((task) => task.id == 'child-1');
+      final child2 = lastChanged.firstWhere((task) => task.id == 'child-2');
+      final child3 = lastChanged.firstWhere((task) => task.id == 'child-3');
+
+      expect(parent.isCompleted, isTrue);
+      expect(child1.isCompleted, isTrue);
+      expect(child2.isCompleted, isTrue);
+      expect(child3.isCompleted, isTrue);
+    });
+
+    testWidgets('親タスクを完了解除しても子タスクの状態は変わらないこと', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: true,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: true,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: 'ホテル予約',
+          isCompleted: true,
+          parentTaskId: 'parent-1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(Checkbox).first);
+      await tester.pumpAndSettle();
+
+      final parent = lastChanged.firstWhere((task) => task.id == 'parent-1');
+      final child1 = lastChanged.firstWhere((task) => task.id == 'child-1');
+      final child2 = lastChanged.firstWhere((task) => task.id == 'child-2');
+
+      expect(parent.isCompleted, isFalse);
+      expect(child1.isCompleted, isTrue);
+      expect(child2.isCompleted, isTrue);
+    });
+
+    testWidgets('子タスクを完了にしても親タスクの状態は変わらないこと', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'parent-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+        TaskDto(
+          id: 'child-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'チケット手配',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(Checkbox).at(1));
+      await tester.pumpAndSettle();
+
+      final parent = lastChanged.firstWhere((task) => task.id == 'parent-1');
+      final child = lastChanged.firstWhere((task) => task.id == 'child-1');
+
+      expect(parent.isCompleted, isFalse);
+      expect(child.isCompleted, isTrue);
+    });
+
     testWidgets('タスクタップで編集ボトムシートが開くこと', (tester) async {
       final tasks = [
         TaskDto(
