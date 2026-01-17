@@ -199,7 +199,7 @@ class TripEditModal extends HookWidget {
             tripName: nameController.text.isEmpty ? null : nameController.text,
             tripStartDate: selectedStart,
             tripEndDate: selectedEnd,
-            tripMemo: memoController.text.isEmpty ? null : memoController.text,
+            tripMemo: memoController.text,
             pins: PinMapper.toEntityList(pins.value),
             tasks: TaskMapper.toEntityList(sortedTasks),
           );
