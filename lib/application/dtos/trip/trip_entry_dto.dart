@@ -36,7 +36,7 @@ class TripEntryDto extends Equatable {
     Object? tripName = copyWithPlaceholder,
     Object? tripStartDate = copyWithPlaceholder,
     Object? tripEndDate = copyWithPlaceholder,
-    Object? tripMemo = copyWithPlaceholder,
+    String? tripMemo,
     Object? pins = copyWithPlaceholder,
     Object? routes = copyWithPlaceholder,
     Object? tasks = copyWithPlaceholder,
@@ -60,11 +60,7 @@ class TripEntryDto extends Equatable {
         this.tripEndDate,
         'tripEndDate',
       ),
-      tripMemo: resolveCopyWithValue<String>(
-        tripMemo,
-        this.tripMemo,
-        'tripMemo',
-      ),
+      tripMemo: tripMemo ?? this.tripMemo,
       pins: resolveCopyWithValue<List<PinDto>>(pins, this.pins, 'pins'),
       routes: resolveCopyWithValue<List<RouteDto>>(
         routes,
