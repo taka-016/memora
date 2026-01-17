@@ -137,8 +137,7 @@ void main() {
       expect(child.isCompleted, isTrue);
     });
 
-    testWidgets('親タスクを完了にすると複数の子タスク（一部完了済み）が全て完了になること',
-        (tester) async {
+    testWidgets('親タスクを完了にすると複数の子タスク（一部完了済み）が全て完了になること', (tester) async {
       List<TaskDto> lastChanged = [];
       final tasks = [
         TaskDto(

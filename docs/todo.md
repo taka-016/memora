@@ -564,3 +564,8 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] DatePickerダイアログ上部の年月日表記に曜日も表示する
   - [x] DatePickerダイアログ上部の年月日表記タップで直接入力で年月日を変更できるようにする
 - [x] _showDeleteConfirmDialog（削除ダイアログ）の共通ウィジェット化
+- [ ] 編集画面の変更状態をRiverpodで管理し、キャンセル時に確認ダイアログを表示する
+  - [ ] 状態管理の作成
+  - [ ] グループ編集画面に適用
+  - [ ] メンバー編集画面に適用
+  - [ ] 旅行編集画面に適用
