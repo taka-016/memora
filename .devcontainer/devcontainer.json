@@ -17,7 +17,8 @@
         "source=android-config-memora,target=/root/.android,type=volume",
         "source=android-sdk-memora,target=/opt/android-sdk-linux,type=volume",
         "source=gradle-memora,target=/root/.gradle,type=volume",
-        "source=bashhistory-memora,target=/commandhistory,type=volume"
+        "source=bashhistory-memora,target=/commandhistory,type=volume",
+        "source=${localEnv:HOME}/.ssh,target=/root/.ssh-localhost,type=bind,consistency=cached,readonly"
     ],
     "runArgs": [
         "--env-file",
