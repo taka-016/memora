@@ -101,5 +101,60 @@ void main() {
 
       expect(result, true);
     });
+
+    testWidgets('showメソッドで編集を続ける操作がfalseで返ること', (WidgetTester tester) async {
+      bool? result;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  result = await EditDiscardConfirmDialog.show(context);
+                },
+                child: const Text('ダイアログ表示'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('ダイアログ表示'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('編集を続ける'));
+      await tester.pumpAndSettle();
+
+      expect(result, false);
+    });
+
+    testWidgets('showメソッドでダイアログを閉じたときデフォルト値falseが返ること', (WidgetTester tester) async {
+      bool? result;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  result = await EditDiscardConfirmDialog.show(context);
+                },
+                child: const Text('ダイアログ表示'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('ダイアログ表示'));
+      await tester.pumpAndSettle();
+
+      // ダイアログ外をタップして閉じる
+      await tester.tapAt(const Offset(0, 0));
+      await tester.pumpAndSettle();
+
+      expect(result, false);
+    });
   });
 }
