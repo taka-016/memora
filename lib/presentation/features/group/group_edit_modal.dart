@@ -495,7 +495,7 @@ class GroupEditModal extends HookConsumerWidget {
                 return;
               }
 
-              if (shouldClose == true) {
+              if (shouldClose) {
                 editStateNotifier.reset();
                 Navigator.of(context).pop();
               }
