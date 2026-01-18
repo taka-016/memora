@@ -150,8 +150,8 @@ void main() {
       await tester.tap(find.text('ダイアログ表示'));
       await tester.pumpAndSettle();
 
-      // ダイアログ外をタップして閉じる
-      await tester.tapAt(const Offset(0, 0));
+      // バックボタンでダイアログを閉じる
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
 
       expect(result, false);
