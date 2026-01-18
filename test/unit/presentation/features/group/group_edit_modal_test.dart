@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
@@ -74,17 +75,33 @@ GroupMemberDto createGroupMemberDto({
   );
 }
 
+Widget buildSubject({
+  required GroupDto group,
+  required void Function(Group) onSave,
+  required List<GroupMemberDto> availableMembers,
+  required GroupMemberDto member,
+}) {
+  return ProviderScope(
+    child: MaterialApp(
+      home: GroupEditModal(
+        group: group,
+        onSave: onSave,
+        availableMembers: availableMembers,
+        member: member,
+      ),
+    ),
+  );
+}
+
 void main() {
   group('GroupEditModal', () {
     testWidgets('新規作成時にタイトルが正しく表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(id: '', name: '', memo: ''),
-            onSave: (group) {},
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: createGroupDto(id: '', name: '', memo: ''),
+          onSave: (group) {},
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -100,13 +117,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: group,
-            onSave: (group) {},
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: group,
+          onSave: (group) {},
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -115,13 +130,11 @@ void main() {
 
     testWidgets('必須フィールドが空の場合にバリデーションエラーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(id: '', name: '', memo: ''),
-            onSave: (group) {},
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: createGroupDto(id: '', name: '', memo: ''),
+          onSave: (group) {},
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -136,15 +149,13 @@ void main() {
       Group? savedGroup;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(id: '', name: '', memo: ''),
-            onSave: (group) {
-              savedGroup = group;
-            },
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: createGroupDto(id: '', name: '', memo: ''),
+          onSave: (group) {
+            savedGroup = group;
+          },
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -171,15 +182,13 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: group,
-            onSave: (group) {
-              savedGroup = group;
-            },
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: group,
+          onSave: (group) {
+            savedGroup = group;
+          },
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -234,21 +243,19 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'group1',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
-                createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'group1',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
+              createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -271,21 +278,19 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'group1',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
-                createGroupMemberDto(groupId: 'group1', memberId: 'owner-id'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'group1',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'group1', memberId: 'member1'),
+              createGroupMemberDto(groupId: 'group1', memberId: 'owner-id'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -310,18 +315,16 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: '',
-              ownerId: 'owner-id',
-              name: '',
-              members: const [],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: '',
+            ownerId: 'owner-id',
+            name: '',
+            members: const [],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -355,20 +358,18 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -423,20 +424,18 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -476,20 +475,18 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -526,20 +523,18 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -558,39 +553,37 @@ void main() {
       final longName = 'とても長い名前のテストメンバー' * 3;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: [
-              createGroupMemberDto(
-                memberId: 'member1',
-                groupId: '',
-                accountId: 'account1',
-                ownerId: 'admin-id',
-                displayName: longName,
-                kanjiLastName: '長い',
-                kanjiFirstName: '名前',
-                hiraganaLastName: 'ながい',
-                hiraganaFirstName: 'なまえ',
-                firstName: 'Long',
-                lastName: 'Name',
-                gender: 'その他',
-                birthday: DateTime(1990, 1, 1),
-                email: 'long@example.com',
-                phoneNumber: '090-0000-0000',
-                type: 'member',
-              ),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
-            member: createCurrentMember(),
           ),
+          onSave: (group) {},
+          availableMembers: [
+            createGroupMemberDto(
+              memberId: 'member1',
+              groupId: '',
+              accountId: 'account1',
+              ownerId: 'admin-id',
+              displayName: longName,
+              kanjiLastName: '長い',
+              kanjiFirstName: '名前',
+              hiraganaLastName: 'ながい',
+              hiraganaFirstName: 'なまえ',
+              firstName: 'Long',
+              lastName: 'Name',
+              gender: 'その他',
+              birthday: DateTime(1990, 1, 1),
+              email: 'long@example.com',
+              phoneNumber: '090-0000-0000',
+              type: 'member',
+            ),
+          ],
+          member: createCurrentMember(),
         ),
       );
 
@@ -626,15 +619,13 @@ void main() {
       Group? savedGroup;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(id: '', name: '', memo: ''),
-            onSave: (group) {
-              savedGroup = group;
-            },
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: createGroupDto(id: '', name: '', memo: ''),
+          onSave: (group) {
+            savedGroup = group;
+          },
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -657,25 +648,27 @@ void main() {
 
     testWidgets('キャンセルボタンでダイアログが閉じる', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () => showDialog(
-                  context: context,
-                  builder: (context) => GroupEditModal(
-                    group: createGroupDto(
-                      id: '',
-                      ownerId: 'owner-id',
-                      name: '',
-                      memo: '',
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => showDialog(
+                    context: context,
+                    builder: (context) => GroupEditModal(
+                      group: createGroupDto(
+                        id: '',
+                        ownerId: 'owner-id',
+                        name: '',
+                        memo: '',
+                      ),
+                      onSave: (group) {},
+                      availableMembers: const [],
+                      member: createCurrentMember(),
                     ),
-                    onSave: (group) {},
-                    availableMembers: const [],
-                    member: createCurrentMember(),
                   ),
+                  child: const Text('Open Modal'),
                 ),
-                child: const Text('Open Modal'),
               ),
             ),
           ),
@@ -722,26 +715,24 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-id',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: availableMembers
-                  .take(5)
-                  .map(
-                    (member) => createGroupMemberDto(
-                      groupId: 'test-id',
-                      memberId: member.memberId,
-                    ),
-                  )
-                  .toList(),
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-id',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: availableMembers
+                .take(5)
+                .map(
+                  (member) => createGroupMemberDto(
+                    groupId: 'test-id',
+                    memberId: member.memberId,
+                  ),
+                )
+                .toList(),
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -803,13 +794,11 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: group,
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: group,
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -829,13 +818,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: group,
-            onSave: (group) {},
-            availableMembers: const [],
-            member: createCurrentMember(),
-          ),
+        buildSubject(
+          group: group,
+          onSave: (group) {},
+          availableMembers: const [],
+          member: createCurrentMember(),
         ),
       );
 
@@ -890,29 +877,27 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-group',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(
-                  groupId: 'test-group',
-                  memberId: 'admin-member',
-                  isAdministrator: true,
-                ),
-                createGroupMemberDto(
-                  groupId: 'test-group',
-                  memberId: 'normal-member',
-                  isAdministrator: false,
-                ),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-group',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(
+                groupId: 'test-group',
+                memberId: 'admin-member',
+                isAdministrator: true,
+              ),
+              createGroupMemberDto(
+                groupId: 'test-group',
+                memberId: 'normal-member',
+                isAdministrator: false,
+              ),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -981,29 +966,27 @@ void main() {
       ];
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-group',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(
-                  groupId: 'test-group',
-                  memberId: 'admin-member',
-                  isAdministrator: true,
-                ),
-                createGroupMemberDto(
-                  groupId: 'test-group',
-                  memberId: 'normal-member',
-                  isAdministrator: false,
-                ),
-              ],
-            ),
-            onSave: (group) {},
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-group',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(
+                groupId: 'test-group',
+                memberId: 'admin-member',
+                isAdministrator: true,
+              ),
+              createGroupMemberDto(
+                groupId: 'test-group',
+                memberId: 'normal-member',
+                isAdministrator: false,
+              ),
+            ],
           ),
+          onSave: (group) {},
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
@@ -1059,26 +1042,24 @@ void main() {
       Group? savedGroup;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: GroupEditModal(
-            group: createGroupDto(
-              id: 'test-group',
-              ownerId: 'owner-id',
-              name: 'テストグループ',
-              members: [
-                createGroupMemberDto(
-                  groupId: 'test-group',
-                  memberId: 'member1',
-                  isAdministrator: false,
-                ),
-              ],
-            ),
-            onSave: (group) {
-              savedGroup = group;
-            },
-            availableMembers: availableMembers,
-            member: createCurrentMember(),
+        buildSubject(
+          group: createGroupDto(
+            id: 'test-group',
+            ownerId: 'owner-id',
+            name: 'テストグループ',
+            members: [
+              createGroupMemberDto(
+                groupId: 'test-group',
+                memberId: 'member1',
+                isAdministrator: false,
+              ),
+            ],
           ),
+          onSave: (group) {
+            savedGroup = group;
+          },
+          availableMembers: availableMembers,
+          member: createCurrentMember(),
         ),
       );
 
