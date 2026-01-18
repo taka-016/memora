@@ -1,14 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/mappers/group/group_mapper.dart';
 import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
+import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
-class GroupEditModal extends HookWidget {
+class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
   final Function(Group) onSave;
   final List<GroupMemberDto> availableMembers;
@@ -23,10 +27,12 @@ class GroupEditModal extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(text: group.name);
     final memoController = useTextEditingController(text: group.memo ?? '');
+    final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
+    final editState = ref.watch(editStateNotifierProvider);
 
     GroupMemberDto? findMemberById(String memberId) {
       for (final member in availableMembers) {
@@ -68,12 +74,42 @@ class GroupEditModal extends HookWidget {
       return [normalizedOwner, ...filteredMembers];
     }
 
+    final initialMembers = useMemoized(
+      () => normalizeMembers(group.ownerId, group.id, group.members),
+      [group],
+    );
+    final initialName = group.name;
+    final initialMemo = group.memo ?? '';
+
     final groupState = useState<GroupDto>(
-      group.copyWith(
-        members: normalizeMembers(group.ownerId, group.id, group.members),
-      ),
+      group.copyWith(members: initialMembers),
     );
     final isEditing = group.id.isNotEmpty;
+
+    void updateDirtyState() {
+      final isDirty =
+          nameController.text != initialName ||
+          memoController.text != initialMemo ||
+          !listEquals(groupState.value.members, initialMembers);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        editStateNotifier.setDirty(isDirty);
+      });
+    }
+
+    useEffect(() {
+      void listener() => updateDirtyState();
+      nameController.addListener(listener);
+      memoController.addListener(listener);
+      return () {
+        nameController.removeListener(listener);
+        memoController.removeListener(listener);
+      };
+    }, [nameController, memoController]);
+
+    useEffect(() {
+      updateDirtyState();
+      return null;
+    }, [groupState.value]);
 
     List<GroupMemberDto> getAddableMembers() {
       final selectedIds = groupState.value.members
@@ -447,7 +483,23 @@ class GroupEditModal extends HookWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () async {
+              if (!editState.isDirty) {
+                editStateNotifier.reset();
+                Navigator.of(context).pop();
+                return;
+              }
+
+              final shouldClose = await EditDiscardConfirmDialog.show(context);
+              if (!context.mounted) {
+                return;
+              }
+
+              if (shouldClose == true) {
+                editStateNotifier.reset();
+                Navigator.of(context).pop();
+              }
+            },
             child: const Text('キャンセル'),
           ),
           const SizedBox(width: 8),
@@ -459,6 +511,7 @@ class GroupEditModal extends HookWidget {
                   memo: memoController.text,
                 );
                 onSave(GroupMapper.toEntity(updatedGroup));
+                editStateNotifier.reset();
                 Navigator.of(context).pop();
               }
             },
@@ -468,33 +521,50 @@ class GroupEditModal extends HookWidget {
       );
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 24.0,
-      ),
-      child: Material(
-        type: MaterialType.card,
-        child: Stack(
-          children: [
-            FocusKiller.createDummyFocusWidget(),
-            Container(
-              width: MediaQuery.of(context).size.width * 0.95,
-              height: MediaQuery.of(context).size.height * 0.8,
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  buildTitle(),
-                  const SizedBox(height: 20),
-                  Expanded(child: buildScrollableContent()),
-                  const SizedBox(height: 24),
-                  buildActionButtons(),
-                ],
+    return PopScope(
+      canPop: !editState.isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          editStateNotifier.reset();
+          return;
+        }
+        final shouldClose = await EditDiscardConfirmDialog.show(context);
+        if (!context.mounted) {
+          return;
+        }
+        if (shouldClose) {
+          editStateNotifier.reset();
+          Navigator.of(context).pop();
+        }
+      },
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 24.0,
+        ),
+        child: Material(
+          type: MaterialType.card,
+          child: Stack(
+            children: [
+              FocusKiller.createDummyFocusWidget(),
+              Container(
+                width: MediaQuery.of(context).size.width * 0.95,
+                height: MediaQuery.of(context).size.height * 0.8,
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    buildTitle(),
+                    const SizedBox(height: 20),
+                    Expanded(child: buildScrollableContent()),
+                    const SizedBox(height: 24),
+                    buildActionButtons(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
