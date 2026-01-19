@@ -9,16 +9,13 @@ void main() {
       WidgetTester tester,
       void Function(bool? result) onResult,
     ) async {
-      bool? result;
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: Builder(
               builder: (context) => ElevatedButton(
                 onPressed: () async {
-                  result = await EditDiscardConfirmDialog.show(context);
-                  onResult(result);
+                  onResult(await EditDiscardConfirmDialog.show(context));
                 },
                 child: const Text('ダイアログ表示'),
               ),
