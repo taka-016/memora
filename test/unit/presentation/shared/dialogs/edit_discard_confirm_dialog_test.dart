@@ -121,7 +121,9 @@ void main() {
       expect(result, false);
     });
 
-    testWidgets('showメソッドでダイアログを閉じたときデフォルト値falseが返ること', (WidgetTester tester) async {
+    testWidgets('showメソッドでダイアログを閉じたときデフォルト値falseが返ること', (
+      WidgetTester tester,
+    ) async {
       bool? result;
 
       await showDialogWithShowMethod(tester, (value) => result = value);
