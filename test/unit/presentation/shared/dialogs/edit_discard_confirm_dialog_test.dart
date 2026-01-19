@@ -4,6 +4,33 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 
 void main() {
   group('EditDiscardConfirmDialog', () {
+    // showメソッドを呼び出してダイアログを表示するヘルパー関数
+    Future<void> showDialogWithShowMethod(
+      WidgetTester tester,
+      void Function(bool? result) onResult,
+    ) async {
+      bool? result;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => ElevatedButton(
+                onPressed: () async {
+                  result = await EditDiscardConfirmDialog.show(context);
+                  onResult(result);
+                },
+                child: const Text('ダイアログ表示'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('ダイアログ表示'));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('編集破棄確認ダイアログが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(home: Scaffold(body: EditDiscardConfirmDialog())),
@@ -78,23 +105,7 @@ void main() {
     testWidgets('showメソッドで破棄操作がtrueで返ること', (WidgetTester tester) async {
       bool? result;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () async {
-                  result = await EditDiscardConfirmDialog.show(context);
-                },
-                child: const Text('ダイアログ表示'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('ダイアログ表示'));
-      await tester.pumpAndSettle();
+      await showDialogWithShowMethod(tester, (value) => result = value);
 
       await tester.tap(find.text('破棄する'));
       await tester.pumpAndSettle();
@@ -105,23 +116,7 @@ void main() {
     testWidgets('showメソッドで編集を続ける操作がfalseで返ること', (WidgetTester tester) async {
       bool? result;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () async {
-                  result = await EditDiscardConfirmDialog.show(context);
-                },
-                child: const Text('ダイアログ表示'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('ダイアログ表示'));
-      await tester.pumpAndSettle();
+      await showDialogWithShowMethod(tester, (value) => result = value);
 
       await tester.tap(find.text('編集を続ける'));
       await tester.pumpAndSettle();
@@ -132,23 +127,7 @@ void main() {
     testWidgets('showメソッドでダイアログを閉じたときデフォルト値falseが返ること', (WidgetTester tester) async {
       bool? result;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Builder(
-              builder: (context) => ElevatedButton(
-                onPressed: () async {
-                  result = await EditDiscardConfirmDialog.show(context);
-                },
-                child: const Text('ダイアログ表示'),
-              ),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('ダイアログ表示'));
-      await tester.pumpAndSettle();
+      await showDialogWithShowMethod(tester, (value) => result = value);
 
       // バックボタンでダイアログを閉じる
       await tester.binding.handlePopRoute();
