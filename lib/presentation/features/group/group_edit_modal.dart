@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -78,19 +77,25 @@ class GroupEditModal extends HookConsumerWidget {
       () => normalizeMembers(group.ownerId, group.id, group.members),
       [group],
     );
-    final initialName = group.name;
-    final initialMemo = group.memo ?? '';
+    final initialGroupForComparison = useMemoized(
+      () => group.copyWith(members: initialMembers, memo: group.memo ?? ''),
+      [group, initialMembers],
+    );
 
     final groupState = useState<GroupDto>(
       group.copyWith(members: initialMembers),
     );
     final isEditing = group.id.isNotEmpty;
 
+    GroupDto buildUpdatedGroup() {
+      return groupState.value.copyWith(
+        name: nameController.text,
+        memo: memoController.text,
+      );
+    }
+
     void updateDirtyState() {
-      final isDirty =
-          nameController.text != initialName ||
-          memoController.text != initialMemo ||
-          !listEquals(groupState.value.members, initialMembers);
+      final isDirty = buildUpdatedGroup() != initialGroupForComparison;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         editStateNotifier.setDirty(isDirty);
       });
@@ -506,11 +511,7 @@ class GroupEditModal extends HookConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                final updatedGroup = groupState.value.copyWith(
-                  name: nameController.text,
-                  memo: memoController.text,
-                );
-                onSave(GroupMapper.toEntity(updatedGroup));
+                onSave(GroupMapper.toEntity(buildUpdatedGroup()));
                 editStateNotifier.reset();
                 Navigator.of(context).pop();
               }
