@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
+
+Widget _createApp({required Widget child}) {
+  return ProviderScope(
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
+}
 
 void main() {
   group('MemberEditModal', () {
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Assert
@@ -46,10 +49,8 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: existingMember, onSave: (member) {}),
-          ),
+        _createApp(
+          child: MemberEditModal(member: existingMember, onSave: (member) {}),
         ),
       );
 
@@ -82,10 +83,8 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: existingMember, onSave: (member) {}),
-          ),
+        _createApp(
+          child: MemberEditModal(member: existingMember, onSave: (member) {}),
         ),
       );
 
@@ -105,11 +104,7 @@ void main() {
     testWidgets('必須項目が未入力の場合バリデーションエラーが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Act
@@ -125,14 +120,12 @@ void main() {
       Member? savedMember;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(
-              member: null,
-              onSave: (member) {
-                savedMember = member;
-              },
-            ),
+        _createApp(
+          child: MemberEditModal(
+            member: null,
+            onSave: (member) {
+              savedMember = member;
+            },
           ),
         ),
       );
@@ -169,11 +162,7 @@ void main() {
     testWidgets('性別ドロップダウンが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Assert
@@ -184,11 +173,7 @@ void main() {
     testWidgets('日付選択ボタンが正しく表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Assert - 日付選択エリアが表示されていることを確認
@@ -198,11 +183,7 @@ void main() {
 
     testWidgets('生年月日に未来日付を入力できること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       await tester.ensureVisible(find.text('選択してください'));
@@ -229,11 +210,7 @@ void main() {
     testWidgets('キャンセルボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Assert
@@ -245,14 +222,12 @@ void main() {
       Member? savedMember;
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(
-              member: null,
-              onSave: (member) {
-                savedMember = member;
-              },
-            ),
+        _createApp(
+          child: MemberEditModal(
+            member: null,
+            onSave: (member) {
+              savedMember = member;
+            },
           ),
         ),
       );
@@ -278,11 +253,7 @@ void main() {
     testWidgets('フォームのスクロールが正しく動作すること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MemberEditModal(member: null, onSave: (member) {}),
-          ),
-        ),
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
       );
 
       // Act
