@@ -55,26 +55,22 @@ class MemberEditModal extends HookConsumerWidget {
 
     final isEditing = member != null;
 
-    String? normalizeInputValue(String value) {
-      return value.isEmpty ? null : value;
-    }
-
     final initialMemberForComparison = useMemoized(() {
       return MemberDto(
         id: member?.id ?? '',
         accountId: member?.accountId,
         ownerId: member?.ownerId,
         displayName: member?.displayName ?? '',
-        kanjiLastName: member?.kanjiLastName,
-        kanjiFirstName: member?.kanjiFirstName,
-        hiraganaLastName: member?.hiraganaLastName,
-        hiraganaFirstName: member?.hiraganaFirstName,
-        firstName: member?.firstName,
-        lastName: member?.lastName,
+        kanjiLastName: member?.kanjiLastName ?? '',
+        kanjiFirstName: member?.kanjiFirstName ?? '',
+        hiraganaLastName: member?.hiraganaLastName ?? '',
+        hiraganaFirstName: member?.hiraganaFirstName ?? '',
+        firstName: member?.firstName ?? '',
+        lastName: member?.lastName ?? '',
         gender: member?.gender,
         birthday: member?.birthday,
-        email: member?.email,
-        phoneNumber: member?.phoneNumber,
+        email: member?.email ?? '',
+        phoneNumber: member?.phoneNumber ?? '',
         type: member?.type,
         passportNumber: member?.passportNumber,
         passportExpiration: member?.passportExpiration,
@@ -84,18 +80,16 @@ class MemberEditModal extends HookConsumerWidget {
     MemberDto buildUpdatedMember() {
       return initialMemberForComparison.copyWith(
         displayName: displayNameController.text,
-        kanjiLastName: normalizeInputValue(kanjiLastNameController.text),
-        kanjiFirstName: normalizeInputValue(kanjiFirstNameController.text),
-        hiraganaLastName: normalizeInputValue(hiraganaLastNameController.text),
-        hiraganaFirstName: normalizeInputValue(
-          hiraganaFirstNameController.text,
-        ),
-        firstName: normalizeInputValue(firstNameController.text),
-        lastName: normalizeInputValue(lastNameController.text),
+        kanjiLastName: kanjiLastNameController.text,
+        kanjiFirstName: kanjiFirstNameController.text,
+        hiraganaLastName: hiraganaLastNameController.text,
+        hiraganaFirstName: hiraganaFirstNameController.text,
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
         gender: gender.value,
         birthday: birthday.value,
-        email: normalizeInputValue(emailController.text),
-        phoneNumber: normalizeInputValue(phoneNumberController.text),
+        email: emailController.text,
+        phoneNumber: phoneNumberController.text,
       );
     }
 

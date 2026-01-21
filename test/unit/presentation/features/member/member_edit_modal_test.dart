@@ -217,7 +217,7 @@ void main() {
       expect(find.text('キャンセル'), findsOneWidget);
     });
 
-    testWidgets('空文字の場合nullに変換されること', (WidgetTester tester) async {
+    testWidgets('空文字の場合は空文字で保存されること', (WidgetTester tester) async {
       // Arrange
       Member? savedMember;
 
@@ -244,10 +244,10 @@ void main() {
       // Assert
       expect(savedMember, isNotNull);
       expect(savedMember!.displayName, 'テスト表示名');
-      expect(savedMember!.kanjiLastName, isNull);
-      expect(savedMember!.kanjiFirstName, isNull);
-      expect(savedMember!.email, isNull);
-      expect(savedMember!.phoneNumber, isNull);
+      expect(savedMember!.kanjiLastName, '');
+      expect(savedMember!.kanjiFirstName, '');
+      expect(savedMember!.email, '');
+      expect(savedMember!.phoneNumber, '');
     });
 
     testWidgets('フォームのスクロールが正しく動作すること', (WidgetTester tester) async {
