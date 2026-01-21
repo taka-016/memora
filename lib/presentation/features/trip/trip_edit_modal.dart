@@ -100,7 +100,7 @@ class TripEditModal extends HookConsumerWidget {
         routes: tripEntry?.routes,
         tasks: initialTasks,
       );
-    }, [groupId, tripEntry, year, initialPins, initialTasks]);
+    }, [groupId, tripEntry, year]);
 
     TripEntryDto buildUpdatedTripEntry() {
       final tripName = nameController.text.isEmpty ? null : nameController.text;
