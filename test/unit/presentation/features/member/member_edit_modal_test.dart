@@ -267,5 +267,45 @@ void main() {
       // Assert - エラーが発生しないことを確認
       expect(find.byType(SingleChildScrollView), findsOneWidget);
     });
+
+    testWidgets('変更後にキャンセルすると破棄確認が表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '表示名').first,
+        'テスト表示名',
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('変更内容の確認'), findsOneWidget);
+      expect(find.text('変更内容が保存されていません。破棄しますか？'), findsOneWidget);
+    });
+
+    testWidgets('破棄するを選択すると確認ダイアログが閉じること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '表示名').first,
+        'テスト表示名',
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      expect(find.text('破棄する'), findsOneWidget);
+      await tester.tap(find.text('破棄する'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('変更内容の確認'), findsNothing);
+    });
   });
 }
