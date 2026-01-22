@@ -86,7 +86,7 @@ class TaskEditBottomSheet extends HookWidget {
           : selectedParentTaskId;
       final updated = task.copyWith(
         name: trimmedName,
-        memo: memoController.text.isEmpty ? null : memoController.text,
+        memo: memoController.text,
         dueDate: dueDateState.value,
         assignedMemberId: selectedAssignedMemberId,
         parentTaskId: parentTaskId,
