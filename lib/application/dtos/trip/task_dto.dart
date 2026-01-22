@@ -32,7 +32,7 @@ class TaskDto extends Equatable {
     String? name,
     bool? isCompleted,
     Object? dueDate = copyWithPlaceholder,
-    Object? memo = copyWithPlaceholder,
+    String? memo,
     Object? assignedMemberId = copyWithPlaceholder,
   }) {
     return TaskDto(
@@ -47,7 +47,7 @@ class TaskDto extends Equatable {
       name: name ?? this.name,
       isCompleted: isCompleted ?? this.isCompleted,
       dueDate: resolveCopyWithValue<DateTime>(dueDate, this.dueDate, 'dueDate'),
-      memo: resolveCopyWithValue<String>(memo, this.memo, 'memo'),
+      memo: memo ?? this.memo,
       assignedMemberId: resolveCopyWithValue<String>(
         assignedMemberId,
         this.assignedMemberId,

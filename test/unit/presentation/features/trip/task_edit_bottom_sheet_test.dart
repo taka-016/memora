@@ -325,7 +325,7 @@ void main() {
       expect(saved!.assignedMemberId, isNull);
       expect(saved!.parentTaskId, isNull);
       expect(saved!.dueDate, isNull);
-      expect(saved!.memo, isNull);
+      expect(saved!.memo, '');
     });
 
     testWidgets('キャンセルで変更が破棄されること', (tester) async {
