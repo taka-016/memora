@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/mappers/trip/pin_mapper.dart';
-import 'package:memora/application/mappers/trip/task_mapper.dart';
+import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
@@ -34,7 +36,7 @@ class TripEditModalTestHandle {
   }
 }
 
-class TripEditModal extends HookWidget {
+class TripEditModal extends HookConsumerWidget {
   final String groupId;
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
@@ -55,7 +57,7 @@ class TripEditModal extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final nameController = useTextEditingController(
       text: tripEntry?.tripName ?? '',
@@ -67,16 +69,72 @@ class TripEditModal extends HookWidget {
     final endDate = useState<DateTime?>(tripEntry?.tripEndDate);
     final errorMessage = useState<String?>(null);
     final expandedSection = useState<TripEditExpandedSection?>(null);
-    final pins = useState<List<PinDto>>(
-      List<PinDto>.from(tripEntry?.pins ?? []),
+    final initialPins = useMemoized(
+      () => List<PinDto>.from(tripEntry?.pins ?? []),
+      [tripEntry],
     );
-    final tasks = useState<List<TaskDto>>(
-      List<TaskDto>.from(tripEntry?.tasks ?? []),
+    final initialTasks = useMemoized(
+      () => List<TaskDto>.from(tripEntry?.tasks ?? []),
+      [tripEntry],
     );
+    final pins = useState<List<PinDto>>(initialPins);
+    final tasks = useState<List<TaskDto>>(initialTasks);
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
     final mapIconKey = useMemoized(() => GlobalKey());
+    final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
+    final editState = ref.watch(editStateNotifierProvider);
+
+    final initialTripForComparison = useMemoized(() {
+      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
+      return TripEntryDto(
+        id: tripEntry?.id ?? '',
+        groupId: groupId,
+        tripYear: tripYearValue,
+        tripName: tripEntry?.tripName,
+        tripStartDate: tripEntry?.tripStartDate,
+        tripEndDate: tripEntry?.tripEndDate,
+        tripMemo: tripEntry?.tripMemo ?? '',
+        pins: initialPins,
+        routes: tripEntry?.routes,
+        tasks: initialTasks,
+      );
+    }, [groupId, tripEntry, year]);
+
+    TripEntryDto buildUpdatedTripEntry() {
+      final tripName = nameController.text.isEmpty ? null : nameController.text;
+      return initialTripForComparison.copyWith(
+        tripName: tripName,
+        tripStartDate: startDate.value,
+        tripEndDate: endDate.value,
+        tripMemo: memoController.text,
+        pins: List<PinDto>.from(pins.value),
+        tasks: List<TaskDto>.from(tasks.value),
+      );
+    }
+
+    void updateDirtyState() {
+      final isDirty = buildUpdatedTripEntry() != initialTripForComparison;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        editStateNotifier.setDirty(isDirty);
+      });
+    }
+
+    useEffect(() {
+      void listener() => updateDirtyState();
+      nameController.addListener(listener);
+      memoController.addListener(listener);
+      return () {
+        nameController.removeListener(listener);
+        memoController.removeListener(listener);
+      };
+    }, [nameController, memoController]);
+
+    useEffect(() {
+      updateDirtyState();
+      return null;
+    }, [startDate.value, endDate.value, pins.value, tasks.value]);
 
     useEffect(() {
       if (testHandle != null) {
@@ -192,18 +250,13 @@ class TripEditModal extends HookWidget {
         try {
           final sortedTasks = List<TaskDto>.from(tasks.value)
             ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-          final trip = TripEntry(
-            id: tripEntry?.id ?? '',
-            groupId: groupId,
-            tripYear: tripYearValue,
-            tripName: nameController.text.isEmpty ? null : nameController.text,
+          final updatedTripEntry = buildUpdatedTripEntry().copyWith(
             tripStartDate: selectedStart,
             tripEndDate: selectedEnd,
-            tripMemo: memoController.text,
-            pins: PinMapper.toEntityList(pins.value),
-            tasks: TaskMapper.toEntityList(sortedTasks),
+            tasks: sortedTasks,
           );
-          onSave(trip);
+          onSave(TripEntryMapper.toEntity(updatedTripEntry));
+          editStateNotifier.reset();
           if (context.mounted) {
             Navigator.of(context).pop();
           }
@@ -556,7 +609,25 @@ class TripEditModal extends HookWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () async {
+                      if (!editState.isDirty) {
+                        editStateNotifier.reset();
+                        Navigator.of(context).pop();
+                        return;
+                      }
+
+                      final shouldClose = await EditDiscardConfirmDialog.show(
+                        context,
+                      );
+                      if (!context.mounted) {
+                        return;
+                      }
+
+                      if (shouldClose) {
+                        editStateNotifier.reset();
+                        Navigator.of(context).pop();
+                      }
+                    },
                     child: const Text('キャンセル'),
                   ),
                   const SizedBox(width: 8),
@@ -608,18 +679,35 @@ class TripEditModal extends HookWidget {
       }
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 24.0,
-      ),
-      child: Material(
-        type: MaterialType.card,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.95,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(24.0),
-          child: buildDialogContent(),
+    return PopScope(
+      canPop: !editState.isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          editStateNotifier.reset();
+          return;
+        }
+        final shouldClose = await EditDiscardConfirmDialog.show(context);
+        if (!context.mounted) {
+          return;
+        }
+        if (shouldClose) {
+          editStateNotifier.reset();
+          Navigator.of(context).pop();
+        }
+      },
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 24.0,
+        ),
+        child: Material(
+          type: MaterialType.card,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.95,
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: const EdgeInsets.all(24.0),
+            child: buildDialogContent(),
+          ),
         ),
       ),
     );

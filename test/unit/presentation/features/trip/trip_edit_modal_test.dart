@@ -402,6 +402,60 @@ void main() {
       expect(find.text('キャンセル'), findsOneWidget);
     });
 
+    testWidgets('変更後にキャンセルすると破棄確認が表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            onSave: (TripEntry tripEntry) {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '旅行名').first,
+        'テスト旅行',
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('変更内容の確認'), findsOneWidget);
+      expect(find.text('変更内容が保存されていません。破棄しますか？'), findsOneWidget);
+    });
+
+    testWidgets('破棄するを選択すると確認ダイアログが閉じること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            onSave: (TripEntry tripEntry) {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '旅行名').first,
+        'テスト旅行',
+      );
+      await tester.pump();
+      await tester.pump();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      expect(find.text('破棄する'), findsOneWidget);
+      await tester.tap(find.text('破棄する'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('変更内容の確認'), findsNothing);
+    });
+
     testWidgets('作成ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
       TripEntry? savedTripEntry;
 

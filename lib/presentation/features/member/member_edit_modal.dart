@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
-class MemberEditModal extends HookWidget {
+class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
   final Function(Member) onSave;
   final Function(MemberDto)? onInvite;
@@ -17,7 +21,7 @@ class MemberEditModal extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final formKey = useMemoized(() => GlobalKey<FormState>());
     final displayNameController = useTextEditingController(
       text: member?.displayName ?? '',
@@ -46,8 +50,97 @@ class MemberEditModal extends HookWidget {
     );
     final gender = useState<String?>(member?.gender);
     final birthday = useState<DateTime?>(member?.birthday);
+    final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
+    final editState = ref.watch(editStateNotifierProvider);
 
     final isEditing = member != null;
+
+    final initialMemberForComparison = useMemoized(() {
+      return MemberDto(
+        id: member?.id ?? '',
+        accountId: member?.accountId,
+        ownerId: member?.ownerId,
+        displayName: member?.displayName ?? '',
+        kanjiLastName: member?.kanjiLastName ?? '',
+        kanjiFirstName: member?.kanjiFirstName ?? '',
+        hiraganaLastName: member?.hiraganaLastName ?? '',
+        hiraganaFirstName: member?.hiraganaFirstName ?? '',
+        firstName: member?.firstName ?? '',
+        lastName: member?.lastName ?? '',
+        gender: member?.gender,
+        birthday: member?.birthday,
+        email: member?.email ?? '',
+        phoneNumber: member?.phoneNumber ?? '',
+        type: member?.type,
+        passportNumber: member?.passportNumber,
+        passportExpiration: member?.passportExpiration,
+      );
+    }, [member]);
+
+    MemberDto buildUpdatedMember() {
+      return initialMemberForComparison.copyWith(
+        displayName: displayNameController.text,
+        kanjiLastName: kanjiLastNameController.text,
+        kanjiFirstName: kanjiFirstNameController.text,
+        hiraganaLastName: hiraganaLastNameController.text,
+        hiraganaFirstName: hiraganaFirstNameController.text,
+        firstName: firstNameController.text,
+        lastName: lastNameController.text,
+        gender: gender.value,
+        birthday: birthday.value,
+        email: emailController.text,
+        phoneNumber: phoneNumberController.text,
+      );
+    }
+
+    void updateDirtyState() {
+      final isDirty = buildUpdatedMember() != initialMemberForComparison;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        editStateNotifier.setDirty(isDirty);
+      });
+    }
+
+    useEffect(
+      () {
+        void listener() => updateDirtyState();
+        displayNameController.addListener(listener);
+        kanjiLastNameController.addListener(listener);
+        kanjiFirstNameController.addListener(listener);
+        hiraganaLastNameController.addListener(listener);
+        hiraganaFirstNameController.addListener(listener);
+        firstNameController.addListener(listener);
+        lastNameController.addListener(listener);
+        emailController.addListener(listener);
+        phoneNumberController.addListener(listener);
+        return () {
+          displayNameController.removeListener(listener);
+          kanjiLastNameController.removeListener(listener);
+          kanjiFirstNameController.removeListener(listener);
+          hiraganaLastNameController.removeListener(listener);
+          hiraganaFirstNameController.removeListener(listener);
+          firstNameController.removeListener(listener);
+          lastNameController.removeListener(listener);
+          emailController.removeListener(listener);
+          phoneNumberController.removeListener(listener);
+        };
+      },
+      [
+        displayNameController,
+        kanjiLastNameController,
+        kanjiFirstNameController,
+        hiraganaLastNameController,
+        hiraganaFirstNameController,
+        firstNameController,
+        lastNameController,
+        emailController,
+        phoneNumberController,
+      ],
+    );
+
+    useEffect(() {
+      updateDirtyState();
+      return null;
+    }, [gender.value, birthday.value]);
 
     Widget buildHeader() {
       return Text(
@@ -243,41 +336,10 @@ class MemberEditModal extends HookWidget {
 
     void handleSave() {
       if (formKey.currentState!.validate()) {
-        final savedMember = Member(
-          id: member?.id ?? '',
-          accountId: member?.accountId,
-          ownerId: member?.ownerId,
-          displayName: displayNameController.text,
-          kanjiLastName: kanjiLastNameController.text.isEmpty
-              ? null
-              : kanjiLastNameController.text,
-          kanjiFirstName: kanjiFirstNameController.text.isEmpty
-              ? null
-              : kanjiFirstNameController.text,
-          hiraganaLastName: hiraganaLastNameController.text.isEmpty
-              ? null
-              : hiraganaLastNameController.text,
-          hiraganaFirstName: hiraganaFirstNameController.text.isEmpty
-              ? null
-              : hiraganaFirstNameController.text,
-          firstName: firstNameController.text.isEmpty
-              ? null
-              : firstNameController.text,
-          lastName: lastNameController.text.isEmpty
-              ? null
-              : lastNameController.text,
-          gender: gender.value,
-          birthday: birthday.value,
-          email: emailController.text.isEmpty ? null : emailController.text,
-          phoneNumber: phoneNumberController.text.isEmpty
-              ? null
-              : phoneNumberController.text,
-          type: member?.type,
-          passportNumber: member?.passportNumber,
-          passportExpiration: member?.passportExpiration,
-        );
+        final savedMember = MemberMapper.toEntity(buildUpdatedMember());
 
         onSave(savedMember);
+        editStateNotifier.reset();
         Navigator.of(context).pop();
       }
     }
@@ -306,7 +368,25 @@ class MemberEditModal extends HookWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () async {
+                  if (!editState.isDirty) {
+                    editStateNotifier.reset();
+                    Navigator.of(context).pop();
+                    return;
+                  }
+
+                  final shouldClose = await EditDiscardConfirmDialog.show(
+                    context,
+                  );
+                  if (!context.mounted) {
+                    return;
+                  }
+
+                  if (shouldClose) {
+                    editStateNotifier.reset();
+                    Navigator.of(context).pop();
+                  }
+                },
                 child: const Text('キャンセル'),
               ),
               const SizedBox(width: 8),
@@ -320,27 +400,44 @@ class MemberEditModal extends HookWidget {
       );
     }
 
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 24.0,
-      ),
-      child: Material(
-        type: MaterialType.card,
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.95,
-          height: MediaQuery.of(context).size.height * 0.8,
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              buildHeader(),
-              const SizedBox(height: 20),
-              buildForm(),
-              const SizedBox(height: 24),
-              buildActionButtons(),
-            ],
+    return PopScope(
+      canPop: !editState.isDirty,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          editStateNotifier.reset();
+          return;
+        }
+        final shouldClose = await EditDiscardConfirmDialog.show(context);
+        if (!context.mounted) {
+          return;
+        }
+        if (shouldClose) {
+          editStateNotifier.reset();
+          Navigator.of(context).pop();
+        }
+      },
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 24.0,
+        ),
+        child: Material(
+          type: MaterialType.card,
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.95,
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildHeader(),
+                const SizedBox(height: 20),
+                buildForm(),
+                const SizedBox(height: 24),
+                buildActionButtons(),
+              ],
+            ),
           ),
         ),
       ),
