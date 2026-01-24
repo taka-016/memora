@@ -1,12 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/application/queries/trip/task_query_service.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 
-Widget _wrapWithApp(Widget child) {
-  return MaterialApp(
-    home: Scaffold(body: SizedBox(height: 600, child: child)),
+class FakeTaskQueryService implements TaskQueryService {
+  FakeTaskQueryService(this.tasks);
+
+  final List<TaskDto> tasks;
+
+  @override
+  Future<List<TaskDto>> getTasksByTripId(
+    String tripId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return tasks;
+  }
+}
+
+Widget _wrapWithApp(Widget child, {List<Override> overrides = const []}) {
+  return ProviderScope(
+    overrides: overrides,
+    child: MaterialApp(
+      home: Scaffold(body: SizedBox(height: 600, child: child)),
+    ),
   );
 }
 
@@ -33,7 +54,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -46,6 +72,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: const [],
             groupMembers: members,
             onChanged: (updated) {
@@ -79,6 +106,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -118,6 +146,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -176,6 +205,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -230,6 +260,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -274,6 +305,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -306,7 +338,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -338,6 +375,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -406,6 +444,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -452,7 +491,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -495,7 +539,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -526,7 +575,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -562,6 +616,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (updated) {
@@ -603,7 +658,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -623,7 +683,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -655,7 +720,12 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(tasks: tasks, groupMembers: members, onChanged: (_) {}),
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
         ),
       );
 
@@ -685,6 +755,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           TaskView(
+            tripId: 'trip-1',
             tasks: tasks,
             groupMembers: members,
             onChanged: (changed) {
@@ -707,6 +778,89 @@ void main() {
       final orphanTask = lastChanged.firstWhere((t) => t.id == 'task-2');
       expect(orphanTask.parentTaskId, isNull);
       expect(orphanTask.name, '孤立した子タスク');
+    });
+
+    testWidgets('コピーでペーストが有効になること', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '準備',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      final pasteButtonFinder = find.byKey(const Key('task_paste_button'));
+      IconButton pasteButton = tester.widget(pasteButtonFinder);
+      expect(pasteButton.onPressed, isNull);
+
+      await tester.tap(find.byKey(const Key('task_copy_button')));
+      await tester.pump();
+
+      pasteButton = tester.widget(pasteButtonFinder);
+      expect(pasteButton.onPressed, isNotNull);
+    });
+
+    testWidgets('ペーストでタスクが置き換わること', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '元のタスク',
+          isCompleted: false,
+        ),
+      ];
+      final copiedTasks = [
+        TaskDto(
+          id: 'copied-task',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'コピー済みタスク',
+          isCompleted: false,
+        ),
+      ];
+      final fakeQueryService = FakeTaskQueryService(copiedTasks);
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+          overrides: [
+            taskQueryServiceProvider.overrideWithValue(fakeQueryService),
+          ],
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('task_copy_button')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('task_paste_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('元のタスク'), findsNothing);
+      expect(find.text('コピー済みタスク'), findsOneWidget);
+      expect(lastChanged.length, 1);
+      expect(lastChanged.first.name, 'コピー済みタスク');
     });
   });
 }

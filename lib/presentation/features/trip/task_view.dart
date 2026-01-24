@@ -1,30 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
+import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
 import 'package:uuid/uuid.dart';
 
-class TaskView extends HookWidget {
+class TaskView extends HookConsumerWidget {
   const TaskView({
     super.key,
+    required this.tripId,
     required this.tasks,
     required this.groupMembers,
     required this.onChanged,
     this.onClose,
   });
 
+  final String? tripId;
   final List<TaskDto> tasks;
   final List<GroupMemberDto> groupMembers;
   final ValueChanged<List<TaskDto>> onChanged;
   final VoidCallback? onClose;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final taskNameController = useTextEditingController();
     final tasksState = useState<List<TaskDto>>(_normalizeOrder(tasks));
     final collapsedParents = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
+    final copiedTripId = ref.watch(copiedTaskTripIdProvider);
+    final canCopy = tripId?.isNotEmpty ?? false;
+    final canPaste = copiedTripId?.isNotEmpty ?? false;
 
     useEffect(() {
       tasksState.value = _normalizeOrder(tasks);
@@ -121,7 +129,7 @@ class TaskView extends HookWidget {
         ...tasksState.value,
         TaskDto(
           id: uuid,
-          tripId: '',
+          tripId: tripId ?? '',
           orderIndex: parentTasks().length,
           name: trimmed,
           isCompleted: false,
@@ -163,6 +171,33 @@ class TaskView extends HookWidget {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
           const Spacer(),
+          IconButton(
+            key: const Key('task_copy_button'),
+            onPressed: canCopy
+                ? () {
+                    ref.read(copiedTaskTripIdProvider.notifier).state = tripId;
+                  }
+                : null,
+            icon: const Icon(Icons.copy),
+            tooltip: 'タスクをコピー',
+          ),
+          IconButton(
+            key: const Key('task_paste_button'),
+            onPressed: canPaste
+                ? () async {
+                    final copiedId = copiedTripId;
+                    if (copiedId == null || copiedId.isEmpty) {
+                      return;
+                    }
+                    final tasks = await ref
+                        .read(getTasksByTripIdUsecaseProvider)
+                        .execute(copiedId);
+                    notifyChange(tasks);
+                  }
+                : null,
+            icon: const Icon(Icons.content_paste),
+            tooltip: 'タスクをペースト',
+          ),
           IconButton(
             onPressed: () {
               if (onClose != null) {
