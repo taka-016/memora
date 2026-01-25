@@ -699,7 +699,7 @@ List<TaskDto> _regenerateTasksForPaste(List<TaskDto> tasks, String? tripId) {
         ? null
         : idMap[task.parentTaskId];
     return task.copyWith(
-      id: idMap[task.id] ?? uuid.v4(),
+      id: idMap[task.id]!,
       tripId: tripId ?? '',
       parentTaskId: newParentId,
     );
