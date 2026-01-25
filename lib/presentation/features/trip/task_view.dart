@@ -82,6 +82,30 @@ class TaskView extends HookConsumerWidget {
       );
     }
 
+    Future<bool> confirmPaste() async {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('タスクの置き換え確認'),
+            content: const Text('ペーストすると現在のタスクが置き換わります。よろしいですか？'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('キャンセル'),
+              ),
+              ElevatedButton(
+                key: const Key('task_paste_confirm_button'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('置き換える'),
+              ),
+            ],
+          );
+        },
+      );
+      return result ?? false;
+    }
+
     void toggleCompletion(TaskDto task, bool? value) {
       final isCompleted = value ?? false;
       final updated = List<TaskDto>.from(tasksState.value);
@@ -189,10 +213,17 @@ class TaskView extends HookConsumerWidget {
                     if (copiedId == null || copiedId.isEmpty) {
                       return;
                     }
+                    final shouldReplace = await confirmPaste();
+                    if (!shouldReplace) {
+                      return;
+                    }
                     final tasks = await ref
                         .read(getTasksByTripIdUsecaseProvider)
                         .execute(copiedId);
-                    notifyChange(tasks);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    notifyChange(_regenerateTasksForPaste(tasks, tripId));
                   }
                 : null,
             icon: const Icon(Icons.content_paste),
@@ -657,4 +688,20 @@ List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
   );
 
   return normalized;
+}
+
+List<TaskDto> _regenerateTasksForPaste(List<TaskDto> tasks, String? tripId) {
+  final uuid = const Uuid();
+  final idMap = <String, String>{for (final task in tasks) task.id: uuid.v4()};
+
+  return tasks.map((task) {
+    final newParentId = task.parentTaskId == null
+        ? null
+        : idMap[task.parentTaskId];
+    return task.copyWith(
+      id: idMap[task.id] ?? uuid.v4(),
+      tripId: tripId ?? '',
+      parentTaskId: newParentId,
+    );
+  }).toList();
 }
