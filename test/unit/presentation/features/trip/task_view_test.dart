@@ -884,6 +884,57 @@ void main() {
       expect(lastChanged.first.name, 'コピー済みタスク');
     });
 
+    testWidgets('ペースト確認ダイアログのキャンセルでタスクが変更されないこと', (tester) async {
+      List<TaskDto> lastChanged = [];
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '元のタスク',
+          isCompleted: false,
+        ),
+      ];
+      final copiedTasks = [
+        TaskDto(
+          id: 'copied-task',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: 'コピー済みタスク',
+          isCompleted: false,
+        ),
+      ];
+      final fakeQueryService = FakeTaskQueryService(copiedTasks);
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (updated) {
+              lastChanged = updated;
+            },
+          ),
+          overrides: [
+            taskQueryServiceProvider.overrideWithValue(fakeQueryService),
+          ],
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('task_copy_button')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('task_paste_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('元のタスク'), findsOneWidget);
+      expect(find.text('コピー済みタスク'), findsNothing);
+      expect(lastChanged, isEmpty);
+    });
+
     testWidgets('ペースト時にIDと親子関係が再生成されること', (tester) async {
       List<TaskDto> lastChanged = [];
       final copiedTasks = [
