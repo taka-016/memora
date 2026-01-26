@@ -20,7 +20,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   Future<String> saveTripEntry(TripEntry tripEntry) async {
     final batch = _firestore.batch();
 
-    final tripDocRef = _firestore.collection('trip_entries').doc(tripEntry.id);
+    final tripDocRef = _firestore.collection('trip_entries').doc();
     batch.set(tripDocRef, FirestoreTripEntryMapper.toFirestore(tripEntry));
     final tasksCollection = _firestore.collection('tasks');
 
