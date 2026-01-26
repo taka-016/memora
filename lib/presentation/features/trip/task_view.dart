@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
 import 'package:uuid/uuid.dart';
@@ -217,13 +218,26 @@ class TaskView extends HookConsumerWidget {
                     if (!shouldReplace) {
                       return;
                     }
-                    final tasks = await ref
-                        .read(getTasksByTripIdUsecaseProvider)
-                        .execute(copiedId);
-                    if (!context.mounted) {
-                      return;
+                    errorMessage.value = null;
+                    try {
+                      final tasks = await ref
+                          .read(getTasksByTripIdUsecaseProvider)
+                          .execute(copiedId);
+                      if (!context.mounted) {
+                        return;
+                      }
+                      notifyChange(_regenerateTasksForPaste(tasks, tripId));
+                    } catch (e, stackTrace) {
+                      logger.e(
+                        'TaskView.pasteTasks: ${e.toString()}',
+                        error: e,
+                        stackTrace: stackTrace,
+                      );
+                      if (!context.mounted) {
+                        return;
+                      }
+                      errorMessage.value = 'タスクの取得に失敗しました: $e';
                     }
-                    notifyChange(_regenerateTasksForPaste(tasks, tripId));
                   }
                 : null,
             icon: const Icon(Icons.content_paste),
