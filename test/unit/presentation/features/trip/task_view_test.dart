@@ -7,6 +7,7 @@ import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
+import '../../../../helpers/test_exception.dart';
 
 class FakeTaskQueryService implements TaskQueryService {
   FakeTaskQueryService(this.tasks);
@@ -19,6 +20,16 @@ class FakeTaskQueryService implements TaskQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return tasks;
+  }
+}
+
+class FailingTaskQueryService implements TaskQueryService {
+  @override
+  Future<List<TaskDto>> getTasksByTripId(
+    String tripId, {
+    List<OrderBy>? orderBy,
+  }) {
+    throw TestException('通信エラー');
   }
 }
 
@@ -933,6 +944,44 @@ void main() {
       expect(find.text('元のタスク'), findsOneWidget);
       expect(find.text('コピー済みタスク'), findsNothing);
       expect(lastChanged, isEmpty);
+    });
+
+    testWidgets('ペースト時に失敗するとエラーメッセージが表示されること', (tester) async {
+      final tasks = [
+        TaskDto(
+          id: 'task-1',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '元のタスク',
+          isCompleted: false,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          TaskView(
+            tripId: 'trip-1',
+            tasks: tasks,
+            groupMembers: members,
+            onChanged: (_) {},
+          ),
+          overrides: [
+            taskQueryServiceProvider.overrideWithValue(
+              FailingTaskQueryService(),
+            ),
+          ],
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('task_copy_button')));
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('task_paste_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('task_paste_confirm_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('タスクの取得に失敗しました'), findsOneWidget);
     });
 
     testWidgets('ペースト時にIDと親子関係が再生成されること', (tester) async {
