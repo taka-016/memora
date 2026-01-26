@@ -667,6 +667,7 @@ class TripEditModal extends HookConsumerWidget {
           );
         case TripEditExpandedSection.tasks:
           return TaskView(
+            tripId: tripEntry?.id,
             tasks: tasks.value,
             groupMembers: groupMembers,
             onChanged: (updatedTasks) {
