@@ -83,7 +83,7 @@ void main() {
         final mockRouteDocRef = MockDocumentReference<Map<String, dynamic>>();
         final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
         when(mockDocRef.id).thenReturn('generated-doc-id');
-        when(mockCollection.doc('trip001')).thenReturn(mockDocRef);
+        when(mockCollection.doc()).thenReturn(mockDocRef);
         when(mockFirestore.batch()).thenReturn(mockBatch);
         when(mockBatch.commit()).thenAnswer((_) async {});
         when(mockRoutesCollection.doc()).thenReturn(mockRouteDocRef);
@@ -93,7 +93,7 @@ void main() {
 
         expect(result, equals('generated-doc-id'));
         verify(mockFirestore.batch()).called(1);
-        verify(mockCollection.doc('trip001')).called(1);
+        verify(mockCollection.doc()).called(1);
         verify(mockRoutesCollection.doc()).called(1);
         verify(mockBatch.set(mockRouteDocRef, any)).called(1);
         verify(mockTasksCollection.doc('task-001')).called(1);

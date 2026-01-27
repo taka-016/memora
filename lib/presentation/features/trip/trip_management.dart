@@ -341,16 +341,15 @@ class TripManagement extends HookConsumerWidget {
     }
 
     Widget buildTripSubtitle(TripEntryDto tripEntry) {
+      final memo = tripEntry.tripMemo?.trim();
+      final memoText = memo ?? '';
+      final hasMemo = memoText.isNotEmpty;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(buildTripPeriodLabel(tripEntry)),
-          if (tripEntry.tripMemo != null)
-            Text(
-              tripEntry.tripMemo!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+          if (hasMemo)
+            Text(memoText, maxLines: 2, overflow: TextOverflow.ellipsis),
         ],
       );
     }
