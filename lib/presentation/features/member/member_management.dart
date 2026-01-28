@@ -306,6 +306,15 @@ class MemberManagement extends HookConsumerWidget {
         itemBuilder: (context, index) {
           final targetMember = managedMembers.value[index];
           final isCurrentUser = index == 0;
+          final email = targetMember.email?.trim();
+          final phoneNumber = targetMember.phoneNumber?.trim();
+          String? subtitleText;
+          if (email != null && email.isNotEmpty) {
+            subtitleText = email;
+          } else if (phoneNumber != null && phoneNumber.isNotEmpty) {
+            subtitleText = phoneNumber;
+          }
+          final subtitle = subtitleText != null ? Text(subtitleText) : null;
 
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -314,11 +323,7 @@ class MemberManagement extends HookConsumerWidget {
                 child: Text(targetMember.displayName.substring(0, 1)),
               ),
               title: Text(targetMember.displayName),
-              subtitle:
-                  (targetMember.email != null ||
-                      targetMember.phoneNumber != null)
-                  ? Text(targetMember.email ?? targetMember.phoneNumber ?? '')
-                  : null,
+              subtitle: subtitle,
               onTap: () => showEditMemberDialog(targetMember),
               trailing: (!isCurrentUser && targetMember.accountId == null)
                   ? IconButton(
