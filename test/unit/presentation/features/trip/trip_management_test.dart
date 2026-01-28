@@ -331,7 +331,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
@@ -365,7 +364,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);
@@ -384,7 +382,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).thenAnswer((_) async => null);
@@ -415,7 +412,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);
@@ -434,7 +430,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
@@ -478,7 +473,6 @@ void main() {
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
           pinsOrderBy: anyNamed('pinsOrderBy'),
-          pinDetailsOrderBy: anyNamed('pinDetailsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);

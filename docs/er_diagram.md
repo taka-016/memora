@@ -23,14 +23,6 @@ erDiagram
         timestamp visitEndDate
         string visitMemo
     }
-    pin_details {
-        string id PK
-        string pinId FK "NOT NULL"
-        string name
-        timestamp startDate
-        timestamp endDate
-        string memo
-    }
     routes {
         string id PK
         string tripId FK "NOT NULL"
@@ -113,7 +105,6 @@ erDiagram
     trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ routes : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
-    pins ||--o{ pin_details : "pinId → pinId"
     pins ||--o{ routes : "id → departurePinId"
     pins ||--o{ routes : "id → arrivalPinId"
     tasks ||--o{ tasks : "id → parentTaskId"

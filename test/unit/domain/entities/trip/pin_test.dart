@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/pin_detail.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
@@ -16,14 +15,6 @@ void main() {
         visitStartDate: DateTime(2025, 6, 1),
         visitEndDate: DateTime(2025, 6, 2),
         visitMemo: 'テストメモ',
-        details: [
-          PinDetail(
-            pinId: 'pin001',
-            name: '朝食',
-            startDate: DateTime(2025, 6, 1, 8, 0),
-            endDate: DateTime(2025, 6, 1, 9, 0),
-          ),
-        ],
       );
       expect(pin.pinId, 'pin001');
       expect(pin.tripId, 'trip001');
@@ -34,8 +25,6 @@ void main() {
       expect(pin.visitStartDate, DateTime(2025, 6, 1));
       expect(pin.visitEndDate, DateTime(2025, 6, 2));
       expect(pin.visitMemo, 'テストメモ');
-      expect(pin.details, hasLength(1));
-      expect(pin.details.first.name, '朝食');
     });
 
     test('訪問終了日時が開始日時より前の場合は例外が発生する', () {
@@ -114,14 +103,6 @@ void main() {
         latitude: 36.0,
         locationName: '新宿駅',
         visitMemo: '新しいメモ',
-        details: [
-          PinDetail(
-            pinId: 'pin001',
-            name: '夜景鑑賞',
-            startDate: DateTime(2025, 6, 1, 20, 0),
-            endDate: DateTime(2025, 6, 1, 22, 0),
-          ),
-        ],
       );
       expect(updatedPin.pinId, 'pin001');
       expect(updatedPin.tripId, 'trip001');
@@ -132,46 +113,6 @@ void main() {
       expect(updatedPin.visitStartDate, DateTime(2025, 6, 1));
       expect(updatedPin.visitEndDate, DateTime(2025, 6, 2));
       expect(updatedPin.visitMemo, '新しいメモ');
-      expect(updatedPin.details, hasLength(1));
-      expect(updatedPin.details.first.name, '夜景鑑賞');
-    });
-
-    test('訪問期間外の詳細予定が含まれる場合は例外が発生する', () {
-      expect(
-        () => Pin(
-          pinId: 'pin001',
-          tripId: 'trip001',
-          groupId: 'group001',
-          latitude: 35.0,
-          longitude: 139.0,
-          visitStartDate: DateTime(2025, 6, 1, 8, 0),
-          visitEndDate: DateTime(2025, 6, 1, 20, 0),
-          details: [
-            PinDetail(
-              pinId: 'pin001',
-              startDate: DateTime(2025, 6, 1, 7, 0),
-              endDate: DateTime(2025, 6, 1, 9, 0),
-            ),
-          ],
-        ),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('訪問日時が未設定の場合に詳細予定を含めると例外が発生する', () {
-      expect(
-        () => Pin(
-          pinId: 'pin001',
-          tripId: 'trip001',
-          groupId: 'group001',
-          latitude: 35.0,
-          longitude: 139.0,
-          details: [
-            PinDetail(pinId: 'pin001', startDate: DateTime(2025, 6, 1, 10, 0)),
-          ],
-        ),
-        throwsA(isA<ValidationException>()),
-      );
     });
   });
 }

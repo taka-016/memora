@@ -19,7 +19,6 @@ class GetTripEntryByIdUsecase {
     return await _tripEntryQueryService.getTripEntryById(
       tripId,
       pinsOrderBy: [const OrderBy('visitStartDate', descending: false)],
-      pinDetailsOrderBy: [const OrderBy('startDate', descending: false)],
       tasksOrderBy: [const OrderBy('orderIndex', descending: false)],
     );
   }
