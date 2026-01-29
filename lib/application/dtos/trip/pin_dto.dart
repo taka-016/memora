@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 
 class PinDto extends Equatable {
   const PinDto({
@@ -12,7 +11,6 @@ class PinDto extends Equatable {
     this.visitStartDate,
     this.visitEndDate,
     this.visitMemo,
-    this.details,
   });
 
   final String pinId;
@@ -24,7 +22,6 @@ class PinDto extends Equatable {
   final DateTime? visitStartDate;
   final DateTime? visitEndDate;
   final String? visitMemo;
-  final List<PinDetailDto>? details;
 
   PinDto copyWith({
     String? pinId,
@@ -36,7 +33,6 @@ class PinDto extends Equatable {
     DateTime? visitStartDate,
     DateTime? visitEndDate,
     String? visitMemo,
-    List<PinDetailDto>? details,
   }) {
     return PinDto(
       pinId: pinId ?? this.pinId,
@@ -48,7 +44,6 @@ class PinDto extends Equatable {
       visitStartDate: visitStartDate ?? this.visitStartDate,
       visitEndDate: visitEndDate ?? this.visitEndDate,
       visitMemo: visitMemo ?? this.visitMemo,
-      details: details ?? this.details,
     );
   }
 
@@ -63,6 +58,5 @@ class PinDto extends Equatable {
     visitStartDate,
     visitEndDate,
     visitMemo,
-    details,
   ];
 }

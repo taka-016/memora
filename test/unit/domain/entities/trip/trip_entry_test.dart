@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/pin_detail.dart';
 import 'package:memora/domain/entities/trip/route.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -29,15 +28,6 @@ void main() {
             visitStartDate: DateTime(2025, 6, 2),
             visitEndDate: DateTime(2025, 6, 3),
             visitMemo: 'エッフェル塔',
-            details: [
-              PinDetail(
-                pinId: 'pin1',
-                name: '午前観光',
-                startDate: DateTime(2025, 6, 2, 9),
-                endDate: DateTime(2025, 6, 2, 12),
-                memo: 'ルーブル美術館などを見学',
-              ),
-            ],
           ),
         ],
         routes: [
@@ -69,7 +59,6 @@ void main() {
       expect(entry.tripYear, 2025);
       expect(entry.pins.first.locationName, 'パリ');
       expect(entry.pins.first.visitMemo, 'エッフェル塔');
-      expect(entry.pins.first.details, hasLength(1));
       expect(entry.routes, hasLength(1));
       expect(entry.routes.first.orderIndex, 0);
       expect(entry.tasks, hasLength(1));

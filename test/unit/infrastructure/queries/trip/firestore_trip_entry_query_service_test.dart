@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
@@ -25,7 +24,6 @@ void main() {
     late MockCollectionReference<Map<String, dynamic>>
     mockTripEntriesCollection;
     late MockCollectionReference<Map<String, dynamic>> mockPinsCollection;
-    late MockCollectionReference<Map<String, dynamic>> mockPinDetailsCollection;
     late MockCollectionReference<Map<String, dynamic>> mockRoutesCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
     late FirestoreTripEntryQueryService service;
@@ -35,8 +33,6 @@ void main() {
       mockTripEntriesCollection =
           MockCollectionReference<Map<String, dynamic>>();
       mockPinsCollection = MockCollectionReference<Map<String, dynamic>>();
-      mockPinDetailsCollection =
-          MockCollectionReference<Map<String, dynamic>>();
       mockRoutesCollection = MockCollectionReference<Map<String, dynamic>>();
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
 
@@ -44,26 +40,19 @@ void main() {
         mockFirestore.collection('trip_entries'),
       ).thenReturn(mockTripEntriesCollection);
       when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
-      when(
-        mockFirestore.collection('pin_details'),
-      ).thenReturn(mockPinDetailsCollection);
       when(mockFirestore.collection('routes')).thenReturn(mockRoutesCollection);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
 
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
     });
 
-    test('旅行IDで旅行情報を取得し、関連するピンと詳細も取得する', () async {
+    test('旅行IDで旅行情報を取得し、関連するピンも取得する', () async {
       const tripId = 'trip123';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockPinsQuery = MockQuery<Map<String, dynamic>>();
       final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockPinDetailsQuery = MockQuery<Map<String, dynamic>>();
-      final mockPinDetailsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockPinDetailDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockRoutesQuery = MockQuery<Map<String, dynamic>>();
       final mockRoutesSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockRouteDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
@@ -104,24 +93,6 @@ void main() {
       });
 
       when(
-        mockPinDetailsCollection.where('pinId', isEqualTo: 'pin001'),
-      ).thenReturn(mockPinDetailsQuery);
-      when(
-        mockPinDetailsQuery.orderBy('startDate', descending: false),
-      ).thenReturn(mockPinDetailsQuery);
-      when(
-        mockPinDetailsQuery.get(),
-      ).thenAnswer((_) async => mockPinDetailsSnapshot);
-      when(mockPinDetailsSnapshot.docs).thenReturn([mockPinDetailDoc]);
-      when(mockPinDetailDoc.data()).thenReturn({
-        'pinId': 'pin001',
-        'name': 'ランチ',
-        'startDate': Timestamp.fromDate(DateTime(2024, 8, 2, 12)),
-        'endDate': Timestamp.fromDate(DateTime(2024, 8, 2, 13)),
-        'memo': '近くのカフェ',
-      });
-
-      when(
         mockRoutesCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockRoutesQuery);
       when(
@@ -157,7 +128,6 @@ void main() {
       final result = await service.getTripEntryById(
         tripId,
         pinsOrderBy: const [OrderBy('visitStartDate', descending: false)],
-        pinDetailsOrderBy: const [OrderBy('startDate', descending: false)],
         routesOrderBy: const [OrderBy('orderIndex', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
       );
@@ -167,18 +137,13 @@ void main() {
       expect(result.tripName, equals('夏旅行'));
       expect(result.pins, hasLength(1));
       final PinDto pin = result.pins!.first;
-      expect(pin.details, hasLength(1));
-      final PinDetailDto detail = pin.details!.first;
-      expect(detail.name, equals('ランチ'));
+      expect(pin.locationName, equals('東京タワー'));
       expect(result.routes, hasLength(1));
       expect(result.routes!.first.orderIndex, 0);
       expect(result.tasks, hasLength(1));
       expect(result.tasks!.first.name, '準備');
       verify(
         mockPinsQuery.orderBy('visitStartDate', descending: false),
-      ).called(1);
-      verify(
-        mockPinDetailsQuery.orderBy('startDate', descending: false),
       ).called(1);
       verify(
         mockRoutesQuery.orderBy('orderIndex', descending: false),

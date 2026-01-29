@@ -1,14 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/mappers/trip/pin_detail_mapper.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 
 class PinMapper {
-  static PinDto fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc, {
-    List<PinDetailDto>? details,
-  }) {
+  static PinDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return PinDto(
       pinId: data?['pinId'] as String? ?? '',
@@ -20,7 +15,6 @@ class PinMapper {
       visitStartDate: (data?['visitStartDate'] as Timestamp?)?.toDate(),
       visitEndDate: (data?['visitEndDate'] as Timestamp?)?.toDate(),
       visitMemo: data?['visitMemo'] as String?,
-      details: details ?? [],
     );
   }
 
@@ -35,7 +29,6 @@ class PinMapper {
       visitStartDate: dto.visitStartDate,
       visitEndDate: dto.visitEndDate,
       visitMemo: dto.visitMemo,
-      details: PinDetailMapper.toEntityList(dto.details ?? []),
     );
   }
 

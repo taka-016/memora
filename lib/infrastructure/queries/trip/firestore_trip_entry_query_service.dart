@@ -1,7 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/mappers/trip/pin_detail_mapper.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/mappers/trip/route_mapper.dart';
 import 'package:memora/application/mappers/trip/task_mapper.dart';
@@ -20,7 +18,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   Future<TripEntryDto?> getTripEntryById(
     String tripId, {
     List<OrderBy>? pinsOrderBy,
-    List<OrderBy>? pinDetailsOrderBy,
     List<OrderBy>? routesOrderBy,
     List<OrderBy>? tasksOrderBy,
   }) async {
@@ -44,31 +41,9 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       }
 
       final pinsSnapshot = await pinsQuery.get();
-      final pins = <PinDto>[];
-
-      for (final pinDoc in pinsSnapshot.docs) {
-        final pinId = pinDoc.data()['pinId'] as String? ?? '';
-        Query<Map<String, dynamic>> pinDetailsQuery = _firestore
-            .collection('pin_details')
-            .where('pinId', isEqualTo: pinId);
-
-        if (pinDetailsOrderBy != null && pinDetailsOrderBy.isNotEmpty) {
-          for (final order in pinDetailsOrderBy) {
-            pinDetailsQuery = pinDetailsQuery.orderBy(
-              order.field,
-              descending: order.descending,
-            );
-          }
-        }
-
-        final pinDetailsSnapshot = await pinDetailsQuery.get();
-        final pinDetails = pinDetailsSnapshot.docs
-            .map((detailDoc) => PinDetailMapper.fromFirestore(detailDoc))
-            .toList();
-
-        final PinDto pin = PinMapper.fromFirestore(pinDoc, details: pinDetails);
-        pins.add(pin);
-      }
+      final pins = pinsSnapshot.docs
+          .map((pinDoc) => PinMapper.fromFirestore(pinDoc))
+          .toList();
 
       Query<Map<String, dynamic>> routesQuery = _firestore
           .collection('routes')

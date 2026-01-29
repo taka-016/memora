@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/trip/pin_detail_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:mockito/annotations.dart';
@@ -24,19 +23,10 @@ void main() {
         'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1, 10, 0)),
         'visitEndDate': Timestamp.fromDate(DateTime(2024, 1, 1, 12, 0)),
         'visitMemo': '観光で訪問',
-        'details': [
-          PinDetailDto(pinId: 'pin-123', name: '詳細1'),
-          PinDetailDto(pinId: 'pin-123', name: '詳細2'),
-        ],
       });
 
-      final pinDetails = [
-        PinDetailDto(pinId: 'pin-123', name: '詳細1'),
-        PinDetailDto(pinId: 'pin-123', name: '詳細2'),
-      ];
-
       // Act
-      final dto = PinMapper.fromFirestore(mockDoc, details: pinDetails);
+      final dto = PinMapper.fromFirestore(mockDoc);
 
       // Assert
       expect(dto.pinId, 'pin-123');
@@ -48,9 +38,6 @@ void main() {
       expect(dto.visitStartDate, DateTime(2024, 1, 1, 10, 0));
       expect(dto.visitEndDate, DateTime(2024, 1, 1, 12, 0));
       expect(dto.visitMemo, '観光で訪問');
-      expect(dto.details!.length, 2);
-      expect(dto.details![0].name, '詳細1');
-      expect(dto.details![1].name, '詳細2');
     });
 
     test('Firestoreのデータが一部nullの場合も正しく変換できる', () {
@@ -75,7 +62,6 @@ void main() {
       expect(dto.visitStartDate, isNull);
       expect(dto.visitEndDate, isNull);
       expect(dto.visitMemo, isNull);
-      expect(dto.details, isEmpty);
     });
 
     test('pinIdが未設定の場合はデフォルト値を設定する', () {
@@ -109,10 +95,6 @@ void main() {
         visitStartDate: DateTime(2024, 1, 1, 10, 0),
         visitEndDate: DateTime(2024, 1, 1, 12, 0),
         visitMemo: '観光で訪問',
-        details: [
-          PinDetailDto(pinId: 'pin-123', name: '詳細1'),
-          PinDetailDto(pinId: 'pin-123', name: '詳細2'),
-        ],
       );
 
       // Act
@@ -128,9 +110,6 @@ void main() {
       expect(entity.visitStartDate, DateTime(2024, 1, 1, 10, 0));
       expect(entity.visitEndDate, DateTime(2024, 1, 1, 12, 0));
       expect(entity.visitMemo, '観光で訪問');
-      expect(entity.details.length, 2);
-      expect(entity.details[0].name, '詳細1');
-      expect(entity.details[1].name, '詳細2');
     });
 
     test('idがnullのDtoをエンティティに変換する際は空文字列になる', () {
@@ -175,7 +154,6 @@ void main() {
       expect(entity.visitStartDate, isNull);
       expect(entity.visitEndDate, isNull);
       expect(entity.visitMemo, isNull);
-      expect(entity.details, isEmpty);
     });
 
     test('PinDtoのリストを正しくエンティティリストに変換する', () {
@@ -190,10 +168,6 @@ void main() {
           locationName: '東京駅',
           visitStartDate: DateTime(2024, 1, 1, 10, 0),
           visitEndDate: DateTime(2024, 1, 1, 12, 0),
-          details: [
-            PinDetailDto(pinId: 'pin-1', name: '詳細1'),
-            PinDetailDto(pinId: 'pin-1', name: '詳細2'),
-          ],
         ),
         PinDto(
           pinId: 'pin-2',
@@ -204,10 +178,6 @@ void main() {
           locationName: '大阪駅',
           visitStartDate: DateTime(2024, 2, 1, 10, 0),
           visitEndDate: DateTime(2024, 2, 1, 12, 0),
-          details: [
-            PinDetailDto(pinId: 'pin-2', name: '詳細3'),
-            PinDetailDto(pinId: 'pin-2', name: '詳細4'),
-          ],
         ),
       ];
 
@@ -220,16 +190,10 @@ void main() {
       expect(entities[0].tripId, 'trip-1');
       expect(entities[0].groupId, 'group-1');
       expect(entities[0].locationName, '東京駅');
-      expect(entities[0].details.length, 2);
-      expect(entities[0].details[0].name, '詳細1');
-      expect(entities[0].details[1].name, '詳細2');
       expect(entities[1].pinId, 'pin-2');
       expect(entities[1].tripId, 'trip-2');
       expect(entities[1].groupId, 'group-2');
       expect(entities[1].locationName, '大阪駅');
-      expect(entities[1].details.length, 2);
-      expect(entities[1].details[0].name, '詳細3');
-      expect(entities[1].details[1].name, '詳細4');
     });
 
     test('空のリストを変換する', () {
