@@ -559,6 +559,7 @@ RouteSegmentDetailに保持する（_otherRouteInfoInputsを廃止する）
   - [x] 各画面へのmember引数受け渡しを廃止する
 - [x] TaskViewのbuildParentCardを分割する
 - [x] pin_detailsを廃止する
+- [x] routesを廃止する（ER図、エンティティ、リポジトリなどを整理する）
 
 ## 不具合修正
 

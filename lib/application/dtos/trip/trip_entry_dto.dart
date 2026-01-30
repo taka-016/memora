@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/copy_with_helper.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 
 class TripEntryDto extends Equatable {
@@ -14,7 +13,6 @@ class TripEntryDto extends Equatable {
     this.tripEndDate,
     this.tripMemo,
     this.pins,
-    this.routes,
     this.tasks,
   });
 
@@ -26,7 +24,6 @@ class TripEntryDto extends Equatable {
   final DateTime? tripEndDate;
   final String? tripMemo;
   final List<PinDto>? pins;
-  final List<RouteDto>? routes;
   final List<TaskDto>? tasks;
 
   TripEntryDto copyWith({
@@ -38,7 +35,6 @@ class TripEntryDto extends Equatable {
     Object? tripEndDate = copyWithPlaceholder,
     String? tripMemo,
     Object? pins = copyWithPlaceholder,
-    Object? routes = copyWithPlaceholder,
     Object? tasks = copyWithPlaceholder,
   }) {
     return TripEntryDto(
@@ -62,11 +58,6 @@ class TripEntryDto extends Equatable {
       ),
       tripMemo: tripMemo ?? this.tripMemo,
       pins: resolveCopyWithValue<List<PinDto>>(pins, this.pins, 'pins'),
-      routes: resolveCopyWithValue<List<RouteDto>>(
-        routes,
-        this.routes,
-        'routes',
-      ),
       tasks: resolveCopyWithValue<List<TaskDto>>(tasks, this.tasks, 'tasks'),
     );
   }
@@ -81,7 +72,6 @@ class TripEntryDto extends Equatable {
     tripEndDate,
     tripMemo,
     pins,
-    routes,
     tasks,
   ];
 }

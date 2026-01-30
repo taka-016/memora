@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
-import 'package:memora/application/mappers/trip/route_mapper.dart';
 import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 
@@ -12,7 +10,6 @@ class TripEntryMapper {
   static TripEntryDto fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     List<PinDto> pins = const [],
-    List<RouteDto> routes = const [],
     List<TaskDto> tasks = const [],
   }) {
     final data = doc.data() ?? {};
@@ -32,14 +29,12 @@ class TripEntryMapper {
       tripEndDate: tripEndDate,
       tripMemo: data['tripMemo'] as String?,
       pins: pins,
-      routes: routes,
       tasks: tasks,
     );
   }
 
   static TripEntry toEntity(TripEntryDto dto) {
     final pinDtos = dto.pins ?? const <PinDto>[];
-    final routeDtos = dto.routes ?? const <RouteDto>[];
     final taskDtos = dto.tasks ?? const <TaskDto>[];
     return TripEntry(
       id: dto.id,
@@ -50,7 +45,6 @@ class TripEntryMapper {
       tripEndDate: dto.tripEndDate,
       tripMemo: dto.tripMemo,
       pins: PinMapper.toEntityList(pinDtos),
-      routes: RouteMapper.toEntityList(routeDtos),
       tasks: TaskMapper.toEntityList(taskDtos),
     );
   }

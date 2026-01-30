@@ -1,7 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/route.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -30,15 +28,6 @@ void main() {
             visitMemo: 'エッフェル塔',
           ),
         ],
-        routes: [
-          Route(
-            tripId: 'abc123',
-            orderIndex: 0,
-            departurePinId: 'pin1',
-            arrivalPinId: 'pin2',
-            travelMode: TravelMode.drive,
-          ),
-        ],
         tasks: [
           Task(
             id: 'task-1',
@@ -59,8 +48,6 @@ void main() {
       expect(entry.tripYear, 2025);
       expect(entry.pins.first.locationName, 'パリ');
       expect(entry.pins.first.visitMemo, 'エッフェル塔');
-      expect(entry.routes, hasLength(1));
-      expect(entry.routes.first.orderIndex, 0);
       expect(entry.tasks, hasLength(1));
       expect(entry.tasks.first.name, '持ち物準備');
     });
@@ -94,7 +81,6 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
-        routes: const [],
         tasks: const [],
       );
       final entry2 = TripEntry(
@@ -106,7 +92,6 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
-        routes: const [],
         tasks: const [],
       );
       expect(entry1, equals(entry2));
@@ -122,7 +107,6 @@ void main() {
         tripEndDate: DateTime(2025, 6, 10),
         tripMemo: 'テストメモ',
         pins: const [],
-        routes: const [],
         tasks: const [],
       );
       final updatedEntry = entry.copyWith(
@@ -138,15 +122,6 @@ void main() {
             locationName: 'ローマ',
             visitStartDate: DateTime(2025, 6, 12),
             visitEndDate: DateTime(2025, 6, 14),
-          ),
-        ],
-        routes: [
-          Route(
-            tripId: 'abc123',
-            orderIndex: 1,
-            departurePinId: 'pin2',
-            arrivalPinId: 'pin3',
-            travelMode: TravelMode.walk,
           ),
         ],
         tasks: [
@@ -166,8 +141,6 @@ void main() {
       expect(updatedEntry.tripEndDate, DateTime(2025, 6, 15));
       expect(updatedEntry.tripMemo, 'テストメモ');
       expect(updatedEntry.pins, hasLength(1));
-      expect(updatedEntry.routes, hasLength(1));
-      expect(updatedEntry.routes.first.orderIndex, 1);
       expect(updatedEntry.tasks, hasLength(1));
       expect(updatedEntry.tasks.first.name, 'ホテル予約');
     });
@@ -189,64 +162,6 @@ void main() {
               longitude: 0,
               visitStartDate: DateTime(2025, 5, 31),
               visitEndDate: DateTime(2025, 6, 2),
-            ),
-          ],
-        ),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('routesに含まれるRouteの順序が保持される', () {
-      final entry = TripEntry(
-        id: 'trip123',
-        groupId: 'group456',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        routes: [
-          Route(
-            tripId: 'trip123',
-            orderIndex: 1,
-            departurePinId: 'pinB',
-            arrivalPinId: 'pinC',
-            travelMode: TravelMode.walk,
-          ),
-          Route(
-            tripId: 'trip123',
-            orderIndex: 0,
-            departurePinId: 'pinA',
-            arrivalPinId: 'pinB',
-            travelMode: TravelMode.drive,
-          ),
-        ],
-      );
-
-      expect(entry.routes[0].orderIndex, 1);
-      expect(entry.routes[1].orderIndex, 0);
-    });
-
-    test('routesのorderIndexが重複していると例外が発生する', () {
-      expect(
-        () => TripEntry(
-          id: 'trip123',
-          groupId: 'group456',
-          tripYear: 2025,
-          tripStartDate: DateTime(2025, 6, 1),
-          tripEndDate: DateTime(2025, 6, 10),
-          routes: [
-            Route(
-              tripId: 'trip123',
-              orderIndex: 0,
-              departurePinId: 'pinA',
-              arrivalPinId: 'pinB',
-              travelMode: TravelMode.drive,
-            ),
-            Route(
-              tripId: 'trip123',
-              orderIndex: 0,
-              departurePinId: 'pinB',
-              arrivalPinId: 'pinC',
-              travelMode: TravelMode.walk,
             ),
           ],
         ),

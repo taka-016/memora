@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/route.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_route_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
@@ -28,14 +26,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       batch.set(
         pinDocRef,
         FirestorePinMapper.toFirestore(pin.copyWith(tripId: tripDocRef.id)),
-      );
-    }
-
-    for (final Route route in tripEntry.routes) {
-      final routeDocRef = _firestore.collection('routes').doc();
-      batch.set(
-        routeDocRef,
-        FirestoreRouteMapper.toFirestore(route.copyWith(tripId: tripDocRef.id)),
       );
     }
 
@@ -69,14 +59,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       batch.delete(pinDoc.reference);
     }
 
-    final routesSnapshot = await _firestore
-        .collection('routes')
-        .where('tripId', isEqualTo: tripEntry.id)
-        .get();
-    for (final routeDoc in routesSnapshot.docs) {
-      batch.delete(routeDoc.reference);
-    }
-
     final tasksSnapshot = await tasksCollection
         .where('tripId', isEqualTo: tripEntry.id)
         .get();
@@ -91,14 +73,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         FirestorePinMapper.toFirestore(
           pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
         ),
-      );
-    }
-
-    for (final Route route in tripEntry.routes) {
-      final routeDocRef = _firestore.collection('routes').doc();
-      batch.set(
-        routeDocRef,
-        FirestoreRouteMapper.toFirestore(route.copyWith(tripId: tripEntry.id)),
       );
     }
 
@@ -123,14 +97,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         .get();
     for (final doc in pinsSnapshot.docs) {
       batch.delete(doc.reference);
-    }
-
-    final routesSnapshot = await _firestore
-        .collection('routes')
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final routeDoc in routesSnapshot.docs) {
-      batch.delete(routeDoc.reference);
     }
 
     final tasksSnapshot = await _firestore
@@ -160,13 +126,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
           .get();
       for (final pinDoc in pinsSnapshot.docs) {
         batch.delete(pinDoc.reference);
-      }
-      final routesSnapshot = await _firestore
-          .collection('routes')
-          .where('tripId', isEqualTo: tripEntryDoc.id)
-          .get();
-      for (final routeDoc in routesSnapshot.docs) {
-        batch.delete(routeDoc.reference);
       }
       final tasksSnapshot = await _firestore
           .collection('tasks')

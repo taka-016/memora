@@ -23,18 +23,6 @@ erDiagram
         timestamp visitEndDate
         string visitMemo
     }
-    routes {
-        string id PK
-        string tripId FK "NOT NULL"
-        number orderIndex "NOT NULL"
-        string departurePinId FK "NOT NULL"
-        string arrivalPinId FK "NOT NULL"
-        string travelMode "NOT NULL"
-        number distanceMeters
-        number durationSeconds
-        string instructions
-        string polyline
-    }
     tasks {
         string id PK
         string tripId FK "NOT NULL"
@@ -103,10 +91,7 @@ erDiagram
     }
 
     trip_entries ||--o{ pins : "id → tripId"
-    trip_entries ||--o{ routes : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
-    pins ||--o{ routes : "id → departurePinId"
-    pins ||--o{ routes : "id → arrivalPinId"
     tasks ||--o{ tasks : "id → parentTaskId"
     tasks ||--|| members : "assignedMemberId → id"
     groups ||--o{ group_members : "id → groupId"

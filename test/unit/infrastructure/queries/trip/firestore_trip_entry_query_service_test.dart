@@ -24,7 +24,6 @@ void main() {
     late MockCollectionReference<Map<String, dynamic>>
     mockTripEntriesCollection;
     late MockCollectionReference<Map<String, dynamic>> mockPinsCollection;
-    late MockCollectionReference<Map<String, dynamic>> mockRoutesCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
     late FirestoreTripEntryQueryService service;
 
@@ -33,14 +32,12 @@ void main() {
       mockTripEntriesCollection =
           MockCollectionReference<Map<String, dynamic>>();
       mockPinsCollection = MockCollectionReference<Map<String, dynamic>>();
-      mockRoutesCollection = MockCollectionReference<Map<String, dynamic>>();
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
 
       when(
         mockFirestore.collection('trip_entries'),
       ).thenReturn(mockTripEntriesCollection);
       when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
-      when(mockFirestore.collection('routes')).thenReturn(mockRoutesCollection);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
 
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
@@ -53,9 +50,6 @@ void main() {
       final mockPinsQuery = MockQuery<Map<String, dynamic>>();
       final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockRoutesQuery = MockQuery<Map<String, dynamic>>();
-      final mockRoutesSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockRouteDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
@@ -93,23 +87,6 @@ void main() {
       });
 
       when(
-        mockRoutesCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockRoutesQuery);
-      when(
-        mockRoutesQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockRoutesQuery);
-      when(mockRoutesQuery.get()).thenAnswer((_) async => mockRoutesSnapshot);
-      when(mockRoutesSnapshot.docs).thenReturn([mockRouteDoc]);
-      when(mockRouteDoc.data()).thenReturn({
-        'tripId': tripId,
-        'orderIndex': 0,
-        'departurePinId': 'pin001',
-        'arrivalPinId': 'pin002',
-        'travelMode': 'DRIVE',
-      });
-      when(mockRouteDoc.id).thenReturn('route001');
-
-      when(
         mockTasksCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockTasksQuery);
       when(
@@ -128,7 +105,6 @@ void main() {
       final result = await service.getTripEntryById(
         tripId,
         pinsOrderBy: const [OrderBy('visitStartDate', descending: false)],
-        routesOrderBy: const [OrderBy('orderIndex', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
       );
 
@@ -138,15 +114,10 @@ void main() {
       expect(result.pins, hasLength(1));
       final PinDto pin = result.pins!.first;
       expect(pin.locationName, equals('東京タワー'));
-      expect(result.routes, hasLength(1));
-      expect(result.routes!.first.orderIndex, 0);
       expect(result.tasks, hasLength(1));
       expect(result.tasks!.first.name, '準備');
       verify(
         mockPinsQuery.orderBy('visitStartDate', descending: false),
-      ).called(1);
-      verify(
-        mockRoutesQuery.orderBy('orderIndex', descending: false),
       ).called(1);
       verify(mockTasksQuery.orderBy('orderIndex', descending: false)).called(1);
     });
