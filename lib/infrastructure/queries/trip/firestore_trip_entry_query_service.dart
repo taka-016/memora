@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/pin_mapper.dart';
-import 'package:memora/application/mappers/trip/route_mapper.dart';
 import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -18,7 +17,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   Future<TripEntryDto?> getTripEntryById(
     String tripId, {
     List<OrderBy>? pinsOrderBy,
-    List<OrderBy>? routesOrderBy,
     List<OrderBy>? tasksOrderBy,
   }) async {
     try {
@@ -45,24 +43,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .map((pinDoc) => PinMapper.fromFirestore(pinDoc))
           .toList();
 
-      Query<Map<String, dynamic>> routesQuery = _firestore
-          .collection('routes')
-          .where('tripId', isEqualTo: tripId);
-
-      if (routesOrderBy != null && routesOrderBy.isNotEmpty) {
-        for (final order in routesOrderBy) {
-          routesQuery = routesQuery.orderBy(
-            order.field,
-            descending: order.descending,
-          );
-        }
-      }
-
-      final routesSnapshot = await routesQuery.get();
-      final routes = routesSnapshot.docs
-          .map((routeDoc) => RouteMapper.fromFirestore(routeDoc))
-          .toList();
-
       Query<Map<String, dynamic>> tasksQuery = _firestore
           .collection('tasks')
           .where('tripId', isEqualTo: tripId);
@@ -81,12 +61,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .map((taskDoc) => TaskMapper.fromFirestore(taskDoc))
           .toList();
 
-      return TripEntryMapper.fromFirestore(
-        doc,
-        pins: pins,
-        routes: routes,
-        tasks: tasks,
-      );
+      return TripEntryMapper.fromFirestore(doc, pins: pins, tasks: tasks);
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryQueryService.getTripEntryById: ${e.toString()}',

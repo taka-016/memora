@@ -1,13 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
-import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
-import 'package:memora/domain/entities/trip/route.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:mockito/annotations.dart';
@@ -39,17 +36,6 @@ void main() {
           longitude: 135.0,
         ),
       ];
-
-      final routeDtos = [
-        RouteDto(
-          id: 'route-001',
-          tripId: 'trip-001',
-          orderIndex: 0,
-          departurePinId: 'pin-001',
-          arrivalPinId: 'pin-002',
-          travelMode: TravelMode.drive,
-        ),
-      ];
       final taskDtos = [
         TaskDto(
           id: 'task-001',
@@ -63,7 +49,6 @@ void main() {
       final dto = TripEntryMapper.fromFirestore(
         mockDoc,
         pins: pinDtos,
-        routes: routeDtos,
         tasks: taskDtos,
       );
 
@@ -75,7 +60,6 @@ void main() {
       expect(dto.tripEndDate, DateTime(2024, 3, 25));
       expect(dto.tripMemo, '家族旅行');
       expect(dto.pins, pinDtos);
-      expect(dto.routes, routeDtos);
       expect(dto.tasks, taskDtos);
     });
 
@@ -94,7 +78,6 @@ void main() {
       expect(dto.tripStartDate, isNull);
       expect(dto.tripEndDate, isNull);
       expect(dto.pins, isEmpty);
-      expect(dto.routes, isEmpty);
       expect(dto.tasks, isEmpty);
     });
 
@@ -115,17 +98,6 @@ void main() {
             latitude: 34.0,
             longitude: 134.0,
             locationName: '海岸',
-          ),
-        ],
-        routes: [
-          RouteDto(
-            id: 'route-010',
-            tripId: 'trip-003',
-            orderIndex: 0,
-            departurePinId: 'pin-010',
-            arrivalPinId: 'pin-011',
-            travelMode: TravelMode.walk,
-            durationSeconds: 600,
           ),
         ],
         tasks: [
@@ -159,16 +131,6 @@ void main() {
               latitude: 34.0,
               longitude: 134.0,
               locationName: '海岸',
-            ),
-          ],
-          routes: [
-            Route(
-              tripId: 'trip-003',
-              orderIndex: 0,
-              departurePinId: 'pin-010',
-              arrivalPinId: 'pin-011',
-              travelMode: TravelMode.walk,
-              durationSeconds: 600,
             ),
           ],
           tasks: [

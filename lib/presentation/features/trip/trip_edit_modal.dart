@@ -97,7 +97,6 @@ class TripEditModal extends HookConsumerWidget {
         tripEndDate: tripEntry?.tripEndDate,
         tripMemo: tripEntry?.tripMemo ?? '',
         pins: initialPins,
-        routes: tripEntry?.routes,
         tasks: initialTasks,
       );
     }, [groupId, tripEntry, year]);

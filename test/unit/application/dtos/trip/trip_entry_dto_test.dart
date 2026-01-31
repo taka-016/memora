@@ -1,9 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/dtos/trip/route_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/core/enums/travel_mode.dart';
 
 void main() {
   group('TripEntryDto', () {
@@ -22,7 +20,6 @@ void main() {
       expect(dto.tripEndDate, isNull);
       expect(dto.tripMemo, isNull);
       expect(dto.pins, isNull);
-      expect(dto.routes, isNull);
       expect(dto.tasks, isNull);
     });
 
@@ -47,16 +44,6 @@ void main() {
         PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0),
         PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0),
       ];
-      final routes = [
-        RouteDto(
-          id: 'route-1',
-          tripId: 'trip-entry-123',
-          orderIndex: 0,
-          departurePinId: 'pin-1',
-          arrivalPinId: 'pin-2',
-          travelMode: TravelMode.drive,
-        ),
-      ];
       final tasks = [
         TaskDto(
           id: 'task-1',
@@ -76,14 +63,12 @@ void main() {
         tripEndDate: DateTime(2024, 5, 3),
         tripMemo: '家族旅行のメモ',
         pins: pins,
-        routes: routes,
         tasks: tasks,
       );
 
       expect(dto.tripName, '春の旅行');
       expect(dto.tripMemo, '家族旅行のメモ');
       expect(dto.pins, pins);
-      expect(dto.routes, routes);
       expect(dto.tasks, tasks);
     });
 
@@ -117,16 +102,6 @@ void main() {
         tripName: '元の旅行名',
         tripMemo: '元のメモ',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
-        routes: [
-          RouteDto(
-            id: 'route-1',
-            tripId: 'trip-entry-123',
-            orderIndex: 0,
-            departurePinId: 'pin-1',
-            arrivalPinId: 'pin-1b',
-            travelMode: TravelMode.walk,
-          ),
-        ],
         tasks: [
           TaskDto(
             id: 'task-1',
@@ -142,16 +117,6 @@ void main() {
         tripName: '新しい旅行名',
         tripMemo: '新しいメモ',
         pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
-        routes: [
-          RouteDto(
-            id: 'route-2',
-            tripId: 'trip-entry-123',
-            orderIndex: 1,
-            departurePinId: 'pin-1b',
-            arrivalPinId: 'pin-2',
-            travelMode: TravelMode.drive,
-          ),
-        ],
         tasks: [
           TaskDto(
             id: 'task-2',
@@ -166,7 +131,6 @@ void main() {
       expect(copiedDto.tripName, '新しい旅行名');
       expect(copiedDto.tripMemo, '新しいメモ');
       expect(copiedDto.pins?.first.pinId, 'pin-2');
-      expect(copiedDto.routes?.first.id, 'route-2');
       expect(copiedDto.tasks?.first.id, 'task-2');
     });
 
@@ -211,16 +175,6 @@ void main() {
 
     test('copyWithで何も指定しなければ元の値を保持する', () {
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
-      final routes = [
-        RouteDto(
-          id: 'route-1',
-          tripId: 'trip-entry-123',
-          orderIndex: 0,
-          departurePinId: 'pin-1',
-          arrivalPinId: 'pin-2',
-          travelMode: TravelMode.drive,
-        ),
-      ];
       final tasks = [
         TaskDto(
           id: 'task-1',
@@ -239,7 +193,6 @@ void main() {
         tripEndDate: DateTime(2024, 5, 3),
         tripMemo: '旅行のメモ',
         pins: pins,
-        routes: routes,
         tasks: tasks,
       );
 
@@ -250,16 +203,6 @@ void main() {
 
     test('同じ値を持つインスタンスは等しい', () {
       final pins = [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)];
-      final routes = [
-        RouteDto(
-          id: 'route-1',
-          tripId: 'trip-entry-123',
-          orderIndex: 0,
-          departurePinId: 'pin-1',
-          arrivalPinId: 'pin-2',
-          travelMode: TravelMode.drive,
-        ),
-      ];
       final tasks = [
         TaskDto(
           id: 'task-1',
@@ -279,7 +222,6 @@ void main() {
         tripEndDate: DateTime(2024, 5, 3),
         tripMemo: '家族旅行のメモ',
         pins: pins,
-        routes: routes,
         tasks: tasks,
       );
 
@@ -292,7 +234,6 @@ void main() {
         tripEndDate: DateTime(2024, 5, 3),
         tripMemo: '家族旅行のメモ',
         pins: pins,
-        routes: routes,
         tasks: tasks,
       );
 
@@ -310,16 +251,6 @@ void main() {
         tripEndDate: DateTime(2024, 5, 3),
         tripMemo: 'メモA',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
-        routes: [
-          RouteDto(
-            id: 'route-1',
-            tripId: 'trip-entry-123',
-            orderIndex: 0,
-            departurePinId: 'pin-1',
-            arrivalPinId: 'pin-2',
-            travelMode: TravelMode.drive,
-          ),
-        ],
         tasks: [
           TaskDto(
             id: 'task-1',
@@ -340,16 +271,6 @@ void main() {
         tripEndDate: DateTime(2024, 6, 3),
         tripMemo: 'メモB',
         pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
-        routes: [
-          RouteDto(
-            id: 'route-2',
-            tripId: 'trip-entry-999',
-            orderIndex: 0,
-            departurePinId: 'pin-2',
-            arrivalPinId: 'pin-3',
-            travelMode: TravelMode.walk,
-          ),
-        ],
         tasks: [
           TaskDto(
             id: 'task-2',
