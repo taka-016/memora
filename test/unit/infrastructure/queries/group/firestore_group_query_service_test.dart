@@ -620,5 +620,87 @@ void main() {
       expect(result.members[0].displayName, 'Aメンバー');
       expect(result.members[1].displayName, 'Bメンバー');
     });
+
+    test('membersOrderByでorderIndexを指定した場合はorderIndex優先で並ぶ', () async {
+      const groupId = 'group123';
+
+      when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
+      when(mockGroupsCollection.doc(groupId)).thenReturn(mockDocumentReference);
+      when(
+        mockDocumentReference.get(),
+      ).thenAnswer((_) async => mockDocumentSnapshot);
+      when(mockDocumentSnapshot.exists).thenReturn(true);
+      when(mockDocumentSnapshot.id).thenReturn(groupId);
+      when(
+        mockDocumentSnapshot.data(),
+      ).thenReturn({'name': 'テストグループ', 'ownerId': 'owner1'});
+
+      final mockGroupMemberQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupMemberSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockGroupMemberDoc1 =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockGroupMemberDoc2 =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
+      ).thenReturn(mockGroupMemberQuery);
+      when(
+        mockGroupMemberQuery.get(),
+      ).thenAnswer((_) async => mockGroupMemberSnapshot);
+      when(
+        mockGroupMemberSnapshot.docs,
+      ).thenReturn([mockGroupMemberDoc1, mockGroupMemberDoc2]);
+      when(mockGroupMemberDoc1.data()).thenReturn({
+        'memberId': 'member1',
+        'groupId': 'group1',
+        'orderIndex': 1,
+      });
+      when(mockGroupMemberDoc2.data()).thenReturn({
+        'memberId': 'member2',
+        'groupId': 'group2',
+        'orderIndex': 0,
+      });
+
+      when(
+        mockFirestore.collection('members'),
+      ).thenReturn(mockMembersCollection);
+
+      final mockMemberDocRef1 = MockDocumentReference<Map<String, dynamic>>();
+      final mockMemberSnapshot1 = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockMembersCollection.doc('member1')).thenReturn(mockMemberDocRef1);
+      when(
+        mockMemberDocRef1.get(),
+      ).thenAnswer((_) async => mockMemberSnapshot1);
+      when(mockMemberSnapshot1.exists).thenReturn(true);
+      when(mockMemberSnapshot1.id).thenReturn('member1');
+      when(mockMemberSnapshot1.data()).thenReturn({'displayName': 'Aメンバー'});
+
+      final mockMemberDocRef2 = MockDocumentReference<Map<String, dynamic>>();
+      final mockMemberSnapshot2 = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockMembersCollection.doc('member2')).thenReturn(mockMemberDocRef2);
+      when(
+        mockMemberDocRef2.get(),
+      ).thenAnswer((_) async => mockMemberSnapshot2);
+      when(mockMemberSnapshot2.exists).thenReturn(true);
+      when(mockMemberSnapshot2.id).thenReturn('member2');
+      when(mockMemberSnapshot2.data()).thenReturn({'displayName': 'Bメンバー'});
+
+      final result = await service.getGroupWithMembersById(
+        groupId,
+        membersOrderBy: [
+          const OrderBy('orderIndex', descending: false),
+          const OrderBy('displayName', descending: false),
+        ],
+      );
+
+      expect(result, isNotNull);
+      expect(result!.members, hasLength(2));
+      expect(result.members[0].memberId, 'member2');
+      expect(result.members[1].memberId, 'member1');
+    });
   });
 }

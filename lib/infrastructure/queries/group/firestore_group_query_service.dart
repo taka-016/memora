@@ -241,6 +241,9 @@ class FirestoreGroupQueryService implements GroupQueryService {
     sortedMembers.sort((a, b) {
       for (final order in orderBy) {
         int comparison = 0;
+        if (order.field == 'orderIndex') {
+          comparison = a.orderIndex.compareTo(b.orderIndex);
+        }
         if (order.field == 'displayName') {
           comparison = a.displayName.compareTo(b.displayName);
         }

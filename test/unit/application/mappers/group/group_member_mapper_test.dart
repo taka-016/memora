@@ -19,9 +19,11 @@ void main() {
         final mockMemberDoc = MockDocumentSnapshot<Map<String, dynamic>>();
 
         when(mockMemberDoc.id).thenReturn('member001');
-        when(
-          mockGroupMemberDoc.data(),
-        ).thenReturn({'groupId': 'group001', 'isAdministrator': true});
+        when(mockGroupMemberDoc.data()).thenReturn({
+          'groupId': 'group001',
+          'isAdministrator': true,
+          'orderIndex': 2,
+        });
         when(mockMemberDoc.data()).thenReturn({
           'accountId': 'account001',
           'ownerId': 'owner001',
@@ -51,6 +53,7 @@ void main() {
         expect(result.memberId, 'member001');
         expect(result.groupId, 'group001');
         expect(result.isAdministrator, true);
+        expect(result.orderIndex, 2);
         expect(result.accountId, 'account001');
         expect(result.ownerId, 'owner001');
         expect(result.displayName, '山田太郎');
@@ -89,6 +92,7 @@ void main() {
         expect(result.groupId, 'group002');
         expect(result.isAdministrator, false);
         expect(result.displayName, '佐藤花子');
+        expect(result.orderIndex, 0);
       });
 
       test('displayNameが未設定の場合は空文字列になる', () {
@@ -113,6 +117,7 @@ void main() {
         expect(result.groupId, 'group003');
         expect(result.displayName, '');
         expect(result.email, 'test@example.com');
+        expect(result.orderIndex, 0);
       });
     });
 
@@ -147,6 +152,7 @@ void main() {
         expect(result.memberId, 'member1');
         expect(result.groupId, 'group1');
         expect(result.isAdministrator, false);
+        expect(result.orderIndex, 0);
         expect(result.accountId, 'account1');
         expect(result.ownerId, 'owner1');
         expect(result.displayName, '山田太郎');
@@ -182,6 +188,7 @@ void main() {
         expect(result.ownerId, null);
         expect(result.hiraganaFirstName, null);
         expect(result.hiraganaLastName, null);
+        expect(result.orderIndex, 0);
       });
     });
 
@@ -212,14 +219,17 @@ void main() {
         expect(result[0].groupId, 'group1');
         expect(result[0].displayName, '山田太郎');
         expect(result[0].email, 'taro@example.com');
+        expect(result[0].orderIndex, 0);
         expect(result[1].memberId, 'member2');
         expect(result[1].groupId, 'group1');
         expect(result[1].displayName, '佐藤花子');
         expect(result[1].email, 'hanako@example.com');
+        expect(result[1].orderIndex, 1);
         expect(result[2].memberId, 'member3');
         expect(result[2].groupId, 'group1');
         expect(result[2].displayName, '鈴木一郎');
         expect(result[2].email, null);
+        expect(result[2].orderIndex, 2);
       });
 
       test('空のリストを変換できる', () {
@@ -244,6 +254,7 @@ void main() {
           isAdministrator: true,
           displayName: '山田太郎',
           email: 'taro@example.com',
+          orderIndex: 1,
         );
 
         // Act
@@ -256,6 +267,7 @@ void main() {
             groupId: 'group001',
             memberId: 'member001',
             isAdministrator: true,
+            orderIndex: 1,
           ),
         );
       });
@@ -267,6 +279,7 @@ void main() {
           groupId: 'group002',
           isAdministrator: false,
           displayName: '佐藤花子',
+          orderIndex: 0,
         );
 
         // Act
@@ -279,6 +292,7 @@ void main() {
             groupId: 'group002',
             memberId: 'member002',
             isAdministrator: false,
+            orderIndex: 0,
           ),
         );
       });
@@ -293,18 +307,21 @@ void main() {
             groupId: 'group001',
             isAdministrator: true,
             displayName: '山田太郎',
+            orderIndex: 0,
           ),
           GroupMemberDto(
             memberId: 'member002',
             groupId: 'group001',
             isAdministrator: false,
             displayName: '佐藤花子',
+            orderIndex: 1,
           ),
           GroupMemberDto(
             memberId: 'member003',
             groupId: 'group001',
             isAdministrator: false,
             displayName: '鈴木一郎',
+            orderIndex: 2,
           ),
         ];
 
@@ -319,6 +336,7 @@ void main() {
             groupId: 'group001',
             memberId: 'member001',
             isAdministrator: true,
+            orderIndex: 0,
           ),
         );
         expect(
@@ -327,6 +345,7 @@ void main() {
             groupId: 'group001',
             memberId: 'member002',
             isAdministrator: false,
+            orderIndex: 1,
           ),
         );
         expect(
@@ -335,6 +354,7 @@ void main() {
             groupId: 'group001',
             memberId: 'member003',
             isAdministrator: false,
+            orderIndex: 2,
           ),
         );
       });

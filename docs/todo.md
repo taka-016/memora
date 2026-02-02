@@ -4,7 +4,7 @@
 
 - [x] pinsテーブルにlocationNameカラムを追加する
 - [x] group_membersにisAdministratorを追加する
-- [ ] group_membersにorderIndexを追加する
+- [x] group_membersにorderIndexを追加する
 - [x] GroupWithMembersDtoのマッパーを作成する
 - [x] GroupWithMembersMapperにtoEntityとtoEntityListを追加する
 - [x] GroupWithMembersDtoにownerIdを追加する
@@ -193,8 +193,8 @@
   - [x] topPageからGroupMemberにmember(ログインユーザーに紐づくmember)を渡す
 - [x] グループオーナーは必ずグループメンバーに含める
   - [x] グループ新規画面のメンバー一覧の先頭にログインユーザーを固定表示し、新規/編集モードともに削除不可かつ管理者固定で変更不可（＝アクションメニューのボタンを表示しない）
-- [ ] グループメンバーはオーナー含め並び替え可能とする
-  - [ ] 現状はオーナーが必ず先頭に来る仕組みになっているが、これを廃止し、リスト内にオーナーがいればOKとしてorderIndexを優先する
+- [x] グループメンバーはオーナー含め並び替え可能とする
+  - [x] 現状はオーナーが必ず先頭に来る仕組みになっているが、これを廃止し、リスト内にオーナーがいればOKとしてorderIndexを優先する
 
 ## メンバー管理画面
 

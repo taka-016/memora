@@ -8,6 +8,7 @@ void main() {
       expect(member.groupId, 'group001');
       expect(member.memberId, 'member001');
       expect(member.isAdministrator, false);
+      expect(member.orderIndex, 0);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
@@ -15,11 +16,13 @@ void main() {
         groupId: 'group001',
         memberId: 'member001',
         isAdministrator: true,
+        orderIndex: 1,
       );
       final member2 = GroupMember(
         groupId: 'group001',
         memberId: 'member001',
         isAdministrator: true,
+        orderIndex: 1,
       );
       expect(member1, equals(member2));
     });
@@ -40,10 +43,12 @@ void main() {
         groupId: 'group002',
         memberId: 'member002',
         isAdministrator: true,
+        orderIndex: 2,
       );
       expect(updatedMember.groupId, 'group002');
       expect(updatedMember.memberId, 'member002');
       expect(updatedMember.isAdministrator, true);
+      expect(updatedMember.orderIndex, 2);
     });
   });
 }
