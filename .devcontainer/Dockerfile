@@ -45,6 +45,9 @@ RUN npm install -g @openai/codex@${CODEX_VERSION}
 # Firebase CLIのインストール
 RUN npm install -g firebase-tools
 
+# VS Code CLIのインストール
+RUN curl -fsSL https://aka.ms/install-vscode-cli.sh | sh
+
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
 
