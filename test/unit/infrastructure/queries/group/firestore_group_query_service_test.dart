@@ -362,7 +362,7 @@ void main() {
       final result = await service.getGroupsWithMembersByMemberId(
         memberId,
         groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('displayName', descending: false)],
+        membersOrderBy: [const OrderBy('orderIndex', descending: false)],
       );
 
       expect(result, hasLength(2));
@@ -371,10 +371,6 @@ void main() {
       expect(result[0].name, 'Aグループ');
       expect(result[1].id, 'group2');
       expect(result[1].name, 'Bグループ');
-
-      // メンバーがdisplayNameの昇順でソートされていることを確認
-      expect(result[0].members[0].displayName, 'Aメンバー');
-      expect(result[1].members[0].displayName, 'Bメンバー');
     });
 
     test('groupsOrderByとmembersOrderByを指定して管理グループとメンバーをソート順で取得する', () async {
@@ -438,7 +434,7 @@ void main() {
       final result = await service.getManagedGroupsWithMembersByOwnerId(
         ownerId,
         groupsOrderBy: [const OrderBy('name', descending: false)],
-        membersOrderBy: [const OrderBy('displayName', descending: true)],
+        membersOrderBy: [const OrderBy('orderIndex', descending: true)],
       );
 
       expect(result, hasLength(1));
@@ -577,12 +573,16 @@ void main() {
       when(
         mockGroupMemberSnapshot.docs,
       ).thenReturn([mockGroupMemberDoc1, mockGroupMemberDoc2]);
-      when(
-        mockGroupMemberDoc1.data(),
-      ).thenReturn({'memberId': 'member1', 'groupId': 'group1'});
-      when(
-        mockGroupMemberDoc2.data(),
-      ).thenReturn({'memberId': 'member2', 'groupId': 'group2'});
+      when(mockGroupMemberDoc1.data()).thenReturn({
+        'memberId': 'member1',
+        'groupId': 'group1',
+        'orderIndex': 1,
+      });
+      when(mockGroupMemberDoc2.data()).thenReturn({
+        'memberId': 'member2',
+        'groupId': 'group2',
+        'orderIndex': 0,
+      });
 
       // メンバー詳細の取得
       when(
@@ -611,17 +611,17 @@ void main() {
 
       final result = await service.getGroupWithMembersById(
         groupId,
-        membersOrderBy: [const OrderBy('displayName', descending: false)],
+        membersOrderBy: [const OrderBy('orderIndex', descending: false)],
       );
 
       expect(result, isNotNull);
       expect(result!.members, hasLength(2));
-      // displayNameの昇順でソートされていることを確認
-      expect(result.members[0].displayName, 'Aメンバー');
-      expect(result.members[1].displayName, 'Bメンバー');
+      // orderIndexの昇順でソートされていることを確認
+      expect(result.members[0].memberId, 'member2');
+      expect(result.members[1].memberId, 'member1');
     });
 
-    test('membersOrderByでorderIndexを指定した場合はorderIndex優先で並ぶ', () async {
+    test('membersOrderByでorderIndexの降順で並ぶ', () async {
       const groupId = 'group123';
 
       when(mockFirestore.collection('groups')).thenReturn(mockGroupsCollection);
@@ -691,16 +691,13 @@ void main() {
 
       final result = await service.getGroupWithMembersById(
         groupId,
-        membersOrderBy: [
-          const OrderBy('orderIndex', descending: false),
-          const OrderBy('displayName', descending: false),
-        ],
+        membersOrderBy: [const OrderBy('orderIndex', descending: true)],
       );
 
       expect(result, isNotNull);
       expect(result!.members, hasLength(2));
-      expect(result.members[0].memberId, 'member2');
-      expect(result.members[1].memberId, 'member1');
+      expect(result.members[0].memberId, 'member1');
+      expect(result.members[1].memberId, 'member2');
     });
   });
 }

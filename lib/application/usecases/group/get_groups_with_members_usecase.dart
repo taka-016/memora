@@ -19,10 +19,7 @@ class GetGroupsWithMembersUsecase {
     return await _groupQueryService.getGroupsWithMembersByMemberId(
       member.id,
       groupsOrderBy: [const OrderBy('name', descending: false)],
-      membersOrderBy: [
-        const OrderBy('orderIndex', descending: false),
-        const OrderBy('displayName', descending: false),
-      ],
+      membersOrderBy: [const OrderBy('orderIndex', descending: false)],
     );
   }
 }
