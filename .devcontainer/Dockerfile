@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   tree \
   ripgrep \
   gnupg \
-  ca-certificates && \
+  ca-certificates \
+  tar && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Node.jsとnpmのインストール
@@ -41,6 +42,12 @@ RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 # Codex CLIのインストール
 ARG CODEX_VERSION=latest
 RUN npm install -g @openai/codex@${CODEX_VERSION}
+
+# VS Code CLIのインストール（code tunnel用）
+RUN curl -L "https://code.visualstudio.com/sha/download?build=stable&os=cli-linux-x64" \
+  -o /tmp/vscode_cli.tar.gz && \
+  tar -xzf /tmp/vscode_cli.tar.gz -C /usr/local/bin && \
+  rm /tmp/vscode_cli.tar.gz
 
 # Firebase CLIのインストール
 RUN npm install -g firebase-tools
