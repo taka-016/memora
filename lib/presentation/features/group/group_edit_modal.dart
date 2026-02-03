@@ -370,6 +370,29 @@ class GroupEditModal extends HookConsumerWidget {
       );
     }
 
+    Widget buildMemberActionSlot(
+      int index,
+      bool isOwner,
+      GroupMemberDto groupMember,
+      List<GroupMemberDto> changeCandidates,
+    ) {
+      const actionSlotSize = 40.0;
+      return SizedBox(
+        width: actionSlotSize,
+        height: actionSlotSize,
+        child: isOwner
+            ? const SizedBox.shrink()
+            : Align(
+                alignment: Alignment.center,
+                child: buildMemberActionMenu(
+                  index,
+                  groupMember,
+                  changeCandidates,
+                ),
+              ),
+      );
+    }
+
     Widget buildMemberContainer(int index) {
       final groupMember = groupState.value.members[index];
       final member = findMemberById(groupMember.memberId);
@@ -399,10 +422,13 @@ class GroupEditModal extends HookConsumerWidget {
             ),
             const SizedBox(width: 12),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
-            if (!isOwner) ...[
-              const SizedBox(width: 8),
-              buildMemberActionMenu(index, groupMember, changeCandidates),
-            ],
+            const SizedBox(width: 8),
+            buildMemberActionSlot(
+              index,
+              isOwner,
+              groupMember,
+              changeCandidates,
+            ),
           ],
         ),
       );
