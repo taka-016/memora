@@ -21,10 +21,7 @@ class GetManagedGroupsWithMembersUsecase {
     return await _groupQueryService.getManagedGroupsWithMembersByOwnerId(
       member.id,
       groupsOrderBy: [const OrderBy('name', descending: false)],
-      membersOrderBy: [
-        const OrderBy('orderIndex', descending: false),
-        const OrderBy('displayName', descending: false),
-      ],
+      membersOrderBy: [const OrderBy('orderIndex', descending: false)],
     );
   }
 }

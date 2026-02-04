@@ -67,7 +67,7 @@ class TripManagement extends HookConsumerWidget {
       try {
         final result = await getGroupWithMembersByIdUsecase.execute(
           groupId,
-          membersOrderBy: [const OrderBy('displayName')],
+          membersOrderBy: [const OrderBy('orderIndex')],
         );
         if (!context.mounted) {
           return;

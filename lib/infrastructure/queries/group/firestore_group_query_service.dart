@@ -244,9 +244,6 @@ class FirestoreGroupQueryService implements GroupQueryService {
         if (order.field == 'orderIndex') {
           comparison = a.orderIndex.compareTo(b.orderIndex);
         }
-        if (order.field == 'displayName') {
-          comparison = a.displayName.compareTo(b.displayName);
-        }
         if (comparison != 0) {
           return order.descending ? -comparison : comparison;
         }
