@@ -99,7 +99,9 @@ void main() {
       final mockGroupMemberQuery2 = MockQuery<Map<String, dynamic>>();
       final mockGroupMemberSnapshot2 =
           MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2 =
+      final mockGroupMemberDoc2a =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockGroupMemberDoc2b =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
@@ -108,10 +110,19 @@ void main() {
       when(
         mockGroupMemberQuery2.get(),
       ).thenAnswer((_) async => mockGroupMemberSnapshot2);
-      when(mockGroupMemberSnapshot2.docs).thenReturn([mockGroupMemberDoc2]);
       when(
-        mockGroupMemberDoc2.data(),
-      ).thenReturn({'memberId': 'member1', 'groupId': 'group1'});
+        mockGroupMemberSnapshot2.docs,
+      ).thenReturn([mockGroupMemberDoc2a, mockGroupMemberDoc2b]);
+      when(mockGroupMemberDoc2a.data()).thenReturn({
+        'memberId': 'member1',
+        'groupId': 'group1',
+        'orderIndex': 1,
+      });
+      when(mockGroupMemberDoc2b.data()).thenReturn({
+        'memberId': 'member3',
+        'groupId': 'group1',
+        'orderIndex': 0,
+      });
 
       // グループのメンバー取得（group2）
       final mockGroupMemberQuery3 = MockQuery<Map<String, dynamic>>();
@@ -127,9 +138,11 @@ void main() {
         mockGroupMemberQuery3.get(),
       ).thenAnswer((_) async => mockGroupMemberSnapshot3);
       when(mockGroupMemberSnapshot3.docs).thenReturn([mockGroupMemberDoc3]);
-      when(
-        mockGroupMemberDoc3.data(),
-      ).thenReturn({'memberId': 'member2', 'groupId': 'group2'});
+      when(mockGroupMemberDoc3.data()).thenReturn({
+        'memberId': 'member2',
+        'groupId': 'group2',
+        'orderIndex': 0,
+      });
 
       // メンバー詳細の取得
       when(
@@ -155,6 +168,16 @@ void main() {
       when(mockMemberSnapshot2.exists).thenReturn(true);
       when(mockMemberSnapshot2.id).thenReturn('member2');
       when(mockMemberSnapshot2.data()).thenReturn({'displayName': 'メンバー2'});
+
+      final mockMemberDocRef3 = MockDocumentReference<Map<String, dynamic>>();
+      final mockMemberSnapshot3 = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(mockMembersCollection.doc('member3')).thenReturn(mockMemberDocRef3);
+      when(
+        mockMemberDocRef3.get(),
+      ).thenAnswer((_) async => mockMemberSnapshot3);
+      when(mockMemberSnapshot3.exists).thenReturn(true);
+      when(mockMemberSnapshot3.id).thenReturn('member3');
+      when(mockMemberSnapshot3.data()).thenReturn({'displayName': 'メンバー3'});
 
       final result = await service.getGroupsWithMembersByMemberId(memberId);
 
@@ -302,7 +325,9 @@ void main() {
       final mockGroupMemberQuery2 = MockQuery<Map<String, dynamic>>();
       final mockGroupMemberSnapshot2 =
           MockQuerySnapshot<Map<String, dynamic>>();
-      final mockGroupMemberDoc2 =
+      final mockGroupMemberDoc2a =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockGroupMemberDoc2b =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
@@ -311,10 +336,19 @@ void main() {
       when(
         mockGroupMemberQuery2.get(),
       ).thenAnswer((_) async => mockGroupMemberSnapshot2);
-      when(mockGroupMemberSnapshot2.docs).thenReturn([mockGroupMemberDoc2]);
       when(
-        mockGroupMemberDoc2.data(),
-      ).thenReturn({'memberId': 'member1', 'groupId': 'group1'});
+        mockGroupMemberSnapshot2.docs,
+      ).thenReturn([mockGroupMemberDoc2a, mockGroupMemberDoc2b]);
+      when(mockGroupMemberDoc2a.data()).thenReturn({
+        'memberId': 'member1',
+        'groupId': 'group1',
+        'orderIndex': 1,
+      });
+      when(mockGroupMemberDoc2b.data()).thenReturn({
+        'memberId': 'member2',
+        'groupId': 'group1',
+        'orderIndex': 0,
+      });
 
       // グループのメンバー取得（group2）
       final mockGroupMemberQuery3 = MockQuery<Map<String, dynamic>>();
@@ -330,9 +364,11 @@ void main() {
         mockGroupMemberQuery3.get(),
       ).thenAnswer((_) async => mockGroupMemberSnapshot3);
       when(mockGroupMemberSnapshot3.docs).thenReturn([mockGroupMemberDoc3]);
-      when(
-        mockGroupMemberDoc3.data(),
-      ).thenReturn({'memberId': 'member2', 'groupId': 'group2'});
+      when(mockGroupMemberDoc3.data()).thenReturn({
+        'memberId': 'member2',
+        'groupId': 'group2',
+        'orderIndex': 0,
+      });
 
       // メンバー詳細の取得
       when(
@@ -369,8 +405,13 @@ void main() {
       // メモリ内ソートでAグループ、Bグループの順になることを確認
       expect(result[0].id, 'group1');
       expect(result[0].name, 'Aグループ');
+      expect(result[0].members, hasLength(2));
+      expect(result[0].members[0].memberId, 'member2');
+      expect(result[0].members[1].memberId, 'member1');
       expect(result[1].id, 'group2');
       expect(result[1].name, 'Bグループ');
+      expect(result[1].members, hasLength(1));
+      expect(result[1].members[0].memberId, 'member2');
     });
 
     test('groupsOrderByとmembersOrderByを指定して管理グループとメンバーをソート順で取得する', () async {
@@ -575,12 +616,12 @@ void main() {
       ).thenReturn([mockGroupMemberDoc1, mockGroupMemberDoc2]);
       when(mockGroupMemberDoc1.data()).thenReturn({
         'memberId': 'member1',
-        'groupId': 'group1',
+        'groupId': groupId,
         'orderIndex': 1,
       });
       when(mockGroupMemberDoc2.data()).thenReturn({
         'memberId': 'member2',
-        'groupId': 'group2',
+        'groupId': groupId,
         'orderIndex': 0,
       });
 
@@ -656,12 +697,12 @@ void main() {
       ).thenReturn([mockGroupMemberDoc1, mockGroupMemberDoc2]);
       when(mockGroupMemberDoc1.data()).thenReturn({
         'memberId': 'member1',
-        'groupId': 'group1',
+        'groupId': groupId,
         'orderIndex': 1,
       });
       when(mockGroupMemberDoc2.data()).thenReturn({
         'memberId': 'member2',
-        'groupId': 'group2',
+        'groupId': groupId,
         'orderIndex': 0,
       });
 
