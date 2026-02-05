@@ -52,14 +52,10 @@ RUN dart pub global activate flutterfire_cli
 RUN curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
 
 # PM2のインストール
-# RUN npm install -g pm2@6.0.10
+RUN npm install -g pm2@6.0.10
 
-# Claude Code UIのインストール
-# RUN mkdir /app && cd /app && \
-#   git clone https://github.com/siteboon/claudecodeui.git && \
-#   cd claudecodeui && \
-#   npm install && \
-#   npm run build
+# code-server インストール
+RUN curl -fsSL https://code-server.dev/install.sh | sh
 
 # /root/.gitconfig を削除
 RUN rm -f /root/.gitconfig

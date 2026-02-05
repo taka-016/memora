@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Claude Code UIの起動
-# (cd /app/claudecodeui && pm2 start npm --name claudecodeui -- start)
+# 保存済みのPM2プロセス定義を復元
+pm2 resurrect

@@ -21,10 +21,17 @@
     ],
     "runArgs": [
         "--env-file",
-        ".devcontainer/.env",
-        "-p",
-        "3001:3001"
+        ".devcontainer/.env"
     ],
+    "forwardPorts": [
+        8080
+    ],
+    "portsAttributes": {
+        "8080": {
+            "label": "code-server",
+            "onAutoForward": "openBrowser"
+        }
+    },
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1.0": {}
     },
