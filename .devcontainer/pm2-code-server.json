@@ -10,7 +10,7 @@
         "none",
         "--disable-telemetry"
       ],
-      "cwd": "/workspaces",
+      "cwd": "/workspaces/${localWorkspaceFolderBasename}",
       "log_date_format": "YYYY-MM-DD HH:mm:ss",
       "autorestart": true,
       "max_restarts": 10,
