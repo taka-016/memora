@@ -3,5 +3,6 @@
     "[markdown]": {
         "editor.defaultFormatter": "yzhang.markdown-all-in-one"
     },
-    "dart.openDevTools": "flutter"
+    "dart.openDevTools": "flutter",
+    "files.eol": "\n"
 }
