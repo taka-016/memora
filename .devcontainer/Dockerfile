@@ -51,9 +51,6 @@ RUN dart pub global activate flutterfire_cli
 # UVのインストール
 RUN curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
 
-# PM2のインストール
-RUN npm install -g pm2@6.0.10
-
 # code-server インストール
 RUN curl -fsSL https://code-server.dev/install.sh | sh
 

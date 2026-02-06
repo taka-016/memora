@@ -1,4 +1,3 @@
 #!/bin/bash
 
-# 保存済みのPM2プロセス定義を復元
-pm2 resurrect
+code-server /workspaces --bind-addr 0.0.0.0:8080 --auth none

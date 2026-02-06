@@ -10,6 +10,3 @@ flutter doctor
 flutter --version
 flutter pub get
 dart pub global activate very_good_cli
-
-# code-serverをPM2で起動し、プロセス定義を保存
-pm2 start .devcontainer/pm2-code-server.json && pm2 save
