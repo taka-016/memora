@@ -1,4 +1,3 @@
 #!/bin/bash
 
-# Claude Code UIの起動
-# (cd /app/claudecodeui && pm2 start npm --name claudecodeui -- start)
+code-server /workspaces --bind-addr 0.0.0.0:8080 --auth none

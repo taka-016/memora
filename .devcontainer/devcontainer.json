@@ -23,7 +23,7 @@
         "--env-file",
         ".devcontainer/.env",
         "-p",
-        "3001:3001"
+        "8080:8080"
     ],
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1.0": {}

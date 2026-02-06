@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "code-server",
+      "script": "code-server",
+      "args": [
+        "/workspaces/${localWorkspaceFolderBasename}",
+        "--bind-addr",
+        "0.0.0.0:8080",
+        "--auth",
+        "none",
+        "--disable-telemetry"
+      ],
+      "cwd": "/workspaces/${localWorkspaceFolderBasename}",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss",
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 3000
+    }
+  ]
+}
