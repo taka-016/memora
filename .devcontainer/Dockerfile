@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   vim \
   tree \
   ripgrep \
+  openssh-server \
   gnupg \
   ca-certificates && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
