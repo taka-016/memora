@@ -36,6 +36,7 @@ GroupMemberDto createGroupMemberDto({
   required String groupId,
   String displayName = '',
   bool isAdministrator = false,
+  int orderIndex = 0,
   String? accountId,
   String? ownerId,
   String? hiraganaFirstName,
@@ -57,6 +58,7 @@ GroupMemberDto createGroupMemberDto({
     groupId: groupId,
     displayName: displayName,
     isAdministrator: isAdministrator,
+    orderIndex: orderIndex,
     accountId: accountId,
     ownerId: ownerId,
     hiraganaFirstName: hiraganaFirstName,
@@ -263,7 +265,7 @@ void main() {
       expect(find.text('メンバー2'), findsOneWidget);
     });
 
-    testWidgets('オーナーが先頭に固定表示される', (WidgetTester tester) async {
+    testWidgets('並び順に従ってオーナーが表示される', (WidgetTester tester) async {
       final availableMembers = [
         createGroupMemberDto(
           memberId: 'owner-id',
@@ -296,13 +298,14 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('member_row_0')),
-          matching: find.text('オーナー'),
-        ),
-        findsOneWidget,
+      final member1Position = tester.getTopLeft(
+        find.byKey(const Key('member_row_member1')),
       );
+      final ownerPosition = tester.getTopLeft(
+        find.byKey(const Key('member_row_owner-id')),
+      );
+
+      expect(member1Position.dy, lessThan(ownerPosition.dy));
     });
 
     testWidgets('オーナーの操作メニューが表示されず管理者が固定される', (WidgetTester tester) async {
@@ -439,8 +442,8 @@ void main() {
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
-      await tester.tap(find.byKey(const Key('member_action_menu_1')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('メンバーを変更'));
@@ -490,8 +493,8 @@ void main() {
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
-      await tester.tap(find.byKey(const Key('member_action_menu_1')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('メンバーを削除'));
@@ -538,12 +541,12 @@ void main() {
         ),
       );
 
-      await tester.ensureVisible(find.byKey(const Key('member_action_menu_1')));
-      await tester.tap(find.byKey(const Key('member_action_menu_1')));
+      await tester.ensureVisible(find.byKey(const Key('member_action_menu_0')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
       final changeMenuItem = tester.widget<PopupMenuItem>(
-        find.byKey(const Key('member_change_action_1')),
+        find.byKey(const Key('member_change_action_0')),
       );
 
       expect(changeMenuItem.enabled, isFalse);
@@ -911,14 +914,14 @@ void main() {
       expect(find.text('一般メンバー'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_1')),
+          of: find.byKey(const Key('admin_badge_slot_0')),
           matching: find.text('管理者'),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_2')),
+          of: find.byKey(const Key('admin_badge_slot_1')),
           matching: find.text('管理者'),
         ),
         findsNothing,
@@ -996,7 +999,7 @@ void main() {
         find.byKey(const Key('admin_badge_slot_0')),
       );
       final normalSlot = tester.widget<SizedBox>(
-        find.byKey(const Key('admin_badge_slot_2')),
+        find.byKey(const Key('admin_badge_slot_1')),
       );
 
       expect(adminSlot.width, equals(normalSlot.width));
@@ -1010,7 +1013,7 @@ void main() {
       );
       expect(
         find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_2')),
+          of: find.byKey(const Key('admin_badge_slot_1')),
           matching: find.text('管理者'),
         ),
         findsNothing,
@@ -1069,7 +1072,7 @@ void main() {
       expect(find.text('管理者'), findsOneWidget);
 
       // 操作メニューから管理者権限を付与
-      await tester.tap(find.byKey(const Key('member_action_menu_1')));
+      await tester.tap(find.byKey(const Key('member_action_menu_0')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('管理者に設定'));

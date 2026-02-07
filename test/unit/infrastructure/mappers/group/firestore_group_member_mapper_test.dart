@@ -12,6 +12,7 @@ void main() {
         groupId: 'group001',
         memberId: 'member001',
         isAdministrator: true,
+        orderIndex: 2,
       );
 
       final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
@@ -19,6 +20,7 @@ void main() {
       expect(data['groupId'], 'group001');
       expect(data['memberId'], 'member001');
       expect(data['isAdministrator'], true);
+      expect(data['orderIndex'], 2);
       expect(data['createdAt'], isA<FieldValue>());
     });
 
@@ -30,6 +32,7 @@ void main() {
       expect(data['groupId'], '');
       expect(data['memberId'], '');
       expect(data['isAdministrator'], false);
+      expect(data['orderIndex'], 0);
       expect(data['createdAt'], isA<FieldValue>());
     });
   });

@@ -48,29 +48,44 @@ class GroupEditModal extends HookConsumerWidget {
       List<GroupMemberDto> members,
     ) {
       if (ownerId.isEmpty) {
-        return members;
+        return members
+            .asMap()
+            .entries
+            .map(
+              (entry) =>
+                  entry.value.copyWith(groupId: groupId, orderIndex: entry.key),
+            )
+            .toList();
       }
 
-      final ownerFromMembers = members
-          .where((member) => member.memberId == ownerId)
-          .toList();
-      final resolvedOwner = ownerFromMembers.isNotEmpty
-          ? ownerFromMembers.first
-          : (member.memberId == ownerId ? member : null);
-
-      if (resolvedOwner == null) {
-        return members;
-      }
-
-      final normalizedOwner = resolvedOwner.copyWith(
-        groupId: groupId,
-        isAdministrator: true,
+      final normalizedMembers = List<GroupMemberDto>.from(members);
+      final ownerIndex = normalizedMembers.indexWhere(
+        (member) => member.memberId == ownerId,
       );
-      final filteredMembers = members
-          .where((member) => member.memberId != ownerId)
-          .toList();
+      final resolvedOwner = ownerIndex != -1
+          ? normalizedMembers[ownerIndex]
+          : null;
+      final fallbackOwner = member.memberId == ownerId ? member : null;
 
-      return [normalizedOwner, ...filteredMembers];
+      if (resolvedOwner != null) {
+        normalizedMembers[ownerIndex] = resolvedOwner.copyWith(
+          groupId: groupId,
+          isAdministrator: true,
+        );
+      } else if (fallbackOwner != null) {
+        normalizedMembers.add(
+          fallbackOwner.copyWith(groupId: groupId, isAdministrator: true),
+        );
+      }
+
+      return normalizedMembers
+          .asMap()
+          .entries
+          .map(
+            (entry) =>
+                entry.value.copyWith(groupId: groupId, orderIndex: entry.key),
+          )
+          .toList();
     }
 
     final initialMembers = useMemoized(
@@ -355,6 +370,29 @@ class GroupEditModal extends HookConsumerWidget {
       );
     }
 
+    Widget buildMemberActionSlot(
+      int index,
+      bool isOwner,
+      GroupMemberDto groupMember,
+      List<GroupMemberDto> changeCandidates,
+    ) {
+      const actionSlotSize = 40.0;
+      return SizedBox(
+        width: actionSlotSize,
+        height: actionSlotSize,
+        child: isOwner
+            ? const SizedBox.shrink()
+            : Align(
+                alignment: Alignment.center,
+                child: buildMemberActionMenu(
+                  index,
+                  groupMember,
+                  changeCandidates,
+                ),
+              ),
+      );
+    }
+
     Widget buildMemberContainer(int index) {
       final groupMember = groupState.value.members[index];
       final member = findMemberById(groupMember.memberId);
@@ -365,10 +403,15 @@ class GroupEditModal extends HookConsumerWidget {
       final changeCandidates = getChangeCandidates(index);
 
       return Container(
-        key: Key('member_row_$index'),
+        key: Key('member_row_${groupMember.memberId}'),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: Row(
           children: [
+            ReorderableDragStartListener(
+              index: index,
+              child: const Icon(Icons.drag_handle),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 displayName,
@@ -379,10 +422,13 @@ class GroupEditModal extends HookConsumerWidget {
             ),
             const SizedBox(width: 12),
             buildAdminBadgeSlot(index, groupMember.isAdministrator),
-            if (!isOwner) ...[
-              const SizedBox(width: 8),
-              buildMemberActionMenu(index, groupMember, changeCandidates),
-            ],
+            const SizedBox(width: 8),
+            buildMemberActionSlot(
+              index,
+              isOwner,
+              groupMember,
+              changeCandidates,
+            ),
           ],
         ),
       );
@@ -392,10 +438,30 @@ class GroupEditModal extends HookConsumerWidget {
       return SizedBox(
         key: const Key('selected_member_list'),
         height: 250,
-        child: ListView.separated(
+        child: ReorderableListView.builder(
           itemCount: groupState.value.members.length,
-          itemBuilder: (context, index) => buildMemberContainer(index),
-          separatorBuilder: (context, index) => const Divider(height: 1),
+          buildDefaultDragHandles: false,
+          itemBuilder: (context, index) {
+            return Column(
+              key: ValueKey(groupState.value.members[index].memberId),
+              children: [
+                buildMemberContainer(index),
+                if (index < groupState.value.members.length - 1)
+                  const Divider(height: 1),
+              ],
+            );
+          },
+          onReorder: (oldIndex, newIndex) {
+            if (newIndex > oldIndex) {
+              newIndex -= 1;
+            }
+            final updatedMembers = List<GroupMemberDto>.from(
+              groupState.value.members,
+            );
+            final member = updatedMembers.removeAt(oldIndex);
+            updatedMembers.insert(newIndex, member);
+            updateGroupMembers(updatedMembers);
+          },
         ),
       );
     }

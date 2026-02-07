@@ -14,6 +14,7 @@ class GroupMemberMapper {
       memberId: memberDoc.id,
       groupId: groupMemberData!['groupId'] as String,
       isAdministrator: groupMemberData['isAdministrator'] as bool? ?? false,
+      orderIndex: groupMemberData['orderIndex'] as int? ?? 0,
       accountId: memberData?['accountId'] as String?,
       ownerId: memberData?['ownerId'] as String?,
       hiraganaFirstName: memberData?['hiraganaFirstName'] as String?,
@@ -33,11 +34,16 @@ class GroupMemberMapper {
     );
   }
 
-  static GroupMemberDto fromMember(MemberDto member, String groupId) {
+  static GroupMemberDto fromMember(
+    MemberDto member,
+    String groupId, {
+    int orderIndex = 0,
+  }) {
     return GroupMemberDto(
       memberId: member.id,
       groupId: groupId,
       isAdministrator: false,
+      orderIndex: orderIndex,
       accountId: member.accountId,
       ownerId: member.ownerId,
       hiraganaFirstName: member.hiraganaFirstName,
@@ -61,7 +67,11 @@ class GroupMemberMapper {
     List<MemberDto> members,
     String groupId,
   ) {
-    return members.map((member) => fromMember(member, groupId)).toList();
+    return members
+        .asMap()
+        .entries
+        .map((entry) => fromMember(entry.value, groupId, orderIndex: entry.key))
+        .toList();
   }
 
   static GroupMember toEntity(GroupMemberDto dto) {
@@ -69,6 +79,7 @@ class GroupMemberMapper {
       groupId: dto.groupId,
       memberId: dto.memberId,
       isAdministrator: dto.isAdministrator,
+      orderIndex: dto.orderIndex,
     );
   }
 

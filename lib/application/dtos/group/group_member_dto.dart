@@ -4,6 +4,7 @@ class GroupMemberDto extends Equatable {
   const GroupMemberDto({
     required this.memberId,
     required this.groupId,
+    this.orderIndex = 0,
     this.accountId,
     this.ownerId,
     this.hiraganaFirstName,
@@ -25,6 +26,7 @@ class GroupMemberDto extends Equatable {
 
   final String memberId;
   final String groupId;
+  final int orderIndex;
   final String? accountId;
   final String? ownerId;
   final String? hiraganaFirstName;
@@ -47,6 +49,7 @@ class GroupMemberDto extends Equatable {
     String? memberId,
     String? groupId,
     bool? isAdministrator,
+    int? orderIndex,
     String? accountId,
     String? ownerId,
     String? hiraganaFirstName,
@@ -67,6 +70,7 @@ class GroupMemberDto extends Equatable {
     return GroupMemberDto(
       memberId: memberId ?? this.memberId,
       groupId: groupId ?? this.groupId,
+      orderIndex: orderIndex ?? this.orderIndex,
       accountId: accountId ?? this.accountId,
       ownerId: ownerId ?? this.ownerId,
       hiraganaFirstName: hiraganaFirstName ?? this.hiraganaFirstName,
@@ -91,6 +95,7 @@ class GroupMemberDto extends Equatable {
   List<Object?> get props => [
     memberId,
     groupId,
+    orderIndex,
     accountId,
     ownerId,
     hiraganaFirstName,

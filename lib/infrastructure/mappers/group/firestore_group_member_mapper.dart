@@ -7,6 +7,7 @@ class FirestoreGroupMemberMapper {
       'groupId': groupMember.groupId,
       'memberId': groupMember.memberId,
       'isAdministrator': groupMember.isAdministrator,
+      'orderIndex': groupMember.orderIndex,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
