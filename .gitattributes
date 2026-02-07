@@ -1,0 +1,32 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.jar binary
+*.jks binary
+*.keystore binary
+*.so binary
+*.dylib binary
+*.dll binary
+*.a binary
+*.o binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.gz binary
+*.tgz binary
+*.tar binary
+*.7z binary
+*.bin binary
+*.dat binary
+
+*.bat text eol=lf
+*.ps1 text eol=lf
+*.cmd text eol=lf
