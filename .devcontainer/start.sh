@@ -12,6 +12,14 @@ if [[ -f "${key_path}.pub" ]]; then
   chmod 600 /root/.ssh/authorized_keys
 fi
 
-/usr/sbin/sshd
+if pgrep -x sshd >/dev/null; then
+  echo "sshdは既に起動しています"
+else
+  if /usr/sbin/sshd; then
+    echo "sshdを起動しました"
+  else
+    echo "sshdの起動に失敗しました"
+  fi
+fi
 
 code-server /workspaces --bind-addr 0.0.0.0:8080 --auth none
