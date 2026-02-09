@@ -17,9 +17,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   vim \
   tree \
   ripgrep \
+  openssh-server \
+  procps \
   gnupg \
   ca-certificates && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# sshdの鍵認証設定
+RUN mkdir -p /etc/ssh/sshd_config.d && \
+  cat <<'EOF' >/etc/ssh/sshd_config.d/01-key-auth.conf
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+PubkeyAuthentication yes
+EOF
 
 # Node.jsとnpmのインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
