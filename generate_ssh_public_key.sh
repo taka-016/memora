@@ -2,7 +2,10 @@
 set -euo pipefail
 
 script_dir="$(cd "$(dirname "$0")" && pwd)"
-key_path="${1:-${script_dir}/devcontainer_ed25519}"
+default_key_dir="${script_dir}/devcontainer_keys"
+key_path="${1:-${default_key_dir}/devcontainer_ed25519}"
+
+mkdir -p "$(dirname "${key_path}")"
 
 if [[ -f "${key_path}" ]]; then
   if [[ -f "${key_path}.pub" ]]; then

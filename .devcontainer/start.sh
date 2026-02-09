@@ -4,7 +4,7 @@ set -euo pipefail
 
 mkdir -p /var/run/sshd
 
-key_path="$(cd "$(dirname "$0")/.." && pwd)/devcontainer_ed25519"
+key_path="$(cd "$(dirname "$0")/.." && pwd)/devcontainer_keys/devcontainer_ed25519"
 if [[ -f "${key_path}.pub" ]]; then
   mkdir -p /root/.ssh
   chmod 700 /root/.ssh
