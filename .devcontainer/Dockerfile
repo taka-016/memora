@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   tree \
   ripgrep \
   openssh-server \
+  procps \
   gnupg \
   ca-certificates && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
