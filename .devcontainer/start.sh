@@ -12,7 +12,17 @@ if [[ -f "${key_path}.pub" ]]; then
   chmod 600 /root/.ssh/authorized_keys
 fi
 
-if pgrep -x sshd >/dev/null; then
+if command -v pgrep >/dev/null; then
+  if pgrep -x sshd >/dev/null; then
+    echo "sshdは既に起動しています"
+  else
+    if /usr/sbin/sshd; then
+      echo "sshdを起動しました"
+    else
+      echo "sshdの起動に失敗しました"
+    fi
+  fi
+elif [[ -f /var/run/sshd.pid ]] && kill -0 "$(cat /var/run/sshd.pid)" 2>/dev/null; then
   echo "sshdは既に起動しています"
 else
   if /usr/sbin/sshd; then
