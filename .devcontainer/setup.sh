@@ -3,7 +3,7 @@
 # .claude/.config.jsonの存在を確認し、なければ初期化
 [ -f ~/.claude/.config.json ] || echo '{}' > ~/.claude/.config.json
 
-# 初回セットアップでもSSH鍵を必ず生成する
+# SSH鍵を生成
 bash ./generate_ssh_public_key.sh
 
 # 開発環境の状態を確認
