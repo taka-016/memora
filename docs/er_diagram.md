@@ -89,6 +89,28 @@ erDiagram
         string inviterId FK "NOT NULL"
         string invitationCode "NOT NULL"
     }
+    dvc_point_contracts {
+        string id PK
+        string groupId FK "NOT NULL"
+        string contractName "NOT NULL"
+        number useYearStartMonth "NOT NULL"
+        number annualPoint "NOT NULL"
+    }
+    dvc_limited_points {
+        string id PK
+        string groupId FK "NOT NULL"
+        timestamp startYearMonth "NOT NULL"
+        timestamp endYearMonth "NOT NULL"
+        number point "NOT NULL"
+        string memo
+    }
+    dvc_point_usages {
+        string id PK
+        string groupId FK "NOT NULL"
+        timestamp usageYearMonth "NOT NULL"
+        number usedPoint "NOT NULL"
+        string memo
+    }
 
     trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
@@ -104,5 +126,8 @@ erDiagram
     members ||--o{ groups : "id → ownerId"
     members ||--o{ member_invitations : "id → inviteeId"
     members ||--o{ member_invitations : "id → inviterId"
+    groups ||--o{ dvc_point_contracts : "id → groupId"
+    groups ||--o{ dvc_limited_points : "id → groupId"
+    groups ||--o{ dvc_point_usages : "id → groupId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
