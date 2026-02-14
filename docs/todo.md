@@ -82,6 +82,19 @@
   - [x] TripEntryMapper、TripEntryDtoを対応させる
 - [x] trip_entryのエンティティのtaskのエラーチェックから、orderindexの重複チェックを廃止する
 - [x] 存在しない親タスクidが設定されている場合、エラーとする(タスクidの検索範囲は、trip_entryに紐づくタスク内)
+- [ ] DVC関連テーブルを実装する
+  - [ ] dvc_point_contractsテーブルを実装する
+    - [ ] ER図どおりにカラムを定義する
+    - [ ] エンティティ・DTO・Mapperを作成する
+    - [ ] Repository・QueryService・Firestore実装を作成する
+  - [ ] dvc_limited_pointsテーブルを実装する
+    - [ ] ER図どおりにカラムを定義する
+    - [ ] エンティティ・DTO・Mapperを作成する
+    - [ ] Repository・QueryService・Firestore実装を作成する
+  - [ ] dvc_point_usagesテーブルを実装する
+    - [ ] ER図どおりにカラムを定義する
+    - [ ] エンティティ・DTO・Mapperを作成する
+    - [ ] Repository・QueryService・Firestore実装を作成する
 
 ## マップの表示
 
