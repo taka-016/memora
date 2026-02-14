@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
@@ -7,6 +10,9 @@ import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
+import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_limited_point_repository.dart';
+import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contract_repository.dart';
+import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_usage_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
@@ -38,6 +44,24 @@ final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
 
 final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
   return RepositoryFactory.create<TripEntryRepository>(ref: ref);
+});
+
+final dvcPointContractRepositoryProvider = Provider<DvcPointContractRepository>(
+  (ref) {
+    return RepositoryFactory.create<DvcPointContractRepository>(ref: ref);
+  },
+);
+
+final dvcLimitedPointRepositoryProvider = Provider<DvcLimitedPointRepository>((
+  ref,
+) {
+  return RepositoryFactory.create<DvcLimitedPointRepository>(ref: ref);
+});
+
+final dvcPointUsageRepositoryProvider = Provider<DvcPointUsageRepository>((
+  ref,
+) {
+  return RepositoryFactory.create<DvcPointUsageRepository>(ref: ref);
 });
 
 class RepositoryFactory {
@@ -75,6 +99,15 @@ class RepositoryFactory {
     }
     if (T == TripEntryRepository) {
       return FirestoreTripEntryRepository() as T;
+    }
+    if (T == DvcPointContractRepository) {
+      return FirestoreDvcPointContractRepository() as T;
+    }
+    if (T == DvcLimitedPointRepository) {
+      return FirestoreDvcLimitedPointRepository() as T;
+    }
+    if (T == DvcPointUsageRepository) {
+      return FirestoreDvcPointUsageRepository() as T;
     }
     throw ArgumentError('Unknown repository type: $T');
   }
