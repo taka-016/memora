@@ -93,6 +93,8 @@ erDiagram
         string id PK
         string groupId FK "NOT NULL"
         string contractName "NOT NULL"
+        timestamp contractStartYearMonth "NOT NULL"
+        timestamp contractEndYearMonth "NOT NULL"
         number useYearStartMonth "NOT NULL"
         number annualPoint "NOT NULL"
     }

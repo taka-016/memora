@@ -86,7 +86,7 @@
   - [ ] ER図のDVC関連テーブル定義（テーブル名・カラム・関連）を確定する
   - [x] ER図で確定した各DVCテーブルごとに実装タスクを作成する
   - [ ] dvc_point_contractsテーブルを実装する
-    - [ ] ER図どおりにカラムを定義する（id, groupId, contractName, useYearStartMonth, annualPoint）
+    - [ ] ER図どおりにカラムを定義する（id, groupId, contractName, contractStartYearMonth, contractEndYearMonth, useYearStartMonth, annualPoint）
     - [ ] Group（id）との関連（groupId）を持つエンティティ・DTO・Mapperを作成する
     - [ ] Repository・QueryService・Firestore実装を作成する
     - [ ] groupId単位での取得・保存・更新・削除を実装する
