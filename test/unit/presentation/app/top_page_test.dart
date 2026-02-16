@@ -225,6 +225,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
@@ -315,6 +316,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
     });
 
     testWidgets('DVCポイント計算でグループ一覧から計算画面へ遷移し、戻ると一覧に戻る', (

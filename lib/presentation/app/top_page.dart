@@ -222,7 +222,7 @@ class TopPage extends HookConsumerWidget {
       children: [
         GroupSelectionList(
           onGroupSelected: (group) => _onDvcGroupSelected(ref, group),
-          title: 'グループ一覧',
+          title: 'グループを選択',
           listKey: const Key('group_list'),
         ),
         dvcState.selectedGroup != null

@@ -57,7 +57,7 @@ void main() {
   }
 
   group('GroupList', () {
-    testWidgets('グループ一覧が表示される', (WidgetTester tester) async {
+    testWidgets('グループ選択タイトルと一覧が表示される', (WidgetTester tester) async {
       // Arrange
       final member1 = GroupMemberDto(
         memberId: 'member1',
@@ -93,7 +93,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('グループ2'), findsOneWidget);
       expect(find.text('1人のメンバー'), findsOneWidget);
@@ -177,7 +177,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsNothing);
       verify(

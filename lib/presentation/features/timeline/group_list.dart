@@ -11,7 +11,7 @@ class GroupList extends StatelessWidget {
   Widget build(BuildContext context) {
     return GroupSelectionList(
       onGroupSelected: onGroupSelected,
-      title: 'グループ一覧',
+      title: 'グループを選択',
       listKey: const Key('group_list'),
     );
   }
