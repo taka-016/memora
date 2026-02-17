@@ -7,7 +7,6 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/dvc_point_calculation_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
@@ -116,7 +115,11 @@ class TopPage extends HookConsumerWidget {
           .read(groupTimelineNavigationNotifierProvider.notifier)
           .getStackIndex(),
       children: [
-        GroupList(onGroupSelected: (group) => _onGroupSelected(ref, group)),
+        GroupSelectionList(
+          onGroupSelected: (group) => _onGroupSelected(ref, group),
+          title: 'グループを選択',
+          listKey: const Key('group_list'),
+        ),
         isTestEnvironment
             ? _buildTestGroupTimeline(ref)
             : timelineState.groupTimelineInstance ?? Container(),

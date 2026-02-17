@@ -573,6 +573,10 @@ void main() {
         3,
       ); // GroupList, GroupTimeline, TripManagement
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
+      expect(
+        indexedStack.children.first.runtimeType.toString(),
+        'GroupSelectionList',
+      );
 
       // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
       final container = ProviderScope.containerOf(

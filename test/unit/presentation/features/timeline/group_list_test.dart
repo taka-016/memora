@@ -7,8 +7,8 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -52,11 +52,13 @@ void main() {
           () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
         ),
       ],
-      child: MaterialApp(home: const Scaffold(body: GroupList())),
+      child: MaterialApp(
+        home: const Scaffold(body: GroupSelectionList(title: 'グループを選択')),
+      ),
     );
   }
 
-  group('GroupList', () {
+  group('GroupSelectionList', () {
     testWidgets('グループ選択タイトルと一覧が表示される', (WidgetTester tester) async {
       // Arrange
       final member1 = GroupMemberDto(
@@ -219,7 +221,8 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: GroupList(
+              body: GroupSelectionList(
+                title: 'グループを選択',
                 onGroupSelected: (groupWithMembers) {
                   selectedGroup = groupWithMembers;
                 },
