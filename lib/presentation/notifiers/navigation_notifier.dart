@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum NavigationItem {
   groupTimeline,
+  dvcPointCalculation,
   mapDisplay,
   groupManagement,
   memberManagement,

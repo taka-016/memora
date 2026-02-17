@@ -39,6 +39,7 @@ void main() {
       final notifier = container.read(navigationNotifierProvider.notifier);
       final testItems = [
         NavigationItem.groupTimeline,
+        NavigationItem.dvcPointCalculation,
         NavigationItem.mapDisplay,
         NavigationItem.groupManagement,
         NavigationItem.memberManagement,

@@ -7,8 +7,8 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/presentation/features/timeline/group_list.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -52,12 +52,14 @@ void main() {
           () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
         ),
       ],
-      child: MaterialApp(home: const Scaffold(body: GroupList())),
+      child: MaterialApp(
+        home: const Scaffold(body: GroupSelectionList(title: 'グループを選択')),
+      ),
     );
   }
 
-  group('GroupList', () {
-    testWidgets('グループ一覧が表示される', (WidgetTester tester) async {
+  group('GroupSelectionList', () {
+    testWidgets('グループ選択タイトルと一覧が表示される', (WidgetTester tester) async {
       // Arrange
       final member1 = GroupMemberDto(
         memberId: 'member1',
@@ -93,7 +95,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.text('グループ1'), findsOneWidget);
       expect(find.text('グループ2'), findsOneWidget);
       expect(find.text('1人のメンバー'), findsOneWidget);
@@ -177,7 +179,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.text('グループ一覧'), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.text('テストグループ'), findsOneWidget);
       expect(find.text('エラーが発生しました'), findsNothing);
       verify(
@@ -219,7 +221,8 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: GroupList(
+              body: GroupSelectionList(
+                title: 'グループを選択',
                 onGroupSelected: (groupWithMembers) {
                   selectedGroup = groupWithMembers;
                 },

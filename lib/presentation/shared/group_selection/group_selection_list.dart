@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
-enum GroupListState { loading, groupList, empty, error }
+enum GroupSelectionListState { loading, groupList, empty, error }
 
-class GroupList extends HookConsumerWidget {
+class GroupSelectionList extends HookConsumerWidget {
   final void Function(GroupDto)? onGroupSelected;
+  final String title;
+  final Key listKey;
 
-  const GroupList({super.key, this.onGroupSelected});
+  const GroupSelectionList({
+    super.key,
+    this.onGroupSelected,
+    this.title = 'グループ一覧',
+    this.listKey = const Key('group_list'),
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,13 +31,13 @@ class GroupList extends HookConsumerWidget {
       getGroupsWithMembersUsecaseProvider,
     );
 
-    final state = useState(GroupListState.loading);
+    final state = useState(GroupSelectionListState.loading);
     final groupsWithMembers = useState<List<GroupDto>>(<GroupDto>[]);
     final errorMessage = useState('');
 
     final loadData = useCallback(() async {
       try {
-        state.value = GroupListState.loading;
+        state.value = GroupSelectionListState.loading;
         final fetchedGroups = await getGroupsWithMembersUsecase.execute(
           currentMember,
         );
@@ -39,17 +46,17 @@ class GroupList extends HookConsumerWidget {
 
         groupsWithMembers.value = fetchedGroups;
         state.value = fetchedGroups.isEmpty
-            ? GroupListState.empty
-            : GroupListState.groupList;
+            ? GroupSelectionListState.empty
+            : GroupSelectionListState.groupList;
       } catch (e, stack) {
         logger.e(
-          'GroupList._loadData: ${e.toString()}',
+          'GroupSelectionList._loadData: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
         if (!context.mounted) return;
         errorMessage.value = 'エラーが発生しました';
-        state.value = GroupListState.error;
+        state.value = GroupSelectionListState.error;
       }
     }, [context, getGroupsWithMembersUsecase, currentMember]);
 
@@ -60,20 +67,23 @@ class GroupList extends HookConsumerWidget {
 
     Widget buildContentByState() {
       switch (state.value) {
-        case GroupListState.loading:
+        case GroupSelectionListState.loading:
           return const Center(child: CircularProgressIndicator());
-        case GroupListState.empty:
+        case GroupSelectionListState.empty:
           return const Center(
             child: Text('グループがありません', style: TextStyle(fontSize: 18)),
           );
-        case GroupListState.groupList:
+        case GroupSelectionListState.groupList:
           return Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Text(
-                  'グループ一覧',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Expanded(
@@ -92,7 +102,7 @@ class GroupList extends HookConsumerWidget {
               ),
             ],
           );
-        case GroupListState.error:
+        case GroupSelectionListState.error:
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -106,9 +116,6 @@ class GroupList extends HookConsumerWidget {
       }
     }
 
-    return Container(
-      key: const Key('group_list'),
-      child: buildContentByState(),
-    );
+    return Container(key: listKey, child: buildContentByState());
   }
 }

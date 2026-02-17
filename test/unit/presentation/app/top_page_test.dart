@@ -17,6 +17,7 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -196,11 +197,13 @@ void main() {
 
       // Assert
       expect(find.text('グループ年表'), findsOneWidget);
+      expect(find.text('DVCポイント計算'), findsOneWidget);
       expect(find.text('地図表示'), findsOneWidget);
       expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
       expect(find.byIcon(Icons.timeline), findsOneWidget);
+      expect(find.byIcon(Icons.calculate), findsOneWidget);
       expect(find.byIcon(Icons.map), findsOneWidget);
       expect(find.byIcon(Icons.group_work), findsOneWidget);
       expect(find.byIcon(Icons.people), findsOneWidget);
@@ -223,6 +226,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
       expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
@@ -280,6 +284,83 @@ void main() {
       // Assert
       expect(find.byKey(const Key('map_view')), findsOneWidget);
       expect(find.byKey(const Key('group_list')), findsNothing);
+    });
+
+    testWidgets('メニューから「DVCポイント計算」を選択すると、グループ一覧画面が表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // いったん別画面に遷移する
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('設定'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+
+      // DVCポイント計算を選択する
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('DVCポイント計算'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループを選択'), findsOneWidget);
+    });
+
+    testWidgets('DVCポイント計算でグループ一覧から計算画面へ遷移し、戻ると一覧に戻る', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('DVCポイント計算'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsOneWidget,
+      );
+      expect(find.text('グループ1'), findsOneWidget);
+
+      // Act: 戻る
+      await tester.tap(find.byKey(const Key('dvc_back_button')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
     testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
@@ -493,6 +574,7 @@ void main() {
         3,
       ); // GroupList, GroupTimeline, TripManagement
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
+      expect(indexedStack.children.first, isA<GroupSelectionList>());
 
       // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
       final container = ProviderScope.containerOf(
