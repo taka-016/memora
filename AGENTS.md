@@ -7,6 +7,7 @@
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
 - todo: docs/todo.md
+- done: docs/done.md
 
 ## 主要コマンド
 
@@ -44,10 +45,10 @@
 ### 作業完了手順
 
 1. `./check.sh`を実行し、エラーが残っていないことが確認してから完了作業を進める
-2. 作業に対応する`docs/todo.md`の項目に`[x]`チェックを入れる
+2. 作業に対応する`docs/todo.md`の項目に`[x]`チェックを入れ、`docs/done.md`に移動する
 3. 作業に関連するファイルを`git add <対象ファイル>`でステージングに追加する（`git add .`は禁止）
 4. `AGENTS.md`の「コミット形式」に従ってコミット&プッシュ&プルリクエストを作成する
-5. プルリクエストの説明は、作業に対応する`docs/todo.md`の項目を記載する
+5. プルリクエストの説明は、`docs/done.md`に移動した作業対応項目を記載する
 
 ## MCP使用ルール
 
