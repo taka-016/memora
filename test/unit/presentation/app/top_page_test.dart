@@ -17,6 +17,7 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -573,10 +574,7 @@ void main() {
         3,
       ); // GroupList, GroupTimeline, TripManagement
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
-      expect(
-        indexedStack.children.first.runtimeType.toString(),
-        'GroupSelectionList',
-      );
+      expect(indexedStack.children.first, isA<GroupSelectionList>());
 
       // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
       final container = ProviderScope.containerOf(
