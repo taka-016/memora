@@ -191,7 +191,7 @@
 ## グループ管理
 
 - [x] GroupをownerIdで抽出する処理をリポジトリに追加する
-- [x] GruopMemberをmemberIdで抽出する処理をリポジトリに追加する
+- [x] GroupMemberをmemberIdで抽出する処理をリポジトリに追加する
 - [x] GetGroupsWithMembersUsecaseのexecuteメソッドを修正する
   - [x] memberを引数に取るようにする
   - [x] Group取得はgetGroupsは使用せず、getGroupsByOwnerIdを使用する（member.idを使用）
