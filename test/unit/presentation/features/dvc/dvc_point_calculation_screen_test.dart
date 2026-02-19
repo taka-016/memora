@@ -101,8 +101,8 @@ void main() {
       expect(find.byKey(const Key('dvc_limited_point_button')), findsOneWidget);
       expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
       expect(find.text('年月'), findsOneWidget);
-      expect(find.text('利用可能ポイント'), findsOneWidget);
-      expect(find.text('利用登録済ポイント'), findsOneWidget);
+      expect(find.text('利用可能\nポイント'), findsOneWidget);
+      expect(find.text('利用\nポイント'), findsOneWidget);
     });
 
     testWidgets('さらに表示で表示月範囲を拡張できる', (tester) async {
@@ -139,15 +139,29 @@ void main() {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
 
-      final before = tester.getTopLeft(find.text('利用可能ポイント'));
+      final before = tester.getTopLeft(find.text('利用可能\nポイント'));
       await tester.drag(
         find.byKey(const Key('dvc_table_horizontal_scroll')),
         const Offset(-1000, 0),
       );
       await tester.pumpAndSettle();
-      final after = tester.getTopLeft(find.text('利用可能ポイント'));
+      final after = tester.getTopLeft(find.text('利用可能\nポイント'));
 
       expect(after.dx, before.dx);
+    });
+
+    testWidgets('ヘッダ列の幅は約半分の70pxになっている', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final tableLeft = tester.getTopLeft(
+        find.byKey(const Key('dvc_point_table')),
+      );
+      final scrollLeft = tester.getTopLeft(
+        find.byKey(const Key('dvc_table_horizontal_scroll')),
+      );
+
+      expect(scrollLeft.dx - tableLeft.dx, 70);
     });
 
     testWidgets('利用登録の＋ボタンでダイアログを開ける', (tester) async {

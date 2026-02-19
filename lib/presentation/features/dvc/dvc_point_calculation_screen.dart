@@ -27,7 +27,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
 
   static const int _initialMonthRange = 60;
   static const int _rangeIncrement = 60;
-  static const double _labelColumnWidth = 140;
+  static const double _labelColumnWidth = 70;
   static const double _monthColumnWidth = 40;
   static const double _rowHeight = 96;
 
@@ -543,7 +543,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text('${_formatYearMonth(month)} 利用登録済ポイント内訳'),
+            title: Text('${_formatYearMonth(month)} 利用ポイント内訳'),
             content: SizedBox(
               width: 520,
               child: usages.isEmpty
@@ -811,12 +811,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                       borderColor: borderColor,
                     ),
                     buildLabelCell(
-                      label: '利用可能ポイント',
+                      label: '利用可能\nポイント',
                       height: _rowHeight,
                       borderColor: borderColor,
                     ),
                     buildLabelCell(
-                      label: '利用登録済ポイント',
+                      label: '利用\nポイント',
                       height: _rowHeight,
                       borderColor: borderColor,
                     ),
