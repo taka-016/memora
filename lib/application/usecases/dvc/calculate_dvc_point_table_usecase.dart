@@ -165,7 +165,7 @@ class CalculateDvcPointTableUsecase {
           sourceType: DvcPointSourceType.contract,
           sourceName: contract.contractName,
           availableFrom: DateTime(grantMonth.year - 1, grantMonth.month),
-          expireExclusive: DateTime(grantMonth.year + 1, grantMonth.month),
+          expireExclusive: DateTime(grantMonth.year + 2, grantMonth.month),
           totalPoint: contract.annualPoint,
           remainingPoint: contract.annualPoint,
         ),

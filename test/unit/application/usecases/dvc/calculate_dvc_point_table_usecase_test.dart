@@ -30,7 +30,7 @@ void main() {
         limitedPoints: const [],
         pointUsages: const [],
         startYearMonth: DateTime(2024, 10),
-        endYearMonth: DateTime(2026, 10),
+        endYearMonth: DateTime(2027, 10),
       );
 
       expect(
@@ -38,11 +38,11 @@ void main() {
         100,
       );
       expect(
-        _summaryAt(result.monthlySummaries, DateTime(2026, 9)).availablePoint,
+        _summaryAt(result.monthlySummaries, DateTime(2027, 9)).availablePoint,
         100,
       );
       expect(
-        _summaryAt(result.monthlySummaries, DateTime(2026, 10)).availablePoint,
+        _summaryAt(result.monthlySummaries, DateTime(2027, 10)).availablePoint,
         0,
       );
     });
@@ -87,7 +87,7 @@ void main() {
       );
       expect(
         _summaryAt(result.monthlySummaries, DateTime(2026, 4)).availablePoint,
-        100,
+        150,
       );
     });
 
