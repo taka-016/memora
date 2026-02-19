@@ -41,7 +41,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final contractsState = useState<List<DvcPointContractDto>>([]);
     final limitedPointsState = useState<List<DvcLimitedPointDto>>([]);
     final pointUsagesState = useState<List<DvcPointUsageDto>>([]);
-    final startMonthOffset = useState(-_initialMonthRange);
+    final startMonthOffset = useState(0);
     final endMonthOffset = useState(_initialMonthRange);
 
     final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
@@ -697,11 +697,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     Widget buildYearMonthRow(Color borderColor) {
       return Row(
         children: [
-          buildLabelCell(
-            label: '年月',
-            height: _rowHeight,
-            borderColor: borderColor,
-          ),
           buildEdgeCell(
             borderColor: borderColor,
             child: TextButton(
@@ -711,9 +706,9 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                     startMonthOffset.value - _rangeIncrement;
               },
               child: const Text(
-                'さらに表示',
+                'さらに\n表示',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10),
+                style: TextStyle(fontSize: 9),
               ),
             ),
           ),
@@ -732,9 +727,9 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                 endMonthOffset.value = endMonthOffset.value + _rangeIncrement;
               },
               child: const Text(
-                'さらに表示',
+                'さらに\n表示',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 10),
+                style: TextStyle(fontSize: 9),
               ),
             ),
           ),
@@ -745,11 +740,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     Widget buildAvailableRow(Color borderColor) {
       return Row(
         children: [
-          buildLabelCell(
-            label: '利用可能ポイント',
-            height: _rowHeight,
-            borderColor: borderColor,
-          ),
           buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
             final summary = summaryByMonthKey[_monthKey(month)];
@@ -771,11 +761,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     Widget buildUsageRow(Color borderColor) {
       return Row(
         children: [
-          buildLabelCell(
-            label: '利用登録済ポイント',
-            height: _rowHeight,
-            borderColor: borderColor,
-          ),
           buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
             final summary = summaryByMonthKey[_monthKey(month)];
@@ -815,15 +800,42 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         key: const Key('dvc_point_table'),
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Column(
-                children: [
-                  buildYearMonthRow(borderColor),
-                  buildAvailableRow(borderColor),
-                  buildUsageRow(borderColor),
-                ],
-              ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  children: [
+                    buildLabelCell(
+                      label: '年月',
+                      height: _rowHeight,
+                      borderColor: borderColor,
+                    ),
+                    buildLabelCell(
+                      label: '利用可能ポイント',
+                      height: _rowHeight,
+                      borderColor: borderColor,
+                    ),
+                    buildLabelCell(
+                      label: '利用登録済ポイント',
+                      height: _rowHeight,
+                      borderColor: borderColor,
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    key: const Key('dvc_table_horizontal_scroll'),
+                    scrollDirection: Axis.horizontal,
+                    child: Column(
+                      children: [
+                        buildYearMonthRow(borderColor),
+                        buildAvailableRow(borderColor),
+                        buildUsageRow(borderColor),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

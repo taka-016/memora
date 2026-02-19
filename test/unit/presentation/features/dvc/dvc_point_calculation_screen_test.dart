@@ -118,6 +118,38 @@ void main() {
       expect(afterCount, greaterThan(beforeCount));
     });
 
+    testWidgets('初期表示は現在年月から5年後までで、過去年月を含まない', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final current = DateTime.now();
+      final currentMonthKey = ValueKey<String>(
+        'dvc_month_cell_${current.year}_${current.month}',
+      );
+      final previousMonth = DateTime(current.year, current.month - 1);
+      final previousMonthKey = ValueKey<String>(
+        'dvc_month_cell_${previousMonth.year}_${previousMonth.month}',
+      );
+
+      expect(find.byKey(currentMonthKey), findsOneWidget);
+      expect(find.byKey(previousMonthKey), findsNothing);
+    });
+
+    testWidgets('ヘッダ列は横スクロールしても固定表示される', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final before = tester.getTopLeft(find.text('利用可能ポイント'));
+      await tester.drag(
+        find.byKey(const Key('dvc_table_horizontal_scroll')),
+        const Offset(-1000, 0),
+      );
+      await tester.pumpAndSettle();
+      final after = tester.getTopLeft(find.text('利用可能ポイント'));
+
+      expect(after.dx, before.dx);
+    });
+
     testWidgets('利用登録の＋ボタンでダイアログを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
