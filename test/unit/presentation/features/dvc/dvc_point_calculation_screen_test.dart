@@ -100,8 +100,7 @@ void main() {
       );
       expect(find.byKey(const Key('dvc_limited_point_button')), findsOneWidget);
       expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
-      expect(find.text('年'), findsOneWidget);
-      expect(find.text('月'), findsOneWidget);
+      expect(find.text('年月'), findsOneWidget);
       expect(find.text('利用可能ポイント'), findsOneWidget);
       expect(find.text('利用登録済ポイント'), findsOneWidget);
     });
@@ -112,7 +111,7 @@ void main() {
 
       final beforeCount = _findMonthCells().evaluate().length;
 
-      await tester.tap(find.byKey(const Key('dvc_show_more_future')));
+      await tester.tap(find.byKey(const Key('dvc_show_more_past')));
       await tester.pumpAndSettle();
 
       final afterCount = _findMonthCells().evaluate().length;

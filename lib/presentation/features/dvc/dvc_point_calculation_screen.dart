@@ -28,8 +28,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
   static const int _initialMonthRange = 60;
   static const int _rangeIncrement = 60;
   static const double _labelColumnWidth = 140;
-  static const double _monthColumnWidth = 108;
-  static const double _headerHeight = 54;
+  static const double _monthColumnWidth = 40;
   static const double _rowHeight = 96;
 
   final GroupDto group;
@@ -680,51 +679,63 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       );
     }
 
-    Widget buildYearRow(Color borderColor) {
-      final grouped = <int, int>{};
-      for (final month in visibleMonths) {
-        grouped[month.year] = (grouped[month.year] ?? 0) + 1;
-      }
-
-      return Row(
-        children: [
-          buildLabelCell(
-            label: '年',
-            height: _headerHeight,
-            borderColor: borderColor,
+    Widget buildEdgeCell({required Color borderColor, Widget? child}) {
+      return Container(
+        width: _monthColumnWidth,
+        height: _rowHeight,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: borderColor),
+            bottom: BorderSide(color: borderColor),
+            right: BorderSide(color: borderColor),
           ),
-          ...grouped.entries.map((entry) {
-            return Container(
-              width: entry.value * _monthColumnWidth,
-              height: _headerHeight,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: borderColor),
-                  bottom: BorderSide(color: borderColor),
-                  right: BorderSide(color: borderColor),
-                ),
-              ),
-              child: Text('${entry.key}年'),
-            );
-          }),
-        ],
+        ),
+        child: child ?? const SizedBox.shrink(),
       );
     }
 
-    Widget buildMonthRow(Color borderColor) {
+    Widget buildYearMonthRow(Color borderColor) {
       return Row(
         children: [
           buildLabelCell(
-            label: '月',
+            label: '年月',
             height: _rowHeight,
             borderColor: borderColor,
+          ),
+          buildEdgeCell(
+            borderColor: borderColor,
+            child: TextButton(
+              key: const Key('dvc_show_more_past'),
+              onPressed: () {
+                startMonthOffset.value =
+                    startMonthOffset.value - _rangeIncrement;
+              },
+              child: const Text(
+                'さらに表示',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10),
+              ),
+            ),
           ),
           ...visibleMonths.map(
             (month) => buildMonthCell(
               month: month,
-              text: '${month.month}月',
+              text: '${month.year}\n${month.month}月',
               borderColor: borderColor,
+            ),
+          ),
+          buildEdgeCell(
+            borderColor: borderColor,
+            child: TextButton(
+              key: const Key('dvc_show_more_future'),
+              onPressed: () {
+                endMonthOffset.value = endMonthOffset.value + _rangeIncrement;
+              },
+              child: const Text(
+                'さらに表示',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10),
+              ),
             ),
           ),
         ],
@@ -739,6 +750,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             height: _rowHeight,
             borderColor: borderColor,
           ),
+          buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
             final summary = summaryByMonthKey[_monthKey(month)];
             final availablePoint = summary?.availablePoint ?? 0;
@@ -751,6 +763,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               onTap: () => showAvailableBreakdownDialog(month, breakdowns),
             );
           }),
+          buildEdgeCell(borderColor: borderColor),
         ],
       );
     }
@@ -763,6 +776,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             height: _rowHeight,
             borderColor: borderColor,
           ),
+          buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
             final summary = summaryByMonthKey[_monthKey(month)];
             final usedPoint = summary?.usedPoint ?? 0;
@@ -790,6 +804,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               ),
             );
           }),
+          buildEdgeCell(borderColor: borderColor),
         ],
       );
     }
@@ -799,33 +814,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return Column(
         key: const Key('dvc_point_table'),
         children: [
-          Row(
-            children: [
-              TextButton(
-                key: const Key('dvc_show_more_past'),
-                onPressed: () {
-                  startMonthOffset.value =
-                      startMonthOffset.value - _rangeIncrement;
-                },
-                child: const Text('さらに表示'),
-              ),
-              const Spacer(),
-              TextButton(
-                key: const Key('dvc_show_more_future'),
-                onPressed: () {
-                  endMonthOffset.value = endMonthOffset.value + _rangeIncrement;
-                },
-                child: const Text('さらに表示'),
-              ),
-            ],
-          ),
           Expanded(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Column(
                 children: [
-                  buildYearRow(borderColor),
-                  buildMonthRow(borderColor),
+                  buildYearMonthRow(borderColor),
                   buildAvailableRow(borderColor),
                   buildUsageRow(borderColor),
                 ],
