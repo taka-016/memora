@@ -40,7 +40,7 @@ Future<void> showDvcUsageBreakdownModal({
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('閉じる'),
           ),
         ],
