@@ -18,6 +18,8 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 
 enum _DvcScreenState { loading, loaded, error }
 
+enum _DvcActionMenu { contractRegistration, limitedPointRegistration }
+
 class DvcPointCalculationScreen extends HookConsumerWidget {
   const DvcPointCalculationScreen({
     super.key,
@@ -598,18 +600,28 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             Positioned(
               right: 0,
               top: -4,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    key: const Key('dvc_contract_management_button'),
-                    icon: const Icon(Icons.assignment),
-                    onPressed: showContractManagementDialog,
+              child: PopupMenuButton<_DvcActionMenu>(
+                key: const Key('dvc_action_menu_button'),
+                icon: const Icon(Icons.more_vert),
+                tooltip: '操作メニュー',
+                onSelected: (action) {
+                  switch (action) {
+                    case _DvcActionMenu.contractRegistration:
+                      showContractManagementDialog();
+                      break;
+                    case _DvcActionMenu.limitedPointRegistration:
+                      showLimitedPointDialog();
+                      break;
+                  }
+                },
+                itemBuilder: (context) => const [
+                  PopupMenuItem<_DvcActionMenu>(
+                    value: _DvcActionMenu.contractRegistration,
+                    child: Text('契約登録'),
                   ),
-                  IconButton(
-                    key: const Key('dvc_limited_point_button'),
-                    icon: const Icon(Icons.local_offer),
-                    onPressed: showLimitedPointDialog,
+                  PopupMenuItem<_DvcActionMenu>(
+                    value: _DvcActionMenu.limitedPointRegistration,
+                    child: Text('期間限定ポイント登録'),
                   ),
                 ],
               ),
@@ -699,17 +711,16 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         children: [
           buildEdgeCell(
             borderColor: borderColor,
-            child: TextButton(
+            child: IconButton(
               key: const Key('dvc_show_more_past'),
+              icon: const Icon(Icons.arrow_left),
+              iconSize: 28,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onPressed: () {
                 startMonthOffset.value =
                     startMonthOffset.value - _rangeIncrement;
               },
-              child: const Text(
-                'さらに\n表示',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 9),
-              ),
             ),
           ),
           ...visibleMonths.map(
@@ -721,16 +732,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           ),
           buildEdgeCell(
             borderColor: borderColor,
-            child: TextButton(
+            child: IconButton(
               key: const Key('dvc_show_more_future'),
+              icon: const Icon(Icons.arrow_right),
+              iconSize: 28,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onPressed: () {
                 endMonthOffset.value = endMonthOffset.value + _rangeIncrement;
               },
-              child: const Text(
-                'さらに\n表示',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 9),
-              ),
             ),
           ),
         ],
@@ -748,7 +758,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             return buildMonthCell(
               month: month,
               keyPrefix: 'dvc_available_cell_',
-              text: '$availablePoint pt',
+              text: '$availablePoint',
               borderColor: borderColor,
               onTap: () => showAvailableBreakdownDialog(month, breakdowns),
             );
@@ -770,7 +780,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             return buildMonthCell(
               month: month,
               keyPrefix: 'dvc_used_cell_',
-              text: '$usedPoint pt',
+              text: '$usedPoint',
               borderColor: borderColor,
               onTap: () => showUsageBreakdownDialog(month, usageDetails),
               footer: Align(

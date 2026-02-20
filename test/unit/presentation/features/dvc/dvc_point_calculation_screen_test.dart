@@ -96,18 +96,31 @@ void main() {
       expect(find.text('家族グループ'), findsOneWidget);
       expect(
         find.byKey(const Key('dvc_contract_management_button')),
-        findsOneWidget,
+        findsNothing,
       );
-      expect(find.byKey(const Key('dvc_limited_point_button')), findsOneWidget);
+      expect(find.byKey(const Key('dvc_limited_point_button')), findsNothing);
+      expect(find.byKey(const Key('dvc_action_menu_button')), findsOneWidget);
       expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
       expect(find.text('年月'), findsOneWidget);
       expect(find.text('利用可能\nポイント'), findsOneWidget);
       expect(find.text('利用\nポイント'), findsOneWidget);
     });
 
-    testWidgets('さらに表示で表示月範囲を拡張できる', (tester) async {
+    testWidgets('左右矢印で表示月範囲を拡張できる', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
+
+      expect(find.text('さらに\n表示'), findsNothing);
+      final pastButton = tester.widget<IconButton>(
+        find.byKey(const Key('dvc_show_more_past')),
+      );
+      final futureButton = tester.widget<IconButton>(
+        find.byKey(const Key('dvc_show_more_future')),
+      );
+      expect((pastButton.icon as Icon).icon, Icons.arrow_left);
+      expect((futureButton.icon as Icon).icon, Icons.arrow_right);
+      expect(pastButton.iconSize, 28);
+      expect(futureButton.iconSize, 28);
 
       final beforeCount = _findMonthCells().evaluate().length;
 
@@ -116,6 +129,13 @@ void main() {
 
       final afterCount = _findMonthCells().evaluate().length;
       expect(afterCount, greaterThan(beforeCount));
+    });
+
+    testWidgets('利用可能ポイントと利用ポイントのセルにptを表示しない', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining(' pt'), findsNothing);
     });
 
     testWidgets('初期表示は現在年月から5年後までで、過去年月を含まない', (tester) async {
@@ -176,22 +196,37 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
-    testWidgets('契約管理ボタンで契約管理ダイアログを開ける', (tester) async {
+    testWidgets('3点メニューで操作メニューを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('dvc_contract_management_button')));
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('契約登録'), findsOneWidget);
+      expect(find.text('期間限定ポイント登録'), findsOneWidget);
+    });
+
+    testWidgets('3点メニューの契約登録で契約管理ダイアログを開ける', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約登録'));
       await tester.pumpAndSettle();
 
       expect(find.text('契約管理'), findsOneWidget);
       expect(find.byKey(const Key('dvc_contract_add_button')), findsOneWidget);
     });
 
-    testWidgets('期間限定ポイント登録ボタンで登録ダイアログを開ける', (tester) async {
+    testWidgets('3点メニューの期間限定ポイント登録で登録ダイアログを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('dvc_limited_point_button')));
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
       await tester.pumpAndSettle();
 
       expect(find.text('期間限定ポイント登録'), findsOneWidget);
