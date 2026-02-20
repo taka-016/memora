@@ -10,11 +10,16 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
-import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
+import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
+import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/dvc/dvc_usage_breakdown_modal.dart';
+import 'package:memora/presentation/features/dvc/dvc_usage_registration_modal.dart';
 
 enum _DvcScreenState { loading, loaded, error }
 
@@ -107,9 +112,9 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return null;
     }, [group.id]);
 
-    final currentMonth = _monthStart(DateTime.now());
-    final visibleStart = _addMonths(currentMonth, startMonthOffset.value);
-    final visibleEnd = _addMonths(currentMonth, endMonthOffset.value);
+    final currentMonth = dvcMonthStart(DateTime.now());
+    final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
+    final visibleEnd = dvcAddMonths(currentMonth, endMonthOffset.value);
     final visibleMonths = _buildMonthList(visibleStart, visibleEnd);
 
     final calculationResult = calculator.execute(
@@ -121,10 +126,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     );
     final summaryByMonthKey = {
       for (final summary in calculationResult.monthlySummaries)
-        _monthKey(summary.yearMonth): summary,
+        dvcMonthKey(summary.yearMonth): summary,
     };
 
-    Future<void> saveContractSettings(List<_EditableContract> editable) async {
+    Future<void> saveContractSettings(
+      List<DvcEditableContract> editable,
+    ) async {
       final contractRepository = ref.read(dvcPointContractRepositoryProvider);
       final contracts = editable
           .where((contract) => contract.isValid)
@@ -150,8 +157,8 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final limitedPoint = DvcLimitedPoint(
         id: '',
         groupId: group.id,
-        startYearMonth: _monthStart(startYearMonth),
-        endYearMonth: _monthStart(endYearMonth),
+        startYearMonth: dvcMonthStart(startYearMonth),
+        endYearMonth: dvcMonthStart(endYearMonth),
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
@@ -168,7 +175,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final usage = DvcPointUsage(
         id: '',
         groupId: group.id,
-        usageYearMonth: _monthStart(usageYearMonth),
+        usageYearMonth: dvcMonthStart(usageYearMonth),
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
@@ -180,425 +187,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
       await pointUsageRepository.deleteDvcPointUsage(pointUsageId);
       await loadData(showLoading: false);
-    }
-
-    void showContractManagementDialog() {
-      final editable = contractsState.value
-          .map(
-            (contract) => _EditableContract.fromDto(
-              contract,
-              expanded: contractsState.value.length == 1,
-            ),
-          )
-          .toList();
-      if (editable.isEmpty) {
-        editable.add(
-          _EditableContract(
-            contractName: '',
-            contractStartYearMonth: _monthStart(DateTime.now()),
-            contractEndYearMonth: _monthStart(DateTime.now()),
-            useYearStartMonth: DateTime.now().month,
-            annualPointText: '',
-            expanded: true,
-          ),
-        );
-      }
-      var validationError = '';
-
-      showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: const Text('契約管理'),
-                content: SizedBox(
-                  width: 520,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ...editable.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final contract = entry.value;
-                          return Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    title: Text(
-                                      contract.contractName.isEmpty
-                                          ? '新しい契約'
-                                          : contract.contractName,
-                                    ),
-                                    trailing: Icon(
-                                      contract.expanded
-                                          ? Icons.expand_less
-                                          : Icons.expand_more,
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        editable[index] = contract.copyWith(
-                                          expanded: !contract.expanded,
-                                        );
-                                      });
-                                    },
-                                  ),
-                                  if (contract.expanded)
-                                    _ContractForm(
-                                      contract: contract,
-                                      onChanged: (updated) {
-                                        setState(() {
-                                          editable[index] = updated;
-                                        });
-                                      },
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        }),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            key: const Key('dvc_contract_add_button'),
-                            icon: const Icon(Icons.add_circle_outline),
-                            onPressed: () {
-                              setState(() {
-                                editable.add(
-                                  _EditableContract(
-                                    contractName: '',
-                                    contractStartYearMonth: _monthStart(
-                                      DateTime.now(),
-                                    ),
-                                    contractEndYearMonth: _monthStart(
-                                      DateTime.now(),
-                                    ),
-                                    useYearStartMonth: DateTime.now().month,
-                                    annualPointText: '',
-                                    expanded: true,
-                                  ),
-                                );
-                              });
-                            },
-                          ),
-                        ),
-                        if (validationError.isNotEmpty)
-                          Text(
-                            validationError,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('キャンセル'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final hasInvalid = editable.any((contract) {
-                        return contract.contractName.trim().isEmpty ||
-                            contract.annualPoint <= 0 ||
-                            contract.contractEndYearMonth.isBefore(
-                              contract.contractStartYearMonth,
-                            );
-                      });
-                      if (hasInvalid) {
-                        setState(() {
-                          validationError = '入力内容を確認してください';
-                        });
-                        return;
-                      }
-                      Navigator.of(dialogContext).pop();
-                      await saveContractSettings(editable);
-                    },
-                    child: const Text('更新'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    }
-
-    void showLimitedPointDialog() {
-      var startYearMonth = _monthStart(DateTime.now());
-      var endYearMonth = _monthStart(DateTime.now());
-      final pointController = TextEditingController();
-      final memoController = TextEditingController();
-      var validationError = '';
-
-      showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: const Text('期間限定ポイント登録'),
-                content: SizedBox(
-                  width: 420,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _YearMonthSelector(
-                        label: '開始年月',
-                        selected: startYearMonth,
-                        onSelected: (value) {
-                          setState(() {
-                            startYearMonth = value;
-                          });
-                        },
-                      ),
-                      _YearMonthSelector(
-                        label: '終了年月',
-                        selected: endYearMonth,
-                        onSelected: (value) {
-                          setState(() {
-                            endYearMonth = value;
-                          });
-                        },
-                      ),
-                      TextField(
-                        key: const Key('dvc_limited_point_field'),
-                        controller: pointController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'ポイント数'),
-                      ),
-                      TextField(
-                        key: const Key('dvc_limited_memo_field'),
-                        controller: memoController,
-                        decoration: const InputDecoration(labelText: 'メモ'),
-                      ),
-                      if (validationError.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            validationError,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('キャンセル'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final point = int.tryParse(pointController.text) ?? 0;
-                      if (point <= 0 || endYearMonth.isBefore(startYearMonth)) {
-                        setState(() {
-                          validationError = '入力内容を確認してください';
-                        });
-                        return;
-                      }
-                      Navigator.of(dialogContext).pop();
-                      await saveLimitedPoint(
-                        startYearMonth: startYearMonth,
-                        endYearMonth: endYearMonth,
-                        point: point,
-                        memo: memoController.text.trim(),
-                      );
-                    },
-                    child: const Text('登録'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    }
-
-    void showUsageDialog({
-      required DateTime targetYearMonth,
-      required int maxAvailablePoint,
-    }) {
-      final pointController = TextEditingController();
-      final memoController = TextEditingController();
-      var validationError = '';
-
-      showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: const Text('ポイント利用登録'),
-                content: SizedBox(
-                  width: 420,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('${_formatYearMonth(targetYearMonth)}の利用登録'),
-                      TextField(
-                        key: const Key('dvc_usage_point_field'),
-                        controller: pointController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: '利用ポイント'),
-                      ),
-                      TextField(
-                        key: const Key('dvc_usage_memo_field'),
-                        controller: memoController,
-                        decoration: const InputDecoration(labelText: 'メモ'),
-                      ),
-                      if (validationError.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            validationError,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(),
-                    child: const Text('キャンセル'),
-                  ),
-                  TextButton(
-                    onPressed: () async {
-                      final usedPoint = int.tryParse(pointController.text) ?? 0;
-                      if (usedPoint <= 0) {
-                        setState(() {
-                          validationError = '利用ポイントを入力してください';
-                        });
-                        return;
-                      }
-                      if (usedPoint > maxAvailablePoint) {
-                        setState(() {
-                          validationError = '利用可能ポイントを超えています';
-                        });
-                        return;
-                      }
-                      Navigator.of(dialogContext).pop();
-                      await saveUsage(
-                        usageYearMonth: targetYearMonth,
-                        usedPoint: usedPoint,
-                        memo: memoController.text.trim(),
-                      );
-                    },
-                    child: const Text('登録'),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    }
-
-    void showAvailableBreakdownDialog(
-      DateTime month,
-      List<DvcAvailablePointBreakdown> breakdowns,
-    ) {
-      showDialog<void>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('${_formatYearMonth(month)}\n利用可能ポイント内訳'),
-            content: SizedBox(
-              width: 520,
-              child: breakdowns.isEmpty
-                  ? const Text('内訳がありません')
-                  : ListView(
-                      shrinkWrap: true,
-                      children: breakdowns.map((breakdown) {
-                        final memo = breakdown.memo?.trim() ?? '';
-                        return ListTile(
-                          title: Text(
-                            '${breakdown.sourceName}: ${breakdown.remainingPoint}pt',
-                          ),
-                          subtitle: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (breakdown.useYear != null)
-                                Text('${breakdown.useYear}ユースイヤー'),
-                              Text(
-                                '有効期限: ${_formatYearMonth(breakdown.expireAt)}',
-                              ),
-                              if (memo.isNotEmpty) Text(memo),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('閉じる'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-
-    void showUsageBreakdownDialog(
-      DateTime month,
-      List<DvcPointUsageDto> usages,
-    ) {
-      showDialog<void>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            title: Text('${_formatYearMonth(month)}\n利用ポイント内訳'),
-            content: SizedBox(
-              width: 520,
-              child: usages.isEmpty
-                  ? const Text('利用登録がありません')
-                  : ListView(
-                      shrinkWrap: true,
-                      children: usages.map((usage) {
-                        final memo = usage.memo?.isEmpty ?? true
-                            ? ''
-                            : usage.memo!;
-                        return ListTile(
-                          title: Text('${usage.usedPoint}pt'),
-                          subtitle: memo.isEmpty ? null : Text(memo),
-                          trailing: IconButton(
-                            key: ValueKey(
-                              'dvc_usage_delete_button_${usage.id}',
-                            ),
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () async {
-                              Navigator.of(dialogContext).pop();
-                              await deleteUsage(usage.id);
-                            },
-                          ),
-                        );
-                      }).toList(),
-                    ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('閉じる'),
-              ),
-            ],
-          );
-        },
-      );
     }
 
     Widget buildHeader() {
@@ -634,10 +222,21 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                 onSelected: (action) {
                   switch (action) {
                     case _DvcActionMenu.contractRegistration:
-                      showContractManagementDialog();
+                      unawaited(
+                        showDvcContractManagementModal(
+                          context: context,
+                          contracts: contractsState.value,
+                          onSave: saveContractSettings,
+                        ),
+                      );
                       break;
                     case _DvcActionMenu.limitedPointRegistration:
-                      showLimitedPointDialog();
+                      unawaited(
+                        showDvcLimitedPointRegistrationModal(
+                          context: context,
+                          onSave: saveLimitedPoint,
+                        ),
+                      );
                       break;
                   }
                 },
@@ -780,7 +379,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         children: [
           buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
-            final summary = summaryByMonthKey[_monthKey(month)];
+            final summary = summaryByMonthKey[dvcMonthKey(month)];
             final availablePoint = summary?.availablePoint ?? 0;
             final breakdowns = summary?.availableBreakdowns ?? const [];
             return buildMonthCell(
@@ -794,7 +393,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                     )
                   : null,
               borderColor: borderColor,
-              onTap: () => showAvailableBreakdownDialog(month, breakdowns),
+              onTap: () {
+                unawaited(
+                  showDvcAvailableBreakdownModal(
+                    context: context,
+                    month: month,
+                    breakdowns: breakdowns,
+                  ),
+                );
+              },
             );
           }),
           buildEdgeCell(borderColor: borderColor),
@@ -807,7 +414,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         children: [
           buildEdgeCell(borderColor: borderColor),
           ...visibleMonths.map((month) {
-            final summary = summaryByMonthKey[_monthKey(month)];
+            final summary = summaryByMonthKey[dvcMonthKey(month)];
             final usedPoint = summary?.usedPoint ?? 0;
             final usageDetails = summary?.usageDetails ?? const [];
             final availablePoint = summary?.availablePoint ?? 0;
@@ -816,7 +423,16 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               keyPrefix: 'dvc_used_cell_',
               text: '$usedPoint',
               borderColor: borderColor,
-              onTap: () => showUsageBreakdownDialog(month, usageDetails),
+              onTap: () {
+                unawaited(
+                  showDvcUsageBreakdownModal(
+                    context: context,
+                    month: month,
+                    usages: usageDetails,
+                    onDelete: deleteUsage,
+                  ),
+                );
+              },
               footer: Align(
                 alignment: Alignment.bottomCenter,
                 child: IconButton(
@@ -825,10 +441,16 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                   ),
                   icon: const Icon(Icons.add_circle_outline),
                   iconSize: 20,
-                  onPressed: () => showUsageDialog(
-                    targetYearMonth: month,
-                    maxAvailablePoint: availablePoint,
-                  ),
+                  onPressed: () {
+                    unawaited(
+                      showDvcUsageRegistrationModal(
+                        context: context,
+                        targetYearMonth: month,
+                        maxAvailablePoint: availablePoint,
+                        onSave: saveUsage,
+                      ),
+                    );
+                  },
                 ),
               ),
             );
@@ -919,204 +541,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
   }
 }
 
-class _YearMonthSelector extends StatelessWidget {
-  const _YearMonthSelector({
-    required this.label,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final DateTime selected;
-  final ValueChanged<DateTime> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        TextButton(
-          onPressed: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: selected,
-              firstDate: DateTime(2000, 1),
-              lastDate: DateTime(2100, 12),
-            );
-            if (picked == null) {
-              return;
-            }
-            onSelected(DateTime(picked.year, picked.month));
-          },
-          child: Text(_formatYearMonth(selected)),
-        ),
-      ],
-    );
-  }
-}
-
-class _ContractForm extends StatelessWidget {
-  const _ContractForm({required this.contract, required this.onChanged});
-
-  final _EditableContract contract;
-  final ValueChanged<_EditableContract> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          initialValue: contract.contractName,
-          decoration: const InputDecoration(labelText: '契約名'),
-          onChanged: (value) {
-            onChanged(contract.copyWith(contractName: value));
-          },
-        ),
-        _YearMonthSelector(
-          label: '契約開始年月',
-          selected: contract.contractStartYearMonth,
-          onSelected: (value) {
-            onChanged(contract.copyWith(contractStartYearMonth: value));
-          },
-        ),
-        _YearMonthSelector(
-          label: '契約終了年月',
-          selected: contract.contractEndYearMonth,
-          onSelected: (value) {
-            onChanged(contract.copyWith(contractEndYearMonth: value));
-          },
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            const Text('ユースイヤー開始月'),
-            const SizedBox(width: 16),
-            DropdownButton<int>(
-              value: contract.useYearStartMonth,
-              items: List.generate(
-                12,
-                (index) => DropdownMenuItem(
-                  value: index + 1,
-                  child: Text('${index + 1}月'),
-                ),
-              ),
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
-                onChanged(contract.copyWith(useYearStartMonth: value));
-              },
-            ),
-          ],
-        ),
-        TextFormField(
-          initialValue: contract.annualPointText,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: '年間ポイント'),
-          onChanged: (value) {
-            onChanged(contract.copyWith(annualPointText: value));
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _EditableContract {
-  _EditableContract({
-    required this.contractName,
-    required this.contractStartYearMonth,
-    required this.contractEndYearMonth,
-    required this.useYearStartMonth,
-    required this.annualPointText,
-    required this.expanded,
-  });
-
-  factory _EditableContract.fromDto(
-    DvcPointContractDto dto, {
-    required bool expanded,
-  }) {
-    return _EditableContract(
-      contractName: dto.contractName,
-      contractStartYearMonth: _monthStart(dto.contractStartYearMonth),
-      contractEndYearMonth: _monthStart(dto.contractEndYearMonth),
-      useYearStartMonth: dto.useYearStartMonth,
-      annualPointText: dto.annualPoint.toString(),
-      expanded: expanded,
-    );
-  }
-
-  final String contractName;
-  final DateTime contractStartYearMonth;
-  final DateTime contractEndYearMonth;
-  final int useYearStartMonth;
-  final String annualPointText;
-  final bool expanded;
-
-  int get annualPoint => int.tryParse(annualPointText) ?? 0;
-
-  bool get isValid {
-    return contractName.trim().isNotEmpty &&
-        annualPoint > 0 &&
-        !contractEndYearMonth.isBefore(contractStartYearMonth);
-  }
-
-  DvcPointContract toEntity(String groupId) {
-    return DvcPointContract(
-      id: '',
-      groupId: groupId,
-      contractName: contractName.trim(),
-      contractStartYearMonth: contractStartYearMonth,
-      contractEndYearMonth: contractEndYearMonth,
-      useYearStartMonth: useYearStartMonth,
-      annualPoint: annualPoint,
-    );
-  }
-
-  _EditableContract copyWith({
-    String? contractName,
-    DateTime? contractStartYearMonth,
-    DateTime? contractEndYearMonth,
-    int? useYearStartMonth,
-    String? annualPointText,
-    bool? expanded,
-  }) {
-    return _EditableContract(
-      contractName: contractName ?? this.contractName,
-      contractStartYearMonth:
-          contractStartYearMonth ?? this.contractStartYearMonth,
-      contractEndYearMonth: contractEndYearMonth ?? this.contractEndYearMonth,
-      useYearStartMonth: useYearStartMonth ?? this.useYearStartMonth,
-      annualPointText: annualPointText ?? this.annualPointText,
-      expanded: expanded ?? this.expanded,
-    );
-  }
-}
-
 List<DateTime> _buildMonthList(DateTime startYearMonth, DateTime endYearMonth) {
-  final start = _monthStart(startYearMonth);
-  final end = _monthStart(endYearMonth);
+  final start = dvcMonthStart(startYearMonth);
+  final end = dvcMonthStart(endYearMonth);
   if (end.isBefore(start)) {
     return const [];
   }
   final result = <DateTime>[];
-  for (var month = start; !month.isAfter(end); month = _addMonths(month, 1)) {
+  for (var month = start; !month.isAfter(end); month = dvcAddMonths(month, 1)) {
     result.add(month);
   }
   return result;
-}
-
-DateTime _monthStart(DateTime dateTime) =>
-    DateTime(dateTime.year, dateTime.month);
-
-DateTime _addMonths(DateTime dateTime, int months) {
-  return DateTime(dateTime.year, dateTime.month + months);
-}
-
-String _monthKey(DateTime dateTime) => '${dateTime.year}-${dateTime.month}';
-
-String _formatYearMonth(DateTime dateTime) {
-  final month = dateTime.month.toString().padLeft(2, '0');
-  return '${dateTime.year}-$month';
 }
