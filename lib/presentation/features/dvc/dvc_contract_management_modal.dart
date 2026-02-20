@@ -62,10 +62,26 @@ Future<void> showDvcContractManagementModal({
                                       ? '新しい契約'
                                       : contract.contractName,
                                 ),
-                                trailing: Icon(
-                                  contract.expanded
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      key: ValueKey(
+                                        'dvc_contract_delete_button_$index',
+                                      ),
+                                      icon: const Icon(Icons.delete_outline),
+                                      onPressed: () {
+                                        setState(() {
+                                          editable.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                    Icon(
+                                      contract.expanded
+                                          ? Icons.expand_less
+                                          : Icons.expand_more,
+                                    ),
+                                  ],
                                 ),
                                 onTap: () {
                                   setState(() {

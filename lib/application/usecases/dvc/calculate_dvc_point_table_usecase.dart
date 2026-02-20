@@ -9,6 +9,7 @@ enum DvcPointSourceType { contract, limited }
 class DvcAvailablePointBreakdown {
   const DvcAvailablePointBreakdown({
     required this.sourceType,
+    required this.sourceId,
     required this.sourceName,
     required this.remainingPoint,
     required this.availableFrom,
@@ -18,6 +19,7 @@ class DvcAvailablePointBreakdown {
   });
 
   final DvcPointSourceType sourceType;
+  final String sourceId;
   final String sourceName;
   final int remainingPoint;
   final DateTime availableFrom;
@@ -116,6 +118,7 @@ class CalculateDvcPointTableUsecase {
             .map(
               (bucket) => DvcAvailablePointBreakdown(
                 sourceType: bucket.sourceType,
+                sourceId: bucket.sourceId,
                 sourceName: bucket.sourceName,
                 remainingPoint: bucket.remainingPoint,
                 availableFrom: bucket.availableFrom,
@@ -177,6 +180,7 @@ class CalculateDvcPointTableUsecase {
       buckets.add(
         _PointBucket(
           sourceType: DvcPointSourceType.contract,
+          sourceId: contract.id,
           sourceName: contract.contractName,
           availableFrom: DateTime(grantMonth.year - 1, grantMonth.month),
           expireExclusive: DateTime(grantMonth.year + 2, grantMonth.month),
@@ -196,6 +200,7 @@ class CalculateDvcPointTableUsecase {
     final end = _monthStart(limitedPoint.endYearMonth);
     return _PointBucket(
       sourceType: DvcPointSourceType.limited,
+      sourceId: limitedPoint.id,
       sourceName: '期間限定ポイント',
       availableFrom: start,
       expireExclusive: _addMonths(end, 1),
@@ -286,6 +291,7 @@ class CalculateDvcPointTableUsecase {
 class _PointBucket {
   _PointBucket({
     required this.sourceType,
+    required this.sourceId,
     required this.sourceName,
     required this.availableFrom,
     required this.expireExclusive,
@@ -296,6 +302,7 @@ class _PointBucket {
   });
 
   final DvcPointSourceType sourceType;
+  final String sourceId;
   final String sourceName;
   final DateTime availableFrom;
   final DateTime expireExclusive;
@@ -307,6 +314,7 @@ class _PointBucket {
   _PointBucket copy() {
     return _PointBucket(
       sourceType: sourceType,
+      sourceId: sourceId,
       sourceName: sourceName,
       availableFrom: availableFrom,
       expireExclusive: expireExclusive,

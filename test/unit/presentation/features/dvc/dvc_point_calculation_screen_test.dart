@@ -338,6 +338,27 @@ void main() {
       expect(find.byKey(const Key('dvc_contract_add_button')), findsOneWidget);
     });
 
+    testWidgets('契約管理ダイアログで契約カードを削除して更新できる', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('契約登録'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('dvc_contract_delete_button_0')),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(TextButton, '更新'));
+      await tester.pumpAndSettle();
+
+      expect(contractRepository.deletedGroupIds, contains('g1'));
+      expect(contractRepository.savedContracts, isEmpty);
+    });
+
     testWidgets('3点メニューの期間限定ポイント登録で登録ダイアログを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
@@ -475,6 +496,123 @@ void main() {
 
       expect(find.text('${currentMonth.year}ユースイヤー'), findsOneWidget);
       expect(find.textContaining('有効期限:'), findsOneWidget);
+    });
+
+    testWidgets('利用可能ポイント内訳の期間限定ポイントは削除できる', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      limitedQueryService = _FakeDvcLimitedPointQueryService([
+        DvcLimitedPointDto(
+          id: 'l1',
+          groupId: 'g1',
+          startYearMonth: currentMonth,
+          endYearMonth: currentMonth,
+          point: 30,
+          memo: '削除対象',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('dvc_limited_point_delete_button_l1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(limitedRepository.deletedLimitedPointIds, contains('l1'));
+    });
+
+    testWidgets('利用可能ポイント内訳の有効期限はfrom〜to形式で表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      limitedQueryService = _FakeDvcLimitedPointQueryService([
+        DvcLimitedPointDto(
+          id: 'l1',
+          groupId: 'g1',
+          startYearMonth: currentMonth,
+          endYearMonth: DateTime(currentMonth.year, currentMonth.month + 2),
+          point: 30,
+          memo: 'メモ',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final endMonth = DateTime(currentMonth.year, currentMonth.month + 2);
+      expect(
+        find.text(
+          '有効期限: ${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(endMonth)}',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('期間限定ポイントの内訳はメモを有効期限より先に表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService(const []);
+      limitedQueryService = _FakeDvcLimitedPointQueryService([
+        DvcLimitedPointDto(
+          id: 'l1',
+          groupId: 'g1',
+          startYearMonth: currentMonth,
+          endYearMonth: currentMonth,
+          point: 30,
+          memo: '期間限定メモ',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final tileFinder = find.ancestor(
+        of: find.text('期間限定ポイント: 30pt'),
+        matching: find.byType(ListTile),
+      );
+      final subtitleColumnFinder = find.descendant(
+        of: tileFinder,
+        matching: find.byType(Column),
+      );
+      final subtitleColumn = tester.widget<Column>(subtitleColumnFinder.first);
+      final subtitleTexts = subtitleColumn.children
+          .whereType<Text>()
+          .map((text) => text.data)
+          .whereType<String>()
+          .toList();
+
+      expect(subtitleTexts[0], '期間限定メモ');
+      expect(
+        subtitleTexts[1],
+        '有効期限: ${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(currentMonth)}',
+      );
     });
 
     testWidgets('利用ポイント内訳から利用登録済ポイントを削除できる', (tester) async {
