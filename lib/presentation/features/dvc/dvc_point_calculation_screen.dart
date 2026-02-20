@@ -680,6 +680,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       required Color borderColor,
       VoidCallback? onTap,
       Widget? footer,
+      TextStyle? textStyle,
       String keyPrefix = 'dvc_month_cell_',
     }) {
       return Container(
@@ -702,7 +703,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                   child: Text(
                     text,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13),
+                    style: const TextStyle(fontSize: 13).merge(textStyle),
                   ),
                 ),
               ),
@@ -781,6 +782,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               month: month,
               keyPrefix: 'dvc_available_cell_',
               text: '$availablePoint',
+              textStyle: availablePoint < 0
+                  ? const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    )
+                  : null,
               borderColor: borderColor,
               onTap: () => showAvailableBreakdownDialog(month, breakdowns),
             );

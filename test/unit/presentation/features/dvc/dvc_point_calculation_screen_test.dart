@@ -138,6 +138,50 @@ void main() {
       expect(find.textContaining(' pt'), findsNothing);
     });
 
+    testWidgets('利用可能ポイントがマイナスの場合は赤字太字で表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c-current',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 100,
+        ),
+      ]);
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u-current',
+          groupId: 'g1',
+          usageYearMonth: currentMonth,
+          usedPoint: 110,
+          memo: '超過利用',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final negativeAvailablePointTextFinder = find.descendant(
+        of: find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+        matching: find.text('-10'),
+      );
+
+      expect(negativeAvailablePointTextFinder, findsOneWidget);
+
+      final negativeAvailablePointText = tester.widget<Text>(
+        negativeAvailablePointTextFinder,
+      );
+      expect(negativeAvailablePointText.style?.color, Colors.red);
+      expect(negativeAvailablePointText.style?.fontWeight, FontWeight.bold);
+    });
+
     testWidgets('初期表示は現在年月から5年後までで、過去年月を含まない', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();

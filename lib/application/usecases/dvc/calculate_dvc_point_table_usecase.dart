@@ -91,6 +91,7 @@ class CalculateDvcPointTableUsecase {
 
     final workingBuckets = buckets.map((bucket) => bucket.copy()).toList();
     final summaries = <DvcMonthlyPointSummary>[];
+    var carriedOverusedPoint = 0;
 
     for (
       var month = simulationStart;
@@ -99,6 +100,16 @@ class CalculateDvcPointTableUsecase {
     ) {
       final monthUsages = usagesByMonth[_monthKey(month)] ?? const [];
       final activeBuckets = _activeBuckets(workingBuckets, month);
+      if (carriedOverusedPoint > 0) {
+        carriedOverusedPoint = _consumePoint(
+          activeBuckets: activeBuckets,
+          point: carriedOverusedPoint,
+        );
+      }
+      carriedOverusedPoint += _consumeByUsages(
+        activeBuckets: activeBuckets,
+        usages: monthUsages,
+      );
 
       if (!month.isBefore(normalizedStart)) {
         final availableBreakdowns = activeBuckets
@@ -115,10 +126,12 @@ class CalculateDvcPointTableUsecase {
             )
             .toList();
 
-        final availablePoint = availableBreakdowns.fold<int>(
-          0,
-          (sum, breakdown) => sum + breakdown.remainingPoint,
-        );
+        final availablePoint =
+            availableBreakdowns.fold<int>(
+              0,
+              (sum, breakdown) => sum + breakdown.remainingPoint,
+            ) -
+            carriedOverusedPoint;
         final usedPoint = monthUsages.fold<int>(
           0,
           (sum, usage) => sum + usage.usedPoint,
@@ -134,8 +147,6 @@ class CalculateDvcPointTableUsecase {
           ),
         );
       }
-
-      _consumeByUsages(activeBuckets: activeBuckets, usages: monthUsages);
     }
 
     return DvcPointTableCalculationResult(monthlySummaries: summaries);
@@ -231,21 +242,34 @@ class CalculateDvcPointTableUsecase {
     return active;
   }
 
-  void _consumeByUsages({
+  int _consumeByUsages({
     required List<_PointBucket> activeBuckets,
     required List<DvcPointUsageDto> usages,
   }) {
+    var overusedPoint = 0;
     for (final usage in usages) {
-      var remainToConsume = usage.usedPoint;
-      for (final bucket in activeBuckets) {
-        if (remainToConsume <= 0) {
-          break;
-        }
-        final consumable = min(bucket.remainingPoint, remainToConsume);
-        bucket.remainingPoint -= consumable;
-        remainToConsume -= consumable;
-      }
+      overusedPoint += _consumePoint(
+        activeBuckets: activeBuckets,
+        point: usage.usedPoint,
+      );
     }
+    return overusedPoint;
+  }
+
+  int _consumePoint({
+    required List<_PointBucket> activeBuckets,
+    required int point,
+  }) {
+    var remainToConsume = point;
+    for (final bucket in activeBuckets) {
+      if (remainToConsume <= 0) {
+        break;
+      }
+      final consumable = min(bucket.remainingPoint, remainToConsume);
+      bucket.remainingPoint -= consumable;
+      remainToConsume -= consumable;
+    }
+    return remainToConsume;
   }
 
   DateTime _monthStart(DateTime dateTime) =>
