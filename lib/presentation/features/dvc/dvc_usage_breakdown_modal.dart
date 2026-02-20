@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 typedef DvcUsageDeleteCallback = Future<void> Function(String pointUsageId);
 
@@ -30,6 +31,18 @@ Future<void> showDvcUsageBreakdownModal({
                         key: ValueKey('dvc_usage_delete_button_${usage.id}'),
                         icon: const Icon(Icons.delete_outline),
                         onPressed: () async {
+                          final confirmed = await DeleteConfirmDialog.show(
+                            dialogContext,
+                            title: '削除確認',
+                            content: '利用ポイントを削除しますか？',
+                            onConfirm: () {},
+                          );
+                          if (confirmed != true) {
+                            return;
+                          }
+                          if (!dialogContext.mounted) {
+                            return;
+                          }
                           Navigator.of(dialogContext).pop();
                           await onDelete(usage.id);
                         },

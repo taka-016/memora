@@ -183,6 +183,14 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       await loadData(showLoading: false);
     }
 
+    Future<void> deleteLimitedPoint(String limitedPointId) async {
+      final limitedPointRepository = ref.read(
+        dvcLimitedPointRepositoryProvider,
+      );
+      await limitedPointRepository.deleteDvcLimitedPoint(limitedPointId);
+      await loadData(showLoading: false);
+    }
+
     Future<void> deleteUsage(String pointUsageId) async {
       final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
       await pointUsageRepository.deleteDvcPointUsage(pointUsageId);
@@ -399,6 +407,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                     context: context,
                     month: month,
                     breakdowns: breakdowns,
+                    onDeleteLimitedPoint: deleteLimitedPoint,
                   ),
                 );
               },
