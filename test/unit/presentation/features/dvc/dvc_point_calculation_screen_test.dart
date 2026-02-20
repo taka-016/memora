@@ -495,7 +495,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('${currentMonth.year}ユースイヤー'), findsOneWidget);
-      expect(find.textContaining('有効期限:'), findsOneWidget);
+      expect(find.textContaining('〜'), findsOneWidget);
+      expect(find.textContaining('有効期限:'), findsNothing);
     });
 
     testWidgets('利用可能ポイント内訳の期間限定ポイントは削除できる', (tester) async {
@@ -527,6 +528,12 @@ void main() {
       await tester.tap(
         find.byKey(const ValueKey('dvc_limited_point_delete_button_l1')),
       );
+      await tester.pumpAndSettle();
+
+      expect(find.text('削除確認'), findsOneWidget);
+      expect(limitedRepository.deletedLimitedPointIds, isEmpty);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '削除'));
       await tester.pumpAndSettle();
 
       expect(limitedRepository.deletedLimitedPointIds, contains('l1'));
@@ -561,10 +568,11 @@ void main() {
       final endMonth = DateTime(currentMonth.year, currentMonth.month + 2);
       expect(
         find.text(
-          '有効期限: ${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(endMonth)}',
+          '${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(endMonth)}',
         ),
         findsOneWidget,
       );
+      expect(find.textContaining('有効期限:'), findsNothing);
     });
 
     testWidgets('期間限定ポイントの内訳はメモを有効期限より先に表示する', (tester) async {
@@ -611,7 +619,7 @@ void main() {
       expect(subtitleTexts[0], '期間限定メモ');
       expect(
         subtitleTexts[1],
-        '有効期限: ${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(currentMonth)}',
+        '${_formatYearMonthForTest(currentMonth)}〜${_formatYearMonthForTest(currentMonth)}',
       );
     });
 
@@ -636,6 +644,12 @@ void main() {
       await tester.tap(
         find.byKey(const ValueKey('dvc_usage_delete_button_u1')),
       );
+      await tester.pumpAndSettle();
+
+      expect(find.text('削除確認'), findsOneWidget);
+      expect(usageRepository.deletedUsageIds, isEmpty);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '削除'));
       await tester.pumpAndSettle();
 
       expect(usageRepository.deletedUsageIds, contains('u1'));

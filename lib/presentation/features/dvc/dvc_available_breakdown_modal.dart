@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 typedef DvcLimitedPointDeleteCallback =
     Future<void> Function(String limitedPointId);
@@ -25,7 +26,7 @@ Future<void> showDvcAvailableBreakdownModal({
                   children: breakdowns.map((breakdown) {
                     final memo = breakdown.memo?.trim() ?? '';
                     final expireLabel =
-                        '有効期限: ${dvcFormatYearMonth(breakdown.availableFrom)}〜'
+                        '${dvcFormatYearMonth(breakdown.availableFrom)}〜'
                         '${dvcFormatYearMonth(breakdown.expireAt)}';
                     final subtitleChildren = <Widget>[
                       if (breakdown.useYear != null)
@@ -60,6 +61,19 @@ Future<void> showDvcAvailableBreakdownModal({
                               ),
                               icon: const Icon(Icons.delete_outline),
                               onPressed: () async {
+                                final confirmed =
+                                    await DeleteConfirmDialog.show(
+                                      dialogContext,
+                                      title: '削除確認',
+                                      content: '期間限定ポイントを削除しますか？',
+                                      onConfirm: () {},
+                                    );
+                                if (confirmed != true) {
+                                  return;
+                                }
+                                if (!dialogContext.mounted) {
+                                  return;
+                                }
                                 Navigator.of(dialogContext).pop();
                                 await onDeleteLimitedPoint(breakdown.sourceId);
                               },
