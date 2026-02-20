@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -240,6 +242,78 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
+    testWidgets('利用ポイント登録後に横スクロール位置を維持したまま再計算できる', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      final usages = <DvcPointUsageDto>[];
+      final secondLoadCompleter = Completer<void>();
+      usageQueryService = _FakeDvcPointUsageQueryService(
+        usages,
+        onBeforeReturn: (callCount) async {
+          if (callCount == 2) {
+            await secondLoadCompleter.future;
+          }
+        },
+      );
+      usageRepository = _FakeDvcPointUsageRepository(
+        onSave: (pointUsage) {
+          usages.add(
+            DvcPointUsageDto(
+              id: 'u${usages.length + 1}',
+              groupId: pointUsage.groupId,
+              usageYearMonth: pointUsage.usageYearMonth,
+              usedPoint: pointUsage.usedPoint,
+              memo: pointUsage.memo,
+            ),
+          );
+        },
+      );
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.byKey(const Key('dvc_table_horizontal_scroll')),
+        const Offset(-40, 0),
+      );
+      await tester.pumpAndSettle();
+
+      final offsetBefore = _horizontalScrollOffset(tester);
+      expect(offsetBefore, greaterThan(0));
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_add_usage_button_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '10',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pump();
+
+      expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      secondLoadCompleter.complete();
+      await tester.pumpAndSettle();
+
+      final usedCell = find.byKey(
+        ValueKey('dvc_used_cell_${currentMonth.year}_${currentMonth.month}'),
+      );
+      expect(
+        find.descendant(of: usedCell, matching: find.text('10')),
+        findsOneWidget,
+      );
+
+      final offsetAfter = _horizontalScrollOffset(tester);
+      expect(offsetAfter, closeTo(offsetBefore, 0.1));
+    });
+
     testWidgets('3点メニューで操作メニューを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
@@ -446,6 +520,15 @@ Finder _findAddUsageButtons() {
   });
 }
 
+double _horizontalScrollOffset(WidgetTester tester) {
+  final scrollable = find.descendant(
+    of: find.byKey(const Key('dvc_table_horizontal_scroll')),
+    matching: find.byType(Scrollable),
+  );
+  final state = tester.state<ScrollableState>(scrollable);
+  return state.position.pixels;
+}
+
 DateTime _monthStart(DateTime dateTime) =>
     DateTime(dateTime.year, dateTime.month);
 
@@ -492,15 +575,21 @@ class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
 }
 
 class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  _FakeDvcPointUsageQueryService(this.usages);
+  _FakeDvcPointUsageQueryService(this.usages, {this.onBeforeReturn});
 
   final List<DvcPointUsageDto> usages;
+  final Future<void> Function(int callCount)? onBeforeReturn;
+  int _callCount = 0;
 
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
+    _callCount += 1;
+    if (onBeforeReturn != null) {
+      await onBeforeReturn!(_callCount);
+    }
     return usages.where((usage) => usage.groupId == groupId).toList();
   }
 }
@@ -548,9 +637,12 @@ class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
 }
 
 class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
+  _FakeDvcPointUsageRepository({this.onSave});
+
   final List<DvcPointUsage> savedUsages = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
+  final void Function(DvcPointUsage pointUsage)? onSave;
 
   @override
   Future<void> deleteDvcPointUsage(String pointUsageId) async {
@@ -565,5 +657,6 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   @override
   Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {
     savedUsages.add(pointUsage);
+    onSave?.call(pointUsage);
   }
 }

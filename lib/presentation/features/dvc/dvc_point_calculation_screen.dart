@@ -45,12 +45,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final pointUsagesState = useState<List<DvcPointUsageDto>>([]);
     final startMonthOffset = useState(0);
     final endMonthOffset = useState(_initialMonthRange);
+    final tableHorizontalScrollController = useScrollController();
 
     final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
 
-    Future<void> loadData() async {
+    Future<void> loadData({bool showLoading = true}) async {
       try {
-        state.value = _DvcScreenState.loading;
+        final shouldShowLoading =
+            showLoading || state.value != _DvcScreenState.loaded;
+        if (shouldShowLoading) {
+          state.value = _DvcScreenState.loading;
+        }
         final contractQueryService = ref.read(
           dvcPointContractQueryServiceProvider,
         );
@@ -130,7 +135,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       for (final contract in contracts) {
         await contractRepository.saveDvcPointContract(contract);
       }
-      await loadData();
+      await loadData(showLoading: false);
     }
 
     Future<void> saveLimitedPoint({
@@ -151,7 +156,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         memo: memo.isEmpty ? null : memo,
       );
       await limitedPointRepository.saveDvcLimitedPoint(limitedPoint);
-      await loadData();
+      await loadData(showLoading: false);
     }
 
     Future<void> saveUsage({
@@ -168,13 +173,13 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         memo: memo.isEmpty ? null : memo,
       );
       await pointUsageRepository.saveDvcPointUsage(usage);
-      await loadData();
+      await loadData(showLoading: false);
     }
 
     Future<void> deleteUsage(String pointUsageId) async {
       final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
       await pointUsageRepository.deleteDvcPointUsage(pointUsageId);
-      await loadData();
+      await loadData(showLoading: false);
     }
 
     void showContractManagementDialog() {
@@ -864,6 +869,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     key: const Key('dvc_table_horizontal_scroll'),
+                    controller: tableHorizontalScrollController,
                     scrollDirection: Axis.horizontal,
                     child: Column(
                       children: [
