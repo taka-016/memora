@@ -177,7 +177,7 @@ void main() {
 
       expect(
         _summaryAt(result.monthlySummaries, DateTime(2025, 5)).availablePoint,
-        200,
+        80,
       );
       expect(
         _summaryAt(result.monthlySummaries, DateTime(2025, 5)).usedPoint,
@@ -189,7 +189,7 @@ void main() {
       );
     });
 
-    test('当月の利用登録は当月の利用可能ポイント表示に影響しない', () {
+    test('当月の利用登録は当月の利用可能ポイント表示にも反映される', () {
       final contracts = [
         DvcPointContractDto(
           id: 'c1',
@@ -221,7 +221,7 @@ void main() {
 
       expect(
         _summaryAt(result.monthlySummaries, DateTime(2025, 10)).availablePoint,
-        100,
+        60,
       );
       expect(
         _summaryAt(result.monthlySummaries, DateTime(2025, 10)).usedPoint,
@@ -231,6 +231,86 @@ void main() {
         _summaryAt(result.monthlySummaries, DateTime(2025, 11)).availablePoint,
         60,
       );
+    });
+
+    test('利用可能ポイントを超える利用登録時は利用可能ポイントがマイナスになる', () {
+      final contracts = [
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 100,
+        ),
+      ];
+      final usages = [
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: DateTime(2025, 10),
+          usedPoint: 110,
+          memo: '超過利用',
+        ),
+      ];
+
+      final result = usecase.execute(
+        contracts: contracts,
+        limitedPoints: const [],
+        pointUsages: usages,
+        startYearMonth: DateTime(2025, 10),
+        endYearMonth: DateTime(2025, 11),
+      );
+
+      expect(
+        _summaryAt(result.monthlySummaries, DateTime(2025, 10)).availablePoint,
+        -10,
+      );
+      expect(
+        _summaryAt(result.monthlySummaries, DateTime(2025, 11)).availablePoint,
+        -10,
+      );
+    });
+
+    test('有効期限内で0ポイントになった内訳も保持される', () {
+      final contracts = [
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 100,
+        ),
+      ];
+      final usages = [
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: DateTime(2025, 10),
+          usedPoint: 100,
+          memo: '全量利用',
+        ),
+      ];
+
+      final result = usecase.execute(
+        contracts: contracts,
+        limitedPoints: const [],
+        pointUsages: usages,
+        startYearMonth: DateTime(2025, 10),
+        endYearMonth: DateTime(2025, 11),
+      );
+
+      final novemberSummary = _summaryAt(
+        result.monthlySummaries,
+        DateTime(2025, 11),
+      );
+      expect(novemberSummary.availablePoint, 0);
+      expect(novemberSummary.availableBreakdowns, hasLength(1));
+      expect(novemberSummary.availableBreakdowns.first.remainingPoint, 0);
+      expect(novemberSummary.availableBreakdowns.first.useYear, 2025);
     });
   });
 }

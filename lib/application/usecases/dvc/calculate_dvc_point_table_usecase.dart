@@ -13,6 +13,7 @@ class DvcAvailablePointBreakdown {
     required this.remainingPoint,
     required this.availableFrom,
     required this.expireAt,
+    this.useYear,
     this.memo,
   });
 
@@ -21,6 +22,7 @@ class DvcAvailablePointBreakdown {
   final int remainingPoint;
   final DateTime availableFrom;
   final DateTime expireAt;
+  final int? useYear;
   final String? memo;
 }
 
@@ -89,6 +91,7 @@ class CalculateDvcPointTableUsecase {
 
     final workingBuckets = buckets.map((bucket) => bucket.copy()).toList();
     final summaries = <DvcMonthlyPointSummary>[];
+    var carriedOverusedPoint = 0;
 
     for (
       var month = simulationStart;
@@ -97,6 +100,16 @@ class CalculateDvcPointTableUsecase {
     ) {
       final monthUsages = usagesByMonth[_monthKey(month)] ?? const [];
       final activeBuckets = _activeBuckets(workingBuckets, month);
+      if (carriedOverusedPoint > 0) {
+        carriedOverusedPoint = _consumePoint(
+          activeBuckets: activeBuckets,
+          point: carriedOverusedPoint,
+        );
+      }
+      carriedOverusedPoint += _consumeByUsages(
+        activeBuckets: activeBuckets,
+        usages: monthUsages,
+      );
 
       if (!month.isBefore(normalizedStart)) {
         final availableBreakdowns = activeBuckets
@@ -107,15 +120,18 @@ class CalculateDvcPointTableUsecase {
                 remainingPoint: bucket.remainingPoint,
                 availableFrom: bucket.availableFrom,
                 expireAt: _addMonths(bucket.expireExclusive, -1),
+                useYear: bucket.useYear,
                 memo: bucket.memo,
               ),
             )
             .toList();
 
-        final availablePoint = availableBreakdowns.fold<int>(
-          0,
-          (sum, breakdown) => sum + breakdown.remainingPoint,
-        );
+        final availablePoint =
+            availableBreakdowns.fold<int>(
+              0,
+              (sum, breakdown) => sum + breakdown.remainingPoint,
+            ) -
+            carriedOverusedPoint;
         final usedPoint = monthUsages.fold<int>(
           0,
           (sum, usage) => sum + usage.usedPoint,
@@ -131,8 +147,6 @@ class CalculateDvcPointTableUsecase {
           ),
         );
       }
-
-      _consumeByUsages(activeBuckets: activeBuckets, usages: monthUsages);
     }
 
     return DvcPointTableCalculationResult(monthlySummaries: summaries);
@@ -168,6 +182,7 @@ class CalculateDvcPointTableUsecase {
           expireExclusive: DateTime(grantMonth.year + 2, grantMonth.month),
           totalPoint: contract.annualPoint,
           remainingPoint: contract.annualPoint,
+          useYear: grantMonth.year,
         ),
       );
       grantMonth = DateTime(grantMonth.year + 1, grantMonth.month);
@@ -186,6 +201,7 @@ class CalculateDvcPointTableUsecase {
       expireExclusive: _addMonths(end, 1),
       totalPoint: max(0, limitedPoint.point),
       remainingPoint: max(0, limitedPoint.point),
+      useYear: null,
       memo: limitedPoint.memo,
     );
   }
@@ -218,7 +234,6 @@ class CalculateDvcPointTableUsecase {
         buckets
             .where(
               (bucket) =>
-                  bucket.remainingPoint > 0 &&
                   !month.isBefore(bucket.availableFrom) &&
                   month.isBefore(bucket.expireExclusive),
             )
@@ -227,21 +242,34 @@ class CalculateDvcPointTableUsecase {
     return active;
   }
 
-  void _consumeByUsages({
+  int _consumeByUsages({
     required List<_PointBucket> activeBuckets,
     required List<DvcPointUsageDto> usages,
   }) {
+    var overusedPoint = 0;
     for (final usage in usages) {
-      var remainToConsume = usage.usedPoint;
-      for (final bucket in activeBuckets) {
-        if (remainToConsume <= 0) {
-          break;
-        }
-        final consumable = min(bucket.remainingPoint, remainToConsume);
-        bucket.remainingPoint -= consumable;
-        remainToConsume -= consumable;
-      }
+      overusedPoint += _consumePoint(
+        activeBuckets: activeBuckets,
+        point: usage.usedPoint,
+      );
     }
+    return overusedPoint;
+  }
+
+  int _consumePoint({
+    required List<_PointBucket> activeBuckets,
+    required int point,
+  }) {
+    var remainToConsume = point;
+    for (final bucket in activeBuckets) {
+      if (remainToConsume <= 0) {
+        break;
+      }
+      final consumable = min(bucket.remainingPoint, remainToConsume);
+      bucket.remainingPoint -= consumable;
+      remainToConsume -= consumable;
+    }
+    return remainToConsume;
   }
 
   DateTime _monthStart(DateTime dateTime) =>
@@ -263,6 +291,7 @@ class _PointBucket {
     required this.expireExclusive,
     required this.totalPoint,
     required this.remainingPoint,
+    required this.useYear,
     this.memo,
   });
 
@@ -272,6 +301,7 @@ class _PointBucket {
   final DateTime expireExclusive;
   final int totalPoint;
   int remainingPoint;
+  final int? useYear;
   final String? memo;
 
   _PointBucket copy() {
@@ -282,6 +312,7 @@ class _PointBucket {
       expireExclusive: expireExclusive,
       totalPoint: totalPoint,
       remainingPoint: remainingPoint,
+      useYear: useYear,
       memo: memo,
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -138,6 +140,50 @@ void main() {
       expect(find.textContaining(' pt'), findsNothing);
     });
 
+    testWidgets('利用可能ポイントがマイナスの場合は赤字太字で表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c-current',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 100,
+        ),
+      ]);
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u-current',
+          groupId: 'g1',
+          usageYearMonth: currentMonth,
+          usedPoint: 110,
+          memo: '超過利用',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final negativeAvailablePointTextFinder = find.descendant(
+        of: find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+        matching: find.text('-10'),
+      );
+
+      expect(negativeAvailablePointTextFinder, findsOneWidget);
+
+      final negativeAvailablePointText = tester.widget<Text>(
+        negativeAvailablePointTextFinder,
+      );
+      expect(negativeAvailablePointText.style?.color, Colors.red);
+      expect(negativeAvailablePointText.style?.fontWeight, FontWeight.bold);
+    });
+
     testWidgets('初期表示は現在年月から5年後までで、過去年月を含まない', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
@@ -196,6 +242,78 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
+    testWidgets('利用ポイント登録後に横スクロール位置を維持したまま再計算できる', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      final usages = <DvcPointUsageDto>[];
+      final secondLoadCompleter = Completer<void>();
+      usageQueryService = _FakeDvcPointUsageQueryService(
+        usages,
+        onBeforeReturn: (callCount) async {
+          if (callCount == 2) {
+            await secondLoadCompleter.future;
+          }
+        },
+      );
+      usageRepository = _FakeDvcPointUsageRepository(
+        onSave: (pointUsage) {
+          usages.add(
+            DvcPointUsageDto(
+              id: 'u${usages.length + 1}',
+              groupId: pointUsage.groupId,
+              usageYearMonth: pointUsage.usageYearMonth,
+              usedPoint: pointUsage.usedPoint,
+              memo: pointUsage.memo,
+            ),
+          );
+        },
+      );
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+        find.byKey(const Key('dvc_table_horizontal_scroll')),
+        const Offset(-40, 0),
+      );
+      await tester.pumpAndSettle();
+
+      final offsetBefore = _horizontalScrollOffset(tester);
+      expect(offsetBefore, greaterThan(0));
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_add_usage_button_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('dvc_usage_point_field')),
+        '10',
+      );
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pump();
+
+      expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      secondLoadCompleter.complete();
+      await tester.pumpAndSettle();
+
+      final usedCell = find.byKey(
+        ValueKey('dvc_used_cell_${currentMonth.year}_${currentMonth.month}'),
+      );
+      expect(
+        find.descendant(of: usedCell, matching: find.text('10')),
+        findsOneWidget,
+      );
+
+      final offsetAfter = _horizontalScrollOffset(tester);
+      expect(offsetAfter, closeTo(offsetBefore, 0.1));
+    });
+
     testWidgets('3点メニューで操作メニューを開ける', (tester) async {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
@@ -234,6 +352,156 @@ void main() {
       expect(find.text('終了年月'), findsOneWidget);
       expect(find.text('ポイント数'), findsOneWidget);
     });
+
+    testWidgets('利用可能ポイント内訳タイトルは年月で改行して2段表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c-current',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 100,
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('${_formatYearMonthForTest(currentMonth)}\n利用可能ポイント内訳'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('利用ポイント内訳タイトルは年月で改行して2段表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: currentMonth,
+          usedPoint: 10,
+          memo: '利用済み',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await _tapUsageCellBody(tester, currentMonth);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('${_formatYearMonthForTest(currentMonth)}\n利用ポイント内訳'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('有効期限内で0ポイントになった利用可能ポイントも0ptで表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c-current',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 100,
+        ),
+      ]);
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: DateTime(currentMonth.year, currentMonth.month - 1),
+          usedPoint: 100,
+          memo: '使い切り',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('契約A: 0pt'), findsOneWidget);
+    });
+
+    testWidgets('利用可能ポイント内訳にユースイヤーと有効期限を表示する', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      contractQueryService = _FakeDvcPointContractQueryService([
+        DvcPointContractDto(
+          id: 'c-current',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: currentMonth,
+          contractEndYearMonth: currentMonth,
+          useYearStartMonth: currentMonth.month,
+          annualPoint: 100,
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(
+          ValueKey(
+            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('${currentMonth.year}ユースイヤー'), findsOneWidget);
+      expect(find.textContaining('有効期限:'), findsOneWidget);
+    });
+
+    testWidgets('利用ポイント内訳から利用登録済ポイントを削除できる', (tester) async {
+      final currentMonth = _monthStart(DateTime.now());
+      usageQueryService = _FakeDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: currentMonth,
+          usedPoint: 10,
+          memo: '削除対象',
+        ),
+      ]);
+
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await _tapUsageCellBody(tester, currentMonth);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('dvc_usage_delete_button_u1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(usageRepository.deletedUsageIds, contains('u1'));
+    });
   });
 }
 
@@ -250,6 +518,31 @@ Finder _findAddUsageButtons() {
     return key is ValueKey<String> &&
         key.value.startsWith('dvc_add_usage_button_');
   });
+}
+
+double _horizontalScrollOffset(WidgetTester tester) {
+  final scrollable = find.descendant(
+    of: find.byKey(const Key('dvc_table_horizontal_scroll')),
+    matching: find.byType(Scrollable),
+  );
+  final state = tester.state<ScrollableState>(scrollable);
+  return state.position.pixels;
+}
+
+DateTime _monthStart(DateTime dateTime) =>
+    DateTime(dateTime.year, dateTime.month);
+
+String _formatYearMonthForTest(DateTime dateTime) {
+  final month = dateTime.month.toString().padLeft(2, '0');
+  return '${dateTime.year}-$month';
+}
+
+Future<void> _tapUsageCellBody(WidgetTester tester, DateTime month) async {
+  final cellFinder = find.byKey(
+    ValueKey('dvc_used_cell_${month.year}_${month.month}'),
+  );
+  final rect = tester.getRect(cellFinder);
+  await tester.tapAt(Offset(rect.center.dx, rect.top + 12));
 }
 
 class _FakeDvcPointContractQueryService
@@ -282,15 +575,21 @@ class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
 }
 
 class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  _FakeDvcPointUsageQueryService(this.usages);
+  _FakeDvcPointUsageQueryService(this.usages, {this.onBeforeReturn});
 
   final List<DvcPointUsageDto> usages;
+  final Future<void> Function(int callCount)? onBeforeReturn;
+  int _callCount = 0;
 
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
+    _callCount += 1;
+    if (onBeforeReturn != null) {
+      await onBeforeReturn!(_callCount);
+    }
     return usages.where((usage) => usage.groupId == groupId).toList();
   }
 }
@@ -338,9 +637,12 @@ class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
 }
 
 class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
+  _FakeDvcPointUsageRepository({this.onSave});
+
   final List<DvcPointUsage> savedUsages = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
+  final void Function(DvcPointUsage pointUsage)? onSave;
 
   @override
   Future<void> deleteDvcPointUsage(String pointUsageId) async {
@@ -355,5 +657,6 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   @override
   Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {
     savedUsages.add(pointUsage);
+    onSave?.call(pointUsage);
   }
 }
