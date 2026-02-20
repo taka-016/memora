@@ -13,6 +13,7 @@ class DvcAvailablePointBreakdown {
     required this.remainingPoint,
     required this.availableFrom,
     required this.expireAt,
+    this.useYear,
     this.memo,
   });
 
@@ -21,6 +22,7 @@ class DvcAvailablePointBreakdown {
   final int remainingPoint;
   final DateTime availableFrom;
   final DateTime expireAt;
+  final int? useYear;
   final String? memo;
 }
 
@@ -107,6 +109,7 @@ class CalculateDvcPointTableUsecase {
                 remainingPoint: bucket.remainingPoint,
                 availableFrom: bucket.availableFrom,
                 expireAt: _addMonths(bucket.expireExclusive, -1),
+                useYear: bucket.useYear,
                 memo: bucket.memo,
               ),
             )
@@ -168,6 +171,7 @@ class CalculateDvcPointTableUsecase {
           expireExclusive: DateTime(grantMonth.year + 2, grantMonth.month),
           totalPoint: contract.annualPoint,
           remainingPoint: contract.annualPoint,
+          useYear: grantMonth.year,
         ),
       );
       grantMonth = DateTime(grantMonth.year + 1, grantMonth.month);
@@ -186,6 +190,7 @@ class CalculateDvcPointTableUsecase {
       expireExclusive: _addMonths(end, 1),
       totalPoint: max(0, limitedPoint.point),
       remainingPoint: max(0, limitedPoint.point),
+      useYear: null,
       memo: limitedPoint.memo,
     );
   }
@@ -218,7 +223,6 @@ class CalculateDvcPointTableUsecase {
         buckets
             .where(
               (bucket) =>
-                  bucket.remainingPoint > 0 &&
                   !month.isBefore(bucket.availableFrom) &&
                   month.isBefore(bucket.expireExclusive),
             )
@@ -263,6 +267,7 @@ class _PointBucket {
     required this.expireExclusive,
     required this.totalPoint,
     required this.remainingPoint,
+    required this.useYear,
     this.memo,
   });
 
@@ -272,6 +277,7 @@ class _PointBucket {
   final DateTime expireExclusive;
   final int totalPoint;
   int remainingPoint;
+  final int? useYear;
   final String? memo;
 
   _PointBucket copy() {
@@ -282,6 +288,7 @@ class _PointBucket {
       expireExclusive: expireExclusive,
       totalPoint: totalPoint,
       remainingPoint: remainingPoint,
+      useYear: useYear,
       memo: memo,
     );
   }

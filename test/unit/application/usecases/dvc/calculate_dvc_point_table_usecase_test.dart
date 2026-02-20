@@ -232,6 +232,46 @@ void main() {
         60,
       );
     });
+
+    test('有効期限内で0ポイントになった内訳も保持される', () {
+      final contracts = [
+        DvcPointContractDto(
+          id: 'c1',
+          groupId: 'g1',
+          contractName: '契約A',
+          contractStartYearMonth: DateTime(2025, 10),
+          contractEndYearMonth: DateTime(2025, 10),
+          useYearStartMonth: 10,
+          annualPoint: 100,
+        ),
+      ];
+      final usages = [
+        DvcPointUsageDto(
+          id: 'u1',
+          groupId: 'g1',
+          usageYearMonth: DateTime(2025, 10),
+          usedPoint: 100,
+          memo: '全量利用',
+        ),
+      ];
+
+      final result = usecase.execute(
+        contracts: contracts,
+        limitedPoints: const [],
+        pointUsages: usages,
+        startYearMonth: DateTime(2025, 10),
+        endYearMonth: DateTime(2025, 11),
+      );
+
+      final novemberSummary = _summaryAt(
+        result.monthlySummaries,
+        DateTime(2025, 11),
+      );
+      expect(novemberSummary.availablePoint, 0);
+      expect(novemberSummary.availableBreakdowns, hasLength(1));
+      expect(novemberSummary.availableBreakdowns.first.remainingPoint, 0);
+      expect(novemberSummary.availableBreakdowns.first.useYear, 2025);
+    });
   });
 }
 

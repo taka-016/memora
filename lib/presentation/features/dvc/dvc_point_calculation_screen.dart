@@ -171,6 +171,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       await loadData();
     }
 
+    Future<void> deleteUsage(String pointUsageId) async {
+      final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
+      await pointUsageRepository.deleteDvcPointUsage(pointUsageId);
+      await loadData();
+    }
+
     void showContractManagementDialog() {
       final editable = contractsState.value
           .map(
@@ -503,7 +509,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text('${_formatYearMonth(month)} 利用可能ポイント内訳'),
+            title: Text('${_formatYearMonth(month)}\n利用可能ポイント内訳'),
             content: SizedBox(
               width: 520,
               child: breakdowns.isEmpty
@@ -511,17 +517,23 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                   : ListView(
                       shrinkWrap: true,
                       children: breakdowns.map((breakdown) {
-                        final period =
-                            '${_formatYearMonth(breakdown.availableFrom)}〜${_formatYearMonth(breakdown.expireAt)}';
-                        final memo =
-                            breakdown.memo == null || breakdown.memo!.isEmpty
-                            ? ''
-                            : '\n${breakdown.memo!}';
+                        final memo = breakdown.memo?.trim() ?? '';
                         return ListTile(
                           title: Text(
                             '${breakdown.sourceName}: ${breakdown.remainingPoint}pt',
                           ),
-                          subtitle: Text('$period$memo'),
+                          subtitle: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (breakdown.useYear != null)
+                                Text('${breakdown.useYear}ユースイヤー'),
+                              Text(
+                                '有効期限: ${_formatYearMonth(breakdown.expireAt)}',
+                              ),
+                              if (memo.isNotEmpty) Text(memo),
+                            ],
+                          ),
                         );
                       }).toList(),
                     ),
@@ -543,9 +555,9 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     ) {
       showDialog<void>(
         context: context,
-        builder: (context) {
+        builder: (dialogContext) {
           return AlertDialog(
-            title: Text('${_formatYearMonth(month)} 利用ポイント内訳'),
+            title: Text('${_formatYearMonth(month)}\n利用ポイント内訳'),
             content: SizedBox(
               width: 520,
               child: usages.isEmpty
@@ -558,7 +570,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                             : usage.memo!;
                         return ListTile(
                           title: Text('${usage.usedPoint}pt'),
-                          subtitle: Text(memo),
+                          subtitle: memo.isEmpty ? null : Text(memo),
+                          trailing: IconButton(
+                            key: ValueKey(
+                              'dvc_usage_delete_button_${usage.id}',
+                            ),
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: () async {
+                              Navigator.of(dialogContext).pop();
+                              await deleteUsage(usage.id);
+                            },
+                          ),
                         );
                       }).toList(),
                     ),
