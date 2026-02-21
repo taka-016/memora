@@ -1,4 +1,4 @@
-# Flutter + Android開発環境（Android専用）
+# Flutter + Android開発環境
 FROM instrumentisto/flutter:3.35.4-androidsdk35-r0
 
 USER root
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   nano \
   vim \
   tree \
+  tmux \
   ripgrep \
   openssh-server \
   procps \
