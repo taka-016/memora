@@ -105,7 +105,32 @@ void main() {
         find.byKey(const Key('timeline_dvc_point_calculation_button')),
         findsOneWidget,
       );
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget.key ==
+                  const Key('timeline_dvc_point_calculation_button') &&
+              widget is ElevatedButton,
+        ),
+        findsOneWidget,
+      );
       expect(find.text('DVCポイント計算'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('timeline_dvc_point_calculation_button')),
+          matching: find.byIcon(Icons.calculate),
+        ),
+        findsOneWidget,
+      );
+
+      final button = tester.widget<ElevatedButton>(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
+      final foregroundColor = button.style?.foregroundColor?.resolve({});
+      final defaultTextColor = Theme.of(
+        tester.element(find.byType(GroupTimeline)),
+      ).textTheme.bodyMedium?.color;
+      expect(foregroundColor, defaultTextColor);
     });
 
     testWidgets('DVCポイント計算ボタンをタップするとコールバック関数が呼ばれる', (

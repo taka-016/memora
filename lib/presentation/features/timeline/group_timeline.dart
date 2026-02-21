@@ -658,10 +658,14 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     Widget buildDvcPointCalculationButton() {
-      return TextButton(
+      return ElevatedButton.icon(
         key: const Key('timeline_dvc_point_calculation_button'),
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+        ),
         onPressed: onDvcPointCalculationPressed,
-        child: const Text('DVCポイント計算'),
+        icon: const Icon(Icons.calculate),
+        label: const Text('DVCポイント計算'),
       );
     }
 
