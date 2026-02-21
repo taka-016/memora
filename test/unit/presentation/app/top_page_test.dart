@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
+import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
+import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
+import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
@@ -15,6 +18,10 @@ import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
@@ -105,6 +112,13 @@ void main() {
         ],
       ),
     ];
+
+    when(
+      mockGroupQueryService.getGroupWithMembersById(
+        any,
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => groupsWithMembers.first);
   });
 
   Widget createTestWidget({
@@ -152,6 +166,15 @@ void main() {
         authServiceProvider.overrideWithValue(testAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
         pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+        dvcPointContractQueryServiceProvider.overrideWithValue(
+          const _FakeDvcPointContractQueryService(),
+        ),
+        dvcLimitedPointQueryServiceProvider.overrideWithValue(
+          const _FakeDvcLimitedPointQueryService(),
+        ),
+        dvcPointUsageQueryServiceProvider.overrideWithValue(
+          const _FakeDvcPointUsageQueryService(),
+        ),
       ],
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
@@ -784,4 +807,41 @@ void main() {
       expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
+}
+
+class _FakeDvcPointContractQueryService
+    implements DvcPointContractQueryService {
+  const _FakeDvcPointContractQueryService();
+
+  @override
+  Future<List<DvcPointContractDto>> getDvcPointContractsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
+}
+
+class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
+  const _FakeDvcLimitedPointQueryService();
+
+  @override
+  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
+}
+
+class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
+  const _FakeDvcPointUsageQueryService();
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
 }

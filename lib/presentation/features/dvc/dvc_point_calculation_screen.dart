@@ -7,6 +7,7 @@ import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
@@ -28,7 +29,7 @@ enum _DvcActionMenu { contractRegistration, limitedPointRegistration }
 class DvcPointCalculationScreen extends HookConsumerWidget {
   const DvcPointCalculationScreen({
     super.key,
-    required this.group,
+    required this.groupId,
     required this.onBackPressed,
   });
 
@@ -38,7 +39,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
   static const double _monthColumnWidth = 40;
   static const double _rowHeight = 96;
 
-  final GroupDto group;
+  final String groupId;
   final VoidCallback onBackPressed;
 
   @override
@@ -48,11 +49,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final contractsState = useState<List<DvcPointContractDto>>([]);
     final limitedPointsState = useState<List<DvcLimitedPointDto>>([]);
     final pointUsagesState = useState<List<DvcPointUsageDto>>([]);
+    final groupNameState = useState('');
     final startMonthOffset = useState(0);
     final endMonthOffset = useState(_initialMonthRange);
     final tableHorizontalScrollController = useScrollController();
 
     final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
+    final getGroupWithMembersByIdUsecase = ref.read(
+      getGroupWithMembersByIdUsecaseProvider,
+    );
 
     Future<void> loadData({bool showLoading = true}) async {
       try {
@@ -71,16 +76,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           dvcPointUsageQueryServiceProvider,
         );
         final results = await Future.wait([
+          getGroupWithMembersByIdUsecase.execute(groupId),
           contractQueryService.getDvcPointContractsByGroupId(
-            group.id,
+            groupId,
             orderBy: [const OrderBy('contractName', descending: false)],
           ),
           limitedPointQueryService.getDvcLimitedPointsByGroupId(
-            group.id,
+            groupId,
             orderBy: [const OrderBy('startYearMonth', descending: false)],
           ),
           pointUsageQueryService.getDvcPointUsagesByGroupId(
-            group.id,
+            groupId,
             orderBy: [const OrderBy('usageYearMonth', descending: false)],
           ),
         ]);
@@ -89,9 +95,11 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           return;
         }
 
-        contractsState.value = results[0] as List<DvcPointContractDto>;
-        limitedPointsState.value = results[1] as List<DvcLimitedPointDto>;
-        pointUsagesState.value = results[2] as List<DvcPointUsageDto>;
+        final group = results[0] as GroupDto?;
+        groupNameState.value = group?.name ?? '';
+        contractsState.value = results[1] as List<DvcPointContractDto>;
+        limitedPointsState.value = results[2] as List<DvcLimitedPointDto>;
+        pointUsagesState.value = results[3] as List<DvcPointUsageDto>;
         state.value = _DvcScreenState.loaded;
       } catch (e, stack) {
         logger.e(
@@ -110,7 +118,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     useEffect(() {
       Future.microtask(loadData);
       return null;
-    }, [group.id]);
+    }, [groupId]);
 
     final currentMonth = dvcMonthStart(DateTime.now());
     final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
@@ -135,10 +143,10 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final contractRepository = ref.read(dvcPointContractRepositoryProvider);
       final contracts = editable
           .where((contract) => contract.isValid)
-          .map((contract) => contract.toEntity(group.id))
+          .map((contract) => contract.toEntity(groupId))
           .toList();
 
-      await contractRepository.deleteDvcPointContractsByGroupId(group.id);
+      await contractRepository.deleteDvcPointContractsByGroupId(groupId);
       for (final contract in contracts) {
         await contractRepository.saveDvcPointContract(contract);
       }
@@ -156,7 +164,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       );
       final limitedPoint = DvcLimitedPoint(
         id: '',
-        groupId: group.id,
+        groupId: groupId,
         startYearMonth: dvcMonthStart(startYearMonth),
         endYearMonth: dvcMonthStart(endYearMonth),
         point: point,
@@ -174,7 +182,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
       final usage = DvcPointUsage(
         id: '',
-        groupId: group.id,
+        groupId: groupId,
         usageYearMonth: dvcMonthStart(usageYearMonth),
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
@@ -213,7 +221,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             ),
             Center(
               child: Text(
-                group.name,
+                groupNameState.value,
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,

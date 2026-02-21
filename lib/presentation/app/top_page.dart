@@ -123,9 +123,9 @@ class TopPage extends HookConsumerWidget {
                     .backFromTripManagement(),
               )
             : Container(),
-        timelineState.selectedDvcGroup != null
+        timelineState.selectedDvcGroupId != null
             ? DvcPointCalculationScreen(
-                group: timelineState.selectedDvcGroup!,
+                groupId: timelineState.selectedDvcGroupId!,
                 onBackPressed: () => ref
                     .read(groupTimelineNavigationNotifierProvider.notifier)
                     .backFromDvcPointCalculation(),

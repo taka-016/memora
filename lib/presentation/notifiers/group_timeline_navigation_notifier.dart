@@ -20,7 +20,7 @@ class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
   final String? selectedGroupId;
   final int? selectedYear;
-  final GroupDto? selectedDvcGroup;
+  final String? selectedDvcGroupId;
   final GroupTimeline? groupTimelineInstance;
   final VoidCallback? refreshGroupTimeline;
 
@@ -28,7 +28,7 @@ class GroupTimelineNavigationState {
     required this.currentScreen,
     this.selectedGroupId,
     this.selectedYear,
-    this.selectedDvcGroup,
+    this.selectedDvcGroupId,
     this.groupTimelineInstance,
     this.refreshGroupTimeline,
   });
@@ -37,12 +37,12 @@ class GroupTimelineNavigationState {
     GroupTimelineScreenState? currentScreen,
     String? selectedGroupId,
     int? selectedYear,
-    GroupDto? selectedDvcGroup,
+    String? selectedDvcGroupId,
     GroupTimeline? groupTimelineInstance,
     VoidCallback? refreshGroupTimeline,
     bool clearGroupId = false,
     bool clearYear = false,
-    bool clearDvcGroup = false,
+    bool clearDvcGroupId = false,
     bool clearInstance = false,
     bool clearRefresh = false,
   }) {
@@ -52,9 +52,9 @@ class GroupTimelineNavigationState {
           ? null
           : (selectedGroupId ?? this.selectedGroupId),
       selectedYear: clearYear ? null : (selectedYear ?? this.selectedYear),
-      selectedDvcGroup: clearDvcGroup
+      selectedDvcGroupId: clearDvcGroupId
           ? null
-          : (selectedDvcGroup ?? this.selectedDvcGroup),
+          : (selectedDvcGroupId ?? this.selectedDvcGroupId),
       groupTimelineInstance: clearInstance
           ? null
           : (groupTimelineInstance ?? this.groupTimelineInstance),
@@ -77,7 +77,7 @@ class GroupTimelineNavigationNotifier
   void showGroupList() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.groupList,
-      clearDvcGroup: true,
+      clearDvcGroupId: true,
       clearInstance: true,
     );
   }
@@ -88,7 +88,7 @@ class GroupTimelineNavigationNotifier
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
       onDvcPointCalculationPressed: () =>
-          showDvcPointCalculation(groupWithMembers),
+          showDvcPointCalculation(groupWithMembers.id),
       onSetRefreshCallback: (callback) {
         Future(() {
           state = state.copyWith(refreshGroupTimeline: callback);
@@ -98,7 +98,7 @@ class GroupTimelineNavigationNotifier
 
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
-      clearDvcGroup: true,
+      clearDvcGroupId: true,
       groupTimelineInstance: groupTimeline,
     );
   }
@@ -121,17 +121,17 @@ class GroupTimelineNavigationNotifier
     state.refreshGroupTimeline?.call();
   }
 
-  void showDvcPointCalculation(GroupDto selectedDvcGroup) {
+  void showDvcPointCalculation(String selectedDvcGroupId) {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.dvcPointCalculation,
-      selectedDvcGroup: selectedDvcGroup,
+      selectedDvcGroupId: selectedDvcGroupId,
     );
   }
 
   void backFromDvcPointCalculation() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
-      clearDvcGroup: true,
+      clearDvcGroupId: true,
     );
   }
 
@@ -140,7 +140,7 @@ class GroupTimelineNavigationNotifier
       currentScreen: GroupTimelineScreenState.groupList,
       clearGroupId: true,
       clearYear: true,
-      clearDvcGroup: true,
+      clearDvcGroupId: true,
       clearInstance: true,
       clearRefresh: true,
     );

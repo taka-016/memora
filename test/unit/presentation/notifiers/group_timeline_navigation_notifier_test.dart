@@ -38,7 +38,7 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedDvcGroup, isNull);
+      expect(state.selectedDvcGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -98,12 +98,12 @@ void main() {
       );
 
       // Act
-      notifier.showDvcPointCalculation(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.dvcPointCalculation);
-      expect(state.selectedDvcGroup, testGroupWithMembers);
+      expect(state.selectedDvcGroupId, testGroupWithMembers.id);
     });
 
     test('旅行管理画面から戻ることができる', () {
@@ -142,7 +142,7 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedDvcGroup, isNull);
+      expect(state.selectedDvcGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -153,7 +153,7 @@ void main() {
         groupTimelineNavigationNotifierProvider.notifier,
       );
       notifier.showGroupTimeline(testGroupWithMembers);
-      notifier.showDvcPointCalculation(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
 
       // Act
       notifier.backFromDvcPointCalculation();
@@ -161,7 +161,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedDvcGroup, isNull);
+      expect(state.selectedDvcGroupId, isNull);
     });
 
     test('スタックインデックスを正しく取得できる', () {
@@ -182,7 +182,7 @@ void main() {
       expect(notifier.getStackIndex(), 2);
 
       // DVCポイント計算画面の場合
-      notifier.showDvcPointCalculation(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
       expect(notifier.getStackIndex(), 3);
     });
 
