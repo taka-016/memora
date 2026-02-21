@@ -38,7 +38,6 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -142,7 +141,6 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
