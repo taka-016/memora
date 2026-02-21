@@ -20,7 +20,6 @@ class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
   final String? selectedGroupId;
   final int? selectedYear;
-  final String? selectedDvcGroupId;
   final GroupTimeline? groupTimelineInstance;
   final VoidCallback? refreshGroupTimeline;
 
@@ -28,7 +27,6 @@ class GroupTimelineNavigationState {
     required this.currentScreen,
     this.selectedGroupId,
     this.selectedYear,
-    this.selectedDvcGroupId,
     this.groupTimelineInstance,
     this.refreshGroupTimeline,
   });
@@ -37,12 +35,10 @@ class GroupTimelineNavigationState {
     GroupTimelineScreenState? currentScreen,
     String? selectedGroupId,
     int? selectedYear,
-    String? selectedDvcGroupId,
     GroupTimeline? groupTimelineInstance,
     VoidCallback? refreshGroupTimeline,
     bool clearGroupId = false,
     bool clearYear = false,
-    bool clearDvcGroupId = false,
     bool clearInstance = false,
     bool clearRefresh = false,
   }) {
@@ -52,9 +48,6 @@ class GroupTimelineNavigationState {
           ? null
           : (selectedGroupId ?? this.selectedGroupId),
       selectedYear: clearYear ? null : (selectedYear ?? this.selectedYear),
-      selectedDvcGroupId: clearDvcGroupId
-          ? null
-          : (selectedDvcGroupId ?? this.selectedDvcGroupId),
       groupTimelineInstance: clearInstance
           ? null
           : (groupTimelineInstance ?? this.groupTimelineInstance),
@@ -77,7 +70,8 @@ class GroupTimelineNavigationNotifier
   void showGroupList() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.groupList,
-      clearDvcGroupId: true,
+      clearGroupId: true,
+      clearYear: true,
       clearInstance: true,
     );
   }
@@ -98,7 +92,8 @@ class GroupTimelineNavigationNotifier
 
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
-      clearDvcGroupId: true,
+      clearGroupId: true,
+      clearYear: true,
       groupTimelineInstance: groupTimeline,
     );
   }
@@ -121,17 +116,17 @@ class GroupTimelineNavigationNotifier
     state.refreshGroupTimeline?.call();
   }
 
-  void showDvcPointCalculation(String selectedDvcGroupId) {
+  void showDvcPointCalculation(String selectedGroupId) {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.dvcPointCalculation,
-      selectedDvcGroupId: selectedDvcGroupId,
+      selectedGroupId: selectedGroupId,
     );
   }
 
   void backFromDvcPointCalculation() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
-      clearDvcGroupId: true,
+      clearGroupId: true,
     );
   }
 
@@ -140,7 +135,6 @@ class GroupTimelineNavigationNotifier
       currentScreen: GroupTimelineScreenState.groupList,
       clearGroupId: true,
       clearYear: true,
-      clearDvcGroupId: true,
       clearInstance: true,
       clearRefresh: true,
     );

@@ -38,7 +38,7 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedDvcGroupId, isNull);
+      expect(state.selectedGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -103,7 +103,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.dvcPointCalculation);
-      expect(state.selectedDvcGroupId, testGroupWithMembers.id);
+      expect(state.selectedGroupId, testGroupWithMembers.id);
     });
 
     test('旅行管理画面から戻ることができる', () {
@@ -142,7 +142,7 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
-      expect(state.selectedDvcGroupId, isNull);
+      expect(state.selectedGroupId, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -161,7 +161,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedDvcGroupId, isNull);
+      expect(state.selectedGroupId, isNull);
     });
 
     test('スタックインデックスを正しく取得できる', () {
