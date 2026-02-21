@@ -9,7 +9,7 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
@@ -20,29 +20,24 @@ import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {
   group('DvcPointCalculationScreen', () {
-    late GroupDto group;
+    const groupId = 'g1';
     late _FakeDvcPointContractQueryService contractQueryService;
     late _FakeDvcLimitedPointQueryService limitedQueryService;
     late _FakeDvcPointUsageQueryService usageQueryService;
+    late _FakeGroupQueryService groupQueryService;
     late _FakeDvcPointContractRepository contractRepository;
     late _FakeDvcLimitedPointRepository limitedRepository;
     late _FakeDvcPointUsageRepository usageRepository;
 
     setUp(() {
-      group = const GroupDto(
-        id: 'g1',
-        ownerId: 'o1',
-        name: '家族グループ',
-        members: [],
-      );
-
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
           id: 'c1',
-          groupId: 'g1',
+          groupId: groupId,
           contractName: '契約A',
           contractStartYearMonth: DateTime(2025, 10),
           contractEndYearMonth: DateTime(2025, 10),
@@ -52,6 +47,9 @@ void main() {
       ]);
       limitedQueryService = _FakeDvcLimitedPointQueryService(const []);
       usageQueryService = _FakeDvcPointUsageQueryService(const []);
+      groupQueryService = const _FakeGroupQueryService(
+        GroupDto(id: groupId, ownerId: 'o1', name: '家族グループ', members: []),
+      );
 
       contractRepository = _FakeDvcPointContractRepository();
       limitedRepository = _FakeDvcLimitedPointRepository();
@@ -70,6 +68,7 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             usageQueryService,
           ),
+          groupQueryServiceProvider.overrideWithValue(groupQueryService),
           dvcPointContractRepositoryProvider.overrideWithValue(
             contractRepository,
           ),
@@ -80,7 +79,10 @@ void main() {
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: DvcPointCalculationScreen(group: group, onBackPressed: () {}),
+            body: DvcPointCalculationScreen(
+              groupId: groupId,
+              onBackPressed: () {},
+            ),
           ),
         ),
       );
@@ -810,5 +812,40 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
   Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {
     savedUsages.add(pointUsage);
     onSave?.call(pointUsage);
+  }
+}
+
+class _FakeGroupQueryService implements GroupQueryService {
+  const _FakeGroupQueryService(this.group);
+
+  final GroupDto group;
+
+  @override
+  Future<GroupDto?> getGroupWithMembersById(
+    String groupId, {
+    List<OrderBy>? membersOrderBy,
+  }) async {
+    if (group.id != groupId) {
+      return null;
+    }
+    return group;
+  }
+
+  @override
+  Future<List<GroupDto>> getGroupsWithMembersByMemberId(
+    String memberId, {
+    List<OrderBy>? groupsOrderBy,
+    List<OrderBy>? membersOrderBy,
+  }) async {
+    return [group];
+  }
+
+  @override
+  Future<List<GroupDto>> getManagedGroupsWithMembersByOwnerId(
+    String ownerId, {
+    List<OrderBy>? groupsOrderBy,
+    List<OrderBy>? membersOrderBy,
+  }) async {
+    return [group];
   }
 }
