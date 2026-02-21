@@ -128,6 +128,8 @@ class GroupTimelineNavigationNotifier
       currentScreen: GroupTimelineScreenState.timeline,
       clearGroupId: true,
     );
+
+    state.refreshGroupTimeline?.call();
   }
 
   void resetToGroupList() {
