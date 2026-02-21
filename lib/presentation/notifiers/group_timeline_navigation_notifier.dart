@@ -69,11 +69,15 @@ class GroupTimelineNavigationNotifier
     );
   }
 
-  void showGroupTimeline(GroupDto groupWithMembers) {
+  void showGroupTimeline(
+    GroupDto groupWithMembers, {
+    VoidCallback? onDvcPointCalculationPressed,
+  }) {
     final groupTimeline = GroupTimeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
+      onDvcPointCalculationPressed: onDvcPointCalculationPressed,
       onSetRefreshCallback: (callback) {
         Future(() {
           state = state.copyWith(refreshGroupTimeline: callback);

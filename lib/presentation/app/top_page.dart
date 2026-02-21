@@ -90,7 +90,23 @@ class TopPage extends HookConsumerWidget {
   void _onGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
-        .showGroupTimeline(groupWithMembers);
+        .showGroupTimeline(
+          groupWithMembers,
+          onDvcPointCalculationPressed: () =>
+              _onDvcPointCalculationSelected(ref, groupWithMembers),
+        );
+  }
+
+  void _onDvcPointCalculationSelected(
+    WidgetRef ref,
+    GroupDto groupWithMembers,
+  ) {
+    ref
+        .read(dvcPointCalculationNavigationNotifierProvider.notifier)
+        .showCalculation(groupWithMembers);
+    ref
+        .read(navigationNotifierProvider.notifier)
+        .selectItem(NavigationItem.dvcPointCalculation);
   }
 
   void _onDvcGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
@@ -121,7 +137,12 @@ class TopPage extends HookConsumerWidget {
           listKey: const Key('group_list'),
         ),
         isTestEnvironment
-            ? _buildTestGroupTimeline(ref)
+            ? _buildTestGroupTimeline(
+                ref,
+                timelineState
+                    .groupTimelineInstance
+                    ?.onDvcPointCalculationPressed,
+              )
             : timelineState.groupTimelineInstance ?? Container(),
         timelineState.selectedGroupId != null &&
                 timelineState.selectedYear != null
@@ -137,7 +158,10 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildTestGroupTimeline(WidgetRef ref) {
+  Widget _buildTestGroupTimeline(
+    WidgetRef ref,
+    VoidCallback? onDvcPointCalculationPressed,
+  ) {
     return Container(
       key: const Key('group_timeline'),
       child: Column(
@@ -153,6 +177,19 @@ class TopPage extends HookConsumerWidget {
               },
             ),
             title: const Text('テストグループ'),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  key: const Key('timeline_dvc_point_calculation_button'),
+                  onPressed: onDvcPointCalculationPressed,
+                  child: const Text('DVCポイント計算'),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: _buildTestPlaceholder(
@@ -232,10 +269,8 @@ class TopPage extends HookConsumerWidget {
             ? DvcPointCalculationScreen(
                 group: dvcState.selectedGroup!,
                 onBackPressed: () => ref
-                    .read(
-                      dvcPointCalculationNavigationNotifierProvider.notifier,
-                    )
-                    .showGroupList(),
+                    .read(navigationNotifierProvider.notifier)
+                    .selectItem(NavigationItem.groupTimeline),
               )
             : Container(),
       ],
@@ -357,13 +392,6 @@ class TopPage extends HookConsumerWidget {
         Icons.timeline,
         'グループ年表',
         NavigationItem.groupTimeline,
-      ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.calculate,
-        'DVCポイント計算',
-        NavigationItem.dvcPointCalculation,
       ),
       _buildDrawerItem(
         context,

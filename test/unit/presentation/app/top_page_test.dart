@@ -197,13 +197,13 @@ void main() {
 
       // Assert
       expect(find.text('グループ年表'), findsOneWidget);
-      expect(find.text('DVCポイント計算'), findsOneWidget);
+      expect(find.text('DVCポイント計算'), findsNothing);
       expect(find.text('地図表示'), findsOneWidget);
       expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
       expect(find.byIcon(Icons.timeline), findsOneWidget);
-      expect(find.byIcon(Icons.calculate), findsOneWidget);
+      expect(find.byIcon(Icons.calculate), findsNothing);
       expect(find.byIcon(Icons.map), findsOneWidget);
       expect(find.byIcon(Icons.group_work), findsOneWidget);
       expect(find.byIcon(Icons.people), findsOneWidget);
@@ -286,7 +286,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('メニューから「DVCポイント計算」を選択すると、グループ一覧画面が表示される', (
+    testWidgets('グループ年表の「DVCポイント計算」をタップすると計算画面に遷移する', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -302,27 +302,25 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // いったん別画面に遷移する
-      await tester.tap(find.byIcon(Icons.menu));
+      // グループ一覧からグループ選択して年表へ遷移する
+      await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('設定'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('settings')), findsOneWidget);
 
-      // DVCポイント計算を選択する
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('DVCポイント計算'));
+      // 年表画面のDVCポイント計算ボタンを押下する
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_list')), findsOneWidget);
-      expect(find.text('グループを選択'), findsOneWidget);
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsOneWidget,
+      );
+      expect(find.text('グループ1'), findsOneWidget);
     });
 
-    testWidgets('DVCポイント計算でグループ一覧から計算画面へ遷移し、戻ると一覧に戻る', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('DVCポイント計算画面の戻るボタンを押すとグループ年表に戻る', (WidgetTester tester) async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -336,12 +334,11 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('DVCポイント計算'));
-      await tester.pumpAndSettle();
-
       await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
       await tester.pumpAndSettle();
 
       // Assert
@@ -360,7 +357,7 @@ void main() {
         find.byKey(const Key('dvc_point_calculation_screen')),
         findsNothing,
       );
-      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
     testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
