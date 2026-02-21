@@ -568,8 +568,8 @@ void main() {
       );
       expect(
         indexedStack.children.length,
-        3,
-      ); // GroupList, GroupTimeline, TripManagement
+        4,
+      ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
       expect(indexedStack.children.first, isA<GroupSelectionList>());
 

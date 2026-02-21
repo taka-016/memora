@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
-enum GroupTimelineScreenState { groupList, timeline, tripManagement }
+enum GroupTimelineScreenState {
+  groupList,
+  timeline,
+  tripManagement,
+  dvcPointCalculation,
+}
 
 final groupTimelineNavigationNotifierProvider =
     NotifierProvider<
@@ -15,6 +20,7 @@ class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
   final String? selectedGroupId;
   final int? selectedYear;
+  final GroupDto? selectedDvcGroup;
   final GroupTimeline? groupTimelineInstance;
   final VoidCallback? refreshGroupTimeline;
 
@@ -22,6 +28,7 @@ class GroupTimelineNavigationState {
     required this.currentScreen,
     this.selectedGroupId,
     this.selectedYear,
+    this.selectedDvcGroup,
     this.groupTimelineInstance,
     this.refreshGroupTimeline,
   });
@@ -30,10 +37,12 @@ class GroupTimelineNavigationState {
     GroupTimelineScreenState? currentScreen,
     String? selectedGroupId,
     int? selectedYear,
+    GroupDto? selectedDvcGroup,
     GroupTimeline? groupTimelineInstance,
     VoidCallback? refreshGroupTimeline,
     bool clearGroupId = false,
     bool clearYear = false,
+    bool clearDvcGroup = false,
     bool clearInstance = false,
     bool clearRefresh = false,
   }) {
@@ -43,6 +52,9 @@ class GroupTimelineNavigationState {
           ? null
           : (selectedGroupId ?? this.selectedGroupId),
       selectedYear: clearYear ? null : (selectedYear ?? this.selectedYear),
+      selectedDvcGroup: clearDvcGroup
+          ? null
+          : (selectedDvcGroup ?? this.selectedDvcGroup),
       groupTimelineInstance: clearInstance
           ? null
           : (groupTimelineInstance ?? this.groupTimelineInstance),
@@ -65,19 +77,18 @@ class GroupTimelineNavigationNotifier
   void showGroupList() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.groupList,
+      clearDvcGroup: true,
       clearInstance: true,
     );
   }
 
-  void showGroupTimeline(
-    GroupDto groupWithMembers, {
-    VoidCallback? onDvcPointCalculationPressed,
-  }) {
+  void showGroupTimeline(GroupDto groupWithMembers) {
     final groupTimeline = GroupTimeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
-      onDvcPointCalculationPressed: onDvcPointCalculationPressed,
+      onDvcPointCalculationPressed: () =>
+          showDvcPointCalculation(groupWithMembers),
       onSetRefreshCallback: (callback) {
         Future(() {
           state = state.copyWith(refreshGroupTimeline: callback);
@@ -87,6 +98,7 @@ class GroupTimelineNavigationNotifier
 
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
+      clearDvcGroup: true,
       groupTimelineInstance: groupTimeline,
     );
   }
@@ -109,11 +121,26 @@ class GroupTimelineNavigationNotifier
     state.refreshGroupTimeline?.call();
   }
 
+  void showDvcPointCalculation(GroupDto selectedDvcGroup) {
+    state = state.copyWith(
+      currentScreen: GroupTimelineScreenState.dvcPointCalculation,
+      selectedDvcGroup: selectedDvcGroup,
+    );
+  }
+
+  void backFromDvcPointCalculation() {
+    state = state.copyWith(
+      currentScreen: GroupTimelineScreenState.timeline,
+      clearDvcGroup: true,
+    );
+  }
+
   void resetToGroupList() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.groupList,
       clearGroupId: true,
       clearYear: true,
+      clearDvcGroup: true,
       clearInstance: true,
       clearRefresh: true,
     );
@@ -127,6 +154,8 @@ class GroupTimelineNavigationNotifier
         return 1;
       case GroupTimelineScreenState.tripManagement:
         return 2;
+      case GroupTimelineScreenState.dvcPointCalculation:
+        return 3;
     }
   }
 }

@@ -38,6 +38,7 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
+      expect(state.selectedDvcGroup, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -90,6 +91,21 @@ void main() {
       expect(state.selectedYear, testYear);
     });
 
+    test('DVCポイント計算画面に遷移できる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      notifier.showDvcPointCalculation(testGroupWithMembers);
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.dvcPointCalculation);
+      expect(state.selectedDvcGroup, testGroupWithMembers);
+    });
+
     test('旅行管理画面から戻ることができる', () {
       // Arrange
       final notifier = container.read(
@@ -126,8 +142,26 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.selectedGroupId, isNull);
       expect(state.selectedYear, isNull);
+      expect(state.selectedDvcGroup, isNull);
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
+    });
+
+    test('DVCポイント計算画面から戻ることができる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers);
+
+      // Act
+      notifier.backFromDvcPointCalculation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedDvcGroup, isNull);
     });
 
     test('スタックインデックスを正しく取得できる', () {
@@ -146,6 +180,10 @@ void main() {
       // 旅行管理画面の場合
       notifier.showTripManagement('test-group', 2024);
       expect(notifier.getStackIndex(), 2);
+
+      // DVCポイント計算画面の場合
+      notifier.showDvcPointCalculation(testGroupWithMembers);
+      expect(notifier.getStackIndex(), 3);
     });
 
     test('年表表示時にGroupTimelineインスタンスが作成される', () {

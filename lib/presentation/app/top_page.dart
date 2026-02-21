@@ -5,7 +5,6 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/dvc_point_calculation_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
@@ -33,9 +32,6 @@ class TopPage extends HookConsumerWidget {
         ref.read(navigationNotifierProvider.notifier).resetToDefault();
         ref
             .read(groupTimelineNavigationNotifierProvider.notifier)
-            .resetToGroupList();
-        ref
-            .read(dvcPointCalculationNavigationNotifierProvider.notifier)
             .resetToGroupList();
       });
       return null;
@@ -79,40 +75,13 @@ class TopPage extends HookConsumerWidget {
           .read(groupTimelineNavigationNotifierProvider.notifier)
           .resetToGroupList();
     }
-    if (item != NavigationItem.dvcPointCalculation) {
-      ref
-          .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-          .resetToGroupList();
-    }
     Navigator.of(context).pop();
   }
 
   void _onGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
-        .showGroupTimeline(
-          groupWithMembers,
-          onDvcPointCalculationPressed: () =>
-              _onDvcPointCalculationSelected(ref, groupWithMembers),
-        );
-  }
-
-  void _onDvcPointCalculationSelected(
-    WidgetRef ref,
-    GroupDto groupWithMembers,
-  ) {
-    ref
-        .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-        .showCalculation(groupWithMembers);
-    ref
-        .read(navigationNotifierProvider.notifier)
-        .selectItem(NavigationItem.dvcPointCalculation);
-  }
-
-  void _onDvcGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
-    ref
-        .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-        .showCalculation(groupWithMembers);
+        .showGroupTimeline(groupWithMembers);
   }
 
   Widget _buildGroupTimelineStack(
@@ -152,6 +121,14 @@ class TopPage extends HookConsumerWidget {
                 onBackPressed: () => ref
                     .read(groupTimelineNavigationNotifierProvider.notifier)
                     .backFromTripManagement(),
+              )
+            : Container(),
+        timelineState.selectedDvcGroup != null
+            ? DvcPointCalculationScreen(
+                group: timelineState.selectedDvcGroup!,
+                onBackPressed: () => ref
+                    .read(groupTimelineNavigationNotifierProvider.notifier)
+                    .backFromDvcPointCalculation(),
               )
             : Container(),
       ],
@@ -214,8 +191,6 @@ class TopPage extends HookConsumerWidget {
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
         return _buildGroupTimelineStack(context, ref, currentMember);
-      case NavigationItem.dvcPointCalculation:
-        return _buildDvcPointCalculationStack(ref);
       case NavigationItem.mapDisplay:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
@@ -250,31 +225,6 @@ class TopPage extends HookConsumerWidget {
       case NavigationItem.accountSettings:
         return const AccountSettings();
     }
-  }
-
-  Widget _buildDvcPointCalculationStack(WidgetRef ref) {
-    final dvcState = ref.watch(dvcPointCalculationNavigationNotifierProvider);
-
-    return IndexedStack(
-      index: ref
-          .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-          .getStackIndex(),
-      children: [
-        GroupSelectionList(
-          onGroupSelected: (group) => _onDvcGroupSelected(ref, group),
-          title: 'グループを選択',
-          listKey: const Key('group_list'),
-        ),
-        dvcState.selectedGroup != null
-            ? DvcPointCalculationScreen(
-                group: dvcState.selectedGroup!,
-                onBackPressed: () => ref
-                    .read(navigationNotifierProvider.notifier)
-                    .selectItem(NavigationItem.groupTimeline),
-              )
-            : Container(),
-      ],
-    );
   }
 
   Widget _buildTestPlaceholder({
