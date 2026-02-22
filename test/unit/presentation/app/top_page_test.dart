@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
+import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
+import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
+import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
@@ -15,6 +18,10 @@ import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
@@ -105,6 +112,13 @@ void main() {
         ],
       ),
     ];
+
+    when(
+      mockGroupQueryService.getGroupWithMembersById(
+        any,
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => groupsWithMembers.first);
   });
 
   Widget createTestWidget({
@@ -152,6 +166,15 @@ void main() {
         authServiceProvider.overrideWithValue(testAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
         pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+        dvcPointContractQueryServiceProvider.overrideWithValue(
+          const _FakeDvcPointContractQueryService(),
+        ),
+        dvcLimitedPointQueryServiceProvider.overrideWithValue(
+          const _FakeDvcLimitedPointQueryService(),
+        ),
+        dvcPointUsageQueryServiceProvider.overrideWithValue(
+          const _FakeDvcPointUsageQueryService(),
+        ),
       ],
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
@@ -197,13 +220,13 @@ void main() {
 
       // Assert
       expect(find.text('グループ年表'), findsOneWidget);
-      expect(find.text('DVCポイント計算'), findsOneWidget);
+      expect(find.text('DVCポイント計算'), findsNothing);
       expect(find.text('地図表示'), findsOneWidget);
       expect(find.text('グループ管理'), findsOneWidget);
       expect(find.text('メンバー管理'), findsOneWidget);
       expect(find.text('設定'), findsOneWidget);
       expect(find.byIcon(Icons.timeline), findsOneWidget);
-      expect(find.byIcon(Icons.calculate), findsOneWidget);
+      expect(find.byIcon(Icons.calculate), findsNothing);
       expect(find.byIcon(Icons.map), findsOneWidget);
       expect(find.byIcon(Icons.group_work), findsOneWidget);
       expect(find.byIcon(Icons.people), findsOneWidget);
@@ -286,7 +309,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('メニューから「DVCポイント計算」を選択すると、グループ一覧画面が表示される', (
+    testWidgets('グループ年表の「DVCポイント計算」をタップすると計算画面に遷移する', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -302,27 +325,25 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      // いったん別画面に遷移する
-      await tester.tap(find.byIcon(Icons.menu));
+      // グループ一覧からグループ選択して年表へ遷移する
+      await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('設定'));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('settings')), findsOneWidget);
 
-      // DVCポイント計算を選択する
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('DVCポイント計算'));
+      // 年表画面のDVCポイント計算ボタンを押下する
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
       await tester.pumpAndSettle();
 
       // Assert
-      expect(find.byKey(const Key('group_list')), findsOneWidget);
-      expect(find.text('グループを選択'), findsOneWidget);
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsOneWidget,
+      );
+      expect(find.text('グループ1'), findsOneWidget);
     });
 
-    testWidgets('DVCポイント計算でグループ一覧から計算画面へ遷移し、戻ると一覧に戻る', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('DVCポイント計算画面の戻るボタンを押すとグループ年表に戻る', (WidgetTester tester) async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -336,12 +357,11 @@ void main() {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.menu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('DVCポイント計算'));
-      await tester.pumpAndSettle();
-
       await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
       await tester.pumpAndSettle();
 
       // Assert
@@ -360,7 +380,7 @@ void main() {
         find.byKey(const Key('dvc_point_calculation_screen')),
         findsNothing,
       );
-      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
     testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
@@ -571,8 +591,8 @@ void main() {
       );
       expect(
         indexedStack.children.length,
-        3,
-      ); // GroupList, GroupTimeline, TripManagement
+        4,
+      ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
       expect(indexedStack.children.first, isA<GroupSelectionList>());
 
@@ -787,4 +807,41 @@ void main() {
       expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
+}
+
+class _FakeDvcPointContractQueryService
+    implements DvcPointContractQueryService {
+  const _FakeDvcPointContractQueryService();
+
+  @override
+  Future<List<DvcPointContractDto>> getDvcPointContractsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
+}
+
+class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
+  const _FakeDvcLimitedPointQueryService();
+
+  @override
+  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
+}
+
+class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
+  const _FakeDvcPointUsageQueryService();
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
 }

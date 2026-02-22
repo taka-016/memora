@@ -95,6 +95,59 @@ void main() {
       expect(find.byIcon(Icons.settings_input_composite), findsOneWidget);
     });
 
+    testWidgets('年表タイトル下の右端にDVCポイント計算ボタンが表示される', (WidgetTester tester) async {
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+        findsOneWidget,
+      );
+      expect(find.text('DVCポイント計算'), findsOneWidget);
+    });
+
+    testWidgets('DVCポイント計算ボタンをタップするとコールバック関数が呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      var callbackCalled = false;
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onDvcPointCalculationPressed: () {
+                  callbackCalled = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(callbackCalled, isTrue);
+    });
+
     testWidgets('年表のヘッダー行に年の列が表示される', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(createTestWidget());

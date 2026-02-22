@@ -24,6 +24,7 @@ class GroupTimeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
+  final VoidCallback? onDvcPointCalculationPressed;
   final Function(VoidCallback)? onSetRefreshCallback;
 
   static const int _initialYearRange = 5;
@@ -46,6 +47,7 @@ class GroupTimeline extends HookConsumerWidget {
     required this.groupWithMembers,
     this.onBackPressed,
     this.onTripManagementSelected,
+    this.onDvcPointCalculationPressed,
     this.onSetRefreshCallback,
   });
 
@@ -655,14 +657,31 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
+    Widget buildDvcPointCalculationButton() {
+      return TextButton(
+        key: const Key('timeline_dvc_point_calculation_button'),
+        onPressed: onDvcPointCalculationPressed,
+        child: const Text('DVCポイント計算'),
+      );
+    }
+
     Widget buildHeader() {
       return Container(
-        padding: const EdgeInsets.all(16),
-        child: Stack(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (onBackPressed != null) buildBackButton(),
-            buildGroupTitle(),
-            buildSettingsButton(),
+            Stack(
+              children: [
+                if (onBackPressed != null) buildBackButton(),
+                buildGroupTitle(),
+                buildSettingsButton(),
+              ],
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [buildDvcPointCalculationButton()],
+            ),
           ],
         ),
       );

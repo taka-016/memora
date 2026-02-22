@@ -90,6 +90,21 @@ void main() {
       expect(state.selectedYear, testYear);
     });
 
+    test('DVCポイント計算画面に遷移できる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.dvcPointCalculation);
+      expect(state.selectedGroupId, testGroupWithMembers.id);
+    });
+
     test('旅行管理画面から戻ることができる', () {
       // Arrange
       final notifier = container.read(
@@ -130,6 +145,23 @@ void main() {
       expect(state.refreshGroupTimeline, isNull);
     });
 
+    test('DVCポイント計算画面から戻ることができる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+
+      // Act
+      notifier.backFromDvcPointCalculation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedGroupId, isNull);
+    });
+
     test('スタックインデックスを正しく取得できる', () {
       // Arrange
       final notifier = container.read(
@@ -146,6 +178,10 @@ void main() {
       // 旅行管理画面の場合
       notifier.showTripManagement('test-group', 2024);
       expect(notifier.getStackIndex(), 2);
+
+      // DVCポイント計算画面の場合
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+      expect(notifier.getStackIndex(), 3);
     });
 
     test('年表表示時にGroupTimelineインスタンスが作成される', () {
