@@ -14,10 +14,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   curl \
   nano \
-  vim \
   tree \
   tmux \
+  build-essential \
   ripgrep \
+  fd-find \
+  xclip \
   openssh-server \
   procps \
   gnupg \
@@ -33,18 +35,39 @@ ChallengeResponseAuthentication no
 PubkeyAuthentication yes
 EOF
 
+# bashの履歴を永続化
+RUN mkdir -p /commandhistory && \
+  touch /commandhistory/.bash_history && \
+  echo "export HISTFILE=/commandhistory/.bash_history" >> /etc/bash.bashrc && \
+  echo "export PROMPT_COMMAND='history -a'" >> /etc/bash.bashrc
+
+# fdfind→fd
+RUN ln -s $(which fdfind) /usr/local/bin/fd
+
+# Neovimのインストール
+RUN curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux-x86_64.tar.gz \
+ && tar xzf nvim-linux-x86_64.tar.gz \
+ && mv nvim-linux-x86_64 /opt/nvim \
+ && ln -s /opt/nvim/bin/nvim /usr/local/bin/nvim
+RUN echo 'alias vim=nvim' >> /root/.bashrc
+RUN mkdir -p /root/.config/nvim
+RUN printf '%s\n' \
+"set number" \
+"set relativenumber" \
+"set tabstop=2" \
+"set shiftwidth=2" \
+"set expandtab" \
+"set smartindent" \
+"set clipboard=unnamedplus" \
+"syntax on" \
+> /root/.config/nvim/init.vim
+
 # Node.jsとnpmのインストール
 RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   apt-get update && \
   apt-get install -y nodejs && \
   apt-get clean && rm -rf /var/lib/apt/lists/* && \
   npm install -g npm@11
-
-# bashの履歴を永続化
-RUN mkdir -p /commandhistory && \
-  touch /commandhistory/.bash_history && \
-  echo "export HISTFILE=/commandhistory/.bash_history" >> /etc/bash.bashrc && \
-  echo "export PROMPT_COMMAND='history -a'" >> /etc/bash.bashrc
 
 # claude codeのインストール
 ARG CLAUDE_CODE_VERSION=latest
@@ -59,9 +82,6 @@ RUN npm install -g firebase-tools
 
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
-
-# UVのインストール
-RUN curl -LsSf https://astral.sh/uv/install.sh | sudo env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
 
 # code-server インストール
 RUN curl -fsSL https://code-server.dev/install.sh | sh
