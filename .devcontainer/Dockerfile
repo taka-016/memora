@@ -59,6 +59,11 @@ RUN printf '%s\n' \
 "set expandtab" \
 "set smartindent" \
 "set clipboard=unnamedplus" \
+"set ignorecase" \
+"set smartcase" \
+"set incsearch" \
+"set hlsearch" \
+"set mouse=a" \
 "syntax on" \
 > /root/.config/nvim/init.vim
 
