@@ -18,7 +18,8 @@
         "source=android-sdk-memora,target=/opt/android-sdk-linux,type=volume",
         "source=gradle-memora,target=/root/.gradle,type=volume",
         "source=bashhistory-memora,target=/commandhistory,type=volume",
-        "source=ssh-host-keys-memora,target=/etc/ssh,type=volume"
+        "source=ssh-host-keys-memora,target=/etc/ssh,type=volume",
+        "source=tmux-config-memora,target=/root/.config/tmux/tmux.conf,type=volume"
     ],
     "runArgs": [
         "--env-file",
