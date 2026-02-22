@@ -88,8 +88,5 @@ RUN npm install -g firebase-tools
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
 
-# code-server インストール
-RUN curl -fsSL https://code-server.dev/install.sh | sh
-
 # /root/.gitconfig を削除
 RUN rm -f /root/.gitconfig
