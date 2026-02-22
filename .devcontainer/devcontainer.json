@@ -19,15 +19,13 @@
         "source=gradle-memora,target=/root/.gradle,type=volume",
         "source=bashhistory-memora,target=/commandhistory,type=volume",
         "source=ssh-host-keys-memora,target=/etc/ssh,type=volume",
-        "source=tmux-config-memora,target=/root/.tmux.conf,type=volume"
+        "source=tmux-config-memora,target=/root/.config/tmux/tmux.conf,type=volume"
     ],
     "runArgs": [
         "--env-file",
         ".devcontainer/.env",
         "-p",
-        "2222:22",
-        "-p",
-        "8080:8080"
+        "2222:22"
     ],
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1.0": {}

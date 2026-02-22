@@ -21,5 +21,3 @@ else
     echo "sshdの起動に失敗しました"
   fi
 fi
-
-code-server /workspaces --bind-addr 0.0.0.0:8080 --auth none
