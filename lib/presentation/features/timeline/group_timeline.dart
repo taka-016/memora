@@ -661,7 +661,10 @@ class GroupTimeline extends HookConsumerWidget {
       return ElevatedButton.icon(
         key: const Key('timeline_dvc_point_calculation_button'),
         style: ElevatedButton.styleFrom(
-          foregroundColor: Theme.of(context).textTheme.bodyMedium?.color,
+          foregroundColor:
+              DefaultTextStyle.of(context).style.color ??
+              Theme.of(context).textTheme.bodyMedium?.color ??
+              Theme.of(context).colorScheme.onSurface,
         ),
         onPressed: onDvcPointCalculationPressed,
         icon: const Icon(Icons.calculate),

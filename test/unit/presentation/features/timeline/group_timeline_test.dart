@@ -127,9 +127,13 @@ void main() {
         find.byKey(const Key('timeline_dvc_point_calculation_button')),
       );
       final foregroundColor = button.style?.foregroundColor?.resolve({});
-      final defaultTextColor = Theme.of(
-        tester.element(find.byType(GroupTimeline)),
-      ).textTheme.bodyMedium?.color;
+      final timelineElement = tester.element(find.byType(GroupTimeline));
+      final defaultTextColor =
+          DefaultTextStyle.of(timelineElement).style.color ??
+          Theme.of(timelineElement).textTheme.bodyMedium?.color ??
+          Theme.of(timelineElement).colorScheme.onSurface;
+      expect(foregroundColor, isNotNull);
+      expect(defaultTextColor, isNotNull);
       expect(foregroundColor, defaultTextColor);
     });
 
