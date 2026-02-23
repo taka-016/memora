@@ -512,23 +512,30 @@ class GroupTimeline extends HookConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                key: Key('fixed_row_$rowIndex'),
-                width: _fixedColumnWidth,
-                height: rowHeights[rowIndex],
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: borderColor, width: _borderWidth),
-                    bottom: BorderSide(color: borderColor, width: _borderWidth),
+              GestureDetector(
+                onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  key: Key('fixed_row_$rowIndex'),
+                  width: _fixedColumnWidth,
+                  height: rowHeights[rowIndex],
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(color: borderColor, width: _borderWidth),
+                      bottom: BorderSide(
+                        color: borderColor,
+                        width: _borderWidth,
+                      ),
+                    ),
                   ),
+                  child: rowIndex == 2
+                      ? _buildDvcPointUsageLabel(
+                          onPressed: onDvcPointCalculationPressed,
+                        )
+                      : Text(label),
                 ),
-                child: rowIndex == 2
-                    ? _buildDvcPointUsageLabel(
-                        onPressed: onDvcPointCalculationPressed,
-                      )
-                    : Text(label),
               ),
               Container(
                 width: _borderWidth,

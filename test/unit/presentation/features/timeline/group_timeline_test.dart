@@ -170,6 +170,45 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
+    testWidgets('DVC行の固定セル全体をタップするとコールバック関数が呼ばれる', (WidgetTester tester) async {
+      // Arrange
+      var callbackCalled = false;
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onDvcPointCalculationPressed: () {
+                  callbackCalled = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.byKey(const Key('fixed_row_2')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(callbackCalled, isTrue);
+    });
+
     testWidgets('DVCポイント利用行に利用年月・利用ポイント・メモが表示される', (WidgetTester tester) async {
       // Arrange
       final currentYear = DateTime.now().year;
