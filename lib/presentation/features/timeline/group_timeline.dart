@@ -551,7 +551,7 @@ class GroupTimeline extends HookConsumerWidget {
           if (rowIndex < rowHeights.length)
             Positioned(
               left: 0,
-              bottom: 0,
+              bottom: -19,
               child: Listener(
                 key: Key('row_resizer_icon_$rowIndex'),
                 onPointerDown: (event) {
