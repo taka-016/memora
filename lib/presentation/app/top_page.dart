@@ -162,22 +162,19 @@ class TopPage extends HookConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('DVC'),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          key: const Key(
-                            'timeline_dvc_point_usage_edit_button',
-                          ),
-                          onTap: onDvcPointCalculationPressed,
-                          child: const Icon(Icons.edit, size: 16),
-                        ),
-                      ],
+                    const Text('DVC'),
+                    const SizedBox(width: 8),
+                    InkWell(
+                      key: const Key('timeline_dvc_point_usage_edit_button'),
+                      onTap: onDvcPointCalculationPressed,
+                      borderRadius: BorderRadius.circular(4),
+                      child: const Padding(
+                        padding: EdgeInsets.all(2),
+                        child: Icon(Icons.edit, size: 16),
+                      ),
                     ),
                   ],
                 ),

@@ -392,10 +392,19 @@ class GroupTimeline extends HookConsumerWidget {
       }
 
       final usageText = usages
-          .map(
-            (usage) =>
-                '${dvcFormatYearMonth(usage.usageYearMonth)}\n${usage.usedPoint}pt\n${usage.memo ?? ''}',
-          )
+          .map((usage) {
+            final lines = <String>[
+              dvcFormatYearMonth(usage.usageYearMonth),
+              '${usage.usedPoint}pt',
+            ];
+
+            final memo = usage.memo;
+            if (memo != null && memo.trim().isNotEmpty) {
+              lines.add(memo);
+            }
+
+            return lines.join('\n');
+          })
           .join('\n\n');
 
       return Padding(
@@ -512,29 +521,34 @@ class GroupTimeline extends HookConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
                   key: Key('fixed_row_$rowIndex'),
-                  width: _fixedColumnWidth,
-                  height: rowHeights[rowIndex],
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(color: borderColor, width: _borderWidth),
-                      bottom: BorderSide(
-                        color: borderColor,
-                        width: _borderWidth,
+                  onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
+                  child: Container(
+                    width: _fixedColumnWidth,
+                    height: rowHeights[rowIndex],
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(
+                          color: borderColor,
+                          width: _borderWidth,
+                        ),
+                        bottom: BorderSide(
+                          color: borderColor,
+                          width: _borderWidth,
+                        ),
                       ),
                     ),
+                    child: rowIndex == 2
+                        ? _buildDvcPointUsageLabel(
+                            onPressed: onDvcPointCalculationPressed,
+                          )
+                        : Text(label),
                   ),
-                  child: rowIndex == 2
-                      ? _buildDvcPointUsageLabel(
-                          onPressed: onDvcPointCalculationPressed,
-                        )
-                      : Text(label),
                 ),
               ),
               Container(
@@ -830,10 +844,14 @@ class GroupTimeline extends HookConsumerWidget {
         children: [
           const Text('DVC'),
           const SizedBox(width: 8),
-          GestureDetector(
+          InkWell(
             key: const Key('timeline_dvc_point_usage_edit_button'),
             onTap: onPressed,
-            child: const Icon(Icons.edit, size: 16),
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.all(2),
+              child: Icon(Icons.edit, size: 16),
+            ),
           ),
         ],
       ),

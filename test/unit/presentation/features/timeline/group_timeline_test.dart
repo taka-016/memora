@@ -160,10 +160,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Act
-      final editButton = tester.widget<GestureDetector>(
+      await tester.tap(
         find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
       );
-      editButton.onTap!.call();
       await tester.pumpAndSettle();
 
       // Assert
@@ -257,6 +256,58 @@ void main() {
         find.descendant(
           of: nextYearCell,
           matching: find.text('${nextYearMonth.year}-01\n80pt\nメモ2'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('DVCポイント利用でメモが空の場合は末尾改行なしで表示される', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final currentMonth = DateTime(currentYear, 4);
+      final nextYearMonth = DateTime(currentYear + 1, 1);
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage1',
+              groupId: '1',
+              usageYearMonth: currentMonth,
+              usedPoint: 120,
+            ),
+            DvcPointUsageDto(
+              id: 'usage2',
+              groupId: '1',
+              usageYearMonth: nextYearMonth,
+              usedPoint: 80,
+              memo: '  ',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      final currentYearCell = find.byKey(
+        Key('dvc_point_usage_cell_$currentYear'),
+      );
+      final nextYearCell = find.byKey(
+        Key('dvc_point_usage_cell_${currentYear + 1}'),
+      );
+
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.text('${currentMonth.year}-04\n120pt'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: nextYearCell,
+          matching: find.text('${nextYearMonth.year}-01\n80pt'),
         ),
         findsOneWidget,
       );
