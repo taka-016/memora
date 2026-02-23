@@ -309,7 +309,7 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('グループ年表の「DVCポイント計算」をタップすると計算画面に遷移する', (
+    testWidgets('グループ年表の「DVCポイント利用」の編集をタップすると計算画面に遷移する', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -329,9 +329,9 @@ void main() {
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
 
-      // 年表画面のDVCポイント計算ボタンを押下する
+      // 年表画面のDVCポイント利用編集ボタンを押下する
       await tester.tap(
-        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+        find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
       );
       await tester.pumpAndSettle();
 
@@ -360,7 +360,7 @@ void main() {
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
       await tester.tap(
-        find.byKey(const Key('timeline_dvc_point_calculation_button')),
+        find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
       );
       await tester.pumpAndSettle();
 

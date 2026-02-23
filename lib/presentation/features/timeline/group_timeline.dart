@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
@@ -10,15 +10,10 @@ import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.d
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
-
-class _VerticalDragGestureRecognizer extends VerticalDragGestureRecognizer {
-  @override
-  void rejectGesture(int pointer) {
-    acceptGesture(pointer);
-  }
-}
 
 class GroupTimeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
@@ -60,16 +55,22 @@ class GroupTimeline extends HookConsumerWidget {
     final calculateYakudoshiUsecase = ref.read(
       calculateYakudoshiUsecaseProvider,
     );
-    final totalDataRows = 2 + groupWithMembers.members.length;
+    final dvcPointUsageQueryService = ref.read(
+      dvcPointUsageQueryServiceProvider,
+    );
+    final totalDataRows = 3 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
 
     final startYearOffset = useState(-_initialYearRange);
     final endYearOffset = useState(_initialYearRange);
     final isDraggingOnFixedRow = useState(false);
     final tripsByYearState = useState<Map<int, List<TripEntryDto>>>({});
+    final dvcPointUsagesByYearState =
+        useState<Map<int, List<DvcPointUsageDto>>>({});
     final rowHeightsState = useState<List<double>>(
       List.filled(totalDataRows, _dataRowHeight),
     );
+    final activeResizePointer = useState<int?>(null);
     final displaySettingsState = useState(TimelineDisplaySettings.defaults);
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final rowScrollControllers = useMemoized(
@@ -252,9 +253,48 @@ class GroupTimeline extends HookConsumerWidget {
       }
     }
 
-    Future<void> refreshTripData() async {
+    Future<void> loadDvcPointUsageData() async {
+      try {
+        final usages = await dvcPointUsageQueryService
+            .getDvcPointUsagesByGroupId(groupWithMembers.id);
+
+        if (!context.mounted) return;
+
+        final grouped = <int, List<DvcPointUsageDto>>{};
+        for (final usage in usages) {
+          grouped.putIfAbsent(usage.usageYearMonth.year, () => []).add(usage);
+        }
+
+        for (final entry in grouped.entries) {
+          entry.value.sort((a, b) {
+            final comparedMonth = a.usageYearMonth.compareTo(b.usageYearMonth);
+            if (comparedMonth != 0) {
+              return comparedMonth;
+            }
+            return a.id.compareTo(b.id);
+          });
+        }
+
+        dvcPointUsagesByYearState.value = grouped;
+      } catch (e, stack) {
+        logger.e(
+          'GroupTimeline.loadDvcPointUsageData: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+
+        if (!context.mounted) return;
+        dvcPointUsagesByYearState.value = {};
+      }
+    }
+
+    Future<void> refreshTimelineData() async {
       tripsByYearState.value = {};
-      await loadTripDataForVisibleYears();
+      dvcPointUsagesByYearState.value = {};
+      await Future.wait([
+        loadTripDataForVisibleYears(),
+        loadDvcPointUsageData(),
+      ]);
     }
 
     useEffect(() {
@@ -263,8 +303,13 @@ class GroupTimeline extends HookConsumerWidget {
     }, [startYearOffset.value, endYearOffset.value, groupWithMembers.id]);
 
     useEffect(() {
+      Future.microtask(loadDvcPointUsageData);
+      return null;
+    }, [groupWithMembers.id]);
+
+    useEffect(() {
       if (onSetRefreshCallback != null) {
-        onSetRefreshCallback!(refreshTripData);
+        onSetRefreshCallback!(refreshTimelineData);
       }
       return null;
     }, [onSetRefreshCallback]);
@@ -314,17 +359,18 @@ class GroupTimeline extends HookConsumerWidget {
       if (onTripManagementSelected == null) {
         return;
       }
-      final yearIndex = columnIndex - 1;
-      final currentYear = DateTime.now().year;
-      final selectedYear = currentYear + startYearOffset.value + yearIndex;
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
       onTripManagementSelected!(groupWithMembers.id, selectedYear);
     }
 
     Widget buildTripCellContent(int columnIndex) {
-      final yearIndex = columnIndex - 1;
-      final currentYear = DateTime.now().year;
-      final selectedYear = currentYear + startYearOffset.value + yearIndex;
-
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
       final trips = tripsByYearState.value[selectedYear] ?? [];
 
       return TripCell(
@@ -334,14 +380,38 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
-    bool isMemberRow(int rowIndex) => rowIndex >= 2;
+    Widget buildDvcPointUsageCellContent(int columnIndex) {
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
+      final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
+
+      if (usages.isEmpty) {
+        return const SizedBox.shrink();
+      }
+
+      final usageText = usages
+          .map(
+            (usage) =>
+                '${dvcFormatYearMonth(usage.usageYearMonth)}\n${usage.usedPoint}pt\n${usage.memo ?? ''}',
+          )
+          .join('\n\n');
+
+      return Padding(
+        padding: const EdgeInsets.only(left: 8, top: 4, right: 8),
+        child: Text(usageText),
+      );
+    }
+
+    bool isMemberRow(int rowIndex) => rowIndex >= 3;
 
     Widget buildMemberCellContent(int rowIndex, int columnIndex) {
       if (!isMemberRow(rowIndex)) {
         return const SizedBox.shrink();
       }
 
-      final memberIndex = rowIndex - 2;
+      final memberIndex = rowIndex - 3;
       if (memberIndex >= groupWithMembers.members.length) {
         return const SizedBox.shrink();
       }
@@ -349,9 +419,10 @@ class GroupTimeline extends HookConsumerWidget {
       final member = groupWithMembers.members[memberIndex];
       final birthday = member.birthday;
 
-      final yearIndex = columnIndex - 1;
-      final currentYear = DateTime.now().year;
-      final targetYear = currentYear + startYearOffset.value + yearIndex;
+      final targetYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
       final ageLabel = displaySettings.showAge
           ? _buildAgeLabel(birthday, targetYear)
           : null;
@@ -392,8 +463,13 @@ class GroupTimeline extends HookConsumerWidget {
 
           final isTripRow = rowIndex == 0;
           final isGroupEventRow = rowIndex == 1;
+          final isDvcPointUsageRow = rowIndex == 2;
           final isYearColumn =
               columnIndex != 0 && columnIndex != columnCount - 1;
+          final year = _yearFromColumnIndex(columnIndex, startYearOffset.value);
+          final cellKey = isDvcPointUsageRow && isYearColumn
+              ? Key('dvc_point_usage_cell_$year')
+              : null;
 
           return SizedBox(
             width: width,
@@ -403,18 +479,21 @@ class GroupTimeline extends HookConsumerWidget {
                   ? () => onTripCellTapped(columnIndex)
                   : null,
               child: Container(
+                key: cellKey,
                 alignment: Alignment.topLeft,
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(color: borderColor, width: _borderWidth),
                     right: BorderSide(color: borderColor, width: _borderWidth),
                   ),
-                  color: isTripRow || isGroupEventRow
+                  color: isTripRow || isGroupEventRow || isDvcPointUsageRow
                       ? Colors.lightBlue.shade50
                       : Colors.transparent,
                 ),
                 child: isTripRow && isYearColumn
                     ? buildTripCellContent(columnIndex)
+                    : isDvcPointUsageRow && isYearColumn
+                    ? buildDvcPointUsageCellContent(columnIndex)
                     : isYearColumn
                     ? buildMemberCellContent(rowIndex, columnIndex)
                     : const SizedBox.shrink(),
@@ -445,7 +524,11 @@ class GroupTimeline extends HookConsumerWidget {
                     bottom: BorderSide(color: borderColor, width: _borderWidth),
                   ),
                 ),
-                child: Text(label),
+                child: rowIndex == 2
+                    ? _buildDvcPointUsageLabel(
+                        onPressed: onDvcPointCalculationPressed,
+                      )
+                    : Text(label),
               ),
               Container(
                 width: _borderWidth,
@@ -468,48 +551,51 @@ class GroupTimeline extends HookConsumerWidget {
           if (rowIndex < rowHeights.length)
             Positioned(
               left: 0,
-              bottom: -19,
+              bottom: 0,
               child: Listener(
-                onPointerDown: (_) {
+                key: Key('row_resizer_icon_$rowIndex'),
+                onPointerDown: (event) {
+                  activeResizePointer.value = event.pointer;
                   isDraggingOnFixedRow.value = true;
                 },
-                onPointerUp: (_) {
+                onPointerMove: (event) {
+                  if (activeResizePointer.value != event.pointer) {
+                    return;
+                  }
+                  final updatedHeights = List<double>.from(
+                    rowHeightsState.value,
+                  );
+                  final newHeight = (updatedHeights[rowIndex] + event.delta.dy)
+                      .clamp(_rowMinHeight, _rowMaxHeight);
+                  updatedHeights[rowIndex] = newHeight;
+                  rowHeightsState.value = updatedHeights;
+                },
+                onPointerUp: (event) {
+                  if (activeResizePointer.value != event.pointer) {
+                    return;
+                  }
+                  activeResizePointer.value = null;
                   isDraggingOnFixedRow.value = false;
                 },
-                child: RawGestureDetector(
-                  key: Key('row_resizer_icon_$rowIndex'),
-                  gestures: {
-                    _VerticalDragGestureRecognizer:
-                        GestureRecognizerFactoryWithHandlers<
-                          _VerticalDragGestureRecognizer
-                        >(() => _VerticalDragGestureRecognizer(), (
-                          _VerticalDragGestureRecognizer instance,
-                        ) {
-                          instance.onUpdate = (details) {
-                            final updatedHeights = List<double>.from(
-                              rowHeightsState.value,
-                            );
-                            final newHeight =
-                                (updatedHeights[rowIndex] + details.delta.dy)
-                                    .clamp(_rowMinHeight, _rowMaxHeight);
-                            updatedHeights[rowIndex] = newHeight;
-                            rowHeightsState.value = updatedHeights;
-                          };
-                        }),
-                  },
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.resizeUpDown,
-                    child: Container(
-                      width: _fixedColumnWidth,
-                      height: 50,
-                      decoration: const BoxDecoration(
-                        color: Color.fromARGB(0, 255, 0, 0),
-                      ),
-                      child: Icon(
-                        Icons.drag_handle,
-                        size: 40,
-                        color: colorScheme.outline,
-                      ),
+                onPointerCancel: (event) {
+                  if (activeResizePointer.value != event.pointer) {
+                    return;
+                  }
+                  activeResizePointer.value = null;
+                  isDraggingOnFixedRow.value = false;
+                },
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.resizeUpDown,
+                  child: Container(
+                    width: _fixedColumnWidth,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: Color.fromARGB(0, 255, 0, 0),
+                    ),
+                    child: Icon(
+                      Icons.drag_handle,
+                      size: 40,
+                      color: colorScheme.outline,
                     ),
                   ),
                 ),
@@ -524,6 +610,7 @@ class GroupTimeline extends HookConsumerWidget {
       final dataRowLabels = [
         '旅行',
         'イベント',
+        'DVC',
         ...members.map((m) => m.displayName),
       ];
 
@@ -657,14 +744,6 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
-    Widget buildDvcPointCalculationButton() {
-      return TextButton(
-        key: const Key('timeline_dvc_point_calculation_button'),
-        onPressed: onDvcPointCalculationPressed,
-        child: const Text('DVCポイント計算'),
-      );
-    }
-
     Widget buildHeader() {
       return Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -677,10 +756,6 @@ class GroupTimeline extends HookConsumerWidget {
                 buildGroupTitle(),
                 buildSettingsButton(),
               ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [buildDvcPointCalculationButton()],
             ),
           ],
         ),
@@ -728,6 +803,31 @@ class GroupTimeline extends HookConsumerWidget {
         children: [
           buildHeader(),
           Expanded(child: buildTimelineTable()),
+        ],
+      ),
+    );
+  }
+
+  static int _yearFromColumnIndex(int columnIndex, int startYearOffset) {
+    final yearIndex = columnIndex - 1;
+    final currentYear = DateTime.now().year;
+    return currentYear + startYearOffset + yearIndex;
+  }
+
+  Widget _buildDvcPointUsageLabel({required VoidCallback? onPressed}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('DVC'),
+          const SizedBox(width: 8),
+          GestureDetector(
+            key: const Key('timeline_dvc_point_usage_edit_button'),
+            onTap: onPressed,
+            child: const Icon(Icons.edit, size: 16),
+          ),
         ],
       ),
     );
