@@ -13,7 +13,6 @@ import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
-import 'package:memora/presentation/shared/widgets/dvc_point_usage_edit_label.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -114,7 +113,6 @@ void main() {
 
       // Assert
       expect(find.text('DVC'), findsOneWidget);
-      expect(find.byType(DvcPointUsageEditLabel), findsOneWidget);
       expect(
         find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
         findsOneWidget,

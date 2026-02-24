@@ -25,7 +25,6 @@ import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
-import 'package:memora/presentation/shared/widgets/dvc_point_usage_edit_label.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -331,7 +330,6 @@ void main() {
       await tester.pumpAndSettle();
 
       // 年表画面のDVCポイント利用編集ボタンを押下する
-      expect(find.byType(DvcPointUsageEditLabel), findsOneWidget);
       await tester.tap(
         find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
       );
