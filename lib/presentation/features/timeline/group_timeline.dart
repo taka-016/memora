@@ -14,6 +14,7 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
+import 'package:memora/presentation/shared/widgets/dvc_point_usage_edit_label.dart';
 
 class GroupTimeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
@@ -838,23 +839,7 @@ class GroupTimeline extends HookConsumerWidget {
   Widget _buildDvcPointUsageLabel({required VoidCallback? onPressed}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('DVC'),
-          const SizedBox(width: 8),
-          InkWell(
-            key: const Key('timeline_dvc_point_usage_edit_button'),
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.all(2),
-              child: Icon(Icons.edit, size: 16),
-            ),
-          ),
-        ],
-      ),
+      child: DvcPointUsageEditLabel(onPressed: onPressed),
     );
   }
 
