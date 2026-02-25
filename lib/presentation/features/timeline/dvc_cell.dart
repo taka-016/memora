@@ -33,7 +33,6 @@ class DvcCell extends StatelessWidget {
         '${dvcFormatYearMonth(usage.usageYearMonth)}  '
         '${usage.usedPoint}pt';
     final memo = usage.memo?.trim();
-    final hasMemo = memo != null && memo.isNotEmpty;
 
     return SizedBox(
       height: _itemHeight,
@@ -49,7 +48,7 @@ class DvcCell extends StatelessWidget {
               maxLines: 1,
             ),
           ),
-          if (hasMemo)
+          if (memo != null && memo.isNotEmpty)
             Flexible(
               child: Padding(
                 padding: const EdgeInsets.only(left: 8.0),
