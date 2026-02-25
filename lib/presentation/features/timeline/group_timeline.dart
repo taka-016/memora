@@ -11,7 +11,7 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
@@ -391,25 +391,10 @@ class GroupTimeline extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
-      final usageText = usages
-          .map((usage) {
-            final lines = <String>[
-              dvcFormatYearMonth(usage.usageYearMonth),
-              '${usage.usedPoint}pt',
-            ];
-
-            final memo = usage.memo;
-            if (memo != null && memo.trim().isNotEmpty) {
-              lines.add(memo);
-            }
-
-            return lines.join('\n');
-          })
-          .join('\n\n');
-
-      return Padding(
-        padding: const EdgeInsets.only(left: 8, top: 4, right: 8),
-        child: Text(usageText),
+      return DvcCell(
+        usages: usages,
+        availableHeight: rowHeights[2],
+        availableWidth: _yearColumnWidth,
       );
     }
 

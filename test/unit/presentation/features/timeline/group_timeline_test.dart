@@ -248,15 +248,23 @@ void main() {
       expect(
         find.descendant(
           of: currentYearCell,
-          matching: find.text('${currentMonth.year}-04\n120pt\nメモ1'),
+          matching: find.text('${currentMonth.year}-04  120pt'),
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: currentYearCell, matching: find.text('メモ1')),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: nextYearCell,
-          matching: find.text('${nextYearMonth.year}-01\n80pt\nメモ2'),
+          matching: find.text('${nextYearMonth.year}-01  80pt'),
         ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: nextYearCell, matching: find.text('メモ2')),
         findsOneWidget,
       );
     });
@@ -300,14 +308,14 @@ void main() {
       expect(
         find.descendant(
           of: currentYearCell,
-          matching: find.text('${currentMonth.year}-04\n120pt'),
+          matching: find.text('${currentMonth.year}-04  120pt'),
         ),
         findsOneWidget,
       );
       expect(
         find.descendant(
           of: nextYearCell,
-          matching: find.text('${nextYearMonth.year}-01\n80pt'),
+          matching: find.text('${nextYearMonth.year}-01  80pt'),
         ),
         findsOneWidget,
       );
