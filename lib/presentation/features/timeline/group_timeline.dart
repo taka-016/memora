@@ -11,6 +11,7 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
@@ -366,6 +367,59 @@ class GroupTimeline extends HookConsumerWidget {
       onTripManagementSelected!(groupWithMembers.id, selectedYear);
     }
 
+    void showDvcPointUsageDetailsDialog(int columnIndex) {
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
+      final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
+
+      if (usages.isEmpty) {
+        return;
+      }
+
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            key: Key('dvc_point_usage_detail_dialog_$selectedYear'),
+            title: Text('DVCポイント利用詳細（$selectedYear年）'),
+            content: SizedBox(
+              width: 480,
+              height: 360,
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: usages.length,
+                separatorBuilder: (_, __) => const Divider(height: 16),
+                itemBuilder: (_, index) {
+                  final usage = usages[index];
+                  final memo = usage.memo?.trim() ?? '';
+                  final displayMemo = memo.isEmpty ? 'なし' : memo;
+
+                  return Column(
+                    key: Key('dvc_point_usage_detail_item_${usage.id}'),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('利用年月: ${dvcFormatYearMonth(usage.usageYearMonth)}'),
+                      Text('利用ポイント: ${usage.usedPoint}pt'),
+                      Text('メモ: $displayMemo'),
+                    ],
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('閉じる'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     Widget buildTripCellContent(int columnIndex) {
       final selectedYear = _yearFromColumnIndex(
         columnIndex,
@@ -471,6 +525,8 @@ class GroupTimeline extends HookConsumerWidget {
             child: GestureDetector(
               onTap: isTripRow && isYearColumn
                   ? () => onTripCellTapped(columnIndex)
+                  : isDvcPointUsageRow && isYearColumn
+                  ? () => showDvcPointUsageDetailsDialog(columnIndex)
                   : null,
               child: Container(
                 key: cellKey,
