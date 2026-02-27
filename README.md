@@ -1,119 +1,119 @@
 # memora
 
-A Flutter application for recording and sharing events within groups such as families
+家族などのグループ内で、イベントを記録・共有するためのFlutterアプリケーションです。
 
-## Overview
+## 概要
 
-Memora is a Flutter mobile application designed for groups such as families and friends to record, organize, and share memories through an interactive timeline interface. The application provides a comprehensive platform for managing personal and group events, travel experiences, and life milestones in chronological order.
+Memoraは、家族や友人などのグループで思い出を記録・整理・共有するためのFlutterモバイルアプリです。年表UIを中心に、個人・グループのイベント、旅行履歴、ライフイベントを時系列で管理できます。
 
-### Key Features
+### 主な機能
 
-- **Timeline Visualization**: Interactive timeline displaying events, travels, and life events across past, present, and future years with adjustable row heights and year-based column organization
-- **Group & Member Management**: Create and manage multiple groups with flexible member assignment, allowing members to belong to multiple groups simultaneously
-- **Event Management**: Create, edit, and delete personal and group events with validation for required fields (name, date) and chronological organization
-- **Travel Management**: Comprehensive travel planning with start/end date validation, location pinning, visit scheduling, and itinerary ordering through drag-and-drop interface
-- **Interactive Maps**: Google Maps integration with location search, manual pin placement, travel route visualization, and historical visit tracking for frequently visited places
-- **Life Event Automation**: Automatic calculation and display of future life events (Shichi-Go-San ceremony, school milestones, coming of age) based on member birthdays
+- **年表表示**: 過去・現在・未来のイベントや旅行、ライフイベントを、年ごとの列で俯瞰表示（行高さの調整にも対応）
+- **グループ・メンバー管理**: 複数グループの作成・管理、メンバーの柔軟な所属設定（メンバーの複数グループ所属に対応）
+- **イベント管理**: 個人・グループイベントの作成、編集、削除。必須項目（名称・日付）を検証しつつ時系列で管理
+- **旅行管理**: 開始/終了日の検証、訪問先ピン管理、訪問日時管理、ドラッグ&ドロップによる旅程並び替えに対応
+- **地図連携**: Google Maps連携による地名検索、任意地点へのピン配置、経路表示、訪問履歴の可視化
+- **ライフイベント自動計算**: メンバーの生年月日を基に、七五三・学齢・成人などの将来イベントを自動算出して表示
 
-## Documentation
+## ドキュメント
 
-Please refer to the following for detailed design documentation:
+詳細設計は以下を参照してください。
 
-- [Application Specification](./docs/app_spec.md) - Functional requirements and UI structure
-- [User Stories](./docs/user_stories.md) - User scenarios and acceptance criteria
-- [ER Diagram](./docs/er_diagram.md) - Database design
-- [Use Case Diagram](./docs/usecase_diagram.md) - System usage scenarios
-- [TODO List](./docs/todo.md) - Development progress status
+- [アプリケーション仕様](./docs/app_spec.md) - 機能要件と画面構成
+- [ユーザーストーリー](./docs/user_stories.md) - 利用シナリオと受け入れ条件
+- [ER図](./docs/er_diagram.md) - データベース設計
+- [ユースケース図](./docs/usecase_diagram.md) - システム利用シナリオ
+- [TODO一覧](./docs/todo.md) - 開発進捗
 
-## Development Environment
+## 開発環境
 
-### Google Cloud Platform API Configuration
+### Google Cloud Platform API設定
 
-Enable the following APIs in your Google Cloud Console and configure the corresponding API keys:
+Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設定してください。
 
-- **Maps SDK for Android** - Required for map functionality on Android devices. Set the API key in `android/local.properties` as `MAPS_API_KEY`
-- **Places API** - Required for location search functionality. Set the API key in `.env` as `GOOGLE_PLACES_API_KEY`
+- **Maps SDK for Android**: Androidで地図機能を利用するために必要。`android/local.properties`に`MAPS_API_KEY`として設定
+- **Places API**: 地名検索機能で必要。`.env`に`GOOGLE_PLACES_API_KEY`として設定
 
-#### Environment Setup Instructions
+#### 環境構築手順
 
-1. Create environment variable file:
+1. 環境変数ファイルを作成
 
    ```bash
    cp .env.example .env
-   # Edit .env file to set required environment variables
+   # .envに必要な環境変数を設定
    ```
 
-2. Install dependencies:
+2. 依存関係をインストール
 
    ```bash
    flutter pub get
    ```
 
-3. Generate configuration from environment variables:
+3. 環境変数から設定コードを生成
 
    ```bash
    dart run build_runner build --delete-conflicting-outputs
    ```
 
-4. Remove the .env file (contains sensitive information):
+4. `.env`ファイルを削除（機密情報を含むため）
 
    ```bash
    rm .env
    ```
 
-5. Configure Android local properties:
+5. Androidの`local.properties`を設定
 
    ```bash
-   # Create android/local.properties with the following content:
+   # android/local.propertiesの例
    sdk.dir=/path/to/your/android/sdk
    flutter.sdk=/path/to/your/flutter/sdk
    flutter.buildMode=debug
    flutter.versionName=1.0.0
    flutter.versionCode=1
-   
-   # Google Maps API key
+
+   # Google Maps APIキー
    MAPS_API_KEY=your_maps_api_key_here
    ```
 
-### Firebase Configuration
+### Firebase設定
 
-This application uses Firebase/Firestore for data persistence and Firebase Authentication for user management. The following APIs must be enabled in your Firebase Console:
+本アプリはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。
 
-- **Identity Toolkit API** - Required for Firebase Authentication
-- **Token Service API** - Required for secure token management
+- **Identity Toolkit API**: Firebase Authenticationに必要
+- **Token Service API**: セキュアなトークン管理に必要
 
-#### Required Configuration Files
+#### 必要な設定ファイル
 
-- `firebase_options.dart` - Generated Firebase configuration file
-- `firebase.json` - Firebase project configuration file
+- `firebase_options.dart` - 生成されたFirebase設定ファイル
+- `firebase.json` - Firebaseプロジェクト設定ファイル
 
-#### Firebase Setup Instructions
+#### Firebaseセットアップ手順
 
-1. Create Firebase Project:
-   - Go to [Firebase Console](https://console.firebase.google.com/)
-   - Create a new project or select existing project
-   - Enable Authentication and Firestore Database
+1. Firebaseプロジェクトを作成
+   - [Firebase Console](https://console.firebase.google.com/)にアクセス
+   - 新規プロジェクトを作成、または既存プロジェクトを選択
+   - AuthenticationとFirestore Databaseを有効化
 
-2. Enable Required Services:
-   - In Firebase Console, enable Authentication (Google and Email/Password providers)
-   - Enable Firestore Database in production mode
-   - Configure Firestore security rules as needed
+2. 必要なサービスを有効化
+   - Authentication（Google/メールアドレス・パスワード）を有効化
+   - Firestore Databaseを本番モードで有効化
+   - 必要に応じてFirestoreセキュリティルールを設定
 
-3. Run Firebase Setup Script:
+3. Firebaseセットアップスクリプトを実行
 
    ```bash
    ./setup_firebase.sh
    ```
 
-   This script will:
-   - Install Firebase CLI and FlutterFire CLI (if needed)
-   - Guide you through Firebase login
-   - Configure Flutter Firebase integration (flutterfire configure)
-   - Add Firestore indexes configuration to firebase.json
-   - Set up Firebase project alias
-   - Deploy required Firestore indexes
+   スクリプトが実施する内容:
+   - Firebase CLIとFlutterFire CLIのインストール（未導入時）
+   - Firebaseログイン手順の案内
+   - Flutter向けFirebase設定（`flutterfire configure`）
+   - `firebase.json`へのFirestoreインデックス設定追加
+   - Firebaseプロジェクトエイリアス設定
+   - 必要なFirestoreインデックスのデプロイ
 
-## License
+## ライセンス
 
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).  
-See the [LICENSE](./LICENSE) file for details.
+このプロジェクトはGNU Affero General Public License v3.0（AGPL-3.0）の下で公開されています。  
+詳細は[LICENSE](./LICENSE)を参照してください。
