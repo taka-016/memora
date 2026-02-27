@@ -321,6 +321,89 @@ void main() {
       );
     });
 
+    testWidgets('DVCセルをタップすると対象年セルの全件詳細がポップアップ表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final yearCell = Key('dvc_point_usage_cell_$currentYear');
+      const longMemo = 'このメモはポップアップで省略されずに全文表示されるべき長文です。';
+
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage1',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 1),
+              usedPoint: 30,
+              memo: 'メモ1',
+            ),
+            DvcPointUsageDto(
+              id: 'usage2',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 4),
+              usedPoint: 60,
+              memo: 'メモ2',
+            ),
+            DvcPointUsageDto(
+              id: 'usage3',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 8),
+              usedPoint: 90,
+              memo: longMemo,
+            ),
+            DvcPointUsageDto(
+              id: 'usage4',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 12),
+              usedPoint: 120,
+              memo: 'メモ4',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.byKey(yearCell));
+      await tester.pumpAndSettle();
+
+      // Assert
+      final dialog = find.byType(AlertDialog);
+      expect(dialog, findsOneWidget);
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.text('利用年月: $currentYear-01'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('利用ポイント: 30pt')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('メモ: メモ1')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.text('利用年月: $currentYear-12'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('利用ポイント: 120pt')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('メモ: $longMemo')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('年表のヘッダー行に年の列が表示される', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(createTestWidget());
