@@ -5,12 +5,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
@@ -56,9 +56,7 @@ class GroupTimeline extends HookConsumerWidget {
     final calculateYakudoshiUsecase = ref.read(
       calculateYakudoshiUsecaseProvider,
     );
-    final dvcPointUsageQueryService = ref.read(
-      dvcPointUsageQueryServiceProvider,
-    );
+    final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
     final totalDataRows = 3 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
 
@@ -256,8 +254,9 @@ class GroupTimeline extends HookConsumerWidget {
 
     Future<void> loadDvcPointUsageData() async {
       try {
-        final usages = await dvcPointUsageQueryService
-            .getDvcPointUsagesByGroupId(groupWithMembers.id);
+        final usages = await getDvcPointUsagesUsecase.execute(
+          groupWithMembers.id,
+        );
 
         if (!context.mounted) return;
 
