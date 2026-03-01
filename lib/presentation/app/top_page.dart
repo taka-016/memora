@@ -144,7 +144,7 @@ class TopPage extends HookConsumerWidget {
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        // Mapは外部依存（Google Map）を含むため、テスト時のみ切り替えする。
+        // Mapは外部依存（Google Map）を含むため、テスト時のみ切り替えを行う。
         return MapScreen(isTestEnvironment: isTestEnvironment);
       case NavigationItem.groupManagement:
         if (currentMember == null) {
