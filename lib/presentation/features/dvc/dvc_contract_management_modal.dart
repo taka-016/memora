@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
-import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
 typedef DvcContractSaveCallback =
     Future<void> Function(List<DvcEditableContract> contracts);
@@ -170,42 +170,6 @@ Future<void> showDvcContractManagementModal({
   );
 }
 
-class _YearMonthSelector extends StatelessWidget {
-  const _YearMonthSelector({
-    required this.label,
-    required this.selected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final DateTime selected;
-  final ValueChanged<DateTime> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Text(label)),
-        TextButton(
-          onPressed: () async {
-            final picked = await showDatePicker(
-              context: context,
-              initialDate: selected,
-              firstDate: DateTime(2000, 1),
-              lastDate: DateTime(2100, 12),
-            );
-            if (picked == null) {
-              return;
-            }
-            onSelected(DateTime(picked.year, picked.month));
-          },
-          child: Text(dvcFormatYearMonth(selected)),
-        ),
-      ],
-    );
-  }
-}
-
 class _ContractForm extends StatelessWidget {
   const _ContractForm({required this.contract, required this.onChanged});
 
@@ -224,14 +188,14 @@ class _ContractForm extends StatelessWidget {
             onChanged(contract.copyWith(contractName: value));
           },
         ),
-        _YearMonthSelector(
+        DvcYearMonthSelector(
           label: '契約開始年月',
           selected: contract.contractStartYearMonth,
           onSelected: (value) {
             onChanged(contract.copyWith(contractStartYearMonth: value));
           },
         ),
-        _YearMonthSelector(
+        DvcYearMonthSelector(
           label: '契約終了年月',
           selected: contract.contractEndYearMonth,
           onSelected: (value) {
@@ -311,18 +275,6 @@ class DvcEditableContract {
     return contractName.trim().isNotEmpty &&
         annualPoint > 0 &&
         !contractEndYearMonth.isBefore(contractStartYearMonth);
-  }
-
-  DvcPointContract toEntity(String groupId) {
-    return DvcPointContract(
-      id: '',
-      groupId: groupId,
-      contractName: contractName.trim(),
-      contractStartYearMonth: contractStartYearMonth,
-      contractEndYearMonth: contractEndYearMonth,
-      useYearStartMonth: useYearStartMonth,
-      annualPoint: annualPoint,
-    );
   }
 
   DvcEditableContract copyWith({
