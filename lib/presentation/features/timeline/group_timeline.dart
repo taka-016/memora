@@ -12,7 +12,6 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/timeline/dvc_point_usage_edit_label.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
@@ -587,8 +586,24 @@ class GroupTimeline extends HookConsumerWidget {
                     child: rowIndex == 2
                         ? Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: DvcPointUsageEditLabel(
-                              onPressed: onDvcPointCalculationPressed,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('DVC'),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  key: const Key(
+                                    'timeline_dvc_point_usage_edit_button',
+                                  ),
+                                  onTap: onDvcPointCalculationPressed,
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(2),
+                                    child: Icon(Icons.edit, size: 16),
+                                  ),
+                                ),
+                              ],
                             ),
                           )
                         : Text(label),
