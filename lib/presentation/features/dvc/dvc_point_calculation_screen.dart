@@ -7,14 +7,17 @@ import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/usecases/dvc/delete_dvc_limited_point_usecase.dart';
+import 'package:memora/application/usecases/dvc/delete_dvc_point_usage_usecase.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
+import 'package:memora/application/usecases/dvc/get_dvc_limited_points_usecase.dart';
+import 'package:memora/application/usecases/dvc/get_dvc_point_contracts_usecase.dart';
+import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
+import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.dart';
+import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
+import 'package:memora/application/usecases/dvc/save_dvc_point_usage_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
-import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
@@ -58,6 +61,13 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final getGroupWithMembersByIdUsecase = ref.read(
       getGroupWithMembersByIdUsecaseProvider,
     );
+    final getDvcPointContractsUsecase = ref.read(
+      getDvcPointContractsUsecaseProvider,
+    );
+    final getDvcLimitedPointsUsecase = ref.read(
+      getDvcLimitedPointsUsecaseProvider,
+    );
+    final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
 
     Future<void> loadData({bool showLoading = true}) async {
       try {
@@ -66,29 +76,11 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         if (shouldShowLoading) {
           state.value = _DvcScreenState.loading;
         }
-        final contractQueryService = ref.read(
-          dvcPointContractQueryServiceProvider,
-        );
-        final limitedPointQueryService = ref.read(
-          dvcLimitedPointQueryServiceProvider,
-        );
-        final pointUsageQueryService = ref.read(
-          dvcPointUsageQueryServiceProvider,
-        );
         final results = await Future.wait([
           getGroupWithMembersByIdUsecase.execute(groupId),
-          contractQueryService.getDvcPointContractsByGroupId(
-            groupId,
-            orderBy: [const OrderBy('contractName', descending: false)],
-          ),
-          limitedPointQueryService.getDvcLimitedPointsByGroupId(
-            groupId,
-            orderBy: [const OrderBy('startYearMonth', descending: false)],
-          ),
-          pointUsageQueryService.getDvcPointUsagesByGroupId(
-            groupId,
-            orderBy: [const OrderBy('usageYearMonth', descending: false)],
-          ),
+          getDvcPointContractsUsecase.execute(groupId),
+          getDvcLimitedPointsUsecase.execute(groupId),
+          getDvcPointUsagesUsecase.execute(groupId),
         ]);
 
         if (!context.mounted) {
@@ -140,16 +132,28 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     Future<void> saveContractSettings(
       List<DvcEditableContract> editable,
     ) async {
-      final contractRepository = ref.read(dvcPointContractRepositoryProvider);
       final contracts = editable
           .where((contract) => contract.isValid)
-          .map((contract) => contract.toEntity(groupId))
+          .map(
+            (contract) => DvcPointContractDto(
+              id: '',
+              groupId: groupId,
+              contractName: contract.contractName.trim(),
+              contractStartYearMonth: contract.contractStartYearMonth,
+              contractEndYearMonth: contract.contractEndYearMonth,
+              useYearStartMonth: contract.useYearStartMonth,
+              annualPoint: contract.annualPoint,
+            ),
+          )
           .toList();
 
-      await contractRepository.deleteDvcPointContractsByGroupId(groupId);
-      for (final contract in contracts) {
-        await contractRepository.saveDvcPointContract(contract);
-      }
+      final saveDvcPointContractsUsecase = ref.read(
+        saveDvcPointContractsUsecaseProvider,
+      );
+      await saveDvcPointContractsUsecase.execute(
+        groupId: groupId,
+        contracts: contracts,
+      );
       await loadData(showLoading: false);
     }
 
@@ -159,10 +163,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       required int point,
       required String memo,
     }) async {
-      final limitedPointRepository = ref.read(
-        dvcLimitedPointRepositoryProvider,
-      );
-      final limitedPoint = DvcLimitedPoint(
+      final limitedPoint = DvcLimitedPointDto(
         id: '',
         groupId: groupId,
         startYearMonth: dvcMonthStart(startYearMonth),
@@ -170,7 +171,10 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      await limitedPointRepository.saveDvcLimitedPoint(limitedPoint);
+      final saveDvcLimitedPointUsecase = ref.read(
+        saveDvcLimitedPointUsecaseProvider,
+      );
+      await saveDvcLimitedPointUsecase.execute(limitedPoint);
       await loadData(showLoading: false);
     }
 
@@ -179,29 +183,33 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       required int usedPoint,
       required String memo,
     }) async {
-      final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
-      final usage = DvcPointUsage(
+      final usage = DvcPointUsageDto(
         id: '',
         groupId: groupId,
         usageYearMonth: dvcMonthStart(usageYearMonth),
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      await pointUsageRepository.saveDvcPointUsage(usage);
+      final saveDvcPointUsageUsecase = ref.read(
+        saveDvcPointUsageUsecaseProvider,
+      );
+      await saveDvcPointUsageUsecase.execute(usage);
       await loadData(showLoading: false);
     }
 
     Future<void> deleteLimitedPoint(String limitedPointId) async {
-      final limitedPointRepository = ref.read(
-        dvcLimitedPointRepositoryProvider,
+      final deleteDvcLimitedPointUsecase = ref.read(
+        deleteDvcLimitedPointUsecaseProvider,
       );
-      await limitedPointRepository.deleteDvcLimitedPoint(limitedPointId);
+      await deleteDvcLimitedPointUsecase.execute(limitedPointId);
       await loadData(showLoading: false);
     }
 
     Future<void> deleteUsage(String pointUsageId) async {
-      final pointUsageRepository = ref.read(dvcPointUsageRepositoryProvider);
-      await pointUsageRepository.deleteDvcPointUsage(pointUsageId);
+      final deleteDvcPointUsageUsecase = ref.read(
+        deleteDvcPointUsageUsecaseProvider,
+      );
+      await deleteDvcPointUsageUsecase.execute(pointUsageId);
       await loadData(showLoading: false);
     }
 
