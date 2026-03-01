@@ -5,7 +5,6 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/dvc_point_calculation_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
@@ -33,9 +32,6 @@ class TopPage extends HookConsumerWidget {
         ref.read(navigationNotifierProvider.notifier).resetToDefault();
         ref
             .read(groupTimelineNavigationNotifierProvider.notifier)
-            .resetToGroupList();
-        ref
-            .read(dvcPointCalculationNavigationNotifierProvider.notifier)
             .resetToGroupList();
       });
       return null;
@@ -79,11 +75,6 @@ class TopPage extends HookConsumerWidget {
           .read(groupTimelineNavigationNotifierProvider.notifier)
           .resetToGroupList();
     }
-    if (item != NavigationItem.dvcPointCalculation) {
-      ref
-          .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-          .resetToGroupList();
-    }
     Navigator.of(context).pop();
   }
 
@@ -91,12 +82,6 @@ class TopPage extends HookConsumerWidget {
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
         .showGroupTimeline(groupWithMembers);
-  }
-
-  void _onDvcGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
-    ref
-        .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-        .showCalculation(groupWithMembers);
   }
 
   Widget _buildGroupTimelineStack(
@@ -120,9 +105,7 @@ class TopPage extends HookConsumerWidget {
           title: 'グループを選択',
           listKey: const Key('group_list'),
         ),
-        isTestEnvironment
-            ? _buildTestGroupTimeline(ref)
-            : timelineState.groupTimelineInstance ?? Container(),
+        timelineState.groupTimelineInstance ?? Container(),
         timelineState.selectedGroupId != null &&
                 timelineState.selectedYear != null
             ? TripManagement(
@@ -133,37 +116,17 @@ class TopPage extends HookConsumerWidget {
                     .backFromTripManagement(),
               )
             : Container(),
-      ],
-    );
-  }
-
-  Widget _buildTestGroupTimeline(WidgetRef ref) {
-    return Container(
-      key: const Key('group_timeline'),
-      child: Column(
-        children: [
-          AppBar(
-            leading: IconButton(
-              key: const Key('back_button'),
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                ref
+        timelineState.currentScreen ==
+                    GroupTimelineScreenState.dvcPointCalculation &&
+                timelineState.selectedGroupId != null
+            ? DvcPointCalculationScreen(
+                groupId: timelineState.selectedGroupId!,
+                onBackPressed: () => ref
                     .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .showGroupList();
-              },
-            ),
-            title: const Text('テストグループ'),
-          ),
-          Expanded(
-            child: _buildTestPlaceholder(
-              key: 'group_timeline_content',
-              icon: Icons.timeline,
-              title: 'グループ年表テスト',
-              subtitle: 'テスト環境',
-            ),
-          ),
-        ],
-      ),
+                    .backFromDvcPointCalculation(),
+              )
+            : Container(),
+      ],
     );
   }
 
@@ -177,102 +140,27 @@ class TopPage extends HookConsumerWidget {
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
         return _buildGroupTimelineStack(context, ref, currentMember);
-      case NavigationItem.dvcPointCalculation:
-        return _buildDvcPointCalculationStack(ref);
       case NavigationItem.mapDisplay:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
+        // Mapは外部依存（Google Map）を含むため、テスト時のみ切り替えを行う。
         return MapScreen(isTestEnvironment: isTestEnvironment);
       case NavigationItem.groupManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return isTestEnvironment
-            ? _buildTestPlaceholder(
-                key: 'group_settings',
-                icon: Icons.group_work,
-                title: 'グループ管理',
-                subtitle: 'グループ管理画面',
-              )
-            : const GroupManagement();
+        return const GroupManagement();
       case NavigationItem.memberManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return isTestEnvironment
-            ? _buildTestPlaceholder(
-                key: 'member_settings',
-                icon: Icons.people,
-                title: 'メンバー管理',
-                subtitle: 'メンバー管理画面',
-              )
-            : const MemberManagement();
+        return const MemberManagement();
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:
         return const AccountSettings();
     }
-  }
-
-  Widget _buildDvcPointCalculationStack(WidgetRef ref) {
-    final dvcState = ref.watch(dvcPointCalculationNavigationNotifierProvider);
-
-    return IndexedStack(
-      index: ref
-          .read(dvcPointCalculationNavigationNotifierProvider.notifier)
-          .getStackIndex(),
-      children: [
-        GroupSelectionList(
-          onGroupSelected: (group) => _onDvcGroupSelected(ref, group),
-          title: 'グループを選択',
-          listKey: const Key('group_list'),
-        ),
-        dvcState.selectedGroup != null
-            ? DvcPointCalculationScreen(
-                group: dvcState.selectedGroup!,
-                onBackPressed: () => ref
-                    .read(
-                      dvcPointCalculationNavigationNotifierProvider.notifier,
-                    )
-                    .showGroupList(),
-              )
-            : Container(),
-      ],
-    );
-  }
-
-  Widget _buildTestPlaceholder({
-    required String key,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      key: Key(key),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 100, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   AppBar _buildAppBar(BuildContext context) {
@@ -357,13 +245,6 @@ class TopPage extends HookConsumerWidget {
         Icons.timeline,
         'グループ年表',
         NavigationItem.groupTimeline,
-      ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.calculate,
-        'DVCポイント計算',
-        NavigationItem.dvcPointCalculation,
       ),
       _buildDrawerItem(
         context,

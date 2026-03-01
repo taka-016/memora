@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 
-enum GroupTimelineScreenState { groupList, timeline, tripManagement }
+enum GroupTimelineScreenState {
+  groupList,
+  timeline,
+  tripManagement,
+  dvcPointCalculation,
+}
 
 final groupTimelineNavigationNotifierProvider =
     NotifierProvider<
@@ -65,6 +70,8 @@ class GroupTimelineNavigationNotifier
   void showGroupList() {
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.groupList,
+      clearGroupId: true,
+      clearYear: true,
       clearInstance: true,
     );
   }
@@ -74,6 +81,8 @@ class GroupTimelineNavigationNotifier
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
+      onDvcPointCalculationPressed: () =>
+          showDvcPointCalculation(groupWithMembers.id),
       onSetRefreshCallback: (callback) {
         Future(() {
           state = state.copyWith(refreshGroupTimeline: callback);
@@ -83,6 +92,8 @@ class GroupTimelineNavigationNotifier
 
     state = state.copyWith(
       currentScreen: GroupTimelineScreenState.timeline,
+      clearGroupId: true,
+      clearYear: true,
       groupTimelineInstance: groupTimeline,
     );
   }
@@ -100,6 +111,22 @@ class GroupTimelineNavigationNotifier
       currentScreen: GroupTimelineScreenState.timeline,
       clearGroupId: true,
       clearYear: true,
+    );
+
+    state.refreshGroupTimeline?.call();
+  }
+
+  void showDvcPointCalculation(String selectedGroupId) {
+    state = state.copyWith(
+      currentScreen: GroupTimelineScreenState.dvcPointCalculation,
+      selectedGroupId: selectedGroupId,
+    );
+  }
+
+  void backFromDvcPointCalculation() {
+    state = state.copyWith(
+      currentScreen: GroupTimelineScreenState.timeline,
+      clearGroupId: true,
     );
 
     state.refreshGroupTimeline?.call();
@@ -123,6 +150,8 @@ class GroupTimelineNavigationNotifier
         return 1;
       case GroupTimelineScreenState.tripManagement:
         return 2;
+      case GroupTimelineScreenState.dvcPointCalculation:
+        return 3;
     }
   }
 }
