@@ -10,6 +10,12 @@ import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dar
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
+import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
+import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
+import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -17,6 +23,7 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
@@ -66,12 +73,18 @@ void main() {
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
   late MemberDto testMember;
+  late _FakeDvcPointContractRepository dvcPointContractRepository;
+  late _FakeDvcLimitedPointRepository dvcLimitedPointRepository;
+  late _FakeDvcPointUsageRepository dvcPointUsageRepository;
 
   setUp(() {
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
+    dvcPointContractRepository = _FakeDvcPointContractRepository();
+    dvcLimitedPointRepository = _FakeDvcLimitedPointRepository();
+    dvcPointUsageRepository = _FakeDvcPointUsageRepository();
 
     when(
       mockPinQueryService.getPinsByMemberId(any),
@@ -174,6 +187,15 @@ void main() {
         ),
         dvcPointUsageQueryServiceProvider.overrideWithValue(
           const _FakeDvcPointUsageQueryService(),
+        ),
+        dvcPointContractRepositoryProvider.overrideWithValue(
+          dvcPointContractRepository,
+        ),
+        dvcLimitedPointRepositoryProvider.overrideWithValue(
+          dvcLimitedPointRepository,
+        ),
+        dvcPointUsageRepositoryProvider.overrideWithValue(
+          dvcPointUsageRepository,
         ),
       ],
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
@@ -844,4 +866,37 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }) async {
     return const [];
   }
+}
+
+class _FakeDvcPointContractRepository implements DvcPointContractRepository {
+  @override
+  Future<void> deleteDvcPointContract(String contractId) async {}
+
+  @override
+  Future<void> deleteDvcPointContractsByGroupId(String groupId) async {}
+
+  @override
+  Future<void> saveDvcPointContract(DvcPointContract contract) async {}
+}
+
+class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
+  @override
+  Future<void> deleteDvcLimitedPoint(String limitedPointId) async {}
+
+  @override
+  Future<void> deleteDvcLimitedPointsByGroupId(String groupId) async {}
+
+  @override
+  Future<void> saveDvcLimitedPoint(DvcLimitedPoint limitedPoint) async {}
+}
+
+class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
+  @override
+  Future<void> deleteDvcPointUsage(String pointUsageId) async {}
+
+  @override
+  Future<void> deleteDvcPointUsagesByGroupId(String groupId) async {}
+
+  @override
+  Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {}
 }

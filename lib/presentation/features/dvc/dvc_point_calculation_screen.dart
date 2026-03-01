@@ -68,6 +68,19 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       getDvcLimitedPointsUsecaseProvider,
     );
     final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
+    final saveDvcPointContractsUsecase = ref.read(
+      saveDvcPointContractsUsecaseProvider,
+    );
+    final saveDvcLimitedPointUsecase = ref.read(
+      saveDvcLimitedPointUsecaseProvider,
+    );
+    final saveDvcPointUsageUsecase = ref.read(saveDvcPointUsageUsecaseProvider);
+    final deleteDvcLimitedPointUsecase = ref.read(
+      deleteDvcLimitedPointUsecaseProvider,
+    );
+    final deleteDvcPointUsageUsecase = ref.read(
+      deleteDvcPointUsageUsecaseProvider,
+    );
 
     Future<void> loadData({bool showLoading = true}) async {
       try {
@@ -147,9 +160,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           )
           .toList();
 
-      final saveDvcPointContractsUsecase = ref.read(
-        saveDvcPointContractsUsecaseProvider,
-      );
       await saveDvcPointContractsUsecase.execute(
         groupId: groupId,
         contracts: contracts,
@@ -171,9 +181,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      final saveDvcLimitedPointUsecase = ref.read(
-        saveDvcLimitedPointUsecaseProvider,
-      );
       await saveDvcLimitedPointUsecase.execute(limitedPoint);
       await loadData(showLoading: false);
     }
@@ -190,25 +197,16 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      final saveDvcPointUsageUsecase = ref.read(
-        saveDvcPointUsageUsecaseProvider,
-      );
       await saveDvcPointUsageUsecase.execute(usage);
       await loadData(showLoading: false);
     }
 
     Future<void> deleteLimitedPoint(String limitedPointId) async {
-      final deleteDvcLimitedPointUsecase = ref.read(
-        deleteDvcLimitedPointUsecaseProvider,
-      );
       await deleteDvcLimitedPointUsecase.execute(limitedPointId);
       await loadData(showLoading: false);
     }
 
     Future<void> deleteUsage(String pointUsageId) async {
-      final deleteDvcPointUsageUsecase = ref.read(
-        deleteDvcPointUsageUsecaseProvider,
-      );
       await deleteDvcPointUsageUsecase.execute(pointUsageId);
       await loadData(showLoading: false);
     }

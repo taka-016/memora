@@ -13,6 +13,7 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
+import 'package:memora/presentation/features/timeline/dvc_point_usage_edit_label.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
@@ -162,22 +163,7 @@ class TopPage extends HookConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('DVC'),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      key: const Key('timeline_dvc_point_usage_edit_button'),
-                      onTap: onDvcPointCalculationPressed,
-                      borderRadius: BorderRadius.circular(4),
-                      child: const Padding(
-                        padding: EdgeInsets.all(2),
-                        child: Icon(Icons.edit, size: 16),
-                      ),
-                    ),
-                  ],
-                ),
+                DvcPointUsageEditLabel(onPressed: onDvcPointCalculationPressed),
               ],
             ),
           ),
