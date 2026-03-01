@@ -8,14 +8,30 @@ import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.d
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/domain/entities/group/group_event.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
+import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/domain/entities/member/member_event.dart';
+import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/repositories/group/group_event_repository.dart';
+import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
+import 'package:memora/domain/repositories/member/member_event_repository.dart';
+import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -30,10 +46,14 @@ import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/features/group/group_management.dart';
+import 'package:memora/presentation/features/member/member_management.dart';
+import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';
@@ -76,8 +96,17 @@ void main() {
   late _FakeDvcPointContractRepository dvcPointContractRepository;
   late _FakeDvcLimitedPointRepository dvcLimitedPointRepository;
   late _FakeDvcPointUsageRepository dvcPointUsageRepository;
+  late _FakeTripEntryQueryService tripEntryQueryService;
+  late _FakeGroupRepository groupRepository;
+  late _FakeGroupEventRepository groupEventRepository;
+  late _FakeTripEntryRepository tripEntryRepository;
+  late _FakeMemberRepository memberRepository;
+  late _FakeMemberEventRepository memberEventRepository;
+  late _FakeMemberInvitationRepository memberInvitationRepository;
+  late _FakeMemberInvitationQueryService memberInvitationQueryService;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
@@ -85,6 +114,14 @@ void main() {
     dvcPointContractRepository = _FakeDvcPointContractRepository();
     dvcLimitedPointRepository = _FakeDvcLimitedPointRepository();
     dvcPointUsageRepository = _FakeDvcPointUsageRepository();
+    tripEntryQueryService = const _FakeTripEntryQueryService();
+    groupRepository = _FakeGroupRepository();
+    groupEventRepository = _FakeGroupEventRepository();
+    tripEntryRepository = _FakeTripEntryRepository();
+    memberRepository = _FakeMemberRepository();
+    memberEventRepository = _FakeMemberEventRepository();
+    memberInvitationRepository = _FakeMemberInvitationRepository();
+    memberInvitationQueryService = const _FakeMemberInvitationQueryService();
 
     when(
       mockPinQueryService.getPinsByMemberId(any),
@@ -132,6 +169,13 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => groupsWithMembers.first);
+    when(
+      mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        any,
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => []);
   });
 
   Widget createTestWidget({
@@ -159,6 +203,15 @@ void main() {
     when(
       testMemberQueryService.getMemberByAccountId(any),
     ).thenAnswer((_) async => defaultMember);
+    when(
+      testMemberQueryService.getMemberById(any),
+    ).thenAnswer((_) async => defaultMember);
+    when(
+      testMemberQueryService.getMembersByOwnerId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
     when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -196,6 +249,18 @@ void main() {
         ),
         dvcPointUsageRepositoryProvider.overrideWithValue(
           dvcPointUsageRepository,
+        ),
+        tripEntryQueryServiceProvider.overrideWithValue(tripEntryQueryService),
+        groupRepositoryProvider.overrideWithValue(groupRepository),
+        groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+        tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
+        memberRepositoryProvider.overrideWithValue(memberRepository),
+        memberEventRepositoryProvider.overrideWithValue(memberEventRepository),
+        memberInvitationRepositoryProvider.overrideWithValue(
+          memberInvitationRepository,
+        ),
+        memberInvitationQueryServiceProvider.overrideWithValue(
+          memberInvitationQueryService,
         ),
       ],
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
@@ -403,6 +468,51 @@ void main() {
         findsNothing,
       );
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+    });
+
+    testWidgets('テスト環境でもグループ年表は実ウィジェットを表示する', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GroupTimeline), findsOneWidget);
+    });
+
+    testWidgets('テスト環境でもグループ管理とメンバー管理は実ウィジェットを表示する', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ管理'));
+      await tester.pumpAndSettle();
+      expect(find.byType(GroupManagement), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('メンバー管理'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MemberManagement), findsOneWidget);
     });
 
     testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
@@ -757,6 +867,40 @@ void main() {
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
           pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+          dvcPointContractQueryServiceProvider.overrideWithValue(
+            const _FakeDvcPointContractQueryService(),
+          ),
+          dvcLimitedPointQueryServiceProvider.overrideWithValue(
+            const _FakeDvcLimitedPointQueryService(),
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            const _FakeDvcPointUsageQueryService(),
+          ),
+          dvcPointContractRepositoryProvider.overrideWithValue(
+            dvcPointContractRepository,
+          ),
+          dvcLimitedPointRepositoryProvider.overrideWithValue(
+            dvcLimitedPointRepository,
+          ),
+          dvcPointUsageRepositoryProvider.overrideWithValue(
+            dvcPointUsageRepository,
+          ),
+          tripEntryQueryServiceProvider.overrideWithValue(
+            tripEntryQueryService,
+          ),
+          groupRepositoryProvider.overrideWithValue(groupRepository),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+          tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
+          memberRepositoryProvider.overrideWithValue(memberRepository),
+          memberEventRepositoryProvider.overrideWithValue(
+            memberEventRepository,
+          ),
+          memberInvitationRepositoryProvider.overrideWithValue(
+            memberInvitationRepository,
+          ),
+          memberInvitationQueryServiceProvider.overrideWithValue(
+            memberInvitationQueryService,
+          ),
         ],
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
@@ -814,6 +958,40 @@ void main() {
           authServiceProvider.overrideWithValue(mockAuthService),
           groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
           pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+          dvcPointContractQueryServiceProvider.overrideWithValue(
+            const _FakeDvcPointContractQueryService(),
+          ),
+          dvcLimitedPointQueryServiceProvider.overrideWithValue(
+            const _FakeDvcLimitedPointQueryService(),
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            const _FakeDvcPointUsageQueryService(),
+          ),
+          dvcPointContractRepositoryProvider.overrideWithValue(
+            dvcPointContractRepository,
+          ),
+          dvcLimitedPointRepositoryProvider.overrideWithValue(
+            dvcLimitedPointRepository,
+          ),
+          dvcPointUsageRepositoryProvider.overrideWithValue(
+            dvcPointUsageRepository,
+          ),
+          tripEntryQueryServiceProvider.overrideWithValue(
+            tripEntryQueryService,
+          ),
+          groupRepositoryProvider.overrideWithValue(groupRepository),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+          tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
+          memberRepositoryProvider.overrideWithValue(memberRepository),
+          memberEventRepositoryProvider.overrideWithValue(
+            memberEventRepository,
+          ),
+          memberInvitationRepositoryProvider.overrideWithValue(
+            memberInvitationRepository,
+          ),
+          memberInvitationQueryServiceProvider.overrideWithValue(
+            memberInvitationQueryService,
+          ),
         ],
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
@@ -899,4 +1077,121 @@ class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
 
   @override
   Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {}
+}
+
+class _FakeTripEntryQueryService implements TripEntryQueryService {
+  const _FakeTripEntryQueryService();
+
+  @override
+  Future<TripEntryDto?> getTripEntryById(
+    String tripId, {
+    List<OrderBy>? pinsOrderBy,
+    List<OrderBy>? tasksOrderBy,
+  }) async {
+    return null;
+  }
+
+  @override
+  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
+    String groupId,
+    int year, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return const [];
+  }
+}
+
+class _FakeGroupRepository implements GroupRepository {
+  @override
+  Future<void> deleteGroup(String groupId) async {}
+
+  @override
+  Future<void> deleteGroupMembersByMemberId(String memberId) async {}
+
+  @override
+  Future<String> saveGroup(Group group) async {
+    return 'g1';
+  }
+
+  @override
+  Future<void> updateGroup(Group group) async {}
+}
+
+class _FakeGroupEventRepository implements GroupEventRepository {
+  @override
+  Future<void> deleteGroupEvent(String groupEventId) async {}
+
+  @override
+  Future<void> deleteGroupEventsByGroupId(String groupId) async {}
+
+  @override
+  Future<void> saveGroupEvent(GroupEvent groupEvent) async {}
+}
+
+class _FakeTripEntryRepository implements TripEntryRepository {
+  @override
+  Future<void> deleteTripEntriesByGroupId(String groupId) async {}
+
+  @override
+  Future<void> deleteTripEntry(String tripId) async {}
+
+  @override
+  Future<String> saveTripEntry(TripEntry tripEntry) async {
+    return 't1';
+  }
+
+  @override
+  Future<void> updateTripEntry(TripEntry tripEntry) async {}
+}
+
+class _FakeMemberRepository implements MemberRepository {
+  @override
+  Future<void> deleteMember(String memberId) async {}
+
+  @override
+  Future<void> saveMember(Member member) async {}
+
+  @override
+  Future<void> updateMember(Member member) async {}
+}
+
+class _FakeMemberEventRepository implements MemberEventRepository {
+  @override
+  Future<void> deleteMemberEvent(String memberEventId) async {}
+
+  @override
+  Future<void> deleteMemberEventsByMemberId(String memberId) async {}
+
+  @override
+  Future<void> saveMemberEvent(MemberEvent memberEvent) async {}
+}
+
+class _FakeMemberInvitationRepository implements MemberInvitationRepository {
+  @override
+  Future<void> deleteMemberInvitation(String id) async {}
+
+  @override
+  Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {}
+
+  @override
+  Future<void> updateMemberInvitation(
+    MemberInvitation memberInvitation,
+  ) async {}
+}
+
+class _FakeMemberInvitationQueryService
+    implements MemberInvitationQueryService {
+  const _FakeMemberInvitationQueryService();
+
+  @override
+  Future<MemberInvitationDto?> getByInvitationCode(
+    String invitationCode,
+  ) async {
+    return null;
+  }
+
+  @override
+  Future<MemberInvitationDto?> getByInviteeId(String inviteeId) async {
+    return null;
+  }
 }

@@ -13,7 +13,6 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/presentation/features/timeline/dvc_point_usage_edit_label.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
@@ -106,14 +105,7 @@ class TopPage extends HookConsumerWidget {
           title: 'グループを選択',
           listKey: const Key('group_list'),
         ),
-        isTestEnvironment
-            ? _buildTestGroupTimeline(
-                ref,
-                timelineState
-                    .groupTimelineInstance
-                    ?.onDvcPointCalculationPressed,
-              )
-            : timelineState.groupTimelineInstance ?? Container(),
+        timelineState.groupTimelineInstance ?? Container(),
         timelineState.selectedGroupId != null &&
                 timelineState.selectedYear != null
             ? TripManagement(
@@ -138,48 +130,6 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildTestGroupTimeline(
-    WidgetRef ref,
-    VoidCallback? onDvcPointCalculationPressed,
-  ) {
-    return Container(
-      key: const Key('group_timeline'),
-      child: Column(
-        children: [
-          AppBar(
-            leading: IconButton(
-              key: const Key('back_button'),
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                ref
-                    .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .showGroupList();
-              },
-            ),
-            title: const Text('テストグループ'),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                DvcPointUsageEditLabel(onPressed: onDvcPointCalculationPressed),
-              ],
-            ),
-          ),
-          Expanded(
-            child: _buildTestPlaceholder(
-              key: 'group_timeline_content',
-              icon: Icons.timeline,
-              title: 'グループ年表テスト',
-              subtitle: 'テスト環境',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildBody(
     BuildContext context,
     WidgetRef ref,
@@ -194,69 +144,23 @@ class TopPage extends HookConsumerWidget {
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
+        // Mapは外部依存（Google Map）を含むため、テスト時のみ切り替えを維持する。
         return MapScreen(isTestEnvironment: isTestEnvironment);
       case NavigationItem.groupManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return isTestEnvironment
-            ? _buildTestPlaceholder(
-                key: 'group_settings',
-                icon: Icons.group_work,
-                title: 'グループ管理',
-                subtitle: 'グループ管理画面',
-              )
-            : const GroupManagement();
+        return const GroupManagement();
       case NavigationItem.memberManagement:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        return isTestEnvironment
-            ? _buildTestPlaceholder(
-                key: 'member_settings',
-                icon: Icons.people,
-                title: 'メンバー管理',
-                subtitle: 'メンバー管理画面',
-              )
-            : const MemberManagement();
+        return const MemberManagement();
       case NavigationItem.settings:
         return const Settings();
       case NavigationItem.accountSettings:
         return const AccountSettings();
     }
-  }
-
-  Widget _buildTestPlaceholder({
-    required String key,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      key: Key(key),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 100, color: Colors.grey),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   AppBar _buildAppBar(BuildContext context) {
