@@ -584,27 +584,8 @@ class GroupTimeline extends HookConsumerWidget {
                       ),
                     ),
                     child: rowIndex == 2
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('DVC'),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  key: const Key(
-                                    'timeline_dvc_point_usage_edit_button',
-                                  ),
-                                  onTap: onDvcPointCalculationPressed,
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(2),
-                                    child: Icon(Icons.edit, size: 16),
-                                  ),
-                                ),
-                              ],
-                            ),
+                        ? _buildDvcPointUsageLabel(
+                            onPressed: onDvcPointCalculationPressed,
                           )
                         : Text(label),
                   ),
@@ -892,6 +873,29 @@ class GroupTimeline extends HookConsumerWidget {
     final yearIndex = columnIndex - 1;
     final currentYear = DateTime.now().year;
     return currentYear + startYearOffset + yearIndex;
+  }
+
+  Widget _buildDvcPointUsageLabel({required VoidCallback? onPressed}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('DVC'),
+          const SizedBox(width: 8),
+          InkWell(
+            key: const Key('timeline_dvc_point_usage_edit_button'),
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.all(2),
+              child: Icon(Icons.edit, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String? _buildAgeLabel(DateTime? birthday, int targetYear) {
