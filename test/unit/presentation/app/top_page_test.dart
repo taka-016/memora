@@ -8,8 +8,19 @@ import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.d
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/domain/repositories/group/group_event_repository.dart';
+import 'package:memora/domain/repositories/group/group_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
+import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
+import 'package:memora/domain/repositories/member/member_event_repository.dart';
+import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
+import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -17,16 +28,17 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/features/group/group_management.dart';
+import 'package:memora/presentation/features/member/member_management.dart';
+import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';
@@ -58,6 +70,20 @@ class _TestGroupTimelineNavigationNotifier
   AuthService,
   AuthNotifier,
   PinQueryService,
+  DvcPointContractQueryService,
+  DvcLimitedPointQueryService,
+  DvcPointUsageQueryService,
+  DvcPointContractRepository,
+  DvcLimitedPointRepository,
+  DvcPointUsageRepository,
+  TripEntryQueryService,
+  GroupRepository,
+  GroupEventRepository,
+  TripEntryRepository,
+  MemberRepository,
+  MemberEventRepository,
+  MemberInvitationRepository,
+  MemberInvitationQueryService,
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
@@ -66,16 +92,152 @@ void main() {
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
   late MemberDto testMember;
+  late MockDvcPointContractQueryService mockDvcPointContractQueryService;
+  late MockDvcLimitedPointQueryService mockDvcLimitedPointQueryService;
+  late MockDvcPointUsageQueryService mockDvcPointUsageQueryService;
+  late MockDvcPointContractRepository mockDvcPointContractRepository;
+  late MockDvcLimitedPointRepository mockDvcLimitedPointRepository;
+  late MockDvcPointUsageRepository mockDvcPointUsageRepository;
+  late MockTripEntryQueryService mockTripEntryQueryService;
+  late MockGroupRepository mockGroupRepository;
+  late MockGroupEventRepository mockGroupEventRepository;
+  late MockTripEntryRepository mockTripEntryRepository;
+  late MockMemberRepository mockMemberRepository;
+  late MockMemberEventRepository mockMemberEventRepository;
+  late MockMemberInvitationRepository mockMemberInvitationRepository;
+  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     mockGroupQueryService = MockGroupQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
+    mockDvcPointContractQueryService = MockDvcPointContractQueryService();
+    mockDvcLimitedPointQueryService = MockDvcLimitedPointQueryService();
+    mockDvcPointUsageQueryService = MockDvcPointUsageQueryService();
+    mockDvcPointContractRepository = MockDvcPointContractRepository();
+    mockDvcLimitedPointRepository = MockDvcLimitedPointRepository();
+    mockDvcPointUsageRepository = MockDvcPointUsageRepository();
+    mockTripEntryQueryService = MockTripEntryQueryService();
+    mockGroupRepository = MockGroupRepository();
+    mockGroupEventRepository = MockGroupEventRepository();
+    mockTripEntryRepository = MockTripEntryRepository();
+    mockMemberRepository = MockMemberRepository();
+    mockMemberEventRepository = MockMemberEventRepository();
+    mockMemberInvitationRepository = MockMemberInvitationRepository();
+    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
 
     when(
       mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
+    when(
+      mockDvcPointContractQueryService.getDvcPointContractsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDvcPointUsageQueryService.getDvcPointUsagesByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockTripEntryQueryService.getTripEntryById(
+        any,
+        pinsOrderBy: anyNamed('pinsOrderBy'),
+        tasksOrderBy: anyNamed('tasksOrderBy'),
+      ),
+    ).thenAnswer((_) async => null);
+    when(
+      mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+        any,
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockMemberInvitationQueryService.getByInvitationCode(any),
+    ).thenAnswer((_) async => null);
+    when(
+      mockMemberInvitationQueryService.getByInviteeId(any),
+    ).thenAnswer((_) async => null);
+    when(
+      mockDvcPointContractRepository.deleteDvcPointContract(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointContractRepository.deleteDvcPointContractsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointContractRepository.saveDvcPointContract(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.deleteDvcLimitedPoint(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.deleteDvcLimitedPointsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.saveDvcLimitedPoint(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.deleteDvcPointUsage(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.deleteDvcPointUsagesByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.saveDvcPointUsage(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupRepository.deleteGroup(any)).thenAnswer((_) async {});
+    when(
+      mockGroupRepository.deleteGroupMembersByMemberId(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupRepository.saveGroup(any)).thenAnswer((_) async => 'g1');
+    when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
+    when(
+      mockGroupEventRepository.deleteGroupEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockGroupEventRepository.deleteGroupEventsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupEventRepository.saveGroupEvent(any)).thenAnswer((_) async {});
+    when(
+      mockTripEntryRepository.deleteTripEntriesByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(mockTripEntryRepository.deleteTripEntry(any)).thenAnswer((_) async {});
+    when(
+      mockTripEntryRepository.saveTripEntry(any),
+    ).thenAnswer((_) async => 't1');
+    when(mockTripEntryRepository.updateTripEntry(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.deleteMember(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.deleteMemberEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.deleteMemberEventsByMemberId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.saveMemberEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.deleteMemberInvitation(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.saveMemberInvitation(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.updateMemberInvitation(any),
+    ).thenAnswer((_) async {});
 
     testMember = MemberDto(
       id: 'admin1',
@@ -119,13 +281,23 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => groupsWithMembers.first);
+    when(
+      mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+        any,
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget({
+  List<Override> createTopPageTestOverrides({
     MockMemberQueryService? memberQueryService,
     MockAuthService? authService,
-    MockAuthNotifier? authNotifier,
+    AuthNotifier? authNotifier,
     MemberDto? currentMember,
+    NavigationNotifier? navigationNotifier,
+    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    FakeCurrentMemberNotifier? currentMemberNotifier,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -146,6 +318,15 @@ void main() {
     when(
       testMemberQueryService.getMemberByAccountId(any),
     ).thenAnswer((_) async => defaultMember);
+    when(
+      testMemberQueryService.getMemberById(any),
+    ).thenAnswer((_) async => defaultMember);
+    when(
+      testMemberQueryService.getMembersByOwnerId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
     when(testAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -155,27 +336,83 @@ void main() {
       ),
     ).thenAnswer((_) async => groupsWithMembers);
 
+    final resolvedCurrentMemberNotifier =
+        currentMemberNotifier ??
+        FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember);
+
+    return [
+      authNotifierProvider.overrideWith(
+        () => authNotifier ?? FakeAuthNotifier.authenticated(),
+      ),
+      if (navigationNotifier != null)
+        navigationNotifierProvider.overrideWith(() => navigationNotifier),
+      if (groupTimelineNavigationNotifier != null)
+        groupTimelineNavigationNotifierProvider.overrideWith(
+          () => groupTimelineNavigationNotifier,
+        ),
+      currentMemberNotifierProvider.overrideWith(
+        () => resolvedCurrentMemberNotifier,
+      ),
+      memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
+      authServiceProvider.overrideWithValue(testAuthService),
+      groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+      pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+      dvcPointContractQueryServiceProvider.overrideWithValue(
+        mockDvcPointContractQueryService,
+      ),
+      dvcLimitedPointQueryServiceProvider.overrideWithValue(
+        mockDvcLimitedPointQueryService,
+      ),
+      dvcPointUsageQueryServiceProvider.overrideWithValue(
+        mockDvcPointUsageQueryService,
+      ),
+      dvcPointContractRepositoryProvider.overrideWithValue(
+        mockDvcPointContractRepository,
+      ),
+      dvcLimitedPointRepositoryProvider.overrideWithValue(
+        mockDvcLimitedPointRepository,
+      ),
+      dvcPointUsageRepositoryProvider.overrideWithValue(
+        mockDvcPointUsageRepository,
+      ),
+      tripEntryQueryServiceProvider.overrideWithValue(
+        mockTripEntryQueryService,
+      ),
+      groupRepositoryProvider.overrideWithValue(mockGroupRepository),
+      groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
+      tripEntryRepositoryProvider.overrideWithValue(mockTripEntryRepository),
+      memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+      memberEventRepositoryProvider.overrideWithValue(
+        mockMemberEventRepository,
+      ),
+      memberInvitationRepositoryProvider.overrideWithValue(
+        mockMemberInvitationRepository,
+      ),
+      memberInvitationQueryServiceProvider.overrideWithValue(
+        mockMemberInvitationQueryService,
+      ),
+    ];
+  }
+
+  Widget createTestWidget({
+    MockMemberQueryService? memberQueryService,
+    MockAuthService? authService,
+    AuthNotifier? authNotifier,
+    MemberDto? currentMember,
+    NavigationNotifier? navigationNotifier,
+    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    FakeCurrentMemberNotifier? currentMemberNotifier,
+  }) {
     return ProviderScope(
-      overrides: [
-        authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
-        currentMemberNotifierProvider.overrideWith(
-          () =>
-              FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember),
-        ),
-        memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
-        authServiceProvider.overrideWithValue(testAuthService),
-        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-        dvcPointContractQueryServiceProvider.overrideWithValue(
-          const _FakeDvcPointContractQueryService(),
-        ),
-        dvcLimitedPointQueryServiceProvider.overrideWithValue(
-          const _FakeDvcLimitedPointQueryService(),
-        ),
-        dvcPointUsageQueryServiceProvider.overrideWithValue(
-          const _FakeDvcPointUsageQueryService(),
-        ),
-      ],
+      overrides: createTopPageTestOverrides(
+        memberQueryService: memberQueryService,
+        authService: authService,
+        authNotifier: authNotifier,
+        currentMember: currentMember,
+        navigationNotifier: navigationNotifier,
+        groupTimelineNavigationNotifier: groupTimelineNavigationNotifier,
+        currentMemberNotifier: currentMemberNotifier,
+      ),
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
   }
@@ -381,6 +618,51 @@ void main() {
         findsNothing,
       );
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+    });
+
+    testWidgets('テスト環境でもグループ年表は実ウィジェットを表示する', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GroupTimeline), findsOneWidget);
+    });
+
+    testWidgets('テスト環境でもグループ管理とメンバー管理は実ウィジェットを表示する', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ管理'));
+      await tester.pumpAndSettle();
+      expect(find.byType(GroupManagement), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('メンバー管理'));
+      await tester.pumpAndSettle();
+      expect(find.byType(MemberManagement), findsOneWidget);
     });
 
     testWidgets('メニューから「メンバー管理」を選択すると、メンバー管理画面が表示される', (
@@ -720,22 +1002,14 @@ void main() {
 
       // Providerをオーバーライドして、非デフォルト状態から開始
       final widget = ProviderScope(
-        overrides: [
-          authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
-          navigationNotifierProvider.overrideWith(
-            () => _TestNavigationNotifier(),
-          ),
-          groupTimelineNavigationNotifierProvider.overrideWith(
-            () => _TestGroupTimelineNavigationNotifier(),
-          ),
-          currentMemberNotifierProvider.overrideWith(
-            () => FakeCurrentMemberNotifier.loaded(defaultMember),
-          ),
-          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
-          authServiceProvider.overrideWithValue(mockAuthService),
-          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-        ],
+        overrides: createTopPageTestOverrides(
+          memberQueryService: mockMemberQueryService,
+          authService: mockAuthService,
+          currentMember: defaultMember,
+          navigationNotifier: _TestNavigationNotifier(),
+          groupTimelineNavigationNotifier:
+              _TestGroupTimelineNavigationNotifier(),
+        ),
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
@@ -781,18 +1055,14 @@ void main() {
         const AuthState.authenticated(testUser),
       );
       final widget = ProviderScope(
-        overrides: [
-          authNotifierProvider.overrideWith(() => fakeAuthNotifier),
-          currentMemberNotifierProvider.overrideWith(
-            () => FakeCurrentMemberNotifier.error(
-              'メンバー情報の取得に失敗しました。再度ログインしてください。',
-            ),
+        overrides: createTopPageTestOverrides(
+          memberQueryService: mockMemberQueryService,
+          authService: mockAuthService,
+          authNotifier: fakeAuthNotifier,
+          currentMemberNotifier: FakeCurrentMemberNotifier.error(
+            'メンバー情報の取得に失敗しました。再度ログインしてください。',
           ),
-          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
-          authServiceProvider.overrideWithValue(mockAuthService),
-          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-        ],
+        ),
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
@@ -807,41 +1077,4 @@ void main() {
       expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
-}
-
-class _FakeDvcPointContractQueryService
-    implements DvcPointContractQueryService {
-  const _FakeDvcPointContractQueryService();
-
-  @override
-  Future<List<DvcPointContractDto>> getDvcPointContractsByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
-  const _FakeDvcLimitedPointQueryService();
-
-  @override
-  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  const _FakeDvcPointUsageQueryService();
-
-  @override
-  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
 }
