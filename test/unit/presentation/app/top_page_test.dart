@@ -11,18 +11,7 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
-import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/domain/entities/group/group.dart';
-import 'package:memora/domain/entities/group/group_event.dart';
-import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
-import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
-import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
-import 'package:memora/domain/entities/member/member.dart';
-import 'package:memora/domain/entities/member/member_event.dart';
-import 'package:memora/domain/entities/member/member_invitation.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
@@ -41,10 +30,6 @@ import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -85,6 +70,20 @@ class _TestGroupTimelineNavigationNotifier
   AuthService,
   AuthNotifier,
   PinQueryService,
+  DvcPointContractQueryService,
+  DvcLimitedPointQueryService,
+  DvcPointUsageQueryService,
+  DvcPointContractRepository,
+  DvcLimitedPointRepository,
+  DvcPointUsageRepository,
+  TripEntryQueryService,
+  GroupRepository,
+  GroupEventRepository,
+  TripEntryRepository,
+  MemberRepository,
+  MemberEventRepository,
+  MemberInvitationRepository,
+  MemberInvitationQueryService,
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
@@ -93,17 +92,20 @@ void main() {
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
   late MemberDto testMember;
-  late _FakeDvcPointContractRepository dvcPointContractRepository;
-  late _FakeDvcLimitedPointRepository dvcLimitedPointRepository;
-  late _FakeDvcPointUsageRepository dvcPointUsageRepository;
-  late _FakeTripEntryQueryService tripEntryQueryService;
-  late _FakeGroupRepository groupRepository;
-  late _FakeGroupEventRepository groupEventRepository;
-  late _FakeTripEntryRepository tripEntryRepository;
-  late _FakeMemberRepository memberRepository;
-  late _FakeMemberEventRepository memberEventRepository;
-  late _FakeMemberInvitationRepository memberInvitationRepository;
-  late _FakeMemberInvitationQueryService memberInvitationQueryService;
+  late MockDvcPointContractQueryService mockDvcPointContractQueryService;
+  late MockDvcLimitedPointQueryService mockDvcLimitedPointQueryService;
+  late MockDvcPointUsageQueryService mockDvcPointUsageQueryService;
+  late MockDvcPointContractRepository mockDvcPointContractRepository;
+  late MockDvcLimitedPointRepository mockDvcLimitedPointRepository;
+  late MockDvcPointUsageRepository mockDvcPointUsageRepository;
+  late MockTripEntryQueryService mockTripEntryQueryService;
+  late MockGroupRepository mockGroupRepository;
+  late MockGroupEventRepository mockGroupEventRepository;
+  late MockTripEntryRepository mockTripEntryRepository;
+  late MockMemberRepository mockMemberRepository;
+  late MockMemberEventRepository mockMemberEventRepository;
+  late MockMemberInvitationRepository mockMemberInvitationRepository;
+  late MockMemberInvitationQueryService mockMemberInvitationQueryService;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -111,21 +113,131 @@ void main() {
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
-    dvcPointContractRepository = _FakeDvcPointContractRepository();
-    dvcLimitedPointRepository = _FakeDvcLimitedPointRepository();
-    dvcPointUsageRepository = _FakeDvcPointUsageRepository();
-    tripEntryQueryService = const _FakeTripEntryQueryService();
-    groupRepository = _FakeGroupRepository();
-    groupEventRepository = _FakeGroupEventRepository();
-    tripEntryRepository = _FakeTripEntryRepository();
-    memberRepository = _FakeMemberRepository();
-    memberEventRepository = _FakeMemberEventRepository();
-    memberInvitationRepository = _FakeMemberInvitationRepository();
-    memberInvitationQueryService = const _FakeMemberInvitationQueryService();
+    mockDvcPointContractQueryService = MockDvcPointContractQueryService();
+    mockDvcLimitedPointQueryService = MockDvcLimitedPointQueryService();
+    mockDvcPointUsageQueryService = MockDvcPointUsageQueryService();
+    mockDvcPointContractRepository = MockDvcPointContractRepository();
+    mockDvcLimitedPointRepository = MockDvcLimitedPointRepository();
+    mockDvcPointUsageRepository = MockDvcPointUsageRepository();
+    mockTripEntryQueryService = MockTripEntryQueryService();
+    mockGroupRepository = MockGroupRepository();
+    mockGroupEventRepository = MockGroupEventRepository();
+    mockTripEntryRepository = MockTripEntryRepository();
+    mockMemberRepository = MockMemberRepository();
+    mockMemberEventRepository = MockMemberEventRepository();
+    mockMemberInvitationRepository = MockMemberInvitationRepository();
+    mockMemberInvitationQueryService = MockMemberInvitationQueryService();
 
     when(
       mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
+    when(
+      mockDvcPointContractQueryService.getDvcPointContractsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockDvcPointUsageQueryService.getDvcPointUsagesByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockTripEntryQueryService.getTripEntryById(
+        any,
+        pinsOrderBy: anyNamed('pinsOrderBy'),
+        tasksOrderBy: anyNamed('tasksOrderBy'),
+      ),
+    ).thenAnswer((_) async => null);
+    when(
+      mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+        any,
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockMemberInvitationQueryService.getByInvitationCode(any),
+    ).thenAnswer((_) async => null);
+    when(
+      mockMemberInvitationQueryService.getByInviteeId(any),
+    ).thenAnswer((_) async => null);
+    when(
+      mockDvcPointContractRepository.deleteDvcPointContract(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointContractRepository.deleteDvcPointContractsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointContractRepository.saveDvcPointContract(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.deleteDvcLimitedPoint(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.deleteDvcLimitedPointsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcLimitedPointRepository.saveDvcLimitedPoint(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.deleteDvcPointUsage(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.deleteDvcPointUsagesByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockDvcPointUsageRepository.saveDvcPointUsage(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupRepository.deleteGroup(any)).thenAnswer((_) async {});
+    when(
+      mockGroupRepository.deleteGroupMembersByMemberId(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupRepository.saveGroup(any)).thenAnswer((_) async => 'g1');
+    when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
+    when(
+      mockGroupEventRepository.deleteGroupEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockGroupEventRepository.deleteGroupEventsByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(mockGroupEventRepository.saveGroupEvent(any)).thenAnswer((_) async {});
+    when(
+      mockTripEntryRepository.deleteTripEntriesByGroupId(any),
+    ).thenAnswer((_) async {});
+    when(mockTripEntryRepository.deleteTripEntry(any)).thenAnswer((_) async {});
+    when(
+      mockTripEntryRepository.saveTripEntry(any),
+    ).thenAnswer((_) async => 't1');
+    when(mockTripEntryRepository.updateTripEntry(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.deleteMember(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
+    when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.deleteMemberEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.deleteMemberEventsByMemberId(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberEventRepository.saveMemberEvent(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.deleteMemberInvitation(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.saveMemberInvitation(any),
+    ).thenAnswer((_) async {});
+    when(
+      mockMemberInvitationRepository.updateMemberInvitation(any),
+    ).thenAnswer((_) async {});
 
     testMember = MemberDto(
       id: 'admin1',
@@ -246,34 +358,38 @@ void main() {
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
-        const _FakeDvcPointContractQueryService(),
+        mockDvcPointContractQueryService,
       ),
       dvcLimitedPointQueryServiceProvider.overrideWithValue(
-        const _FakeDvcLimitedPointQueryService(),
+        mockDvcLimitedPointQueryService,
       ),
       dvcPointUsageQueryServiceProvider.overrideWithValue(
-        const _FakeDvcPointUsageQueryService(),
+        mockDvcPointUsageQueryService,
       ),
       dvcPointContractRepositoryProvider.overrideWithValue(
-        dvcPointContractRepository,
+        mockDvcPointContractRepository,
       ),
       dvcLimitedPointRepositoryProvider.overrideWithValue(
-        dvcLimitedPointRepository,
+        mockDvcLimitedPointRepository,
       ),
       dvcPointUsageRepositoryProvider.overrideWithValue(
-        dvcPointUsageRepository,
+        mockDvcPointUsageRepository,
       ),
-      tripEntryQueryServiceProvider.overrideWithValue(tripEntryQueryService),
-      groupRepositoryProvider.overrideWithValue(groupRepository),
-      groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
-      tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
-      memberRepositoryProvider.overrideWithValue(memberRepository),
-      memberEventRepositoryProvider.overrideWithValue(memberEventRepository),
+      tripEntryQueryServiceProvider.overrideWithValue(
+        mockTripEntryQueryService,
+      ),
+      groupRepositoryProvider.overrideWithValue(mockGroupRepository),
+      groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
+      tripEntryRepositoryProvider.overrideWithValue(mockTripEntryRepository),
+      memberRepositoryProvider.overrideWithValue(mockMemberRepository),
+      memberEventRepositoryProvider.overrideWithValue(
+        mockMemberEventRepository,
+      ),
       memberInvitationRepositoryProvider.overrideWithValue(
-        memberInvitationRepository,
+        mockMemberInvitationRepository,
       ),
       memberInvitationQueryServiceProvider.overrideWithValue(
-        memberInvitationQueryService,
+        mockMemberInvitationQueryService,
       ),
     ];
   }
@@ -961,191 +1077,4 @@ void main() {
       expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
-}
-
-class _FakeDvcPointContractQueryService
-    implements DvcPointContractQueryService {
-  const _FakeDvcPointContractQueryService();
-
-  @override
-  Future<List<DvcPointContractDto>> getDvcPointContractsByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
-  const _FakeDvcLimitedPointQueryService();
-
-  @override
-  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  const _FakeDvcPointUsageQueryService();
-
-  @override
-  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeDvcPointContractRepository implements DvcPointContractRepository {
-  @override
-  Future<void> deleteDvcPointContract(String contractId) async {}
-
-  @override
-  Future<void> deleteDvcPointContractsByGroupId(String groupId) async {}
-
-  @override
-  Future<void> saveDvcPointContract(DvcPointContract contract) async {}
-}
-
-class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
-  @override
-  Future<void> deleteDvcLimitedPoint(String limitedPointId) async {}
-
-  @override
-  Future<void> deleteDvcLimitedPointsByGroupId(String groupId) async {}
-
-  @override
-  Future<void> saveDvcLimitedPoint(DvcLimitedPoint limitedPoint) async {}
-}
-
-class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
-  @override
-  Future<void> deleteDvcPointUsage(String pointUsageId) async {}
-
-  @override
-  Future<void> deleteDvcPointUsagesByGroupId(String groupId) async {}
-
-  @override
-  Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {}
-}
-
-class _FakeTripEntryQueryService implements TripEntryQueryService {
-  const _FakeTripEntryQueryService();
-
-  @override
-  Future<TripEntryDto?> getTripEntryById(
-    String tripId, {
-    List<OrderBy>? pinsOrderBy,
-    List<OrderBy>? tasksOrderBy,
-  }) async {
-    return null;
-  }
-
-  @override
-  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
-    String groupId,
-    int year, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return const [];
-  }
-}
-
-class _FakeGroupRepository implements GroupRepository {
-  @override
-  Future<void> deleteGroup(String groupId) async {}
-
-  @override
-  Future<void> deleteGroupMembersByMemberId(String memberId) async {}
-
-  @override
-  Future<String> saveGroup(Group group) async {
-    return 'g1';
-  }
-
-  @override
-  Future<void> updateGroup(Group group) async {}
-}
-
-class _FakeGroupEventRepository implements GroupEventRepository {
-  @override
-  Future<void> deleteGroupEvent(String groupEventId) async {}
-
-  @override
-  Future<void> deleteGroupEventsByGroupId(String groupId) async {}
-
-  @override
-  Future<void> saveGroupEvent(GroupEvent groupEvent) async {}
-}
-
-class _FakeTripEntryRepository implements TripEntryRepository {
-  @override
-  Future<void> deleteTripEntriesByGroupId(String groupId) async {}
-
-  @override
-  Future<void> deleteTripEntry(String tripId) async {}
-
-  @override
-  Future<String> saveTripEntry(TripEntry tripEntry) async {
-    return 't1';
-  }
-
-  @override
-  Future<void> updateTripEntry(TripEntry tripEntry) async {}
-}
-
-class _FakeMemberRepository implements MemberRepository {
-  @override
-  Future<void> deleteMember(String memberId) async {}
-
-  @override
-  Future<void> saveMember(Member member) async {}
-
-  @override
-  Future<void> updateMember(Member member) async {}
-}
-
-class _FakeMemberEventRepository implements MemberEventRepository {
-  @override
-  Future<void> deleteMemberEvent(String memberEventId) async {}
-
-  @override
-  Future<void> deleteMemberEventsByMemberId(String memberId) async {}
-
-  @override
-  Future<void> saveMemberEvent(MemberEvent memberEvent) async {}
-}
-
-class _FakeMemberInvitationRepository implements MemberInvitationRepository {
-  @override
-  Future<void> deleteMemberInvitation(String id) async {}
-
-  @override
-  Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {}
-
-  @override
-  Future<void> updateMemberInvitation(
-    MemberInvitation memberInvitation,
-  ) async {}
-}
-
-class _FakeMemberInvitationQueryService
-    implements MemberInvitationQueryService {
-  const _FakeMemberInvitationQueryService();
-
-  @override
-  Future<MemberInvitationDto?> getByInvitationCode(
-    String invitationCode,
-  ) async {
-    return null;
-  }
-
-  @override
-  Future<MemberInvitationDto?> getByInviteeId(String inviteeId) async {
-    return null;
-  }
 }
