@@ -178,11 +178,14 @@ void main() {
     ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget({
+  List<Override> createTopPageTestOverrides({
     MockMemberQueryService? memberQueryService,
     MockAuthService? authService,
-    MockAuthNotifier? authNotifier,
+    AuthNotifier? authNotifier,
     MemberDto? currentMember,
+    NavigationNotifier? navigationNotifier,
+    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    FakeCurrentMemberNotifier? currentMemberNotifier,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -221,48 +224,79 @@ void main() {
       ),
     ).thenAnswer((_) async => groupsWithMembers);
 
+    final resolvedCurrentMemberNotifier =
+        currentMemberNotifier ??
+        FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember);
+
+    return [
+      authNotifierProvider.overrideWith(
+        () => authNotifier ?? FakeAuthNotifier.authenticated(),
+      ),
+      if (navigationNotifier != null)
+        navigationNotifierProvider.overrideWith(() => navigationNotifier),
+      if (groupTimelineNavigationNotifier != null)
+        groupTimelineNavigationNotifierProvider.overrideWith(
+          () => groupTimelineNavigationNotifier,
+        ),
+      currentMemberNotifierProvider.overrideWith(
+        () => resolvedCurrentMemberNotifier,
+      ),
+      memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
+      authServiceProvider.overrideWithValue(testAuthService),
+      groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+      pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
+      dvcPointContractQueryServiceProvider.overrideWithValue(
+        const _FakeDvcPointContractQueryService(),
+      ),
+      dvcLimitedPointQueryServiceProvider.overrideWithValue(
+        const _FakeDvcLimitedPointQueryService(),
+      ),
+      dvcPointUsageQueryServiceProvider.overrideWithValue(
+        const _FakeDvcPointUsageQueryService(),
+      ),
+      dvcPointContractRepositoryProvider.overrideWithValue(
+        dvcPointContractRepository,
+      ),
+      dvcLimitedPointRepositoryProvider.overrideWithValue(
+        dvcLimitedPointRepository,
+      ),
+      dvcPointUsageRepositoryProvider.overrideWithValue(
+        dvcPointUsageRepository,
+      ),
+      tripEntryQueryServiceProvider.overrideWithValue(tripEntryQueryService),
+      groupRepositoryProvider.overrideWithValue(groupRepository),
+      groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+      tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
+      memberRepositoryProvider.overrideWithValue(memberRepository),
+      memberEventRepositoryProvider.overrideWithValue(memberEventRepository),
+      memberInvitationRepositoryProvider.overrideWithValue(
+        memberInvitationRepository,
+      ),
+      memberInvitationQueryServiceProvider.overrideWithValue(
+        memberInvitationQueryService,
+      ),
+    ];
+  }
+
+  Widget createTestWidget({
+    MockMemberQueryService? memberQueryService,
+    MockAuthService? authService,
+    AuthNotifier? authNotifier,
+    MemberDto? currentMember,
+    NavigationNotifier? navigationNotifier,
+    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    FakeCurrentMemberNotifier? currentMemberNotifier,
+  }) {
     return ProviderScope(
-      overrides: [
-        authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
-        currentMemberNotifierProvider.overrideWith(
-          () =>
-              FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember),
-        ),
-        memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
-        authServiceProvider.overrideWithValue(testAuthService),
-        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-        dvcPointContractQueryServiceProvider.overrideWithValue(
-          const _FakeDvcPointContractQueryService(),
-        ),
-        dvcLimitedPointQueryServiceProvider.overrideWithValue(
-          const _FakeDvcLimitedPointQueryService(),
-        ),
-        dvcPointUsageQueryServiceProvider.overrideWithValue(
-          const _FakeDvcPointUsageQueryService(),
-        ),
-        dvcPointContractRepositoryProvider.overrideWithValue(
-          dvcPointContractRepository,
-        ),
-        dvcLimitedPointRepositoryProvider.overrideWithValue(
-          dvcLimitedPointRepository,
-        ),
-        dvcPointUsageRepositoryProvider.overrideWithValue(
-          dvcPointUsageRepository,
-        ),
-        tripEntryQueryServiceProvider.overrideWithValue(tripEntryQueryService),
-        groupRepositoryProvider.overrideWithValue(groupRepository),
-        groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
-        tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
-        memberRepositoryProvider.overrideWithValue(memberRepository),
-        memberEventRepositoryProvider.overrideWithValue(memberEventRepository),
-        memberInvitationRepositoryProvider.overrideWithValue(
-          memberInvitationRepository,
-        ),
-        memberInvitationQueryServiceProvider.overrideWithValue(
-          memberInvitationQueryService,
-        ),
-      ],
+      overrides: createTopPageTestOverrides(
+        memberQueryService: memberQueryService,
+        authService: authService,
+        authNotifier: authNotifier,
+        currentMember: currentMember,
+        navigationNotifier: navigationNotifier,
+        groupTimelineNavigationNotifier: groupTimelineNavigationNotifier,
+        currentMemberNotifier: currentMemberNotifier,
+      ),
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
   }
@@ -852,56 +886,14 @@ void main() {
 
       // Providerをオーバーライドして、非デフォルト状態から開始
       final widget = ProviderScope(
-        overrides: [
-          authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
-          navigationNotifierProvider.overrideWith(
-            () => _TestNavigationNotifier(),
-          ),
-          groupTimelineNavigationNotifierProvider.overrideWith(
-            () => _TestGroupTimelineNavigationNotifier(),
-          ),
-          currentMemberNotifierProvider.overrideWith(
-            () => FakeCurrentMemberNotifier.loaded(defaultMember),
-          ),
-          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
-          authServiceProvider.overrideWithValue(mockAuthService),
-          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-          dvcPointContractQueryServiceProvider.overrideWithValue(
-            const _FakeDvcPointContractQueryService(),
-          ),
-          dvcLimitedPointQueryServiceProvider.overrideWithValue(
-            const _FakeDvcLimitedPointQueryService(),
-          ),
-          dvcPointUsageQueryServiceProvider.overrideWithValue(
-            const _FakeDvcPointUsageQueryService(),
-          ),
-          dvcPointContractRepositoryProvider.overrideWithValue(
-            dvcPointContractRepository,
-          ),
-          dvcLimitedPointRepositoryProvider.overrideWithValue(
-            dvcLimitedPointRepository,
-          ),
-          dvcPointUsageRepositoryProvider.overrideWithValue(
-            dvcPointUsageRepository,
-          ),
-          tripEntryQueryServiceProvider.overrideWithValue(
-            tripEntryQueryService,
-          ),
-          groupRepositoryProvider.overrideWithValue(groupRepository),
-          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
-          tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
-          memberRepositoryProvider.overrideWithValue(memberRepository),
-          memberEventRepositoryProvider.overrideWithValue(
-            memberEventRepository,
-          ),
-          memberInvitationRepositoryProvider.overrideWithValue(
-            memberInvitationRepository,
-          ),
-          memberInvitationQueryServiceProvider.overrideWithValue(
-            memberInvitationQueryService,
-          ),
-        ],
+        overrides: createTopPageTestOverrides(
+          memberQueryService: mockMemberQueryService,
+          authService: mockAuthService,
+          currentMember: defaultMember,
+          navigationNotifier: _TestNavigationNotifier(),
+          groupTimelineNavigationNotifier:
+              _TestGroupTimelineNavigationNotifier(),
+        ),
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
@@ -947,52 +939,14 @@ void main() {
         const AuthState.authenticated(testUser),
       );
       final widget = ProviderScope(
-        overrides: [
-          authNotifierProvider.overrideWith(() => fakeAuthNotifier),
-          currentMemberNotifierProvider.overrideWith(
-            () => FakeCurrentMemberNotifier.error(
-              'メンバー情報の取得に失敗しました。再度ログインしてください。',
-            ),
+        overrides: createTopPageTestOverrides(
+          memberQueryService: mockMemberQueryService,
+          authService: mockAuthService,
+          authNotifier: fakeAuthNotifier,
+          currentMemberNotifier: FakeCurrentMemberNotifier.error(
+            'メンバー情報の取得に失敗しました。再度ログインしてください。',
           ),
-          memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
-          authServiceProvider.overrideWithValue(mockAuthService),
-          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-          pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-          dvcPointContractQueryServiceProvider.overrideWithValue(
-            const _FakeDvcPointContractQueryService(),
-          ),
-          dvcLimitedPointQueryServiceProvider.overrideWithValue(
-            const _FakeDvcLimitedPointQueryService(),
-          ),
-          dvcPointUsageQueryServiceProvider.overrideWithValue(
-            const _FakeDvcPointUsageQueryService(),
-          ),
-          dvcPointContractRepositoryProvider.overrideWithValue(
-            dvcPointContractRepository,
-          ),
-          dvcLimitedPointRepositoryProvider.overrideWithValue(
-            dvcLimitedPointRepository,
-          ),
-          dvcPointUsageRepositoryProvider.overrideWithValue(
-            dvcPointUsageRepository,
-          ),
-          tripEntryQueryServiceProvider.overrideWithValue(
-            tripEntryQueryService,
-          ),
-          groupRepositoryProvider.overrideWithValue(groupRepository),
-          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
-          tripEntryRepositoryProvider.overrideWithValue(tripEntryRepository),
-          memberRepositoryProvider.overrideWithValue(memberRepository),
-          memberEventRepositoryProvider.overrideWithValue(
-            memberEventRepository,
-          ),
-          memberInvitationRepositoryProvider.overrideWithValue(
-            memberInvitationRepository,
-          ),
-          memberInvitationQueryServiceProvider.overrideWithValue(
-            memberInvitationQueryService,
-          ),
-        ],
+        ),
         child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
