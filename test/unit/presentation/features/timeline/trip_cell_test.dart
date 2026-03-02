@@ -141,7 +141,7 @@ void main() {
       expect(find.text('2023/01/01'), findsOneWidget);
       expect(find.text('旅行0'), findsOneWidget);
       // 省略表示が表示される
-      expect(find.textContaining('...他9件'), findsOneWidget);
+      expect(find.textContaining('…他9件'), findsOneWidget);
     });
 
     testWidgets('利用可能な高さが0以下の場合、空のContainerを表示する', (WidgetTester tester) async {

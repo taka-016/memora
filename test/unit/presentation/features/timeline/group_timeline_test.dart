@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
@@ -18,6 +21,7 @@ import 'group_timeline_test.mocks.dart';
 void main() {
   late GroupDto testGroupWithMembers;
   late MockTripEntryQueryService mockTripEntryQueryService;
+  late DvcPointUsageQueryService dvcPointUsageQueryService;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -36,6 +40,7 @@ void main() {
     );
 
     mockTripEntryQueryService = MockTripEntryQueryService();
+    dvcPointUsageQueryService = const _FakeDvcPointUsageQueryService([]);
 
     // デフォルトの挙動を設定
     when(
@@ -47,11 +52,17 @@ void main() {
     ).thenAnswer((_) async => []);
   });
 
-  Widget createTestWidget({TripEntryQueryService? tripEntryQueryService}) {
+  Widget createTestWidget({
+    TripEntryQueryService? tripEntryQueryService,
+    DvcPointUsageQueryService? dvcPointUsageService,
+  }) {
     return ProviderScope(
       overrides: [
         tripEntryQueryServiceProvider.overrideWithValue(
           tripEntryQueryService ?? mockTripEntryQueryService,
+        ),
+        dvcPointUsageQueryServiceProvider.overrideWithValue(
+          dvcPointUsageService ?? dvcPointUsageQueryService,
         ),
       ],
       child: MaterialApp(
@@ -93,6 +104,304 @@ void main() {
       // Assert
       expect(find.byKey(const Key('timeline_settings_button')), findsOneWidget);
       expect(find.byIcon(Icons.settings_input_composite), findsOneWidget);
+    });
+
+    testWidgets('DVC行に編集アイコンボタンが表示される', (WidgetTester tester) async {
+      // Act
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('DVC'), findsOneWidget);
+      expect(
+        find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
+          matching: find.byIcon(Icons.edit),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('DVCポイント利用の編集ボタンをタップするとコールバック関数が呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      var callbackCalled = false;
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onDvcPointCalculationPressed: () {
+                  callbackCalled = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(callbackCalled, isTrue);
+    });
+
+    testWidgets('DVC行の固定セル全体をタップするとコールバック関数が呼ばれる', (WidgetTester tester) async {
+      // Arrange
+      var callbackCalled = false;
+      final widget = ProviderScope(
+        overrides: [
+          tripEntryQueryServiceProvider.overrideWithValue(
+            mockTripEntryQueryService,
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 1200,
+              height: 800,
+              child: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onDvcPointCalculationPressed: () {
+                  callbackCalled = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.byKey(const Key('fixed_row_2')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(callbackCalled, isTrue);
+    });
+
+    testWidgets('DVCポイント利用行に利用年月・利用ポイント・メモが表示される', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final currentMonth = DateTime(currentYear, 4);
+      final nextYearMonth = DateTime(currentYear + 1, 1);
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage1',
+              groupId: '1',
+              usageYearMonth: currentMonth,
+              usedPoint: 120,
+              memo: 'メモ1',
+            ),
+            DvcPointUsageDto(
+              id: 'usage2',
+              groupId: '1',
+              usageYearMonth: nextYearMonth,
+              usedPoint: 80,
+              memo: 'メモ2',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      final currentYearCell = find.byKey(
+        Key('dvc_point_usage_cell_$currentYear'),
+      );
+      final nextYearCell = find.byKey(
+        Key('dvc_point_usage_cell_${currentYear + 1}'),
+      );
+
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.text('${currentMonth.year}-04  120pt'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: currentYearCell, matching: find.text('メモ1')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: nextYearCell,
+          matching: find.text('${nextYearMonth.year}-01  80pt'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: nextYearCell, matching: find.text('メモ2')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('DVCポイント利用でメモが空の場合は末尾改行なしで表示される', (WidgetTester tester) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final currentMonth = DateTime(currentYear, 4);
+      final nextYearMonth = DateTime(currentYear + 1, 1);
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage1',
+              groupId: '1',
+              usageYearMonth: currentMonth,
+              usedPoint: 120,
+            ),
+            DvcPointUsageDto(
+              id: 'usage2',
+              groupId: '1',
+              usageYearMonth: nextYearMonth,
+              usedPoint: 80,
+              memo: '  ',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      final currentYearCell = find.byKey(
+        Key('dvc_point_usage_cell_$currentYear'),
+      );
+      final nextYearCell = find.byKey(
+        Key('dvc_point_usage_cell_${currentYear + 1}'),
+      );
+
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.text('${currentMonth.year}-04  120pt'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: nextYearCell,
+          matching: find.text('${nextYearMonth.year}-01  80pt'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('DVCセルをタップすると対象年セルの全件詳細がポップアップ表示される', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final currentYear = DateTime.now().year;
+      final yearCell = Key('dvc_point_usage_cell_$currentYear');
+      const longMemo = 'このメモはポップアップで省略されずに全文表示されるべき長文です。';
+
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage1',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 1),
+              usedPoint: 30,
+              memo: 'メモ1',
+            ),
+            DvcPointUsageDto(
+              id: 'usage2',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 4),
+              usedPoint: 60,
+              memo: 'メモ2',
+            ),
+            DvcPointUsageDto(
+              id: 'usage3',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 8),
+              usedPoint: 90,
+              memo: longMemo,
+            ),
+            DvcPointUsageDto(
+              id: 'usage4',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 12),
+              usedPoint: 120,
+              memo: 'メモ4',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.tap(find.byKey(yearCell));
+      await tester.pumpAndSettle();
+
+      // Assert
+      final dialog = find.byType(AlertDialog);
+      expect(dialog, findsOneWidget);
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.text('利用年月: $currentYear-01'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('利用ポイント: 30pt')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('メモ: メモ1')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: dialog,
+          matching: find.text('利用年月: $currentYear-12'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('利用ポイント: 120pt')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('メモ: $longMemo')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('年表のヘッダー行に年の列が表示される', (WidgetTester tester) async {
@@ -364,6 +673,10 @@ void main() {
       expect(
         find.byKey(const Key('row_resizer_icon_2')),
         findsOneWidget,
+      ); // DVCポイント利用行のリサイザー
+      expect(
+        find.byKey(const Key('row_resizer_icon_3')),
+        findsOneWidget,
       ); // メンバー行のリサイザー
     });
 
@@ -387,7 +700,7 @@ void main() {
       // 旅行行のリサイザーをドラッグ
       final resizerKey = find.byKey(const Key('row_resizer_icon_0'));
       expect(resizerKey, findsOneWidget);
-      await tester.drag(resizerKey, const Offset(0, 20)); // 下に20px移動
+      await _dragResizer(tester, resizerKey, const Offset(0, 20)); // 下に20px移動
       await tester.pumpAndSettle();
 
       // Assert
@@ -420,13 +733,13 @@ void main() {
       // 旅行行のリサイザーをドラッグ
       final travelResizer = find.byKey(const Key('row_resizer_icon_0'));
       expect(travelResizer, findsOneWidget);
-      await tester.drag(travelResizer, const Offset(0, 10));
+      await _dragResizer(tester, travelResizer, const Offset(0, 10));
       await tester.pumpAndSettle();
 
       // イベント行のリサイザーをドラッグ
       final eventResizer = find.byKey(const Key('row_resizer_icon_1'));
       expect(eventResizer, findsOneWidget);
-      await tester.drag(eventResizer, const Offset(0, 30));
+      await _dragResizer(tester, eventResizer, const Offset(0, 30));
       await tester.pumpAndSettle();
 
       // Assert
@@ -450,6 +763,9 @@ void main() {
         overrides: [
           tripEntryQueryServiceProvider.overrideWithValue(
             mockTripEntryQueryService,
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
           ),
         ],
         child: MaterialApp(
@@ -496,6 +812,9 @@ void main() {
           tripEntryQueryServiceProvider.overrideWithValue(
             mockTripEntryQueryService,
           ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -535,6 +854,9 @@ void main() {
         overrides: [
           tripEntryQueryServiceProvider.overrideWithValue(
             mockTripEntryQueryService,
+          ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
           ),
         ],
         child: MaterialApp(
@@ -622,6 +944,9 @@ void main() {
           tripEntryQueryServiceProvider.overrideWithValue(
             mockTripEntryQueryService,
           ),
+          dvcPointUsageQueryServiceProvider.overrideWithValue(
+            dvcPointUsageQueryService,
+          ),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -643,4 +968,37 @@ void main() {
       expect(capturedCallback, isNotNull);
     });
   });
+}
+
+class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
+  const _FakeDvcPointUsageQueryService(this.pointUsages);
+
+  final List<DvcPointUsageDto> pointUsages;
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
+}
+
+Offset _resizerDragStart(WidgetTester tester, Finder resizerFinder) {
+  final topLeft = tester.getTopLeft(resizerFinder);
+  return topLeft + const Offset(8, 8);
+}
+
+Future<void> _dragResizer(
+  WidgetTester tester,
+  Finder resizerFinder,
+  Offset dragOffset,
+) async {
+  final gesture = await tester.startGesture(
+    _resizerDragStart(tester, resizerFinder),
+  );
+  await tester.pump();
+  await gesture.moveBy(dragOffset);
+  await tester.pump();
+  await gesture.up();
 }
