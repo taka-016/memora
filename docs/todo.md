@@ -55,60 +55,71 @@
 
 ## リファクタリング
 
-- [ ] `lib/presentation/app/top_page.dart` は `domain/value_objects/auth_state.dart` を直接参照している
-  - [ ] 認証状態は認証ユースケースの戻り値（アプリケーション層の状態型）で扱う
-  - [ ] 画面内の状態分岐から `domain` の状態型参照を排除する
-- [ ] `lib/presentation/features/auth/auth_guard.dart` は `domain/value_objects/auth_state.dart` と `infrastructure/factories/auth_service_factory.dart` を直接参照している
-  - [ ] `application/usecases` に認証状態取得・監視ユースケースを追加する
-  - [ ] AuthGuardからFactory依存を削除しユースケース経由に統一する
-- [ ] `lib/presentation/features/auth/login_page.dart` は `domain/value_objects/auth_state.dart` を直接参照している
-  - [ ] ログイン画面の状態分岐を認証ユースケースの戻り値で扱う
-- [ ] `lib/presentation/features/auth/signup_page.dart` は `domain/value_objects/auth_state.dart` を直接参照している
-  - [ ] サインアップ画面の状態判定を認証ユースケースの戻り値経由に変更する
-- [ ] `lib/presentation/features/group/group_edit_modal.dart` は `domain/entities/group/group.dart` を直接参照している
-  - [ ] 画面入出力を `application/dtos/group/group_dto.dart` に統一する
-  - [ ] ドメインエンティティへの変換責務をユースケース側へ移動する
-- [ ] `lib/presentation/features/member/member_edit_modal.dart` は `domain/entities/member/member.dart` を直接参照している
-  - [ ] 画面入出力を `application/dtos/member/member_dto.dart` に統一する
-- [ ] `lib/presentation/features/trip/route_info_view.dart` は `domain/value_objects/route_segment_detail.dart` を直接参照している
-  - [ ] 区間表示データをユースケースの戻り値（表示用モデル）で受け取る
-  - [ ] `route_segment_detail` の生成・検証責務をユースケース内へ集約する
-- [ ] `lib/presentation/features/trip/route_memo_edit_bottom_sheet.dart` は `domain/value_objects/route_segment_detail.dart` を直接参照している
-  - [ ] ボトムシートは文字列などプリミティブ入力のみを扱う
-  - [ ] 保存時の型変換はユースケース側で実施する
-- [ ] `lib/presentation/features/trip/select_visit_location_view.dart` は `domain/value_objects/location.dart` を直接参照している
-  - [ ] 緯度・経度・場所名などプリミティブで受け渡す
-  - [ ] `location` の生成・検証はユースケース側で実施する
-- [ ] `lib/presentation/features/trip/trip_edit_modal.dart` は `domain/entities/trip/trip_entry.dart` `domain/exceptions/validation_exception.dart` `domain/value_objects/location.dart` を直接参照している
-  - [ ] 編集対象データをTrip系DTOに置き換える
-  - [ ] 位置・日付などの入力はプリミティブでユースケースへ渡す
-  - [ ] 入力検証エラーはアプリケーション層の戻り値で扱う
-  - [ ] 画面でのドメイン例外の直接ハンドリングを廃止する
-- [ ] `lib/presentation/features/trip/trip_management.dart` は `domain/entities/trip/trip_entry.dart` と `domain/value_objects/order_by.dart` を直接参照している
-  - [ ] 一覧表示データを `application/dtos/trip` へ置き換える
-  - [ ] 並び順指定はユースケース入力の列挙・フラグで抽象化する
-- [ ] `lib/presentation/notifiers/auth_notifier.dart` は `domain/value_objects/auth_state.dart` `domain/entities/account/user.dart` `infrastructure/factories/auth_service_factory.dart` を直接参照している
-  - [ ] 認証Notifierの入出力を認証ユースケースの戻り値に統一する
-  - [ ] Factory生成責務をアプリケーション層へ移譲する
-- [ ] `lib/presentation/notifiers/current_member_notifier.dart` は `domain/value_objects/auth_state.dart` を直接参照している
-  - [ ] 認証状態連携を認証ユースケースの戻り値経由に変更する
-- [ ] `lib/presentation/notifiers/location_notifier.dart` は `domain/value_objects/location.dart` `domain/value_objects/location_state.dart` `domain/services/current_location_service.dart` `infrastructure/services/geolocator_current_location_service.dart` を直接参照している
-  - [ ] 現在地取得を `application/usecases` に委譲する
-  - [ ] Notifierが扱う状態を緯度経度などのプリミティブ＋画面状態に限定する
-- [ ] `lib/presentation/shared/inputs/custom_search_bar.dart` は `domain/services/location_search_service.dart` と `domain/value_objects/location_candidate.dart` を直接参照している
-  - [ ] 場所検索ユースケースを介して検索を実行する
-  - [ ] 候補データはユースケース戻り値の表示用モデルで受け取る
-- [ ] `lib/presentation/shared/map_views/google_map_view_builder.dart` は `domain/value_objects/location.dart` を直接参照している
-  - [ ] ビュー生成引数を緯度経度などのプリミティブへ置き換える
-- [ ] `lib/presentation/shared/map_views/google_map_view.dart` は `domain/value_objects/location.dart` と `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
-  - [ ] マップ表示の入出力を緯度経度などのプリミティブに統一する
-  - [ ] 検索処理を場所検索ユースケース経由に変更する
-- [ ] `lib/presentation/shared/map_views/map_view_builder.dart` は `domain/value_objects/location.dart` を直接参照している
-  - [ ] 抽象インターフェースの型を緯度経度などのプリミティブへ置換する
-- [ ] `lib/presentation/shared/map_views/placeholder_map_view_builder.dart` は `domain/value_objects/location.dart` を直接参照している
-  - [ ] プレースホルダービューの引数型を緯度経度などのプリミティブへ置換する
-- [ ] `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart` は `domain/services/nearby_location_service.dart` `domain/value_objects/location.dart` `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
-  - [ ] 周辺検索処理をユースケース化して画面から分離する
-  - [ ] ボトムシートはプリミティブ入力を扱い、変換はユースケース側で実施する
+- [ ] `lib/presentation/app/top_page.dart:16` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/features/auth/auth_guard.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/features/auth/auth_guard.dart:4` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
+  - [ ] Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
+- [ ] `lib/presentation/features/auth/login_page.dart:5` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/features/auth/signup_page.dart:5` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/features/group/group_edit_modal.dart:7` で `domain/entities/group/group.dart` を直接参照している
+  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- [ ] `lib/presentation/features/member/member_edit_modal.dart:6` で `domain/entities/member/member.dart` を直接参照している
+  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- [ ] `lib/presentation/features/trip/route_info_view.dart:12` で `domain/value_objects/route_segment_detail.dart` を直接参照している
+  - [ ] 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
+- [ ] `lib/presentation/features/trip/route_memo_edit_bottom_sheet.dart:4` で `domain/value_objects/route_segment_detail.dart` を直接参照している
+  - [ ] 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
+- [ ] `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/entities/trip/trip_entry.dart` を直接参照している
+  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- [ ] `lib/presentation/features/trip/trip_edit_modal.dart:11` で `domain/exceptions/validation_exception.dart` を直接参照している
+  - [ ] 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
+- [ ] `lib/presentation/features/trip/trip_edit_modal.dart:12` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/features/trip/trip_management.dart:13` で `domain/entities/trip/trip_entry.dart` を直接参照している
+  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- [ ] `lib/presentation/features/trip/trip_management.dart:14` で `domain/value_objects/order_by.dart` を直接参照している
+  - [ ] 並び順指定はユースケース入力の列挙・フラグで表現する
+- [ ] `lib/presentation/notifiers/auth_notifier.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/notifiers/auth_notifier.dart:4` で `domain/entities/account/user.dart` を直接参照している
+  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- [ ] `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
+  - [ ] Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
+- [ ] `lib/presentation/notifiers/current_member_notifier.dart:8` で `domain/value_objects/auth_state.dart` を直接参照している
+  - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- [ ] `lib/presentation/notifiers/location_notifier.dart:2` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/notifiers/location_notifier.dart:3` で `domain/value_objects/location_state.dart` を直接参照している
+  - [ ] 位置状態はプレゼン用state（プリミティブ中心）へ置換し、domainの状態型参照を排除する
+- [ ] `lib/presentation/notifiers/location_notifier.dart:4` で `domain/services/current_location_service.dart` を直接参照している
+  - [ ] 現在地取得はユースケース経由に統一し、domainサービスを画面から直接参照しない
+- [ ] `lib/presentation/notifiers/location_notifier.dart:5` で `infrastructure/services/geolocator_current_location_service.dart` を直接参照している
+  - [ ] インフラサービス直接参照を削除し、現在地ユースケース経由の呼び出しに統一する
+- [ ] `lib/presentation/shared/inputs/custom_search_bar.dart:3` で `domain/services/location_search_service.dart` を直接参照している
+  - [ ] 場所検索はユースケース経由に統一し、domainサービスを画面から直接参照しない
+- [ ] `lib/presentation/shared/inputs/custom_search_bar.dart:4` で `domain/value_objects/location_candidate.dart` を直接参照している
+  - [ ] 候補は検索ユースケースの戻り値（表示用モデル）で受け取る
+- [ ] `lib/presentation/shared/map_views/google_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/shared/map_views/google_map_view.dart:5` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/shared/map_views/google_map_view.dart:10` で `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
+  - [ ] インフラサービス直接参照を削除し、場所検索ユースケース経由の呼び出しに統一する
+- [ ] `lib/presentation/shared/map_views/map_view_builder.dart:3` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/shared/map_views/placeholder_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:4` で `domain/services/nearby_location_service.dart` を直接参照している
+  - [ ] 周辺検索はユースケース経由に統一し、domainサービスを画面から直接参照しない
+- [ ] `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:5` で `domain/value_objects/location.dart` を直接参照している
+  - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- [ ] `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:6` で `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
+  - [ ] インフラサービス直接参照を削除し、周辺検索ユースケース経由の呼び出しに統一する
 
 ## 不具合修正
