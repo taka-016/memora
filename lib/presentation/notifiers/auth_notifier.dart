@@ -12,6 +12,9 @@ import 'package:memora/core/app_logger.dart';
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
+
+const memberSelectionRequiredMessage = 'member_selection_required';
+
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
@@ -87,7 +90,7 @@ class AuthNotifier extends Notifier<AuthState> {
       }
 
       state = AuthState.unauthenticated(
-        'member_selection_required',
+        memberSelectionRequiredMessage,
         messageType: MessageType.info,
       );
     } catch (e, stack) {
@@ -225,7 +228,7 @@ extension AuthViewStateX on AuthViewState {
 
   bool get isInfoMessage => messageType == MessageType.info;
 
-  bool get requiresMemberSelection => message == 'member_selection_required';
+  bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
 
   String? get authenticatedLoginId => user?.loginId;
 }
