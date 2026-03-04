@@ -13,7 +13,6 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
@@ -193,11 +192,12 @@ class TopPage extends HookConsumerWidget {
 
   Widget _buildDrawerHeader(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
-    if (authState.status == AuthStatus.authenticated) {
-      return _buildUserDrawerHeader(context, authState.user!.loginId);
-    } else {
+
+    if (!authState.isAuthenticated) {
       return _buildDefaultHeader(context);
     }
+
+    return _buildUserDrawerHeader(context, authState.authenticatedLoginId!);
   }
 
   Widget _buildUserDrawerHeader(BuildContext context, String email) {

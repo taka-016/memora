@@ -12,6 +12,7 @@ import 'package:memora/core/app_logger.dart';
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
+typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
   StreamSubscription<User?>? _authStateSubscription;
@@ -217,4 +218,14 @@ class AuthNotifier extends Notifier<AuthState> {
   void clearError() {
     state = state.copyWith(message: '');
   }
+}
+
+extension AuthViewStateX on AuthViewState {
+  bool get isLoading => status == AuthStatus.loading;
+
+  bool get isInfoMessage => messageType == MessageType.info;
+
+  bool get requiresMemberSelection => message == 'member_selection_required';
+
+  String? get authenticatedLoginId => user?.loginId;
 }
