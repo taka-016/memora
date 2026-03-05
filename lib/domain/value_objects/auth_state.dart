@@ -40,6 +40,8 @@ class AuthState extends Equatable {
   final String message;
   final MessageType messageType;
 
+  bool get isLoading => status == AuthStatus.loading;
+
   bool get isAuthenticated => status == AuthStatus.authenticated;
 
   AuthState copyWith({

@@ -224,8 +224,6 @@ class AuthNotifier extends Notifier<AuthState> {
 }
 
 extension AuthViewStateX on AuthViewState {
-  bool get isLoading => status == AuthStatus.loading;
-
   bool get isInfoMessage => messageType == MessageType.info;
 
   bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
