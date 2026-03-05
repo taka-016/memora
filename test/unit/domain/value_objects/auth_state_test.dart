@@ -62,6 +62,23 @@ void main() {
       expect(loadingState.isAuthenticated, false);
     });
 
+    test('isLoading ゲッターが正しく動作する', () {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+
+      const loadingState = AuthState.loading();
+      const authenticatedState = AuthState.authenticated(user);
+      final unauthenticatedState = AuthState.unauthenticated('');
+
+      expect(loadingState.isLoading, true);
+      expect(authenticatedState.isLoading, false);
+      expect(unauthenticatedState.isLoading, false);
+    });
+
     test('等価性の比較ができる', () {
       const user = User(
         id: 'user123',

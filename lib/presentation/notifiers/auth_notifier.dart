@@ -13,6 +13,10 @@ final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
 
+const memberSelectionRequiredMessage = 'member_selection_required';
+
+typedef AuthViewState = AuthState;
+
 class AuthNotifier extends Notifier<AuthState> {
   StreamSubscription<User?>? _authStateSubscription;
 
@@ -86,7 +90,7 @@ class AuthNotifier extends Notifier<AuthState> {
       }
 
       state = AuthState.unauthenticated(
-        'member_selection_required',
+        memberSelectionRequiredMessage,
         messageType: MessageType.info,
       );
     } catch (e, stack) {
@@ -217,4 +221,12 @@ class AuthNotifier extends Notifier<AuthState> {
   void clearError() {
     state = state.copyWith(message: '');
   }
+}
+
+extension AuthViewStateX on AuthViewState {
+  bool get isInfoMessage => messageType == MessageType.info;
+
+  bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
+
+  String? get authenticatedLoginId => user?.loginId;
 }

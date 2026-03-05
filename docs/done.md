@@ -610,6 +610,16 @@
 
 ## リファクタリング
 
+- `lib/presentation/app/top_page.dart:16` で `domain/value_objects/auth_state.dart` を直接参照している
+  - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- `lib/presentation/features/auth/auth_guard.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
+  - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- `lib/presentation/features/auth/auth_guard.dart:4` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
+  - Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
+- `lib/presentation/features/auth/login_page.dart:5` で `domain/value_objects/auth_state.dart` を直接参照している
+  - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- `lib/presentation/features/auth/signup_page.dart:5` で `domain/value_objects/auth_state.dart` を直接参照している
+  - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
 - GroupDtoを作成する
   - GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - マッパーも用意する

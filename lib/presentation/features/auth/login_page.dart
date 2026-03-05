@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'signup_page.dart';
 
@@ -39,8 +38,8 @@ class LoginPage extends HookConsumerWidget {
       ).push(MaterialPageRoute(builder: (context) => const SignupPage()));
     }
 
-    Widget buildMessageContainer(AuthState authState) {
-      final isInfo = authState.messageType == MessageType.info;
+    Widget buildMessageContainer(AuthViewState authState) {
+      final isInfo = authState.isInfoMessage;
       final color = isInfo ? Colors.green : Colors.red;
 
       return Container(
@@ -158,14 +157,14 @@ class LoginPage extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    Widget buildFormContent(AuthState authState) {
+    Widget buildFormContent(AuthViewState authState) {
       return AutofillGroup(
         child: Form(
           key: formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (authState.status == AuthStatus.loading)
+              if (authState.isLoading)
                 buildLoadingIndicator()
               else ...[
                 if (authState.message.isNotEmpty)

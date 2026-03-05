@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
+import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/invitation_code_input_dialog.dart';
 import 'package:memora/presentation/features/auth/member_creation_selection_dialog.dart';
@@ -16,22 +15,22 @@ class AuthGuard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authNotifierProvider);
 
-    switch (authState.status) {
-      case AuthStatus.loading:
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      case AuthStatus.authenticated:
-        return child;
-      case AuthStatus.unauthenticated:
-        if (authState.message == 'member_selection_required') {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _showMemberCreationDialog(context, ref);
-          });
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return const LoginPage();
+    if (authState.isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    if (authState.isAuthenticated) {
+      return child;
+    }
+
+    if (authState.requiresMemberSelection) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showMemberCreationDialog(context, ref);
+      });
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return const LoginPage();
   }
 
   Future<void> _showMemberCreationDialog(
@@ -39,9 +38,8 @@ class AuthGuard extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     final authNotifier = ref.read(authNotifierProvider.notifier);
-
-    final authService = ref.read(authServiceProvider);
-    final currentUser = await authService.getCurrentUser();
+    final getCurrentUserUseCase = ref.read(getCurrentUserUseCaseProvider);
+    final currentUser = await getCurrentUserUseCase.execute();
 
     if (currentUser == null) {
       await authNotifier.logout();

@@ -113,7 +113,7 @@ void main() {
       await Future(() {});
 
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, 'member_selection_required');
+      expect(notifier.state.message, memberSelectionRequiredMessage);
     });
 
     test(
