@@ -60,3 +60,4 @@ mcp.json
 .github/prompts
 *.bk
 devcontainer_keys
+test/.test_optimizer.dart

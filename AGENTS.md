@@ -22,6 +22,7 @@
 - `flutter test test/unit/` - ユニットテストのみ実行
 - `flutter test test/integration/` - インテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
+- `./tools/ci/release_android_apk.sh` - release APKをビルドし、`memora-<version>.apk`を作成
 
 ## コーディングの進め方
 
@@ -39,6 +40,7 @@
 
 1. ユーザーからの指示に該当する作業が`docs/todo.md`に存在しない場合は、**必ず作業を中断**してユーザーに確認する
    - ただし、ユーザーがtodoの確認を省略するよう指示した場合や、指示の中にtodoの作成が含まれる場合はこの限りではない
+   - 質問への回答のみが目的で、実装やファイル変更を伴わない場合はtodo確認を不要とする
 2. 現在がmainブランチの場合、新しく作業用のブランチを切る（`AGENTS.md`の「ブランチ名」に従う）
 3. `tree lib test`でディレクトリ構造を確認する
 4. `AGENTS.md`の「設計資料」を確認し、アプリケーション仕様を理解する
