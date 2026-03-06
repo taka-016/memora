@@ -111,5 +111,45 @@
   - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
 - [ ] `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:6` で `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
   - [ ] インフラサービス直接参照を削除し、周辺検索ユースケース経由の呼び出しに統一する
+- [ ] `lib/application/mappers/**` が `cloud_firestore` に依存している（Firestoreの読み取り変換がapplication層に混在している）
+  - [ ] 対象ソース
+  - [ ] `lib/application/mappers/member/member_mapper.dart:1`
+  - [ ] `lib/application/mappers/member/member_event_mapper.dart:1`
+  - [ ] `lib/application/mappers/member/member_invitation_mapper.dart:1`
+  - [ ] `lib/application/mappers/group/group_mapper.dart:1`
+  - [ ] `lib/application/mappers/group/group_event_mapper.dart:1`
+  - [ ] `lib/application/mappers/group/group_member_mapper.dart:1`
+  - [ ] `lib/application/mappers/trip/trip_entry_mapper.dart:1`
+  - [ ] `lib/application/mappers/trip/pin_mapper.dart:1`
+  - [ ] `lib/application/mappers/trip/task_mapper.dart:1`
+  - [ ] `lib/application/mappers/dvc/dvc_point_contract_mapper.dart:1`
+  - [ ] `lib/application/mappers/dvc/dvc_limited_point_mapper.dart:1`
+  - [ ] `lib/application/mappers/dvc/dvc_point_usage_mapper.dart:1`
+  - [ ] 必要対応: Firestore依存の`fromFirestore`をinfrastructure層Mapperへ移管し、application層Mapperは`DTO <-> Entity`変換に限定する
+- [ ] `lib/infrastructure/queries/**` が `application/mappers` の `fromFirestore` に依存している
+  - [ ] 対象ソース
+  - [ ] `lib/infrastructure/queries/member/firestore_member_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/member/firestore_member_invitation_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/group/firestore_group_query_service.dart:5`
+  - [ ] `lib/infrastructure/queries/dvc/firestore_dvc_point_contract_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/dvc/firestore_dvc_limited_point_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/dvc/firestore_dvc_point_usage_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/trip/firestore_trip_entry_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/trip/firestore_task_query_service.dart:3`
+  - [ ] `lib/infrastructure/queries/trip/firestore_pin_query_service.dart:3`
+  - [ ] 必要対応: 参照先を`lib/infrastructure/mappers/**`へ切り替え、Firestoreの読み取り変換はinfrastructure層で完結させる
+- [ ] Firestore Mapper再配置に伴いMapperテストの責務を再編する
+  - [ ] 対象ソース（application層のFirestore変換テスト）
+  - [ ] `test/unit/application/mappers/member/*.dart`
+  - [ ] `test/unit/application/mappers/group/*.dart`
+  - [ ] `test/unit/application/mappers/trip/*.dart`
+  - [ ] `test/unit/application/mappers/dvc/*.dart`
+  - [ ] 対象ソース（infrastructure層のFirestore Mapperテスト）
+  - [ ] `test/unit/infrastructure/mappers/member/*.dart`
+  - [ ] `test/unit/infrastructure/mappers/group/*.dart`
+  - [ ] `test/unit/infrastructure/mappers/trip/*.dart`
+  - [ ] `test/unit/infrastructure/mappers/dvc/*.dart`
+  - [ ] 必要対応: Firestore読み取り変換テストをinfrastructure側へ寄せ、application側は`DTO <-> Entity`変換テストに限定する
+  - [ ] 必要対応: モック変更後に`dart run build_runner build --delete-conflicting-outputs`を実行して`*.mocks.dart`を再生成する
 
 ## 不具合修正

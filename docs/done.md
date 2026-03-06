@@ -610,6 +610,7 @@
 
 ## リファクタリング
 
+- application層MapperのFirestore依存調査を実施し、infrastructure層へ移管する対応項目をdocs/todo.mdへ追記する
 - `lib/presentation/app/top_page.dart:16` で `domain/value_objects/auth_state.dart` を直接参照している
   - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
 - `lib/presentation/features/auth/auth_guard.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
