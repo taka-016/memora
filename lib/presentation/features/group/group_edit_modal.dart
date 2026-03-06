@@ -3,8 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/mappers/group/group_mapper.dart';
-import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
@@ -13,7 +11,7 @@ enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
 class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
-  final Function(Group) onSave;
+  final Function(GroupDto) onSave;
   final List<GroupMemberDto> availableMembers;
   final GroupMemberDto member;
 
@@ -577,7 +575,7 @@ class GroupEditModal extends HookConsumerWidget {
           ElevatedButton(
             onPressed: () {
               if (formKey.currentState!.validate()) {
-                onSave(GroupMapper.toEntity(buildUpdatedGroup()));
+                onSave(buildUpdatedGroup());
                 editStateNotifier.reset();
                 Navigator.of(context).pop();
               }

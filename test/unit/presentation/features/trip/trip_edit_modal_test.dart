@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -21,7 +20,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -47,7 +46,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -73,7 +72,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -91,7 +90,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -115,7 +114,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -146,7 +145,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -169,7 +168,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -184,7 +183,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -218,7 +217,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
             testHandle: testHandle,
           ),
@@ -257,7 +256,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
             testHandle: testHandle,
           ),
@@ -306,7 +305,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -352,7 +351,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -378,7 +377,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -393,7 +392,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -408,7 +407,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -434,7 +433,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -457,7 +456,7 @@ void main() {
     });
 
     testWidgets('作成ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
 
       final testHandle = TripEditModalTestHandle();
 
@@ -466,7 +465,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -514,7 +513,7 @@ void main() {
         tripMemo: '既存メモ',
       );
 
-      TripEntry? updatedTripEntry;
+      TripEntryDto? updatedTripEntry;
 
       await tester.pumpWidget(
         _createApp(
@@ -522,7 +521,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: existingTripEntry,
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               updatedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -545,7 +544,7 @@ void main() {
     });
 
     testWidgets('日付未設定でも保存できること', (WidgetTester tester) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
 
       await tester.pumpWidget(
         _createApp(
@@ -553,7 +552,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             year: 2024,
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -573,7 +572,7 @@ void main() {
     });
 
     testWidgets('開始日が終了日より後の場合にエラーメッセージが表示されること', (WidgetTester tester) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
 
       final testHandle = TripEditModalTestHandle();
 
@@ -591,7 +590,7 @@ void main() {
               tripEndDate: DateTime(2024, 1, 3),
               tripMemo: 'テストメモ',
             ),
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -619,7 +618,7 @@ void main() {
     testWidgets('開始日がパラメータの年と異なる場合にエラーメッセージが表示されること', (
       WidgetTester tester,
     ) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
 
       final testHandle = TripEditModalTestHandle();
 
@@ -638,7 +637,7 @@ void main() {
               tripEndDate: DateTime(2024, 6, 10),
               tripMemo: 'テストメモ',
             ),
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -665,7 +664,7 @@ void main() {
     testWidgets('終了日がパラメータの年と異なる場合でも正常に保存されること（年またぎ対応）', (
       WidgetTester tester,
     ) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
 
       await tester.pumpWidget(
         _createApp(
@@ -682,7 +681,7 @@ void main() {
               tripEndDate: DateTime(2025, 1, 3), // 年またぎ
               tripMemo: 'テストメモ',
             ),
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -714,7 +713,7 @@ void main() {
               return TripEditModal(
                 groupId: groupId,
                 groupMembers: const [],
-                onSave: (TripEntry tripEntry) {},
+                onSave: (TripEntryDto tripEntry) {},
                 isTestEnvironment: true,
               );
             },
@@ -761,7 +760,7 @@ void main() {
     testWidgets('作成ボタン押下時にonSaveコールバックでpinsが渡されること', (
       WidgetTester tester,
     ) async {
-      TripEntry? savedTripEntry;
+      TripEntryDto? savedTripEntry;
       final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
@@ -769,7 +768,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (TripEntry tripEntry) {
+            onSave: (TripEntryDto tripEntry) {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
@@ -820,11 +819,11 @@ void main() {
 
       // onSaveコールバックでピンデータが正しく渡されることを確認
       expect(savedTripEntry, isNotNull);
-      expect(savedTripEntry!.pins.length, equals(2));
-      expect(savedTripEntry!.pins[0].pinId, equals('test-pin-1'));
-      expect(savedTripEntry!.pins[0].locationName, equals('東京駅'));
-      expect(savedTripEntry!.pins[1].pinId, equals('test-pin-2'));
-      expect(savedTripEntry!.pins[1].locationName, equals('渋谷駅'));
+      expect(savedTripEntry!.pins!.length, equals(2));
+      expect(savedTripEntry!.pins![0].pinId, equals('test-pin-1'));
+      expect(savedTripEntry!.pins![0].locationName, equals('東京駅'));
+      expect(savedTripEntry!.pins![1].pinId, equals('test-pin-2'));
+      expect(savedTripEntry!.pins![1].locationName, equals('渋谷駅'));
     });
 
     testWidgets('ピンが存在する場合、訪問場所一覧が表示されること', (WidgetTester tester) async {
@@ -855,7 +854,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -884,7 +883,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -922,7 +921,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -972,7 +971,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -1014,7 +1013,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -1057,7 +1056,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -1100,7 +1099,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),
@@ -1147,7 +1146,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (TripEntry tripEntry) {},
+            onSave: (TripEntryDto tripEntry) {},
             isTestEnvironment: true,
           ),
         ),

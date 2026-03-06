@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
@@ -18,7 +17,7 @@ const memberSelectionRequiredMessage = 'member_selection_required';
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<User?>? _authStateSubscription;
+  StreamSubscription<AuthUser?>? _authStateSubscription;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -47,7 +46,7 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState.loading();
   }
 
-  Future<void> _handleAuthenticatedUser(User user) async {
+  Future<void> _handleAuthenticatedUser(AuthUser user) async {
     if (!user.isVerified) {
       await _handleUnverifiedUser();
       return;
@@ -74,11 +73,11 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  Future<void> _handleVerifiedUser(User user) async {
+  Future<void> _handleVerifiedUser(AuthUser user) async {
     await _processUserMembership(user);
   }
 
-  Future<void> _processUserMembership(User user) async {
+  Future<void> _processUserMembership(AuthUser user) async {
     try {
       await authService.validateCurrentUserToken();
 
@@ -103,7 +102,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> createNewMember(User user) async {
+  Future<void> createNewMember(AuthUser user) async {
     try {
       final success = await createMemberFromUserUseCase.execute(user);
       if (success) {
@@ -121,7 +120,7 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> acceptInvitation(String invitationCode, User user) async {
+  Future<bool> acceptInvitation(String invitationCode, AuthUser user) async {
     try {
       final success = await acceptInvitationUseCase.execute(
         invitationCode,

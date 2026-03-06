@@ -1,7 +1,9 @@
 import 'package:memora/domain/entities/account/user.dart';
 
+typedef AuthUser = User;
+
 abstract class AuthService {
-  Future<User?> getCurrentUser();
+  Future<AuthUser?> getCurrentUser();
 
   Future<void> signInWithEmailAndPassword({
     required String email,
@@ -27,5 +29,5 @@ abstract class AuthService {
 
   Future<void> sendEmailVerification();
 
-  Stream<User?> get authStateChanges;
+  Stream<AuthUser?> get authStateChanges;
 }

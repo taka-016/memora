@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/mappers/group/group_mapper.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 
@@ -12,7 +13,7 @@ class UpdateGroupUsecase {
 
   UpdateGroupUsecase(this._groupRepository);
 
-  Future<void> execute(Group updatedGroup) async {
-    await _groupRepository.updateGroup(updatedGroup);
+  Future<void> execute(GroupDto updatedGroup) async {
+    await _groupRepository.updateGroup(GroupMapper.toEntity(updatedGroup));
   }
 }

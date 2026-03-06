@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({
@@ -79,7 +78,7 @@ GroupMemberDto createGroupMemberDto({
 
 Widget buildSubject({
   required GroupDto group,
-  required void Function(Group) onSave,
+  required void Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
   required GroupMemberDto member,
 }) {
@@ -148,7 +147,7 @@ void main() {
     });
 
     testWidgets('有効な入力でonSaveコールバックが呼ばれる', (WidgetTester tester) async {
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(
@@ -174,7 +173,7 @@ void main() {
     });
 
     testWidgets('メモを空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       final group = createGroupDto(
         id: 'test-id',
@@ -619,7 +618,7 @@ void main() {
         ),
       ];
 
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(
@@ -1042,7 +1041,7 @@ void main() {
         ),
       ];
 
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(

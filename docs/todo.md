@@ -55,30 +55,20 @@
 
 ## リファクタリング
 
-- [ ] `lib/presentation/features/group/group_edit_modal.dart:7` で `domain/entities/group/group.dart` を直接参照している
-  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
-- [ ] `lib/presentation/features/member/member_edit_modal.dart:6` で `domain/entities/member/member.dart` を直接参照している
-  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - [ ] `lib/presentation/features/trip/route_info_view.dart:12` で `domain/value_objects/route_segment_detail.dart` を直接参照している
   - [ ] 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
 - [ ] `lib/presentation/features/trip/route_memo_edit_bottom_sheet.dart:4` で `domain/value_objects/route_segment_detail.dart` を直接参照している
   - [ ] 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
 - [ ] `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
   - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- [ ] `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/entities/trip/trip_entry.dart` を直接参照している
-  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - [ ] `lib/presentation/features/trip/trip_edit_modal.dart:11` で `domain/exceptions/validation_exception.dart` を直接参照している
   - [ ] 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
 - [ ] `lib/presentation/features/trip/trip_edit_modal.dart:12` で `domain/value_objects/location.dart` を直接参照している
   - [ ] 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- [ ] `lib/presentation/features/trip/trip_management.dart:13` で `domain/entities/trip/trip_entry.dart` を直接参照している
-  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - [ ] `lib/presentation/features/trip/trip_management.dart:14` で `domain/value_objects/order_by.dart` を直接参照している
   - [ ] 並び順指定はユースケース入力の列挙・フラグで表現する
 - [ ] `lib/presentation/notifiers/auth_notifier.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
   - [ ] 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
-- [ ] `lib/presentation/notifiers/auth_notifier.dart:4` で `domain/entities/account/user.dart` を直接参照している
-  - [ ] 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - [ ] `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
   - [ ] Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
 - [ ] `lib/presentation/notifiers/current_member_notifier.dart:8` で `domain/value_objects/auth_state.dart` を直接参照している

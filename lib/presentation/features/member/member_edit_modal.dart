@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/member/member_mapper.dart';
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
-  final Function(Member) onSave;
+  final Function(MemberDto) onSave;
   final Function(MemberDto)? onInvite;
 
   const MemberEditModal({
@@ -336,9 +334,7 @@ class MemberEditModal extends HookConsumerWidget {
 
     void handleSave() {
       if (formKey.currentState!.validate()) {
-        final savedMember = MemberMapper.toEntity(buildUpdatedMember());
-
-        onSave(savedMember);
+        onSave(buildUpdatedMember());
         editStateNotifier.reset();
         Navigator.of(context).pop();
       }

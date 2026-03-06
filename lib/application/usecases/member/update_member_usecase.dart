@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 
@@ -12,7 +13,7 @@ class UpdateMemberUsecase {
 
   UpdateMemberUsecase(this._memberRepository);
 
-  Future<void> execute(Member updatedMember) async {
-    await _memberRepository.updateMember(updatedMember);
+  Future<void> execute(MemberDto updatedMember) async {
+    await _memberRepository.updateMember(MemberMapper.toEntity(updatedMember));
   }
 }
