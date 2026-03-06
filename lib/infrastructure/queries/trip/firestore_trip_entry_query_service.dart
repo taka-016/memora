@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/mappers/trip/pin_mapper.dart';
-import 'package:memora/application/mappers/trip/task_mapper.dart';
-import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 
 class FirestoreTripEntryQueryService implements TripEntryQueryService {
   final FirebaseFirestore _firestore;
@@ -40,7 +40,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final pinsSnapshot = await pinsQuery.get();
       final pins = pinsSnapshot.docs
-          .map((pinDoc) => PinMapper.fromFirestore(pinDoc))
+          .map(FirestorePinMapper.fromFirestore)
           .toList();
 
       Query<Map<String, dynamic>> tasksQuery = _firestore
@@ -58,10 +58,14 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final tasksSnapshot = await tasksQuery.get();
       final tasks = tasksSnapshot.docs
-          .map((taskDoc) => TaskMapper.fromFirestore(taskDoc))
+          .map(FirestoreTaskMapper.fromFirestore)
           .toList();
 
-      return TripEntryMapper.fromFirestore(doc, pins: pins, tasks: tasks);
+      return FirestoreTripEntryMapper.fromFirestore(
+        doc,
+        pins: pins,
+        tasks: tasks,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryQueryService.getTripEntryById: ${e.toString()}',
@@ -91,9 +95,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       }
 
       final snapshot = await query.get();
-      return snapshot.docs
-          .map((doc) => TripEntryMapper.fromFirestore(doc))
-          .toList();
+      return snapshot.docs.map(FirestoreTripEntryMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreTripEntryQueryService.getTripEntriesByGroupIdAndYear: ${e.toString()}',

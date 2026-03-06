@@ -1,24 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
 
 class DvcPointUsageMapper {
-  static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
-
-  static DvcPointUsageDto fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data() ?? {};
-    return DvcPointUsageDto(
-      id: doc.id,
-      groupId: data['groupId'] as String? ?? '',
-      usageYearMonth:
-          (data['usageYearMonth'] as Timestamp?)?.toDate() ?? _defaultDate,
-      usedPoint: _asInt(data['usedPoint']),
-      memo: data['memo'] as String?,
-    );
-  }
-
   static DvcPointUsage toEntity(DvcPointUsageDto dto) {
     return DvcPointUsage(
       id: dto.id,
@@ -45,12 +28,5 @@ class DvcPointUsageMapper {
 
   static List<DvcPointUsageDto> toDtoList(List<DvcPointUsage> entities) {
     return entities.map(toDto).toList();
-  }
-
-  static int _asInt(dynamic value) {
-    if (value is num) {
-      return value.toInt();
-    }
-    return 0;
   }
 }

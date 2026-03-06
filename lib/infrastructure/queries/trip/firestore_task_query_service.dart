@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
-import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 
 class FirestoreTaskQueryService implements TaskQueryService {
   FirestoreTaskQueryService({FirebaseFirestore? firestore})
@@ -28,7 +28,7 @@ class FirestoreTaskQueryService implements TaskQueryService {
       }
 
       final snapshot = await query.get();
-      return snapshot.docs.map(TaskMapper.fromFirestore).toList();
+      return snapshot.docs.map(FirestoreTaskMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreTaskQueryService.getTasksByTripId: ${e.toString()}',

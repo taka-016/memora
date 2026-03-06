@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/mappers/trip/pin_mapper.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 
 class FirestorePinQueryService implements PinQueryService {
   FirestorePinQueryService({FirebaseFirestore? firestore})
@@ -72,8 +72,6 @@ class FirestorePinQueryService implements PinQueryService {
         .where('groupId', isEqualTo: groupId)
         .get();
 
-    return pinsSnapshot.docs.map((doc) {
-      return PinMapper.fromFirestore(doc);
-    }).toList();
+    return pinsSnapshot.docs.map(FirestorePinMapper.fromFirestore).toList();
   }
 }

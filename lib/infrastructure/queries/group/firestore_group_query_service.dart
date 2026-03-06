@@ -2,10 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/mappers/group/group_mapper.dart';
-import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/group/firestore_group_mapper.dart';
+import 'package:memora/infrastructure/mappers/group/firestore_group_member_mapper.dart';
 
 class FirestoreGroupQueryService implements GroupQueryService {
   final FirebaseFirestore _firestore;
@@ -83,7 +83,10 @@ class FirestoreGroupQueryService implements GroupQueryService {
         groupId,
         orderBy: membersOrderBy,
       );
-      return GroupMapper.fromFirestore(groupSnapshot, members: members);
+      return FirestoreGroupMapper.fromFirestore(
+        groupSnapshot,
+        members: members,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreGroupQueryService.getGroupWithMembersById: ${e.toString()}',
@@ -112,7 +115,7 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
     return snapshot.docs.map((doc) {
       final members = const <GroupMemberDto>[];
-      return GroupMapper.fromFirestore(doc, members: members);
+      return FirestoreGroupMapper.fromFirestore(doc, members: members);
     }).toList();
   }
 
@@ -133,7 +136,9 @@ class FirestoreGroupQueryService implements GroupQueryService {
 
       if (groupSnapshot.exists) {
         final members = const <GroupMemberDto>[];
-        groups.add(GroupMapper.fromFirestore(groupSnapshot, members: members));
+        groups.add(
+          FirestoreGroupMapper.fromFirestore(groupSnapshot, members: members),
+        );
       }
     }
 
@@ -222,7 +227,9 @@ class FirestoreGroupQueryService implements GroupQueryService {
           .get();
 
       if (memberSnapshot.exists) {
-        members.add(GroupMemberMapper.fromFirestore(doc, memberSnapshot));
+        members.add(
+          FirestoreGroupMemberMapper.fromFirestore(doc, memberSnapshot),
+        );
       }
     }
 

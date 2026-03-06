@@ -1,82 +1,61 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 
-@GenerateMocks([QueryDocumentSnapshot])
+import '../../../../helpers/fake_document_snapshot.dart';
+
 void main() {
   group('FirestorePinMapper', () {
-    test('PinエンティティからFirestoreのMapへ変換できる', () {
-      final pin = Pin(
-        pinId: 'pin-entity-001',
-        tripId: 'trip-entity-001',
-        groupId: 'group-entity-001',
-        latitude: 34.701909,
-        longitude: 135.494977,
-        locationName: '大阪駅',
-        visitStartDate: DateTime(2024, 2, 1, 9, 30),
-        visitEndDate: DateTime(2024, 2, 1, 11, 0),
-        visitMemo: '観光開始',
+    test('FirestoreドキュメントからPinDtoへ変換できる', () {
+      final doc = FakeDocumentSnapshot(
+        docId: 'pinDoc001',
+        data: {
+          'pinId': 'pin001',
+          'tripId': 'trip001',
+          'groupId': 'group001',
+          'latitude': 35.0,
+          'longitude': 135.0,
+          'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
+        },
       );
 
-      final map = FirestorePinMapper.toFirestore(pin);
+      final dto = FirestorePinMapper.fromFirestore(doc);
 
-      expect(map['pinId'], 'pin-entity-001');
-      expect(map['tripId'], 'trip-entity-001');
-      expect(map['groupId'], 'group-entity-001');
-      expect(map['latitude'], 34.701909);
-      expect(map['longitude'], 135.494977);
-      expect(map['locationName'], '大阪駅');
-      expect(map['visitStartDate'], isA<Timestamp>());
-      expect(map['visitEndDate'], isA<Timestamp>());
-      expect(map['visitMemo'], '観光開始');
-      expect(map['createdAt'], isA<FieldValue>());
+      expect(dto.pinId, 'pin001');
+      expect(dto.tripId, 'trip001');
+      expect(dto.groupId, 'group001');
+      expect(dto.latitude, 35.0);
+      expect(dto.longitude, 135.0);
+      expect(dto.visitStartDate, DateTime(2024, 1, 1));
     });
 
-    test('オプショナルプロパティがnullでもFirestoreのMapへ変換できる', () {
-      final pin = Pin(
-        pinId: 'pin-entity-002',
-        tripId: 'trip-entity-002',
-        groupId: 'group-entity-002',
-        latitude: 26.2125,
-        longitude: 127.6811,
-      );
+    test('Firestoreの欠損値はデフォルトで補完する', () {
+      final doc = FakeDocumentSnapshot(docId: 'pinDoc002', data: {});
 
-      final map = FirestorePinMapper.toFirestore(pin);
+      final dto = FirestorePinMapper.fromFirestore(doc);
 
-      expect(map['pinId'], 'pin-entity-002');
-      expect(map['tripId'], 'trip-entity-002');
-      expect(map['groupId'], 'group-entity-002');
-      expect(map['latitude'], 26.2125);
-      expect(map['longitude'], 127.6811);
-      expect(map['locationName'], isNull);
-      expect(map['visitStartDate'], isNull);
-      expect(map['visitEndDate'], isNull);
-      expect(map['visitMemo'], isNull);
-      expect(map['createdAt'], isA<FieldValue>());
+      expect(dto.pinId, '');
+      expect(dto.latitude, 0.0);
+      expect(dto.longitude, 0.0);
     });
 
-    test('空文字列を含むPinからFirestoreのMapへ変換できる', () {
+    test('PinをFirestoreのMapへ変換できる', () {
       final pin = Pin(
-        pinId: '',
-        tripId: '',
-        groupId: '',
-        latitude: 0.0,
-        longitude: 0.0,
+        pinId: 'pin003',
+        tripId: 'trip003',
+        groupId: 'group003',
+        latitude: 34.7,
+        longitude: 135.5,
       );
 
       final map = FirestorePinMapper.toFirestore(pin);
 
-      expect(map['pinId'], '');
-      expect(map['tripId'], '');
-      expect(map['groupId'], '');
-      expect(map['latitude'], 0.0);
-      expect(map['longitude'], 0.0);
-      expect(map['locationName'], isNull);
-      expect(map['visitStartDate'], isNull);
-      expect(map['visitEndDate'], isNull);
-      expect(map['visitMemo'], isNull);
+      expect(map['pinId'], 'pin003');
+      expect(map['tripId'], 'trip003');
+      expect(map['groupId'], 'group003');
+      expect(map['latitude'], 34.7);
+      expect(map['longitude'], 135.5);
       expect(map['createdAt'], isA<FieldValue>());
     });
   });

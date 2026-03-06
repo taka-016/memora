@@ -1,51 +1,62 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/mappers/member/firestore_member_event_mapper.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
+import 'package:memora/infrastructure/mappers/member/firestore_member_event_mapper.dart';
 
-@GenerateMocks([QueryDocumentSnapshot])
+import '../../../../helpers/fake_document_snapshot.dart';
+
 void main() {
   group('FirestoreMemberEventMapper', () {
-    test('MemberEventからFirestoreのMapへ変換できる', () {
-      final memberEvent = MemberEvent(
-        id: 'memberevent001',
-        memberId: 'member001',
-        type: 'birthday',
-        name: 'テストイベント',
-        startDate: DateTime(2025, 6, 1),
-        endDate: DateTime(2025, 6, 2),
-        memo: 'テストメモ',
+    test('FirestoreドキュメントからMemberEventDtoへ変換できる', () {
+      final doc = FakeDocumentSnapshot(
+        docId: 'event001',
+        data: {
+          'memberId': 'member001',
+          'type': 'training',
+          'startDate': Timestamp.fromDate(DateTime(2024, 4, 1)),
+          'endDate': Timestamp.fromDate(DateTime(2024, 4, 2)),
+        },
       );
 
-      final data = FirestoreMemberEventMapper.toFirestore(memberEvent);
+      final dto = FirestoreMemberEventMapper.fromFirestore(doc);
 
-      expect(data['memberId'], 'member001');
-      expect(data['type'], 'birthday');
-      expect(data['name'], 'テストイベント');
-      expect(data['startDate'], isA<Timestamp>());
-      expect(data['endDate'], isA<Timestamp>());
-      expect(data['memo'], 'テストメモ');
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(dto.id, 'event001');
+      expect(dto.memberId, 'member001');
+      expect(dto.type, 'training');
+      expect(dto.startDate, DateTime(2024, 4, 1));
+      expect(dto.endDate, DateTime(2024, 4, 2));
     });
 
-    test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
+    test('Firestoreの欠損値はデフォルトで補完する', () {
+      final doc = FakeDocumentSnapshot(
+        docId: 'event002',
+        data: {'memberId': 'member002'},
+      );
+
+      final dto = FirestoreMemberEventMapper.fromFirestore(doc);
+
+      expect(dto.id, 'event002');
+      expect(dto.memberId, 'member002');
+      expect(dto.type, '');
+      expect(dto.startDate, DateTime.fromMillisecondsSinceEpoch(0));
+      expect(dto.endDate, DateTime.fromMillisecondsSinceEpoch(0));
+    });
+
+    test('MemberEventをFirestoreのMapへ変換できる', () {
       final memberEvent = MemberEvent(
-        id: 'memberevent004',
-        memberId: 'member002',
-        type: 'anniversary',
-        startDate: DateTime(2025, 8, 1),
-        endDate: DateTime(2025, 8, 2),
+        id: 'event003',
+        memberId: 'member003',
+        type: 'meeting',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 2),
       );
 
       final data = FirestoreMemberEventMapper.toFirestore(memberEvent);
 
-      expect(data['memberId'], 'member002');
-      expect(data['type'], 'anniversary');
-      expect(data['name'], isNull);
+      expect(data['memberId'], 'member003');
+      expect(data['type'], 'meeting');
       expect(data['startDate'], isA<Timestamp>());
       expect(data['endDate'], isA<Timestamp>());
-      expect(data['memo'], isNull);
       expect(data['createdAt'], isA<FieldValue>());
     });
   });

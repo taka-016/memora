@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
-import 'package:memora/application/mappers/dvc/dvc_point_contract_mapper.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/dvc/firestore_dvc_point_contract_mapper.dart';
 
 class FirestoreDvcPointContractQueryService
     implements DvcPointContractQueryService {
@@ -29,7 +29,9 @@ class FirestoreDvcPointContractQueryService
       }
 
       final snapshot = await query.get();
-      return snapshot.docs.map(DvcPointContractMapper.fromFirestore).toList();
+      return snapshot.docs
+          .map(FirestoreDvcPointContractMapper.fromFirestore)
+          .toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreDvcPointContractQueryService.getDvcPointContractsByGroupId: ${e.toString()}',
