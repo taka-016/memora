@@ -40,6 +40,19 @@ void main() {
       expect(dto.longitude, 0.0);
     });
 
+    test('latitudeとlongitudeがnumの場合もdoubleとして変換できる', () {
+      final doc = FakeDocumentSnapshot(
+        docId: 'pinDoc003',
+        data: {'pinId': 'pin003', 'latitude': 35, 'longitude': 135},
+      );
+
+      final dto = FirestorePinMapper.fromFirestore(doc);
+
+      expect(dto.pinId, 'pin003');
+      expect(dto.latitude, 35.0);
+      expect(dto.longitude, 135.0);
+    });
+
     test('PinをFirestoreのMapへ変換できる', () {
       final pin = Pin(
         pinId: 'pin003',

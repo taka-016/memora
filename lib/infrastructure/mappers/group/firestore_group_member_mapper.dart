@@ -13,7 +13,7 @@ class FirestoreGroupMemberMapper {
       memberId: memberDoc.id,
       groupId: groupMemberData!['groupId'] as String,
       isAdministrator: groupMemberData['isAdministrator'] as bool? ?? false,
-      orderIndex: groupMemberData['orderIndex'] as int? ?? 0,
+      orderIndex: _asInt(groupMemberData['orderIndex']) ?? 0,
       accountId: memberData?['accountId'] as String?,
       ownerId: memberData?['ownerId'] as String?,
       hiraganaFirstName: memberData?['hiraganaFirstName'] as String?,
@@ -42,4 +42,9 @@ class FirestoreGroupMemberMapper {
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
+
+  static int? _asInt(Object? value) => switch (value) {
+    final num number => number.toInt(),
+    _ => null,
+  };
 }

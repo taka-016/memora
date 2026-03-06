@@ -47,6 +47,26 @@ void main() {
       expect(dto.displayName, '');
     });
 
+    test('orderIndexがnumの場合もintとして変換できる', () {
+      final groupMemberDoc = FakeDocumentSnapshot(
+        docId: 'gm003',
+        data: {'groupId': 'group003', 'orderIndex': 2.0},
+      );
+      final memberDoc = FakeDocumentSnapshot(
+        docId: 'member003',
+        data: {'displayName': '次郎'},
+      );
+
+      final dto = FirestoreGroupMemberMapper.fromFirestore(
+        groupMemberDoc,
+        memberDoc,
+      );
+
+      expect(dto.groupId, 'group003');
+      expect(dto.orderIndex, 2);
+      expect(dto.displayName, '次郎');
+    });
+
     test('GroupMemberをFirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(
         groupId: 'group003',

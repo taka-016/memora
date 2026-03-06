@@ -9,14 +9,19 @@ class FirestorePinMapper {
       pinId: data?['pinId'] as String? ?? '',
       tripId: data?['tripId'] as String?,
       groupId: data?['groupId'] as String?,
-      latitude: data?['latitude'] as double? ?? 0.0,
-      longitude: data?['longitude'] as double? ?? 0.0,
+      latitude: _asDouble(data?['latitude']) ?? 0.0,
+      longitude: _asDouble(data?['longitude']) ?? 0.0,
       locationName: data?['locationName'] as String?,
       visitStartDate: (data?['visitStartDate'] as Timestamp?)?.toDate(),
       visitEndDate: (data?['visitEndDate'] as Timestamp?)?.toDate(),
       visitMemo: data?['visitMemo'] as String?,
     );
   }
+
+  static double? _asDouble(Object? value) => switch (value) {
+    final num number => number.toDouble(),
+    _ => null,
+  };
 
   static Map<String, dynamic> toFirestore(Pin pin) {
     return {
