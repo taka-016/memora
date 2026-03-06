@@ -19,7 +19,18 @@ void main() {
       final restored = DvcPointContractMapper.toDto(entity);
 
       expect(entity.id, 'contract-1');
+      expect(entity.groupId, 'group-1');
+      expect(entity.contractName, '契約A');
+      expect(entity.contractStartYearMonth, DateTime(2024, 10));
+      expect(entity.contractEndYearMonth, DateTime(2042, 9));
+      expect(entity.useYearStartMonth, 10);
+      expect(entity.annualPoint, 200);
+      expect(restored.id, 'contract-1');
+      expect(restored.groupId, 'group-1');
       expect(restored.contractName, '契約A');
+      expect(restored.contractStartYearMonth, DateTime(2024, 10));
+      expect(restored.contractEndYearMonth, DateTime(2042, 9));
+      expect(restored.useYearStartMonth, 10);
       expect(restored.annualPoint, 200);
     });
 
