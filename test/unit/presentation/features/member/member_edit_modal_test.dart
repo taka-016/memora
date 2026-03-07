@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 
 Widget _createApp({required Widget child}) {
@@ -117,7 +115,7 @@ void main() {
 
     testWidgets('正しく入力された場合onSaveが呼ばれること', (WidgetTester tester) async {
       // Arrange
-      Member? savedMember;
+      MemberDto? savedMember;
 
       await tester.pumpWidget(
         _createApp(
@@ -219,7 +217,7 @@ void main() {
 
     testWidgets('空文字の場合は空文字で保存されること', (WidgetTester tester) async {
       // Arrange
-      Member? savedMember;
+      MemberDto? savedMember;
 
       await tester.pumpWidget(
         _createApp(

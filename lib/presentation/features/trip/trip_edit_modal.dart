@@ -5,9 +5,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
@@ -40,7 +38,7 @@ class TripEditModal extends HookConsumerWidget {
   final String groupId;
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
-  final Function(TripEntry) onSave;
+  final Future<void> Function(TripEntryDto) onSave;
   final bool isTestEnvironment;
   final int? year;
   final TripEditModalTestHandle? testHandle;
@@ -254,7 +252,7 @@ class TripEditModal extends HookConsumerWidget {
             tripEndDate: selectedEnd,
             tasks: sortedTasks,
           );
-          onSave(TripEntryMapper.toEntity(updatedTripEntry));
+          await onSave(updatedTripEntry);
           editStateNotifier.reset();
           if (context.mounted) {
             Navigator.of(context).pop();

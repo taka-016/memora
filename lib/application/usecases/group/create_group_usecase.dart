@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/mappers/group/group_mapper.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 
@@ -12,7 +13,8 @@ class CreateGroupUsecase {
 
   CreateGroupUsecase(this._groupRepository);
 
-  Future<String> execute(Group group) async {
-    return await _groupRepository.saveGroup(group);
+  Future<String> execute(GroupDto group) async {
+    final entity = GroupMapper.toEntity(group);
+    return await _groupRepository.saveGroup(entity);
   }
 }

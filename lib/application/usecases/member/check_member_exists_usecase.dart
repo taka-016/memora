@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
-import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final checkMemberExistsUseCaseProvider = Provider<CheckMemberExistsUseCase>((
@@ -14,9 +13,9 @@ class CheckMemberExistsUseCase {
 
   CheckMemberExistsUseCase(this._memberQueryService);
 
-  Future<bool> execute(User user) async {
+  Future<bool> execute(String accountId) async {
     final existingMember = await _memberQueryService.getMemberByAccountId(
-      user.id,
+      accountId,
     );
     return existingMember != null;
   }

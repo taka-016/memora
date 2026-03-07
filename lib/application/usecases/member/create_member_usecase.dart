@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:uuid/uuid.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -13,25 +15,26 @@ class CreateMemberUsecase {
 
   CreateMemberUsecase(this._memberRepository);
 
-  Future<void> execute(Member editedMember, String ownerId) async {
+  Future<void> execute(MemberDto editedMember, String ownerId) async {
+    final editedMemberEntity = MemberMapper.toEntity(editedMember);
     final newMember = Member(
       id: const Uuid().v4(),
-      accountId: editedMember.accountId,
+      accountId: editedMemberEntity.accountId,
       ownerId: ownerId,
-      displayName: editedMember.displayName,
-      kanjiLastName: editedMember.kanjiLastName,
-      kanjiFirstName: editedMember.kanjiFirstName,
-      hiraganaLastName: editedMember.hiraganaLastName,
-      hiraganaFirstName: editedMember.hiraganaFirstName,
-      firstName: editedMember.firstName,
-      lastName: editedMember.lastName,
-      gender: editedMember.gender,
-      birthday: editedMember.birthday,
-      email: editedMember.email,
-      phoneNumber: editedMember.phoneNumber,
-      type: editedMember.type,
-      passportNumber: editedMember.passportNumber,
-      passportExpiration: editedMember.passportExpiration,
+      displayName: editedMemberEntity.displayName,
+      kanjiLastName: editedMemberEntity.kanjiLastName,
+      kanjiFirstName: editedMemberEntity.kanjiFirstName,
+      hiraganaLastName: editedMemberEntity.hiraganaLastName,
+      hiraganaFirstName: editedMemberEntity.hiraganaFirstName,
+      firstName: editedMemberEntity.firstName,
+      lastName: editedMemberEntity.lastName,
+      gender: editedMemberEntity.gender,
+      birthday: editedMemberEntity.birthday,
+      email: editedMemberEntity.email,
+      phoneNumber: editedMemberEntity.phoneNumber,
+      type: editedMemberEntity.type,
+      passportNumber: editedMemberEntity.passportNumber,
+      passportExpiration: editedMemberEntity.passportExpiration,
     );
 
     await _memberRepository.saveMember(newMember);

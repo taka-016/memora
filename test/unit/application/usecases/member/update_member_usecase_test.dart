@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -20,7 +21,7 @@ void main() {
   group('UpdateMemberUsecase', () {
     test('メンバー情報を更新すること', () async {
       // Arrange
-      final updatedMember = Member(
+      final updatedMember = MemberDto(
         id: 'member-id',
         accountId: null,
         ownerId: 'admin-member-id',
@@ -39,12 +40,18 @@ void main() {
       await usecase.execute(updatedMember);
 
       // Assert
-      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
+      final captured = verify(
+        mockMemberRepository.updateMember(captureAny),
+      ).captured;
+      final member = captured.single as Member;
+      expect(member.id, updatedMember.id);
+      expect(member.displayName, updatedMember.displayName);
+      expect(member.ownerId, updatedMember.ownerId);
     });
 
     test('最小限のデータでメンバーを更新すること', () async {
       // Arrange
-      final updatedMember = Member(id: 'member-id', displayName: '更新表示名');
+      final updatedMember = MemberDto(id: 'member-id', displayName: '更新表示名');
 
       when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
 
@@ -52,7 +59,12 @@ void main() {
       await usecase.execute(updatedMember);
 
       // Assert
-      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
+      final captured = verify(
+        mockMemberRepository.updateMember(captureAny),
+      ).captured;
+      final member = captured.single as Member;
+      expect(member.id, updatedMember.id);
+      expect(member.displayName, updatedMember.displayName);
     });
   });
 }

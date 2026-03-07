@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
@@ -18,7 +17,7 @@ const memberSelectionRequiredMessage = 'member_selection_required';
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<User?>? _authStateSubscription;
+  StreamSubscription<dynamic>? _authStateSubscription;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -47,7 +46,7 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState.loading();
   }
 
-  Future<void> _handleAuthenticatedUser(User user) async {
+  Future<void> _handleAuthenticatedUser(dynamic user) async {
     if (!user.isVerified) {
       await _handleUnverifiedUser();
       return;
@@ -74,15 +73,15 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  Future<void> _handleVerifiedUser(User user) async {
+  Future<void> _handleVerifiedUser(dynamic user) async {
     await _processUserMembership(user);
   }
 
-  Future<void> _processUserMembership(User user) async {
+  Future<void> _processUserMembership(dynamic user) async {
     try {
       await authService.validateCurrentUserToken();
 
-      final memberExists = await checkMemberExistsUseCase.execute(user);
+      final memberExists = await checkMemberExistsUseCase.execute(user.id);
 
       if (memberExists) {
         state = AuthState.authenticated(user);
@@ -103,11 +102,17 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> createNewMember(User user) async {
+  Future<void> createNewMember({
+    required String userId,
+    required String loginId,
+  }) async {
     try {
-      final success = await createMemberFromUserUseCase.execute(user);
+      final success = await createMemberFromUserUseCase.execute(
+        userId: userId,
+        loginId: loginId,
+      );
       if (success) {
-        state = AuthState.authenticated(user);
+        await _setAuthenticatedStateFromCurrentUser();
       } else {
         await _signOutWithError('メンバー作成に失敗しました。');
       }
@@ -121,17 +126,19 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> acceptInvitation(String invitationCode, User user) async {
+  Future<bool> acceptInvitation(
+    String invitationCode, {
+    required String userId,
+  }) async {
     try {
       final success = await acceptInvitationUseCase.execute(
         invitationCode,
-        user.id,
+        userId,
       );
       if (!success) {
         return false;
       }
-      state = AuthState.authenticated(user);
-      return true;
+      return await _setAuthenticatedStateFromCurrentUser();
     } catch (e, stack) {
       logger.e(
         'AuthNotifier.acceptInvitation: ${e.toString()}',
@@ -157,6 +164,26 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> _signOutWithError(String message) async {
     await _signOut();
     state = AuthState.unauthenticated(message, messageType: MessageType.error);
+  }
+
+  Future<bool> _setAuthenticatedStateFromCurrentUser() async {
+    try {
+      final currentUser = await authService.getCurrentUser();
+      if (currentUser == null) {
+        await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
+        return false;
+      }
+      state = AuthState.authenticated(currentUser);
+      return true;
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier._setAuthenticatedStateFromCurrentUser: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
+      return false;
+    }
   }
 
   Future<void> _handleUnauthenticatedUser() async {
