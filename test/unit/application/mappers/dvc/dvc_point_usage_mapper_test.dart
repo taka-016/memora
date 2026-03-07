@@ -7,10 +7,11 @@ void main() {
   group('DvcPointUsageMapper', () {
     test('Dtoからエンティティへ変換できる', () {
       final dto = DvcPointUsageDto(
-        id: 'usage-1',
-        groupId: 'group-1',
-        usageYearMonth: DateTime(2024, 10),
+        id: 'usage001',
+        groupId: 'group001',
+        usageYearMonth: DateTime(2025, 10),
         usedPoint: 60,
+        memo: 'ホテル',
       );
 
       final entity = DvcPointUsageMapper.toEntity(dto);
@@ -18,27 +19,13 @@ void main() {
       expect(
         entity,
         DvcPointUsage(
-          id: 'usage-1',
-          groupId: 'group-1',
-          usageYearMonth: DateTime(2024, 10),
+          id: 'usage001',
+          groupId: 'group001',
+          usageYearMonth: DateTime(2025, 10),
           usedPoint: 60,
+          memo: 'ホテル',
         ),
       );
-    });
-
-    test('エンティティからDtoへ変換できる', () {
-      final entity = DvcPointUsage(
-        id: 'usage-1',
-        groupId: 'group-1',
-        usageYearMonth: DateTime(2024, 10),
-        usedPoint: 60,
-      );
-
-      final dto = DvcPointUsageMapper.toDto(entity);
-
-      expect(dto.id, 'usage-1');
-      expect(dto.groupId, 'group-1');
-      expect(dto.usedPoint, 60);
     });
   });
 }

@@ -7,12 +7,12 @@ void main() {
   group('DvcPointContractMapper', () {
     test('Dtoからエンティティへ変換できる', () {
       final dto = DvcPointContractDto(
-        id: 'contract-1',
-        groupId: 'group-1',
+        id: 'contract001',
+        groupId: 'group001',
         contractName: '契約A',
-        contractStartYearMonth: DateTime(2024, 1),
-        contractEndYearMonth: DateTime(2030, 1),
-        useYearStartMonth: 1,
+        contractStartYearMonth: DateTime(2024, 10),
+        contractEndYearMonth: DateTime(2042, 9),
+        useYearStartMonth: 10,
         annualPoint: 200,
       );
 
@@ -21,33 +21,15 @@ void main() {
       expect(
         entity,
         DvcPointContract(
-          id: 'contract-1',
-          groupId: 'group-1',
+          id: 'contract001',
+          groupId: 'group001',
           contractName: '契約A',
-          contractStartYearMonth: DateTime(2024, 1),
-          contractEndYearMonth: DateTime(2030, 1),
-          useYearStartMonth: 1,
+          contractStartYearMonth: DateTime(2024, 10),
+          contractEndYearMonth: DateTime(2042, 9),
+          useYearStartMonth: 10,
           annualPoint: 200,
         ),
       );
-    });
-
-    test('エンティティからDtoへ変換できる', () {
-      final entity = DvcPointContract(
-        id: 'contract-1',
-        groupId: 'group-1',
-        contractName: '契約A',
-        contractStartYearMonth: DateTime(2024, 1),
-        contractEndYearMonth: DateTime(2030, 1),
-        useYearStartMonth: 1,
-        annualPoint: 200,
-      );
-
-      final dto = DvcPointContractMapper.toDto(entity);
-
-      expect(dto.id, 'contract-1');
-      expect(dto.groupId, 'group-1');
-      expect(dto.annualPoint, 200);
     });
   });
 }

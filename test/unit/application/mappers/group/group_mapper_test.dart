@@ -1,53 +1,122 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/mappers/group/group_mapper.dart';
+import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/domain/entities/group/group_member.dart';
 
 void main() {
   group('GroupMapper', () {
     test('DTOからGroupエンティティへ変換できる', () {
+      const members = [
+        GroupMemberDto(
+          memberId: 'member001',
+          groupId: 'group001',
+          isAdministrator: true,
+          displayName: '管理者',
+        ),
+        GroupMemberDto(
+          memberId: 'member002',
+          groupId: 'group001',
+          isAdministrator: false,
+          displayName: 'メンバー',
+        ),
+      ];
+
       final dto = GroupDto(
-        id: 'group-1',
-        ownerId: 'owner-1',
+        id: 'group001',
+        ownerId: 'owner001',
         name: 'テストグループ',
-        members: const [
-          GroupMemberDto(
-            memberId: 'member-1',
-            groupId: 'group-1',
-            displayName: 'メンバー1',
-          ),
-        ],
+        memo: 'テストメモ',
+        members: members,
       );
 
       final entity = GroupMapper.toEntity(dto);
 
-      expect(entity.id, 'group-1');
-      expect(entity.ownerId, 'owner-1');
-      expect(entity.name, 'テストグループ');
-      expect(entity.members, hasLength(1));
+      expect(
+        entity,
+        Group(
+          id: 'group001',
+          ownerId: 'owner001',
+          name: 'テストグループ',
+          memo: 'テストメモ',
+          members: const [
+            GroupMember(
+              groupId: 'group001',
+              memberId: 'member001',
+              isAdministrator: true,
+            ),
+            GroupMember(
+              groupId: 'group001',
+              memberId: 'member002',
+              isAdministrator: false,
+            ),
+          ],
+        ),
+      );
     });
 
-    test('DTOリストをGroupエンティティリストへ変換できる', () {
-      final dtos = [
+    test('DTOリストからGroupエンティティのリストへ変換できる', () {
+      final dtoList = [
         GroupDto(
-          id: 'group-1',
-          ownerId: 'owner-1',
-          name: 'A',
-          members: const [],
+          id: 'group001',
+          ownerId: 'owner001',
+          name: 'グループ1',
+          memo: 'メモ1',
+          members: const [
+            GroupMemberDto(
+              memberId: 'member001',
+              groupId: 'group001',
+              displayName: 'メンバー1',
+            ),
+          ],
         ),
         GroupDto(
-          id: 'group-2',
-          ownerId: 'owner-2',
-          name: 'B',
-          members: const [],
+          id: 'group002',
+          ownerId: 'owner002',
+          name: 'グループ2',
+          memo: 'メモ2',
+          members: const [
+            GroupMemberDto(
+              memberId: 'member002',
+              groupId: 'group002',
+              isAdministrator: true,
+              displayName: 'メンバー2',
+            ),
+          ],
         ),
       ];
 
-      final entities = GroupMapper.toEntityList(dtos);
+      final entities = GroupMapper.toEntityList(dtoList);
 
-      expect(entities, hasLength(2));
-      expect(entities[0].id, 'group-1');
-      expect(entities[1].id, 'group-2');
+      expect(entities, [
+        Group(
+          id: 'group001',
+          ownerId: 'owner001',
+          name: 'グループ1',
+          memo: 'メモ1',
+          members: const [
+            GroupMember(
+              groupId: 'group001',
+              memberId: 'member001',
+              isAdministrator: false,
+            ),
+          ],
+        ),
+        Group(
+          id: 'group002',
+          ownerId: 'owner002',
+          name: 'グループ2',
+          memo: 'メモ2',
+          members: const [
+            GroupMember(
+              groupId: 'group002',
+              memberId: 'member002',
+              isAdministrator: true,
+            ),
+          ],
+        ),
+      ]);
     });
   });
 }

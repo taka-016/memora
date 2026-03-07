@@ -5,68 +5,87 @@ import 'package:memora/domain/entities/member/member_invitation.dart';
 
 void main() {
   group('MemberInvitationMapper', () {
-    test('Dtoからエンティティへ変換できる', () {
+    test('MemberInvitationDtoからエンティティへ変換できる', () {
       final dto = MemberInvitationDto(
-        id: 'inv-1',
-        inviteeId: 'm1',
-        inviterId: 'm2',
-        invitationCode: 'CODE',
+        id: 'invite-003',
+        inviteeId: 'member-010',
+        inviterId: 'member-020',
+        invitationCode: 'CODE999',
       );
 
       final entity = MemberInvitationMapper.toEntity(dto);
 
-      expect(entity.id, 'inv-1');
-      expect(entity.inviteeId, 'm1');
-      expect(entity.inviterId, 'm2');
-      expect(entity.invitationCode, 'CODE');
+      expect(
+        entity,
+        const MemberInvitation(
+          id: 'invite-003',
+          inviteeId: 'member-010',
+          inviterId: 'member-020',
+          invitationCode: 'CODE999',
+        ),
+      );
     });
 
-    test('エンティティからDtoへ変換できる', () {
+    test('MemberInvitationエンティティからDtoへ変換できる', () {
       const entity = MemberInvitation(
-        id: 'inv-2',
-        inviteeId: 'm3',
-        inviterId: 'm4',
-        invitationCode: 'CODE2',
+        id: 'invite-004',
+        inviteeId: 'member-030',
+        inviterId: 'member-040',
+        invitationCode: 'CODEABC',
       );
 
       final dto = MemberInvitationMapper.toDto(entity);
 
-      expect(dto.id, 'inv-2');
-      expect(dto.inviteeId, 'm3');
-      expect(dto.inviterId, 'm4');
-      expect(dto.invitationCode, 'CODE2');
+      expect(dto.id, 'invite-004');
+      expect(dto.inviteeId, 'member-030');
+      expect(dto.inviterId, 'member-040');
+      expect(dto.invitationCode, 'CODEABC');
     });
 
-    test('Dtoリストをエンティティリストに変換できる', () {
+    test('Dtoリストからエンティティリストへ変換できる', () {
       final dtos = [
         MemberInvitationDto(
-          id: 'inv-1',
-          inviteeId: 'm1',
-          inviterId: 'm2',
-          invitationCode: 'C1',
+          id: 'invite-101',
+          inviteeId: 'member-101',
+          inviterId: 'member-201',
+          invitationCode: 'AAA111',
+        ),
+        MemberInvitationDto(
+          id: 'invite-102',
+          inviteeId: 'member-102',
+          inviterId: 'member-202',
+          invitationCode: 'BBB222',
         ),
       ];
 
       final entities = MemberInvitationMapper.toEntityList(dtos);
 
-      expect(entities, hasLength(1));
-      expect(entities.first.id, 'inv-1');
+      expect(entities.length, 2);
+      expect(entities[0].id, 'invite-101');
+      expect(entities[1].invitationCode, 'BBB222');
     });
 
-    test('エンティティリストをDtoリストに変換できる', () {
+    test('エンティティリストからDtoリストへ変換できる', () {
       const entities = [
         MemberInvitation(
-          id: 'inv-1',
-          inviteeId: 'm1',
-          inviterId: 'm2',
-          invitationCode: 'C1',
+          id: 'invite-201',
+          inviteeId: 'member-301',
+          inviterId: 'member-401',
+          invitationCode: 'CCC333',
+        ),
+        MemberInvitation(
+          id: 'invite-202',
+          inviteeId: 'member-302',
+          inviterId: 'member-402',
+          invitationCode: 'DDD444',
         ),
       ];
 
       final dtos = MemberInvitationMapper.toDtoList(entities);
 
-      expect(dtos, hasLength(1));
-      expect(dtos.first.id, 'inv-1');
+      expect(dtos.length, 2);
+      expect(dtos[0].id, 'invite-201');
+      expect(dtos[1].invitationCode, 'DDD444');
     });
   });
 }

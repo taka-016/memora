@@ -7,68 +7,101 @@ void main() {
   group('MemberEventMapper', () {
     test('MemberEventDtoからエンティティへ変換できる', () {
       final dto = MemberEventDto(
-        id: 'event-1',
-        memberId: 'member-1',
-        type: 'birthday',
-        startDate: DateTime(2024, 1, 1),
-        endDate: DateTime(2024, 1, 2),
+        id: 'member-event-003',
+        memberId: 'member-010',
+        type: 'meeting',
+        name: '面談',
+        startDate: DateTime(2024, 4, 2, 14),
+        endDate: DateTime(2024, 4, 2, 15),
+        memo: '評価面談',
       );
 
       final entity = MemberEventMapper.toEntity(dto);
 
-      expect(entity.id, 'event-1');
-      expect(entity.memberId, 'member-1');
-      expect(entity.type, 'birthday');
+      expect(
+        entity,
+        MemberEvent(
+          id: 'member-event-003',
+          memberId: 'member-010',
+          type: 'meeting',
+          name: '面談',
+          startDate: DateTime(2024, 4, 2, 14),
+          endDate: DateTime(2024, 4, 2, 15),
+          memo: '評価面談',
+        ),
+      );
     });
 
     test('MemberEventエンティティからDtoへ変換できる', () {
       final entity = MemberEvent(
-        id: 'event-2',
-        memberId: 'member-2',
-        type: 'school',
-        startDate: DateTime(2024, 2, 1),
-        endDate: DateTime(2024, 2, 2),
+        id: 'member-event-004',
+        memberId: 'member-020',
+        type: 'outing',
+        name: '外出',
+        startDate: DateTime(2024, 4, 3, 10),
+        endDate: DateTime(2024, 4, 3, 12),
+        memo: '買い物',
       );
 
       final dto = MemberEventMapper.toDto(entity);
 
-      expect(dto.id, 'event-2');
-      expect(dto.memberId, 'member-2');
-      expect(dto.type, 'school');
+      expect(dto.id, 'member-event-004');
+      expect(dto.memberId, 'member-020');
+      expect(dto.type, 'outing');
+      expect(dto.name, '外出');
+      expect(dto.startDate, DateTime(2024, 4, 3, 10));
+      expect(dto.endDate, DateTime(2024, 4, 3, 12));
+      expect(dto.memo, '買い物');
     });
 
-    test('Dtoリストをエンティティリストに変換できる', () {
+    test('Dtoリストからエンティティリストへ変換できる', () {
       final dtos = [
         MemberEventDto(
-          id: 'event-1',
-          memberId: 'member-1',
-          type: 'a',
-          startDate: DateTime(2024, 1, 1),
-          endDate: DateTime(2024, 1, 1),
+          id: 'member-event-101',
+          memberId: 'member-101',
+          type: 'training',
+          startDate: DateTime(2024, 4, 4, 9),
+          endDate: DateTime(2024, 4, 4, 11),
+        ),
+        MemberEventDto(
+          id: 'member-event-102',
+          memberId: 'member-102',
+          type: 'meeting',
+          startDate: DateTime(2024, 4, 5, 9),
+          endDate: DateTime(2024, 4, 5, 11),
         ),
       ];
 
       final entities = MemberEventMapper.toEntityList(dtos);
 
-      expect(entities, hasLength(1));
-      expect(entities.first.id, 'event-1');
+      expect(entities.length, 2);
+      expect(entities[0].id, 'member-event-101');
+      expect(entities[1].type, 'meeting');
     });
 
-    test('エンティティリストをDtoリストに変換できる', () {
+    test('エンティティリストからDtoリストへ変換できる', () {
       final entities = [
         MemberEvent(
-          id: 'event-1',
-          memberId: 'member-1',
-          type: 'a',
-          startDate: DateTime(2024, 1, 1),
-          endDate: DateTime(2024, 1, 1),
+          id: 'member-event-201',
+          memberId: 'member-201',
+          type: 'training',
+          startDate: DateTime(2024, 4, 6, 9),
+          endDate: DateTime(2024, 4, 6, 11),
+        ),
+        MemberEvent(
+          id: 'member-event-202',
+          memberId: 'member-202',
+          type: 'outing',
+          startDate: DateTime(2024, 4, 7, 9),
+          endDate: DateTime(2024, 4, 7, 11),
         ),
       ];
 
       final dtos = MemberEventMapper.toDtoList(entities);
 
-      expect(dtos, hasLength(1));
-      expect(dtos.first.id, 'event-1');
+      expect(dtos.length, 2);
+      expect(dtos[0].id, 'member-event-201');
+      expect(dtos[1].type, 'outing');
     });
   });
 }
