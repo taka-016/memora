@@ -138,18 +138,5 @@
   - `lib/infrastructure/queries/trip/firestore_task_query_service.dart:3`
   - `lib/infrastructure/queries/trip/firestore_pin_query_service.dart:3`
   - 必要対応: 参照先を`lib/infrastructure/mappers/**`へ切り替え、Firestoreの読み取り変換はinfrastructure層で完結させる
-- Firestore Mapper再配置に伴いMapperテストの責務を再編する
-  - 対象ソース（application層のFirestore変換テスト）
-  - `test/unit/application/mappers/member/*.dart`
-  - `test/unit/application/mappers/group/*.dart`
-  - `test/unit/application/mappers/trip/*.dart`
-  - `test/unit/application/mappers/dvc/*.dart`
-  - 対象ソース（infrastructure層のFirestore Mapperテスト）
-  - `test/unit/infrastructure/mappers/member/*.dart`
-  - `test/unit/infrastructure/mappers/group/*.dart`
-  - `test/unit/infrastructure/mappers/trip/*.dart`
-  - `test/unit/infrastructure/mappers/dvc/*.dart`
-  - 必要対応: Firestore読み取り変換テストをinfrastructure側へ寄せ、application側は`DTO <-> Entity`変換テストに限定する
-  - 必要対応: モック変更後に`dart run build_runner build --delete-conflicting-outputs`を実行して`*.mocks.dart`を再生成する
 
 ## 不具合修正
