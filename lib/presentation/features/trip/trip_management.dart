@@ -10,7 +10,6 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
@@ -122,7 +121,7 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> handleAddTripSave(TripEntry tripEntry) async {
+    Future<void> handleAddTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
@@ -164,7 +163,7 @@ class TripManagement extends HookConsumerWidget {
       );
     }
 
-    Future<void> handleEditTripSave(TripEntry tripEntry) async {
+    Future<void> handleEditTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {

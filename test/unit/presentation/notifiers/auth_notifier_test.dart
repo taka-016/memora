@@ -75,7 +75,7 @@ void main() {
 
       when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
       when(
-        mockCheckMemberExistsUseCase.execute(user),
+        mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => true);
 
       final controller = StreamController<User?>();
@@ -88,7 +88,7 @@ void main() {
       await Future(() {});
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(mockCheckMemberExistsUseCase.execute(user)).called(1);
+      verify(mockCheckMemberExistsUseCase.execute(user.id)).called(1);
     });
 
     test('新規ユーザーのログイン時にmember_selection_required状態になる', () async {
@@ -100,7 +100,7 @@ void main() {
 
       when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
       when(
-        mockCheckMemberExistsUseCase.execute(user),
+        mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => false);
 
       final controller = StreamController<User?>();
@@ -129,7 +129,7 @@ void main() {
           mockAuthService.validateCurrentUserToken(),
         ).thenAnswer((_) async {});
         when(
-          mockCheckMemberExistsUseCase.execute(user),
+          mockCheckMemberExistsUseCase.execute(user.id),
         ).thenThrow(TestException('Firestore error'));
         when(mockAuthService.signOut()).thenAnswer((_) async {});
 
@@ -156,8 +156,12 @@ void main() {
       );
 
       when(
-        mockCreateMemberFromUserUseCase.execute(user),
+        mockCreateMemberFromUserUseCase.execute(
+          userId: user.id,
+          loginId: user.loginId,
+        ),
       ).thenAnswer((_) async => true);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
       final controller = StreamController<User?>();
       addTearDown(controller.close);
@@ -166,10 +170,15 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      await notifier.createNewMember(user);
+      await notifier.createNewMember(userId: user.id, loginId: user.loginId);
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(mockCreateMemberFromUserUseCase.execute(user)).called(1);
+      verify(
+        mockCreateMemberFromUserUseCase.execute(
+          userId: user.id,
+          loginId: user.loginId,
+        ),
+      ).called(1);
     });
 
     test('acceptInvitationが成功した場合authenticated状態になる', () async {
@@ -183,6 +192,7 @@ void main() {
       when(
         mockAcceptInvitationUseCase.execute(invitationCode, user.id),
       ).thenAnswer((_) async => true);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
       final controller = StreamController<User?>();
       addTearDown(controller.close);
@@ -191,7 +201,10 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      final result = await notifier.acceptInvitation(invitationCode, user);
+      final result = await notifier.acceptInvitation(
+        invitationCode,
+        userId: user.id,
+      );
 
       expect(result, true);
       expect(notifier.state.status, AuthStatus.authenticated);
@@ -220,7 +233,10 @@ void main() {
       final notifier = container.read(authNotifierProvider.notifier);
       notifier.state = AuthState.authenticated(user);
 
-      final result = await notifier.acceptInvitation(invitationCode, user);
+      final result = await notifier.acceptInvitation(
+        invitationCode,
+        userId: user.id,
+      );
 
       expect(result, false);
       expect(notifier.state.status, AuthStatus.authenticated);

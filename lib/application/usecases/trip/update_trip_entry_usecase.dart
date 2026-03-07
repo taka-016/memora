@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 
@@ -12,7 +13,8 @@ class UpdateTripEntryUsecase {
 
   UpdateTripEntryUsecase(this._tripEntryRepository);
 
-  Future<void> execute(TripEntry tripEntry) async {
-    await _tripEntryRepository.updateTripEntry(tripEntry);
+  Future<void> execute(TripEntryDto tripEntry) async {
+    final entity = TripEntryMapper.toEntity(tripEntry);
+    await _tripEntryRepository.updateTripEntry(entity);
   }
 }

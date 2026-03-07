@@ -3,7 +3,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
-import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'create_member_from_user_usecase_test.mocks.dart';
 import '../../../../helpers/test_exception.dart';
@@ -21,22 +20,19 @@ void main() {
   group('CreateMemberFromUserUseCase', () {
     test('ユーザー情報から新規メンバーを作成成功した場合trueを返す', () async {
       // Arrange
-      const user = User(
-        id: 'user-id',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
+      const userId = 'user-id';
+      const loginId = 'test@example.com';
       final expectedMember = Member(
         id: '',
-        displayName: user.loginId,
-        accountId: user.id,
-        email: user.loginId,
+        displayName: loginId,
+        accountId: userId,
+        email: loginId,
       );
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
 
       // Act
-      final result = await useCase.execute(user);
+      final result = await useCase.execute(userId: userId, loginId: loginId);
 
       // Assert
       expect(result, isTrue);
@@ -52,18 +48,15 @@ void main() {
 
     test('メンバー作成時にエラーが発生した場合falseを返す', () async {
       // Arrange
-      const user = User(
-        id: 'user-id',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
+      const userId = 'user-id';
+      const loginId = 'test@example.com';
 
       when(
         mockMemberRepository.saveMember(any),
       ).thenThrow(TestException('Database error'));
 
       // Act
-      final result = await useCase.execute(user);
+      final result = await useCase.execute(userId: userId, loginId: loginId);
 
       // Assert
       expect(result, isFalse);

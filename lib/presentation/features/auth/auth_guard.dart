@@ -58,7 +58,10 @@ class AuthGuard extends ConsumerWidget {
 
       switch (selectedOption) {
         case MemberCreationOption.createNew:
-          await authNotifier.createNewMember(currentUser);
+          await authNotifier.createNewMember(
+            userId: currentUser.id,
+            loginId: currentUser.loginId,
+          );
           return;
         case MemberCreationOption.useInvitationCode:
           if (!context.mounted) return;
@@ -102,7 +105,7 @@ class AuthGuard extends ConsumerWidget {
 
       final success = await authNotifier.acceptInvitation(
         invitationCode,
-        currentUser,
+        userId: currentUser.id,
       );
 
       if (!success) {

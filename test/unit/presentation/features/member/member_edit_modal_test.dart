@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-
-import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 
 Widget _createApp({required Widget child}) {
@@ -17,7 +15,9 @@ void main() {
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Assert
@@ -50,7 +50,10 @@ void main() {
       // Act
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: existingMember, onSave: (member) {}),
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (member) async {},
+          ),
         ),
       );
 
@@ -84,7 +87,10 @@ void main() {
       // Act
       await tester.pumpWidget(
         _createApp(
-          child: MemberEditModal(member: existingMember, onSave: (member) {}),
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (member) async {},
+          ),
         ),
       );
 
@@ -104,7 +110,9 @@ void main() {
     testWidgets('必須項目が未入力の場合バリデーションエラーが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Act
@@ -117,13 +125,13 @@ void main() {
 
     testWidgets('正しく入力された場合onSaveが呼ばれること', (WidgetTester tester) async {
       // Arrange
-      Member? savedMember;
+      MemberDto? savedMember;
 
       await tester.pumpWidget(
         _createApp(
           child: MemberEditModal(
             member: null,
-            onSave: (member) {
+            onSave: (member) async {
               savedMember = member;
             },
           ),
@@ -162,7 +170,9 @@ void main() {
     testWidgets('性別ドロップダウンが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Assert
@@ -173,7 +183,9 @@ void main() {
     testWidgets('日付選択ボタンが正しく表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Assert - 日付選択エリアが表示されていることを確認
@@ -183,7 +195,9 @@ void main() {
 
     testWidgets('生年月日に未来日付を入力できること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       await tester.ensureVisible(find.text('選択してください'));
@@ -210,7 +224,9 @@ void main() {
     testWidgets('キャンセルボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Assert
@@ -219,13 +235,13 @@ void main() {
 
     testWidgets('空文字の場合は空文字で保存されること', (WidgetTester tester) async {
       // Arrange
-      Member? savedMember;
+      MemberDto? savedMember;
 
       await tester.pumpWidget(
         _createApp(
           child: MemberEditModal(
             member: null,
-            onSave: (member) {
+            onSave: (member) async {
               savedMember = member;
             },
           ),
@@ -253,7 +269,9 @@ void main() {
     testWidgets('フォームのスクロールが正しく動作すること', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       // Act
@@ -270,7 +288,9 @@ void main() {
 
     testWidgets('変更後にキャンセルすると破棄確認が表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       await tester.enterText(
@@ -289,7 +309,9 @@ void main() {
 
     testWidgets('破棄するを選択すると確認ダイアログが閉じること', (WidgetTester tester) async {
       await tester.pumpWidget(
-        _createApp(child: MemberEditModal(member: null, onSave: (member) {})),
+        _createApp(
+          child: MemberEditModal(member: null, onSave: (member) async {}),
+        ),
       );
 
       await tester.enterText(

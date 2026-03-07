@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/create_member_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -20,7 +21,7 @@ void main() {
   group('CreateMemberUsecase', () {
     test('新しいメンバーを作成すること', () async {
       // Arrange
-      final editedMember = Member(
+      final editedMember = MemberDto(
         id: 'edited-member-id',
         displayName: '新メンバー',
         kanjiLastName: '新田',
@@ -55,7 +56,10 @@ void main() {
 
     test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
-      final editedMember = Member(id: 'edited-member-id', displayName: 'ミニマル');
+      final editedMember = MemberDto(
+        id: 'edited-member-id',
+        displayName: 'ミニマル',
+      );
       const ownerId = 'admin-member-id';
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});

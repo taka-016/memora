@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/member/member_mapper.dart';
-import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
-  final Function(Member) onSave;
-  final Function(MemberDto)? onInvite;
+  final Future<void> Function(MemberDto) onSave;
+  final void Function(MemberDto)? onInvite;
 
   const MemberEditModal({
     super.key,
@@ -334,13 +333,28 @@ class MemberEditModal extends HookConsumerWidget {
       }
     }
 
-    void handleSave() {
+    Future<void> handleSave() async {
       if (formKey.currentState!.validate()) {
-        final savedMember = MemberMapper.toEntity(buildUpdatedMember());
-
-        onSave(savedMember);
-        editStateNotifier.reset();
-        Navigator.of(context).pop();
+        try {
+          await onSave(buildUpdatedMember());
+          if (!context.mounted) {
+            return;
+          }
+          editStateNotifier.reset();
+          Navigator.of(context).pop();
+        } catch (e, stack) {
+          logger.e(
+            'MemberEditModal.onSave: ${e.toString()}',
+            error: e,
+            stackTrace: stack,
+          );
+          if (!context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $e')));
+        }
       }
     }
 

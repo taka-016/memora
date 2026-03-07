@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/domain/entities/group/group.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({
@@ -79,7 +78,7 @@ GroupMemberDto createGroupMemberDto({
 
 Widget buildSubject({
   required GroupDto group,
-  required void Function(Group) onSave,
+  required Future<void> Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
   required GroupMemberDto member,
 }) {
@@ -101,7 +100,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: createGroupDto(id: '', name: '', memo: ''),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: const [],
           member: createCurrentMember(),
         ),
@@ -121,7 +120,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: group,
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: const [],
           member: createCurrentMember(),
         ),
@@ -134,7 +133,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: createGroupDto(id: '', name: '', memo: ''),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: const [],
           member: createCurrentMember(),
         ),
@@ -148,12 +147,12 @@ void main() {
     });
 
     testWidgets('有効な入力でonSaveコールバックが呼ばれる', (WidgetTester tester) async {
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(
           group: createGroupDto(id: '', name: '', memo: ''),
-          onSave: (group) {
+          onSave: (group) async {
             savedGroup = group;
           },
           availableMembers: const [],
@@ -174,7 +173,7 @@ void main() {
     });
 
     testWidgets('メモを空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       final group = createGroupDto(
         id: 'test-id',
@@ -186,7 +185,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: group,
-          onSave: (group) {
+          onSave: (group) async {
             savedGroup = group;
           },
           availableMembers: const [],
@@ -255,7 +254,7 @@ void main() {
               createGroupMemberDto(groupId: 'group1', memberId: 'member2'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -290,7 +289,7 @@ void main() {
               createGroupMemberDto(groupId: 'group1', memberId: 'owner-id'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -325,7 +324,7 @@ void main() {
             name: '',
             members: const [],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -370,7 +369,7 @@ void main() {
               createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -436,7 +435,7 @@ void main() {
               createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -487,7 +486,7 @@ void main() {
               createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -535,7 +534,7 @@ void main() {
               createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -565,7 +564,7 @@ void main() {
               createGroupMemberDto(groupId: 'test-id', memberId: 'member1'),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: [
             createGroupMemberDto(
               memberId: 'member1',
@@ -619,12 +618,12 @@ void main() {
         ),
       ];
 
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(
           group: createGroupDto(id: '', name: '', memo: ''),
-          onSave: (group) {
+          onSave: (group) async {
             savedGroup = group;
           },
           availableMembers: availableMembers,
@@ -665,7 +664,7 @@ void main() {
                         name: '',
                         memo: '',
                       ),
-                      onSave: (group) {},
+                      onSave: (group) async {},
                       availableMembers: const [],
                       member: createCurrentMember(),
                     ),
@@ -733,7 +732,7 @@ void main() {
                 )
                 .toList(),
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -799,7 +798,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: group,
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -823,7 +822,7 @@ void main() {
       await tester.pumpWidget(
         buildSubject(
           group: group,
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: const [],
           member: createCurrentMember(),
         ),
@@ -898,7 +897,7 @@ void main() {
               ),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -987,7 +986,7 @@ void main() {
               ),
             ],
           ),
-          onSave: (group) {},
+          onSave: (group) async {},
           availableMembers: availableMembers,
           member: createCurrentMember(),
         ),
@@ -1042,7 +1041,7 @@ void main() {
         ),
       ];
 
-      Group? savedGroup;
+      GroupDto? savedGroup;
 
       await tester.pumpWidget(
         buildSubject(
@@ -1058,7 +1057,7 @@ void main() {
               ),
             ],
           ),
-          onSave: (group) {
+          onSave: (group) async {
             savedGroup = group;
           },
           availableMembers: availableMembers,
