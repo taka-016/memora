@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 
 class FirestoreDvcPointContractMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -14,13 +15,17 @@ class FirestoreDvcPointContractMapper {
       groupId: data['groupId'] as String? ?? '',
       contractName: data['contractName'] as String? ?? '',
       contractStartYearMonth:
-          (data['contractStartYearMonth'] as Timestamp?)?.toDate() ??
+          FirestoreMapperValueParser.asDateTime(
+            data['contractStartYearMonth'],
+          ) ??
           _defaultDate,
       contractEndYearMonth:
-          (data['contractEndYearMonth'] as Timestamp?)?.toDate() ??
+          FirestoreMapperValueParser.asDateTime(data['contractEndYearMonth']) ??
           _defaultDate,
-      useYearStartMonth: _asInt(data['useYearStartMonth']),
-      annualPoint: _asInt(data['annualPoint']),
+      useYearStartMonth: FirestoreMapperValueParser.asInt(
+        data['useYearStartMonth'],
+      ),
+      annualPoint: FirestoreMapperValueParser.asInt(data['annualPoint']),
     );
   }
 
@@ -36,12 +41,5 @@ class FirestoreDvcPointContractMapper {
       'annualPoint': contract.annualPoint,
       'createdAt': FieldValue.serverTimestamp(),
     };
-  }
-
-  static int _asInt(dynamic value) {
-    if (value is num) {
-      return value.toInt();
-    }
-    return 0;
   }
 }

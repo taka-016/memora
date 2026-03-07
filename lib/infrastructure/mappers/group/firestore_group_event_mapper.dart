@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 
 class FirestoreGroupEventMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -14,8 +15,12 @@ class FirestoreGroupEventMapper {
       groupId: data['groupId'] as String? ?? '',
       type: data['type'] as String? ?? '',
       name: data['name'] as String?,
-      startDate: (data['startDate'] as Timestamp?)?.toDate() ?? _defaultDate,
-      endDate: (data['endDate'] as Timestamp?)?.toDate() ?? _defaultDate,
+      startDate:
+          FirestoreMapperValueParser.asDateTime(data['startDate']) ??
+          _defaultDate,
+      endDate:
+          FirestoreMapperValueParser.asDateTime(data['endDate']) ??
+          _defaultDate,
       memo: data['memo'] as String?,
     );
   }

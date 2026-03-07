@@ -3,6 +3,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 
 class FirestoreTripEntryMapper {
   static TripEntryDto fromFirestore(
@@ -11,17 +12,17 @@ class FirestoreTripEntryMapper {
     List<TaskDto> tasks = const [],
   }) {
     final data = doc.data() ?? {};
-    final tripStartTimestamp = data['tripStartDate'] as Timestamp?;
-    final tripEndTimestamp = data['tripEndDate'] as Timestamp?;
-    final tripStartDate = tripStartTimestamp?.toDate();
-    final tripEndDate = tripEndTimestamp?.toDate();
+    final tripStartDate = FirestoreMapperValueParser.asDateTime(
+      data['tripStartDate'],
+    );
+    final tripEndDate = FirestoreMapperValueParser.asDateTime(
+      data['tripEndDate'],
+    );
+    final tripYear = FirestoreMapperValueParser.asNullableInt(data['tripYear']);
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
-      tripYear:
-          data['tripYear'] as int? ??
-          tripStartDate?.year ??
-          DateTime.now().year,
+      tripYear: tripYear ?? tripStartDate?.year ?? DateTime.now().year,
       tripName: data['tripName'] as String?,
       tripStartDate: tripStartDate,
       tripEndDate: tripEndDate,

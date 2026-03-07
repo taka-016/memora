@@ -8,12 +8,12 @@ class FirestoreGroupMapper {
     DocumentSnapshot<Map<String, dynamic>> groupDoc, {
     List<GroupMemberDto> members = const [],
   }) {
-    final groupData = groupDoc.data();
+    final groupData = groupDoc.data() ?? {};
     return GroupDto(
       id: groupDoc.id,
-      ownerId: groupData?['ownerId'] as String? ?? '',
-      name: groupData?['name'] as String? ?? '',
-      memo: groupData?['memo'] as String?,
+      ownerId: groupData['ownerId'] as String? ?? '',
+      name: groupData['name'] as String? ?? '',
+      memo: groupData['memo'] as String?,
       members: members,
     );
   }
