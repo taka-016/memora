@@ -18,7 +18,7 @@ void main() {
         'startYearMonth': Timestamp.fromDate(DateTime(2025, 7)),
         'endYearMonth': Timestamp.fromDate(DateTime(2025, 12)),
         'point': 30.7,
-        'memo': 123,
+        'memo': '追加分',
       });
 
       final result = FirestoreDvcLimitedPointMapper.fromFirestore(doc);
@@ -28,7 +28,19 @@ void main() {
       expect(result.startYearMonth, DateTime(2025, 7));
       expect(result.endYearMonth, DateTime(2025, 12));
       expect(result.point, 30);
-      expect(result.memo, '123');
+      expect(result.memo, '追加分');
+    });
+
+    test('memoが文字列以外の場合はnullへ変換される', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.id).thenReturn('limited003');
+      when(doc.data()).thenReturn({
+        'memo': {'unexpected': 'value'},
+      });
+
+      final result = FirestoreDvcLimitedPointMapper.fromFirestore(doc);
+
+      expect(result.memo, isNull);
     });
 
     test('Firestoreの欠損値をデフォルトで変換できる', () {

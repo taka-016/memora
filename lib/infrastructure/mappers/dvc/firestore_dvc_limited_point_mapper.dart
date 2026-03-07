@@ -20,7 +20,7 @@ class FirestoreDvcLimitedPointMapper {
           FirestoreMapperValueParser.asDateTime(data['endYearMonth']) ??
           _defaultDate,
       point: FirestoreMapperValueParser.asInt(data['point']),
-      memo: data['memo']?.toString(),
+      memo: data['memo'] is String ? data['memo'] as String : null,
     );
   }
 
