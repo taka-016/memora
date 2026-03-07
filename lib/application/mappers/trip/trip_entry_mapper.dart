@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -7,32 +6,6 @@ import 'package:memora/application/mappers/trip/task_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 
 class TripEntryMapper {
-  static TripEntryDto fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc, {
-    List<PinDto> pins = const [],
-    List<TaskDto> tasks = const [],
-  }) {
-    final data = doc.data() ?? {};
-    final tripStartTimestamp = data['tripStartDate'] as Timestamp?;
-    final tripEndTimestamp = data['tripEndDate'] as Timestamp?;
-    final tripStartDate = tripStartTimestamp?.toDate();
-    final tripEndDate = tripEndTimestamp?.toDate();
-    return TripEntryDto(
-      id: doc.id,
-      groupId: data['groupId'] as String? ?? '',
-      tripYear:
-          data['tripYear'] as int? ??
-          tripStartDate?.year ??
-          DateTime.now().year,
-      tripName: data['tripName'] as String?,
-      tripStartDate: tripStartDate,
-      tripEndDate: tripEndDate,
-      tripMemo: data['tripMemo'] as String?,
-      pins: pins,
-      tasks: tasks,
-    );
-  }
-
   static TripEntry toEntity(TripEntryDto dto) {
     final pinDtos = dto.pins ?? const <PinDto>[];
     final taskDtos = dto.tasks ?? const <TaskDto>[];

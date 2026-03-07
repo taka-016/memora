@@ -8,6 +8,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+echo "⚙️ Running build_runner..."
+dart run build_runner build --delete-conflicting-outputs
+
+if [ $? -ne 0 ]; then
+    echo "❌ Build runner failed"
+    exit 1
+fi
+
 echo "🔍 Running analyze..."
 flutter analyze
 

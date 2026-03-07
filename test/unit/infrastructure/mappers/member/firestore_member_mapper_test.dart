@@ -1,12 +1,50 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/mappers/member/firestore_member_mapper.dart';
 import 'package:memora/domain/entities/member/member.dart';
 
-@GenerateMocks([QueryDocumentSnapshot])
+import 'firestore_member_mapper_test.mocks.dart';
+
+@GenerateMocks([DocumentSnapshot])
 void main() {
   group('FirestoreMemberMapper', () {
+    test('FirestoreドキュメントからMemberDtoへ変換できる', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.id).thenReturn('member001');
+      when(doc.data()).thenReturn({
+        'accountId': 'account001',
+        'ownerId': 'owner001',
+        'displayName': '山田太郎',
+        'birthday': Timestamp.fromDate(DateTime(2001, 2, 3)),
+        'email': 'taro@example.com',
+      });
+
+      final result = FirestoreMemberMapper.fromFirestore(doc);
+
+      expect(result.id, 'member001');
+      expect(result.accountId, 'account001');
+      expect(result.ownerId, 'owner001');
+      expect(result.displayName, '山田太郎');
+      expect(result.birthday, DateTime(2001, 2, 3));
+      expect(result.email, 'taro@example.com');
+    });
+
+    test('Firestoreの欠損値をデフォルトで変換できる', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.id).thenReturn('member002');
+      when(doc.data()).thenReturn({});
+
+      final result = FirestoreMemberMapper.fromFirestore(doc);
+
+      expect(result.id, 'member002');
+      expect(result.displayName, '');
+      expect(result.birthday, isNull);
+      expect(result.accountId, isNull);
+      expect(result.ownerId, isNull);
+    });
+
     test('MemberからFirestoreのMapへ変換できる', () {
       final member = Member(
         id: 'member001',

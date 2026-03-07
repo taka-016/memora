@@ -1,7 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/domain/entities/trip/task.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 
 class FirestoreTaskMapper {
+  static TaskDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? {};
+    return TaskDto(
+      id: doc.id,
+      tripId: data['tripId'] as String? ?? '',
+      orderIndex: FirestoreMapperValueParser.asInt(data['orderIndex']),
+      parentTaskId: data['parentTaskId'] as String?,
+      name: data['name'] as String? ?? '',
+      isCompleted: data['isCompleted'] as bool? ?? false,
+      dueDate: FirestoreMapperValueParser.asDateTime(data['dueDate']),
+      memo: data['memo'] as String?,
+      assignedMemberId: data['assignedMemberId'] as String?,
+    );
+  }
+
   static Map<String, dynamic> toFirestore(Task task) {
     final data = <String, dynamic>{
       'tripId': task.tripId,

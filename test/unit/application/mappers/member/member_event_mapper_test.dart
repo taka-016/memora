@@ -1,55 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/mappers/member/member_event_mapper.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 
-import 'member_event_mapper_test.mocks.dart';
-
-@GenerateMocks([DocumentSnapshot])
 void main() {
   group('MemberEventMapper', () {
-    test('FirestoreのドキュメントからMemberEventDtoへ変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member-event-001');
-      when(mockDoc.data()).thenReturn({
-        'memberId': 'member-001',
-        'type': 'training',
-        'name': 'トレーニング',
-        'startDate': Timestamp.fromDate(DateTime(2024, 4, 1, 9)),
-        'endDate': Timestamp.fromDate(DateTime(2024, 4, 1, 11)),
-        'memo': '体育館で実施',
-      });
-
-      final dto = MemberEventMapper.fromFirestore(mockDoc);
-
-      expect(dto.id, 'member-event-001');
-      expect(dto.memberId, 'member-001');
-      expect(dto.type, 'training');
-      expect(dto.name, 'トレーニング');
-      expect(dto.startDate, DateTime(2024, 4, 1, 9));
-      expect(dto.endDate, DateTime(2024, 4, 1, 11));
-      expect(dto.memo, '体育館で実施');
-    });
-
-    test('Firestoreの値が不足している場合はデフォルト値で補完する', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member-event-002');
-      when(mockDoc.data()).thenReturn({'memberId': 'member-002'});
-
-      final dto = MemberEventMapper.fromFirestore(mockDoc);
-
-      expect(dto.id, 'member-event-002');
-      expect(dto.memberId, 'member-002');
-      expect(dto.type, '');
-      expect(dto.name, isNull);
-      expect(dto.startDate, DateTime.fromMillisecondsSinceEpoch(0));
-      expect(dto.endDate, DateTime.fromMillisecondsSinceEpoch(0));
-      expect(dto.memo, isNull);
-    });
-
     test('MemberEventDtoからエンティティへ変換できる', () {
       final dto = MemberEventDto(
         id: 'member-event-003',

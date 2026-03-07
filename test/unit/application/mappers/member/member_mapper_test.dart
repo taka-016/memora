@@ -1,96 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/domain/entities/member/member.dart';
 
-import 'member_mapper_test.mocks.dart';
-
-@GenerateMocks([DocumentSnapshot])
 void main() {
   group('MemberMapper', () {
-    test('FirestoreのDocumentSnapshotからMemberDtoへ変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member001');
-      when(mockDoc.data()).thenReturn({
-        'accountId': 'account001',
-        'ownerId': 'admin001',
-        'hiraganaFirstName': 'たろう',
-        'hiraganaLastName': 'やまだ',
-        'kanjiFirstName': '太郎',
-        'kanjiLastName': '山田',
-        'firstName': 'Taro',
-        'lastName': 'Yamada',
-        'displayName': 'たろちゃん',
-        'type': '一般',
-        'birthday': Timestamp.fromDate(DateTime(2000, 1, 1)),
-        'gender': 'male',
-        'email': 'taro@example.com',
-        'phoneNumber': '090-1234-5678',
-        'passportNumber': 'A1234567',
-        'passportExpiration': '2030-01-01',
-      });
-
-      final member = MemberMapper.fromFirestore(mockDoc);
-
-      expect(member.id, 'member001');
-      expect(member.accountId, 'account001');
-      expect(member.ownerId, 'admin001');
-      expect(member.hiraganaFirstName, 'たろう');
-      expect(member.hiraganaLastName, 'やまだ');
-      expect(member.kanjiFirstName, '太郎');
-      expect(member.kanjiLastName, '山田');
-      expect(member.firstName, 'Taro');
-      expect(member.lastName, 'Yamada');
-      expect(member.displayName, 'たろちゃん');
-      expect(member.type, '一般');
-      expect(member.birthday, DateTime(2000, 1, 1));
-      expect(member.gender, 'male');
-      expect(member.email, 'taro@example.com');
-      expect(member.phoneNumber, '090-1234-5678');
-      expect(member.passportNumber, 'A1234567');
-      expect(member.passportExpiration, '2030-01-01');
-    });
-
-    test('Firestoreのデータが一部nullの場合も正しく変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member002');
-      when(mockDoc.data()).thenReturn({
-        'displayName': 'ゲストユーザー',
-        'type': 'guest',
-        // 他のフィールドはnullまたは未設定
-      });
-
-      final member = MemberMapper.fromFirestore(mockDoc);
-
-      expect(member.id, 'member002');
-      expect(member.displayName, 'ゲストユーザー');
-      expect(member.type, 'guest');
-      expect(member.accountId, isNull);
-      expect(member.ownerId, isNull);
-      expect(member.birthday, isNull);
-      expect(member.email, isNull);
-    });
-
-    test('displayNameが未設定の場合はデフォルト値を設定する', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('member003');
-      when(mockDoc.data()).thenReturn({
-        'firstName': 'Test',
-        'lastName': 'User',
-        // displayNameは未設定
-      });
-
-      final member = MemberMapper.fromFirestore(mockDoc);
-
-      expect(member.id, 'member003');
-      expect(member.displayName, ''); // デフォルト値
-      expect(member.firstName, 'Test');
-      expect(member.lastName, 'User');
-    });
-
     test('MemberエンティティをMemberDtoに正しく変換する', () {
       // Arrange
       final member = Member(

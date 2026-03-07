@@ -1,55 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/mappers/group/group_event_mapper.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 
-import 'group_event_mapper_test.mocks.dart';
-
-@GenerateMocks([DocumentSnapshot])
 void main() {
   group('GroupEventMapper', () {
-    test('FirestoreのドキュメントからGroupEventDtoへ変換できる', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('event-001');
-      when(mockDoc.data()).thenReturn({
-        'groupId': 'group-001',
-        'type': 'trip',
-        'name': '春合宿',
-        'startDate': Timestamp.fromDate(DateTime(2024, 3, 1)),
-        'endDate': Timestamp.fromDate(DateTime(2024, 3, 3)),
-        'memo': '山梨で開催',
-      });
-
-      final dto = GroupEventMapper.fromFirestore(mockDoc);
-
-      expect(dto.id, 'event-001');
-      expect(dto.groupId, 'group-001');
-      expect(dto.type, 'trip');
-      expect(dto.name, '春合宿');
-      expect(dto.startDate, DateTime(2024, 3, 1));
-      expect(dto.endDate, DateTime(2024, 3, 3));
-      expect(dto.memo, '山梨で開催');
-    });
-
-    test('Firestoreの値が不足している場合はデフォルト値で補完する', () {
-      final mockDoc = MockDocumentSnapshot<Map<String, dynamic>>();
-      when(mockDoc.id).thenReturn('event-002');
-      when(mockDoc.data()).thenReturn({'groupId': 'group-002'});
-
-      final dto = GroupEventMapper.fromFirestore(mockDoc);
-
-      expect(dto.id, 'event-002');
-      expect(dto.groupId, 'group-002');
-      expect(dto.type, '');
-      expect(dto.name, isNull);
-      expect(dto.startDate, DateTime.fromMillisecondsSinceEpoch(0));
-      expect(dto.endDate, DateTime.fromMillisecondsSinceEpoch(0));
-      expect(dto.memo, isNull);
-    });
-
     test('GroupEventDtoからエンティティへ変換できる', () {
       final dto = GroupEventDto(
         id: 'event-003',

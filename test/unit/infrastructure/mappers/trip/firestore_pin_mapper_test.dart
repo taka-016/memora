@@ -1,12 +1,59 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 
-@GenerateMocks([QueryDocumentSnapshot])
+import 'firestore_pin_mapper_test.mocks.dart';
+
+@GenerateMocks([DocumentSnapshot])
 void main() {
   group('FirestorePinMapper', () {
+    test('FirestoreドキュメントからPinDtoへ変換できる', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.data()).thenReturn({
+        'pinId': 'pin001',
+        'tripId': 'trip001',
+        'groupId': 'group001',
+        'latitude': 35,
+        'longitude': 139.5,
+        'locationName': '東京駅',
+        'visitStartDate': Timestamp.fromDate(DateTime(2025, 5, 1, 10)),
+        'visitEndDate': Timestamp.fromDate(DateTime(2025, 5, 1, 11)),
+        'visitMemo': '集合',
+      });
+
+      final result = FirestorePinMapper.fromFirestore(doc);
+
+      expect(result.pinId, 'pin001');
+      expect(result.tripId, 'trip001');
+      expect(result.groupId, 'group001');
+      expect(result.latitude, 35.0);
+      expect(result.longitude, 139.5);
+      expect(result.locationName, '東京駅');
+      expect(result.visitStartDate, DateTime(2025, 5, 1, 10));
+      expect(result.visitEndDate, DateTime(2025, 5, 1, 11));
+      expect(result.visitMemo, '集合');
+    });
+
+    test('Firestoreの欠損値をデフォルトで変換できる', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.data()).thenReturn({});
+
+      final result = FirestorePinMapper.fromFirestore(doc);
+
+      expect(result.pinId, '');
+      expect(result.tripId, isNull);
+      expect(result.groupId, isNull);
+      expect(result.latitude, 0.0);
+      expect(result.longitude, 0.0);
+      expect(result.locationName, isNull);
+      expect(result.visitStartDate, isNull);
+      expect(result.visitEndDate, isNull);
+      expect(result.visitMemo, isNull);
+    });
+
     test('PinエンティティからFirestoreのMapへ変換できる', () {
       final pin = Pin(
         pinId: 'pin-entity-001',
