@@ -676,6 +676,10 @@
 - TaskViewのbuildParentCardを分割する
 - pin_detailsを廃止する
 - routesを廃止する（ER図、エンティティ、リポジトリなどを整理する）
+- `lib/application/mappers/**` が `cloud_firestore` に依存している（Firestoreの読み取り変換がapplication層に混在している）
+  - Firestore依存の`fromFirestore`をinfrastructure層Mapperへ移管し、application層Mapperは`DTO <-> Entity`変換に限定する
+- `lib/infrastructure/queries/**` が `application/mappers` の `fromFirestore` に依存している
+  - 参照先を`lib/infrastructure/mappers/**`へ切り替え、Firestoreの読み取り変換はinfrastructure層で完結させる
 
 ## 不具合修正
 

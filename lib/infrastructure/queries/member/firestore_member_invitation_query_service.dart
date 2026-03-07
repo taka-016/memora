@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
-import 'package:memora/application/mappers/member/member_invitation_mapper.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/member/firestore_member_invitation_mapper.dart';
 
 class FirestoreMemberInvitationQueryService
     implements MemberInvitationQueryService {
@@ -23,7 +23,9 @@ class FirestoreMemberInvitationQueryService
         return null;
       }
 
-      return MemberInvitationMapper.fromFirestore(querySnapshot.docs.first);
+      return FirestoreMemberInvitationMapper.fromFirestore(
+        querySnapshot.docs.first,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreMemberInvitationQueryService.getByInviteeId: ${e.toString()}',
@@ -48,7 +50,9 @@ class FirestoreMemberInvitationQueryService
         return null;
       }
 
-      return MemberInvitationMapper.fromFirestore(querySnapshot.docs.first);
+      return FirestoreMemberInvitationMapper.fromFirestore(
+        querySnapshot.docs.first,
+      );
     } catch (e, stack) {
       logger.e(
         'FirestoreMemberInvitationQueryService.getByInvitationCode: ${e.toString()}',

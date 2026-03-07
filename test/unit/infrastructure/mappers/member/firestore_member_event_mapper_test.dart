@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/mappers/member/firestore_member_event_mapper.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
 
-@GenerateMocks([QueryDocumentSnapshot])
 void main() {
   group('FirestoreMemberEventMapper', () {
     test('MemberEventからFirestoreのMapへ変換できる', () {

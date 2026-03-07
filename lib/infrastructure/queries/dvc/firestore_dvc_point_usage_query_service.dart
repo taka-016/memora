@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/application/mappers/dvc/dvc_point_usage_mapper.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/dvc/firestore_dvc_point_usage_mapper.dart';
 
 class FirestoreDvcPointUsageQueryService implements DvcPointUsageQueryService {
   FirestoreDvcPointUsageQueryService({FirebaseFirestore? firestore})
@@ -28,7 +28,9 @@ class FirestoreDvcPointUsageQueryService implements DvcPointUsageQueryService {
       }
 
       final snapshot = await query.get();
-      return snapshot.docs.map(DvcPointUsageMapper.fromFirestore).toList();
+      return snapshot.docs
+          .map(FirestoreDvcPointUsageMapper.fromFirestore)
+          .toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreDvcPointUsageQueryService.getDvcPointUsagesByGroupId: ${e.toString()}',

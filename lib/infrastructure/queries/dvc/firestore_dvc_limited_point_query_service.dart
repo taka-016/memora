@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
-import 'package:memora/application/mappers/dvc/dvc_limited_point_mapper.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/infrastructure/mappers/dvc/firestore_dvc_limited_point_mapper.dart';
 
 class FirestoreDvcLimitedPointQueryService
     implements DvcLimitedPointQueryService {
@@ -29,7 +29,9 @@ class FirestoreDvcLimitedPointQueryService
       }
 
       final snapshot = await query.get();
-      return snapshot.docs.map(DvcLimitedPointMapper.fromFirestore).toList();
+      return snapshot.docs
+          .map(FirestoreDvcLimitedPointMapper.fromFirestore)
+          .toList();
     } catch (e, stack) {
       logger.e(
         'FirestoreDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId: ${e.toString()}',

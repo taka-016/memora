@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/infrastructure/mappers/member/firestore_member_mapper.dart';
 import 'package:memora/domain/value_objects/order_by.dart';
 
 class FirestoreMemberQueryService implements MemberQueryService {
@@ -24,7 +24,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => MemberMapper.fromFirestore(doc))
+          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(
@@ -41,7 +41,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
     try {
       final doc = await _firestore.collection('members').doc(memberId).get();
       if (doc.exists) {
-        return MemberMapper.fromFirestore(doc);
+        return FirestoreMemberMapper.fromFirestore(doc);
       }
       return null;
     } catch (e, stack) {
@@ -63,7 +63,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        return MemberMapper.fromFirestore(querySnapshot.docs.first);
+        return FirestoreMemberMapper.fromFirestore(querySnapshot.docs.first);
       }
       return null;
     } catch (e, stack) {
@@ -94,7 +94,7 @@ class FirestoreMemberQueryService implements MemberQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => MemberMapper.fromFirestore(doc))
+          .map((doc) => FirestoreMemberMapper.fromFirestore(doc))
           .toList();
     } catch (e, stack) {
       logger.e(
