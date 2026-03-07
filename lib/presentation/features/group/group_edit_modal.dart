@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
@@ -11,7 +12,7 @@ enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
 class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
-  final void Function(GroupDto) onSave;
+  final Future<void> Function(GroupDto) onSave;
   final List<GroupMemberDto> availableMembers;
   final GroupMemberDto member;
 
@@ -573,11 +574,28 @@ class GroupEditModal extends HookConsumerWidget {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (formKey.currentState!.validate()) {
-                onSave(buildUpdatedGroup());
-                editStateNotifier.reset();
-                Navigator.of(context).pop();
+                try {
+                  await onSave(buildUpdatedGroup());
+                  if (!context.mounted) {
+                    return;
+                  }
+                  editStateNotifier.reset();
+                  Navigator.of(context).pop();
+                } catch (e, stack) {
+                  logger.e(
+                    'GroupEditModal.onSave: ${e.toString()}',
+                    error: e,
+                    stackTrace: stack,
+                  );
+                  if (!context.mounted) {
+                    return;
+                  }
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $e')));
+                }
               }
             },
             child: Text(isEditing ? '更新' : '作成'),

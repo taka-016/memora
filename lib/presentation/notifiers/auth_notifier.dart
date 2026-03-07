@@ -17,7 +17,7 @@ const memberSelectionRequiredMessage = 'member_selection_required';
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<dynamic>? _authStateSubscription;
+  StreamSubscription? _authStateSubscription;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -35,7 +35,34 @@ class AuthNotifier extends Notifier<AuthState> {
         await _handleUnauthenticatedUser();
         return;
       }
-      await _handleAuthenticatedUser(user);
+
+      if (!user.isVerified) {
+        await _handleUnverifiedUser();
+        return;
+      }
+
+      try {
+        await authService.validateCurrentUserToken();
+
+        final memberExists = await checkMemberExistsUseCase.execute(user.id);
+
+        if (memberExists) {
+          state = AuthState.authenticated(user);
+          return;
+        }
+
+        state = AuthState.unauthenticated(
+          memberSelectionRequiredMessage,
+          messageType: MessageType.info,
+        );
+      } catch (e, stack) {
+        logger.e(
+          'AuthNotifier.authStateChanges: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        await _signOutWithError('認証が無効です。再度ログインしてください。');
+      }
     });
 
     ref.onDispose(() {
@@ -44,14 +71,6 @@ class AuthNotifier extends Notifier<AuthState> {
     });
 
     return const AuthState.loading();
-  }
-
-  Future<void> _handleAuthenticatedUser(dynamic user) async {
-    if (!user.isVerified) {
-      await _handleUnverifiedUser();
-      return;
-    }
-    await _handleVerifiedUser(user);
   }
 
   Future<void> _handleUnverifiedUser() async {
@@ -71,35 +90,6 @@ class AuthNotifier extends Notifier<AuthState> {
       '認証メールを再送しました。メールを確認して認証を完了してください。',
       messageType: MessageType.info,
     );
-  }
-
-  Future<void> _handleVerifiedUser(dynamic user) async {
-    await _processUserMembership(user);
-  }
-
-  Future<void> _processUserMembership(dynamic user) async {
-    try {
-      await authService.validateCurrentUserToken();
-
-      final memberExists = await checkMemberExistsUseCase.execute(user.id);
-
-      if (memberExists) {
-        state = AuthState.authenticated(user);
-        return;
-      }
-
-      state = AuthState.unauthenticated(
-        memberSelectionRequiredMessage,
-        messageType: MessageType.info,
-      );
-    } catch (e, stack) {
-      logger.e(
-        'AuthNotifier._processUserMembership: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      await _signOutWithError('認証が無効です。再度ログインしてください。');
-    }
   }
 
   Future<void> createNewMember({
