@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
@@ -154,12 +155,14 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
+      const userDto = UserDto(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
 
       when(
-        mockCreateMemberFromUserUseCase.execute(
-          userId: user.id,
-          loginId: user.loginId,
-        ),
+        mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
@@ -170,15 +173,10 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      await notifier.createNewMember(userId: user.id, loginId: user.loginId);
+      await notifier.createNewMember(userDto);
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(
-        mockCreateMemberFromUserUseCase.execute(
-          userId: user.id,
-          loginId: user.loginId,
-        ),
-      ).called(1);
+      verify(mockCreateMemberFromUserUseCase.execute(userDto)).called(1);
     });
 
     test('acceptInvitationが成功した場合authenticated状態になる', () async {
@@ -231,7 +229,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(authNotifierProvider.notifier);
-      notifier.state = AuthState.authenticated(user);
+      notifier.state = AuthState.authenticated(
+        const UserDto(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        ),
+      );
 
       final result = await notifier.acceptInvitation(
         invitationCode,

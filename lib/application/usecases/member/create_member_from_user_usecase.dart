@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -14,16 +15,13 @@ class CreateMemberFromUserUseCase {
 
   CreateMemberFromUserUseCase(this._memberRepository);
 
-  Future<bool> execute({
-    required String userId,
-    required String loginId,
-  }) async {
+  Future<bool> execute(UserDto user) async {
     try {
       final newMember = Member(
         id: '',
-        displayName: loginId,
-        accountId: userId,
-        email: loginId,
+        displayName: user.loginId,
+        accountId: user.id,
+        email: user.loginId,
       );
 
       await _memberRepository.saveMember(newMember);

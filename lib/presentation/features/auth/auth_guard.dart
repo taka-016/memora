@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/invitation_code_input_dialog.dart';
@@ -58,10 +59,7 @@ class AuthGuard extends ConsumerWidget {
 
       switch (selectedOption) {
         case MemberCreationOption.createNew:
-          await authNotifier.createNewMember(
-            userId: currentUser.id,
-            loginId: currentUser.loginId,
-          );
+          await authNotifier.createNewMember(currentUser);
           return;
         case MemberCreationOption.useInvitationCode:
           if (!context.mounted) return;
@@ -83,7 +81,7 @@ class AuthGuard extends ConsumerWidget {
   Future<bool> _handleInvitationCodeInput(
     BuildContext context,
     WidgetRef ref,
-    currentUser,
+    UserDto currentUser,
   ) async {
     final authNotifier = ref.read(authNotifierProvider.notifier);
 

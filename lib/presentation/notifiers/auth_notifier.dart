@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/application/mappers/account/user_mapper.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
-
-const memberSelectionRequiredMessage = 'member_selection_required';
 
 typedef AuthViewState = AuthState;
 
@@ -47,7 +47,7 @@ class AuthNotifier extends Notifier<AuthState> {
         final memberExists = await checkMemberExistsUseCase.execute(user.id);
 
         if (memberExists) {
-          state = AuthState.authenticated(user);
+          state = AuthState.authenticated(UserMapper.toDto(user));
           return;
         }
 
@@ -92,15 +92,9 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  Future<void> createNewMember({
-    required String userId,
-    required String loginId,
-  }) async {
+  Future<void> createNewMember(UserDto user) async {
     try {
-      final success = await createMemberFromUserUseCase.execute(
-        userId: userId,
-        loginId: loginId,
-      );
+      final success = await createMemberFromUserUseCase.execute(user);
       if (success) {
         await _setAuthenticatedStateFromCurrentUser();
       } else {
@@ -163,7 +157,7 @@ class AuthNotifier extends Notifier<AuthState> {
         await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
         return false;
       }
-      state = AuthState.authenticated(currentUser);
+      state = AuthState.authenticated(UserMapper.toDto(currentUser));
       return true;
     } catch (e, stack) {
       logger.e(
@@ -238,12 +232,4 @@ class AuthNotifier extends Notifier<AuthState> {
   void clearError() {
     state = state.copyWith(message: '');
   }
-}
-
-extension AuthViewStateX on AuthViewState {
-  bool get isInfoMessage => messageType == MessageType.info;
-
-  bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
-
-  String? get authenticatedLoginId => user?.loginId;
 }

@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/get_current_member_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 enum CurrentMemberStatus { loading, loaded, error }
 

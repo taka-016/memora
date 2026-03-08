@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
@@ -40,7 +41,10 @@ void main() {
 
       final actual = await useCase.execute();
 
-      expect(actual, expectedUser);
+      expect(
+        actual,
+        UserDto(id: 'user-id', loginId: 'test@example.com', isVerified: true),
+      );
       verify(mockAuthService.getCurrentUser()).called(1);
     });
 
