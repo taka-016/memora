@@ -155,12 +155,14 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
+      const userDto = UserDto(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
 
       when(
-        mockCreateMemberFromUserUseCase.execute(
-          userId: user.id,
-          loginId: user.loginId,
-        ),
+        mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
@@ -171,15 +173,10 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      await notifier.createNewMember(userId: user.id, loginId: user.loginId);
+      await notifier.createNewMember(userDto);
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(
-        mockCreateMemberFromUserUseCase.execute(
-          userId: user.id,
-          loginId: user.loginId,
-        ),
-      ).called(1);
+      verify(mockCreateMemberFromUserUseCase.execute(userDto)).called(1);
     });
 
     test('acceptInvitationが成功した場合authenticated状態になる', () async {

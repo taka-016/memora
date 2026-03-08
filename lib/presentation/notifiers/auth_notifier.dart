@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/mappers/account/user_mapper.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -91,15 +92,9 @@ class AuthNotifier extends Notifier<AuthState> {
     );
   }
 
-  Future<void> createNewMember({
-    required String userId,
-    required String loginId,
-  }) async {
+  Future<void> createNewMember(UserDto user) async {
     try {
-      final success = await createMemberFromUserUseCase.execute(
-        userId: userId,
-        loginId: loginId,
-      );
+      final success = await createMemberFromUserUseCase.execute(user);
       if (success) {
         await _setAuthenticatedStateFromCurrentUser();
       } else {
