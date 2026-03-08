@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 
 enum AuthStatus { loading, authenticated, unauthenticated }
 
@@ -20,7 +20,7 @@ class AuthState extends Equatable {
         messageType: MessageType.info,
       );
 
-  const AuthState.authenticated(User user)
+  const AuthState.authenticated(UserDto user)
     : this._(
         status: AuthStatus.authenticated,
         user: user,
@@ -36,7 +36,7 @@ class AuthState extends Equatable {
       );
 
   final AuthStatus status;
-  final User? user;
+  final UserDto? user;
   final String message;
   final MessageType messageType;
 
@@ -46,7 +46,7 @@ class AuthState extends Equatable {
 
   AuthState copyWith({
     AuthStatus? status,
-    User? user,
+    UserDto? user,
     String? message,
     MessageType? messageType,
   }) {

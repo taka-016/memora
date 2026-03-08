@@ -1,6 +1,6 @@
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 /// テスト用のFakeAuthNotifier
 ///
@@ -24,7 +24,7 @@ class FakeAuthNotifier extends AuthNotifier {
   }) {
     return FakeAuthNotifier(
       AuthState.authenticated(
-        User(id: userId, loginId: loginId, isVerified: isVerified),
+        UserDto(id: userId, loginId: loginId, isVerified: isVerified),
       ),
     );
   }

@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/mappers/account/user_mapper.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
@@ -47,7 +48,7 @@ class AuthNotifier extends Notifier<AuthState> {
         final memberExists = await checkMemberExistsUseCase.execute(user.id);
 
         if (memberExists) {
-          state = AuthState.authenticated(user);
+          state = AuthState.authenticated(UserMapper.toDto(user));
           return;
         }
 
@@ -163,7 +164,7 @@ class AuthNotifier extends Notifier<AuthState> {
         await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
         return false;
       }
-      state = AuthState.authenticated(currentUser);
+      state = AuthState.authenticated(UserMapper.toDto(currentUser));
       return true;
     } catch (e, stack) {
       logger.e(

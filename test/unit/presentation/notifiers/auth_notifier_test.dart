@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
@@ -231,7 +232,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(authNotifierProvider.notifier);
-      notifier.state = AuthState.authenticated(user);
+      notifier.state = AuthState.authenticated(
+        const UserDto(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        ),
+      );
 
       final result = await notifier.acceptInvitation(
         invitationCode,
