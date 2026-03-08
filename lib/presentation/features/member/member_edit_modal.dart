@@ -351,9 +351,9 @@ class MemberEditModal extends HookConsumerWidget {
           if (!context.mounted) {
             return;
           }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存に失敗しました。もう一度お試しください。')),
+          );
         }
       }
     }
