@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 
+const memberSelectionRequiredMessage = 'member_selection_required';
+
 enum AuthStatus { loading, authenticated, unauthenticated }
 
 enum MessageType { info, error }
@@ -43,6 +45,12 @@ class AuthState extends Equatable {
   bool get isLoading => status == AuthStatus.loading;
 
   bool get isAuthenticated => status == AuthStatus.authenticated;
+
+  bool get isInfoMessage => messageType == MessageType.info;
+
+  bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
+
+  String? get authenticatedLoginId => user?.loginId;
 
   AuthState copyWith({
     AuthStatus? status,
