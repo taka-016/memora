@@ -55,13 +55,15 @@
 
 ## リファクタリング
 
-- `domain/value_objects` は `Location` のみを残す方針に整理する
-  - `location_candidate.dart` は場所検索結果モデルとして `application/dtos` もしくは `infrastructure` 配下へ移動する
-  - `location_state.dart` はプレゼンテーション層の状態として `presentation/notifiers` 配下へ移動する
-  - `order_by.dart` はクエリ条件として `application/queries` もしくは `infrastructure/queries` 配下へ移動する
-  - `route_segment_detail.dart` は経路取得・表示用モデルとして `application/dtos` もしくは専用モデル配下へ移動する
-- `domain/value_objects/location.dart` を真の値オブジェクトとして見直す
-  - 緯度は `-90..90`、経度は `-180..180` の検証を追加する
+- `lib/domain/value_objects` は `Location` のみを残す方針に整理する
+  - `location_candidate.dart` は場所検索結果モデルとして `lib/application/dtos` もしくは `lib/infrastructure` 配下へ移動する
+    - `lib/domain/services/location_search_service.dart` が戻り値型として参照しているため、ドメイン層がアプリケーション層・インフラ層の型へ依存しないよう、サービス契約もあわせて見直す
+  - `location_state.dart` はプレゼンテーション層の状態として `lib/presentation/notifiers` 配下へ移動する
+  - `order_by.dart` はクエリ条件として `lib/application/queries` もしくは `lib/infrastructure/queries` 配下へ移動する
+  - `route_segment_detail.dart` は経路取得・表示用モデルとして `lib/application/dtos` もしくは専用モデル配下へ移動する
+    - `lib/domain/services/route_info_service.dart` と `lib/infrastructure/services/google_routes_api_route_info_service.dart` での参照も含め、どの層のモデルとして扱うかを見直す
+- `lib/domain/value_objects/location.dart` を真の値オブジェクトとして見直す
+  - 緯度は `-90..90`、経度は `-180..180` の範囲かつ有限値であることの検証を追加する
   - `Pin` など緯度・経度を別々に持つ箇所で `Location` を利用するかを再検討し、位置表現を統一する
 - `lib/presentation/features/trip/route_info_view.dart:12` で `domain/value_objects/route_segment_detail.dart` を直接参照している
   - 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
