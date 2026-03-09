@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 void main() {
   group('Pin', () {
@@ -19,6 +20,7 @@ void main() {
       expect(pin.pinId, 'pin001');
       expect(pin.tripId, 'trip001');
       expect(pin.groupId, 'group001');
+      expect(pin.location, Location(latitude: 35.0, longitude: 139.0));
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
       expect(pin.locationName, '東京駅');
@@ -113,6 +115,19 @@ void main() {
       expect(updatedPin.visitStartDate, DateTime(2025, 6, 1));
       expect(updatedPin.visitEndDate, DateTime(2025, 6, 2));
       expect(updatedPin.visitMemo, '新しいメモ');
+    });
+
+    test('Locationを直接指定してインスタンス生成できる', () {
+      final pin = Pin(
+        pinId: 'pin001',
+        tripId: 'trip001',
+        groupId: 'group001',
+        location: Location(latitude: 35.0, longitude: 139.0),
+      );
+
+      expect(pin.location, Location(latitude: 35.0, longitude: 139.0));
+      expect(pin.latitude, 35.0);
+      expect(pin.longitude, 139.0);
     });
   });
 }

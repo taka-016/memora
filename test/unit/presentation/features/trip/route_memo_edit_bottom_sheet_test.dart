@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/presentation/features/trip/route_memo_edit_bottom_sheet.dart';
 
 void main() {
   Future<void> pumpSheet(
     WidgetTester tester, {
-    RouteSegmentDetail initialDetail = const RouteSegmentDetail.empty(),
-    required ValueChanged<RouteSegmentDetail> onChanged,
+    RouteSegmentDetailDto initialDetail = const RouteSegmentDetailDto.empty(),
+    required ValueChanged<RouteSegmentDetailDto> onChanged,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -24,7 +24,7 @@ void main() {
 
   group('RouteMemoEditBottomSheet', () {
     testWidgets('初期値が入力欄に反映されること', (tester) async {
-      const initial = RouteSegmentDetail(
+      final initial = RouteSegmentDetailDto(
         polyline: [],
         distanceMeters: 0,
         durationSeconds: 1200,
@@ -45,7 +45,7 @@ void main() {
     });
 
     testWidgets('フォーカスが外れたタイミングで入力値が正規化されて通知されること', (tester) async {
-      final changes = <RouteSegmentDetail>[];
+      final changes = <RouteSegmentDetailDto>[];
 
       await pumpSheet(tester, onChanged: changes.add);
 
@@ -78,7 +78,7 @@ void main() {
     });
 
     testWidgets('フォーカスを外さずにウィジェットが破棄されても最新値が通知されること', (tester) async {
-      final changes = <RouteSegmentDetail>[];
+      final changes = <RouteSegmentDetailDto>[];
 
       await pumpSheet(tester, onChanged: changes.add);
 

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/location_state.dart';
+import 'package:memora/presentation/notifiers/location_state.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
 import 'package:memora/core/app_logger.dart';

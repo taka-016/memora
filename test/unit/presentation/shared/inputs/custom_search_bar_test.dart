@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/domain/services/location_search_service.dart';
-import 'package:memora/domain/value_objects/location_candidate.dart';
+import 'package:memora/application/services/location_search_service.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
 
 class MockLocationSearchService implements LocationSearchService {
-  List<LocationCandidate> candidates;
+  List<LocationCandidateDto> candidates;
   MockLocationSearchService(this.candidates);
   @override
-  Future<List<LocationCandidate>> searchByKeyword(String keyword) async {
+  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
     return candidates;
   }
 }
 
 // 共通で使う候補リスト
-const mockCandidatesDefault = [
-  LocationCandidate(
+final mockCandidatesDefault = [
+  LocationCandidateDto(
     name: '東京タワー',
     address: '東京都港区芝公園4-2-8',
     location: Location(latitude: 35.6586, longitude: 139.7454),
   ),
-  LocationCandidate(
+  LocationCandidateDto(
     name: 'スカイツリー',
     address: '東京都墨田区押上1-1-2',
     location: Location(latitude: 35.7101, longitude: 139.8107),
@@ -44,7 +44,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final mockCandidates = mockCandidatesDefault;
-      LocationCandidate? tappedCandidate;
+      LocationCandidateDto? tappedCandidate;
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(

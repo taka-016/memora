@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location_candidate.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
-import 'package:memora/domain/services/location_search_service.dart';
+import 'package:memora/application/services/location_search_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -34,7 +34,7 @@ void main() {
       );
 
       final results = await service.searchByKeyword('東京タワー');
-      expect(results, isA<List<LocationCandidate>>());
+      expect(results, isA<List<LocationCandidateDto>>());
       expect(results.length, 1);
       expect(results[0].name, '東京タワー');
       expect(results[0].address, '東京都港区芝公園４丁目２−８');

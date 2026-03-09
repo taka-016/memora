@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/infrastructure/mappers/member/firestore_member_mapper.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 
 class FirestoreMemberQueryService implements MemberQueryService {
   final FirebaseFirestore _firestore;

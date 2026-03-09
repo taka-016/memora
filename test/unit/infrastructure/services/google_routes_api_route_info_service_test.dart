@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
 void main() {
-  const origin = Location(latitude: 35.0, longitude: 135.0);
-  const destination = Location(latitude: 35.1, longitude: 135.2);
+  final origin = Location(latitude: 35.0, longitude: 135.0);
+  final destination = Location(latitude: 35.1, longitude: 135.2);
 
   GoogleRoutesApiRouteInfoService buildService(MockClient client) {
     return GoogleRoutesApiRouteInfoService(apiKey: 'dummy', httpClient: client);
@@ -54,7 +54,7 @@ void main() {
       );
     });
 
-    test('routesが空ならRouteSegmentDetail.emptyを返しDrive用のBodyを送信する', () async {
+    test('routesが空ならRouteSegmentDetailDto.emptyを返しDrive用のBodyを送信する', () async {
       late http.Request capturedRequest;
       final client = MockClient((request) async {
         capturedRequest = request;
@@ -72,7 +72,7 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      expect(result, const RouteSegmentDetail.empty());
+      expect(result, const RouteSegmentDetailDto.empty());
 
       final decodedBody =
           jsonDecode(capturedRequest.body) as Map<String, dynamic>;

@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 
 class RouteMemoEditBottomSheet extends HookWidget {
   const RouteMemoEditBottomSheet({
     super.key,
-    this.initialDetail = const RouteSegmentDetail.empty(),
+    this.initialDetail = const RouteSegmentDetailDto.empty(),
     required this.onChanged,
   });
 
-  final RouteSegmentDetail initialDetail;
-  final ValueChanged<RouteSegmentDetail> onChanged;
+  final RouteSegmentDetailDto initialDetail;
+  final ValueChanged<RouteSegmentDetailDto> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class RouteMemoEditBottomSheet extends HookWidget {
     );
     final durationFocusNode = useFocusNode();
     final instructionsFocusNode = useFocusNode();
-    final currentDetail = useRef<RouteSegmentDetail>(initialDetail);
+    final currentDetail = useRef<RouteSegmentDetailDto>(initialDetail);
 
     final notifyChange = useCallback(() {
       final parsedDuration = int.tryParse(durationController.text);
@@ -137,7 +137,7 @@ class RouteMemoEditBottomSheet extends HookWidget {
   }
 }
 
-String _initialDurationText(RouteSegmentDetail detail) {
+String _initialDurationText(RouteSegmentDetailDto detail) {
   if (detail.durationSeconds <= 0) {
     return '';
   }

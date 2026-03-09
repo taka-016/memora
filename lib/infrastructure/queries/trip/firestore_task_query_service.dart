@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 
 class FirestoreTaskQueryService implements TaskQueryService {

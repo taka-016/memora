@@ -4,22 +4,22 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/constants/color_constants.dart';
-import 'package:memora/domain/services/route_info_service.dart';
+import 'package:memora/application/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class FakeRouteInfoService implements RouteInfoService {
   final List<_RouteRequest> _requests = [];
-  final Map<String, RouteSegmentDetail> responses;
+  final Map<String, RouteSegmentDetailDto> responses;
 
   FakeRouteInfoService({required this.responses});
 
   int get callCount => _requests.length;
 
   @override
-  Future<RouteSegmentDetail> fetchRoute({
+  Future<RouteSegmentDetailDto> fetchRoute({
     required Location origin,
     required Location destination,
     required TravelMode travelMode,
@@ -33,7 +33,7 @@ class FakeRouteInfoService implements RouteInfoService {
     );
 
     if (travelMode == TravelMode.other) {
-      return RouteSegmentDetail(
+      return RouteSegmentDetailDto(
         polyline: [
           Location(latitude: origin.latitude, longitude: origin.longitude),
           Location(
@@ -48,7 +48,7 @@ class FakeRouteInfoService implements RouteInfoService {
     }
     final key =
         '${origin.latitude},${origin.longitude}->${destination.latitude},${destination.longitude}-$travelMode';
-    return responses[key] ?? const RouteSegmentDetail.empty();
+    return responses[key] ?? const RouteSegmentDetailDto.empty();
   }
 }
 
@@ -188,8 +188,8 @@ void main() {
     testWidgets('経路検索ボタンをタップすると各区間の経路取得が呼び出されること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.05, longitude: 135.05),
               Location(latitude: 35.1, longitude: 135.1),
@@ -198,8 +198,8 @@ void main() {
             durationSeconds: 0,
             instructions: const [],
           ),
-          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.1, longitude: 135.1),
               Location(latitude: 35.15, longitude: 135.15),
               Location(latitude: 35.2, longitude: 135.2),
@@ -260,14 +260,8 @@ void main() {
       final detail = handle.segmentDetails[segmentKey];
       expect(detail, isNotNull);
       expect(detail!.polyline.length, 2);
-      expect(
-        detail.polyline.first,
-        const Location(latitude: 35.0, longitude: 135.0),
-      );
-      expect(
-        detail.polyline.last,
-        const Location(latitude: 35.1, longitude: 135.1),
-      );
+      expect(detail.polyline.first, Location(latitude: 35.0, longitude: 135.0));
+      expect(detail.polyline.last, Location(latitude: 35.1, longitude: 135.1));
       expect(detail.instructions, ['自転車で移動', '徒歩で移動']);
       expect(detail.durationSeconds, 900);
     });
@@ -322,8 +316,8 @@ void main() {
     testWidgets('経路検索後にルートメモとして距離と時間および経路案内を表示できること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.05, longitude: 135.05),
               Location(latitude: 35.1, longitude: 135.1),
@@ -332,8 +326,8 @@ void main() {
             durationSeconds: 900,
             instructions: const ['直進します', '左折します', '到着です'],
           ),
-          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.1, longitude: 135.1),
               Location(latitude: 35.15, longitude: 135.15),
               Location(latitude: 35.2, longitude: 135.2),
@@ -389,8 +383,8 @@ void main() {
     testWidgets('中間のピンを選択した場合は前後の経路ハイライト色が異なること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.05, longitude: 135.05),
               Location(latitude: 35.1, longitude: 135.1),
@@ -399,8 +393,8 @@ void main() {
             durationSeconds: 900,
             instructions: const [],
           ),
-          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.1, longitude: 135.1),
               Location(latitude: 35.15, longitude: 135.15),
               Location(latitude: 35.2, longitude: 135.2),
@@ -444,12 +438,12 @@ void main() {
         ),
       );
 
-      final responses = <String, RouteSegmentDetail>{};
+      final responses = <String, RouteSegmentDetailDto>{};
       for (var i = 0; i < extendedPins.length - 1; i++) {
         final origin = extendedPins[i];
         final destination = extendedPins[i + 1];
         responses['${origin.latitude},${origin.longitude}->${destination.latitude},${destination.longitude}-${TravelMode.drive}'] =
-            RouteSegmentDetail(
+            RouteSegmentDetailDto(
               polyline: [
                 Location(
                   latitude: origin.latitude,
@@ -488,8 +482,8 @@ void main() {
     testWidgets('経路詳細は移動手段プルダウンの下に表示されること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.1, longitude: 135.1),
             ],
@@ -525,8 +519,8 @@ void main() {
     testWidgets('経路詳細を展開すると経路案内が表示されること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
-            polyline: const [
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
+            polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.05, longitude: 135.05),
               Location(latitude: 35.1, longitude: 135.1),
@@ -597,7 +591,7 @@ void main() {
     testWidgets('マップ非表示時の経路検索ではカメラ調整を保留すること', (tester) async {
       final fakeService = FakeRouteInfoService(
         responses: {
-          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetail(
+          '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
               Location(latitude: 35.0, longitude: 135.0),
               Location(latitude: 35.1, longitude: 135.1),

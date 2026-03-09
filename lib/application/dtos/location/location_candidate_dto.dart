@@ -1,9 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
-import 'location.dart';
-
-class LocationCandidate extends Equatable {
-  const LocationCandidate({
+class LocationCandidateDto extends Equatable {
+  const LocationCandidateDto({
     required this.name,
     required this.address,
     required this.location,

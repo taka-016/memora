@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/services/route_info_service.dart';
+import 'package:memora/application/services/route_info_service.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/config/route_info_api_type.dart';
 import 'package:memora/infrastructure/config/route_info_api_type_provider.dart';

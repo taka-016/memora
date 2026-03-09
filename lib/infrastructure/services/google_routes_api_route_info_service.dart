@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:memora/domain/services/route_info_service.dart';
+import 'package:memora/application/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 
 class GoogleRoutesApiRouteInfoService implements RouteInfoService {
@@ -16,13 +16,13 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
   final http.Client _httpClient;
 
   @override
-  Future<RouteSegmentDetail> fetchRoute({
+  Future<RouteSegmentDetailDto> fetchRoute({
     required Location origin,
     required Location destination,
     required TravelMode travelMode,
   }) async {
     if (travelMode == TravelMode.other) {
-      return RouteSegmentDetail(
+      return RouteSegmentDetailDto(
         polyline: [
           Location(latitude: origin.latitude, longitude: origin.longitude),
           Location(
@@ -88,12 +88,12 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     final decoded = jsonDecode(response.body) as Map<String, dynamic>;
     final routes = decoded['routes'];
     if (routes is! List || routes.isEmpty) {
-      return const RouteSegmentDetail.empty();
+      return const RouteSegmentDetailDto.empty();
     }
 
     final route = routes.first;
     if (route is! Map<String, dynamic>) {
-      return const RouteSegmentDetail.empty();
+      return const RouteSegmentDetailDto.empty();
     }
 
     String? encodedPolyline;
@@ -155,7 +155,7 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     }
 
     if (encodedPolyline == null || encodedPolyline.isEmpty) {
-      return RouteSegmentDetail(
+      return RouteSegmentDetailDto(
         polyline: const <Location>[],
         distanceMeters: distanceMeters,
         durationSeconds: durationSeconds,
@@ -164,7 +164,7 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     }
 
     final coordinates = _decodePolyline(encodedPolyline);
-    return RouteSegmentDetail(
+    return RouteSegmentDetailDto(
       polyline: coordinates,
       distanceMeters: distanceMeters,
       durationSeconds: durationSeconds,

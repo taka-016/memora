@@ -1,5 +1,5 @@
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 
 abstract class GroupQueryService {
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(

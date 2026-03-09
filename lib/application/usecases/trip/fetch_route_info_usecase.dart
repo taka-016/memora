@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/domain/services/route_info_service.dart';
+import 'package:memora/application/services/route_info_service.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/infrastructure/factories/route_info_service_factory.dart';
 
 final fetchRouteInfoUsecaseProvider = Provider<FetchRouteInfoUsecase>((ref) {
@@ -15,16 +15,16 @@ class FetchRouteInfoUsecase {
 
   FetchRouteInfoUsecase(this._routeInfoService);
 
-  Future<Map<String, RouteSegmentDetail>> execute({
+  Future<Map<String, RouteSegmentDetailDto>> execute({
     required List<PinDto> pins,
     required Map<String, TravelMode> segmentModes,
-    required Map<String, RouteSegmentDetail> existingDetails,
+    required Map<String, RouteSegmentDetailDto> existingDetails,
   }) async {
     if (pins.length < 2) {
       return {};
     }
 
-    final results = <String, RouteSegmentDetail>{};
+    final results = <String, RouteSegmentDetailDto>{};
     for (var i = 0; i < pins.length - 1; i++) {
       final origin = pins[i];
       final destination = pins[i + 1];
@@ -55,11 +55,11 @@ class FetchRouteInfoUsecase {
     return results;
   }
 
-  RouteSegmentDetail _mergeManualDetailIfNeeded({
+  RouteSegmentDetailDto _mergeManualDetailIfNeeded({
     required String key,
     required TravelMode mode,
-    required RouteSegmentDetail fetchedDetail,
-    required Map<String, RouteSegmentDetail> existingDetails,
+    required RouteSegmentDetailDto fetchedDetail,
+    required Map<String, RouteSegmentDetailDto> existingDetails,
   }) {
     if (mode != TravelMode.other) {
       return fetchedDetail;
@@ -81,6 +81,6 @@ String _segmentKey(PinDto origin, PinDto destination) {
   return '${origin.pinId}->${destination.pinId}';
 }
 
-bool _hasManualContent(RouteSegmentDetail detail) {
+bool _hasManualContent(RouteSegmentDetailDto detail) {
   return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
 }

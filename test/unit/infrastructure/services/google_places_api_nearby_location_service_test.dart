@@ -41,7 +41,7 @@ void main() {
         ),
       );
 
-      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, '東京タワー');
@@ -56,7 +56,7 @@ void main() {
         ),
       ).thenAnswer((_) async => http.Response('Error', 500));
 
-      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, isNull);
@@ -77,7 +77,7 @@ void main() {
         ),
       );
 
-      const location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, isNull);
