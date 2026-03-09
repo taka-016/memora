@@ -17,7 +17,8 @@ final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<void>? _authStateSubscription;
+  StreamSubscription<UserDto?>? _authStateSubscription;
+  int _authStateChangeGeneration = 0;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -30,12 +31,16 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _authStateSubscription?.cancel();
+    _authStateChangeGeneration++;
     _authStateSubscription = authService.authStateChanges
         .map((user) => user == null ? null : UserMapper.toDto(user))
-        .asyncMap(_handleAuthStateChange)
-        .listen((_) {});
+        .listen((user) {
+          final generation = ++_authStateChangeGeneration;
+          unawaited(_handleAuthStateChange(user, generation));
+        });
 
     ref.onDispose(() {
+      _authStateChangeGeneration++;
       _authStateSubscription?.cancel();
       _authStateSubscription = null;
     });
@@ -43,40 +48,65 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState.loading();
   }
 
-  Future<void> _handleUnverifiedUser() async {
+  Future<void> _handleUnverifiedUser(int generation) async {
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
     try {
       await authService.sendEmailVerification();
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
     } catch (e, stack) {
       logger.e(
         'AuthNotifier._handleUnverifiedUser: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
       await _signOutWithError('認証メールの送信に失敗しました。再度ログインしてください。');
       return;
     }
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
     await _signOut();
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
     state = const AuthState.unauthenticated(
       '認証メールを再送しました。メールを確認して認証を完了してください。',
       messageType: MessageType.info,
     );
   }
 
-  Future<void> _handleAuthStateChange(UserDto? user) async {
+  Future<void> _handleAuthStateChange(UserDto? user, int generation) async {
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
+
     if (user == null) {
       await _handleUnauthenticatedUser();
       return;
     }
 
     if (!user.isVerified) {
-      await _handleUnverifiedUser();
+      await _handleUnverifiedUser(generation);
       return;
     }
 
     try {
       await authService.validateCurrentUserToken();
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
 
       final memberExists = await checkMemberExistsUseCase.execute(user.id);
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
 
       if (memberExists) {
         state = AuthState.authenticated(user);
@@ -93,8 +123,15 @@ class AuthNotifier extends Notifier<AuthState> {
         error: e,
         stackTrace: stack,
       );
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
       await _signOutWithError('認証が無効です。再度ログインしてください。');
     }
+  }
+
+  bool _isLatestAuthStateChange(int generation) {
+    return generation == _authStateChangeGeneration;
   }
 
   Future<void> createNewMember(UserDto user) async {

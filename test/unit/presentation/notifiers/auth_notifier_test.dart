@@ -117,7 +117,7 @@ void main() {
       expect(notifier.state.message, memberSelectionRequiredMessage);
     });
 
-    test('認証イベントが連続した場合でも新しいイベントの状態が最終的に優先される', () async {
+    test('認証イベントが連続した場合でも新しいイベントが即時に優先される', () async {
       const user = User(
         id: 'user123',
         loginId: 'test@example.com',
@@ -142,6 +142,11 @@ void main() {
         ..add(user)
         ..add(null);
       await Future(() {});
+      await Future(() {});
+
+      // nullイベントは先行イベントの完了を待たずに反映される
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
 
       validateCompleter.complete();
       await Future(() {});
