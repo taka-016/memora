@@ -55,6 +55,14 @@
 
 ## リファクタリング
 
+- `domain/value_objects` は `Location` のみを残す方針に整理する
+  - `location_candidate.dart` は場所検索結果モデルとして `application/dtos` もしくは `infrastructure` 配下へ移動する
+  - `location_state.dart` はプレゼンテーション層の状態として `presentation/notifiers` 配下へ移動する
+  - `order_by.dart` はクエリ条件として `application/queries` もしくは `infrastructure/queries` 配下へ移動する
+  - `route_segment_detail.dart` は経路取得・表示用モデルとして `application/dtos` もしくは専用モデル配下へ移動する
+- `domain/value_objects/location.dart` を真の値オブジェクトとして見直す
+  - 緯度は `-90..90`、経度は `-180..180` の検証を追加する
+  - `Pin` など緯度・経度を別々に持つ箇所で `Location` を利用するかを再検討し、位置表現を統一する
 - `lib/presentation/features/trip/route_info_view.dart:12` で `domain/value_objects/route_segment_detail.dart` を直接参照している
   - 区間情報はユースケース戻り値（表示用モデル）で受け取り、値オブジェクト生成はユースケースで行う
 - `lib/presentation/features/trip/route_memo_edit_bottom_sheet.dart:4` で `domain/value_objects/route_segment_detail.dart` を直接参照している
