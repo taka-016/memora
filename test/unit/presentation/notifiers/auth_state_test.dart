@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 void main() {
   group('AuthState', () {
@@ -12,7 +12,7 @@ void main() {
     });
 
     test('認証済み状態を正常に作成できる', () {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         displayName: 'テストユーザー',
@@ -46,7 +46,7 @@ void main() {
     });
 
     test('isAuthenticated ゲッターが正しく動作する', () {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         displayName: 'テストユーザー',
@@ -63,7 +63,7 @@ void main() {
     });
 
     test('isLoading ゲッターが正しく動作する', () {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         displayName: 'テストユーザー',
@@ -79,8 +79,46 @@ void main() {
       expect(unauthenticatedState.isLoading, false);
     });
 
+    test('isInfoMessage ゲッターが正しく動作する', () {
+      const infoState = AuthState.unauthenticated(
+        'お知らせ',
+        messageType: MessageType.info,
+      );
+      const errorState = AuthState.unauthenticated(
+        'エラー',
+        messageType: MessageType.error,
+      );
+
+      expect(infoState.isInfoMessage, true);
+      expect(errorState.isInfoMessage, false);
+    });
+
+    test('requiresMemberSelection ゲッターが正しく動作する', () {
+      const requiredState = AuthState.unauthenticated(
+        memberSelectionRequiredMessage,
+      );
+      const normalState = AuthState.unauthenticated('通常メッセージ');
+
+      expect(requiredState.requiresMemberSelection, true);
+      expect(normalState.requiresMemberSelection, false);
+    });
+
+    test('authenticatedLoginId ゲッターが正しく動作する', () {
+      const user = UserDto(
+        id: 'user123',
+        loginId: 'test@example.com',
+        displayName: 'テストユーザー',
+        isVerified: true,
+      );
+      const authenticatedState = AuthState.authenticated(user);
+      const unauthenticatedState = AuthState.unauthenticated('');
+
+      expect(authenticatedState.authenticatedLoginId, 'test@example.com');
+      expect(unauthenticatedState.authenticatedLoginId, isNull);
+    });
+
     test('等価性の比較ができる', () {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         displayName: 'テストユーザー',

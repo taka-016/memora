@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/member/member_mapper.dart';
-import 'package:memora/domain/entities/member/member.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
-  final Function(Member) onSave;
-  final Function(MemberDto)? onInvite;
+  final Future<void> Function(MemberDto) onSave;
+  final Future<void> Function(MemberDto)? onInvite;
 
   const MemberEditModal({
     super.key,
@@ -50,6 +49,7 @@ class MemberEditModal extends HookConsumerWidget {
     );
     final gender = useState<String?>(member?.gender);
     final birthday = useState<DateTime?>(member?.birthday);
+    final isInviting = useState(false);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
 
@@ -328,19 +328,54 @@ class MemberEditModal extends HookConsumerWidget {
       );
     }
 
-    void handleInvite() {
-      if (member != null && onInvite != null) {
-        onInvite!(member!);
+    Future<void> handleInvite() async {
+      if (member == null || onInvite == null || isInviting.value) {
+        return;
+      }
+      isInviting.value = true;
+      try {
+        await onInvite!(member!);
+      } catch (e, stack) {
+        logger.e(
+          'MemberEditModal.onInvite: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('招待に失敗しました。もう一度お試しください。')));
+      } finally {
+        if (context.mounted) {
+          isInviting.value = false;
+        }
       }
     }
 
-    void handleSave() {
+    Future<void> handleSave() async {
       if (formKey.currentState!.validate()) {
-        final savedMember = MemberMapper.toEntity(buildUpdatedMember());
-
-        onSave(savedMember);
-        editStateNotifier.reset();
-        Navigator.of(context).pop();
+        try {
+          await onSave(buildUpdatedMember());
+          if (!context.mounted) {
+            return;
+          }
+          editStateNotifier.reset();
+          Navigator.of(context).pop();
+        } catch (e, stack) {
+          logger.e(
+            'MemberEditModal.onSave: ${e.toString()}',
+            error: e,
+            stackTrace: stack,
+          );
+          if (!context.mounted) {
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('保存に失敗しました。もう一度お試しください。')),
+          );
+        }
       }
     }
 
@@ -352,7 +387,7 @@ class MemberEditModal extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: handleInvite,
+                  onPressed: isInviting.value ? null : handleInvite,
                   icon: const Icon(Icons.person_add),
                   label: const Text('招待'),
                   style: ElevatedButton.styleFrom(

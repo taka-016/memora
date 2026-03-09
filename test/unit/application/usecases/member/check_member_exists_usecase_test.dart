@@ -4,7 +4,6 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
-import 'package:memora/domain/entities/account/user.dart';
 
 import '../../../../helpers/test_exception.dart';
 import 'check_member_exists_usecase_test.mocks.dart';
@@ -22,64 +21,46 @@ void main() {
   group('CheckMemberExistsUseCase', () {
     test('ログインユーザーIDでメンバーが存在する場合trueを返す', () async {
       // Arrange
-      const user = User(
-        id: 'test-user-id',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
+      const accountId = 'test-user-id';
       const testMember = MemberDto(id: 'member-id', displayName: 'Test User');
       when(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId(accountId),
       ).thenAnswer((_) async => testMember);
 
       // Act
-      final result = await useCase.execute(user);
+      final result = await useCase.execute(accountId);
 
       // Assert
       expect(result, isTrue);
-      verify(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
-      ).called(1);
+      verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
 
     test('ログインユーザーIDでメンバーが存在しない場合falseを返す', () async {
       // Arrange
-      const user = User(
-        id: 'test-user-id',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
+      const accountId = 'test-user-id';
       when(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId(accountId),
       ).thenAnswer((_) async => null);
 
       // Act
-      final result = await useCase.execute(user);
+      final result = await useCase.execute(accountId);
 
       // Assert
       expect(result, isFalse);
-      verify(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
-      ).called(1);
+      verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
 
     test('getMemberByAccountIdで例外が発生した場合は例外をそのまま投げる', () async {
       // Arrange
-      const user = User(
-        id: 'test-user-id',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
+      const accountId = 'test-user-id';
 
       when(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
+        mockMemberQueryService.getMemberByAccountId(accountId),
       ).thenThrow(TestException('Database error'));
 
       // Assert
-      expect(() => useCase.execute(user), throwsException);
-      verify(
-        mockMemberQueryService.getMemberByAccountId('test-user-id'),
-      ).called(1);
+      expect(() => useCase.execute(accountId), throwsException);
+      verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
   });
 }

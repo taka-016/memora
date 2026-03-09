@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
@@ -75,7 +76,7 @@ void main() {
 
       when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
       when(
-        mockCheckMemberExistsUseCase.execute(user),
+        mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => true);
 
       final controller = StreamController<User?>();
@@ -88,7 +89,7 @@ void main() {
       await Future(() {});
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(mockCheckMemberExistsUseCase.execute(user)).called(1);
+      verify(mockCheckMemberExistsUseCase.execute(user.id)).called(1);
     });
 
     test('新規ユーザーのログイン時にmember_selection_required状態になる', () async {
@@ -100,7 +101,7 @@ void main() {
 
       when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
       when(
-        mockCheckMemberExistsUseCase.execute(user),
+        mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => false);
 
       final controller = StreamController<User?>();
@@ -116,6 +117,157 @@ void main() {
       expect(notifier.state.message, memberSelectionRequiredMessage);
     });
 
+    test('認証イベントが連続した場合でも新しいイベントが即時に優先される', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final validateCompleter = Completer<void>();
+
+      when(
+        mockAuthService.validateCurrentUserToken(),
+      ).thenAnswer((_) => validateCompleter.future);
+      when(
+        mockCheckMemberExistsUseCase.execute(user.id),
+      ).thenAnswer((_) async => true);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller
+        ..add(user)
+        ..add(null);
+      await Future(() {});
+      await Future(() {});
+
+      // nullイベントは先行イベントの完了を待たずに反映される
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+
+      validateCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+    });
+
+    test('サインアウト中にnullイベントが来ても認証エラーメッセージを保持する', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(
+        mockAuthService.validateCurrentUserToken(),
+      ).thenThrow(TestException('token invalid'));
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証が無効です。再度ログインしてください。');
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証が無効です。再度ログインしてください。');
+    });
+
+    test('サインアウト中にnullイベントが来ても未認証ユーザーエラーメッセージを保持する', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: false,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(
+        mockAuthService.sendEmailVerification(),
+      ).thenThrow(TestException('send mail failed'));
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
+    });
+
+    test('サインアウト中にnullイベントが来ても認証メール再送メッセージを保持する', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: false,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+      expect(notifier.state.messageType, MessageType.info);
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+      expect(notifier.state.messageType, MessageType.info);
+    });
+
     test(
       'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
       () async {
@@ -129,7 +281,7 @@ void main() {
           mockAuthService.validateCurrentUserToken(),
         ).thenAnswer((_) async {});
         when(
-          mockCheckMemberExistsUseCase.execute(user),
+          mockCheckMemberExistsUseCase.execute(user.id),
         ).thenThrow(TestException('Firestore error'));
         when(mockAuthService.signOut()).thenAnswer((_) async {});
 
@@ -154,10 +306,16 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
+      const userDto = UserDto(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
 
       when(
-        mockCreateMemberFromUserUseCase.execute(user),
+        mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
       final controller = StreamController<User?>();
       addTearDown(controller.close);
@@ -166,10 +324,10 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      await notifier.createNewMember(user);
+      await notifier.createNewMember(userDto);
 
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(mockCreateMemberFromUserUseCase.execute(user)).called(1);
+      verify(mockCreateMemberFromUserUseCase.execute(userDto)).called(1);
     });
 
     test('acceptInvitationが成功した場合authenticated状態になる', () async {
@@ -183,6 +341,7 @@ void main() {
       when(
         mockAcceptInvitationUseCase.execute(invitationCode, user.id),
       ).thenAnswer((_) async => true);
+      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
 
       final controller = StreamController<User?>();
       addTearDown(controller.close);
@@ -191,7 +350,10 @@ void main() {
 
       final notifier = container.read(authNotifierProvider.notifier);
 
-      final result = await notifier.acceptInvitation(invitationCode, user);
+      final result = await notifier.acceptInvitation(
+        invitationCode,
+        userId: user.id,
+      );
 
       expect(result, true);
       expect(notifier.state.status, AuthStatus.authenticated);
@@ -218,9 +380,18 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(authNotifierProvider.notifier);
-      notifier.state = AuthState.authenticated(user);
+      notifier.state = AuthState.authenticated(
+        const UserDto(
+          id: 'user123',
+          loginId: 'test@example.com',
+          isVerified: true,
+        ),
+      );
 
-      final result = await notifier.acceptInvitation(invitationCode, user);
+      final result = await notifier.acceptInvitation(
+        invitationCode,
+        userId: user.id,
+      );
 
       expect(result, false);
       expect(notifier.state.status, AuthStatus.authenticated);

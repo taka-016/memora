@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
@@ -21,7 +22,7 @@ import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -1037,7 +1038,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      const testUser = User(
+      const testUser = UserDto(
         id: 'test_user_id',
         loginId: 'test@example.com',
         isVerified: true,

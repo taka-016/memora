@@ -1,24 +1,24 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/application/mappers/account/user_mapper.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
 );
 
-const memberSelectionRequiredMessage = 'member_selection_required';
-
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription<User?>? _authStateSubscription;
+  StreamSubscription<UserDto?>? _authStateSubscription;
+  int _authStateChangeGeneration = 0;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -31,15 +31,16 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _authStateSubscription?.cancel();
-    _authStateSubscription = authService.authStateChanges.listen((user) async {
-      if (user == null) {
-        await _handleUnauthenticatedUser();
-        return;
-      }
-      await _handleAuthenticatedUser(user);
-    });
+    _authStateChangeGeneration++;
+    _authStateSubscription = authService.authStateChanges
+        .map((user) => user == null ? null : UserMapper.toDto(user))
+        .listen((user) {
+          final generation = ++_authStateChangeGeneration;
+          unawaited(_handleAuthStateChange(user, generation));
+        });
 
     ref.onDispose(() {
+      _authStateChangeGeneration++;
       _authStateSubscription?.cancel();
       _authStateSubscription = null;
     });
@@ -47,42 +48,65 @@ class AuthNotifier extends Notifier<AuthState> {
     return const AuthState.loading();
   }
 
-  Future<void> _handleAuthenticatedUser(User user) async {
-    if (!user.isVerified) {
-      await _handleUnverifiedUser();
+  Future<void> _handleUnverifiedUser(int generation) async {
+    if (!_isLatestAuthStateChange(generation)) {
       return;
     }
-    await _handleVerifiedUser(user);
-  }
-
-  Future<void> _handleUnverifiedUser() async {
     try {
       await authService.sendEmailVerification();
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
     } catch (e, stack) {
       logger.e(
         'AuthNotifier._handleUnverifiedUser: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
-      await _signOutWithError('認証メールの送信に失敗しました。再度ログインしてください。');
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
+      await _signOutWithError(
+        '認証メールの送信に失敗しました。再度ログインしてください。',
+        generation: generation,
+      );
       return;
     }
-    await _signOut();
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
     state = const AuthState.unauthenticated(
       '認証メールを再送しました。メールを確認して認証を完了してください。',
       messageType: MessageType.info,
     );
+    await _signOut();
   }
 
-  Future<void> _handleVerifiedUser(User user) async {
-    await _processUserMembership(user);
-  }
+  Future<void> _handleAuthStateChange(UserDto? user, int generation) async {
+    if (!_isLatestAuthStateChange(generation)) {
+      return;
+    }
 
-  Future<void> _processUserMembership(User user) async {
+    if (user == null) {
+      await _handleUnauthenticatedUser();
+      return;
+    }
+
+    if (!user.isVerified) {
+      await _handleUnverifiedUser(generation);
+      return;
+    }
+
     try {
       await authService.validateCurrentUserToken();
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
 
-      final memberExists = await checkMemberExistsUseCase.execute(user);
+      final memberExists = await checkMemberExistsUseCase.execute(user.id);
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
 
       if (memberExists) {
         state = AuthState.authenticated(user);
@@ -95,19 +119,26 @@ class AuthNotifier extends Notifier<AuthState> {
       );
     } catch (e, stack) {
       logger.e(
-        'AuthNotifier._processUserMembership: ${e.toString()}',
+        'AuthNotifier.authStateChanges: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
-      await _signOutWithError('認証が無効です。再度ログインしてください。');
+      if (!_isLatestAuthStateChange(generation)) {
+        return;
+      }
+      await _signOutWithError('認証が無効です。再度ログインしてください。', generation: generation);
     }
   }
 
-  Future<void> createNewMember(User user) async {
+  bool _isLatestAuthStateChange(int generation) {
+    return generation == _authStateChangeGeneration;
+  }
+
+  Future<void> createNewMember(UserDto user) async {
     try {
       final success = await createMemberFromUserUseCase.execute(user);
       if (success) {
-        state = AuthState.authenticated(user);
+        await _setAuthenticatedStateFromCurrentUser();
       } else {
         await _signOutWithError('メンバー作成に失敗しました。');
       }
@@ -121,17 +152,19 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> acceptInvitation(String invitationCode, User user) async {
+  Future<bool> acceptInvitation(
+    String invitationCode, {
+    required String userId,
+  }) async {
     try {
       final success = await acceptInvitationUseCase.execute(
         invitationCode,
-        user.id,
+        userId,
       );
       if (!success) {
         return false;
       }
-      state = AuthState.authenticated(user);
-      return true;
+      return await _setAuthenticatedStateFromCurrentUser();
     } catch (e, stack) {
       logger.e(
         'AuthNotifier.acceptInvitation: ${e.toString()}',
@@ -154,9 +187,32 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> _signOutWithError(String message) async {
-    await _signOut();
+  Future<void> _signOutWithError(String message, {int? generation}) async {
+    if (generation != null && !_isLatestAuthStateChange(generation)) {
+      return;
+    }
     state = AuthState.unauthenticated(message, messageType: MessageType.error);
+    await _signOut();
+  }
+
+  Future<bool> _setAuthenticatedStateFromCurrentUser() async {
+    try {
+      final currentUser = await authService.getCurrentUser();
+      if (currentUser == null) {
+        await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
+        return false;
+      }
+      state = AuthState.authenticated(UserMapper.toDto(currentUser));
+      return true;
+    } catch (e, stack) {
+      logger.e(
+        'AuthNotifier._setAuthenticatedStateFromCurrentUser: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      await _signOutWithError('認証情報の取得に失敗しました。再度ログインしてください。');
+      return false;
+    }
   }
 
   Future<void> _handleUnauthenticatedUser() async {
@@ -221,12 +277,4 @@ class AuthNotifier extends Notifier<AuthState> {
   void clearError() {
     state = state.copyWith(message: '');
   }
-}
-
-extension AuthViewStateX on AuthViewState {
-  bool get isInfoMessage => messageType == MessageType.info;
-
-  bool get requiresMemberSelection => message == memberSelectionRequiredMessage;
-
-  String? get authenticatedLoginId => user?.loginId;
 }

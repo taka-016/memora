@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
@@ -20,7 +21,7 @@ void main() {
 
     test('旅行エントリが正常に更新されること', () async {
       // Arrange
-      final tripEntry = TripEntry(
+      final tripEntry = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
         tripYear: 2024,
@@ -30,15 +31,19 @@ void main() {
         tripMemo: '更新されたメモ',
       );
 
-      when(
-        mockRepository.updateTripEntry(tripEntry),
-      ).thenAnswer((_) async => {});
+      when(mockRepository.updateTripEntry(any)).thenAnswer((_) async => {});
 
       // Act
       await usecase.execute(tripEntry);
 
       // Assert
-      verify(mockRepository.updateTripEntry(tripEntry)).called(1);
+      final captured = verify(
+        mockRepository.updateTripEntry(captureAny),
+      ).captured;
+      final updatedEntry = captured.single as TripEntry;
+      expect(updatedEntry.id, tripEntry.id);
+      expect(updatedEntry.tripName, tripEntry.tripName);
+      expect(updatedEntry.tripMemo, tripEntry.tripMemo);
     });
   });
 }

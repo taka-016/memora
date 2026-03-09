@@ -610,6 +610,16 @@
 
 ## リファクタリング
 
+- `lib/presentation/features/group/group_edit_modal.dart:7` で `domain/entities/group/group.dart` を直接参照している
+  - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- `lib/presentation/features/member/member_edit_modal.dart:6` で `domain/entities/member/member.dart` を直接参照している
+  - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/entities/trip/trip_entry.dart` を直接参照している
+  - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- `lib/presentation/features/trip/trip_management.dart:13` で `domain/entities/trip/trip_entry.dart` を直接参照している
+  - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- `lib/presentation/notifiers/auth_notifier.dart:4` で `domain/entities/account/user.dart` を直接参照している
+  - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - `lib/presentation/app/top_page.dart:16` で `domain/value_objects/auth_state.dart` を直接参照している
   - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
 - `lib/presentation/features/auth/auth_guard.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している

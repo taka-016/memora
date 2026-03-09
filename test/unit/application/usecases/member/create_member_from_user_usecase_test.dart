@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
-import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'create_member_from_user_usecase_test.mocks.dart';
 import '../../../../helpers/test_exception.dart';
@@ -21,7 +21,7 @@ void main() {
   group('CreateMemberFromUserUseCase', () {
     test('ユーザー情報から新規メンバーを作成成功した場合trueを返す', () async {
       // Arrange
-      const user = User(
+      const user = UserDto(
         id: 'user-id',
         loginId: 'test@example.com',
         isVerified: true,
@@ -52,7 +52,7 @@ void main() {
 
     test('メンバー作成時にエラーが発生した場合falseを返す', () async {
       // Arrange
-      const user = User(
+      const user = UserDto(
         id: 'user-id',
         loginId: 'test@example.com',
         isVerified: true,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/application/dtos/account/user_dto.dart';
+import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
@@ -27,7 +27,7 @@ void main() {
     }
 
     testWidgets('認証済みの場合、子ウィジェットが表示される', (WidgetTester tester) async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         displayName: 'テストユーザー',
