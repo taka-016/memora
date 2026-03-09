@@ -156,6 +156,80 @@ void main() {
       expect(notifier.state.message, '');
     });
 
+    test('古い認証エラー処理が遅延完了しても最新状態を上書きしない', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(
+        mockAuthService.validateCurrentUserToken(),
+      ).thenThrow(TestException('token invalid'));
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+    });
+
+    test('古い未認証ユーザーエラー処理が遅延完了しても最新状態を上書きしない', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: false,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(
+        mockAuthService.sendEmailVerification(),
+      ).thenThrow(TestException('send mail failed'));
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+    });
+
     test(
       'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
       () async {

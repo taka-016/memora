@@ -66,7 +66,10 @@ class AuthNotifier extends Notifier<AuthState> {
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
-      await _signOutWithError('認証メールの送信に失敗しました。再度ログインしてください。');
+      await _signOutWithError(
+        '認証メールの送信に失敗しました。再度ログインしてください。',
+        generation: generation,
+      );
       return;
     }
     if (!_isLatestAuthStateChange(generation)) {
@@ -126,7 +129,7 @@ class AuthNotifier extends Notifier<AuthState> {
       if (!_isLatestAuthStateChange(generation)) {
         return;
       }
-      await _signOutWithError('認証が無効です。再度ログインしてください。');
+      await _signOutWithError('認証が無効です。再度ログインしてください。', generation: generation);
     }
   }
 
@@ -187,8 +190,11 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<void> _signOutWithError(String message) async {
+  Future<void> _signOutWithError(String message, {int? generation}) async {
     await _signOut();
+    if (generation != null && !_isLatestAuthStateChange(generation)) {
+      return;
+    }
     state = AuthState.unauthenticated(message, messageType: MessageType.error);
   }
 
