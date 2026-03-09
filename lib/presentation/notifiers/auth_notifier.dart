@@ -17,7 +17,7 @@ final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
 typedef AuthViewState = AuthState;
 
 class AuthNotifier extends Notifier<AuthState> {
-  StreamSubscription? _authStateSubscription;
+  StreamSubscription<UserDto?>? _authStateSubscription;
 
   AuthService get authService => ref.read(authServiceProvider);
   CheckMemberExistsUseCase get checkMemberExistsUseCase =>
@@ -30,40 +30,44 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     _authStateSubscription?.cancel();
-    _authStateSubscription = authService.authStateChanges.listen((user) async {
-      if (user == null) {
-        await _handleUnauthenticatedUser();
-        return;
-      }
+    _authStateSubscription = authService.authStateChanges
+        .map((user) => user == null ? null : UserMapper.toDto(user))
+        .listen((user) async {
+          if (user == null) {
+            await _handleUnauthenticatedUser();
+            return;
+          }
 
-      if (!user.isVerified) {
-        await _handleUnverifiedUser();
-        return;
-      }
+          if (!user.isVerified) {
+            await _handleUnverifiedUser();
+            return;
+          }
 
-      try {
-        await authService.validateCurrentUserToken();
+          try {
+            await authService.validateCurrentUserToken();
 
-        final memberExists = await checkMemberExistsUseCase.execute(user.id);
+            final memberExists = await checkMemberExistsUseCase.execute(
+              user.id,
+            );
 
-        if (memberExists) {
-          state = AuthState.authenticated(UserMapper.toDto(user));
-          return;
-        }
+            if (memberExists) {
+              state = AuthState.authenticated(user);
+              return;
+            }
 
-        state = AuthState.unauthenticated(
-          memberSelectionRequiredMessage,
-          messageType: MessageType.info,
-        );
-      } catch (e, stack) {
-        logger.e(
-          'AuthNotifier.authStateChanges: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        await _signOutWithError('認証が無効です。再度ログインしてください。');
-      }
-    });
+            state = AuthState.unauthenticated(
+              memberSelectionRequiredMessage,
+              messageType: MessageType.info,
+            );
+          } catch (e, stack) {
+            logger.e(
+              'AuthNotifier.authStateChanges: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
+            await _signOutWithError('認証が無効です。再度ログインしてください。');
+          }
+        });
 
     ref.onDispose(() {
       _authStateSubscription?.cancel();
