@@ -10,7 +10,7 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 class MemberEditModal extends HookConsumerWidget {
   final MemberDto? member;
   final Future<void> Function(MemberDto) onSave;
-  final void Function(MemberDto)? onInvite;
+  final Future<void> Function(MemberDto)? onInvite;
 
   const MemberEditModal({
     super.key,
@@ -49,6 +49,7 @@ class MemberEditModal extends HookConsumerWidget {
     );
     final gender = useState<String?>(member?.gender);
     final birthday = useState<DateTime?>(member?.birthday);
+    final isInviting = useState(false);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
 
@@ -327,9 +328,29 @@ class MemberEditModal extends HookConsumerWidget {
       );
     }
 
-    void handleInvite() {
-      if (member != null && onInvite != null) {
-        onInvite!(member!);
+    Future<void> handleInvite() async {
+      if (member == null || onInvite == null || isInviting.value) {
+        return;
+      }
+      isInviting.value = true;
+      try {
+        await onInvite!(member!);
+      } catch (e, stack) {
+        logger.e(
+          'MemberEditModal.onInvite: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!context.mounted) {
+          return;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('招待に失敗しました。もう一度お試しください。')));
+      } finally {
+        if (context.mounted) {
+          isInviting.value = false;
+        }
       }
     }
 
@@ -366,7 +387,7 @@ class MemberEditModal extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: handleInvite,
+                  onPressed: isInviting.value ? null : handleInvite,
                   icon: const Icon(Icons.person_add),
                   label: const Text('招待'),
                   style: ElevatedButton.styleFrom(

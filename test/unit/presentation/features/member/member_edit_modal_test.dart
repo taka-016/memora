@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
+import '../../../../helpers/test_exception.dart';
 
 Widget _createApp({required Widget child}) {
   return ProviderScope(
@@ -328,6 +330,131 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('変更内容の確認'), findsNothing);
+    });
+
+    testWidgets('招待ボタン押下でonInviteが呼ばれること', (WidgetTester tester) async {
+      final existingMember = MemberDto(
+        id: 'test-id',
+        accountId: 'test-account',
+        ownerId: null,
+        displayName: 'テストユーザー',
+        kanjiLastName: '山田',
+        kanjiFirstName: '太郎',
+        hiraganaLastName: 'やまだ',
+        hiraganaFirstName: 'たろう',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        gender: '男性',
+        birthday: DateTime(1990, 1, 1),
+        email: 'test@example.com',
+        phoneNumber: '090-1234-5678',
+        type: 'member',
+        passportNumber: null,
+        passportExpiration: null,
+      );
+      MemberDto? invitedMember;
+
+      await tester.pumpWidget(
+        _createApp(
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (member) async {},
+            onInvite: (member) async {
+              invitedMember = member;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      expect(invitedMember, isNotNull);
+      expect(invitedMember!.id, existingMember.id);
+    });
+
+    testWidgets('招待が失敗した場合にエラーメッセージを表示すること', (WidgetTester tester) async {
+      final existingMember = MemberDto(
+        id: 'test-id',
+        accountId: 'test-account',
+        ownerId: null,
+        displayName: 'テストユーザー',
+        kanjiLastName: '山田',
+        kanjiFirstName: '太郎',
+        hiraganaLastName: 'やまだ',
+        hiraganaFirstName: 'たろう',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        gender: '男性',
+        birthday: DateTime(1990, 1, 1),
+        email: 'test@example.com',
+        phoneNumber: '090-1234-5678',
+        type: 'member',
+        passportNumber: null,
+        passportExpiration: null,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (member) async {},
+            onInvite: (_) async => throw TestException('招待失敗'),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('招待に失敗しました。もう一度お試しください。'), findsOneWidget);
+    });
+
+    testWidgets('招待処理中は多重実行されないこと', (WidgetTester tester) async {
+      final existingMember = MemberDto(
+        id: 'test-id',
+        accountId: 'test-account',
+        ownerId: null,
+        displayName: 'テストユーザー',
+        kanjiLastName: '山田',
+        kanjiFirstName: '太郎',
+        hiraganaLastName: 'やまだ',
+        hiraganaFirstName: 'たろう',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        gender: '男性',
+        birthday: DateTime(1990, 1, 1),
+        email: 'test@example.com',
+        phoneNumber: '090-1234-5678',
+        type: 'member',
+        passportNumber: null,
+        passportExpiration: null,
+      );
+      final inviteCompleter = Completer<void>();
+      var inviteCallCount = 0;
+
+      await tester.pumpWidget(
+        _createApp(
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (member) async {},
+            onInvite: (_) async {
+              inviteCallCount++;
+              await inviteCompleter.future;
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('招待'));
+      await tester.pump();
+      await tester.tap(find.text('招待'));
+      await tester.pump();
+
+      expect(inviteCallCount, 1);
+
+      inviteCompleter.complete();
+      await tester.pumpAndSettle();
     });
   });
 }

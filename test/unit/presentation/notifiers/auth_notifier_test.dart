@@ -117,6 +117,40 @@ void main() {
       expect(notifier.state.message, memberSelectionRequiredMessage);
     });
 
+    test('認証イベントが連続した場合でも新しいイベントの状態が最終的に優先される', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final validateCompleter = Completer<void>();
+
+      when(
+        mockAuthService.validateCurrentUserToken(),
+      ).thenAnswer((_) => validateCompleter.future);
+      when(
+        mockCheckMemberExistsUseCase.execute(user.id),
+      ).thenAnswer((_) async => true);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller
+        ..add(user)
+        ..add(null);
+      await Future(() {});
+
+      validateCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '');
+    });
+
     test(
       'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
       () async {
