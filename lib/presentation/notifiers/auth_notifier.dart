@@ -75,14 +75,11 @@ class AuthNotifier extends Notifier<AuthState> {
     if (!_isLatestAuthStateChange(generation)) {
       return;
     }
-    await _signOut();
-    if (!_isLatestAuthStateChange(generation)) {
-      return;
-    }
     state = const AuthState.unauthenticated(
       '認証メールを再送しました。メールを確認して認証を完了してください。',
       messageType: MessageType.info,
     );
+    await _signOut();
   }
 
   Future<void> _handleAuthStateChange(UserDto? user, int generation) async {
@@ -191,11 +188,11 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _signOutWithError(String message, {int? generation}) async {
-    await _signOut();
     if (generation != null && !_isLatestAuthStateChange(generation)) {
       return;
     }
     state = AuthState.unauthenticated(message, messageType: MessageType.error);
+    await _signOut();
   }
 
   Future<bool> _setAuthenticatedStateFromCurrentUser() async {

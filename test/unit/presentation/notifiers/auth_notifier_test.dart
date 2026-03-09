@@ -156,7 +156,7 @@ void main() {
       expect(notifier.state.message, '');
     });
 
-    test('古い認証エラー処理が遅延完了しても最新状態を上書きしない', () async {
+    test('サインアウト中にnullイベントが来ても認証エラーメッセージを保持する', () async {
       const user = User(
         id: 'user123',
         loginId: 'test@example.com',
@@ -184,16 +184,16 @@ void main() {
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '');
+      expect(notifier.state.message, '認証が無効です。再度ログインしてください。');
 
       signOutCompleter.complete();
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '');
+      expect(notifier.state.message, '認証が無効です。再度ログインしてください。');
     });
 
-    test('古い未認証ユーザーエラー処理が遅延完了しても最新状態を上書きしない', () async {
+    test('サインアウト中にnullイベントが来ても未認証ユーザーエラーメッセージを保持する', () async {
       const user = User(
         id: 'user123',
         loginId: 'test@example.com',
@@ -221,13 +221,51 @@ void main() {
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '');
+      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
 
       signOutCompleter.complete();
       await Future(() {});
       await Future(() {});
       expect(notifier.state.status, AuthStatus.unauthenticated);
-      expect(notifier.state.message, '');
+      expect(notifier.state.message, '認証メールの送信に失敗しました。再度ログインしてください。');
+    });
+
+    test('サインアウト中にnullイベントが来ても認証メール再送メッセージを保持する', () async {
+      const user = User(
+        id: 'user123',
+        loginId: 'test@example.com',
+        isVerified: false,
+      );
+      final signOutCompleter = Completer<void>();
+
+      when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+      when(
+        mockAuthService.signOut(),
+      ).thenAnswer((_) => signOutCompleter.future);
+
+      final controller = StreamController<User?>();
+      addTearDown(controller.close);
+      final container = createContainer(controller.stream);
+      addTearDown(container.dispose);
+
+      final notifier = container.read(authNotifierProvider.notifier);
+      controller.add(user);
+      await Future(() {});
+      await Future(() {});
+
+      controller.add(null);
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+      expect(notifier.state.messageType, MessageType.info);
+
+      signOutCompleter.complete();
+      await Future(() {});
+      await Future(() {});
+      expect(notifier.state.status, AuthStatus.unauthenticated);
+      expect(notifier.state.message, '認証メールを再送しました。メールを確認して認証を完了してください。');
+      expect(notifier.state.messageType, MessageType.info);
     });
 
     test(
