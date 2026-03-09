@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memora Dev Workflow"
+  short_description: "Memoraの実装からPR作成までを行う標準開発フロー"
+  default_prompt: "Use $memora-dev-workflow to implement or modify code in Memora from TDD through pull request creation."
