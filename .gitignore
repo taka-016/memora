@@ -61,3 +61,4 @@ mcp.json
 *.bk
 devcontainer_keys
 test/.test_optimizer.dart
+coverage/
