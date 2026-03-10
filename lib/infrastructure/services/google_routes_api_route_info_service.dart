@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:memora/application/services/route_info_service.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
@@ -163,13 +164,23 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
       );
     }
 
-    final coordinates = _decodePolyline(encodedPolyline);
+    final coordinates = _decodePolylineSafely(encodedPolyline);
     return RouteSegmentDetailDto(
       polyline: coordinates,
       distanceMeters: distanceMeters,
       durationSeconds: durationSeconds,
       instructions: instructions,
     );
+  }
+
+  List<Location> _decodePolylineSafely(String encoded) {
+    try {
+      return _decodePolyline(encoded);
+    } on ValidationException {
+      return const <Location>[];
+    } on RangeError {
+      return const <Location>[];
+    }
   }
 
   List<Location> _decodePolyline(String encoded) {

@@ -168,5 +168,46 @@ void main() {
       expect(detail.polyline.first.latitude, closeTo(36.45556, 1e-5));
       expect(detail.polyline.first.longitude, closeTo(-116.86667, 1e-5));
     });
+
+    test('不正なポリライン文字列でも例外を投げずに空のポリラインで返す', () async {
+      final responseBody = {
+        'routes': [
+          {
+            'polyline': {'encodedPolyline': '?'},
+            'legs': [
+              {
+                'distanceMeters': 1200,
+                'duration': '60s',
+                'steps': [
+                  {
+                    'navigationInstruction': {'instructions': '<div>直進</div>'},
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      final client = MockClient(
+        (request) async => http.Response.bytes(
+          utf8.encode(jsonEncode(responseBody)),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      final service = buildService(client);
+
+      final detail = await service.fetchRoute(
+        origin: origin,
+        destination: destination,
+        travelMode: TravelMode.walk,
+      );
+
+      expect(detail.polyline, isEmpty);
+      expect(detail.distanceMeters, 1200);
+      expect(detail.durationSeconds, 60);
+      expect(detail.instructions, ['直進']);
+    });
   });
 }
