@@ -486,6 +486,37 @@ void main() {
       expect(find.text('東京駅'), findsOneWidget);
     });
 
+    testWidgets('緯度経度が不正な場合はGoogle Places APIを呼び出さない', (
+      WidgetTester tester,
+    ) async {
+      final mockNearbyLocationService = MockNearbyLocationService();
+
+      final invalidPin = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 91.0,
+        longitude: 139.767125,
+        locationName: null,
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: invalidPin,
+              onClose: () {},
+              reverseGeocodingService: mockNearbyLocationService,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      verifyNever(mockNearbyLocationService.getLocationName(any));
+      expect(find.byKey(const Key('locationNameField')), findsOneWidget);
+      expect(find.text('場所名を取得中...'), findsNothing);
+    });
+
     testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
       final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',

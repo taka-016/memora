@@ -66,14 +66,27 @@ void main() {
       expect(pinDto.visitMemo, visitMemo);
     });
 
-    test('location getterでLocationを取得できる', () {
+    test('locationOrNullでLocationを取得できる', () {
       final pinDto = PinDto(
         pinId: 'pin-123',
         latitude: 35.6762,
         longitude: 139.6503,
       );
 
-      expect(pinDto.location, Location(latitude: 35.6762, longitude: 139.6503));
+      expect(
+        pinDto.locationOrNull,
+        Location(latitude: 35.6762, longitude: 139.6503),
+      );
+    });
+
+    test('locationOrNullは不正な緯度経度の場合nullを返す', () {
+      final pinDto = PinDto(
+        pinId: 'pin-123',
+        latitude: 91.0,
+        longitude: 139.6503,
+      );
+
+      expect(pinDto.locationOrNull, isNull);
     });
 
     test('copyWithメソッドで必須パラメータが正しく更新される', () {

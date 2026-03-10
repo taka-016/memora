@@ -24,7 +24,13 @@ class PinDto extends Equatable {
   final DateTime? visitEndDate;
   final String? visitMemo;
 
-  Location get location => Location(latitude: latitude, longitude: longitude);
+  Location? get locationOrNull {
+    try {
+      return Location(latitude: latitude, longitude: longitude);
+    } on Exception {
+      return null;
+    }
+  }
 
   PinDto copyWith({
     String? pinId,
