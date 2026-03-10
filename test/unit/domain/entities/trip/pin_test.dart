@@ -129,5 +129,19 @@ void main() {
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
     });
+
+    test('Locationと緯度経度を同時指定した場合は例外が発生する', () {
+      expect(
+        () => Pin(
+          pinId: 'pin001',
+          tripId: 'trip001',
+          groupId: 'group001',
+          latitude: 35.0,
+          longitude: 139.0,
+          location: Location(latitude: 36.0, longitude: 140.0),
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
   });
 }

@@ -88,6 +88,9 @@ class Pin extends Equatable {
     required double? latitude,
     required double? longitude,
   }) {
+    if (location != null && (latitude != null || longitude != null)) {
+      throw ValidationException('位置情報はlocationまたは緯度・経度のどちらか一方のみ指定してください');
+    }
     if (location != null) {
       return location;
     }
