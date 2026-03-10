@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/value_objects/location.dart';
 
 class PinDto extends Equatable {
@@ -27,7 +28,7 @@ class PinDto extends Equatable {
   Location? get locationOrNull {
     try {
       return Location(latitude: latitude, longitude: longitude);
-    } on Exception {
+    } on ValidationException {
       return null;
     }
   }
