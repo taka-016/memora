@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 class PinDto extends Equatable {
   const PinDto({
@@ -22,6 +23,8 @@ class PinDto extends Equatable {
   final DateTime? visitStartDate;
   final DateTime? visitEndDate;
   final String? visitMemo;
+
+  Location get location => Location(latitude: latitude, longitude: longitude);
 
   PinDto copyWith({
     String? pinId,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/core/app_logger.dart';
@@ -112,12 +111,8 @@ class PinDetailBottomSheet extends HookWidget {
       isLoadingLocation.value = true;
 
       try {
-        final currentLocation = Location(
-          latitude: pin.latitude,
-          longitude: pin.longitude,
-        );
         final fetchedLocationName = await effectiveReverseGeocodingService
-            .getLocationName(currentLocation);
+            .getLocationName(pin.location);
         locationName.value = fetchedLocationName;
       } catch (e, stack) {
         logger.e(
