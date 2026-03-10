@@ -32,8 +32,6 @@ class Pin extends Equatable {
   final DateTime? visitEndDate;
   final String? visitMemo;
 
-  Location get location => Location(latitude: latitude, longitude: longitude);
-
   Pin copyWith({
     String? pinId,
     String? tripId,

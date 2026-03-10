@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
-import 'package:memora/domain/value_objects/location.dart';
 
 void main() {
   group('Pin', () {
@@ -22,7 +21,6 @@ void main() {
       expect(pin.groupId, 'group001');
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
-      expect(pin.location, Location(latitude: 35.0, longitude: 139.0));
       expect(pin.locationName, '東京駅');
       expect(pin.visitStartDate, DateTime(2025, 6, 1));
       expect(pin.visitEndDate, DateTime(2025, 6, 2));
