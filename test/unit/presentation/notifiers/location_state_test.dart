@@ -1,65 +1,70 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/notifiers/location_state.dart';
 
 void main() {
   group('LocationState', () {
     test('緯度と経度を持つLocationStateを作成できる', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState = LocationState(
-        location: location,
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: lastUpdated,
       );
 
-      expect(locationState.location, location);
+      expect(locationState.latitude, 35.6812);
+      expect(locationState.longitude, 139.7671);
       expect(locationState.lastUpdated, lastUpdated);
     });
 
-    test('copyWithでlocationを更新できる', () {
+    test('copyWithで位置情報を更新できる', () {
       final original = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: DateTime(2025, 1, 1),
       );
 
-      final newLocation = Location(latitude: 35.6813, longitude: 139.7671);
-      final updated = original.copyWith(location: newLocation);
+      final updated = original.copyWith(latitude: 35.6813, longitude: 139.7672);
 
-      expect(updated.location, newLocation);
+      expect(updated.latitude, 35.6813);
+      expect(updated.longitude, 139.7672);
       expect(updated.lastUpdated, original.lastUpdated);
     });
 
     test('copyWithで最終更新日時を更新できる', () {
       final original = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: DateTime(2025, 1, 1),
       );
 
       final newLastUpdated = DateTime(2025, 1, 2);
       final updated = original.copyWith(lastUpdated: newLastUpdated);
 
-      expect(updated.location, original.location);
+      expect(updated.latitude, original.latitude);
+      expect(updated.longitude, original.longitude);
       expect(updated.lastUpdated, newLastUpdated);
     });
 
     test('初期状態では全てのフィールドがnullである', () {
       const locationState = LocationState();
 
-      expect(locationState.location, isNull);
+      expect(locationState.latitude, isNull);
+      expect(locationState.longitude, isNull);
       expect(locationState.lastUpdated, isNull);
     });
 
-    test('同じlocationとlastUpdatedを持つLocationStateは等しい', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
+    test('同じ位置情報とlastUpdatedを持つLocationStateは等しい', () {
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState1 = LocationState(
-        location: location,
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: lastUpdated,
       );
       final locationState2 = LocationState(
-        location: location,
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: lastUpdated,
       );
 
@@ -67,15 +72,17 @@ void main() {
       expect(locationState1.hashCode, equals(locationState2.hashCode));
     });
 
-    test('異なるlocationを持つLocationStateは等しくない', () {
+    test('異なる位置情報を持つLocationStateは等しくない', () {
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState1 = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: lastUpdated,
       );
       final locationState2 = LocationState(
-        location: Location(latitude: 35.6813, longitude: 139.7671),
+        latitude: 35.6813,
+        longitude: 139.7671,
         lastUpdated: lastUpdated,
       );
 
@@ -83,14 +90,14 @@ void main() {
     });
 
     test('異なるlastUpdatedを持つLocationStateは等しくない', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
-
       final locationState1 = LocationState(
-        location: location,
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: DateTime(2025, 1, 1),
       );
       final locationState2 = LocationState(
-        location: location,
+        latitude: 35.6812,
+        longitude: 139.7671,
         lastUpdated: DateTime(2025, 1, 2),
       );
 

@@ -106,7 +106,10 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setLocation(
+        latitude: testLocation.latitude,
+        longitude: testLocation.longitude,
+      );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -153,7 +156,10 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setLocation(
+        latitude: testLocation.latitude,
+        longitude: testLocation.longitude,
+      );
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -193,7 +199,8 @@ void main() {
 
     testWidgets('マップの長押しでコールバック関数が呼ばれる', (WidgetTester tester) async {
       bool mapTapped = false;
-      Location? tappedLocation;
+      double? tappedLatitude;
+      double? tappedLongitude;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -201,9 +208,10 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [],
-                onMapLongTapped: (Location location) {
+                onMapLongTapped: (double latitude, double longitude) {
                   mapTapped = true;
-                  tappedLocation = location;
+                  tappedLatitude = latitude;
+                  tappedLongitude = longitude;
                 },
                 onMarkerTapped: (PinDto pin) {},
                 onMarkerUpdated: (PinDto pin) {},
@@ -227,8 +235,8 @@ void main() {
 
       // コールバック関数が正しく呼ばれたことを確認
       expect(mapTapped, true);
-      expect(tappedLocation?.latitude, 35.681236);
-      expect(tappedLocation?.longitude, 139.767125);
+      expect(tappedLatitude, 35.681236);
+      expect(tappedLongitude, 139.767125);
     });
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,

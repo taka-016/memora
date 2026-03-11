@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
 
 abstract class MapViewBuilder {
   Widget createMapView({
     required List<PinDto> pins,
-    Function(Location)? onMapLongTapped,
+    void Function(double latitude, double longitude)? onMapLongTapped,
     Function(PinDto)? onMarkerTapped,
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,

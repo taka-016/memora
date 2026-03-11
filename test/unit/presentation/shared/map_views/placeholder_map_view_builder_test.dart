@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 
 void main() {
@@ -19,7 +18,7 @@ void main() {
       final service = PlaceholderMapViewBuilder();
       final pins = <PinDto>[];
 
-      void onMapLongTapped(Location location) {}
+      void onMapLongTapped(double latitude, double longitude) {}
       void onMarkerTapped(PinDto pin) {}
       void onMarkerDeleted(String pinId) {}
 

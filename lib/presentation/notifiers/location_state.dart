@@ -1,19 +1,24 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/value_objects/location.dart';
 
 class LocationState extends Equatable {
-  final Location? location;
+  final double? latitude;
+  final double? longitude;
   final DateTime? lastUpdated;
 
-  const LocationState({this.location, this.lastUpdated});
+  const LocationState({this.latitude, this.longitude, this.lastUpdated});
 
-  LocationState copyWith({Location? location, DateTime? lastUpdated}) {
+  LocationState copyWith({
+    double? latitude,
+    double? longitude,
+    DateTime? lastUpdated,
+  }) {
     return LocationState(
-      location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
       lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 
   @override
-  List<Object?> get props => [location, lastUpdated];
+  List<Object?> get props => [latitude, longitude, lastUpdated];
 }

@@ -7,7 +7,6 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
@@ -156,13 +155,13 @@ class TripEditModal extends HookConsumerWidget {
       selectedPin.value = null;
     }
 
-    Future<void> onMapLongTapped(Location location) async {
+    Future<void> onMapLongTapped(double latitude, double longitude) async {
       final uuid = Uuid();
       final pinId = uuid.v4();
       final newPin = PinDto(
         pinId: pinId,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude: latitude,
+        longitude: longitude,
       );
 
       pins.value = [...pins.value, newPin];

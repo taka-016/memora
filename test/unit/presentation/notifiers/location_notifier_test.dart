@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/domain/value_objects/location.dart';
 import '../../../helpers/test_exception.dart';
 
 import 'location_notifier_test.mocks.dart';
@@ -35,7 +35,8 @@ void main() {
 
       final state = container.read(locationProvider);
 
-      expect(state.location, isNull);
+      expect(state.latitude, isNull);
+      expect(state.longitude, isNull);
       expect(state.lastUpdated, isNull);
     });
 
@@ -57,7 +58,8 @@ void main() {
       await future;
 
       final state = container.read(locationProvider);
-      expect(state.location, expectedLocation);
+      expect(state.latitude, expectedLocation.latitude);
+      expect(state.longitude, expectedLocation.longitude);
       expect(state.lastUpdated, isNotNull);
     });
 
@@ -78,7 +80,8 @@ void main() {
       await expectLater(future, throwsException);
 
       final state = container.read(locationProvider);
-      expect(state.location, isNull);
+      expect(state.latitude, isNull);
+      expect(state.longitude, isNull);
       expect(state.lastUpdated, isNull);
     });
 
@@ -87,10 +90,11 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Location(latitude: 35.6812, longitude: 139.7671));
+      notifier.setLocation(latitude: 35.6812, longitude: 139.7671);
 
       final state = container.read(locationProvider);
-      expect(state.location, Location(latitude: 35.6812, longitude: 139.7671));
+      expect(state.latitude, 35.6812);
+      expect(state.longitude, 139.7671);
       expect(state.lastUpdated, isNotNull);
     });
 
@@ -99,11 +103,12 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Location(latitude: 35.6812, longitude: 139.7671));
+      notifier.setLocation(latitude: 35.6812, longitude: 139.7671);
       notifier.clearLocation();
 
       final state = container.read(locationProvider);
-      expect(state.location, isNull);
+      expect(state.latitude, isNull);
+      expect(state.longitude, isNull);
       expect(state.lastUpdated, isNull);
     });
   });
