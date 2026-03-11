@@ -51,7 +51,7 @@ void main() {
       final notifier = container.read(locationProvider.notifier);
       final future = notifier.getCurrentLocation();
 
-      const expectedLocation = Location(latitude: 35.6812, longitude: 139.7671);
+      final expectedLocation = Location(latitude: 35.6812, longitude: 139.7671);
       completer.complete(expectedLocation);
 
       await future;

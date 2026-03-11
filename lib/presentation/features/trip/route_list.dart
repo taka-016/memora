@@ -12,7 +12,7 @@ class RouteList extends HookWidget {
 
   final ValueNotifier<List<PinDto>> pinsState;
   final ValueNotifier<Map<String, TravelMode>> segmentModesState;
-  final ValueNotifier<Map<String, RouteSegmentDetail>> segmentDetailsState;
+  final ValueNotifier<Map<String, RouteSegmentDetailDto>> segmentDetailsState;
   final ValueNotifier<Map<String, bool>> routeMemoExpansionState;
   final ValueNotifier<int?> selectedPinIndexState;
 
@@ -45,7 +45,7 @@ class RouteList extends HookWidget {
         newIndex -= 1;
       }
       final updatedPins = List<PinDto>.from(pinsState.value);
-      final previousDetails = Map<String, RouteSegmentDetail>.from(
+      final previousDetails = Map<String, RouteSegmentDetailDto>.from(
         segmentDetailsState.value,
       );
       final item = updatedPins.removeAt(oldIndex);
@@ -76,7 +76,7 @@ class RouteList extends HookWidget {
       }
       segmentModesState.value = {...segmentModesState.value, key: mode};
       if (mode == TravelMode.other || previousMode == TravelMode.other) {
-        final updated = Map<String, RouteSegmentDetail>.from(
+        final updated = Map<String, RouteSegmentDetailDto>.from(
           segmentDetailsState.value,
         )..remove(key);
         segmentDetailsState.value = updated;
@@ -93,9 +93,9 @@ class RouteList extends HookWidget {
 
     Future<void> openOtherRouteInfoSheet(String key) async {
       final initialDetail =
-          segmentDetailsState.value[key] ?? const RouteSegmentDetail.empty();
+          segmentDetailsState.value[key] ?? const RouteSegmentDetailDto.empty();
 
-      final result = await showModalBottomSheet<RouteSegmentDetail>(
+      final result = await showModalBottomSheet<RouteSegmentDetailDto>(
         context: context,
         isScrollControlled: true,
         builder: (context) {
@@ -141,7 +141,7 @@ class RouteList extends HookWidget {
     required List<PinDto> pins,
     required int? selectedPinIndex,
     required Map<String, TravelMode> segmentModes,
-    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, RouteSegmentDetailDto> segmentDetails,
     required Map<String, bool> routeMemoExpansion,
     required void Function(int oldIndex, int newIndex) onReorder,
     required void Function(int index) onPinTap,
@@ -207,7 +207,7 @@ class RouteList extends HookWidget {
     required int index,
     required List<PinDto> pins,
     required Map<String, TravelMode> segmentModes,
-    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, RouteSegmentDetailDto> segmentDetails,
     required Map<String, bool> routeMemoExpansion,
     required void Function(String key, TravelMode mode) onModeChanged,
     required void Function(String key) onToggleRouteMemo,
@@ -303,7 +303,7 @@ class RouteList extends HookWidget {
   Widget buildRouteMemoView({
     required int index,
     required List<PinDto> pins,
-    required Map<String, RouteSegmentDetail> segmentDetails,
+    required Map<String, RouteSegmentDetailDto> segmentDetails,
     required Map<String, bool> routeMemoExpansion,
     required void Function(String key) onToggleRouteMemo,
   }) {
@@ -350,7 +350,7 @@ class RouteList extends HookWidget {
   Widget buildRouteMemo(
     int index,
     String key,
-    RouteSegmentDetail? detail,
+    RouteSegmentDetailDto? detail,
     Map<String, bool> routeMemoExpansion,
   ) {
     final isExpanded = routeMemoExpansion[key] ?? false;
@@ -386,7 +386,7 @@ class RouteList extends HookWidget {
     );
   }
 
-  List<Widget> buildRouteMemoEntries(RouteSegmentDetail detail) {
+  List<Widget> buildRouteMemoEntries(RouteSegmentDetailDto detail) {
     final entries = <Widget>[];
     final distanceLabel = formatDistanceLabel(detail.distanceMeters);
     final dMinutes = durationMinutes(detail.durationSeconds);
@@ -439,16 +439,16 @@ class RouteList extends HookWidget {
 
   void cleanupSegmentDetails(Iterable<String> validKeys) {
     final validKeySet = validKeys.toSet();
-    segmentDetailsState.value = Map<String, RouteSegmentDetail>.from(
+    segmentDetailsState.value = Map<String, RouteSegmentDetailDto>.from(
       segmentDetailsState.value,
     )..removeWhere((key, _) => !validKeySet.contains(key));
   }
 
-  Map<String, RouteSegmentDetail> retainManualDetails(
-    Map<String, RouteSegmentDetail> previousDetails,
+  Map<String, RouteSegmentDetailDto> retainManualDetails(
+    Map<String, RouteSegmentDetailDto> previousDetails,
     Map<String, TravelMode> nextModes,
   ) {
-    final retained = <String, RouteSegmentDetail>{};
+    final retained = <String, RouteSegmentDetailDto>{};
     for (final entry in nextModes.entries) {
       if (entry.value != TravelMode.other) {
         continue;
@@ -465,7 +465,7 @@ class RouteList extends HookWidget {
   void scheduleManualRouteUpdate(
     BuildContext context,
     String key,
-    RouteSegmentDetail detail,
+    RouteSegmentDetailDto detail,
   ) {
     final normalized = sanitizeManualDetail(detail);
 
@@ -474,7 +474,7 @@ class RouteList extends HookWidget {
         return;
       }
       final current = segmentDetailsState.value[key];
-      final updated = Map<String, RouteSegmentDetail>.from(
+      final updated = Map<String, RouteSegmentDetailDto>.from(
         segmentDetailsState.value,
       );
       if (_hasManualContent(normalized)) {
@@ -504,7 +504,7 @@ class RouteList extends HookWidget {
     }
   }
 
-  RouteSegmentDetail sanitizeManualDetail(RouteSegmentDetail detail) {
+  RouteSegmentDetailDto sanitizeManualDetail(RouteSegmentDetailDto detail) {
     final sanitizedInstructions = detail.instructions
         .map((instruction) => instruction.trim())
         .where((instruction) => instruction.isNotEmpty)

@@ -5,12 +5,12 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
 void main() {
-  const origin = Location(latitude: 35.0, longitude: 135.0);
-  const destination = Location(latitude: 35.1, longitude: 135.2);
+  final origin = Location(latitude: 35.0, longitude: 135.0);
+  final destination = Location(latitude: 35.1, longitude: 135.2);
 
   GoogleRoutesApiRouteInfoService buildService(MockClient client) {
     return GoogleRoutesApiRouteInfoService(apiKey: 'dummy', httpClient: client);
@@ -54,7 +54,7 @@ void main() {
       );
     });
 
-    test('routesが空ならRouteSegmentDetail.emptyを返しDrive用のBodyを送信する', () async {
+    test('routesが空ならRouteSegmentDetailDto.emptyを返しDrive用のBodyを送信する', () async {
       late http.Request capturedRequest;
       final client = MockClient((request) async {
         capturedRequest = request;
@@ -72,7 +72,7 @@ void main() {
         travelMode: TravelMode.drive,
       );
 
-      expect(result, const RouteSegmentDetail.empty());
+      expect(result, const RouteSegmentDetailDto.empty());
 
       final decodedBody =
           jsonDecode(capturedRequest.body) as Map<String, dynamic>;
@@ -167,6 +167,47 @@ void main() {
       expect(detail.polyline, isNotEmpty);
       expect(detail.polyline.first.latitude, closeTo(36.45556, 1e-5));
       expect(detail.polyline.first.longitude, closeTo(-116.86667, 1e-5));
+    });
+
+    test('不正なポリライン文字列でも例外を投げずに空のポリラインで返す', () async {
+      final responseBody = {
+        'routes': [
+          {
+            'polyline': {'encodedPolyline': '?'},
+            'legs': [
+              {
+                'distanceMeters': 1200,
+                'duration': '60s',
+                'steps': [
+                  {
+                    'navigationInstruction': {'instructions': '<div>直進</div>'},
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      final client = MockClient(
+        (request) async => http.Response.bytes(
+          utf8.encode(jsonEncode(responseBody)),
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      final service = buildService(client);
+
+      final detail = await service.fetchRoute(
+        origin: origin,
+        destination: destination,
+        travelMode: TravelMode.walk,
+      );
+
+      expect(detail.polyline, isEmpty);
+      expect(detail.distanceMeters, 1200);
+      expect(detail.durationSeconds, 60);
+      expect(detail.instructions, ['直進']);
     });
   });
 }

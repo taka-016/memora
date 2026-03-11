@@ -7,7 +7,7 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';

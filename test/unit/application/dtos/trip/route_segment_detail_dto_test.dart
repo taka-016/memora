@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 
 void main() {
-  group('RouteSegmentDetail', () {
+  group('RouteSegmentDetailDto', () {
     test('emptyコンストラクタは全フィールドを初期化する', () {
-      const detail = RouteSegmentDetail.empty();
+      const detail = RouteSegmentDetailDto.empty();
 
       expect(detail.polyline, isEmpty);
       expect(detail.distanceMeters, 0);
@@ -14,7 +14,7 @@ void main() {
     });
 
     test('copyWithで指定したフィールドだけを更新できる', () {
-      const original = RouteSegmentDetail(
+      final original = RouteSegmentDetailDto(
         polyline: [Location(latitude: 35.0, longitude: 135.0)],
         distanceMeters: 1000,
         durationSeconds: 600,
@@ -33,7 +33,7 @@ void main() {
     });
 
     test('Equatableのpropsには全フィールドが含まれる', () {
-      const detail = RouteSegmentDetail(
+      final detail = RouteSegmentDetailDto(
         polyline: [Location(latitude: 35.0, longitude: 135.0)],
         distanceMeters: 1000,
         durationSeconds: 600,

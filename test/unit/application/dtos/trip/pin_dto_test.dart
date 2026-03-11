@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 void main() {
   group('PinDto', () {
@@ -63,6 +64,29 @@ void main() {
       expect(pinDto.visitStartDate, visitStartDate);
       expect(pinDto.visitEndDate, visitEndDate);
       expect(pinDto.visitMemo, visitMemo);
+    });
+
+    test('locationOrNullでLocationを取得できる', () {
+      final pinDto = PinDto(
+        pinId: 'pin-123',
+        latitude: 35.6762,
+        longitude: 139.6503,
+      );
+
+      expect(
+        pinDto.locationOrNull,
+        Location(latitude: 35.6762, longitude: 139.6503),
+      );
+    });
+
+    test('locationOrNullは不正な緯度経度の場合nullを返す', () {
+      final pinDto = PinDto(
+        pinId: 'pin-123',
+        latitude: 91.0,
+        longitude: 139.6503,
+      );
+
+      expect(pinDto.locationOrNull, isNull);
     });
 
     test('copyWithメソッドで必須パラメータが正しく更新される', () {

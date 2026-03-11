@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/group/firestore_group_mapper.dart';
 import 'package:memora/infrastructure/mappers/group/firestore_group_member_mapper.dart';
 

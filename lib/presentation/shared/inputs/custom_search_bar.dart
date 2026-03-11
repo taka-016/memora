@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:memora/domain/services/location_search_service.dart';
-import 'package:memora/domain/value_objects/location_candidate.dart';
+import 'package:memora/application/services/location_search_service.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 
 class CustomSearchBar extends HookWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
   final LocationSearchService? locationSearchService;
-  final ValueChanged<LocationCandidate>? onCandidateSelected;
+  final ValueChanged<LocationCandidateDto>? onCandidateSelected;
 
   const CustomSearchBar({
     super.key,
@@ -22,7 +22,7 @@ class CustomSearchBar extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final textController = controller ?? useTextEditingController();
-    final candidates = useState<List<LocationCandidate>>([]);
+    final candidates = useState<List<LocationCandidateDto>>([]);
     final isLoading = useState(false);
 
     Future<void> onSearch() async {

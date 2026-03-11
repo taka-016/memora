@@ -5,10 +5,11 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
 
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart'
+    as _i2;
+import 'package:memora/application/services/route_info_service.dart' as _i3;
 import 'package:memora/core/enums/travel_mode.dart' as _i6;
-import 'package:memora/domain/services/route_info_service.dart' as _i3;
 import 'package:memora/domain/value_objects/location.dart' as _i5;
-import 'package:memora/domain/value_objects/route_segment_detail.dart' as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -25,9 +26,9 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeRouteSegmentDetail_0 extends _i1.SmartFake
-    implements _i2.RouteSegmentDetail {
-  _FakeRouteSegmentDetail_0(Object parent, Invocation parentInvocation)
+class _FakeRouteSegmentDetailDto_0 extends _i1.SmartFake
+    implements _i2.RouteSegmentDetailDto {
+  _FakeRouteSegmentDetailDto_0(Object parent, Invocation parentInvocation)
     : super(parent, parentInvocation);
 }
 
@@ -40,7 +41,7 @@ class MockRouteInfoService extends _i1.Mock implements _i3.RouteInfoService {
   }
 
   @override
-  _i4.Future<_i2.RouteSegmentDetail> fetchRoute({
+  _i4.Future<_i2.RouteSegmentDetailDto> fetchRoute({
     required _i5.Location? origin,
     required _i5.Location? destination,
     required _i6.TravelMode? travelMode,
@@ -51,8 +52,8 @@ class MockRouteInfoService extends _i1.Mock implements _i3.RouteInfoService {
               #destination: destination,
               #travelMode: travelMode,
             }),
-            returnValue: _i4.Future<_i2.RouteSegmentDetail>.value(
-              _FakeRouteSegmentDetail_0(
+            returnValue: _i4.Future<_i2.RouteSegmentDetailDto>.value(
+              _FakeRouteSegmentDetailDto_0(
                 this,
                 Invocation.method(#fetchRoute, [], {
                   #origin: origin,
@@ -62,5 +63,5 @@ class MockRouteInfoService extends _i1.Mock implements _i3.RouteInfoService {
               ),
             ),
           )
-          as _i4.Future<_i2.RouteSegmentDetail>);
+          as _i4.Future<_i2.RouteSegmentDetailDto>);
 }

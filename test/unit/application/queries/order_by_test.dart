@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 
 void main() {
   group('OrderBy', () {

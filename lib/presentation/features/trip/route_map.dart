@@ -13,7 +13,7 @@ class RouteMap extends HookWidget {
   });
 
   final ValueNotifier<List<PinDto>> pinsState;
-  final ValueNotifier<Map<String, RouteSegmentDetail>> segmentDetailsState;
+  final ValueNotifier<Map<String, RouteSegmentDetailDto>> segmentDetailsState;
   final ValueNotifier<int?> selectedPinIndexState;
   final ValueNotifier<bool> isMapVisibleState;
   final ValueNotifier<GoogleMapController?> mapControllerState;
@@ -187,7 +187,7 @@ class RouteMap extends HookWidget {
   Widget _buildMapView(
     BuildContext context,
     List<PinDto> pins,
-    Map<String, RouteSegmentDetail> segmentDetails,
+    Map<String, RouteSegmentDetailDto> segmentDetails,
     int? selectedPinIndex,
     VoidCallback scheduleFitMapCameraUpdate,
   ) {
@@ -241,7 +241,7 @@ class RouteMap extends HookWidget {
 }
 
 Set<Polyline> _buildRoutePolylines({
-  required Map<String, RouteSegmentDetail> segmentDetails,
+  required Map<String, RouteSegmentDetailDto> segmentDetails,
   required List<PinDto> pins,
   required int? selectedPinIndex,
 }) {
@@ -273,7 +273,7 @@ Set<Polyline> _buildRoutePolylines({
 }
 
 Map<String, Color> _computeSegmentHighlightColors({
-  required Map<String, RouteSegmentDetail> segmentDetails,
+  required Map<String, RouteSegmentDetailDto> segmentDetails,
   required List<PinDto> pins,
   required int? selectedPinIndex,
 }) {

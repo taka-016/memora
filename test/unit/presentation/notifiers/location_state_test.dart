@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/value_objects/location.dart';
-import 'package:memora/domain/value_objects/location_state.dart';
+import 'package:memora/presentation/notifiers/location_state.dart';
 
 void main() {
   group('LocationState', () {
     test('緯度と経度を持つLocationStateを作成できる', () {
-      const location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Location(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState = LocationState(
@@ -23,7 +23,7 @@ void main() {
         lastUpdated: DateTime(2025, 1, 1),
       );
 
-      const newLocation = Location(latitude: 35.6813, longitude: 139.7671);
+      final newLocation = Location(latitude: 35.6813, longitude: 139.7671);
       final updated = original.copyWith(location: newLocation);
 
       expect(updated.location, newLocation);
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('同じlocationとlastUpdatedを持つLocationStateは等しい', () {
-      const location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Location(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState1 = LocationState(
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('異なるlastUpdatedを持つLocationStateは等しくない', () {
-      const location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Location(latitude: 35.6812, longitude: 139.7671);
 
       final locationState1 = LocationState(
         location: location,

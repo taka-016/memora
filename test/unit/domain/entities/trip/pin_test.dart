@@ -27,6 +27,19 @@ void main() {
       expect(pin.visitMemo, 'テストメモ');
     });
 
+    test('緯度が不正な場合は例外が発生する', () {
+      expect(
+        () => Pin(
+          pinId: 'pin001',
+          tripId: 'trip001',
+          groupId: 'group001',
+          latitude: 91.0,
+          longitude: 139.0,
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
     test('訪問終了日時が開始日時より前の場合は例外が発生する', () {
       expect(
         () => Pin(

@@ -16,7 +16,7 @@ import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';

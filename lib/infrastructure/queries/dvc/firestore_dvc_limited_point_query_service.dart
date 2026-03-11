@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/dvc/firestore_dvc_limited_point_mapper.dart';
 
 class FirestoreDvcLimitedPointQueryService

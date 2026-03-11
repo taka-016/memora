@@ -3,7 +3,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
-import 'package:memora/domain/value_objects/order_by.dart';
+import 'package:memora/application/queries/order_by.dart';
 
 import '../../../../helpers/test_exception.dart';
 import 'firestore_group_query_service_test.mocks.dart';

@@ -9,7 +9,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/constants/color_constants.dart';
-import 'package:memora/domain/value_objects/route_segment_detail.dart';
+import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/presentation/features/trip/route_memo_edit_bottom_sheet.dart';
 
@@ -22,18 +22,18 @@ String _routeSegmentKey(PinDto origin, PinDto destination) {
   return '${origin.pinId}->${destination.pinId}';
 }
 
-bool _hasManualContent(RouteSegmentDetail detail) {
+bool _hasManualContent(RouteSegmentDetailDto detail) {
   return detail.instructions.isNotEmpty || detail.durationSeconds > 0;
 }
 
 class RouteInfoViewTestHandle {
-  Map<String, RouteSegmentDetail> Function()? _getSegmentDetails;
+  Map<String, RouteSegmentDetailDto> Function()? _getSegmentDetails;
   int? Function()? _getSelectedPinIndex;
   Map<String, Color> Function()? _getSegmentHighlightColors;
   bool Function()? _getShouldFitMap;
   void Function(int index)? _selectPin;
 
-  Map<String, RouteSegmentDetail> get segmentDetails =>
+  Map<String, RouteSegmentDetailDto> get segmentDetails =>
       _getSegmentDetails?.call() ?? const {};
 
   int? get selectedPinIndex => _getSelectedPinIndex?.call();
@@ -71,7 +71,9 @@ class RouteInfoView extends HookConsumerWidget {
 
     final pinsState = useState<List<PinDto>>(List<PinDto>.from(pins));
     final segmentModesState = useState<Map<String, TravelMode>>({});
-    final segmentDetailsState = useState<Map<String, RouteSegmentDetail>>({});
+    final segmentDetailsState = useState<Map<String, RouteSegmentDetailDto>>(
+      {},
+    );
     final routeMemoExpansionState = useState<Map<String, bool>>({});
     final isLoadingState = useState(false);
     final errorMessageState = useState<String?>(null);
@@ -88,7 +90,7 @@ class RouteInfoView extends HookConsumerWidget {
       isLoadingState.value = true;
       errorMessageState.value = null;
 
-      final nextResults = <String, RouteSegmentDetail>{};
+      final nextResults = <String, RouteSegmentDetailDto>{};
 
       try {
         nextResults.addAll(
@@ -190,7 +192,7 @@ class RouteInfoView extends HookConsumerWidget {
       }
       final handle = testHandle!;
       handle._getSegmentDetails = () =>
-          Map<String, RouteSegmentDetail>.unmodifiable(
+          Map<String, RouteSegmentDetailDto>.unmodifiable(
             segmentDetailsState.value,
           );
       handle._getSelectedPinIndex = () => selectedPinIndexState.value;

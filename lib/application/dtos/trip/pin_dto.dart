@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/domain/value_objects/location.dart';
 
 class PinDto extends Equatable {
   const PinDto({
@@ -22,6 +24,14 @@ class PinDto extends Equatable {
   final DateTime? visitStartDate;
   final DateTime? visitEndDate;
   final String? visitMemo;
+
+  Location? get locationOrNull {
+    try {
+      return Location(latitude: latitude, longitude: longitude);
+    } on ValidationException {
+      return null;
+    }
+  }
 
   PinDto copyWith({
     String? pinId,

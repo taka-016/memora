@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:memora/domain/services/location_search_service.dart';
-import 'package:memora/domain/value_objects/location_candidate.dart';
+import 'package:memora/application/services/location_search_service.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/domain/value_objects/location.dart';
 
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
@@ -14,7 +14,7 @@ class GooglePlacesApiLocationSearchService implements LocationSearchService {
   }) : httpClient = httpClient ?? http.Client();
 
   @override
-  Future<List<LocationCandidate>> searchByKeyword(String keyword) async {
+  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
     final url = Uri.https(
       'maps.googleapis.com',
       '/maps/api/place/textsearch/json',
@@ -29,8 +29,8 @@ class GooglePlacesApiLocationSearchService implements LocationSearchService {
     final data = json.decode(utf8.decode(response.bodyBytes));
     final results = data['results'];
     if (results is! List) return const [];
-    return results.map<LocationCandidate>((item) {
-      return LocationCandidate(
+    return results.map<LocationCandidateDto>((item) {
+      return LocationCandidateDto(
         name: item['name'] ?? '',
         address: item['formatted_address'] ?? '',
         location: Location(
