@@ -10,13 +10,13 @@ import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class MockLocationService implements CurrentLocationService {
-  final Coordinate? _location;
+  final Coordinate? _coordinate;
 
-  MockLocationService([this._location]);
+  MockLocationService([this._coordinate]);
 
   @override
   Future<Coordinate?> getCurrentLocation() async {
-    return _location;
+    return _coordinate;
   }
 }
 
@@ -109,7 +109,7 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -159,7 +159,7 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -207,9 +207,9 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [],
-                onMapLongTapped: (Coordinate location) {
+                onMapLongTapped: (Coordinate coordinate) {
                   mapTapped = true;
-                  tappedLocation = location;
+                  tappedLocation = coordinate;
                 },
                 onMarkerTapped: (PinDto pin) {},
                 onMarkerUpdated: (PinDto pin) {},

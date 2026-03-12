@@ -35,7 +35,7 @@ void main() {
 
       final state = container.read(locationProvider);
 
-      expect(state.location, isNull);
+      expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
     });
 
@@ -51,16 +51,16 @@ void main() {
       final notifier = container.read(locationProvider.notifier);
       final future = notifier.getCurrentLocation();
 
-      final expectedLocation = Coordinate(
+      final expectedCoordinate = Coordinate(
         latitude: 35.6812,
         longitude: 139.7671,
       );
-      completer.complete(expectedLocation);
+      completer.complete(expectedCoordinate);
 
       await future;
 
       final state = container.read(locationProvider);
-      expect(state.location, expectedLocation);
+      expect(state.coordinate, expectedCoordinate);
       expect(state.lastUpdated, isNotNull);
     });
 
@@ -81,7 +81,7 @@ void main() {
       await expectLater(future, throwsException);
 
       final state = container.read(locationProvider);
-      expect(state.location, isNull);
+      expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
     });
 
@@ -90,11 +90,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Coordinate(latitude: 35.6812, longitude: 139.7671));
+      notifier.setCoordinate(
+        Coordinate(latitude: 35.6812, longitude: 139.7671),
+      );
 
       final state = container.read(locationProvider);
       expect(
-        state.location,
+        state.coordinate,
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
       expect(state.lastUpdated, isNotNull);
@@ -105,11 +107,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Coordinate(latitude: 35.6812, longitude: 139.7671));
+      notifier.setCoordinate(
+        Coordinate(latitude: 35.6812, longitude: 139.7671),
+      );
       notifier.clearLocation();
 
       final state = container.read(locationProvider);
-      expect(state.location, isNull);
+      expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
     });
   });

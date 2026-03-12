@@ -33,7 +33,7 @@ class GooglePlacesApiLocationSearchService implements LocationSearchService {
       return LocationCandidateDto(
         name: item['name'] ?? '',
         address: item['formatted_address'] ?? '',
-        location: Coordinate(
+        coordinate: Coordinate(
           latitude:
               (item['geometry']?['location']?['lat'] as num?)?.toDouble() ??
               0.0,

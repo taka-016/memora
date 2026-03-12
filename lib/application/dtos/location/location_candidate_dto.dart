@@ -5,13 +5,13 @@ class LocationCandidateDto extends Equatable {
   const LocationCandidateDto({
     required this.name,
     required this.address,
-    required this.location,
+    required this.coordinate,
   });
 
   final String name;
   final String address;
-  final Coordinate location;
+  final Coordinate coordinate;
 
   @override
-  List<Object?> get props => [name, address, location];
+  List<Object?> get props => [name, address, coordinate];
 }

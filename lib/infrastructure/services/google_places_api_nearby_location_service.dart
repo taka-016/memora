@@ -14,9 +14,9 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
   }) : httpClient = httpClient ?? http.Client();
 
   @override
-  Future<String?> getLocationName(Coordinate location) async {
+  Future<String?> getLocationName(Coordinate coordinate) async {
     try {
-      return await _getPlaceNameFromNearbySearch(location);
+      return await _getPlaceNameFromNearbySearch(coordinate);
     } catch (e, stack) {
       logger.e(
         'GooglePlacesApiNearbyLocationService.getLocationName: ${e.toString()}',
@@ -27,7 +27,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
     }
   }
 
-  Future<String?> _getPlaceNameFromNearbySearch(Coordinate location) async {
+  Future<String?> _getPlaceNameFromNearbySearch(Coordinate coordinate) async {
     try {
       if (apiKey.isEmpty) {
         return null;
@@ -52,8 +52,8 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
           'locationRestriction': {
             'circle': {
               'center': {
-                'latitude': location.latitude,
-                'longitude': location.longitude,
+                'latitude': coordinate.latitude,
+                'longitude': coordinate.longitude,
               },
               'radius': 100.0,
             },

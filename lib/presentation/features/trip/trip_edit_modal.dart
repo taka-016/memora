@@ -156,13 +156,13 @@ class TripEditModal extends HookConsumerWidget {
       selectedPin.value = null;
     }
 
-    Future<void> onMapLongTapped(Coordinate location) async {
+    Future<void> onMapLongTapped(Coordinate coordinate) async {
       final uuid = Uuid();
       final pinId = uuid.v4();
       final newPin = PinDto(
         pinId: pinId,
-        latitude: location.latitude,
-        longitude: location.longitude,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
       );
 
       pins.value = [...pins.value, newPin];

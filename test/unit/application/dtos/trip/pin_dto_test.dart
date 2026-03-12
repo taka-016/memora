@@ -66,7 +66,7 @@ void main() {
       expect(pinDto.visitMemo, visitMemo);
     });
 
-    test('locationOrNullでCoordinateを取得できる', () {
+    test('coordinateでCoordinateを取得できる', () {
       final pinDto = PinDto(
         pinId: 'pin-123',
         latitude: 35.6762,
@@ -74,12 +74,12 @@ void main() {
       );
 
       expect(
-        pinDto.locationOrNull,
+        pinDto.coordinate,
         Coordinate(latitude: 35.6762, longitude: 139.6503),
       );
     });
 
-    test('locationOrNullは範囲外の緯度経度でもCoordinateを返す', () {
+    test('coordinateは範囲外の緯度経度でもCoordinateを返す', () {
       final pinDto = PinDto(
         pinId: 'pin-123',
         latitude: 91.0,
@@ -87,7 +87,7 @@ void main() {
       );
 
       expect(
-        pinDto.locationOrNull,
+        pinDto.coordinate,
         Coordinate(latitude: 91.0, longitude: 139.6503),
       );
     });

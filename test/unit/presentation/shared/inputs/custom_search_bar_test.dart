@@ -19,12 +19,12 @@ final mockCandidatesDefault = [
   LocationCandidateDto(
     name: '東京タワー',
     address: '東京都港区芝公園4-2-8',
-    location: Coordinate(latitude: 35.6586, longitude: 139.7454),
+    coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
   ),
   LocationCandidateDto(
     name: 'スカイツリー',
     address: '東京都墨田区押上1-1-2',
-    location: Coordinate(latitude: 35.7101, longitude: 139.8107),
+    coordinate: Coordinate(latitude: 35.7101, longitude: 139.8107),
   ),
 ];
 

@@ -24,7 +24,7 @@ class PinDto extends Equatable {
   final DateTime? visitEndDate;
   final String? visitMemo;
 
-  Coordinate get locationOrNull {
+  Coordinate get coordinate {
     return Coordinate(latitude: latitude, longitude: longitude);
   }
 
