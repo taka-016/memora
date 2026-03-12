@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/domain/value_objects/location.dart' as domain;
+import 'package:memora/core/models/coordinate.dart';
 import 'package:http/http.dart' as http;
 import 'package:memora/core/app_logger.dart';
 
@@ -14,7 +14,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
   }) : httpClient = httpClient ?? http.Client();
 
   @override
-  Future<String?> getLocationName(domain.Location location) async {
+  Future<String?> getLocationName(Coordinate location) async {
     try {
       return await _getPlaceNameFromNearbySearch(location);
     } catch (e, stack) {
@@ -27,9 +27,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
     }
   }
 
-  Future<String?> _getPlaceNameFromNearbySearch(
-    domain.Location location,
-  ) async {
+  Future<String?> _getPlaceNameFromNearbySearch(Coordinate location) async {
     try {
       if (apiKey.isEmpty) {
         return null;

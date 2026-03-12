@@ -1,10 +1,10 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class GeolocatorCurrentLocationService implements CurrentLocationService {
   @override
-  Future<Location?> getCurrentLocation() async {
+  Future<Coordinate?> getCurrentLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       await Geolocator.openLocationSettings();
@@ -23,6 +23,9 @@ class GeolocatorCurrentLocationService implements CurrentLocationService {
     }
 
     final position = await Geolocator.getCurrentPosition();
-    return Location(latitude: position.latitude, longitude: position.longitude);
+    return Coordinate(
+      latitude: position.latitude,
+      longitude: position.longitude,
+    );
   }
 }

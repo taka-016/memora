@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class LocationCandidateDto extends Equatable {
   const LocationCandidateDto({
@@ -10,7 +10,7 @@ class LocationCandidateDto extends Equatable {
 
   final String name;
   final String address;
-  final Location location;
+  final Coordinate location;
 
   @override
   List<Object?> get props => [name, address, location];

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 
 void main() {
@@ -15,7 +15,7 @@ void main() {
 
     test('copyWithで指定したフィールドだけを更新できる', () {
       final original = RouteSegmentDetailDto(
-        polyline: [Location(latitude: 35.0, longitude: 135.0)],
+        polyline: [Coordinate(latitude: 35.0, longitude: 135.0)],
         distanceMeters: 1000,
         durationSeconds: 600,
         instructions: ['直進してください'],
@@ -34,7 +34,7 @@ void main() {
 
     test('Equatableのpropsには全フィールドが含まれる', () {
       final detail = RouteSegmentDetailDto(
-        polyline: [Location(latitude: 35.0, longitude: 135.0)],
+        polyline: [Coordinate(latitude: 35.0, longitude: 135.0)],
         distanceMeters: 1000,
         durationSeconds: 600,
         instructions: ['直進してください'],

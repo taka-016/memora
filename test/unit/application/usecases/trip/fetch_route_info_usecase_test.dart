@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/application/services/route_info_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -54,7 +54,7 @@ void main() {
 
     test('移動手段が未指定の場合は自動車で経路取得する', () async {
       final fetchedDetail = RouteSegmentDetailDto(
-        polyline: [Location(latitude: 0, longitude: 0)],
+        polyline: [Coordinate(latitude: 0, longitude: 0)],
         distanceMeters: 1200,
         durationSeconds: 600,
         instructions: const ['直進'],
@@ -93,7 +93,7 @@ void main() {
         instructions: const ['手動メモ'],
       );
       final fetchedDetail = RouteSegmentDetailDto(
-        polyline: [Location(latitude: 1, longitude: 1)],
+        polyline: [Coordinate(latitude: 1, longitude: 1)],
         distanceMeters: 0,
         durationSeconds: 0,
         instructions: const [],

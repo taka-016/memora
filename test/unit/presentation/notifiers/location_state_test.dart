@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/notifiers/location_state.dart';
 
 void main() {
   group('LocationState', () {
     test('緯度と経度を持つLocationStateを作成できる', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Coordinate(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState = LocationState(
@@ -19,11 +19,11 @@ void main() {
 
     test('copyWithでlocationを更新できる', () {
       final original = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        location: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: DateTime(2025, 1, 1),
       );
 
-      final newLocation = Location(latitude: 35.6813, longitude: 139.7671);
+      final newLocation = Coordinate(latitude: 35.6813, longitude: 139.7671);
       final updated = original.copyWith(location: newLocation);
 
       expect(updated.location, newLocation);
@@ -32,7 +32,7 @@ void main() {
 
     test('copyWithで最終更新日時を更新できる', () {
       final original = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        location: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: DateTime(2025, 1, 1),
       );
 
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('同じlocationとlastUpdatedを持つLocationStateは等しい', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Coordinate(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState1 = LocationState(
@@ -71,11 +71,11 @@ void main() {
       final lastUpdated = DateTime(2025, 1, 1);
 
       final locationState1 = LocationState(
-        location: Location(latitude: 35.6812, longitude: 139.7671),
+        location: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: lastUpdated,
       );
       final locationState2 = LocationState(
-        location: Location(latitude: 35.6813, longitude: 139.7671),
+        location: Coordinate(latitude: 35.6813, longitude: 139.7671),
         lastUpdated: lastUpdated,
       );
 
@@ -83,7 +83,7 @@ void main() {
     });
 
     test('異なるlastUpdatedを持つLocationStateは等しくない', () {
-      final location = Location(latitude: 35.6812, longitude: 139.7671);
+      final location = Coordinate(latitude: 35.6812, longitude: 139.7671);
 
       final locationState1 = LocationState(
         location: location,

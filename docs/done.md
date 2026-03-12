@@ -620,6 +620,28 @@
 - `lib/domain/value_objects/location.dart` を真の値オブジェクトとして見直す
   - 緯度は `-90..90`、経度は `-180..180` の範囲かつ有限値であることの検証を追加する
   - `Pin` など緯度・経度を別々に持つ箇所で `Location` を利用するかを再検討し、位置表現を統一する
+- `lib/domain/value_objects/location.dart` を値オブジェクトではなく座標モデルとして再整理する
+  - `domain/value_objects` から外し、`lib/core/models/coordinate.dart` など複数層で共有できる配置へ移す
+  - 名称もドメイン概念ではなく座標を表す `Coordinate` / `GeoCoordinate` 系へ見直す
+  - `presentation` / `application` / `infrastructure` では分解したプリミティブではなく共通座標モデルで受け渡す
+  - 緯度経度の範囲チェックと `ValidationException` による検証は廃止し、座標コンテナとして扱う
+  - エンティティで `Location` を経由して行っている緯度経度チェックも廃止する
+- `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/notifiers/location_notifier.dart:2` で `domain/value_objects/location.dart` を直接参照している
+  - 位置情報は共通座標モデルで保持し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/notifiers/location_state.dart:2` で `domain/value_objects/location.dart` を直接参照している
+  - 位置状態はプレゼン用stateと共通座標モデルで表現し、domainの値オブジェクト参照を排除する
+- `lib/presentation/shared/map_views/google_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/shared/map_views/google_map_view.dart:5` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/shared/map_views/map_view_builder.dart:3` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
+- `lib/presentation/shared/map_views/placeholder_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/features/group/group_edit_modal.dart:7` で `domain/entities/group/group.dart` を直接参照している
   - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - `lib/presentation/features/member/member_edit_modal.dart:6` で `domain/entities/member/member.dart` を直接参照している

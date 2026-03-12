@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
@@ -13,7 +13,7 @@ import 'package:memora/core/app_logger.dart';
 
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
-  final Function(Location)? onMapLongTapped;
+  final Function(Coordinate)? onMapLongTapped;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
@@ -86,10 +86,10 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedLocation(Location location) async {
+    Future<void> moveToSearchedLocation(Coordinate location) async {
       animateToPosition(LatLng(location.latitude, location.longitude));
       onMapLongTapped?.call(
-        Location(latitude: location.latitude, longitude: location.longitude),
+        Coordinate(latitude: location.latitude, longitude: location.longitude),
       );
     }
 
@@ -99,7 +99,7 @@ class GoogleMapView extends HookConsumerWidget {
 
     void onMapLongTap(LatLng position) {
       onMapLongTapped?.call(
-        Location(latitude: position.latitude, longitude: position.longitude),
+        Coordinate(latitude: position.latitude, longitude: position.longitude),
       );
     }
 

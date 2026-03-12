@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
@@ -40,7 +40,7 @@ void main() {
     });
 
     test('現在地取得成功時に状態が更新される', () async {
-      final completer = Completer<Location?>();
+      final completer = Completer<Coordinate?>();
       when(
         mockCurrentLocationService.getCurrentLocation(),
       ).thenAnswer((_) => completer.future);
@@ -51,7 +51,10 @@ void main() {
       final notifier = container.read(locationProvider.notifier);
       final future = notifier.getCurrentLocation();
 
-      final expectedLocation = Location(latitude: 35.6812, longitude: 139.7671);
+      final expectedLocation = Coordinate(
+        latitude: 35.6812,
+        longitude: 139.7671,
+      );
       completer.complete(expectedLocation);
 
       await future;
@@ -62,7 +65,7 @@ void main() {
     });
 
     test('現在地取得失敗時でも状態が変更されない', () async {
-      final completer = Completer<Location?>();
+      final completer = Completer<Coordinate?>();
       when(
         mockCurrentLocationService.getCurrentLocation(),
       ).thenAnswer((_) => completer.future);
@@ -87,10 +90,13 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Location(latitude: 35.6812, longitude: 139.7671));
+      notifier.setLocation(Coordinate(latitude: 35.6812, longitude: 139.7671));
 
       final state = container.read(locationProvider);
-      expect(state.location, Location(latitude: 35.6812, longitude: 139.7671));
+      expect(
+        state.location,
+        Coordinate(latitude: 35.6812, longitude: 139.7671),
+      );
       expect(state.lastUpdated, isNotNull);
     });
 
@@ -99,7 +105,7 @@ void main() {
       addTearDown(container.dispose);
 
       final notifier = container.read(locationProvider.notifier);
-      notifier.setLocation(Location(latitude: 35.6812, longitude: 139.7671));
+      notifier.setLocation(Coordinate(latitude: 35.6812, longitude: 139.7671));
       notifier.clearLocation();
 
       final state = container.read(locationProvider);

@@ -2,8 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:memora/application/services/route_info_service.dart';
-import 'package:memora/domain/exceptions/validation_exception.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 
@@ -18,15 +17,15 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
 
   @override
   Future<RouteSegmentDetailDto> fetchRoute({
-    required Location origin,
-    required Location destination,
+    required Coordinate origin,
+    required Coordinate destination,
     required TravelMode travelMode,
   }) async {
     if (travelMode == TravelMode.other) {
       return RouteSegmentDetailDto(
         polyline: [
-          Location(latitude: origin.latitude, longitude: origin.longitude),
-          Location(
+          Coordinate(latitude: origin.latitude, longitude: origin.longitude),
+          Coordinate(
             latitude: destination.latitude,
             longitude: destination.longitude,
           ),
@@ -157,7 +156,7 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
 
     if (encodedPolyline == null || encodedPolyline.isEmpty) {
       return RouteSegmentDetailDto(
-        polyline: const <Location>[],
+        polyline: const <Coordinate>[],
         distanceMeters: distanceMeters,
         durationSeconds: durationSeconds,
         instructions: instructions,
@@ -173,18 +172,16 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     );
   }
 
-  List<Location> _decodePolylineSafely(String encoded) {
+  List<Coordinate> _decodePolylineSafely(String encoded) {
     try {
       return _decodePolyline(encoded);
-    } on ValidationException {
-      return const <Location>[];
     } on RangeError {
-      return const <Location>[];
+      return const <Coordinate>[];
     }
   }
 
-  List<Location> _decodePolyline(String encoded) {
-    final List<Location> coordinates = [];
+  List<Coordinate> _decodePolyline(String encoded) {
+    final List<Coordinate> coordinates = [];
     int index = 0;
     int lat = 0;
     int lng = 0;
@@ -218,7 +215,7 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
       final deltaLng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
       lng += deltaLng;
 
-      coordinates.add(Location(latitude: lat / 1e5, longitude: lng / 1e5));
+      coordinates.add(Coordinate(latitude: lat / 1e5, longitude: lng / 1e5));
     }
 
     return coordinates;

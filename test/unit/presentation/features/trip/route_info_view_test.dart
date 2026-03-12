@@ -5,7 +5,7 @@ import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/application/usecases/trip/fetch_route_info_usecase.dart';
 import 'package:memora/core/constants/color_constants.dart';
 import 'package:memora/application/services/route_info_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -20,8 +20,8 @@ class FakeRouteInfoService implements RouteInfoService {
 
   @override
   Future<RouteSegmentDetailDto> fetchRoute({
-    required Location origin,
-    required Location destination,
+    required Coordinate origin,
+    required Coordinate destination,
     required TravelMode travelMode,
   }) async {
     _requests.add(
@@ -35,8 +35,8 @@ class FakeRouteInfoService implements RouteInfoService {
     if (travelMode == TravelMode.other) {
       return RouteSegmentDetailDto(
         polyline: [
-          Location(latitude: origin.latitude, longitude: origin.longitude),
-          Location(
+          Coordinate(latitude: origin.latitude, longitude: origin.longitude),
+          Coordinate(
             latitude: destination.latitude,
             longitude: destination.longitude,
           ),
@@ -53,8 +53,8 @@ class FakeRouteInfoService implements RouteInfoService {
 }
 
 class _RouteRequest {
-  final Location origin;
-  final Location destination;
+  final Coordinate origin;
+  final Coordinate destination;
   final TravelMode travelMode;
 
   _RouteRequest({
@@ -190,9 +190,9 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.05, longitude: 135.05),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.05, longitude: 135.05),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 0,
             durationSeconds: 0,
@@ -200,9 +200,9 @@ void main() {
           ),
           '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.1, longitude: 135.1),
-              Location(latitude: 35.15, longitude: 135.15),
-              Location(latitude: 35.2, longitude: 135.2),
+              Coordinate(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.15, longitude: 135.15),
+              Coordinate(latitude: 35.2, longitude: 135.2),
             ],
             distanceMeters: 0,
             durationSeconds: 0,
@@ -260,8 +260,14 @@ void main() {
       final detail = handle.segmentDetails[segmentKey];
       expect(detail, isNotNull);
       expect(detail!.polyline.length, 2);
-      expect(detail.polyline.first, Location(latitude: 35.0, longitude: 135.0));
-      expect(detail.polyline.last, Location(latitude: 35.1, longitude: 135.1));
+      expect(
+        detail.polyline.first,
+        Coordinate(latitude: 35.0, longitude: 135.0),
+      );
+      expect(
+        detail.polyline.last,
+        Coordinate(latitude: 35.1, longitude: 135.1),
+      );
       expect(detail.instructions, ['自転車で移動', '徒歩で移動']);
       expect(detail.durationSeconds, 900);
     });
@@ -318,9 +324,9 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.05, longitude: 135.05),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.05, longitude: 135.05),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 3200,
             durationSeconds: 900,
@@ -328,9 +334,9 @@ void main() {
           ),
           '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.1, longitude: 135.1),
-              Location(latitude: 35.15, longitude: 135.15),
-              Location(latitude: 35.2, longitude: 135.2),
+              Coordinate(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.15, longitude: 135.15),
+              Coordinate(latitude: 35.2, longitude: 135.2),
             ],
             distanceMeters: 2100,
             durationSeconds: 480,
@@ -385,9 +391,9 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.05, longitude: 135.05),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.05, longitude: 135.05),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 3200,
             durationSeconds: 900,
@@ -395,9 +401,9 @@ void main() {
           ),
           '35.1,135.1->35.2,135.2-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.1, longitude: 135.1),
-              Location(latitude: 35.15, longitude: 135.15),
-              Location(latitude: 35.2, longitude: 135.2),
+              Coordinate(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.15, longitude: 135.15),
+              Coordinate(latitude: 35.2, longitude: 135.2),
             ],
             distanceMeters: 2100,
             durationSeconds: 480,
@@ -445,11 +451,11 @@ void main() {
         responses['${origin.latitude},${origin.longitude}->${destination.latitude},${destination.longitude}-${TravelMode.drive}'] =
             RouteSegmentDetailDto(
               polyline: [
-                Location(
+                Coordinate(
                   latitude: origin.latitude,
                   longitude: origin.longitude,
                 ),
-                Location(
+                Coordinate(
                   latitude: destination.latitude,
                   longitude: destination.longitude,
                 ),
@@ -484,8 +490,8 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 1500,
             durationSeconds: 420,
@@ -521,9 +527,9 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.05, longitude: 135.05),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.05, longitude: 135.05),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 4200,
             durationSeconds: 1020,
@@ -593,8 +599,8 @@ void main() {
         responses: {
           '35.0,135.0->35.1,135.1-TravelMode.drive': RouteSegmentDetailDto(
             polyline: [
-              Location(latitude: 35.0, longitude: 135.0),
-              Location(latitude: 35.1, longitude: 135.1),
+              Coordinate(latitude: 35.0, longitude: 135.0),
+              Coordinate(latitude: 35.1, longitude: 135.1),
             ],
             distanceMeters: 1200,
             durationSeconds: 600,

@@ -1,13 +1,13 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class LocationState extends Equatable {
-  final Location? location;
+  final Coordinate? location;
   final DateTime? lastUpdated;
 
   const LocationState({this.location, this.lastUpdated});
 
-  LocationState copyWith({Location? location, DateTime? lastUpdated}) {
+  LocationState copyWith({Coordinate? location, DateTime? lastUpdated}) {
     return LocationState(
       location: location ?? this.location,
       lastUpdated: lastUpdated ?? this.lastUpdated,

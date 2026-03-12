@@ -4,13 +4,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:memora/core/enums/travel_mode.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
 void main() {
-  final origin = Location(latitude: 35.0, longitude: 135.0);
-  final destination = Location(latitude: 35.1, longitude: 135.2);
+  final origin = Coordinate(latitude: 35.0, longitude: 135.0);
+  final destination = Coordinate(latitude: 35.1, longitude: 135.2);
 
   GoogleRoutesApiRouteInfoService buildService(MockClient client) {
     return GoogleRoutesApiRouteInfoService(apiKey: 'dummy', httpClient: client);

@@ -1,5 +1,5 @@
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 abstract interface class NearbyLocationService {
-  Future<String?> getLocationName(Location location);
+  Future<String?> getLocationName(Coordinate location);
 }

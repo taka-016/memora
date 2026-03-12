@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class GooglePlacesApiLocationSearchService implements LocationSearchService {
   final String apiKey;
@@ -33,7 +33,7 @@ class GooglePlacesApiLocationSearchService implements LocationSearchService {
       return LocationCandidateDto(
         name: item['name'] ?? '',
         address: item['formatted_address'] ?? '',
-        location: Location(
+        location: Coordinate(
           latitude:
               (item['geometry']?['location']?['lat'] as num?)?.toDouble() ??
               0.0,

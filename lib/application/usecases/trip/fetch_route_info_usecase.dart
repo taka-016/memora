@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/enums/travel_mode.dart';
 import 'package:memora/application/services/route_info_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart';
 import 'package:memora/infrastructure/factories/route_info_service_factory.dart';
 
@@ -32,11 +32,11 @@ class FetchRouteInfoUsecase {
       final mode = segmentModes[key] ?? TravelMode.drive;
 
       var detail = await _routeInfoService.fetchRoute(
-        origin: Location(
+        origin: Coordinate(
           latitude: origin.latitude,
           longitude: origin.longitude,
         ),
-        destination: Location(
+        destination: Coordinate(
           latitude: destination.latitude,
           longitude: destination.longitude,
         ),
