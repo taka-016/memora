@@ -524,7 +524,8 @@ void main() {
         ),
       ).called(1);
       expect(find.byKey(const Key('locationNameField')), findsOneWidget);
-      expect(find.text('場所名を取得中...'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('場所情報を取得できませんでした'), findsOneWidget);
     });
 
     testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
