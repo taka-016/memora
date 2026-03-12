@@ -110,7 +110,7 @@ void main() {
       notifier.setCoordinate(
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
-      notifier.clearLocation();
+      notifier.clearCoordinate();
 
       final state = container.read(locationProvider);
       expect(state.coordinate, isNull);

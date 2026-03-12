@@ -45,7 +45,12 @@ class LocationNotifier extends Notifier<LocationState> {
     state = state.copyWith(coordinate: coordinate, lastUpdated: DateTime.now());
   }
 
+  @Deprecated('Use clearCoordinate instead.')
   void clearLocation() {
+    clearCoordinate();
+  }
+
+  void clearCoordinate() {
     state = const LocationState();
   }
 }

@@ -82,5 +82,23 @@ void main() {
       final result = await service.getLocationName(location);
       expect(result, isNull);
     });
+
+    test('非有限値の座標ならAPIを呼び出さずnullを返す', () async {
+      const coordinate = Coordinate(
+        latitude: double.infinity,
+        longitude: 139.7454,
+      );
+
+      final result = await service.getLocationName(coordinate);
+
+      verifyNever(
+        mockClient.post(
+          any,
+          headers: anyNamed('headers'),
+          body: anyNamed('body'),
+        ),
+      );
+      expect(result, isNull);
+    });
   });
 }

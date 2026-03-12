@@ -74,14 +74,16 @@ void main() {
       );
 
       expect(result.values.single, equals(fetchedDetail));
-      final capturedModes = verify(
+      final captured = verify(
         mockRouteInfoService.fetchRoute(
-          origin: anyNamed('origin'),
-          destination: anyNamed('destination'),
+          origin: captureAnyNamed('origin'),
+          destination: captureAnyNamed('destination'),
           travelMode: captureAnyNamed('travelMode'),
         ),
       ).captured;
-      expect(capturedModes.single, equals(TravelMode.drive));
+      expect(captured[0], equals(origin.coordinate));
+      expect(captured[1], equals(destination.coordinate));
+      expect(captured[2], equals(TravelMode.drive));
     });
 
     test('その他の経路で手動入力がある場合、取得結果のPolylineのみ反映する', () async {

@@ -21,6 +21,15 @@ class GoogleRoutesApiRouteInfoService implements RouteInfoService {
     required Coordinate destination,
     required TravelMode travelMode,
   }) async {
+    final hasFiniteCoordinates =
+        origin.latitude.isFinite &&
+        origin.longitude.isFinite &&
+        destination.latitude.isFinite &&
+        destination.longitude.isFinite;
+    if (!hasFiniteCoordinates) {
+      return const RouteSegmentDetailDto.empty();
+    }
+
     if (travelMode == TravelMode.other) {
       return RouteSegmentDetailDto(
         polyline: [
