@@ -55,12 +55,18 @@
 
 ## リファクタリング
 
+- `lib/domain/value_objects/location.dart` を値オブジェクトではなく座標モデルとして再整理する
+  - `domain/value_objects` から外し、`lib/core/models/coordinate.dart` など複数層で共有できる配置へ移す
+  - 名称もドメイン概念ではなく座標を表す `Coordinate` / `GeoCoordinate` 系へ見直す
+  - `presentation` / `application` / `infrastructure` では分解したプリミティブではなく共通座標モデルで受け渡す
+  - 緯度経度の範囲チェックと `ValidationException` による検証は廃止し、座標コンテナとして扱う
+  - エンティティで `Location` を経由して行っている緯度経度チェックも廃止する
 - `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/features/trip/trip_edit_modal.dart:9` で `domain/exceptions/validation_exception.dart` を直接参照している
   - 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
 - `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/features/trip/trip_management.dart:13` で `application/queries/order_by.dart` を直接参照している
   - 並び順指定はユースケース入力の列挙・フラグで表現し、プレゼンテーション層でクエリオブジェクトを組み立てない
 - `lib/presentation/notifiers/auth_notifier.dart:5` で `application/services/auth_service.dart` を直接参照している
@@ -68,9 +74,9 @@
 - `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
   - Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
 - `lib/presentation/notifiers/location_notifier.dart:2` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 位置情報は共通座標モデルで保持し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/notifiers/location_state.dart:2` で `domain/value_objects/location.dart` を直接参照している
-  - 位置状態はプレゼン用state（プリミティブ中心）へ置換し、domainの値オブジェクト参照を排除する
+  - 位置状態はプレゼン用stateと共通座標モデルで表現し、domainの値オブジェクト参照を排除する
 - `lib/presentation/notifiers/location_notifier.dart:4` で `domain/services/current_location_service.dart` を直接参照している
   - 現在地取得はユースケース経由に統一し、domainサービスを画面から直接参照しない
 - `lib/presentation/notifiers/location_notifier.dart:5` で `infrastructure/services/geolocator_current_location_service.dart` を直接参照している
@@ -78,15 +84,15 @@
 - `lib/presentation/shared/inputs/custom_search_bar.dart:3` で `application/services/location_search_service.dart` を直接参照している
   - 場所検索はユースケース経由に統一し、プレゼンテーション層からサービス依存を外す
 - `lib/presentation/shared/map_views/google_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/shared/map_views/google_map_view.dart:5` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/shared/map_views/google_map_view.dart:10` で `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
   - インフラサービス直接参照を削除し、場所検索ユースケース経由の呼び出しに統一する
 - `lib/presentation/shared/map_views/map_view_builder.dart:3` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/shared/map_views/placeholder_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+  - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:4` で `domain/services/nearby_location_service.dart` を直接参照している
   - 周辺検索はユースケース経由に統一し、domainサービスを画面から直接参照しない
 - `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:5` で `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
