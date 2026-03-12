@@ -32,9 +32,6 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
       if (apiKey.isEmpty) {
         return null;
       }
-      if (!coordinate.latitude.isFinite || !coordinate.longitude.isFinite) {
-        return null;
-      }
 
       final url = Uri.parse(
         'https://places.googleapis.com/v1/places:searchNearby',

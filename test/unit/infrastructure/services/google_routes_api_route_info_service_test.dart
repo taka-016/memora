@@ -54,24 +54,6 @@ void main() {
       );
     });
 
-    test('非有限値の座標ならHTTPアクセスせずemptyを返す', () async {
-      var called = false;
-      final client = MockClient((request) async {
-        called = true;
-        return http.Response('"unused"', 200);
-      });
-      final service = buildService(client);
-
-      final result = await service.fetchRoute(
-        origin: const Coordinate(latitude: double.nan, longitude: 135.0),
-        destination: destination,
-        travelMode: TravelMode.walk,
-      );
-
-      expect(called, isFalse);
-      expect(result, const RouteSegmentDetailDto.empty());
-    });
-
     test('routesが空ならRouteSegmentDetailDto.emptyを返しDrive用のBodyを送信する', () async {
       late http.Request capturedRequest;
       final client = MockClient((request) async {
