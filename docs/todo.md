@@ -59,7 +59,8 @@
   - `domain/value_objects` から外し、`lib/core/models/coordinate.dart` など複数層で共有できる配置へ移す
   - 名称もドメイン概念ではなく座標を表す `Coordinate` / `GeoCoordinate` 系へ見直す
   - `presentation` / `application` / `infrastructure` では分解したプリミティブではなく共通座標モデルで受け渡す
-  - 緯度経度の範囲チェックや `ValidationException` を投げる責務がドメインルールかを見直し、必要に応じて別レイヤーへ移す
+  - 緯度経度の範囲チェックと `ValidationException` による検証は廃止し、座標コンテナとして扱う
+  - エンティティで `Location` を経由して行っている緯度経度チェックも廃止する
 - `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
   - 座標は共通座標モデルで受け渡し、presentation層からdomainの値オブジェクト参照を排除する
 - `lib/presentation/features/trip/trip_edit_modal.dart:9` で `domain/exceptions/validation_exception.dart` を直接参照している
