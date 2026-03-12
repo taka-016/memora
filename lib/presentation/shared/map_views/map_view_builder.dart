@@ -5,9 +5,9 @@ abstract class MapViewBuilder {
   Widget createMapView({
     required List<PinDto> pins,
     void Function(double latitude, double longitude)? onMapLongTapped,
-    Function(PinDto)? onMarkerTapped,
-    Function(PinDto)? onMarkerUpdated,
-    Function(String)? onMarkerDeleted,
+    void Function(PinDto)? onMarkerTapped,
+    void Function(PinDto)? onMarkerUpdated,
+    void Function(String)? onMarkerDeleted,
     PinDto? selectedPin,
     bool isReadOnly = false,
   });

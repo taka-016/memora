@@ -13,9 +13,9 @@ import 'package:memora/core/app_logger.dart';
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
   final void Function(double latitude, double longitude)? onMapLongTapped;
-  final Function(PinDto)? onMarkerTapped;
-  final Function(PinDto)? onMarkerUpdated;
-  final Function(String)? onMarkerDeleted;
+  final void Function(PinDto)? onMarkerTapped;
+  final void Function(PinDto)? onMarkerUpdated;
+  final void Function(String)? onMarkerDeleted;
   final PinDto? selectedPin;
   final bool isReadOnly;
 

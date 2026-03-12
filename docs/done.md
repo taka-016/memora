@@ -610,22 +610,22 @@
 
 ## リファクタリング
 
-- `lib/presentation/features/trip/select_visit_location_view.dart:3` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/features/trip/trip_edit_modal.dart:10` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/notifiers/location_notifier.dart:2` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/notifiers/location_state.dart:2` で `domain/value_objects/location.dart` を直接参照している
-  - 位置状態はプレゼン用state（プリミティブ中心）へ置換し、domainの値オブジェクト参照を排除する
-- `lib/presentation/shared/map_views/google_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/shared/map_views/google_map_view.dart:5` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/shared/map_views/map_view_builder.dart:3` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
-- `lib/presentation/shared/map_views/placeholder_map_view_builder.dart:4` で `domain/value_objects/location.dart` を直接参照している
-  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証はユースケースで行う
+- `lib/presentation/features/trip/select_visit_location_view.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/features/trip/trip_edit_modal.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/notifiers/location_notifier.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/notifiers/location_state.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 位置状態をプレゼン用state（プリミティブ中心）へ置換し、domainの値オブジェクト参照を排除した
+- `lib/presentation/shared/map_views/google_map_view_builder.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/shared/map_views/google_map_view.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/shared/map_views/map_view_builder.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
+- `lib/presentation/shared/map_views/placeholder_map_view_builder.dart` から `domain/value_objects/location.dart` への直接参照を排除した
+  - 緯度・経度などプリミティブで受け渡し、locationの生成・検証をユースケース側で行うように修正した
 - `lib/domain/value_objects` は `Location` のみを残す方針に整理する
   - `location_candidate.dart` は場所検索結果モデルとして `lib/application/dtos` もしくは `lib/infrastructure` 配下へ移動する
     - `lib/domain/services/location_search_service.dart` が戻り値型として参照しているため、ドメイン層がアプリケーション層・インフラ層の型へ依存しないよう、サービス契約もあわせて見直す

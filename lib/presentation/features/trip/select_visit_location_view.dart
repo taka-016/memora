@@ -23,9 +23,9 @@ class SelectVisitLocationView extends StatelessWidget {
   final VoidCallback onClose;
   final PinDto? selectedPin;
   final void Function(double latitude, double longitude)? onMapLongTapped;
-  final Function(PinDto)? onMarkerTapped;
-  final Function(PinDto)? onMarkerUpdated;
-  final Function(String)? onMarkerDeleted;
+  final void Function(PinDto)? onMarkerTapped;
+  final void Function(PinDto)? onMarkerUpdated;
+  final void Function(String)? onMarkerDeleted;
   final Key? closeButtonKey;
 
   @override
