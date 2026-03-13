@@ -47,7 +47,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
         },
         body: jsonEncode({
           'maxResultCount': 1,
-          'rankPreference': 'DISTANCE',
+          'rankPreference': 'POPULARITY',
           'languageCode': 'ja',
           'locationRestriction': {
             'circle': {
@@ -55,7 +55,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
                 'latitude': coordinate.latitude,
                 'longitude': coordinate.longitude,
               },
-              'radius': 100.0,
+              'radius': 10.0,
             },
           },
         }),
