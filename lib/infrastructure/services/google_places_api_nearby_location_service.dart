@@ -55,7 +55,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
                 'latitude': coordinate.latitude,
                 'longitude': coordinate.longitude,
               },
-              'radius': 10.0,
+              'radius': 100.0,
             },
           },
         }),
