@@ -5,7 +5,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:memora/presentation/notifiers/location_notifier.dart';
+import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -59,7 +59,7 @@ class GoogleMapView extends HookConsumerWidget {
         final firstPin = pins.first;
         return LatLng(firstPin.latitude, firstPin.longitude);
       }
-      final coordinate = ref.read(locationProvider).coordinate;
+      final coordinate = ref.read(coordinateProvider).coordinate;
       return coordinate != null
           ? LatLng(coordinate.latitude, coordinate.longitude)
           : fallbackPosition;
@@ -67,8 +67,8 @@ class GoogleMapView extends HookConsumerWidget {
 
     Future<void> moveToCurrentLocation() async {
       try {
-        await ref.read(locationProvider.notifier).getCurrentLocation();
-        final coordinate = ref.read(locationProvider).coordinate;
+        await ref.read(coordinateProvider.notifier).getCurrentLocation();
+        final coordinate = ref.read(coordinateProvider).coordinate;
 
         if (coordinate == null) {
           showErrorSnackBar('現在地が取得できませんでした');

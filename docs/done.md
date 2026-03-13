@@ -662,6 +662,14 @@
   - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
 - `lib/presentation/features/auth/signup_page.dart:5` で `domain/value_objects/auth_state.dart` を直接参照している
   - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
+- `lib/presentation/notifiers/coordinate_notifier.dart` は `Coordinate` と更新日時だけを保持するNotifierのため、`Location` より `Coordinate` 系の命名へ寄せる
+  - `LocationNotifier` を `CoordinateNotifier` へ改名する
+  - `locationProvider` を `coordinateProvider` へ改名する
+  - `test/unit/presentation/notifiers/coordinate_notifier_test.dart` と関連参照も同じ方針で追従する
+- `lib/presentation/notifiers/coordinate_state.dart` は状態の実体が `Coordinate? coordinate` と `lastUpdated` のみのため、`Location` より `Coordinate` 系の命名へ寄せる
+  - `LocationState` を `CoordinateState` へ改名する
+  - `test/unit/presentation/notifiers/coordinate_state_test.dart` と関連参照も同じ方針で追従する
+- `lib/presentation/shared/map_views/google_map_view.dart` の `locationNotifier` ローカル変数名は上記リファクタリングに合わせて `coordinateNotifier` 系へ揃える
 - GroupDtoを作成する
   - GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - マッパーも用意する
