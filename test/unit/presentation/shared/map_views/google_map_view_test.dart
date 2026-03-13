@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/presentation/notifiers/location_notifier.dart';
+import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
@@ -60,10 +60,10 @@ void main() {
       expect(find.byIcon(Icons.my_location), findsOneWidget);
     });
 
-    testWidgets('ピンもlocationProviderもない場合、デフォルト位置（東京駅）を使用する', (
+    testWidgets('ピンもcoordinateProviderもない場合、デフォルト位置（東京駅）を使用する', (
       WidgetTester tester,
     ) async {
-      // locationProviderにnullを設定
+      // coordinateProviderにnullを設定
       final container = ProviderContainer(
         overrides: [
           currentLocationServiceProvider.overrideWithValue(
@@ -91,10 +91,10 @@ void main() {
       expect(initialPosition.target.longitude, 139.767125);
     });
 
-    testWidgets('ピンがない場合、locationProviderの位置を使用する', (
+    testWidgets('ピンがない場合、coordinateProviderの位置を使用する', (
       WidgetTester tester,
     ) async {
-      // locationProviderに大阪の位置を設定
+      // coordinateProviderに大阪の位置を設定
       final testLocation = Coordinate(
         latitude: 34.693738,
         longitude: 135.502165,
@@ -108,8 +108,8 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setCoordinate(testLocation);
+      final coordinateNotifier = container.read(coordinateProvider.notifier);
+      coordinateNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -124,7 +124,7 @@ void main() {
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final initialPosition = googleMap.initialCameraPosition;
 
-      // locationProviderの位置を確認
+      // coordinateProviderの位置を確認
       expect(initialPosition.target.latitude, 34.693738);
       expect(initialPosition.target.longitude, 135.502165);
     });
@@ -144,7 +144,7 @@ void main() {
         ),
       ];
 
-      // locationProviderにも位置を設定（こちらは使われない）
+      // coordinateProviderにも位置を設定（こちらは使われない）
       final testLocation = Coordinate(
         latitude: 34.693738,
         longitude: 135.502165,
@@ -158,8 +158,8 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setCoordinate(testLocation);
+      final coordinateNotifier = container.read(coordinateProvider.notifier);
+      coordinateNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

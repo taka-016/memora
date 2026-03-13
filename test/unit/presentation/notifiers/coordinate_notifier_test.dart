@@ -4,15 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/notifiers/location_notifier.dart';
+import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import '../../../helpers/test_exception.dart';
 
-import 'location_notifier_test.mocks.dart';
+import 'coordinate_notifier_test.mocks.dart';
 
 @GenerateNiceMocks([MockSpec<CurrentLocationService>()])
 void main() {
-  group('LocationNotifier', () {
+  group('CoordinateNotifier', () {
     late MockCurrentLocationService mockCurrentLocationService;
 
     setUp(() {
@@ -33,7 +33,7 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final state = container.read(locationProvider);
+      final state = container.read(coordinateProvider);
 
       expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
@@ -48,7 +48,7 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(locationProvider.notifier);
+      final notifier = container.read(coordinateProvider.notifier);
       final future = notifier.getCurrentLocation();
 
       final expectedCoordinate = Coordinate(
@@ -59,7 +59,7 @@ void main() {
 
       await future;
 
-      final state = container.read(locationProvider);
+      final state = container.read(coordinateProvider);
       expect(state.coordinate, expectedCoordinate);
       expect(state.lastUpdated, isNotNull);
     });
@@ -73,14 +73,14 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(locationProvider.notifier);
+      final notifier = container.read(coordinateProvider.notifier);
       final future = notifier.getCurrentLocation();
 
       completer.completeError(TestException('位置情報取得エラー'));
 
       await expectLater(future, throwsException);
 
-      final state = container.read(locationProvider);
+      final state = container.read(coordinateProvider);
       expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
     });
@@ -89,12 +89,12 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(locationProvider.notifier);
+      final notifier = container.read(coordinateProvider.notifier);
       notifier.setCoordinate(
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
 
-      final state = container.read(locationProvider);
+      final state = container.read(coordinateProvider);
       expect(
         state.coordinate,
         Coordinate(latitude: 35.6812, longitude: 139.7671),
@@ -106,13 +106,13 @@ void main() {
       final container = createContainer();
       addTearDown(container.dispose);
 
-      final notifier = container.read(locationProvider.notifier);
+      final notifier = container.read(coordinateProvider.notifier);
       notifier.setCoordinate(
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
       notifier.clearCoordinate();
 
-      final state = container.read(locationProvider);
+      final state = container.read(coordinateProvider);
       expect(state.coordinate, isNull);
       expect(state.lastUpdated, isNull);
     });

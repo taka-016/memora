@@ -1,24 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/location_state.dart';
+import 'package:memora/presentation/notifiers/coordinate_state.dart';
 
 void main() {
-  group('LocationState', () {
-    test('緯度と経度を持つLocationStateを作成できる', () {
+  group('CoordinateState', () {
+    test('緯度と経度を持つCoordinateStateを作成できる', () {
       final coordinate = Coordinate(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
-      final locationState = LocationState(
+      final coordinateState = CoordinateState(
         coordinate: coordinate,
         lastUpdated: lastUpdated,
       );
 
-      expect(locationState.coordinate, coordinate);
-      expect(locationState.lastUpdated, lastUpdated);
+      expect(coordinateState.coordinate, coordinate);
+      expect(coordinateState.lastUpdated, lastUpdated);
     });
 
     test('copyWithでcoordinateを更新できる', () {
-      final original = LocationState(
+      final original = CoordinateState(
         coordinate: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: DateTime(2025, 1, 1),
       );
@@ -31,7 +31,7 @@ void main() {
     });
 
     test('copyWithで最終更新日時を更新できる', () {
-      final original = LocationState(
+      final original = CoordinateState(
         coordinate: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: DateTime(2025, 1, 1),
       );
@@ -44,65 +44,65 @@ void main() {
     });
 
     test('初期状態では全てのフィールドがnullである', () {
-      const locationState = LocationState();
+      const coordinateState = CoordinateState();
 
-      expect(locationState.coordinate, isNull);
-      expect(locationState.lastUpdated, isNull);
+      expect(coordinateState.coordinate, isNull);
+      expect(coordinateState.lastUpdated, isNull);
     });
 
-    test('同じcoordinateとlastUpdatedを持つLocationStateは等しい', () {
+    test('同じcoordinateとlastUpdatedを持つCoordinateStateは等しい', () {
       final coordinate = Coordinate(latitude: 35.6812, longitude: 139.7671);
       final lastUpdated = DateTime(2025, 1, 1);
 
-      final locationState1 = LocationState(
+      final coordinateState1 = CoordinateState(
         coordinate: coordinate,
         lastUpdated: lastUpdated,
       );
-      final locationState2 = LocationState(
+      final coordinateState2 = CoordinateState(
         coordinate: coordinate,
         lastUpdated: lastUpdated,
       );
 
-      expect(locationState1, equals(locationState2));
-      expect(locationState1.hashCode, equals(locationState2.hashCode));
+      expect(coordinateState1, equals(coordinateState2));
+      expect(coordinateState1.hashCode, equals(coordinateState2.hashCode));
     });
 
-    test('異なるcoordinateを持つLocationStateは等しくない', () {
+    test('異なるcoordinateを持つCoordinateStateは等しくない', () {
       final lastUpdated = DateTime(2025, 1, 1);
 
-      final locationState1 = LocationState(
+      final coordinateState1 = CoordinateState(
         coordinate: Coordinate(latitude: 35.6812, longitude: 139.7671),
         lastUpdated: lastUpdated,
       );
-      final locationState2 = LocationState(
+      final coordinateState2 = CoordinateState(
         coordinate: Coordinate(latitude: 35.6813, longitude: 139.7671),
         lastUpdated: lastUpdated,
       );
 
-      expect(locationState1, isNot(equals(locationState2)));
+      expect(coordinateState1, isNot(equals(coordinateState2)));
     });
 
-    test('異なるlastUpdatedを持つLocationStateは等しくない', () {
+    test('異なるlastUpdatedを持つCoordinateStateは等しくない', () {
       final coordinate = Coordinate(latitude: 35.6812, longitude: 139.7671);
 
-      final locationState1 = LocationState(
+      final coordinateState1 = CoordinateState(
         coordinate: coordinate,
         lastUpdated: DateTime(2025, 1, 1),
       );
-      final locationState2 = LocationState(
+      final coordinateState2 = CoordinateState(
         coordinate: coordinate,
         lastUpdated: DateTime(2025, 1, 2),
       );
 
-      expect(locationState1, isNot(equals(locationState2)));
+      expect(coordinateState1, isNot(equals(coordinateState2)));
     });
 
-    test('nullフィールドを持つLocationStateの等価性', () {
-      const locationState1 = LocationState();
-      const locationState2 = LocationState();
+    test('nullフィールドを持つCoordinateStateの等価性', () {
+      const coordinateState1 = CoordinateState();
+      const coordinateState2 = CoordinateState();
 
-      expect(locationState1, equals(locationState2));
-      expect(locationState1.hashCode, equals(locationState2.hashCode));
+      expect(coordinateState1, equals(coordinateState2));
+      expect(coordinateState1.hashCode, equals(coordinateState2.hashCode));
     });
   });
 }

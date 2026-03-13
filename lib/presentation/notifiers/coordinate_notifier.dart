@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/location_state.dart';
+import 'package:memora/presentation/notifiers/coordinate_state.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
 import 'package:memora/core/app_logger.dart';
@@ -9,17 +9,18 @@ final currentLocationServiceProvider = Provider<CurrentLocationService>((ref) {
   return GeolocatorCurrentLocationService();
 });
 
-final locationProvider = NotifierProvider<LocationNotifier, LocationState>(
-  LocationNotifier.new,
-);
+final coordinateProvider =
+    NotifierProvider<CoordinateNotifier, CoordinateState>(
+      CoordinateNotifier.new,
+    );
 
-class LocationNotifier extends Notifier<LocationState> {
+class CoordinateNotifier extends Notifier<CoordinateState> {
   CurrentLocationService get _currentLocationService =>
       ref.read(currentLocationServiceProvider);
 
   @override
-  LocationState build() {
-    return const LocationState();
+  CoordinateState build() {
+    return const CoordinateState();
   }
 
   Future<void> getCurrentLocation() async {
@@ -33,7 +34,7 @@ class LocationNotifier extends Notifier<LocationState> {
       }
     } catch (e, stack) {
       logger.e(
-        'LocationNotifier.getCurrentLocation: ${e.toString()}',
+        'CoordinateNotifier.getCurrentLocation: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
@@ -46,6 +47,6 @@ class LocationNotifier extends Notifier<LocationState> {
   }
 
   void clearCoordinate() {
-    state = const LocationState();
+    state = const CoordinateState();
   }
 }
