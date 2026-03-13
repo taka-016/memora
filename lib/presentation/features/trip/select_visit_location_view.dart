@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
@@ -12,6 +13,7 @@ class SelectVisitLocationView extends StatelessWidget {
     required this.onClose,
     this.selectedPin,
     this.onMapLongTapped,
+    this.onSearchCandidateSelected,
     this.onMarkerTapped,
     this.onMarkerUpdated,
     this.onMarkerDeleted,
@@ -24,6 +26,7 @@ class SelectVisitLocationView extends StatelessWidget {
   final VoidCallback onClose;
   final PinDto? selectedPin;
   final Function(Coordinate)? onMapLongTapped;
+  final Function(LocationCandidateDto)? onSearchCandidateSelected;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
@@ -82,6 +85,7 @@ class SelectVisitLocationView extends StatelessWidget {
     return MapViewFactory.create(MapViewType.google).createMapView(
       pins: pins,
       onMapLongTapped: onMapLongTapped,
+      onSearchCandidateSelected: onSearchCandidateSelected,
       onMarkerTapped: onMarkerTapped,
       onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,

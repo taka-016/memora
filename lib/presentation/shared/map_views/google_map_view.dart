@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/env/env.dart';
@@ -14,6 +15,7 @@ import 'package:memora/core/app_logger.dart';
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
   final Function(Coordinate)? onMapLongTapped;
+  final Function(LocationCandidateDto)? onSearchCandidateSelected;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
@@ -24,6 +26,7 @@ class GoogleMapView extends HookConsumerWidget {
     super.key,
     required this.pins,
     this.onMapLongTapped,
+    this.onSearchCandidateSelected,
     this.onMarkerTapped,
     this.onMarkerUpdated,
     this.onMarkerDeleted,
@@ -86,12 +89,18 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedCoordinate(Coordinate coordinate) async {
-      animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
+    Future<void> moveToSearchedLocation(LocationCandidateDto candidate) async {
+      animateToPosition(
+        LatLng(candidate.coordinate.latitude, candidate.coordinate.longitude),
+      );
+      if (onSearchCandidateSelected != null) {
+        onSearchCandidateSelected!.call(candidate);
+        return;
+      }
       onMapLongTapped?.call(
         Coordinate(
-          latitude: coordinate.latitude,
-          longitude: coordinate.longitude,
+          latitude: candidate.coordinate.latitude,
+          longitude: candidate.coordinate.longitude,
         ),
       );
     }
@@ -176,7 +185,7 @@ class GoogleMapView extends HookConsumerWidget {
           hintText: '場所を検索',
           locationSearchService: locationSearchService,
           onCandidateSelected: (candidate) async {
-            await moveToSearchedCoordinate(candidate.coordinate);
+            await moveToSearchedLocation(candidate);
           },
         ),
       );

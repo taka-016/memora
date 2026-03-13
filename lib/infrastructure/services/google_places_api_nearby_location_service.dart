@@ -7,10 +7,12 @@ import 'package:memora/core/app_logger.dart';
 class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
   final String apiKey;
   final http.Client httpClient;
+  final double searchRadiusInMeters;
 
   GooglePlacesApiNearbyLocationService({
     required this.apiKey,
     http.Client? httpClient,
+    this.searchRadiusInMeters = 10.0,
   }) : httpClient = httpClient ?? http.Client();
 
   @override
@@ -55,7 +57,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
                 'latitude': coordinate.latitude,
                 'longitude': coordinate.longitude,
               },
-              'radius': 10.0,
+              'radius': searchRadiusInMeters,
             },
           },
         }),

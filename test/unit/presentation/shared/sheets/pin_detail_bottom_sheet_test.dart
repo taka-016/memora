@@ -528,7 +528,7 @@ void main() {
       expect(find.text('場所情報を取得できませんでした'), findsOneWidget);
     });
 
-    testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {
+    testWidgets('場所名はテキストフィールドとして編集できる', (WidgetTester tester) async {
       final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
@@ -542,17 +542,28 @@ void main() {
             body: PinDetailBottomSheet(
               pin: pinWithLocationName,
               onClose: () {},
+              onUpdate: (_) {},
             ),
           ),
         ),
       );
 
-      // 更新アイコンが表示される
-      expect(find.byIcon(Icons.refresh), findsOneWidget);
+      final locationNameField = find.byKey(const Key('locationNameField'));
+      expect(locationNameField, findsOneWidget);
+      expect(find.byIcon(Icons.refresh), findsNothing);
+
+      final editableText = tester.widget<EditableText>(
+        find.descendant(
+          of: locationNameField,
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(editableText.controller.text, '東京駅');
+      expect(editableText.readOnly, isFalse);
     });
 
-    testWidgets('更新アイコンをタップすると位置取得処理が呼ばれる', (WidgetTester tester) async {
-      final mockNearbyLocationService = MockNearbyLocationService();
+    testWidgets('場所名を編集して更新すると入力値が保存される', (WidgetTester tester) async {
+      PinDto? callbackPin;
       final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',
         latitude: 35.681236,
@@ -560,38 +571,30 @@ void main() {
         locationName: '東京駅',
       );
 
-      // モックの設定: getLocationNameが呼ばれたら'新しい場所名'を返す
-      when(
-        mockNearbyLocationService.getLocationName(any),
-      ).thenAnswer((_) async => '新しい場所名');
-
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: PinDetailBottomSheet(
               pin: pinWithLocationName,
               onClose: () {},
-              onUpdate: (pin) {},
-              reverseGeocodingService: mockNearbyLocationService,
+              onUpdate: (pin) {
+                callbackPin = pin;
+              },
             ),
           ),
         ),
       );
 
-      // 初期状態では既存の場所名が表示されている
-      expect(find.text('東京駅'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('locationNameField')),
+        '手入力した場所名',
+      );
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
 
-      // 更新アイコンをタップ
-      final refreshIconFinder = find.byIcon(Icons.refresh);
-      await tester.tap(refreshIconFinder);
-      await tester.pump();
-
-      // 位置取得処理が呼ばれることを検証
-      verify(mockNearbyLocationService.getLocationName(any)).called(1);
-
-      // ローディング状態の確認
-      await tester.pump();
-      expect(find.text('新しい場所名'), findsOneWidget);
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.locationName, '手入力した場所名');
     });
 
     testWidgets('読み取り専用モードでは全ての編集機能が無効化される', (WidgetTester tester) async {
@@ -617,17 +620,21 @@ void main() {
         ),
       );
 
-      // 現在地再取得アイコンをタップしても処理が呼ばれない
-      final refreshIconFinder = find.byIcon(Icons.refresh);
-      await tester.tap(refreshIconFinder);
-      await tester.pump();
-      verifyNever(mockNearbyLocationService.getLocationName(any));
-
       // 日付・時間フィールドが無効化されている
       final visitStartDateField = tester.widget<InkWell>(
         find.byKey(const Key('visitStartDateField')),
       );
       expect(visitStartDateField.onTap, isNull);
+
+      final locationNameField = find.byKey(const Key('locationNameField'));
+      final locationEditableText = tester.widget<EditableText>(
+        find.descendant(
+          of: locationNameField,
+          matching: find.byType(EditableText),
+        ),
+      );
+      expect(locationEditableText.readOnly, isTrue);
+      expect(find.byIcon(Icons.refresh), findsNothing);
 
       // メモフィールドが読み取り専用になっている
       final editableText = tester.widget<EditableText>(

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -236,6 +238,39 @@ void main() {
       expect(tappedLocation?.latitude, 35.681236);
       expect(tappedLocation?.longitude, 139.767125);
     });
+
+    testWidgets('検索候補を選択すると候補情報付きコールバックが呼ばれる', (WidgetTester tester) async {
+      LocationCandidateDto? selectedCandidate;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [],
+                onSearchCandidateSelected: (candidate) {
+                  selectedCandidate = candidate;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final searchBar = tester.widget<CustomSearchBar>(
+        find.byType(CustomSearchBar),
+      );
+      const candidate = LocationCandidateDto(
+        name: '東京タワー',
+        address: '東京都港区芝公園4-2-8',
+        coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
+      );
+
+      searchBar.onCandidateSelected?.call(candidate);
+
+      expect(selectedCandidate, candidate);
+    });
+
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,
     ) async {
@@ -486,14 +521,7 @@ void main() {
       expect(find.text('更新'), findsNothing);
       expect(find.text('削除'), findsNothing);
 
-      // 現在地再取得ボタンが無効化されている
-      final refreshButton = tester.widget<IconButton>(
-        find.descendant(
-          of: find.byType(PinDetailBottomSheet),
-          matching: find.widgetWithIcon(IconButton, Icons.refresh),
-        ),
-      );
-      expect(refreshButton.onPressed, isNull);
+      expect(find.byIcon(Icons.refresh), findsNothing);
     });
   });
 }
