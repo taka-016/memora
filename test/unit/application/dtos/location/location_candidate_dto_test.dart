@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 void main() {
   group('LocationCandidateDto', () {
@@ -8,24 +8,24 @@ void main() {
       final candidate = LocationCandidateDto(
         name: '東京タワー',
         address: '東京都港区芝公園4-2-8',
-        location: Location(latitude: 35.6586, longitude: 139.7454),
+        coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
       );
       expect(candidate.name, '東京タワー');
       expect(candidate.address, '東京都港区芝公園4-2-8');
-      expect(candidate.location.latitude, 35.6586);
-      expect(candidate.location.longitude, 139.7454);
+      expect(candidate.coordinate.latitude, 35.6586);
+      expect(candidate.coordinate.longitude, 139.7454);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
       final candidate1 = LocationCandidateDto(
         name: '東京タワー',
         address: '東京都港区芝公園4-2-8',
-        location: Location(latitude: 35.6586, longitude: 139.7454),
+        coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
       );
       final candidate2 = LocationCandidateDto(
         name: '東京タワー',
         address: '東京都港区芝公園4-2-8',
-        location: Location(latitude: 35.6586, longitude: 139.7454),
+        coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
       );
       expect(candidate1, equals(candidate2));
     });
@@ -34,12 +34,12 @@ void main() {
       final candidate1 = LocationCandidateDto(
         name: '東京タワー',
         address: '東京都港区芝公園4-2-8',
-        location: Location(latitude: 35.6586, longitude: 139.7454),
+        coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
       );
       final candidate2 = LocationCandidateDto(
         name: 'スカイツリー',
         address: '東京都墨田区押上1-1-2',
-        location: Location(latitude: 35.7101, longitude: 139.8107),
+        coordinate: Coordinate(latitude: 35.7101, longitude: 139.8107),
       );
       expect(candidate1, isNot(equals(candidate2)));
     });

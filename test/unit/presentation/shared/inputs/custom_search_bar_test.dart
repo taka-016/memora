@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class MockLocationSearchService implements LocationSearchService {
   List<LocationCandidateDto> candidates;
@@ -19,12 +19,12 @@ final mockCandidatesDefault = [
   LocationCandidateDto(
     name: '東京タワー',
     address: '東京都港区芝公園4-2-8',
-    location: Location(latitude: 35.6586, longitude: 139.7454),
+    coordinate: Coordinate(latitude: 35.6586, longitude: 139.7454),
   ),
   LocationCandidateDto(
     name: 'スカイツリー',
     address: '東京都墨田区押上1-1-2',
-    location: Location(latitude: 35.7101, longitude: 139.8107),
+    coordinate: Coordinate(latitude: 35.7101, longitude: 139.8107),
   ),
 ];
 

@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/notifiers/location_state.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
@@ -24,9 +24,12 @@ class LocationNotifier extends Notifier<LocationState> {
 
   Future<void> getCurrentLocation() async {
     try {
-      final location = await _currentLocationService.getCurrentLocation();
-      if (location != null) {
-        state = state.copyWith(location: location, lastUpdated: DateTime.now());
+      final coordinate = await _currentLocationService.getCurrentLocation();
+      if (coordinate != null) {
+        state = state.copyWith(
+          coordinate: coordinate,
+          lastUpdated: DateTime.now(),
+        );
       }
     } catch (e, stack) {
       logger.e(
@@ -38,11 +41,11 @@ class LocationNotifier extends Notifier<LocationState> {
     }
   }
 
-  void setLocation(Location location) {
-    state = state.copyWith(location: location, lastUpdated: DateTime.now());
+  void setCoordinate(Coordinate coordinate) {
+    state = state.copyWith(coordinate: coordinate, lastUpdated: DateTime.now());
   }
 
-  void clearLocation() {
+  void clearCoordinate() {
     state = const LocationState();
   }
 }

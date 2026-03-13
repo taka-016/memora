@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/domain/value_objects/location.dart' as domain;
+import 'package:memora/core/models/coordinate.dart';
 import 'package:http/http.dart' as http;
 import 'package:memora/core/app_logger.dart';
 
@@ -14,9 +14,9 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
   }) : httpClient = httpClient ?? http.Client();
 
   @override
-  Future<String?> getLocationName(domain.Location location) async {
+  Future<String?> getLocationName(Coordinate coordinate) async {
     try {
-      return await _getPlaceNameFromNearbySearch(location);
+      return await _getPlaceNameFromNearbySearch(coordinate);
     } catch (e, stack) {
       logger.e(
         'GooglePlacesApiNearbyLocationService.getLocationName: ${e.toString()}',
@@ -27,9 +27,7 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
     }
   }
 
-  Future<String?> _getPlaceNameFromNearbySearch(
-    domain.Location location,
-  ) async {
+  Future<String?> _getPlaceNameFromNearbySearch(Coordinate coordinate) async {
     try {
       if (apiKey.isEmpty) {
         return null;
@@ -54,8 +52,8 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
           'locationRestriction': {
             'circle': {
               'center': {
-                'latitude': location.latitude,
-                'longitude': location.longitude,
+                'latitude': coordinate.latitude,
+                'longitude': coordinate.longitude,
               },
               'radius': 100.0,
             },

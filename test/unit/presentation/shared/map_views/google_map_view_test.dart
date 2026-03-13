@@ -5,18 +5,18 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class MockLocationService implements CurrentLocationService {
-  final Location? _location;
+  final Coordinate? _coordinate;
 
-  MockLocationService([this._location]);
+  MockLocationService([this._coordinate]);
 
   @override
-  Future<Location?> getCurrentLocation() async {
-    return _location;
+  Future<Coordinate?> getCurrentLocation() async {
+    return _coordinate;
   }
 }
 
@@ -95,7 +95,10 @@ void main() {
       WidgetTester tester,
     ) async {
       // locationProviderに大阪の位置を設定
-      final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
+      final testLocation = Coordinate(
+        latitude: 34.693738,
+        longitude: 135.502165,
+      );
       final container = ProviderContainer(
         overrides: [
           currentLocationServiceProvider.overrideWithValue(
@@ -106,7 +109,7 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -142,7 +145,10 @@ void main() {
       ];
 
       // locationProviderにも位置を設定（こちらは使われない）
-      final testLocation = Location(latitude: 34.693738, longitude: 135.502165);
+      final testLocation = Coordinate(
+        latitude: 34.693738,
+        longitude: 135.502165,
+      );
       final container = ProviderContainer(
         overrides: [
           currentLocationServiceProvider.overrideWithValue(
@@ -153,7 +159,7 @@ void main() {
       addTearDown(container.dispose);
 
       final locationNotifier = container.read(locationProvider.notifier);
-      locationNotifier.setLocation(testLocation);
+      locationNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -193,7 +199,7 @@ void main() {
 
     testWidgets('マップの長押しでコールバック関数が呼ばれる', (WidgetTester tester) async {
       bool mapTapped = false;
-      Location? tappedLocation;
+      Coordinate? tappedLocation;
 
       await tester.pumpWidget(
         ProviderScope(
@@ -201,9 +207,9 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [],
-                onMapLongTapped: (Location location) {
+                onMapLongTapped: (Coordinate coordinate) {
                   mapTapped = true;
-                  tappedLocation = location;
+                  tappedLocation = coordinate;
                 },
                 onMarkerTapped: (PinDto pin) {},
                 onMarkerUpdated: (PinDto pin) {},

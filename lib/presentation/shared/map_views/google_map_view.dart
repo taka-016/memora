@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/env/env.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/presentation/notifiers/location_notifier.dart';
@@ -13,7 +13,7 @@ import 'package:memora/core/app_logger.dart';
 
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
-  final Function(Location)? onMapLongTapped;
+  final Function(Coordinate)? onMapLongTapped;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
@@ -59,23 +59,23 @@ class GoogleMapView extends HookConsumerWidget {
         final firstPin = pins.first;
         return LatLng(firstPin.latitude, firstPin.longitude);
       }
-      final location = ref.read(locationProvider).location;
-      return location != null
-          ? LatLng(location.latitude, location.longitude)
+      final coordinate = ref.read(locationProvider).coordinate;
+      return coordinate != null
+          ? LatLng(coordinate.latitude, coordinate.longitude)
           : fallbackPosition;
     }
 
     Future<void> moveToCurrentLocation() async {
       try {
         await ref.read(locationProvider.notifier).getCurrentLocation();
-        final location = ref.read(locationProvider).location;
+        final coordinate = ref.read(locationProvider).coordinate;
 
-        if (location == null) {
+        if (coordinate == null) {
           showErrorSnackBar('現在地が取得できませんでした');
           return;
         }
 
-        animateToPosition(LatLng(location.latitude, location.longitude));
+        animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
       } catch (e, stack) {
         logger.e(
           'GoogleMapView.moveToCurrentLocation: ${e.toString()}',
@@ -86,10 +86,13 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedLocation(Location location) async {
-      animateToPosition(LatLng(location.latitude, location.longitude));
+    Future<void> moveToSearchedCoordinate(Coordinate coordinate) async {
+      animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
       onMapLongTapped?.call(
-        Location(latitude: location.latitude, longitude: location.longitude),
+        Coordinate(
+          latitude: coordinate.latitude,
+          longitude: coordinate.longitude,
+        ),
       );
     }
 
@@ -99,7 +102,7 @@ class GoogleMapView extends HookConsumerWidget {
 
     void onMapLongTap(LatLng position) {
       onMapLongTapped?.call(
-        Location(latitude: position.latitude, longitude: position.longitude),
+        Coordinate(latitude: position.latitude, longitude: position.longitude),
       );
     }
 
@@ -173,7 +176,7 @@ class GoogleMapView extends HookConsumerWidget {
           hintText: '場所を検索',
           locationSearchService: locationSearchService,
           onCandidateSelected: (candidate) async {
-            await moveToSearchedLocation(candidate.location);
+            await moveToSearchedCoordinate(candidate.coordinate);
           },
         ),
       );

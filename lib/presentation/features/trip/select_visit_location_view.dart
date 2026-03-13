@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class SelectVisitLocationView extends StatelessWidget {
@@ -23,7 +23,7 @@ class SelectVisitLocationView extends StatelessWidget {
   final Widget bottomSheet;
   final VoidCallback onClose;
   final PinDto? selectedPin;
-  final Function(Location)? onMapLongTapped;
+  final Function(Coordinate)? onMapLongTapped;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;

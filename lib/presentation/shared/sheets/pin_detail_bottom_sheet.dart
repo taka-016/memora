@@ -111,13 +111,9 @@ class PinDetailBottomSheet extends HookWidget {
       isLoadingLocation.value = true;
 
       try {
-        final currentLocation = pin.locationOrNull;
-        if (currentLocation == null) {
-          locationName.value = null;
-          return;
-        }
+        final currentCoordinate = pin.coordinate;
         final fetchedLocationName = await effectiveReverseGeocodingService
-            .getLocationName(currentLocation);
+            .getLocationName(currentCoordinate);
         locationName.value = fetchedLocationName;
       } catch (e, stack) {
         logger.e(

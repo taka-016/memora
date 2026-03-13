@@ -38,8 +38,8 @@ void main() {
       expect(results.length, 1);
       expect(results[0].name, '東京タワー');
       expect(results[0].address, '東京都港区芝公園４丁目２−８');
-      expect(results[0].location.latitude, 35.6586);
-      expect(results[0].location.longitude, 139.7454);
+      expect(results[0].coordinate.latitude, 35.6586);
+      expect(results[0].coordinate.longitude, 139.7454);
     });
   });
 }

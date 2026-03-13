@@ -9,7 +9,7 @@ import 'package:memora/application/dtos/trip/route_segment_detail_dto.dart'
     as _i2;
 import 'package:memora/application/services/route_info_service.dart' as _i3;
 import 'package:memora/core/enums/travel_mode.dart' as _i6;
-import 'package:memora/domain/value_objects/location.dart' as _i5;
+import 'package:memora/core/models/coordinate.dart' as _i5;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -42,8 +42,8 @@ class MockRouteInfoService extends _i1.Mock implements _i3.RouteInfoService {
 
   @override
   _i4.Future<_i2.RouteSegmentDetailDto> fetchRoute({
-    required _i5.Location? origin,
-    required _i5.Location? destination,
+    required _i5.Coordinate? origin,
+    required _i5.Coordinate? destination,
     required _i6.TravelMode? travelMode,
   }) =>
       (super.noSuchMethod(

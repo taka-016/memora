@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -486,10 +487,15 @@ void main() {
       expect(find.text('東京駅'), findsOneWidget);
     });
 
-    testWidgets('緯度経度が不正な場合はGoogle Places APIを呼び出さない', (
+    testWidgets('範囲外の緯度経度でもGoogle Places APIを呼び出せる', (
       WidgetTester tester,
     ) async {
       final mockNearbyLocationService = MockNearbyLocationService();
+      when(
+        mockNearbyLocationService.getLocationName(
+          const Coordinate(latitude: 91.0, longitude: 139.767125),
+        ),
+      ).thenAnswer((_) async => null);
 
       final invalidPin = PinDto(
         pinId: 'test-pin-id',
@@ -512,9 +518,14 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      verifyNever(mockNearbyLocationService.getLocationName(any));
+      verify(
+        mockNearbyLocationService.getLocationName(
+          const Coordinate(latitude: 91.0, longitude: 139.767125),
+        ),
+      ).called(1);
       expect(find.byKey(const Key('locationNameField')), findsOneWidget);
-      expect(find.text('場所名を取得中...'), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('場所情報を取得できませんでした'), findsOneWidget);
     });
 
     testWidgets('場所名のボックス右端に更新アイコンが表示される', (WidgetTester tester) async {

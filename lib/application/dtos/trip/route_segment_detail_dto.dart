@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:memora/domain/value_objects/location.dart';
+import 'package:memora/core/models/coordinate.dart';
 
 class RouteSegmentDetailDto extends Equatable {
   const RouteSegmentDetailDto({
@@ -10,18 +10,18 @@ class RouteSegmentDetailDto extends Equatable {
   });
 
   const RouteSegmentDetailDto.empty()
-    : polyline = const <Location>[],
+    : polyline = const <Coordinate>[],
       distanceMeters = 0,
       durationSeconds = 0,
       instructions = const <String>[];
 
-  final List<Location> polyline;
+  final List<Coordinate> polyline;
   final int distanceMeters;
   final int durationSeconds;
   final List<String> instructions;
 
   RouteSegmentDetailDto copyWith({
-    List<Location>? polyline,
+    List<Coordinate>? polyline,
     int? distanceMeters,
     int? durationSeconds,
     List<String>? instructions,

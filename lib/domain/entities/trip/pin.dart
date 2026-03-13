@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
-import 'package:memora/domain/value_objects/location.dart';
 
 class Pin extends Equatable {
   Pin({
@@ -14,7 +13,6 @@ class Pin extends Equatable {
     this.visitEndDate,
     this.visitMemo,
   }) {
-    _validateLocation(latitude: latitude, longitude: longitude);
     final start = visitStartDate;
     final end = visitEndDate;
     if (start != null && end != null && end.isBefore(start)) {
@@ -68,11 +66,4 @@ class Pin extends Equatable {
     visitEndDate,
     visitMemo,
   ];
-
-  static void _validateLocation({
-    required double latitude,
-    required double longitude,
-  }) {
-    Location(latitude: latitude, longitude: longitude);
-  }
 }

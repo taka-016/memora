@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/domain/value_objects/location.dart' as domain;
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:mockito/annotations.dart';
@@ -41,7 +41,7 @@ void main() {
         ),
       );
 
-      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      const location = Coordinate(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, '東京タワー');
@@ -56,7 +56,7 @@ void main() {
         ),
       ).thenAnswer((_) async => http.Response('Error', 500));
 
-      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      const location = Coordinate(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, isNull);
@@ -77,7 +77,7 @@ void main() {
         ),
       );
 
-      final location = domain.Location(latitude: 35.6586, longitude: 139.7454);
+      const location = Coordinate(latitude: 35.6586, longitude: 139.7454);
 
       final result = await service.getLocationName(location);
       expect(result, isNull);
