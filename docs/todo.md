@@ -75,5 +75,13 @@
   - 周辺検索はユースケース経由に統一し、domainサービスを画面から直接参照しない
 - `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:5` で `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
   - インフラサービス直接参照を削除し、周辺検索ユースケース経由の呼び出しに統一する
+- `lib/presentation/notifiers/location_notifier.dart` は `Coordinate` と更新日時だけを保持するNotifierのため、`Location` より `Coordinate` 系の命名へ寄せる
+  - `LocationNotifier` は `CoordinateNotifier` もしくは `CurrentCoordinateNotifier` へ改名する
+  - `locationProvider` は `coordinateProvider` もしくは `currentCoordinateProvider` へ改名する
+  - `test/unit/presentation/notifiers/location_notifier_test.dart` と関連参照も同じ方針で追従する
+- `lib/presentation/notifiers/location_state.dart` は状態の実体が `Coordinate? coordinate` と `lastUpdated` のみのため、`Location` より `Coordinate` 系の命名へ寄せる
+  - `LocationState` は `CoordinateState` もしくは `CurrentCoordinateState` へ改名する
+  - `test/unit/presentation/notifiers/location_state_test.dart` と関連参照も同じ方針で追従する
+- `lib/presentation/shared/map_views/google_map_view.dart` の `locationNotifier` ローカル変数名は上記リファクタリングに合わせて `coordinateNotifier` 系へ揃える
 
 ## 不具合修正
