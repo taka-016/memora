@@ -19,7 +19,7 @@ void main() {
       final service = PlaceholderMapViewBuilder();
       final pins = <PinDto>[];
 
-      void onMapLongTapped(Coordinate coordinate) {}
+      void onMapLongTapped(Coordinate coordinate, String? locationName) {}
       void onMarkerTapped(PinDto pin) {}
       void onMarkerDeleted(String pinId) {}
 

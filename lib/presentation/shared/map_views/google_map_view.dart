@@ -1,3 +1,4 @@
+import 'package:memora/application/services/location_search_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,12 +14,14 @@ import 'package:memora/core/app_logger.dart';
 
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
-  final Function(Coordinate)? onMapLongTapped;
+  final void Function(Coordinate coordinate, String? locationName)?
+  onMapLongTapped;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
   final PinDto? selectedPin;
   final bool isReadOnly;
+  final LocationSearchService? locationSearchService;
 
   const GoogleMapView({
     super.key,
@@ -29,6 +32,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onMarkerDeleted,
     this.selectedPin,
     this.isReadOnly = false,
+    this.locationSearchService,
   });
 
   @override
@@ -86,13 +90,17 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedCoordinate(Coordinate coordinate) async {
+    Future<void> moveToSearchedLocation(
+      Coordinate coordinate,
+      String locationName,
+    ) async {
       animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
       onMapLongTapped?.call(
         Coordinate(
           latitude: coordinate.latitude,
           longitude: coordinate.longitude,
         ),
+        locationName,
       );
     }
 
@@ -103,6 +111,7 @@ class GoogleMapView extends HookConsumerWidget {
     void onMapLongTap(LatLng position) {
       onMapLongTapped?.call(
         Coordinate(latitude: position.latitude, longitude: position.longitude),
+        null,
       );
     }
 
@@ -164,9 +173,9 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildSearchBar() {
-      final locationSearchService = GooglePlacesApiLocationSearchService(
-        apiKey: Env.googlePlacesApiKey,
-      );
+      final effectiveLocationSearchService =
+          locationSearchService ??
+          GooglePlacesApiLocationSearchService(apiKey: Env.googlePlacesApiKey);
 
       return Positioned(
         top: 16,
@@ -174,9 +183,9 @@ class GoogleMapView extends HookConsumerWidget {
         right: 16,
         child: CustomSearchBar(
           hintText: '場所を検索',
-          locationSearchService: locationSearchService,
+          locationSearchService: effectiveLocationSearchService,
           onCandidateSelected: (candidate) async {
-            await moveToSearchedCoordinate(candidate.coordinate);
+            await moveToSearchedLocation(candidate.coordinate, candidate.name);
           },
         ),
       );

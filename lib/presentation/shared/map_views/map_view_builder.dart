@@ -5,7 +5,7 @@ import 'package:memora/core/models/coordinate.dart';
 abstract class MapViewBuilder {
   Widget createMapView({
     required List<PinDto> pins,
-    Function(Coordinate)? onMapLongTapped,
+    void Function(Coordinate coordinate, String? locationName)? onMapLongTapped,
     Function(PinDto)? onMarkerTapped,
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,

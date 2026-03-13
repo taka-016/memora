@@ -10,7 +10,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
   @override
   Widget createMapView({
     required List<PinDto> pins,
-    Function(Coordinate)? onMapLongTapped,
+    void Function(Coordinate coordinate, String? locationName)? onMapLongTapped,
     Function(PinDto)? onMarkerTapped,
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,

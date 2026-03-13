@@ -23,7 +23,8 @@ class SelectVisitLocationView extends StatelessWidget {
   final Widget bottomSheet;
   final VoidCallback onClose;
   final PinDto? selectedPin;
-  final Function(Coordinate)? onMapLongTapped;
+  final void Function(Coordinate coordinate, String? locationName)?
+  onMapLongTapped;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;

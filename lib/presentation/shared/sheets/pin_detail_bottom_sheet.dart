@@ -29,9 +29,9 @@ class PinDetailBottomSheet extends HookWidget {
     final fromTime = useState<TimeOfDay?>(null);
     final toDate = useState<DateTime?>(null);
     final toTime = useState<TimeOfDay?>(null);
+    final locationNameController = useTextEditingController();
     final memoController = useTextEditingController();
     final dateErrorMessage = useState<String?>(null);
-    final locationName = useState<String?>(null);
     final isLoadingLocation = useState(false);
     final effectiveReverseGeocodingService = useMemoized(
       () =>
@@ -70,9 +70,10 @@ class PinDetailBottomSheet extends HookWidget {
       fromTime.value = null;
       toDate.value = null;
       toTime.value = null;
+      locationNameController.clear();
       memoController.clear();
 
-      locationName.value = pin.locationName;
+      locationNameController.text = pin.locationName ?? '';
 
       if (pin.visitStartDate != null) {
         fromDate.value = DateTime(
@@ -102,9 +103,7 @@ class PinDetailBottomSheet extends HookWidget {
     }
 
     Future<void> loadLocationName({bool forceRefresh = false}) async {
-      if (locationName.value != null &&
-          locationName.value!.isNotEmpty &&
-          !forceRefresh) {
+      if (locationNameController.text.isNotEmpty && !forceRefresh) {
         return;
       }
 
@@ -114,14 +113,14 @@ class PinDetailBottomSheet extends HookWidget {
         final currentCoordinate = pin.coordinate;
         final fetchedLocationName = await effectiveReverseGeocodingService
             .getLocationName(currentCoordinate);
-        locationName.value = fetchedLocationName;
+        locationNameController.text = fetchedLocationName ?? '';
       } catch (e, stack) {
         logger.e(
           '_PinDetailBottomSheetState._loadLocationName: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
-        locationName.value = null;
+        locationNameController.clear();
       } finally {
         isLoadingLocation.value = false;
       }
@@ -205,7 +204,9 @@ class PinDetailBottomSheet extends HookWidget {
           visitStartDate: start,
           visitEndDate: end,
           visitMemo: memoController.text,
-          locationName: locationName.value,
+          locationName: locationNameController.text.isEmpty
+              ? null
+              : locationNameController.text,
         );
         onUpdate!(updatedPin);
       }
@@ -294,57 +295,27 @@ class PinDetailBottomSheet extends HookWidget {
     }
 
     Widget buildLocationSection() {
-      return Container(
+      return TextFormField(
         key: const Key('locationNameField'),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[300]!),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(Icons.location_on, color: Colors.blue[600]),
-            const SizedBox(width: 8),
-            Expanded(
-              child: isLoadingLocation.value
-                  ? const Row(
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text('場所を取得中...'),
-                      ],
-                    )
-                  : Text(
-                      locationName.value ?? '場所情報を取得できませんでした',
-                      style: TextStyle(
-                        color: locationName.value != null
-                            ? Colors.black87
-                            : Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-            ),
-            SizedBox(
-              height: 24,
-              width: 24,
-              child: IconButton(
-                constraints: const BoxConstraints(),
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.refresh),
-                onPressed: (isLoadingLocation.value || isReadOnly)
-                    ? null
-                    : () => loadLocationName(forceRefresh: true),
-                color: Colors.grey[600],
-                iconSize: 20,
-              ),
-            ),
-          ],
+        controller: locationNameController,
+        readOnly: isReadOnly || isLoadingLocation.value,
+        decoration: InputDecoration(
+          labelText: '場所名',
+          hintText: '場所名を入力',
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(Icons.location_on, color: Colors.blue[600]),
+          suffixIcon: isLoadingLocation.value
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : null,
+          fillColor: isReadOnly ? Colors.grey[100] : null,
+          filled: isReadOnly,
         ),
       );
     }
