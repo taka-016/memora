@@ -669,7 +669,7 @@
 - `lib/presentation/notifiers/coordinate_state.dart` は状態の実体が `Coordinate? coordinate` と `lastUpdated` のみのため、`Location` より `Coordinate` 系の命名へ寄せる
   - `LocationState` を `CoordinateState` へ改名する
   - `test/unit/presentation/notifiers/coordinate_state_test.dart` と関連参照も同じ方針で追従する
-- `lib/presentation/shared/map_views/google_map_view.dart` の `locationNotifier` ローカル変数名は上記リファクタリングに合わせて `coordinateNotifier` 系へ揃える
+- `lib/presentation/shared/map_views/google_map_view.dart` の `locationProvider` / `locationProvider.notifier` 参照を `coordinateProvider` 系へ揃える
 - GroupDtoを作成する
   - GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - マッパーも用意する
