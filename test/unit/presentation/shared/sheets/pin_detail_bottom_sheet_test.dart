@@ -467,6 +467,72 @@ void main() {
       expect(callbackPin!.locationName, equals('手動で変更した場所名'));
     });
 
+    testWidgets('場所名を空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
+      final pinWithLocationName = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+      PinDto? callbackPin;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
+              onUpdate: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byKey(const Key('locationNameField')), '');
+
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.locationName, equals(''));
+    });
+
+    testWidgets('場所名に空白のみ入力して更新すると空文字で保存される', (WidgetTester tester) async {
+      final pinWithLocationName = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+      PinDto? callbackPin;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
+              onUpdate: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byKey(const Key('locationNameField')), '   ');
+
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.locationName, equals(''));
+    });
+
     testWidgets('読み取り専用モードでは全ての編集機能が無効化される', (WidgetTester tester) async {
       final pin = PinDto(
         pinId: 'test-pin-id',

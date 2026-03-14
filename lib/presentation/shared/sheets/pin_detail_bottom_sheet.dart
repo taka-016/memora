@@ -156,6 +156,9 @@ class PinDetailBottomSheet extends HookWidget {
 
       final start = buildFromDateTime();
       final end = buildToDateTime();
+      final normalizedLocationName = locationNameController.text.trim().isEmpty
+          ? ''
+          : locationNameController.text;
 
       if (start != null && end != null && start.isAfter(end)) {
         dateErrorMessage.value = '訪問開始日時は訪問終了日時より前の日時を選択してください';
@@ -167,9 +170,7 @@ class PinDetailBottomSheet extends HookWidget {
           visitStartDate: start,
           visitEndDate: end,
           visitMemo: memoController.text,
-          locationName: locationNameController.text.isEmpty
-              ? null
-              : locationNameController.text,
+          locationName: normalizedLocationName,
         );
         onUpdate!(updatedPin);
       }
