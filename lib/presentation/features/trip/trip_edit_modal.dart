@@ -89,12 +89,14 @@ class TripEditModal extends HookConsumerWidget {
     final mapIconKey = useMemoized(() => GlobalKey());
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
-    final effectiveNearbyLocationService = useMemoized(
-      () =>
-          nearbyLocationService ??
-          GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey),
+    final internalNearbyLocationService = useMemoized(
+      () => nearbyLocationService == null
+          ? GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey)
+          : null,
       [nearbyLocationService],
     );
+    final effectiveNearbyLocationService =
+        nearbyLocationService ?? internalNearbyLocationService;
 
     final initialTripForComparison = useMemoized(() {
       final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
@@ -145,6 +147,12 @@ class TripEditModal extends HookConsumerWidget {
       return null;
     }, [startDate.value, endDate.value, pins.value, tasks.value]);
 
+    useEffect(() {
+      return () {
+        internalNearbyLocationService?.httpClient.close();
+      };
+    }, [internalNearbyLocationService]);
+
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
       selectedPin.value = null;
@@ -166,7 +174,9 @@ class TripEditModal extends HookConsumerWidget {
 
     Future<String?> getLocationName(Coordinate coordinate) async {
       try {
-        return await effectiveNearbyLocationService.getLocationName(coordinate);
+        return await effectiveNearbyLocationService!.getLocationName(
+          coordinate,
+        );
       } catch (e, stack) {
         logger.e(
           'TripEditModal.getLocationName: ${e.toString()}',
