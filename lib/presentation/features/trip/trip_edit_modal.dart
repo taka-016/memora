@@ -26,8 +26,6 @@ enum TripEditExpandedSection { map, routeInfo, tasks }
 class TripEditModalTestHandle {
   void Function(DateTime?, DateTime?)? _setDateRange;
   void Function(List<PinDto>)? _setPins;
-  Future<void> Function(Coordinate)? _triggerMapLongTap;
-  void Function(LocationCandidateDto)? _selectSearchedLocation;
 
   @visibleForTesting
   void setDateRangeForTest(DateTime? start, DateTime? end) {
@@ -37,20 +35,6 @@ class TripEditModalTestHandle {
   @visibleForTesting
   void setPinsForTest(List<PinDto> pins) {
     _setPins?.call(pins);
-  }
-
-  @visibleForTesting
-  Future<void> triggerMapLongTapForTest(Coordinate coordinate) async {
-    final triggerMapLongTap = _triggerMapLongTap;
-    if (triggerMapLongTap == null) {
-      return;
-    }
-    await triggerMapLongTap(coordinate);
-  }
-
-  @visibleForTesting
-  void selectSearchedLocationForTest(LocationCandidateDto candidate) {
-    _selectSearchedLocation?.call(candidate);
   }
 }
 
@@ -211,15 +195,11 @@ class TripEditModal extends HookConsumerWidget {
         testHandle!._setPins = (List<PinDto> newPins) {
           pins.value = List<PinDto>.from(newPins);
         };
-        testHandle!._triggerMapLongTap = onMapLongTapped;
-        testHandle!._selectSearchedLocation = onSearchedLocationSelected;
       }
       return () {
         if (testHandle != null) {
           testHandle!._setDateRange = null;
           testHandle!._setPins = null;
-          testHandle!._triggerMapLongTap = null;
-          testHandle!._selectSearchedLocation = null;
         }
       };
     }, [testHandle]);

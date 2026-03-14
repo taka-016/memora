@@ -7,6 +7,8 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
+import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 Widget _createApp({required Widget child}) {
@@ -211,7 +213,6 @@ void main() {
     });
 
     testWidgets('手動でピンを追加した時だけ場所名を取得すること', (WidgetTester tester) async {
-      final testHandle = TripEditModalTestHandle();
       final fakeNearbyLocationService = FakeNearbyLocationService(
         locationName: '取得した場所名',
       );
@@ -225,16 +226,26 @@ void main() {
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
             },
-            isTestEnvironment: true,
-            testHandle: testHandle,
+            isTestEnvironment: false,
             nearbyLocationService: fakeNearbyLocationService,
           ),
         ),
       );
 
-      await testHandle.triggerMapLongTapForTest(
-        const Coordinate(latitude: 35.681236, longitude: 139.767125),
+      final editButton = find.widgetWithText(ElevatedButton, '編集');
+      await tester.ensureVisible(editButton);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      final googleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
       );
+
+      await Future<void>.sync(() {
+        googleMapView.onMapLongTapped?.call(
+          const Coordinate(latitude: 35.681236, longitude: 139.767125),
+        );
+      });
       await tester.pumpAndSettle();
 
       expect(fakeNearbyLocationService.callCount, 1);
@@ -242,6 +253,13 @@ void main() {
         fakeNearbyLocationService.lastCoordinate,
         const Coordinate(latitude: 35.681236, longitude: 139.767125),
       );
+
+      final selectVisitLocationView = tester.widget<SelectVisitLocationView>(
+        find.byType(SelectVisitLocationView),
+      );
+      selectVisitLocationView.onClose();
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('作成'));
       await tester.pumpAndSettle();
 
@@ -253,7 +271,6 @@ void main() {
     testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
       WidgetTester tester,
     ) async {
-      final testHandle = TripEditModalTestHandle();
       final fakeNearbyLocationService = FakeNearbyLocationService(
         locationName: '取得してはいけない場所名',
       );
@@ -272,17 +289,32 @@ void main() {
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
             },
-            isTestEnvironment: true,
-            testHandle: testHandle,
+            isTestEnvironment: false,
             nearbyLocationService: fakeNearbyLocationService,
           ),
         ),
       );
 
-      testHandle.selectSearchedLocationForTest(candidate);
+      final editButton = find.widgetWithText(ElevatedButton, '編集');
+      await tester.ensureVisible(editButton);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      final googleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
+      );
+
+      googleMapView.onSearchedLocationSelected?.call(candidate);
       await tester.pumpAndSettle();
 
       expect(fakeNearbyLocationService.callCount, 0);
+
+      final selectVisitLocationView = tester.widget<SelectVisitLocationView>(
+        find.byType(SelectVisitLocationView),
+      );
+      selectVisitLocationView.onClose();
+      await tester.pumpAndSettle();
+
       await tester.tap(find.text('作成'));
       await tester.pumpAndSettle();
 
