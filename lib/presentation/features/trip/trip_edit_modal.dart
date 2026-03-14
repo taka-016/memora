@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
@@ -156,10 +157,7 @@ class TripEditModal extends HookConsumerWidget {
       selectedPin.value = null;
     }
 
-    Future<void> onMapLongTapped(
-      Coordinate coordinate,
-      String? locationName,
-    ) async {
+    void addPin({required Coordinate coordinate, String? locationName}) {
       final uuid = Uuid();
       final pinId = uuid.v4();
       final newPin = PinDto(
@@ -171,6 +169,14 @@ class TripEditModal extends HookConsumerWidget {
 
       pins.value = [...pins.value, newPin];
       selectedPin.value = newPin;
+    }
+
+    void onMapLongTapped(Coordinate coordinate) {
+      addPin(coordinate: coordinate);
+    }
+
+    void onSearchedLocationSelected(LocationCandidateDto candidate) {
+      addPin(coordinate: candidate.coordinate, locationName: candidate.name);
     }
 
     void onPinTapped(PinDto pin) {
@@ -654,6 +660,7 @@ class TripEditModal extends HookConsumerWidget {
             isTestEnvironment: isTestEnvironment,
             onClose: toggleMapExpansion,
             onMapLongTapped: onMapLongTapped,
+            onSearchedLocationSelected: onSearchedLocationSelected,
             onMarkerTapped: onPinTapped,
             onMarkerUpdated: onPinUpdated,
             onMarkerDeleted: onPinDeleted,

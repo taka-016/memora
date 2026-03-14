@@ -220,7 +220,7 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [],
-                onMapLongTapped: (Coordinate coordinate, String? locationName) {
+                onMapLongTapped: (Coordinate coordinate) {
                   mapTapped = true;
                   tappedLocation = coordinate;
                 },
@@ -250,9 +250,8 @@ void main() {
       expect(tappedLocation?.longitude, 139.767125);
     });
 
-    testWidgets('検索結果を選択すると場所名付きでピン追加コールバックが呼ばれる', (WidgetTester tester) async {
-      Coordinate? tappedLocation;
-      String? tappedLocationName;
+    testWidgets('検索結果を選択すると検索選択コールバックが呼ばれる', (WidgetTester tester) async {
+      LocationCandidateDto? selectedCandidate;
 
       final searchCandidates = [
         const LocationCandidateDto(
@@ -271,9 +270,8 @@ void main() {
                 locationSearchService: MockLocationSearchService(
                   searchCandidates,
                 ),
-                onMapLongTapped: (Coordinate coordinate, String? locationName) {
-                  tappedLocation = coordinate;
-                  tappedLocationName = locationName;
+                onSearchedLocationSelected: (candidate) {
+                  selectedCandidate = candidate;
                 },
               ),
             ),
@@ -287,9 +285,7 @@ void main() {
       await tester.tap(find.widgetWithText(ListTile, '首里城'));
       await tester.pumpAndSettle();
 
-      expect(tappedLocation, isNotNull);
-      expect(tappedLocationName, equals('首里城'));
-      expect(tappedLocation, equals(searchCandidates.first.coordinate));
+      expect(selectedCandidate, equals(searchCandidates.first));
     });
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,

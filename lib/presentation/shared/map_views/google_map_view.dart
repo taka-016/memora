@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
@@ -14,8 +15,8 @@ import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
-  final void Function(Coordinate coordinate, String? locationName)?
-  onMapLongTapped;
+  final ValueChanged<Coordinate>? onMapLongTapped;
+  final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
   final Function(PinDto)? onMarkerTapped;
   final Function(PinDto)? onMarkerUpdated;
   final Function(String)? onMarkerDeleted;
@@ -27,6 +28,7 @@ class GoogleMapView extends HookConsumerWidget {
     super.key,
     required this.pins,
     this.onMapLongTapped,
+    this.onSearchedLocationSelected,
     this.onMarkerTapped,
     this.onMarkerUpdated,
     this.onMarkerDeleted,
@@ -90,18 +92,10 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedLocation(
-      Coordinate coordinate,
-      String locationName,
-    ) async {
+    Future<void> moveToSearchedLocation(LocationCandidateDto candidate) async {
+      final coordinate = candidate.coordinate;
       animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
-      onMapLongTapped?.call(
-        Coordinate(
-          latitude: coordinate.latitude,
-          longitude: coordinate.longitude,
-        ),
-        locationName,
-      );
+      onSearchedLocationSelected?.call(candidate);
     }
 
     void onMapCreated(GoogleMapController controller) {
@@ -111,7 +105,6 @@ class GoogleMapView extends HookConsumerWidget {
     void onMapLongTap(LatLng position) {
       onMapLongTapped?.call(
         Coordinate(latitude: position.latitude, longitude: position.longitude),
-        null,
       );
     }
 
@@ -185,7 +178,7 @@ class GoogleMapView extends HookConsumerWidget {
           hintText: '場所を検索',
           locationSearchService: effectiveLocationSearchService,
           onCandidateSelected: (candidate) async {
-            await moveToSearchedLocation(candidate.coordinate, candidate.name);
+            await moveToSearchedLocation(candidate);
           },
         ),
       );

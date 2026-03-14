@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/core/models/coordinate.dart';
@@ -10,7 +11,8 @@ class GoogleMapViewBuilder implements MapViewBuilder {
   @override
   Widget createMapView({
     required List<PinDto> pins,
-    void Function(Coordinate coordinate, String? locationName)? onMapLongTapped,
+    ValueChanged<Coordinate>? onMapLongTapped,
+    ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
     Function(PinDto)? onMarkerTapped,
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
@@ -20,6 +22,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     return GoogleMapView(
       pins: pins,
       onMapLongTapped: onMapLongTapped,
+      onSearchedLocationSelected: onSearchedLocationSelected,
       onMarkerTapped: onMarkerTapped,
       onMarkerUpdated: onMarkerUpdated,
       onMarkerDeleted: onMarkerDeleted,
