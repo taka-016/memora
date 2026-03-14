@@ -467,6 +467,42 @@ void main() {
       expect(callbackPin!.locationName, equals('手動で変更した場所名'));
     });
 
+    testWidgets('場所名の前後空白は除去して更新する', (WidgetTester tester) async {
+      final pinWithLocationName = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+      PinDto? callbackPin;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pinWithLocationName,
+              onClose: () {},
+              onUpdate: (pin) {
+                callbackPin = pin;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('locationNameField')),
+        ' 東京駅 ',
+      );
+
+      await tester.ensureVisible(find.text('更新'));
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(callbackPin, isNotNull);
+      expect(callbackPin!.locationName, equals('東京駅'));
+    });
+
     testWidgets('場所名を空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
       final pinWithLocationName = PinDto(
         pinId: 'test-pin-id',

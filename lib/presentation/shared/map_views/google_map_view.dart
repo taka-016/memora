@@ -45,6 +45,20 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedPinState = useState<PinDto?>(null);
     final previousSelectedPin = useRef<PinDto?>(null);
+    final internalLocationSearchService = useMemoized(
+      () => locationSearchService == null
+          ? GooglePlacesApiLocationSearchService(apiKey: Env.googlePlacesApiKey)
+          : null,
+      [locationSearchService],
+    );
+    final effectiveLocationSearchService =
+        locationSearchService ?? internalLocationSearchService;
+
+    useEffect(() {
+      return () {
+        internalLocationSearchService?.httpClient.close();
+      };
+    }, [internalLocationSearchService]);
 
     void showErrorSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -168,10 +182,6 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildSearchBar() {
-      final effectiveLocationSearchService =
-          locationSearchService ??
-          GooglePlacesApiLocationSearchService(apiKey: Env.googlePlacesApiKey);
-
       return Positioned(
         top: 16,
         left: 16,

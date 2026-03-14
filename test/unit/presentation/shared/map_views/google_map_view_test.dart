@@ -8,6 +8,7 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -287,6 +288,38 @@ void main() {
 
       expect(selectedCandidate, equals(searchCandidates.first));
     });
+
+    testWidgets('検索サービス未指定時でも再ビルドで同じインスタンスを使い回す', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      final firstSearchBar = tester.widget<CustomSearchBar>(
+        find.byType(CustomSearchBar),
+      );
+      final firstService = firstSearchBar.locationSearchService;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      final secondSearchBar = tester.widget<CustomSearchBar>(
+        find.byType(CustomSearchBar),
+      );
+      final secondService = secondSearchBar.locationSearchService;
+
+      expect(firstService, isNotNull);
+      expect(identical(secondService, firstService), isTrue);
+    });
+
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,
     ) async {
