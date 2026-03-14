@@ -303,7 +303,6 @@ class PinDetailBottomSheet extends HookWidget {
           labelText: '場所名',
           hintText: '場所名を入力',
           border: const OutlineInputBorder(),
-          prefixIcon: Icon(Icons.location_on, color: Colors.blue[600]),
           suffixIcon: isLoadingLocation.value
               ? const Padding(
                   padding: EdgeInsets.all(12),
