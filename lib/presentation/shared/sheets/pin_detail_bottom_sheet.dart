@@ -116,7 +116,7 @@ class PinDetailBottomSheet extends HookWidget {
         locationNameController.text = fetchedLocationName ?? '';
       } catch (e, stack) {
         logger.e(
-          '_PinDetailBottomSheetState._loadLocationName: ${e.toString()}',
+          'PinDetailBottomSheet.loadLocationName: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );

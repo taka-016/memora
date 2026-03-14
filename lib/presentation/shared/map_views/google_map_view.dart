@@ -1,16 +1,16 @@
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/env/env.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
-import 'package:memora/core/app_logger.dart';
 
 class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
