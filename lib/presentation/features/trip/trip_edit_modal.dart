@@ -7,15 +7,18 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
+import 'package:memora/env/env.dart';
+import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
-import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
-import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
+import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
+import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
 enum TripEditExpandedSection { map, routeInfo, tasks }
@@ -23,6 +26,8 @@ enum TripEditExpandedSection { map, routeInfo, tasks }
 class TripEditModalTestHandle {
   void Function(DateTime?, DateTime?)? _setDateRange;
   void Function(List<PinDto>)? _setPins;
+  Future<void> Function(Coordinate)? _triggerMapLongTap;
+  void Function(LocationCandidateDto)? _selectSearchedLocation;
 
   @visibleForTesting
   void setDateRangeForTest(DateTime? start, DateTime? end) {
@@ -32,6 +37,20 @@ class TripEditModalTestHandle {
   @visibleForTesting
   void setPinsForTest(List<PinDto> pins) {
     _setPins?.call(pins);
+  }
+
+  @visibleForTesting
+  Future<void> triggerMapLongTapForTest(Coordinate coordinate) async {
+    final triggerMapLongTap = _triggerMapLongTap;
+    if (triggerMapLongTap == null) {
+      return;
+    }
+    await triggerMapLongTap(coordinate);
+  }
+
+  @visibleForTesting
+  void selectSearchedLocationForTest(LocationCandidateDto candidate) {
+    _selectSearchedLocation?.call(candidate);
   }
 }
 
@@ -43,6 +62,7 @@ class TripEditModal extends HookConsumerWidget {
   final bool isTestEnvironment;
   final int? year;
   final TripEditModalTestHandle? testHandle;
+  final NearbyLocationService? nearbyLocationService;
 
   const TripEditModal({
     super.key,
@@ -53,6 +73,7 @@ class TripEditModal extends HookConsumerWidget {
     this.isTestEnvironment = false,
     this.year,
     this.testHandle,
+    this.nearbyLocationService,
   });
 
   @override
@@ -84,6 +105,12 @@ class TripEditModal extends HookConsumerWidget {
     final mapIconKey = useMemoized(() => GlobalKey());
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
+    final effectiveNearbyLocationService = useMemoized(
+      () =>
+          nearbyLocationService ??
+          GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey),
+      [nearbyLocationService],
+    );
 
     final initialTripForComparison = useMemoized(() {
       final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
@@ -134,24 +161,6 @@ class TripEditModal extends HookConsumerWidget {
       return null;
     }, [startDate.value, endDate.value, pins.value, tasks.value]);
 
-    useEffect(() {
-      if (testHandle != null) {
-        testHandle!._setDateRange = (DateTime? start, DateTime? end) {
-          startDate.value = start;
-          endDate.value = end;
-        };
-        testHandle!._setPins = (List<PinDto> newPins) {
-          pins.value = List<PinDto>.from(newPins);
-        };
-      }
-      return () {
-        if (testHandle != null) {
-          testHandle!._setDateRange = null;
-          testHandle!._setPins = null;
-        }
-      };
-    }, [testHandle]);
-
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
       selectedPin.value = null;
@@ -171,13 +180,49 @@ class TripEditModal extends HookConsumerWidget {
       selectedPin.value = newPin;
     }
 
-    void onMapLongTapped(Coordinate coordinate) {
-      addPin(coordinate: coordinate);
+    Future<String?> getLocationName(Coordinate coordinate) async {
+      try {
+        return await effectiveNearbyLocationService.getLocationName(coordinate);
+      } catch (e, stack) {
+        logger.e(
+          'TripEditModal.getLocationName: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        return null;
+      }
+    }
+
+    Future<void> onMapLongTapped(Coordinate coordinate) async {
+      final locationName = await getLocationName(coordinate);
+      addPin(coordinate: coordinate, locationName: locationName);
     }
 
     void onSearchedLocationSelected(LocationCandidateDto candidate) {
       addPin(coordinate: candidate.coordinate, locationName: candidate.name);
     }
+
+    useEffect(() {
+      if (testHandle != null) {
+        testHandle!._setDateRange = (DateTime? start, DateTime? end) {
+          startDate.value = start;
+          endDate.value = end;
+        };
+        testHandle!._setPins = (List<PinDto> newPins) {
+          pins.value = List<PinDto>.from(newPins);
+        };
+        testHandle!._triggerMapLongTap = onMapLongTapped;
+        testHandle!._selectSearchedLocation = onSearchedLocationSelected;
+      }
+      return () {
+        if (testHandle != null) {
+          testHandle!._setDateRange = null;
+          testHandle!._setPins = null;
+          testHandle!._triggerMapLongTap = null;
+          testHandle!._selectSearchedLocation = null;
+        }
+      };
+    }, [testHandle]);
 
     void onPinTapped(PinDto pin) {
       selectedPin.value = pin;

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -10,6 +13,21 @@ Widget _createApp({required Widget child}) {
   return ProviderScope(
     child: MaterialApp(home: Scaffold(body: child)),
   );
+}
+
+class FakeNearbyLocationService implements NearbyLocationService {
+  FakeNearbyLocationService({this.locationName});
+
+  final String? locationName;
+  int callCount = 0;
+  Coordinate? lastCoordinate;
+
+  @override
+  Future<String?> getLocationName(Coordinate coordinate) async {
+    callCount += 1;
+    lastCoordinate = coordinate;
+    return locationName;
+  }
 }
 
 void main() {
@@ -190,6 +208,87 @@ void main() {
       );
 
       expect(find.text('編集'), findsOneWidget);
+    });
+
+    testWidgets('手動でピンを追加した時だけ場所名を取得すること', (WidgetTester tester) async {
+      final testHandle = TripEditModalTestHandle();
+      final fakeNearbyLocationService = FakeNearbyLocationService(
+        locationName: '取得した場所名',
+      );
+      TripEntryDto? savedTripEntry;
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            onSave: (TripEntryDto tripEntry) async {
+              savedTripEntry = tripEntry;
+            },
+            isTestEnvironment: true,
+            testHandle: testHandle,
+            nearbyLocationService: fakeNearbyLocationService,
+          ),
+        ),
+      );
+
+      await testHandle.triggerMapLongTapForTest(
+        const Coordinate(latitude: 35.681236, longitude: 139.767125),
+      );
+      await tester.pumpAndSettle();
+
+      expect(fakeNearbyLocationService.callCount, 1);
+      expect(
+        fakeNearbyLocationService.lastCoordinate,
+        const Coordinate(latitude: 35.681236, longitude: 139.767125),
+      );
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(savedTripEntry, isNotNull);
+      expect(savedTripEntry!.pins, hasLength(1));
+      expect(savedTripEntry!.pins!.first.locationName, equals('取得した場所名'));
+    });
+
+    testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
+      WidgetTester tester,
+    ) async {
+      final testHandle = TripEditModalTestHandle();
+      final fakeNearbyLocationService = FakeNearbyLocationService(
+        locationName: '取得してはいけない場所名',
+      );
+      TripEntryDto? savedTripEntry;
+      const candidate = LocationCandidateDto(
+        name: '検索結果の場所名',
+        address: '東京都千代田区丸の内1-9-1',
+        coordinate: Coordinate(latitude: 35.681236, longitude: 139.767125),
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            onSave: (TripEntryDto tripEntry) async {
+              savedTripEntry = tripEntry;
+            },
+            isTestEnvironment: true,
+            testHandle: testHandle,
+            nearbyLocationService: fakeNearbyLocationService,
+          ),
+        ),
+      );
+
+      testHandle.selectSearchedLocationForTest(candidate);
+      await tester.pumpAndSettle();
+
+      expect(fakeNearbyLocationService.callCount, 0);
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(savedTripEntry, isNotNull);
+      expect(savedTripEntry!.pins, hasLength(1));
+      expect(savedTripEntry!.pins!.first.locationName, equals('検索結果の場所名'));
     });
 
     testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
-import 'package:memora/env/env.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends HookWidget {
@@ -12,7 +8,6 @@ class PinDetailBottomSheet extends HookWidget {
   final VoidCallback onClose;
   final Function(PinDto pin)? onUpdate;
   final Function(String)? onDelete;
-  final NearbyLocationService? reverseGeocodingService;
 
   const PinDetailBottomSheet({
     super.key,
@@ -20,7 +15,6 @@ class PinDetailBottomSheet extends HookWidget {
     required this.onClose,
     this.onUpdate,
     this.onDelete,
-    this.reverseGeocodingService,
   });
 
   @override
@@ -32,13 +26,6 @@ class PinDetailBottomSheet extends HookWidget {
     final locationNameController = useTextEditingController();
     final memoController = useTextEditingController();
     final dateErrorMessage = useState<String?>(null);
-    final isLoadingLocation = useState(false);
-    final effectiveReverseGeocodingService = useMemoized(
-      () =>
-          reverseGeocodingService ??
-          GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey),
-      [reverseGeocodingService],
-    );
     final isReadOnly = onUpdate == null;
 
     DateTime? buildFromDateTime() {
@@ -100,30 +87,6 @@ class PinDetailBottomSheet extends HookWidget {
       }
 
       memoController.text = pin.visitMemo ?? '';
-    }
-
-    Future<void> loadLocationName({bool forceRefresh = false}) async {
-      if (locationNameController.text.isNotEmpty && !forceRefresh) {
-        return;
-      }
-
-      isLoadingLocation.value = true;
-
-      try {
-        final currentCoordinate = pin.coordinate;
-        final fetchedLocationName = await effectiveReverseGeocodingService
-            .getLocationName(currentCoordinate);
-        locationNameController.text = fetchedLocationName ?? '';
-      } catch (e, stack) {
-        logger.e(
-          'PinDetailBottomSheet.loadLocationName: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        locationNameController.clear();
-      } finally {
-        isLoadingLocation.value = false;
-      }
     }
 
     Future<void> selectFromDate(BuildContext context) async {
@@ -298,21 +261,11 @@ class PinDetailBottomSheet extends HookWidget {
       return TextFormField(
         key: const Key('locationNameField'),
         controller: locationNameController,
-        readOnly: isReadOnly || isLoadingLocation.value,
+        readOnly: isReadOnly,
         decoration: InputDecoration(
           labelText: '場所名',
           hintText: '場所名を入力',
           border: const OutlineInputBorder(),
-          suffixIcon: isLoadingLocation.value
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : null,
           fillColor: isReadOnly ? Colors.grey[100] : null,
           filled: isReadOnly,
         ),
@@ -418,7 +371,6 @@ class PinDetailBottomSheet extends HookWidget {
 
     useEffect(() {
       initializeFromPin();
-      loadLocationName();
       return null;
     }, [pin]);
 
