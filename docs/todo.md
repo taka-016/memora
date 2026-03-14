@@ -55,6 +55,8 @@
 
 ## リファクタリング
 
+- 地図画面まわりのイベントハンドラ命名を `handle...` 系で統一する
+  - `onMapLongTap` / `onMapLongTapped` / `onSearchedLocationSelected` などの内部処理名を見直し、イベント受け口と処理関数の命名規約を整理する
 - `lib/presentation/features/trip/trip_edit_modal.dart:9` で `domain/exceptions/validation_exception.dart` を直接参照している
   - 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
 - `lib/presentation/features/trip/trip_management.dart:13` で `application/queries/order_by.dart` を直接参照している

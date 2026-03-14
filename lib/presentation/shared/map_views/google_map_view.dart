@@ -92,7 +92,9 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> moveToSearchedLocation(LocationCandidateDto candidate) async {
+    Future<void> onSearchedLocationSelect(
+      LocationCandidateDto candidate,
+    ) async {
       final coordinate = candidate.coordinate;
       animateToPosition(LatLng(coordinate.latitude, coordinate.longitude));
       onSearchedLocationSelected?.call(candidate);
@@ -178,7 +180,7 @@ class GoogleMapView extends HookConsumerWidget {
           hintText: '場所を検索',
           locationSearchService: effectiveLocationSearchService,
           onCandidateSelected: (candidate) async {
-            await moveToSearchedLocation(candidate);
+            await onSearchedLocationSelect(candidate);
           },
         ),
       );
