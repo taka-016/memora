@@ -17,9 +17,9 @@ class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
-  final Function(PinDto)? onPinTapped;
-  final Function(PinDto)? onPinUpdated;
-  final Function(String)? onPinDeleted;
+  final ValueChanged<PinDto>? onPinTapped;
+  final ValueChanged<PinDto>? onPinUpdated;
+  final ValueChanged<String>? onPinDeleted;
   final PinDto? selectedPin;
   final bool isReadOnly;
   final LocationSearchService? locationSearchService;

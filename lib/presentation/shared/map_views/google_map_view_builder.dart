@@ -13,9 +13,9 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     required List<PinDto> pins,
     ValueChanged<Coordinate>? onMapLongTapped,
     ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
-    Function(PinDto)? onPinTapped,
-    Function(PinDto)? onPinUpdated,
-    Function(String)? onPinDeleted,
+    ValueChanged<PinDto>? onPinTapped,
+    ValueChanged<PinDto>? onPinUpdated,
+    ValueChanged<String>? onPinDeleted,
     PinDto? selectedPin,
     bool isReadOnly = false,
   }) {

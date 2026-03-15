@@ -27,9 +27,9 @@ class SelectVisitLocationView extends StatelessWidget {
   final PinDto? selectedPin;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
-  final Function(PinDto)? onPinTapped;
-  final Function(PinDto)? onPinUpdated;
-  final Function(String)? onPinDeleted;
+  final ValueChanged<PinDto>? onPinTapped;
+  final ValueChanged<PinDto>? onPinUpdated;
+  final ValueChanged<String>? onPinDeleted;
   final Key? closeButtonKey;
 
   @override
