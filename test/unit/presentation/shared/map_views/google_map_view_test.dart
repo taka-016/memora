@@ -193,7 +193,7 @@ void main() {
       expect(initialPosition.target.longitude, 136.881537);
     });
 
-    testWidgets('ピンがマーカーとして表示される', (WidgetTester tester) async {
+    testWidgets('ピンが地図上に表示される', (WidgetTester tester) async {
       final testPins = [
         const PinDto(pinId: 'pin1', latitude: 35.681236, longitude: 139.767125),
         const PinDto(pinId: 'pin2', latitude: 35.681236, longitude: 139.767125),
@@ -225,9 +225,9 @@ void main() {
                   mapTapped = true;
                   tappedLocation = coordinate;
                 },
-                onMarkerTapped: (PinDto pin) {},
-                onMarkerUpdated: (PinDto pin) {},
-                onMarkerDeleted: (String pinId) {},
+                onPinTapped: (PinDto pin) {},
+                onPinUpdated: (PinDto pin) {},
+                onPinDeleted: (String pinId) {},
               ),
             ),
           ),
@@ -320,7 +320,7 @@ void main() {
       expect(identical(secondService, firstService), isTrue);
     });
 
-    testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
+    testWidgets('ピンをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,
     ) async {
       const testPin = PinDto(
@@ -329,7 +329,7 @@ void main() {
         longitude: 139.767125,
       );
 
-      bool markerTapped = false;
+      bool pinTapped = false;
       PinDto? tappedPin;
 
       await tester.pumpWidget(
@@ -338,8 +338,8 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerTapped: (PinDto pin) {
-                  markerTapped = true;
+                onPinTapped: (PinDto pin) {
+                  pinTapped = true;
                   tappedPin = pin;
                 },
               ),
@@ -351,12 +351,12 @@ void main() {
       // 初期状態ではボトムシートは非表示
       expect(find.text('削除'), findsNothing);
 
-      // GoogleMapからマーカーを見つけてタップする
+      // GoogleMapからピンを見つけてタップする
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final markers = googleMap.markers;
       expect(markers.length, 1);
 
-      // マーカーのonTapコールバックを実行
+      // ピンのonTapコールバックを実行
       final marker = markers.first;
       marker.onTap!();
       await tester.pumpAndSettle();
@@ -366,11 +366,11 @@ void main() {
       expect(find.text('更新'), findsOneWidget);
 
       // コールバック関数が正しく呼ばれたことを確認
-      expect(markerTapped, true);
+      expect(pinTapped, true);
       expect(tappedPin, testPin);
     });
 
-    testWidgets('更新ボタンをタップするとonMarkerUpdatedコールバックが呼ばれる', (
+    testWidgets('更新ボタンをタップするとonPinUpdatedコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
       const testPin = PinDto(
@@ -379,7 +379,7 @@ void main() {
         longitude: 139.767125,
       );
 
-      bool markerUpdated = false;
+      bool pinUpdated = false;
       PinDto? updatedPin;
 
       await tester.pumpWidget(
@@ -388,8 +388,8 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerUpdated: (PinDto pin) {
-                  markerUpdated = true;
+                onPinUpdated: (PinDto pin) {
+                  pinUpdated = true;
                   updatedPin = pin;
                 },
               ),
@@ -398,7 +398,7 @@ void main() {
         ),
       );
 
-      // マーカーをタップしてボトムシートを表示
+      // ピンをタップしてボトムシートを表示
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final marker = googleMap.markers.first;
       marker.onTap!();
@@ -410,13 +410,13 @@ void main() {
       await tester.pumpAndSettle();
 
       // コールバック関数が正しく呼ばれたことを確認
-      expect(markerUpdated, true);
+      expect(pinUpdated, true);
       expect(updatedPin?.pinId, testPin.pinId);
       expect(updatedPin?.latitude, testPin.latitude);
       expect(updatedPin?.longitude, testPin.longitude);
     });
 
-    testWidgets('削除ボタンをタップするとonMarkerDeletedコールバックが呼ばれる', (
+    testWidgets('削除ボタンをタップするとonPinDeletedコールバックが呼ばれる', (
       WidgetTester tester,
     ) async {
       const testPin = PinDto(
@@ -425,7 +425,7 @@ void main() {
         longitude: 139.767125,
       );
 
-      bool markerDeleted = false;
+      bool pinDeleted = false;
       String? deletedPinId;
 
       await tester.pumpWidget(
@@ -434,8 +434,8 @@ void main() {
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [testPin],
-                onMarkerDeleted: (String pinId) {
-                  markerDeleted = true;
+                onPinDeleted: (String pinId) {
+                  pinDeleted = true;
                   deletedPinId = pinId;
                 },
               ),
@@ -444,7 +444,7 @@ void main() {
         ),
       );
 
-      // マーカーをタップしてボトムシートを表示
+      // ピンをタップしてボトムシートを表示
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final marker = googleMap.markers.first;
       marker.onTap!();
@@ -456,7 +456,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // コールバック関数が正しく呼ばれたことを確認
-      expect(markerDeleted, true);
+      expect(pinDeleted, true);
       expect(deletedPinId, testPin.pinId);
     });
 
@@ -475,7 +475,7 @@ void main() {
         ),
       );
 
-      // マーカーをタップしてボトムシートを表示
+      // ピンをタップしてボトムシートを表示
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final marker = googleMap.markers.first;
       marker.onTap!();
@@ -512,7 +512,7 @@ void main() {
         ),
       );
 
-      // GoogleMapからマーカーを取得
+      // GoogleMapからピンを取得
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final markers = googleMap.markers.toList();
       expect(markers.length, 2);
@@ -557,7 +557,7 @@ void main() {
         ),
       );
 
-      // マーカーをタップしてボトムシートを表示
+      // ピンをタップしてボトムシートを表示
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final marker = googleMap.markers.first;
       marker.onTap!();

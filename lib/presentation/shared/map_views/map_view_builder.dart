@@ -8,9 +8,9 @@ abstract class MapViewBuilder {
     required List<PinDto> pins,
     ValueChanged<Coordinate>? onMapLongTapped,
     ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
-    Function(PinDto)? onMarkerTapped,
-    Function(PinDto)? onMarkerUpdated,
-    Function(String)? onMarkerDeleted,
+    ValueChanged<PinDto>? onPinTapped,
+    ValueChanged<PinDto>? onPinUpdated,
+    ValueChanged<String>? onPinDeleted,
     PinDto? selectedPin,
     bool isReadOnly = false,
   });

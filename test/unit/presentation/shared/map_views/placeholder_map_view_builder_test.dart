@@ -22,15 +22,15 @@ void main() {
 
       void onMapLongTapped(Coordinate coordinate) {}
       void onSearchedLocationSelected(LocationCandidateDto candidate) {}
-      void onMarkerTapped(PinDto pin) {}
-      void onMarkerDeleted(String pinId) {}
+      void onPinTapped(PinDto pin) {}
+      void onPinDeleted(String pinId) {}
 
       final widget = service.createMapView(
         pins: pins,
         onMapLongTapped: onMapLongTapped,
         onSearchedLocationSelected: onSearchedLocationSelected,
-        onMarkerTapped: onMarkerTapped,
-        onMarkerDeleted: onMarkerDeleted,
+        onPinTapped: onPinTapped,
+        onPinDeleted: onPinDeleted,
       );
 
       expect(widget, isA<PlaceholderMapView>());

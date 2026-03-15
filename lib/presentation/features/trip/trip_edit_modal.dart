@@ -187,12 +187,12 @@ class TripEditModal extends HookConsumerWidget {
       }
     }
 
-    Future<void> onMapLongTapped(Coordinate coordinate) async {
+    Future<void> handleMapLongTapped(Coordinate coordinate) async {
       final locationName = await getLocationName(coordinate);
       addPin(coordinate: coordinate, locationName: locationName);
     }
 
-    void onSearchedLocationSelected(LocationCandidateDto candidate) {
+    void handleSearchedLocationSelected(LocationCandidateDto candidate) {
       addPin(coordinate: candidate.coordinate, locationName: candidate.name);
     }
 
@@ -214,11 +214,11 @@ class TripEditModal extends HookConsumerWidget {
       };
     }, [testHandle]);
 
-    void onPinTapped(PinDto pin) {
+    void handlePinTapped(PinDto pin) {
       selectedPin.value = pin;
     }
 
-    Future<void> onPinDeleted(String pinId) async {
+    Future<void> handlePinDeleted(String pinId) async {
       pins.value = pins.value.where((pin) => pin.pinId != pinId).toList();
       if (selectedPin.value?.pinId == pinId) {
         selectedPin.value = null;
@@ -226,7 +226,7 @@ class TripEditModal extends HookConsumerWidget {
       hideBottomSheet();
     }
 
-    void onPinUpdated(PinDto pin) {
+    void handlePinUpdated(PinDto pin) {
       final updatedPins = List<PinDto>.from(pins.value);
       final index = updatedPins.indexWhere((p) => p.pinId == pin.pinId);
       if (index != -1) {
@@ -338,8 +338,8 @@ class TripEditModal extends HookConsumerWidget {
 
       return PinDetailBottomSheet(
         pin: selectedPin.value!,
-        onUpdate: onPinUpdated,
-        onDelete: onPinDeleted,
+        onUpdate: handlePinUpdated,
+        onDelete: handlePinDeleted,
         onClose: hideBottomSheet,
       );
     }
@@ -396,10 +396,10 @@ class TripEditModal extends HookConsumerWidget {
                 }(),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => onPinDeleted(pin.pinId),
+                  onPressed: () => handlePinDeleted(pin.pinId),
                 ),
                 onTap: () {
-                  onPinTapped(pin);
+                  handlePinTapped(pin);
                   isBottomSheetVisible.value = true;
                 },
               ),
@@ -694,11 +694,11 @@ class TripEditModal extends HookConsumerWidget {
             selectedPin: selectedPin.value,
             isTestEnvironment: isTestEnvironment,
             onClose: toggleMapExpansion,
-            onMapLongTapped: onMapLongTapped,
-            onSearchedLocationSelected: onSearchedLocationSelected,
-            onMarkerTapped: onPinTapped,
-            onMarkerUpdated: onPinUpdated,
-            onMarkerDeleted: onPinDeleted,
+            onMapLongTapped: handleMapLongTapped,
+            onSearchedLocationSelected: handleSearchedLocationSelected,
+            onPinTapped: handlePinTapped,
+            onPinUpdated: handlePinUpdated,
+            onPinDeleted: handlePinDeleted,
             bottomSheet: buildBottomSheet(),
             closeButtonKey: mapIconKey,
           );
