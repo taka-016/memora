@@ -40,7 +40,7 @@ class RouteList extends HookWidget {
     final routeMemoExpansion = routeMemoExpansionState.value;
     final selectedPinIndex = selectedPinIndexState.value;
 
-    void onReorder(int oldIndex, int newIndex) {
+    void handleReorder(int oldIndex, int newIndex) {
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
@@ -61,7 +61,7 @@ class RouteList extends HookWidget {
       selectedPinIndexState.value = null;
     }
 
-    void onPinTap(int index) {
+    void handlePinTap(int index) {
       if (selectedPinIndexState.value == index) {
         selectedPinIndexState.value = null;
       } else {
@@ -69,7 +69,7 @@ class RouteList extends HookWidget {
       }
     }
 
-    void onModeChanged(String key, TravelMode mode) {
+    void handleModeChanged(String key, TravelMode mode) {
       final previousMode = segmentModesState.value[key];
       if (previousMode == mode) {
         return;
@@ -126,9 +126,9 @@ class RouteList extends HookWidget {
             segmentModes: segmentModes,
             segmentDetails: segmentDetails,
             routeMemoExpansion: routeMemoExpansion,
-            onReorder: onReorder,
-            onPinTap: onPinTap,
-            onModeChanged: onModeChanged,
+            onReorder: handleReorder,
+            onPinTap: handlePinTap,
+            onModeChanged: handleModeChanged,
             onToggleRouteMemo: toggleRouteMemoExpansion,
             onOpenOtherRouteInfoSheet: openOtherRouteInfoSheet,
           ),

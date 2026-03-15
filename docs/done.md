@@ -613,6 +613,33 @@
 
 ## リファクタリング
 
+- `Marker` と命名している箇所を `Pin` に統一する
+  - 変数名・関数名・Widget名・コメント・テスト名を対象に、地図上のピンを表す命名を `Pin` 系へ揃える
+  - 対象候補
+    - `lib/presentation/shared/map_views/google_map_view.dart`
+      - `onMarkerTapped` / `onMarkerUpdated` / `onMarkerDeleted`
+      - `onMarkerTap` / `onMarkerUpdate` / `onMarkerDelete`
+      - `buildMarkers`
+    - `lib/presentation/features/trip/select_visit_location_view.dart`
+      - `onMarkerTapped` / `onMarkerUpdated` / `onMarkerDeleted`
+    - `lib/presentation/shared/map_views/map_view_builder.dart`
+      - `onMarkerTapped` / `onMarkerUpdated` / `onMarkerDeleted`
+    - `lib/presentation/shared/map_views/google_map_view_builder.dart`
+      - `onMarkerTapped` / `onMarkerUpdated` / `onMarkerDeleted`
+    - `lib/presentation/shared/map_views/placeholder_map_view_builder.dart`
+      - `onMarkerTapped` / `onMarkerUpdated` / `onMarkerDeleted`
+    - `lib/presentation/features/trip/route_map.dart`
+      - `_buildMarkers`
+    - `test/unit/presentation/shared/map_views/google_map_view_test.dart`
+      - `markerTapped` / `markerUpdated` / `markerDeleted`
+      - テスト名およびコメント内の「マーカー」表現
+    - `test/unit/presentation/shared/map_views/google_map_view_builder_test.dart`
+      - `onMarkerTapped` / `onMarkerDeleted`
+    - `test/unit/presentation/shared/map_views/placeholder_map_view_builder_test.dart`
+      - `onMarkerTapped` / `onMarkerDeleted`
+  - `google_maps_flutter` の `Marker` 型名や `GoogleMap.markers` プロパティ名は外部API由来のため、アプリ側命名の統一対象とは分けて扱う
+- 地図画面まわりのイベントハンドラ命名を `handle...` 系で統一する
+  - `onMapLongTap` / `onMapLongTapped` / `onSearchedLocationSelected` などの内部処理名を見直し、イベント受け口と処理関数の命名規約を整理する
 - `lib/domain/value_objects` は `Location` のみを残す方針に整理する
   - `location_candidate.dart` は場所検索結果モデルとして `lib/application/dtos` もしくは `lib/infrastructure` 配下へ移動する
     - `lib/domain/services/location_search_service.dart` が戻り値型として参照しているため、ドメイン層がアプリケーション層・インフラ層の型へ依存しないよう、サービス契約もあわせて見直す

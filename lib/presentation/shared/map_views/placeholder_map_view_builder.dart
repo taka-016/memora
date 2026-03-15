@@ -13,9 +13,9 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
     required List<PinDto> pins,
     ValueChanged<Coordinate>? onMapLongTapped,
     ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
-    Function(PinDto)? onMarkerTapped,
-    Function(PinDto)? onMarkerUpdated,
-    Function(String)? onMarkerDeleted,
+    Function(PinDto)? onPinTapped,
+    Function(PinDto)? onPinUpdated,
+    Function(String)? onPinDeleted,
     PinDto? selectedPin,
     bool isReadOnly = false,
   }) {

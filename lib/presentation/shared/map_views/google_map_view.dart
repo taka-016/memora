@@ -17,9 +17,9 @@ class GoogleMapView extends HookConsumerWidget {
   final List<PinDto> pins;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
-  final Function(PinDto)? onMarkerTapped;
-  final Function(PinDto)? onMarkerUpdated;
-  final Function(String)? onMarkerDeleted;
+  final Function(PinDto)? onPinTapped;
+  final Function(PinDto)? onPinUpdated;
+  final Function(String)? onPinDeleted;
   final PinDto? selectedPin;
   final bool isReadOnly;
   final LocationSearchService? locationSearchService;
@@ -29,9 +29,9 @@ class GoogleMapView extends HookConsumerWidget {
     required this.pins,
     this.onMapLongTapped,
     this.onSearchedLocationSelected,
-    this.onMarkerTapped,
-    this.onMarkerUpdated,
-    this.onMarkerDeleted,
+    this.onPinTapped,
+    this.onPinUpdated,
+    this.onPinDeleted,
     this.selectedPin,
     this.isReadOnly = false,
     this.locationSearchService,
@@ -106,7 +106,7 @@ class GoogleMapView extends HookConsumerWidget {
       }
     }
 
-    Future<void> onSearchedLocationSelect(
+    Future<void> handleSearchedLocationSelected(
       LocationCandidateDto candidate,
     ) async {
       final coordinate = candidate.coordinate;
@@ -114,11 +114,11 @@ class GoogleMapView extends HookConsumerWidget {
       onSearchedLocationSelected?.call(candidate);
     }
 
-    void onMapCreated(GoogleMapController controller) {
+    void handleMapCreated(GoogleMapController controller) {
       mapController.value = controller;
     }
 
-    void onMapLongTap(LatLng position) {
+    void handleMapLongPress(LatLng position) {
       onMapLongTapped?.call(
         Coordinate(latitude: position.latitude, longitude: position.longitude),
       );
@@ -129,18 +129,18 @@ class GoogleMapView extends HookConsumerWidget {
       selectedPinState.value = null;
     }
 
-    void onMarkerUpdate(PinDto pin) {
-      onMarkerUpdated?.call(pin);
+    void handlePinUpdated(PinDto pin) {
+      onPinUpdated?.call(pin);
       hidePinDetailBottomSheet();
     }
 
-    void onMarkerDelete(String pinId) {
-      onMarkerDeleted?.call(pinId);
+    void handlePinDeleted(String pinId) {
+      onPinDeleted?.call(pinId);
       hidePinDetailBottomSheet();
     }
 
-    void onMarkerTap(PinDto pin) {
-      onMarkerTapped?.call(pin);
+    void handlePinTapped(PinDto pin) {
+      onPinTapped?.call(pin);
       selectedPinState.value = pin;
       isBottomSheetVisible.value = true;
     }
@@ -148,20 +148,20 @@ class GoogleMapView extends HookConsumerWidget {
     useEffect(() {
       if (selectedPin != null && selectedPin != previousSelectedPin.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          onMarkerTap(selectedPin!);
+          handlePinTapped(selectedPin!);
         });
       }
       previousSelectedPin.value = selectedPin;
       return null;
     }, [selectedPin]);
 
-    Set<Marker> buildMarkers() {
+    Set<Marker> buildPins() {
       return pins
           .map(
             (pin) => Marker(
               markerId: MarkerId(pin.pinId),
               position: LatLng(pin.latitude, pin.longitude),
-              onTap: () => onMarkerTap(pin),
+              onTap: () => handlePinTapped(pin),
             ),
           )
           .toSet();
@@ -169,13 +169,13 @@ class GoogleMapView extends HookConsumerWidget {
 
     Widget buildGoogleMap() {
       return GoogleMap(
-        onMapCreated: onMapCreated,
+        onMapCreated: handleMapCreated,
         initialCameraPosition: CameraPosition(
           target: getCurrentOrFallbackPosition(),
           zoom: 15,
         ),
-        markers: buildMarkers(),
-        onLongPress: onMapLongTap,
+        markers: buildPins(),
+        onLongPress: handleMapLongPress,
         myLocationEnabled: true,
         myLocationButtonEnabled: false,
       );
@@ -190,7 +190,7 @@ class GoogleMapView extends HookConsumerWidget {
           hintText: '場所を検索',
           locationSearchService: effectiveLocationSearchService,
           onCandidateSelected: (candidate) async {
-            await onSearchedLocationSelect(candidate);
+            await handleSearchedLocationSelected(candidate);
           },
         ),
       );
@@ -215,8 +215,8 @@ class GoogleMapView extends HookConsumerWidget {
 
       return PinDetailBottomSheet(
         pin: selectedPinState.value!,
-        onUpdate: isReadOnly ? null : onMarkerUpdate,
-        onDelete: isReadOnly ? null : onMarkerDelete,
+        onUpdate: isReadOnly ? null : handlePinUpdated,
+        onDelete: isReadOnly ? null : handlePinDeleted,
         onClose: hidePinDetailBottomSheet,
       );
     }

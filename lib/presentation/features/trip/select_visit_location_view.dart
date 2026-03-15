@@ -14,9 +14,9 @@ class SelectVisitLocationView extends StatelessWidget {
     this.selectedPin,
     this.onMapLongTapped,
     this.onSearchedLocationSelected,
-    this.onMarkerTapped,
-    this.onMarkerUpdated,
-    this.onMarkerDeleted,
+    this.onPinTapped,
+    this.onPinUpdated,
+    this.onPinDeleted,
     this.closeButtonKey,
   });
 
@@ -27,9 +27,9 @@ class SelectVisitLocationView extends StatelessWidget {
   final PinDto? selectedPin;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
-  final Function(PinDto)? onMarkerTapped;
-  final Function(PinDto)? onMarkerUpdated;
-  final Function(String)? onMarkerDeleted;
+  final Function(PinDto)? onPinTapped;
+  final Function(PinDto)? onPinUpdated;
+  final Function(String)? onPinDeleted;
   final Key? closeButtonKey;
 
   @override
@@ -86,9 +86,9 @@ class SelectVisitLocationView extends StatelessWidget {
       pins: pins,
       onMapLongTapped: onMapLongTapped,
       onSearchedLocationSelected: onSearchedLocationSelected,
-      onMarkerTapped: onMarkerTapped,
-      onMarkerUpdated: onMarkerUpdated,
-      onMarkerDeleted: onMarkerDeleted,
+      onPinTapped: onPinTapped,
+      onPinUpdated: onPinUpdated,
+      onPinDeleted: onPinDeleted,
       selectedPin: selectedPin,
     );
   }

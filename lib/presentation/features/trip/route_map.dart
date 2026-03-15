@@ -220,14 +220,14 @@ class RouteMap extends HookWidget {
           pins: pins,
           selectedPinIndex: selectedPinIndex,
         ),
-        markers: _buildMarkers(pins),
+        markers: _buildPins(pins),
         myLocationButtonEnabled: false,
         zoomControlsEnabled: false,
       ),
     );
   }
 
-  Set<Marker> _buildMarkers(List<PinDto> pins) {
+  Set<Marker> _buildPins(List<PinDto> pins) {
     return pins
         .map(
           (pin) => Marker(
