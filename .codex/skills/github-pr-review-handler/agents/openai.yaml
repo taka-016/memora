@@ -1,7 +1,7 @@
 interface:
   display_name: "GitHub PR Review Handler"
-  short_description: "GitHub PRレビュー指摘の妥当性確認、修正、返信を支援"
-  default_prompt: "Use $github-pr-review-handler to inspect unresolved review comments on a PR, decide whether each requires changes, apply fixes when needed, and reply on GitHub using the repository's mcp__github__* tools."
+  short_description: "GitHub PRレビュー指摘の妥当性確認、修正、コミット、返信を支援"
+  default_prompt: "Use $github-pr-review-handler to inspect unresolved review comments on a PR, decide whether each requires changes, apply fixes when needed, commit and push any required code changes, and reply on GitHub using the repository's mcp__github__* tools."
 dependencies:
   tools:
     - type: "mcp"

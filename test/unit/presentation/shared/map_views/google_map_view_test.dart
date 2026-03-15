@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -17,6 +20,17 @@ class MockLocationService implements CurrentLocationService {
   @override
   Future<Coordinate?> getCurrentLocation() async {
     return _coordinate;
+  }
+}
+
+class MockLocationSearchService implements LocationSearchService {
+  MockLocationSearchService(this._candidates);
+
+  final List<LocationCandidateDto> _candidates;
+
+  @override
+  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+    return _candidates;
   }
 }
 
@@ -236,6 +250,76 @@ void main() {
       expect(tappedLocation?.latitude, 35.681236);
       expect(tappedLocation?.longitude, 139.767125);
     });
+
+    testWidgets('検索結果を選択すると検索選択コールバックが呼ばれる', (WidgetTester tester) async {
+      LocationCandidateDto? selectedCandidate;
+
+      final searchCandidates = [
+        const LocationCandidateDto(
+          name: '首里城',
+          address: '沖縄県那覇市首里金城町1-2',
+          coordinate: Coordinate(latitude: 26.2173, longitude: 127.7190),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GoogleMapView(
+                pins: const [],
+                locationSearchService: MockLocationSearchService(
+                  searchCandidates,
+                ),
+                onSearchedLocationSelected: (candidate) {
+                  selectedCandidate = candidate;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '首里城');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ListTile, '首里城'));
+      await tester.pumpAndSettle();
+
+      expect(selectedCandidate, equals(searchCandidates.first));
+    });
+
+    testWidgets('検索サービス未指定時でも再ビルドで同じインスタンスを使い回す', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      final firstSearchBar = tester.widget<CustomSearchBar>(
+        find.byType(CustomSearchBar),
+      );
+      final firstService = firstSearchBar.locationSearchService;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: GoogleMapView(pins: const [])),
+          ),
+        ),
+      );
+
+      final secondSearchBar = tester.widget<CustomSearchBar>(
+        find.byType(CustomSearchBar),
+      );
+      final secondService = secondSearchBar.locationSearchService;
+
+      expect(firstService, isNotNull);
+      expect(identical(secondService, firstService), isTrue);
+    });
+
     testWidgets('マーカーをタップするとコールバック関数が呼ばれボトムシートが表示される', (
       WidgetTester tester,
     ) async {
@@ -486,14 +570,8 @@ void main() {
       expect(find.text('更新'), findsNothing);
       expect(find.text('削除'), findsNothing);
 
-      // 現在地再取得ボタンが無効化されている
-      final refreshButton = tester.widget<IconButton>(
-        find.descendant(
-          of: find.byType(PinDetailBottomSheet),
-          matching: find.widgetWithIcon(IconButton, Icons.refresh),
-        ),
-      );
-      expect(refreshButton.onPressed, isNull);
+      // 場所名の再取得ボタンは表示されない
+      expect(find.byIcon(Icons.refresh), findsNothing);
     });
   });
 }

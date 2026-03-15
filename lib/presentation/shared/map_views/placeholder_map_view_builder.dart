@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/core/models/coordinate.dart';
@@ -10,7 +11,8 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
   @override
   Widget createMapView({
     required List<PinDto> pins,
-    Function(Coordinate)? onMapLongTapped,
+    ValueChanged<Coordinate>? onMapLongTapped,
+    ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
     Function(PinDto)? onMarkerTapped,
     Function(PinDto)? onMarkerUpdated,
     Function(String)? onMarkerDeleted,
