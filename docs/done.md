@@ -700,6 +700,16 @@
   - `LocationState` を `CoordinateState` へ改名する
   - `test/unit/presentation/notifiers/coordinate_state_test.dart` と関連参照も同じ方針で追従する
 - `lib/presentation/shared/map_views/google_map_view.dart` の `locationProvider` / `locationProvider.notifier` 参照を `coordinateProvider` 系へ揃える
+- `lib/presentation/notifiers/coordinate_notifier.dart:4` で `domain/services/current_location_service.dart` を直接参照している
+  - 現在地取得はユースケース経由に統一し、domainサービスを画面から直接参照しない
+- `lib/presentation/notifiers/coordinate_notifier.dart:5` で `infrastructure/services/geolocator_current_location_service.dart` を直接参照している
+  - インフラサービス直接参照を削除し、現在地ユースケース経由の呼び出しに統一する
+- `lib/presentation/shared/inputs/custom_search_bar.dart:3` で `application/services/location_search_service.dart` を直接参照している
+  - 場所検索はユースケース経由に統一し、プレゼンテーション層からサービス依存を外す
+- `lib/presentation/shared/map_views/google_map_view.dart:10` で `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
+  - インフラサービス直接参照を削除し、場所検索ユースケース経由の呼び出しに統一する
+- `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart` の周辺検索直接依存は現行コードに存在しないことを確認した
+  - todo記述とのズレを整理し、このファイル自体への追加修正は不要と判断した
 - GroupDtoを作成する
   - GroupMemberDtoとGroupEventDtoも作成し、GroupDtoにリストとして保持する
   - マッパーも用意する

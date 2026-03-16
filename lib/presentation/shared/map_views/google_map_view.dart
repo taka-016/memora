@@ -3,12 +3,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/env/env.dart';
-import 'package:memora/infrastructure/services/google_places_api_location_search_service.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -22,7 +19,6 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<String>? onPinDeleted;
   final PinDto? selectedPin;
   final bool isReadOnly;
-  final LocationSearchService? locationSearchService;
 
   const GoogleMapView({
     super.key,
@@ -34,7 +30,6 @@ class GoogleMapView extends HookConsumerWidget {
     this.onPinDeleted,
     this.selectedPin,
     this.isReadOnly = false,
-    this.locationSearchService,
   });
 
   @override
@@ -45,20 +40,6 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedPinState = useState<PinDto?>(null);
     final previousSelectedPin = useRef<PinDto?>(null);
-    final internalLocationSearchService = useMemoized(
-      () => locationSearchService == null
-          ? GooglePlacesApiLocationSearchService(apiKey: Env.googlePlacesApiKey)
-          : null,
-      [locationSearchService],
-    );
-    final effectiveLocationSearchService =
-        locationSearchService ?? internalLocationSearchService;
-
-    useEffect(() {
-      return () {
-        internalLocationSearchService?.httpClient.close();
-      };
-    }, [internalLocationSearchService]);
 
     void showErrorSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -188,7 +169,6 @@ class GoogleMapView extends HookConsumerWidget {
         right: 16,
         child: CustomSearchBar(
           hintText: '場所を検索',
-          locationSearchService: effectiveLocationSearchService,
           onCandidateSelected: (candidate) async {
             await handleSearchedLocationSelected(candidate);
           },

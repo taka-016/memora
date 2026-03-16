@@ -1,13 +1,8 @@
+import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/coordinate_state.dart';
-import 'package:memora/domain/services/current_location_service.dart';
-import 'package:memora/infrastructure/services/geolocator_current_location_service.dart';
 import 'package:memora/core/app_logger.dart';
-
-final currentLocationServiceProvider = Provider<CurrentLocationService>((ref) {
-  return GeolocatorCurrentLocationService();
-});
+import 'package:memora/presentation/notifiers/coordinate_state.dart';
 
 final coordinateProvider =
     NotifierProvider<CoordinateNotifier, CoordinateState>(
@@ -15,8 +10,8 @@ final coordinateProvider =
     );
 
 class CoordinateNotifier extends Notifier<CoordinateState> {
-  CurrentLocationService get _currentLocationService =>
-      ref.read(currentLocationServiceProvider);
+  GetCurrentLocationUsecase get _getCurrentLocationUsecase =>
+      ref.read(getCurrentLocationUsecaseProvider);
 
   @override
   CoordinateState build() {
@@ -25,7 +20,7 @@ class CoordinateNotifier extends Notifier<CoordinateState> {
 
   Future<void> getCurrentLocation() async {
     try {
-      final coordinate = await _currentLocationService.getCurrentLocation();
+      final coordinate = await _getCurrentLocationUsecase.execute();
       if (coordinate != null) {
         state = state.copyWith(
           coordinate: coordinate,

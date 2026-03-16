@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 
-class CustomSearchBar extends HookWidget {
+class CustomSearchBar extends HookConsumerWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
   final TextEditingController? controller;
-  final LocationSearchService? locationSearchService;
   final ValueChanged<LocationCandidateDto>? onCandidateSelected;
 
   const CustomSearchBar({
@@ -15,22 +15,20 @@ class CustomSearchBar extends HookWidget {
     required this.hintText,
     this.onChanged,
     this.controller,
-    this.locationSearchService,
     this.onCandidateSelected,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textController = controller ?? useTextEditingController();
     final candidates = useState<List<LocationCandidateDto>>([]);
     final isLoading = useState(false);
 
     Future<void> onSearch() async {
-      if (locationSearchService == null) return;
       isLoading.value = true;
-      final results = await locationSearchService!.searchByKeyword(
-        textController.text,
-      );
+      final results = await ref
+          .read(searchLocationsUsecaseProvider)
+          .execute(textController.text);
       candidates.value = results;
       isLoading.value = false;
     }

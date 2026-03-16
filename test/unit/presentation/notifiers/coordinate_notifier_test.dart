@@ -1,29 +1,29 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
-import 'package:memora/domain/services/current_location_service.dart';
 import '../../../helpers/test_exception.dart';
 
 import 'coordinate_notifier_test.mocks.dart';
 
-@GenerateNiceMocks([MockSpec<CurrentLocationService>()])
+@GenerateNiceMocks([MockSpec<GetCurrentLocationUsecase>()])
 void main() {
   group('CoordinateNotifier', () {
-    late MockCurrentLocationService mockCurrentLocationService;
+    late MockGetCurrentLocationUsecase mockGetCurrentLocationUsecase;
 
     setUp(() {
-      mockCurrentLocationService = MockCurrentLocationService();
+      mockGetCurrentLocationUsecase = MockGetCurrentLocationUsecase();
     });
 
     ProviderContainer createContainer() {
       return ProviderContainer(
         overrides: [
-          currentLocationServiceProvider.overrideWithValue(
-            mockCurrentLocationService,
+          getCurrentLocationUsecaseProvider.overrideWithValue(
+            mockGetCurrentLocationUsecase,
           ),
         ],
       );
@@ -42,7 +42,7 @@ void main() {
     test('現在地取得成功時に状態が更新される', () async {
       final completer = Completer<Coordinate?>();
       when(
-        mockCurrentLocationService.getCurrentLocation(),
+        mockGetCurrentLocationUsecase.execute(),
       ).thenAnswer((_) => completer.future);
 
       final container = createContainer();
@@ -67,7 +67,7 @@ void main() {
     test('現在地取得失敗時でも状態が変更されない', () async {
       final completer = Completer<Coordinate?>();
       when(
-        mockCurrentLocationService.getCurrentLocation(),
+        mockGetCurrentLocationUsecase.execute(),
       ).thenAnswer((_) => completer.future);
 
       final container = createContainer();

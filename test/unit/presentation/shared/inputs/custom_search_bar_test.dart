@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 
-class MockLocationSearchService implements LocationSearchService {
-  List<LocationCandidateDto> candidates;
-  MockLocationSearchService(this.candidates);
+class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
+  FakeSearchLocationsUsecase(this.candidates);
+
+  final List<LocationCandidateDto> candidates;
+
   @override
-  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+  Future<List<LocationCandidateDto>> execute(String keyword) async {
     return candidates;
   }
 }
@@ -28,13 +31,25 @@ final mockCandidatesDefault = [
   ),
 ];
 
+Widget buildTestApp({
+  required Widget child,
+  SearchLocationsUsecase? searchLocationsUsecase,
+}) {
+  return ProviderScope(
+    overrides: [
+      searchLocationsUsecaseProvider.overrideWithValue(
+        searchLocationsUsecase ?? FakeSearchLocationsUsecase(const []),
+      ),
+    ],
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
+}
+
 void main() {
   group('CustomSearchBar', () {
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: CustomSearchBar(hintText: '場所を検索')),
-        ),
+        buildTestApp(child: const CustomSearchBar(hintText: '場所を検索')),
       );
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('場所を検索'), findsOneWidget);
@@ -46,15 +61,13 @@ void main() {
       final mockCandidates = mockCandidatesDefault;
       LocationCandidateDto? tappedCandidate;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(
-              hintText: '場所を検索',
-              locationSearchService: MockLocationSearchService(mockCandidates),
-              onCandidateSelected: (candidate) {
-                tappedCandidate = candidate;
-              },
-            ),
+        buildTestApp(
+          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          child: CustomSearchBar(
+            hintText: '場所を検索',
+            onCandidateSelected: (candidate) {
+              tappedCandidate = candidate;
+            },
           ),
         ),
       );
@@ -76,10 +89,8 @@ void main() {
     testWidgets('検索バー右端の×ボタンで入力値がクリアされる', (WidgetTester tester) async {
       final controller = TextEditingController();
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(hintText: '場所を検索', controller: controller),
-          ),
+        buildTestApp(
+          child: CustomSearchBar(hintText: '場所を検索', controller: controller),
         ),
       );
       await tester.enterText(find.byType(TextField), 'テスト');
@@ -94,13 +105,9 @@ void main() {
     testWidgets('候補リストの項目をタップしたらリストが閉じる', (WidgetTester tester) async {
       final mockCandidates = mockCandidatesDefault;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(
-              hintText: '場所を検索',
-              locationSearchService: MockLocationSearchService(mockCandidates),
-            ),
-          ),
+        buildTestApp(
+          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          child: const CustomSearchBar(hintText: '場所を検索'),
         ),
       );
       await tester.enterText(find.byType(TextField), '東京');

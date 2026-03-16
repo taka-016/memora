@@ -71,8 +71,4 @@
   - 場所検索はユースケース経由に統一し、プレゼンテーション層からサービス依存を外す
 - `lib/presentation/shared/map_views/google_map_view.dart:10` で `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
   - インフラサービス直接参照を削除し、場所検索ユースケース経由の呼び出しに統一する
-- `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:4` で `domain/services/nearby_location_service.dart` を直接参照している
-  - 周辺検索はユースケース経由に統一し、domainサービスを画面から直接参照しない
-- `lib/presentation/shared/sheets/pin_detail_bottom_sheet.dart:5` で `infrastructure/services/google_places_api_nearby_location_service.dart` を直接参照している
-  - インフラサービス直接参照を削除し、周辺検索ユースケース経由の呼び出しに統一する
 ## 不具合修正
