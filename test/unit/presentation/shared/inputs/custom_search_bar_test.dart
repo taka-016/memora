@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,6 +23,27 @@ class ThrowingSearchLocationsUsecase implements SearchLocationsUsecase {
   @override
   Future<List<LocationCandidateDto>> execute(String keyword) {
     throw TestException('場所検索失敗');
+  }
+}
+
+class LifecycleAwareSearchLocationsUsecase implements SearchLocationsUsecase {
+  LifecycleAwareSearchLocationsUsecase({
+    required this.completer,
+    required this.candidates,
+    required this.isDisposed,
+  });
+
+  final Completer<void> completer;
+  final List<LocationCandidateDto> candidates;
+  final bool Function() isDisposed;
+
+  @override
+  Future<List<LocationCandidateDto>> execute(String keyword) async {
+    await completer.future;
+    if (isDisposed()) {
+      throw TestException('検索中にプロバイダが破棄されました');
+    }
+    return candidates;
   }
 }
 
@@ -145,6 +167,43 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
+    testWidgets('検索中にプロバイダが破棄されず候補が表示される', (WidgetTester tester) async {
+      final completer = Completer<void>();
+      var disposed = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            searchLocationsUsecaseProvider.overrideWith((ref) {
+              ref.onDispose(() {
+                disposed = true;
+              });
+              return LifecycleAwareSearchLocationsUsecase(
+                completer: completer,
+                candidates: mockCandidatesDefault,
+                isDisposed: () => disposed,
+              );
+            }),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: const CustomSearchBar(hintText: '場所を検索')),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(disposed, isFalse);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('東京タワー'), findsOneWidget);
+      expect(find.text('スカイツリー'), findsOneWidget);
     });
   });
 }
