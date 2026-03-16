@@ -31,6 +31,9 @@ class CustomSearchBar extends HookConsumerWidget {
         final results = await ref
             .read(searchLocationsUsecaseProvider)
             .execute(textController.text);
+        if (!context.mounted) {
+          return;
+        }
         candidates.value = results;
       } catch (e, stack) {
         logger.e(
@@ -39,7 +42,9 @@ class CustomSearchBar extends HookConsumerWidget {
           stackTrace: stack,
         );
       } finally {
-        isLoading.value = false;
+        if (context.mounted) {
+          isLoading.value = false;
+        }
       }
     }
 

@@ -205,5 +205,38 @@ void main() {
       expect(find.text('東京タワー'), findsOneWidget);
       expect(find.text('スカイツリー'), findsOneWidget);
     });
+
+    testWidgets('検索中に破棄されてもdispose後更新例外にならない', (WidgetTester tester) async {
+      final completer = Completer<void>();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            searchLocationsUsecaseProvider.overrideWithValue(
+              LifecycleAwareSearchLocationsUsecase(
+                completer: completer,
+                candidates: mockCandidatesDefault,
+                isDisposed: () => false,
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: const CustomSearchBar(hintText: '場所を検索')),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox())),
+      );
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 }
