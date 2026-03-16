@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 
 class CustomSearchBar extends HookConsumerWidget {
   final String hintText;
@@ -26,11 +27,20 @@ class CustomSearchBar extends HookConsumerWidget {
 
     Future<void> onSearch() async {
       isLoading.value = true;
-      final results = await ref
-          .read(searchLocationsUsecaseProvider)
-          .execute(textController.text);
-      candidates.value = results;
-      isLoading.value = false;
+      try {
+        final results = await ref
+            .read(searchLocationsUsecaseProvider)
+            .execute(textController.text);
+        candidates.value = results;
+      } catch (e, stack) {
+        logger.e(
+          'CustomSearchBar.onSearch: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+      } finally {
+        isLoading.value = false;
+      }
     }
 
     void onFieldChanged(String value) {

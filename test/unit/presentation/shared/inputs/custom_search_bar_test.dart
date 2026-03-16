@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
+import '../../../../helpers/test_exception.dart';
 
 class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
   FakeSearchLocationsUsecase(this.candidates);
@@ -14,6 +15,13 @@ class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
   @override
   Future<List<LocationCandidateDto>> execute(String keyword) async {
     return candidates;
+  }
+}
+
+class ThrowingSearchLocationsUsecase implements SearchLocationsUsecase {
+  @override
+  Future<List<LocationCandidateDto>> execute(String keyword) {
+    throw TestException('場所検索失敗');
   }
 }
 
@@ -121,6 +129,22 @@ void main() {
       // タップ後、候補リストが非表示になっていることを確認
       expect(find.text('東京タワー'), findsNothing);
       expect(find.text('スカイツリー'), findsNothing);
+    });
+
+    testWidgets('検索失敗時でもローディング表示が解除される', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          searchLocationsUsecase: ThrowingSearchLocationsUsecase(),
+          child: const CustomSearchBar(hintText: '場所を検索'),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
     });
   });
 }
