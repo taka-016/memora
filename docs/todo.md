@@ -71,4 +71,6 @@
   - 場所検索はユースケース経由に統一し、プレゼンテーション層からサービス依存を外す
 - `lib/presentation/shared/map_views/google_map_view.dart:10` で `infrastructure/services/google_places_api_location_search_service.dart` を直接参照している
   - インフラサービス直接参照を削除し、場所検索ユースケース経由の呼び出しに統一する
+- `lib/infrastructure/factories/route_info_service_factory.dart` で `http.Client` の生成と破棄を管理していない
+  - `LocationSearchServiceFactory` と同様に Provider / Factory 経由で `http.Client` を注入し、`ref.onDispose(client.close)` でライフサイクルを統一する
 ## 不具合修正
