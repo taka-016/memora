@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
 import 'package:memora/infrastructure/config/location_search_api_type.dart';
 import 'package:memora/infrastructure/config/location_search_api_type_provider.dart';
 import 'package:memora/infrastructure/factories/location_search_service_factory.dart';
@@ -26,24 +25,6 @@ void main() {
       expect(
         () => container.read(locationSearchServiceProvider),
         throwsA(isA<UnimplementedError>()),
-      );
-    });
-
-    test('未知のサービス型指定時はArgumentErrorを投げる', () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final client = http.Client();
-      addTearDown(client.close);
-      final unknownServiceProvider = Provider<String>((ref) {
-        return LocationSearchServiceFactory.create<String>(
-          ref: ref,
-          httpClient: client,
-        );
-      });
-
-      expect(
-        () => container.read(unknownServiceProvider),
-        throwsA(isA<ArgumentError>()),
       );
     });
   });

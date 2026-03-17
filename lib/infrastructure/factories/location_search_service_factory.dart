@@ -9,43 +9,30 @@ import 'package:memora/infrastructure/services/google_places_api_location_search
 final locationSearchServiceProvider = Provider<LocationSearchService>((ref) {
   final client = http.Client();
   ref.onDispose(client.close);
-  return LocationSearchServiceFactory.create<LocationSearchService>(
-    ref: ref,
-    httpClient: client,
-  );
+  return LocationSearchServiceFactory.create(ref: ref, httpClient: client);
 });
 
 class LocationSearchServiceFactory {
-  static T create<T extends Object>({
+  static LocationSearchService create({
     required Ref ref,
     required http.Client httpClient,
   }) {
     final apiType = ref.watch(locationSearchApiTypeProvider);
-    return _createServiceByType<T>(apiType: apiType, httpClient: httpClient);
+    return _createServiceByType(apiType: apiType, httpClient: httpClient);
   }
 
-  static T _createServiceByType<T extends Object>({
+  static LocationSearchService _createServiceByType({
     required LocationSearchApiType apiType,
     required http.Client httpClient,
   }) {
     switch (apiType) {
       case LocationSearchApiType.googlePlaces:
-        return _createGooglePlacesService<T>(httpClient: httpClient);
+        return GooglePlacesApiLocationSearchService(
+          apiKey: Env.googlePlacesApiKey,
+          httpClient: httpClient,
+        );
       case LocationSearchApiType.local:
         throw UnimplementedError('Local implementation is not yet available');
     }
-  }
-
-  static T _createGooglePlacesService<T extends Object>({
-    required http.Client httpClient,
-  }) {
-    if (T == LocationSearchService) {
-      return GooglePlacesApiLocationSearchService(
-            apiKey: Env.googlePlacesApiKey,
-            httpClient: httpClient,
-          )
-          as T;
-    }
-    throw ArgumentError('Unknown service type: $T');
   }
 }
