@@ -7,20 +7,14 @@ import 'package:memora/infrastructure/services/google_places_api_location_search
 final locationSearchServiceProvider = Provider<LocationSearchService>((ref) {
   final client = http.Client();
   ref.onDispose(client.close);
-  return LocationSearchServiceFactory.create<LocationSearchService>(
-    httpClient: client,
-  );
+  return _createLocationSearchService(httpClient: client);
 });
 
-class LocationSearchServiceFactory {
-  static T create<T extends Object>({http.Client? httpClient}) {
-    if (T == LocationSearchService) {
-      return GooglePlacesApiLocationSearchService(
-            apiKey: Env.googlePlacesApiKey,
-            httpClient: httpClient,
-          )
-          as T;
-    }
-    throw ArgumentError('Unknown service type: $T');
-  }
+LocationSearchService _createLocationSearchService({
+  required http.Client httpClient,
+}) {
+  return GooglePlacesApiLocationSearchService(
+    apiKey: Env.googlePlacesApiKey,
+    httpClient: httpClient,
+  );
 }
