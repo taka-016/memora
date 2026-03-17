@@ -1,0 +1,1 @@
+enum LocationSearchApiType { googlePlaces, local }
