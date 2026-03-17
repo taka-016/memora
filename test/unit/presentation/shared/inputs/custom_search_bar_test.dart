@@ -1,15 +1,48 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
+import '../../../../helpers/test_exception.dart';
 
-class MockLocationSearchService implements LocationSearchService {
-  List<LocationCandidateDto> candidates;
-  MockLocationSearchService(this.candidates);
+class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
+  FakeSearchLocationsUsecase(this.candidates);
+
+  final List<LocationCandidateDto> candidates;
+
   @override
-  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+  Future<List<LocationCandidateDto>> execute(String keyword) async {
+    return candidates;
+  }
+}
+
+class ThrowingSearchLocationsUsecase implements SearchLocationsUsecase {
+  @override
+  Future<List<LocationCandidateDto>> execute(String keyword) {
+    throw TestException('場所検索失敗');
+  }
+}
+
+class LifecycleAwareSearchLocationsUsecase implements SearchLocationsUsecase {
+  LifecycleAwareSearchLocationsUsecase({
+    required this.completer,
+    required this.candidates,
+    required this.isDisposed,
+  });
+
+  final Completer<void> completer;
+  final List<LocationCandidateDto> candidates;
+  final bool Function() isDisposed;
+
+  @override
+  Future<List<LocationCandidateDto>> execute(String keyword) async {
+    await completer.future;
+    if (isDisposed()) {
+      throw TestException('検索中にプロバイダが破棄されました');
+    }
     return candidates;
   }
 }
@@ -28,13 +61,25 @@ final mockCandidatesDefault = [
   ),
 ];
 
+Widget buildTestApp({
+  required Widget child,
+  SearchLocationsUsecase? searchLocationsUsecase,
+}) {
+  return ProviderScope(
+    overrides: [
+      searchLocationsUsecaseProvider.overrideWithValue(
+        searchLocationsUsecase ?? FakeSearchLocationsUsecase(const []),
+      ),
+    ],
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
+}
+
 void main() {
   group('CustomSearchBar', () {
     testWidgets('検索バーが表示される', (WidgetTester tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: CustomSearchBar(hintText: '場所を検索')),
-        ),
+        buildTestApp(child: const CustomSearchBar(hintText: '場所を検索')),
       );
       expect(find.byType(TextField), findsOneWidget);
       expect(find.text('場所を検索'), findsOneWidget);
@@ -46,15 +91,13 @@ void main() {
       final mockCandidates = mockCandidatesDefault;
       LocationCandidateDto? tappedCandidate;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(
-              hintText: '場所を検索',
-              locationSearchService: MockLocationSearchService(mockCandidates),
-              onCandidateSelected: (candidate) {
-                tappedCandidate = candidate;
-              },
-            ),
+        buildTestApp(
+          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          child: CustomSearchBar(
+            hintText: '場所を検索',
+            onCandidateSelected: (candidate) {
+              tappedCandidate = candidate;
+            },
           ),
         ),
       );
@@ -76,10 +119,8 @@ void main() {
     testWidgets('検索バー右端の×ボタンで入力値がクリアされる', (WidgetTester tester) async {
       final controller = TextEditingController();
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(hintText: '場所を検索', controller: controller),
-          ),
+        buildTestApp(
+          child: CustomSearchBar(hintText: '場所を検索', controller: controller),
         ),
       );
       await tester.enterText(find.byType(TextField), 'テスト');
@@ -94,13 +135,9 @@ void main() {
     testWidgets('候補リストの項目をタップしたらリストが閉じる', (WidgetTester tester) async {
       final mockCandidates = mockCandidatesDefault;
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CustomSearchBar(
-              hintText: '場所を検索',
-              locationSearchService: MockLocationSearchService(mockCandidates),
-            ),
-          ),
+        buildTestApp(
+          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          child: const CustomSearchBar(hintText: '場所を検索'),
         ),
       );
       await tester.enterText(find.byType(TextField), '東京');
@@ -114,6 +151,92 @@ void main() {
       // タップ後、候補リストが非表示になっていることを確認
       expect(find.text('東京タワー'), findsNothing);
       expect(find.text('スカイツリー'), findsNothing);
+    });
+
+    testWidgets('検索失敗時でもローディング表示が解除される', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          searchLocationsUsecase: ThrowingSearchLocationsUsecase(),
+          child: const CustomSearchBar(hintText: '場所を検索'),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+    });
+
+    testWidgets('検索中にプロバイダが破棄されず候補が表示される', (WidgetTester tester) async {
+      final completer = Completer<void>();
+      var disposed = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            searchLocationsUsecaseProvider.overrideWith((ref) {
+              ref.onDispose(() {
+                disposed = true;
+              });
+              return LifecycleAwareSearchLocationsUsecase(
+                completer: completer,
+                candidates: mockCandidatesDefault,
+                isDisposed: () => disposed,
+              );
+            }),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: const CustomSearchBar(hintText: '場所を検索')),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      expect(disposed, isFalse);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('東京タワー'), findsOneWidget);
+      expect(find.text('スカイツリー'), findsOneWidget);
+    });
+
+    testWidgets('検索中に破棄されてもdispose後更新例外にならない', (WidgetTester tester) async {
+      final completer = Completer<void>();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            searchLocationsUsecaseProvider.overrideWithValue(
+              LifecycleAwareSearchLocationsUsecase(
+                completer: completer,
+                candidates: mockCandidatesDefault,
+                isDisposed: () => false,
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: const CustomSearchBar(hintText: '場所を検索')),
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), '東京');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SizedBox())),
+      );
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
     });
   });
 }

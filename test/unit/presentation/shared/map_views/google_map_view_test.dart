@@ -3,33 +3,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
-import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
-class MockLocationService implements CurrentLocationService {
+class FakeGetCurrentLocationUsecase implements GetCurrentLocationUsecase {
+  FakeGetCurrentLocationUsecase([this._coordinate]);
+
   final Coordinate? _coordinate;
 
-  MockLocationService([this._coordinate]);
-
   @override
-  Future<Coordinate?> getCurrentLocation() async {
+  Future<Coordinate?> execute() async {
     return _coordinate;
   }
 }
 
-class MockLocationSearchService implements LocationSearchService {
-  MockLocationSearchService(this._candidates);
+class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
+  FakeSearchLocationsUsecase(this._candidates);
 
   final List<LocationCandidateDto> _candidates;
 
   @override
-  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+  Future<List<LocationCandidateDto>> execute(String keyword) async {
     return _candidates;
   }
 }
@@ -80,8 +79,11 @@ void main() {
       // coordinateProviderにnullを設定
       final container = ProviderContainer(
         overrides: [
-          currentLocationServiceProvider.overrideWithValue(
-            MockLocationService(),
+          getCurrentLocationUsecaseProvider.overrideWithValue(
+            FakeGetCurrentLocationUsecase(),
+          ),
+          searchLocationsUsecaseProvider.overrideWithValue(
+            FakeSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -115,8 +117,11 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
-          currentLocationServiceProvider.overrideWithValue(
-            MockLocationService(),
+          getCurrentLocationUsecaseProvider.overrideWithValue(
+            FakeGetCurrentLocationUsecase(),
+          ),
+          searchLocationsUsecaseProvider.overrideWithValue(
+            FakeSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -165,8 +170,11 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
-          currentLocationServiceProvider.overrideWithValue(
-            MockLocationService(),
+          getCurrentLocationUsecaseProvider.overrideWithValue(
+            FakeGetCurrentLocationUsecase(),
+          ),
+          searchLocationsUsecaseProvider.overrideWithValue(
+            FakeSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -264,13 +272,18 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            searchLocationsUsecaseProvider.overrideWithValue(
+              FakeSearchLocationsUsecase(searchCandidates),
+            ),
+            getCurrentLocationUsecaseProvider.overrideWithValue(
+              FakeGetCurrentLocationUsecase(),
+            ),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: GoogleMapView(
                 pins: const [],
-                locationSearchService: MockLocationSearchService(
-                  searchCandidates,
-                ),
                 onSearchedLocationSelected: (candidate) {
                   selectedCandidate = candidate;
                 },
@@ -287,37 +300,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(selectedCandidate, equals(searchCandidates.first));
-    });
-
-    testWidgets('検索サービス未指定時でも再ビルドで同じインスタンスを使い回す', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: GoogleMapView(pins: const [])),
-          ),
-        ),
-      );
-
-      final firstSearchBar = tester.widget<CustomSearchBar>(
-        find.byType(CustomSearchBar),
-      );
-      final firstService = firstSearchBar.locationSearchService;
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: GoogleMapView(pins: const [])),
-          ),
-        ),
-      );
-
-      final secondSearchBar = tester.widget<CustomSearchBar>(
-        find.byType(CustomSearchBar),
-      );
-      final secondService = secondSearchBar.locationSearchService;
-
-      expect(firstService, isNotNull);
-      expect(identical(secondService, firstService), isTrue);
     });
 
     testWidgets('ピンをタップするとコールバック関数が呼ばれボトムシートが表示される', (
