@@ -1,6 +1,6 @@
 interface:
   display_name: "Coding Completion"
-  short_description: "コード変更完了時の検証、todo更新、PR作成を支援"
-  default_prompt: "Use $coding-completion to finish a coding task in this repository by running `./check.sh`, updating `docs/todo.md` and `docs/done.md`, staging only the relevant files, and creating the commit, push, and pull request."
+  short_description: "このリポジトリでコード変更を完了させるときに必ず使う締めのスキル"
+  default_prompt: "Always use $coding-completion before finishing code changes in this repository. Complete the task by running `./check.sh`, updating `docs/todo.md` and `docs/done.md` when required, staging only the relevant files, and creating the commit, push, and pull request."
 policy:
   allow_implicit_invocation: true
