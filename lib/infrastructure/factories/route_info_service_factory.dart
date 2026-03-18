@@ -1,34 +1,39 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:memora/application/services/route_info_service.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/config/route_info_api_type.dart';
 import 'package:memora/infrastructure/config/route_info_api_type_provider.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
+final routeInfoHttpClientProvider = Provider<http.Client>((ref) {
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return client;
+});
+
 final routeInfoServiceProvider = Provider<RouteInfoService>((ref) {
-  return RouteInfoServiceFactory.create<RouteInfoService>(ref: ref);
+  return RouteInfoServiceFactory.create(ref: ref);
 });
 
 class RouteInfoServiceFactory {
-  static T create<T extends Object>({required Ref ref}) {
+  static RouteInfoService create({required Ref ref}) {
     final apiType = ref.watch(routeInfoApiTypeProvider);
-    return _createServiceByType<T>(apiType);
+    return _createServiceByType(ref: ref, apiType: apiType);
   }
 
-  static T _createServiceByType<T extends Object>(RouteInfoApiType apiType) {
+  static RouteInfoService _createServiceByType({
+    required Ref ref,
+    required RouteInfoApiType apiType,
+  }) {
     switch (apiType) {
       case RouteInfoApiType.googleRoutes:
-        return _createGoogleRoutesService<T>();
+        return GoogleRoutesApiRouteInfoService(
+          apiKey: Env.googlePlacesApiKey,
+          httpClient: ref.watch(routeInfoHttpClientProvider),
+        );
       case RouteInfoApiType.local:
         throw UnimplementedError('Local implementation is not yet available');
     }
-  }
-
-  static T _createGoogleRoutesService<T>() {
-    if (T == RouteInfoService) {
-      return GoogleRoutesApiRouteInfoService(apiKey: Env.googlePlacesApiKey)
-          as T;
-    }
-    throw ArgumentError('Unknown service type: $T');
   }
 }
