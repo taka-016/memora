@@ -6,8 +6,12 @@ import 'package:memora/infrastructure/config/route_info_api_type.dart';
 import 'package:memora/infrastructure/config/route_info_api_type_provider.dart';
 import 'package:memora/infrastructure/services/google_routes_api_route_info_service.dart';
 
+final routeInfoHttpClientFactoryProvider = Provider<http.Client>((ref) {
+  return http.Client();
+});
+
 final routeInfoHttpClientProvider = Provider<http.Client>((ref) {
-  final client = http.Client();
+  final client = ref.watch(routeInfoHttpClientFactoryProvider);
   ref.onDispose(client.close);
   return client;
 });

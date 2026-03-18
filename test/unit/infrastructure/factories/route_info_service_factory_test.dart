@@ -21,15 +21,20 @@ void main() {
       final client = _TrackingClient();
       final container = ProviderContainer(
         overrides: [
-          routeInfoHttpClientProvider.overrideWith((ref) {
-            ref.onDispose(client.close);
-            return client;
-          }),
+          routeInfoHttpClientFactoryProvider.overrideWithValue(client),
         ],
       );
+      var isDisposed = false;
+      addTearDown(() {
+        if (isDisposed) {
+          return;
+        }
+        container.dispose();
+      });
 
       container.read(routeInfoServiceProvider);
       container.dispose();
+      isDisposed = true;
 
       expect(client.isClosed, isTrue);
     });
