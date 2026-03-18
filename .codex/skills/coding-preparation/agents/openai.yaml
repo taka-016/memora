@@ -1,0 +1,6 @@
+interface:
+  display_name: "Coding Preparation"
+  short_description: "コード変更前のtodo確認、ブランチ作成、構造確認を支援"
+  default_prompt: "Use $coding-preparation to prepare for a coding task in this repository by checking todo handling, creating a work branch when needed, inspecting the `lib` and `test` tree, and reviewing the design docs before editing files."
+policy:
+  allow_implicit_invocation: true
