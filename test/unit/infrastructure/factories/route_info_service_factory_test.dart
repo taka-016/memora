@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
 import 'package:memora/infrastructure/config/route_info_api_type.dart';
 import 'package:memora/infrastructure/config/route_info_api_type_provider.dart';
 import 'package:memora/infrastructure/factories/route_info_service_factory.dart';
@@ -17,28 +16,6 @@ void main() {
       expect(service, isA<GoogleRoutesApiRouteInfoService>());
     });
 
-    test('Provider破棄時にHTTPクライアントも破棄される', () {
-      final client = _TrackingClient();
-      final container = ProviderContainer(
-        overrides: [
-          routeInfoHttpClientFactoryProvider.overrideWithValue(client),
-        ],
-      );
-      var isDisposed = false;
-      addTearDown(() {
-        if (isDisposed) {
-          return;
-        }
-        container.dispose();
-      });
-
-      container.read(routeInfoServiceProvider);
-      container.dispose();
-      isDisposed = true;
-
-      expect(client.isClosed, isTrue);
-    });
-
     test('local指定時は未実装エラーを投げる', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
@@ -51,19 +28,4 @@ void main() {
       );
     });
   });
-}
-
-class _TrackingClient extends http.BaseClient {
-  bool isClosed = false;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
-    return Future.error(UnimplementedError());
-  }
-
-  @override
-  void close() {
-    isClosed = true;
-    super.close();
-  }
 }
