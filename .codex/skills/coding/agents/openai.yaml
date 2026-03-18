@@ -1,0 +1,6 @@
+interface:
+  display_name: "Coding"
+  short_description: "設計制約とTDDを守って実装するためのコーディング支援"
+  default_prompt: "Use $coding to implement changes in this repository while following the presentation-layer dependency rules, the TDD workflow, the spec-escalation rule, and the refactoring policy."
+policy:
+  allow_implicit_invocation: true
