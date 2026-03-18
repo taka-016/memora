@@ -1,0 +1,6 @@
+interface:
+  display_name: "Test Coding"
+  short_description: "このリポジトリ向けのテストコード追加・修正ルールを支援"
+  default_prompt: "Use $test-coding to add or update tests in this repository while following the repository's test placement, naming, Mockito, TestException, and asynchronous test control rules."
+policy:
+  allow_implicit_invocation: true
