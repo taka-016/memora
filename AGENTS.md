@@ -171,10 +171,6 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 - flutter_lintsパッケージを使用
 - analysis_options.yamlでprefer_const_constructors常に有効化、avoid_printエラー扱い
 
-## その他
-
-- 非同期処理にはasync/awaitを使用し、thenチェーンは避ける
-
 ## 環境設定
 
 `.env`の環境変数:
