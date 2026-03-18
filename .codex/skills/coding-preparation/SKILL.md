@@ -1,6 +1,6 @@
 ---
 name: coding-preparation
-description: このリポジトリでコード変更を始める前の確認事項をまとめた準備スキル。関連資料や作業前提を揃えてから進めたいときに使う。
+description: このリポジトリでコード変更を始める前に必ず使う準備スキル。関連資料や作業前提を揃えてから進めるときに使う。
 ---
 
 # Coding Preparation
