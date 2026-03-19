@@ -1,6 +1,6 @@
 ---
 name: coding-completion
-description: このリポジトリでコード変更を完了させるときに必ず使う締めのスキル。検証、差分整理、push、共有まで進めるときに使う。
+description: このリポジトリでコード変更を完了させるときに必ず使う締めのスキル。検証、差分整理、push、PRまで進めるときに使う。
 ---
 
 # Coding Completion
