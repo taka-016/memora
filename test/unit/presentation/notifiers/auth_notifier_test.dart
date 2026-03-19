@@ -5,43 +5,83 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
-import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
+import 'package:memora/application/usecases/account/login_usecase.dart';
+import 'package:memora/application/usecases/account/logout_usecase.dart';
+import 'package:memora/application/usecases/account/observe_auth_state_changes_usecase.dart';
+import 'package:memora/application/usecases/account/send_email_verification_usecase.dart';
+import 'package:memora/application/usecases/account/signup_usecase.dart';
+import 'package:memora/application/usecases/account/validate_current_user_token_usecase.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
-import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import '../../../helpers/test_exception.dart';
 
 import 'auth_notifier_test.mocks.dart';
 
 @GenerateMocks([
-  AuthService,
+  ObserveAuthStateChangesUseCase,
+  ValidateCurrentUserTokenUseCase,
+  SendEmailVerificationUseCase,
+  GetCurrentUserUseCase,
+  LoginUseCase,
+  SignupUseCase,
+  LogoutUseCase,
   CheckMemberExistsUseCase,
   CreateMemberFromUserUseCase,
   AcceptInvitationUseCase,
 ])
 void main() {
   group('AuthNotifier', () {
-    late MockAuthService mockAuthService;
+    late MockObserveAuthStateChangesUseCase mockObserveAuthStateChangesUseCase;
+    late MockValidateCurrentUserTokenUseCase
+    mockValidateCurrentUserTokenUseCase;
+    late MockSendEmailVerificationUseCase mockSendEmailVerificationUseCase;
+    late MockGetCurrentUserUseCase mockGetCurrentUserUseCase;
+    late MockLoginUseCase mockLoginUseCase;
+    late MockSignupUseCase mockSignupUseCase;
+    late MockLogoutUseCase mockLogoutUseCase;
     late MockCheckMemberExistsUseCase mockCheckMemberExistsUseCase;
     late MockCreateMemberFromUserUseCase mockCreateMemberFromUserUseCase;
     late MockAcceptInvitationUseCase mockAcceptInvitationUseCase;
 
     setUp(() {
-      mockAuthService = MockAuthService();
+      mockObserveAuthStateChangesUseCase = MockObserveAuthStateChangesUseCase();
+      mockValidateCurrentUserTokenUseCase =
+          MockValidateCurrentUserTokenUseCase();
+      mockSendEmailVerificationUseCase = MockSendEmailVerificationUseCase();
+      mockGetCurrentUserUseCase = MockGetCurrentUserUseCase();
+      mockLoginUseCase = MockLoginUseCase();
+      mockSignupUseCase = MockSignupUseCase();
+      mockLogoutUseCase = MockLogoutUseCase();
       mockCheckMemberExistsUseCase = MockCheckMemberExistsUseCase();
       mockCreateMemberFromUserUseCase = MockCreateMemberFromUserUseCase();
       mockAcceptInvitationUseCase = MockAcceptInvitationUseCase();
     });
 
-    ProviderContainer createContainer(Stream<User?> authStateStream) {
-      when(mockAuthService.authStateChanges).thenAnswer((_) => authStateStream);
+    ProviderContainer createContainer(Stream<UserDto?> authStateStream) {
+      when(
+        mockObserveAuthStateChangesUseCase.execute(),
+      ).thenAnswer((_) => authStateStream);
 
       return ProviderContainer(
         overrides: [
-          authServiceProvider.overrideWithValue(mockAuthService),
+          observeAuthStateChangesUseCaseProvider.overrideWithValue(
+            mockObserveAuthStateChangesUseCase,
+          ),
+          validateCurrentUserTokenUseCaseProvider.overrideWithValue(
+            mockValidateCurrentUserTokenUseCase,
+          ),
+          sendEmailVerificationUseCaseProvider.overrideWithValue(
+            mockSendEmailVerificationUseCase,
+          ),
+          getCurrentUserUseCaseProvider.overrideWithValue(
+            mockGetCurrentUserUseCase,
+          ),
+          loginUseCaseProvider.overrideWithValue(mockLoginUseCase),
+          signupUseCaseProvider.overrideWithValue(mockSignupUseCase),
+          logoutUseCaseProvider.overrideWithValue(mockLogoutUseCase),
           checkMemberExistsUseCaseProvider.overrideWithValue(
             mockCheckMemberExistsUseCase,
           ),
@@ -56,7 +96,7 @@ void main() {
     }
 
     test('初期状態はloading', () {
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -64,22 +104,24 @@ void main() {
       final state = container.read(authNotifierProvider);
 
       expect(state.status, AuthStatus.loading);
-      verify(mockAuthService.authStateChanges).called(1);
+      verify(mockObserveAuthStateChangesUseCase.execute()).called(1);
     });
 
     test('既存メンバーのログイン時にauthenticated状態になる', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
       );
 
-      when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
+      when(
+        mockValidateCurrentUserTokenUseCase.execute(),
+      ).thenAnswer((_) async {});
       when(
         mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => true);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -93,18 +135,20 @@ void main() {
     });
 
     test('新規ユーザーのログイン時にmember_selection_required状態になる', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
       );
 
-      when(mockAuthService.validateCurrentUserToken()).thenAnswer((_) async {});
+      when(
+        mockValidateCurrentUserTokenUseCase.execute(),
+      ).thenAnswer((_) async {});
       when(
         mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => false);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -118,7 +162,7 @@ void main() {
     });
 
     test('認証イベントが連続した場合でも新しいイベントが即時に優先される', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
@@ -126,13 +170,13 @@ void main() {
       final validateCompleter = Completer<void>();
 
       when(
-        mockAuthService.validateCurrentUserToken(),
+        mockValidateCurrentUserTokenUseCase.execute(),
       ).thenAnswer((_) => validateCompleter.future);
       when(
         mockCheckMemberExistsUseCase.execute(user.id),
       ).thenAnswer((_) async => true);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -157,7 +201,7 @@ void main() {
     });
 
     test('サインアウト中にnullイベントが来ても認証エラーメッセージを保持する', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
@@ -165,13 +209,13 @@ void main() {
       final signOutCompleter = Completer<void>();
 
       when(
-        mockAuthService.validateCurrentUserToken(),
+        mockValidateCurrentUserTokenUseCase.execute(),
       ).thenThrow(TestException('token invalid'));
       when(
-        mockAuthService.signOut(),
+        mockLogoutUseCase.execute(),
       ).thenAnswer((_) => signOutCompleter.future);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -194,7 +238,7 @@ void main() {
     });
 
     test('サインアウト中にnullイベントが来ても未認証ユーザーエラーメッセージを保持する', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: false,
@@ -202,13 +246,13 @@ void main() {
       final signOutCompleter = Completer<void>();
 
       when(
-        mockAuthService.sendEmailVerification(),
+        mockSendEmailVerificationUseCase.execute(),
       ).thenThrow(TestException('send mail failed'));
       when(
-        mockAuthService.signOut(),
+        mockLogoutUseCase.execute(),
       ).thenAnswer((_) => signOutCompleter.future);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -231,19 +275,19 @@ void main() {
     });
 
     test('サインアウト中にnullイベントが来ても認証メール再送メッセージを保持する', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: false,
       );
       final signOutCompleter = Completer<void>();
 
-      when(mockAuthService.sendEmailVerification()).thenAnswer((_) async {});
+      when(mockSendEmailVerificationUseCase.execute()).thenAnswer((_) async {});
       when(
-        mockAuthService.signOut(),
+        mockLogoutUseCase.execute(),
       ).thenAnswer((_) => signOutCompleter.future);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -271,21 +315,21 @@ void main() {
     test(
       'CheckMemberExistsUseCaseが例外を投げた場合はエラーでサインアウトしunauthenticatedになる',
       () async {
-        const user = User(
+        const user = UserDto(
           id: 'user123',
           loginId: 'test@example.com',
           isVerified: true,
         );
 
         when(
-          mockAuthService.validateCurrentUserToken(),
+          mockValidateCurrentUserTokenUseCase.execute(),
         ).thenAnswer((_) async {});
         when(
           mockCheckMemberExistsUseCase.execute(user.id),
         ).thenThrow(TestException('Firestore error'));
-        when(mockAuthService.signOut()).thenAnswer((_) async {});
+        when(mockLogoutUseCase.execute()).thenAnswer((_) async {});
 
-        final controller = StreamController<User?>();
+        final controller = StreamController<UserDto?>();
         addTearDown(controller.close);
         final container = createContainer(controller.stream);
         addTearDown(container.dispose);
@@ -296,16 +340,11 @@ void main() {
 
         expect(notifier.state.status, AuthStatus.unauthenticated);
         expect(notifier.state.message, '認証が無効です。再度ログインしてください。');
-        verify(mockAuthService.signOut()).called(1);
+        verify(mockLogoutUseCase.execute()).called(1);
       },
     );
 
     test('createNewMemberが成功した場合authenticated状態になる', () async {
-      const user = User(
-        id: 'user123',
-        loginId: 'test@example.com',
-        isVerified: true,
-      );
       const userDto = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
@@ -315,9 +354,11 @@ void main() {
       when(
         mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
-      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
+      when(
+        mockGetCurrentUserUseCase.execute(),
+      ).thenAnswer((_) async => userDto);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -331,7 +372,7 @@ void main() {
     });
 
     test('acceptInvitationが成功した場合authenticated状態になる', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
@@ -341,9 +382,9 @@ void main() {
       when(
         mockAcceptInvitationUseCase.execute(invitationCode, user.id),
       ).thenAnswer((_) async => true);
-      when(mockAuthService.getCurrentUser()).thenAnswer((_) async => user);
+      when(mockGetCurrentUserUseCase.execute()).thenAnswer((_) async => user);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -363,7 +404,7 @@ void main() {
     });
 
     test('acceptInvitationが失敗した場合falseを返し認証状態は保持される', () async {
-      const user = User(
+      const user = UserDto(
         id: 'user123',
         loginId: 'test@example.com',
         isVerified: true,
@@ -374,7 +415,7 @@ void main() {
         mockAcceptInvitationUseCase.execute(invitationCode, user.id),
       ).thenAnswer((_) async => false);
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -398,9 +439,9 @@ void main() {
     });
 
     test('ログアウト時はloading状態になる', () async {
-      when(mockAuthService.signOut()).thenAnswer((_) async {});
+      when(mockLogoutUseCase.execute()).thenAnswer((_) async {});
 
-      final controller = StreamController<User?>();
+      final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
       final container = createContainer(controller.stream);
       addTearDown(container.dispose);
@@ -410,7 +451,7 @@ void main() {
       await notifier.logout();
 
       expect(notifier.state.status, AuthStatus.loading);
-      verify(mockAuthService.signOut()).called(1);
+      verify(mockLogoutUseCase.execute()).called(1);
     });
   });
 }
