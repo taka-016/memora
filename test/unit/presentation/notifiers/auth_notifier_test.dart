@@ -18,32 +18,122 @@ import 'package:memora/application/usecases/member/accept_invitation_usecase.dar
 import '../../../helpers/test_exception.dart';
 
 class MockWatchAuthStateChangesUseCase extends Mock
-    implements WatchAuthStateChangesUseCase {}
+    implements WatchAuthStateChangesUseCase {
+  @override
+  Stream<UserDto?> execute() {
+    return super.noSuchMethod(
+          Invocation.method(#execute, []),
+          returnValue: const Stream<UserDto?>.empty(),
+        )
+        as Stream<UserDto?>;
+  }
+}
 
 class MockValidateCurrentUserTokenUseCase extends Mock
-    implements ValidateCurrentUserTokenUseCase {}
+    implements ValidateCurrentUserTokenUseCase {
+  @override
+  Future<void> execute() {
+    return super.noSuchMethod(
+          Invocation.method(#execute, []),
+          returnValue: Future<void>.value(),
+        )
+        as Future<void>;
+  }
+}
 
 class MockSendEmailVerificationUseCase extends Mock
-    implements SendEmailVerificationUseCase {}
+    implements SendEmailVerificationUseCase {
+  @override
+  Future<void> execute() {
+    return super.noSuchMethod(
+          Invocation.method(#execute, []),
+          returnValue: Future<void>.value(),
+        )
+        as Future<void>;
+  }
+}
 
-class MockSignOutUseCase extends Mock implements SignOutUseCase {}
+class MockSignOutUseCase extends Mock implements SignOutUseCase {
+  @override
+  Future<void> execute() {
+    return super.noSuchMethod(
+          Invocation.method(#execute, []),
+          returnValue: Future<void>.value(),
+        )
+        as Future<void>;
+  }
+}
 
-class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
+class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {
+  @override
+  Future<UserDto?> execute() {
+    return super.noSuchMethod(
+          Invocation.method(#execute, []),
+          returnValue: Future<UserDto?>.value(),
+        )
+        as Future<UserDto?>;
+  }
+}
 
 class MockSignInWithEmailAndPasswordUseCase extends Mock
-    implements SignInWithEmailAndPasswordUseCase {}
+    implements SignInWithEmailAndPasswordUseCase {
+  @override
+  Future<void> execute({required String email, required String password}) {
+    return super.noSuchMethod(
+          Invocation.method(#execute, [], {#email: email, #password: password}),
+          returnValue: Future<void>.value(),
+        )
+        as Future<void>;
+  }
+}
 
 class MockCreateUserWithEmailAndPasswordUseCase extends Mock
-    implements CreateUserWithEmailAndPasswordUseCase {}
+    implements CreateUserWithEmailAndPasswordUseCase {
+  @override
+  Future<void> execute({required String email, required String password}) {
+    return super.noSuchMethod(
+          Invocation.method(#execute, [], {#email: email, #password: password}),
+          returnValue: Future<void>.value(),
+        )
+        as Future<void>;
+  }
+}
 
 class MockCheckMemberExistsUseCase extends Mock
-    implements CheckMemberExistsUseCase {}
+    implements CheckMemberExistsUseCase {
+  @override
+  Future<bool> execute(String userId) {
+    return super.noSuchMethod(
+          Invocation.method(#execute, [userId]),
+          returnValue: Future<bool>.value(false),
+        )
+        as Future<bool>;
+  }
+}
 
 class MockCreateMemberFromUserUseCase extends Mock
-    implements CreateMemberFromUserUseCase {}
+    implements CreateMemberFromUserUseCase {
+  @override
+  Future<bool> execute(UserDto user) {
+    return super.noSuchMethod(
+          Invocation.method(#execute, [user]),
+          returnValue: Future<bool>.value(false),
+        )
+        as Future<bool>;
+  }
+}
 
 class MockAcceptInvitationUseCase extends Mock
-    implements AcceptInvitationUseCase {}
+    implements AcceptInvitationUseCase {
+  @override
+  Future<bool> execute(String invitationCode, String userId) {
+    return super.noSuchMethod(
+          Invocation.method(#execute, [invitationCode, userId]),
+          returnValue: Future<bool>.value(false),
+        )
+        as Future<bool>;
+  }
+}
 
 void main() {
   group('AuthNotifier', () {
@@ -375,7 +465,9 @@ void main() {
       when(
         mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
-      when(mockGetCurrentUserUseCase.execute()).thenAnswer((_) async => userDto);
+      when(
+        mockGetCurrentUserUseCase.execute(),
+      ).thenAnswer((_) async => userDto);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
