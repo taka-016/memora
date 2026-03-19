@@ -682,6 +682,10 @@
   - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
 - `lib/presentation/notifiers/auth_notifier.dart:4` で `domain/entities/account/user.dart` を直接参照している
   - 画面入出力はapplication層のDTO/ユースケース戻り値で扱い、エンティティ生成はユースケースに集約する
+- `lib/presentation/notifiers/auth_notifier.dart:5` で `application/services/auth_service.dart` を直接参照している
+  - 認証状態判定と認証操作はユースケース経由に統一し、プレゼンテーション層で認証サービスを直接扱わない
+- `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
+  - Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
 - `lib/presentation/app/top_page.dart:16` で `domain/value_objects/auth_state.dart` を直接参照している
   - 認証状態判定は認証ユースケースの戻り値で行い、domainの状態型参照を排除する
 - `lib/presentation/features/auth/auth_guard.dart:3` で `domain/value_objects/auth_state.dart` を直接参照している
