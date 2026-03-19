@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -8,7 +9,6 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/exceptions/validation_exception.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
@@ -302,8 +302,8 @@ class TripEditModal extends HookConsumerWidget {
           if (context.mounted) {
             Navigator.of(context).pop();
           }
-        } on ValidationException catch (e) {
-          errorMessage.value = '$e';
+        } on ApplicationValidationException catch (e) {
+          errorMessage.value = e.message;
         } catch (e, stack) {
           logger.e(
             'TripEditModal.handleSave: ${e.toString()}',

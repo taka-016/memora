@@ -4,6 +4,8 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
+enum GroupMemberSort { displayOrder }
+
 final getGroupWithMembersByIdUsecaseProvider =
     Provider<GetGroupWithMembersByIdUsecase>((ref) {
       return GetGroupWithMembersByIdUsecase(
@@ -18,11 +20,14 @@ class GetGroupWithMembersByIdUsecase {
 
   Future<GroupDto?> execute(
     String groupId, {
-    List<OrderBy>? membersOrderBy,
+    GroupMemberSort? membersSort,
   }) async {
     return await _groupQueryService.getGroupWithMembersById(
       groupId,
-      membersOrderBy: membersOrderBy,
+      membersOrderBy: switch (membersSort) {
+        GroupMemberSort.displayOrder => [const OrderBy('orderIndex')],
+        null => null,
+      },
     );
   }
 }
