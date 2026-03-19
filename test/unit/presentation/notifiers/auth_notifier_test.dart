@@ -282,9 +282,7 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(
-        mockSendEmailVerificationUseCase.execute(),
-      ).thenAnswer((_) async {});
+      when(mockSendEmailVerificationUseCase.execute()).thenAnswer((_) async {});
       when(
         mockLogoutUseCase.execute(),
       ).thenAnswer((_) => signOutCompleter.future);
@@ -356,7 +354,9 @@ void main() {
       when(
         mockCreateMemberFromUserUseCase.execute(userDto),
       ).thenAnswer((_) async => true);
-      when(mockGetCurrentUserUseCase.execute()).thenAnswer((_) async => userDto);
+      when(
+        mockGetCurrentUserUseCase.execute(),
+      ).thenAnswer((_) async => userDto);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
