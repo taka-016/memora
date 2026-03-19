@@ -865,10 +865,7 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('訪問開始日時は旅行期間内でなければなりません'),
-        findsOneWidget,
-      );
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
     });
 
     testWidgets('開始日が入力済みで終了日が未入力の場合、終了日タップ時に開始日の年月を初期値とすること', (

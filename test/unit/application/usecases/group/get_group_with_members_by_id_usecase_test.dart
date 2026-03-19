@@ -106,7 +106,7 @@ void main() {
       expect(() => usecase.execute(groupId), throwsA(exception));
     });
 
-    test('membersOrderByパラメータが正しく渡されること', () async {
+    test('membersSortパラメータが正しく並び順へ変換されること', () async {
       // Arrange
       const groupId = 'group1';
       const membersSort = GroupMemberSort.displayOrder;
