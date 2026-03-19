@@ -71,7 +71,7 @@ void main() {
       expect(() => usecase.execute(tripEntry), returnsNormally);
     });
 
-    test('旅行の検証エラーはアプリケーション層の例外に変換されること', () async {
+    test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {
       // arrange
       final tripEntry = TripEntryDto(
         id: '',
@@ -83,16 +83,13 @@ void main() {
       );
 
       // act & assert
-      await expectLater(
-        () => usecase.execute(tripEntry),
-        throwsA(
-          isA<ApplicationValidationException>().having(
-            (e) => e.message,
-            'message',
-            '旅行の終了日は開始日以降でなければなりません',
-          ),
-        ),
-      );
+      try {
+        await usecase.execute(tripEntry);
+        fail('ApplicationValidationExceptionが送出される想定です');
+      } on ApplicationValidationException catch (e, stack) {
+        expect(e.message, '旅行の終了日は開始日以降でなければなりません');
+        expect(stack.toString(), contains('trip_entry.dart'));
+      }
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
   });

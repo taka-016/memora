@@ -19,8 +19,11 @@ class CreateTripEntryUsecase {
     try {
       final entity = TripEntryMapper.toEntity(tripEntry);
       return await _tripEntryRepository.saveTripEntry(entity);
-    } on ValidationException catch (e) {
-      throw ApplicationValidationException(e.message);
+    } on ValidationException catch (e, stack) {
+      Error.throwWithStackTrace(
+        ApplicationValidationException(e.message),
+        stack,
+      );
     }
   }
 }
