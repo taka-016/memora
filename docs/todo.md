@@ -59,8 +59,4 @@
   - 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
 - `lib/presentation/features/trip/trip_management.dart:13` で `application/queries/order_by.dart` を直接参照している
   - 並び順指定はユースケース入力の列挙・フラグで表現し、プレゼンテーション層でクエリオブジェクトを組み立てない
-- `lib/presentation/notifiers/auth_notifier.dart:5` で `application/services/auth_service.dart` を直接参照している
-  - 認証状態判定と認証操作はユースケース経由に統一し、プレゼンテーション層で認証サービスを直接扱わない
-- `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
-  - Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
 ## 不具合修正
