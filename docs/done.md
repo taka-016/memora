@@ -770,6 +770,12 @@
   - Firestore依存の`fromFirestore`をinfrastructure層Mapperへ移管し、application層Mapperは`DTO <-> Entity`変換に限定する
 - `lib/infrastructure/queries/**` が `application/mappers` の `fromFirestore` に依存している
   - 参照先を`lib/infrastructure/mappers/**`へ切り替え、Firestoreの読み取り変換はinfrastructure層で完結させる
+- `lib/infrastructure/factories/route_info_service_factory.dart` で `http.Client` の生成と破棄を管理していない
+  - `LocationSearchServiceFactory` と同様に Provider / Factory 経由で `http.Client` を注入し、`ref.onDispose(client.close)` でライフサイクルを統一する
+- `lib/infrastructure/factories/route_info_service_factory.dart` の `create<T>()` / `_createServiceByType<T>()` は generic な型分岐を持っている
+  - 現状の返却型は `RouteInfoService` のみなので、`LocationSearchServiceFactory` と同様に具体型返却へ整理する
+- `lib/infrastructure/factories/auth_service_factory.dart` の `create<T>()` / `_createServiceByType<T>()` は generic な型分岐を持っている
+  - 現状の返却型は `AuthService` のみなので、具体型返却へ整理する
 
 ## 不具合修正
 

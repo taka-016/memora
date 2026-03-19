@@ -63,10 +63,4 @@
   - 認証状態判定と認証操作はユースケース経由に統一し、プレゼンテーション層で認証サービスを直接扱わない
 - `lib/presentation/notifiers/auth_notifier.dart:6` で `infrastructure/factories/auth_service_factory.dart` を直接参照している
   - Factory直接参照を削除し、認証ユースケース経由の呼び出しに統一する
-- `lib/infrastructure/factories/route_info_service_factory.dart` で `http.Client` の生成と破棄を管理していない
-  - `LocationSearchServiceFactory` と同様に Provider / Factory 経由で `http.Client` を注入し、`ref.onDispose(client.close)` でライフサイクルを統一する
-- `lib/infrastructure/factories/route_info_service_factory.dart` の `create<T>()` / `_createServiceByType<T>()` は generic な型分岐を持っている
-  - 現状の返却型は `RouteInfoService` のみなので、`LocationSearchServiceFactory` と同様に具体型返却へ整理する
-- `lib/infrastructure/factories/auth_service_factory.dart` の `create<T>()` / `_createServiceByType<T>()` は generic な型分岐を持っている
-  - 現状の返却型は `AuthService` のみなので、具体型返却へ整理する
 ## 不具合修正
