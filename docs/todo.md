@@ -54,9 +54,4 @@
 
 
 ## リファクタリング
-
-- `lib/presentation/features/trip/trip_edit_modal.dart:9` で `domain/exceptions/validation_exception.dart` を直接参照している
-  - 検証失敗はアプリケーション層のエラー型へ変換して扱い、画面でdomain例外を直接扱わない
-- `lib/presentation/features/trip/trip_management.dart:13` で `application/queries/order_by.dart` を直接参照している
-  - 並び順指定はユースケース入力の列挙・フラグで表現し、プレゼンテーション層でクエリオブジェクトを組み立てない
 ## 不具合修正
