@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -68,6 +69,31 @@ void main() {
 
       // act & assert
       expect(() => usecase.execute(tripEntry), returnsNormally);
+    });
+
+    test('旅行の検証エラーはアプリケーション層の例外に変換されること', () async {
+      // arrange
+      final tripEntry = TripEntryDto(
+        id: '',
+        groupId: 'group123',
+        tripYear: 2024,
+        tripName: 'テスト旅行',
+        tripStartDate: DateTime(2024, 1, 3),
+        tripEndDate: DateTime(2024, 1, 1),
+      );
+
+      // act & assert
+      await expectLater(
+        () => usecase.execute(tripEntry),
+        throwsA(
+          isA<ApplicationValidationException>().having(
+            (e) => e.message,
+            'message',
+            '旅行の終了日は開始日以降でなければなりません',
+          ),
+        ),
+      );
+      verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
   });
 }
