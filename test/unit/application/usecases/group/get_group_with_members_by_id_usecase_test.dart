@@ -106,10 +106,11 @@ void main() {
       expect(() => usecase.execute(groupId), throwsA(exception));
     });
 
-    test('membersOrderByパラメータが正しく渡されること', () async {
+    test('membersSortパラメータが正しく並び順へ変換されること', () async {
       // Arrange
       const groupId = 'group1';
-      final orderBy = [const OrderBy('displayName')];
+      const membersSort = GroupMemberSort.displayOrder;
+      final orderBy = [const OrderBy('orderIndex')];
 
       final expectedResult = GroupDto(
         id: groupId,
@@ -126,7 +127,7 @@ void main() {
       ).thenAnswer((_) async => expectedResult);
 
       // Act
-      await usecase.execute(groupId, membersOrderBy: orderBy);
+      await usecase.execute(groupId, membersSort: membersSort);
 
       // Assert
       verify(

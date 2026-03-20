@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -830,6 +831,41 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.tripStartDate, equals(DateTime(2024, 12, 30)));
       expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
+    });
+
+    testWidgets('保存時の検証エラーはアプリケーション層の例外メッセージを表示すること', (
+      WidgetTester tester,
+    ) async {
+      final tripEntry = TripEntryDto(
+        id: 'test-id',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        tripName: 'テスト旅行',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 3),
+        tripMemo: 'テストメモ',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: tripEntry,
+            onSave: (TripEntryDto tripEntry) async {
+              throw const ApplicationValidationException(
+                '訪問開始日時は旅行期間内でなければなりません',
+              );
+            },
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
     });
 
     testWidgets('開始日が入力済みで終了日が未入力の場合、終了日タップ時に開始日の年月を初期値とすること', (

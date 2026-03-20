@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -44,6 +45,29 @@ void main() {
       expect(updatedEntry.id, tripEntry.id);
       expect(updatedEntry.tripName, tripEntry.tripName);
       expect(updatedEntry.tripMemo, tripEntry.tripMemo);
+    });
+
+    test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {
+      // Arrange
+      final tripEntry = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        tripYear: 2024,
+        tripName: '更新された旅行',
+        tripStartDate: DateTime(2024, 1, 3),
+        tripEndDate: DateTime(2024, 1, 1),
+        tripMemo: '更新されたメモ',
+      );
+
+      // Act & Assert
+      try {
+        await usecase.execute(tripEntry);
+        fail('ApplicationValidationExceptionが送出される想定です');
+      } on ApplicationValidationException catch (e, stack) {
+        expect(e.message, '旅行の終了日は開始日以降でなければなりません');
+        expect(stack.toString(), contains('trip_entry.dart'));
+      }
+      verifyNever(mockRepository.updateTripEntry(any));
     });
   });
 }
