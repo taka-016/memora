@@ -60,5 +60,8 @@
   - `buildNormalLayout()`が担っている基本編集画面の描画を`trip_edit_form_view.dart`へ移し、実態に合う構造と命名へ整理する
   - `trip_edit_form_view.dart`は旅行名、期間、メモ、タスク導線、訪問場所一覧、エラー表示など通常編集画面のUI描画を担当する
   - `trip_edit_form_view.dart`へ渡すcontroller、state、callbackを明示し、親子間の責務境界を固定する
+- `task_view.dart`のタスク一覧描画を`task_list.dart`へ分離し、`TaskView`は画面全体の状態管理とイベント連携に責務を寄せる
+  - `task_list.dart`に親タスク一覧、子タスク一覧、折りたたみ表示、親子タスクの並び替えUIを集約する
+  - `task_view.dart`はヘッダー、エラー表示、タスク追加、コピー・ペースト、BottomSheet連携など一覧外の制御を担当する
 
 ## 不具合修正
