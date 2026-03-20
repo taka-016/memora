@@ -60,4 +60,5 @@
   - `buildNormalLayout()`が担っている基本編集画面の描画を`trip_edit_form_view.dart`へ移し、実態に合う構造と命名へ整理する
   - `trip_edit_form_view.dart`は旅行名、期間、メモ、タスク導線、訪問場所一覧、エラー表示など通常編集画面のUI描画を担当する
   - `trip_edit_form_view.dart`へ渡すcontroller、state、callbackを明示し、親子間の責務境界を固定する
+
 ## 不具合修正
