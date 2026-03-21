@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
@@ -476,6 +477,54 @@ void main() {
           tasksOrderBy: anyNamed('tasksOrderBy'),
         ),
       ).called(1);
+    });
+
+    testWidgets('旅行更新時にバリデーションエラーが発生した場合はモーダルを閉じずにエラー表示すること', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry);
+      when(mockTripEntryRepository.updateTripEntry(any)).thenThrow(
+        const ApplicationValidationException('訪問開始日時は旅行期間内でなければなりません'),
+      );
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              onBackPressed: null,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
+      expect(find.text('北海道旅行'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
