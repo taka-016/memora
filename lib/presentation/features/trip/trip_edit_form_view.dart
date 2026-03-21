@@ -85,6 +85,7 @@ class TripEditFormView extends StatelessWidget {
                   Column(
                     children: [
                       _TripDatePickerField(
+                        isEndDate: false,
                         labelText: '旅行期間 From',
                         selectedDate: startDate,
                         configuredYear: configuredYear,
@@ -95,6 +96,7 @@ class TripEditFormView extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       _TripDatePickerField(
+                        isEndDate: true,
                         labelText: '旅行期間 To',
                         selectedDate: endDate,
                         configuredYear: configuredYear,
@@ -210,6 +212,7 @@ class TripEditFormView extends StatelessWidget {
 
 class _TripDatePickerField extends StatelessWidget {
   const _TripDatePickerField({
+    required this.isEndDate,
     required this.labelText,
     required this.selectedDate,
     required this.onDateSelected,
@@ -219,6 +222,7 @@ class _TripDatePickerField extends StatelessWidget {
     this.clearTooltip,
   });
 
+  final bool isEndDate;
   final String labelText;
   final DateTime? selectedDate;
   final DateTime? comparisonStartDate;
@@ -286,7 +290,7 @@ class _TripDatePickerField extends StatelessWidget {
       return selectedDate!;
     }
 
-    if (labelText == '旅行期間 To' && comparisonStartDate != null) {
+    if (isEndDate && comparisonStartDate != null) {
       return DateTime(comparisonStartDate!.year, comparisonStartDate!.month, 1);
     }
 
