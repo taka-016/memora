@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
@@ -132,6 +133,8 @@ class TripManagement extends HookConsumerWidget {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を作成しました')),
         );
+      } on ApplicationValidationException {
+        rethrow;
       } catch (e, stack) {
         logger.e(
           'TripManagement.handleAddTripSave: ${e.toString()}',
@@ -174,6 +177,8 @@ class TripManagement extends HookConsumerWidget {
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を更新しました')),
         );
+      } on ApplicationValidationException {
+        rethrow;
       } catch (e, stack) {
         logger.e(
           'TripManagement.handleEditTripSave: ${e.toString()}',
