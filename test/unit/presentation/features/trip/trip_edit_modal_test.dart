@@ -8,6 +8,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -35,6 +36,21 @@ class FakeNearbyLocationService implements NearbyLocationService {
 
 void main() {
   group('TripEditModal', () {
+    testWidgets('通常編集画面でTripEditFormViewが表示されること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            onSave: (TripEntryDto tripEntry) async {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      expect(find.byType(TripEditFormView), findsOneWidget);
+    });
+
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(

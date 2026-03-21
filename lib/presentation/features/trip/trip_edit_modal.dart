@@ -12,11 +12,11 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/env/env.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
-import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
+import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
@@ -218,7 +218,7 @@ class TripEditModal extends HookConsumerWidget {
       selectedPin.value = pin;
     }
 
-    Future<void> handlePinDeleted(String pinId) async {
+    void handlePinDeleted(String pinId) {
       pins.value = pins.value.where((pin) => pin.pinId != pinId).toList();
       if (selectedPin.value?.pinId == pinId) {
         selectedPin.value = null;
@@ -260,14 +260,6 @@ class TripEditModal extends HookConsumerWidget {
 
     void closeRouteInfoView() {
       expandedSection.value = null;
-    }
-
-    String formatDateTime(DateTime dateTime) {
-      final month = dateTime.month.toString().padLeft(2, '0');
-      final day = dateTime.day.toString().padLeft(2, '0');
-      final hour = dateTime.hour.toString().padLeft(2, '0');
-      final minute = dateTime.minute.toString().padLeft(2, '0');
-      return '$month/$day $hour:$minute';
     }
 
     Future<void> handleSave() async {
@@ -315,22 +307,6 @@ class TripEditModal extends HookConsumerWidget {
       }
     }
 
-    DateTime determineInitialDate(DateTime? selectedDate, String labelText) {
-      if (selectedDate != null) {
-        return selectedDate;
-      }
-
-      if (labelText == '旅行期間 To' && startDate.value != null) {
-        return DateTime(startDate.value!.year, startDate.value!.month, 1);
-      }
-
-      final configuredYear = tripEntry?.tripYear ?? year;
-      if (configuredYear != null) {
-        return DateTime(configuredYear, 1, 1);
-      }
-      return DateTime.now();
-    }
-
     Widget buildBottomSheet() {
       if (!isBottomSheetVisible.value || selectedPin.value == null) {
         return const SizedBox.shrink();
@@ -344,135 +320,6 @@ class TripEditModal extends HookConsumerWidget {
       );
     }
 
-    Widget buildPinsList() {
-      if (pins.value.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...List.generate(pins.value.length, (index) {
-            final pin = pins.value[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-              child: ListTile(
-                key: Key('pinListItem_${pin.pinId}'),
-                dense: true,
-                contentPadding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-                title: Text(
-                  pin.locationName?.isNotEmpty == true ? pin.locationName! : '',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                subtitle: () {
-                  final List<String> subtitleParts = [];
-                  if (pin.visitStartDate != null && pin.visitEndDate != null) {
-                    subtitleParts.add(
-                      '${formatDateTime(pin.visitStartDate!)} - ${formatDateTime(pin.visitEndDate!)}',
-                    );
-                  } else if (pin.visitStartDate != null) {
-                    subtitleParts.add(
-                      '開始: ${formatDateTime(pin.visitStartDate!)}',
-                    );
-                  } else if (pin.visitEndDate != null) {
-                    subtitleParts.add(
-                      '終了: ${formatDateTime(pin.visitEndDate!)}',
-                    );
-                  }
-
-                  if (subtitleParts.isEmpty) {
-                    return null;
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: subtitleParts
-                        .map(
-                          (text) =>
-                              Text(text, style: const TextStyle(fontSize: 12)),
-                        )
-                        .toList(),
-                  );
-                }(),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => handlePinDeleted(pin.pinId),
-                ),
-                onTap: () {
-                  handlePinTapped(pin);
-                  isBottomSheetVisible.value = true;
-                },
-              ),
-            );
-          }),
-        ],
-      );
-    }
-
-    Widget buildDatePickerField({
-      required String labelText,
-      required DateTime? selectedDate,
-      required Function(DateTime) onDateSelected,
-      VoidCallback? onClear,
-      String? clearTooltip,
-    }) {
-      return InkWell(
-        onTap: () async {
-          final initialDate = determineInitialDate(selectedDate, labelText);
-          final date = await DatePickerHelper.showCustomDatePicker(
-            context,
-            initialDate: initialDate,
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
-          );
-          if (date != null) {
-            onDateSelected(date);
-            errorMessage.value = null;
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black54),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  selectedDate != null
-                      ? '${selectedDate.year}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.day.toString().padLeft(2, '0')}'
-                      : labelText,
-                  style: const TextStyle(color: Colors.black, fontSize: 16),
-                ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (selectedDate != null && onClear != null)
-                    Tooltip(
-                      message: clearTooltip ?? '日付をクリア',
-                      child: IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.black54),
-                        padding: EdgeInsets.zero,
-                        visualDensity: VisualDensity.compact,
-                        constraints: const BoxConstraints(),
-                        splashRadius: 18,
-                        onPressed: () {
-                          onClear();
-                          errorMessage.value = null;
-                        },
-                      ),
-                    ),
-                  const Icon(Icons.calendar_today, color: Colors.black54),
-                ],
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     Widget buildNormalLayout() {
       return Stack(
         children: [
@@ -480,170 +327,44 @@ class TripEditModal extends HookConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                tripEntry != null ? '旅行編集' : '旅行新規作成',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
               Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollController,
-                  child: Form(
-                    key: formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (errorMessage.value != null) ...[
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.red.shade200),
-                            ),
-                            child: Text(
-                              errorMessage.value!,
-                              style: TextStyle(
-                                color: Colors.red.shade700,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: nameController,
-                          decoration: const InputDecoration(
-                            labelText: '旅行名',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Column(
-                          children: [
-                            buildDatePickerField(
-                              labelText: '旅行期間 From',
-                              selectedDate: startDate.value,
-                              onDateSelected: (date) => startDate.value = date,
-                              onClear: () => startDate.value = null,
-                              clearTooltip: '旅行開始日をクリア',
-                            ),
-                            const SizedBox(height: 16),
-                            buildDatePickerField(
-                              labelText: '旅行期間 To',
-                              selectedDate: endDate.value,
-                              onDateSelected: (date) => endDate.value = date,
-                              onClear: () => endDate.value = null,
-                              clearTooltip: '旅行終了日をクリア',
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: memoController,
-                          decoration: const InputDecoration(
-                            labelText: 'メモ',
-                            border: OutlineInputBorder(),
-                          ),
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: showTaskView,
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 48),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.checklist, size: 20),
-                                const SizedBox(width: 4),
-                                const Text('タスク管理'),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            '訪問場所',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: ElevatedButton(
-                                  key: mapIconKey,
-                                  onPressed: toggleMapExpansion,
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: const Size(
-                                      double.infinity,
-                                      48,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.add_location, size: 20),
-                                      SizedBox(width: 4),
-                                      Text('編集'),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: pins.value.length >= 2
-                                      ? showRouteInfoView
-                                      : null,
-                                  style: ElevatedButton.styleFrom(
-                                    minimumSize: const Size(
-                                      double.infinity,
-                                      48,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: const [
-                                      Icon(Icons.route, size: 20),
-                                      SizedBox(width: 4),
-                                      Text('経路情報'),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        buildPinsList(),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
+                child: TripEditFormView(
+                  formKey: formKey,
+                  scrollController: scrollController,
+                  titleText: tripEntry != null ? '旅行編集' : '旅行新規作成',
+                  nameController: nameController,
+                  memoController: memoController,
+                  startDate: startDate.value,
+                  endDate: endDate.value,
+                  errorMessage: errorMessage.value,
+                  configuredYear: tripEntry?.tripYear ?? year,
+                  pins: pins.value,
+                  mapButtonKey: mapIconKey,
+                  onStartDateSelected: (date) {
+                    startDate.value = date;
+                    errorMessage.value = null;
+                  },
+                  onEndDateSelected: (date) {
+                    endDate.value = date;
+                    errorMessage.value = null;
+                  },
+                  onStartDateCleared: () {
+                    startDate.value = null;
+                    errorMessage.value = null;
+                  },
+                  onEndDateCleared: () {
+                    endDate.value = null;
+                    errorMessage.value = null;
+                  },
+                  onShowTaskView: showTaskView,
+                  onToggleMapExpansion: toggleMapExpansion,
+                  onShowRouteInfoView: showRouteInfoView,
+                  onPinTapped: (pin) {
+                    handlePinTapped(pin);
+                    isBottomSheetVisible.value = true;
+                  },
+                  onPinDeleted: handlePinDeleted,
+                  canShowRouteInfo: pins.value.length >= 2,
                 ),
               ),
               const SizedBox(height: 24),
