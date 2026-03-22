@@ -60,7 +60,7 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('画面切り替え要求を粗いコールバックで通知すること', (WidgetTester tester) async {
+    testWidgets('タスク管理・訪問場所編集・経路情報ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
       var taskRequested = 0;
       var mapRequested = 0;
       var routeRequested = 0;
