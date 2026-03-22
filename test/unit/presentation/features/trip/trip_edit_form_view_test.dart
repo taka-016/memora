@@ -10,9 +10,7 @@ Widget _createApp({required Widget child}) {
 
 void main() {
   group('TripEditFormView', () {
-    testWidgets('入力変更とピン削除の結果をまとめてonChangedへ返すこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('入力変更とピン削除の結果をまとめてonChangedへ返すこと', (WidgetTester tester) async {
       TripEntryDto? latestValue;
       final initialValue = TripEntryDto(
         id: 'trip-id',
@@ -62,9 +60,7 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('画面切り替え要求を粗いコールバックで通知すること', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('画面切り替え要求を粗いコールバックで通知すること', (WidgetTester tester) async {
       var taskRequested = 0;
       var mapRequested = 0;
       var routeRequested = 0;
