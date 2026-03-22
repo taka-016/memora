@@ -868,6 +868,98 @@ void main() {
       expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
     });
 
+    testWidgets('ピン更新時に保存エラーメッセージがクリアされること', (WidgetTester tester) async {
+      final testHandle = TripEditModalTestHandle();
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: TripEntryDto(
+              id: 'test-id',
+              groupId: 'test-group-id',
+              tripYear: 2024,
+              tripName: 'テスト旅行',
+              tripMemo: 'テストメモ',
+            ),
+            onSave: (TripEntryDto tripEntry) async {
+              throw const ApplicationValidationException(
+                '訪問開始日時は旅行期間内でなければなりません',
+              );
+            },
+            isTestEnvironment: true,
+            testHandle: testHandle,
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
+
+      testHandle.setPinsForTest([
+        const PinDto(
+          pinId: 'pin-1',
+          latitude: 35.681236,
+          longitude: 139.767125,
+          locationName: '東京駅',
+        ),
+      ]);
+      await tester.pump();
+
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsNothing);
+    });
+
+    testWidgets('タスク更新時に保存エラーメッセージがクリアされること', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: TripEntryDto(
+              id: 'test-id',
+              groupId: 'test-group-id',
+              tripYear: 2024,
+              tripName: 'テスト旅行',
+              tripMemo: 'テストメモ',
+            ),
+            onSave: (TripEntryDto tripEntry) async {
+              throw const ApplicationValidationException(
+                '訪問開始日時は旅行期間内でなければなりません',
+              );
+            },
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
+
+      final taskManagementButton = find.widgetWithText(ElevatedButton, 'タスク管理');
+      await tester.ensureVisible(taskManagementButton);
+      await tester.tap(taskManagementButton);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(const Key('task_name_field')), '追加タスク');
+      await tester.tap(find.text('追加'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('task_view_root')),
+          matching: find.byIcon(Icons.close),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsNothing);
+    });
+
     testWidgets('開始日が入力済みで終了日が未入力の場合、終了日タップ時に開始日の年月を初期値とすること', (
       WidgetTester tester,
     ) async {

@@ -60,7 +60,9 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('タスク管理・訪問場所編集・経路情報ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
+    testWidgets('タスク管理・訪問場所編集・経路情報ボタンが親のハンドラを呼ぶこと', (
+      WidgetTester tester,
+    ) async {
       var taskRequested = 0;
       var mapRequested = 0;
       var routeRequested = 0;
@@ -112,6 +114,82 @@ void main() {
       expect(taskRequested, 1);
       expect(mapRequested, 1);
       expect(routeRequested, 1);
+    });
+
+    testWidgets('選択中のピンが更新された場合はボトムシートも最新の内容に同期されること', (
+      WidgetTester tester,
+    ) async {
+      final initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        tripYear: 2024,
+        pins: [
+          PinDto(
+            pinId: 'pin-1',
+            tripId: 'trip-id',
+            latitude: 35.681236,
+            longitude: 139.767125,
+            locationName: '更新前の場所名',
+          ),
+        ],
+      );
+      final updatedValue = initialValue.copyWith(
+        pins: [
+          PinDto(
+            pinId: 'pin-1',
+            tripId: 'trip-id',
+            latitude: 35.681236,
+            longitude: 139.767125,
+            locationName: '更新後の場所名',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              onChanged: (_) {},
+              onTaskManagementRequested: () {},
+              onVisitLocationEditRequested: () {},
+              onRouteInfoRequested: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('pinListItem_pin-1')));
+      await tester.pumpAndSettle();
+
+      final locationNameFieldBefore = tester.widget<TextFormField>(
+        find.byKey(const Key('locationNameField')),
+      );
+      expect(locationNameFieldBefore.controller!.text, '更新前の場所名');
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: updatedValue,
+              onChanged: (_) {},
+              onTaskManagementRequested: () {},
+              onVisitLocationEditRequested: () {},
+              onRouteInfoRequested: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final locationNameFieldAfter = tester.widget<TextFormField>(
+        find.byKey(const Key('locationNameField')),
+      );
+      expect(locationNameFieldAfter.controller!.text, '更新後の場所名');
     });
   });
 }

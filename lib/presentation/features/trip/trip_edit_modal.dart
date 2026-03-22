@@ -100,6 +100,23 @@ class TripEditModal extends HookConsumerWidget {
     List<TaskDto> currentTasks() =>
         List<TaskDto>.from(draftTripEntry.value.tasks ?? const []);
 
+    void updateDraftTripEntry(TripEntryDto tripEntry) {
+      draftTripEntry.value = tripEntry;
+      errorMessage.value = null;
+    }
+
+    void updateDraftPins(List<PinDto> pins) {
+      updateDraftTripEntry(
+        draftTripEntry.value.copyWith(pins: List<PinDto>.from(pins)),
+      );
+    }
+
+    void updateDraftTasks(List<TaskDto> tasks) {
+      updateDraftTripEntry(
+        draftTripEntry.value.copyWith(tasks: List<TaskDto>.from(tasks)),
+      );
+    }
+
     void updateDirtyState() {
       final isDirty = draftTripEntry.value != initialTripForComparison;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -123,15 +140,12 @@ class TripEditModal extends HookConsumerWidget {
         return null;
       }
       testHandle!._setDateRange = (DateTime? start, DateTime? end) {
-        draftTripEntry.value = draftTripEntry.value.copyWith(
-          tripStartDate: start,
-          tripEndDate: end,
+        updateDraftTripEntry(
+          draftTripEntry.value.copyWith(tripStartDate: start, tripEndDate: end),
         );
       };
       testHandle!._setPins = (List<PinDto> pins) {
-        draftTripEntry.value = draftTripEntry.value.copyWith(
-          pins: List<PinDto>.from(pins),
-        );
+        updateDraftPins(pins);
       };
       return () {
         if (testHandle == null) {
@@ -140,13 +154,7 @@ class TripEditModal extends HookConsumerWidget {
         testHandle!._setDateRange = null;
         testHandle!._setPins = null;
       };
-    }, [testHandle, draftTripEntry.value]);
-
-    void updateDraftPins(List<PinDto> pins) {
-      draftTripEntry.value = draftTripEntry.value.copyWith(
-        pins: List<PinDto>.from(pins),
-      );
-    }
+    }, [testHandle]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
@@ -193,7 +201,7 @@ class TripEditModal extends HookConsumerWidget {
       isBottomSheetVisible.value = true;
     }
 
-    Future<void> handlePinDeleted(String pinId) async {
+    void handlePinDeleted(String pinId) {
       updateDraftPins(
         currentPins().where((pin) => pin.pinId != pinId).toList(),
       );
@@ -337,10 +345,7 @@ class TripEditModal extends HookConsumerWidget {
             child: TripEditFormView(
               value: draftTripEntry.value,
               configuredYear: tripEntry?.tripYear ?? year,
-              onChanged: (updatedTripEntry) {
-                draftTripEntry.value = updatedTripEntry;
-                errorMessage.value = null;
-              },
+              onChanged: updateDraftTripEntry,
               onTaskManagementRequested: showTaskView,
               onVisitLocationEditRequested: toggleMapExpansion,
               onRouteInfoRequested: showRouteInfoView,
@@ -409,11 +414,7 @@ class TripEditModal extends HookConsumerWidget {
             tripId: tripEntry?.id,
             tasks: currentTasks(),
             groupMembers: groupMembers,
-            onChanged: (updatedTasks) {
-              draftTripEntry.value = draftTripEntry.value.copyWith(
-                tasks: List<TaskDto>.from(updatedTasks),
-              );
-            },
+            onChanged: updateDraftTasks,
             onClose: () => expandedSection.value = null,
           );
         case null:

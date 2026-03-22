@@ -81,10 +81,19 @@ class TripEditFormView extends HookWidget {
       }
 
       final currentSelectedPin = selectedPin.value;
-      if (currentSelectedPin != null &&
-          !nextPins.any((pin) => pin.pinId == currentSelectedPin.pinId)) {
-        isBottomSheetVisible.value = false;
-        selectedPin.value = null;
+      if (currentSelectedPin != null) {
+        final matchingPins = nextPins.where(
+          (pin) => pin.pinId == currentSelectedPin.pinId,
+        );
+        if (matchingPins.isEmpty) {
+          isBottomSheetVisible.value = false;
+          selectedPin.value = null;
+        } else {
+          final nextSelectedPin = matchingPins.first;
+          if (nextSelectedPin != currentSelectedPin) {
+            selectedPin.value = nextSelectedPin;
+          }
+        }
       }
     }
 
@@ -136,12 +145,15 @@ class TripEditFormView extends HookWidget {
       notifyChanged();
     }
 
-    DateTime determineInitialDate(DateTime? selectedDate, String labelText) {
+    DateTime determineInitialDate(
+      DateTime? selectedDate, {
+      required bool isEndDate,
+    }) {
       if (selectedDate != null) {
         return selectedDate;
       }
 
-      if (labelText == '旅行期間 To' && startDate.value != null) {
+      if (isEndDate && startDate.value != null) {
         return DateTime(startDate.value!.year, startDate.value!.month, 1);
       }
 
@@ -238,6 +250,7 @@ class TripEditFormView extends HookWidget {
     Widget buildDatePickerField({
       required String labelText,
       required DateTime? selectedDate,
+      required bool isEndDate,
       required ValueChanged<DateTime> onDateSelected,
       VoidCallback? onClear,
       String? clearTooltip,
@@ -246,7 +259,10 @@ class TripEditFormView extends HookWidget {
         onTap: () async {
           final date = await DatePickerHelper.showCustomDatePicker(
             context,
-            initialDate: determineInitialDate(selectedDate, labelText),
+            initialDate: determineInitialDate(
+              selectedDate,
+              isEndDate: isEndDate,
+            ),
             firstDate: DateTime(2000),
             lastDate: DateTime(2100),
           );
@@ -315,6 +331,7 @@ class TripEditFormView extends HookWidget {
                   buildDatePickerField(
                     labelText: '旅行期間 From',
                     selectedDate: startDate.value,
+                    isEndDate: false,
                     onDateSelected: (date) => startDate.value = date,
                     onClear: () {
                       startDate.value = null;
@@ -326,6 +343,7 @@ class TripEditFormView extends HookWidget {
                   buildDatePickerField(
                     labelText: '旅行期間 To',
                     selectedDate: endDate.value,
+                    isEndDate: true,
                     onDateSelected: (date) => endDate.value = date,
                     onClear: () {
                       endDate.value = null;
