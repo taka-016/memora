@@ -342,22 +342,24 @@ void main() {
         ),
       ];
 
-      final testHandle = TripEditModalTestHandle();
+      final tripEntry = TripEntryDto(
+        id: 'test-trip-id',
+        groupId: 'test-group-id',
+        tripYear: 2024,
+        pins: pins,
+      );
 
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
+            tripEntry: tripEntry,
             onSave: (TripEntryDto tripEntry) async {},
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
       );
-
-      testHandle.setPinsForTest(pins);
-      await tester.pumpAndSettle();
 
       final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
       expect(buttonFinder, findsOneWidget);
@@ -381,8 +383,6 @@ void main() {
     });
 
     testWidgets('編集ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
-      final testHandle = TripEditModalTestHandle();
-
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -390,7 +390,6 @@ void main() {
             groupMembers: const [],
             onSave: (TripEntryDto tripEntry) async {},
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
       );
@@ -590,8 +589,6 @@ void main() {
     testWidgets('作成ボタンタップ時にonSaveコールバックが呼ばれること', (WidgetTester tester) async {
       TripEntryDto? savedTripEntry;
 
-      final testHandle = TripEditModalTestHandle();
-
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -601,7 +598,6 @@ void main() {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
       );
@@ -706,8 +702,6 @@ void main() {
     testWidgets('開始日が終了日より後の場合にエラーメッセージが表示されること', (WidgetTester tester) async {
       TripEntryDto? savedTripEntry;
 
-      final testHandle = TripEditModalTestHandle();
-
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -718,24 +712,17 @@ void main() {
               groupId: 'test-group-id',
               tripYear: 2024,
               tripName: 'テスト旅行',
-              tripStartDate: DateTime(2024, 1, 1),
-              tripEndDate: DateTime(2024, 1, 3),
+              tripStartDate: DateTime(2024, 1, 3),
+              tripEndDate: DateTime(2024, 1, 1),
               tripMemo: 'テストメモ',
             ),
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
       );
-
-      testHandle.setDateRangeForTest(
-        DateTime(2024, 1, 3),
-        DateTime(2024, 1, 1),
-      );
-      await tester.pump();
 
       // 更新ボタンをタップ
       await tester.tap(find.text('更新'));
@@ -751,8 +738,6 @@ void main() {
       WidgetTester tester,
     ) async {
       TripEntryDto? savedTripEntry;
-
-      final testHandle = TripEditModalTestHandle();
 
       await tester.pumpWidget(
         _createApp(
@@ -773,14 +758,8 @@ void main() {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
-      );
-
-      testHandle.setDateRangeForTest(
-        DateTime(2023, 6, 1),
-        DateTime(2024, 6, 10),
       );
 
       // 更新ボタンをタップ
@@ -869,8 +848,6 @@ void main() {
     });
 
     testWidgets('ピン更新時に保存エラーメッセージがクリアされること', (WidgetTester tester) async {
-      final testHandle = TripEditModalTestHandle();
-
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -882,6 +859,14 @@ void main() {
               tripYear: 2024,
               tripName: 'テスト旅行',
               tripMemo: 'テストメモ',
+              pins: const [
+                PinDto(
+                  pinId: 'pin-1',
+                  latitude: 35.0,
+                  longitude: 135.0,
+                  locationName: '更新前の場所名',
+                ),
+              ],
             ),
             onSave: (TripEntryDto tripEntry) async {
               throw const ApplicationValidationException(
@@ -889,7 +874,6 @@ void main() {
               );
             },
             isTestEnvironment: true,
-            testHandle: testHandle,
           ),
         ),
       );
@@ -899,15 +883,27 @@ void main() {
 
       expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
 
-      testHandle.setPinsForTest([
-        const PinDto(
-          pinId: 'pin-1',
-          latitude: 35.681236,
-          longitude: 139.767125,
-          locationName: '東京駅',
+      await tester.ensureVisible(find.byKey(const Key('pinListItem_pin-1')));
+      await tester.tap(find.byKey(const Key('pinListItem_pin-1')));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('locationNameField')),
+        '更新後の場所名',
+      );
+      await tester.ensureVisible(
+        find.descendant(
+          of: find.byType(PinDetailBottomSheet),
+          matching: find.text('更新'),
         ),
-      ]);
-      await tester.pump();
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(PinDetailBottomSheet),
+          matching: find.text('更新'),
+        ),
+      );
+      await tester.pumpAndSettle();
 
       expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsNothing);
     });
@@ -1020,8 +1016,6 @@ void main() {
       WidgetTester tester,
     ) async {
       TripEntryDto? savedTripEntry;
-      final testHandle = TripEditModalTestHandle();
-
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -1030,32 +1024,11 @@ void main() {
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
             },
-            isTestEnvironment: true,
-            testHandle: testHandle,
+            isTestEnvironment: false,
+            nearbyLocationService: FakeNearbyLocationService(),
           ),
         ),
       );
-
-      // テスト用のピンデータをセット
-      final testPins = [
-        PinDto(
-          pinId: 'test-pin-1',
-          tripId: 'test-trip-id',
-          latitude: 35.6762,
-          longitude: 139.6503,
-          locationName: '東京駅',
-        ),
-        PinDto(
-          pinId: 'test-pin-2',
-          tripId: 'test-trip-id',
-          latitude: 35.6585,
-          longitude: 139.7454,
-          locationName: '渋谷駅',
-        ),
-      ];
-
-      testHandle.setPinsForTest(testPins);
-      await tester.pump();
 
       // 旅行名を入力
       await tester.enterText(find.byType(TextFormField).first, 'テスト旅行');
@@ -1072,6 +1045,40 @@ void main() {
       await tester.tap(find.text('20').last);
       await tester.pumpAndSettle();
 
+      final editButton = find.widgetWithText(ElevatedButton, '編集');
+      await tester.ensureVisible(editButton);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      const firstCandidate = LocationCandidateDto(
+        name: '東京駅',
+        address: '東京都千代田区丸の内1-9-1',
+        coordinate: Coordinate(latitude: 35.6762, longitude: 139.6503),
+      );
+      const secondCandidate = LocationCandidateDto(
+        name: '渋谷駅',
+        address: '東京都渋谷区道玄坂1-1-1',
+        coordinate: Coordinate(latitude: 35.6585, longitude: 139.7454),
+      );
+
+      final googleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
+      );
+      googleMapView.onSearchedLocationSelected?.call(firstCandidate);
+      await tester.pumpAndSettle();
+
+      final updatedGoogleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
+      );
+      updatedGoogleMapView.onSearchedLocationSelected?.call(secondCandidate);
+      await tester.pumpAndSettle();
+
+      final selectVisitLocationView = tester.widget<SelectVisitLocationView>(
+        find.byType(SelectVisitLocationView),
+      );
+      selectVisitLocationView.onClose();
+      await tester.pumpAndSettle();
+
       // 作成ボタンをタップ
       await tester.tap(find.text('作成'));
       await tester.pumpAndSettle();
@@ -1079,9 +1086,7 @@ void main() {
       // onSaveコールバックでピンデータが正しく渡されることを確認
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.pins!.length, equals(2));
-      expect(savedTripEntry!.pins![0].pinId, equals('test-pin-1'));
       expect(savedTripEntry!.pins![0].locationName, equals('東京駅'));
-      expect(savedTripEntry!.pins![1].pinId, equals('test-pin-2'));
       expect(savedTripEntry!.pins![1].locationName, equals('渋谷駅'));
     });
 

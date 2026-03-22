@@ -23,21 +23,6 @@ import 'package:uuid/uuid.dart';
 
 enum TripEditExpandedSection { map, routeInfo, tasks }
 
-class TripEditModalTestHandle {
-  void Function(DateTime?, DateTime?)? _setDateRange;
-  void Function(List<PinDto>)? _setPins;
-
-  @visibleForTesting
-  void setDateRangeForTest(DateTime? start, DateTime? end) {
-    _setDateRange?.call(start, end);
-  }
-
-  @visibleForTesting
-  void setPinsForTest(List<PinDto> pins) {
-    _setPins?.call(pins);
-  }
-}
-
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
     super.key,
@@ -47,7 +32,6 @@ class TripEditModal extends HookConsumerWidget {
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
-    this.testHandle,
     this.nearbyLocationService,
   });
 
@@ -57,7 +41,6 @@ class TripEditModal extends HookConsumerWidget {
   final Future<void> Function(TripEntryDto) onSave;
   final bool isTestEnvironment;
   final int? year;
-  final TripEditModalTestHandle? testHandle;
   final NearbyLocationService? nearbyLocationService;
 
   @override
@@ -134,27 +117,6 @@ class TripEditModal extends HookConsumerWidget {
         internalNearbyLocationService?.httpClient.close();
       };
     }, [internalNearbyLocationService]);
-
-    useEffect(() {
-      if (testHandle == null) {
-        return null;
-      }
-      testHandle!._setDateRange = (DateTime? start, DateTime? end) {
-        updateDraftTripEntry(
-          draftTripEntry.value.copyWith(tripStartDate: start, tripEndDate: end),
-        );
-      };
-      testHandle!._setPins = (List<PinDto> pins) {
-        updateDraftPins(pins);
-      };
-      return () {
-        if (testHandle == null) {
-          return;
-        }
-        testHandle!._setDateRange = null;
-        testHandle!._setPins = null;
-      };
-    }, [testHandle]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
