@@ -116,6 +116,67 @@ void main() {
       expect(routeRequested, 1);
     });
 
+    testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
+      WidgetTester tester,
+    ) async {
+      var useUpdatedHandler = false;
+      var initialHandlerCallCount = 0;
+      var updatedHandlerCallCount = 0;
+      final initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        tripYear: 2024,
+        tripName: '既存旅行',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        useUpdatedHandler = true;
+                      });
+                    },
+                    child: const Text('ハンドラ切替'),
+                  ),
+                  Expanded(
+                    child: SizedBox(
+                      width: 480,
+                      child: TripEditFormView(
+                        value: initialValue,
+                        onChanged: useUpdatedHandler
+                            ? (_) => updatedHandlerCallCount += 1
+                            : (_) => initialHandlerCallCount += 1,
+                        onTaskManagementRequested: () {},
+                        onVisitLocationEditRequested: () {},
+                        onRouteInfoRequested: () {},
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('ハンドラ切替'));
+      await tester.pump();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '旅行名'),
+        '更新後の旅行',
+      );
+      await tester.pump();
+
+      expect(initialHandlerCallCount, 0);
+      expect(updatedHandlerCallCount, 1);
+    });
+
     testWidgets('選択中のピンが更新された場合はボトムシートも最新の内容に同期されること', (
       WidgetTester tester,
     ) async {
