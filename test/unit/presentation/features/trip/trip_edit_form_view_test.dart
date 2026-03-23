@@ -177,6 +177,84 @@ void main() {
       expect(updatedHandlerCallCount, greaterThan(0));
     });
 
+    testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
+      WidgetTester tester,
+    ) async {
+      var currentValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        tripYear: 2024,
+        tripName: '初期旅行',
+        tripMemo: '初期メモ',
+        tripStartDate: DateTime(2024, 1, 1),
+        tripEndDate: DateTime(2024, 1, 2),
+        pins: [
+          PinDto(
+            pinId: 'pin-1',
+            tripId: 'trip-id',
+            latitude: 35.681236,
+            longitude: 139.767125,
+            locationName: '東京駅',
+          ),
+        ],
+      );
+      final emittedValues = <TripEntryDto>[];
+
+      await tester.pumpWidget(
+        _createApp(
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        currentValue = currentValue.copyWith(
+                          tripName: '外部更新後の旅行',
+                          tripMemo: '外部更新後のメモ',
+                          tripStartDate: DateTime(2024, 2, 1),
+                          tripEndDate: DateTime(2024, 2, 3),
+                          pins: [
+                            const PinDto(
+                              pinId: 'pin-2',
+                              tripId: 'trip-id',
+                              latitude: 34.6937,
+                              longitude: 135.5023,
+                              locationName: '大阪駅',
+                            ),
+                          ],
+                        );
+                      });
+                    },
+                    child: const Text('外部更新'),
+                  ),
+                  Expanded(
+                    child: SizedBox(
+                      width: 480,
+                      child: TripEditFormView(
+                        value: currentValue,
+                        onChanged: emittedValues.add,
+                        onTaskManagementRequested: () {},
+                        onVisitLocationEditRequested: () {},
+                        onRouteInfoRequested: () {},
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('外部更新'));
+      await tester.pump();
+
+      expect(emittedValues, isEmpty);
+      expect(find.text('外部更新後の旅行'), findsOneWidget);
+      expect(find.text('外部更新後のメモ'), findsOneWidget);
+    });
+
     testWidgets('選択中のピンが更新された場合はボトムシートも最新の内容に同期されること', (
       WidgetTester tester,
     ) async {
