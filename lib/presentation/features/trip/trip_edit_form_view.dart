@@ -37,6 +37,7 @@ class TripEditFormView extends HookWidget {
     );
     final selectedPin = useState<PinDto?>(null);
     final isBottomSheetVisible = useState(false);
+    final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
 
     TripEntryDto buildCurrentValue() {
@@ -53,6 +54,10 @@ class TripEditFormView extends HookWidget {
     }
 
     void notifyChanged() {
+      if (isSyncingFromValueRef.value) {
+        return;
+      }
+
       final currentValue = buildCurrentValue();
       if (currentValue != valueRef.value) {
         onChangedRef.value(currentValue);
@@ -60,42 +65,47 @@ class TripEditFormView extends HookWidget {
     }
 
     void syncFromValue() {
-      final tripName = value.tripName ?? '';
-      if (nameController.text != tripName) {
-        nameController.text = tripName;
-      }
+      isSyncingFromValueRef.value = true;
+      try {
+        final tripName = value.tripName ?? '';
+        if (nameController.text != tripName) {
+          nameController.text = tripName;
+        }
 
-      final tripMemo = value.tripMemo ?? '';
-      if (memoController.text != tripMemo) {
-        memoController.text = tripMemo;
-      }
+        final tripMemo = value.tripMemo ?? '';
+        if (memoController.text != tripMemo) {
+          memoController.text = tripMemo;
+        }
 
-      if (startDate.value != value.tripStartDate) {
-        startDate.value = value.tripStartDate;
-      }
-      if (endDate.value != value.tripEndDate) {
-        endDate.value = value.tripEndDate;
-      }
+        if (startDate.value != value.tripStartDate) {
+          startDate.value = value.tripStartDate;
+        }
+        if (endDate.value != value.tripEndDate) {
+          endDate.value = value.tripEndDate;
+        }
 
-      final nextPins = List<PinDto>.from(value.pins ?? const []);
-      if (!listEquals(pins.value, nextPins)) {
-        pins.value = nextPins;
-      }
+        final nextPins = List<PinDto>.from(value.pins ?? const []);
+        if (!listEquals(pins.value, nextPins)) {
+          pins.value = nextPins;
+        }
 
-      final currentSelectedPin = selectedPin.value;
-      if (currentSelectedPin != null) {
-        final matchingPins = nextPins.where(
-          (pin) => pin.pinId == currentSelectedPin.pinId,
-        );
-        if (matchingPins.isEmpty) {
-          isBottomSheetVisible.value = false;
-          selectedPin.value = null;
-        } else {
-          final nextSelectedPin = matchingPins.first;
-          if (nextSelectedPin != currentSelectedPin) {
-            selectedPin.value = nextSelectedPin;
+        final currentSelectedPin = selectedPin.value;
+        if (currentSelectedPin != null) {
+          final matchingPins = nextPins.where(
+            (pin) => pin.pinId == currentSelectedPin.pinId,
+          );
+          if (matchingPins.isEmpty) {
+            isBottomSheetVisible.value = false;
+            selectedPin.value = null;
+          } else {
+            final nextSelectedPin = matchingPins.first;
+            if (nextSelectedPin != currentSelectedPin) {
+              selectedPin.value = nextSelectedPin;
+            }
           }
         }
+      } finally {
+        isSyncingFromValueRef.value = false;
       }
     }
 
