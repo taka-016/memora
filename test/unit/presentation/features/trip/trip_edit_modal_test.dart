@@ -382,6 +382,49 @@ void main() {
       expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
+    testWidgets('本番地図ではピン選択時に詳細ボトムシートが二重表示されないこと', (
+      WidgetTester tester,
+    ) async {
+      const pin = PinDto(
+        pinId: 'pin-1',
+        tripId: 'trip-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        locationName: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: const TripEntryDto(
+              id: 'trip-id',
+              groupId: 'test-group-id',
+              tripYear: 2024,
+              pins: [pin],
+            ),
+            onSave: (TripEntryDto tripEntry) async {},
+            isTestEnvironment: false,
+            nearbyLocationService: FakeNearbyLocationService(),
+          ),
+        ),
+      );
+
+      final editButton = find.widgetWithText(ElevatedButton, '編集');
+      await tester.ensureVisible(editButton);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      final googleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
+      );
+      googleMapView.onPinTapped?.call(pin);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PinDetailBottomSheet), findsOneWidget);
+    });
+
     testWidgets('編集ボタンをタップで地図が展開表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
