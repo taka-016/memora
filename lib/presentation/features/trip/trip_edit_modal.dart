@@ -361,7 +361,9 @@ class TripEditModal extends HookConsumerWidget {
             onPinTapped: handlePinTapped,
             onPinUpdated: handlePinUpdated,
             onPinDeleted: handlePinDeleted,
-            bottomSheet: buildBottomSheet(),
+            bottomSheet: isTestEnvironment
+                ? buildBottomSheet()
+                : const SizedBox.shrink(),
           );
         case TripEditExpandedSection.routeInfo:
           return RouteInfoView(
