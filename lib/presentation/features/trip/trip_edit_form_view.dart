@@ -37,7 +37,7 @@ class TripEditFormView extends HookWidget {
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
 
-    TripEntryDto buildEditedValue({String? tripName, String? tripMemo}) {
+    TripEntryDto buildCurrentValue({String? tripName, String? tripMemo}) {
       final effectiveTripName = tripName ?? nameController.text;
       final normalizedTripName = effectiveTripName.isEmpty
           ? null
@@ -51,9 +51,13 @@ class TripEditFormView extends HookWidget {
       );
     }
 
-    void emitEditedValue(TripEntryDto editedValue) {
-      if (editedValue != value) {
-        onChanged(editedValue);
+    void notifyChanged({String? tripName, String? tripMemo}) {
+      final currentValue = buildCurrentValue(
+        tripName: tripName,
+        tripMemo: tripMemo,
+      );
+      if (currentValue != value) {
+        onChanged(currentValue);
       }
     }
 
@@ -118,7 +122,7 @@ class TripEditFormView extends HookWidget {
         selectedPin.value = null;
       }
       hideBottomSheet();
-      emitEditedValue(buildEditedValue());
+      notifyChanged();
     }
 
     void handlePinUpdated(PinDto pin) {
@@ -132,7 +136,7 @@ class TripEditFormView extends HookWidget {
       updatedPins[index] = pin;
       pins.value = updatedPins;
       hideBottomSheet();
-      emitEditedValue(buildEditedValue());
+      notifyChanged();
     }
 
     DateTime determineInitialDate(
@@ -258,7 +262,7 @@ class TripEditFormView extends HookWidget {
           );
           if (date != null) {
             onDateSelected(date);
-            emitEditedValue(buildEditedValue());
+            notifyChanged();
           }
         },
         child: Container(
@@ -310,8 +314,7 @@ class TripEditFormView extends HookWidget {
             children: [
               TextFormField(
                 controller: nameController,
-                onChanged: (text) =>
-                    emitEditedValue(buildEditedValue(tripName: text)),
+                onChanged: (text) => notifyChanged(tripName: text),
                 decoration: const InputDecoration(
                   labelText: '旅行名',
                   border: OutlineInputBorder(),
@@ -327,7 +330,7 @@ class TripEditFormView extends HookWidget {
                     onDateSelected: (date) => startDate.value = date,
                     onClear: () {
                       startDate.value = null;
-                      emitEditedValue(buildEditedValue());
+                      notifyChanged();
                     },
                     clearTooltip: '旅行開始日をクリア',
                   ),
@@ -339,7 +342,7 @@ class TripEditFormView extends HookWidget {
                     onDateSelected: (date) => endDate.value = date,
                     onClear: () {
                       endDate.value = null;
-                      emitEditedValue(buildEditedValue());
+                      notifyChanged();
                     },
                     clearTooltip: '旅行終了日をクリア',
                   ),
@@ -348,8 +351,7 @@ class TripEditFormView extends HookWidget {
               const SizedBox(height: 16),
               TextFormField(
                 controller: memoController,
-                onChanged: (text) =>
-                    emitEditedValue(buildEditedValue(tripMemo: text)),
+                onChanged: (text) => notifyChanged(tripMemo: text),
                 decoration: const InputDecoration(
                   labelText: 'メモ',
                   border: OutlineInputBorder(),
