@@ -382,9 +382,7 @@ void main() {
       expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
-    testWidgets('本番地図ではピン選択時に詳細ボトムシートが二重表示されないこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('本番地図ではピン選択時に詳細ボトムシートが二重表示されないこと', (WidgetTester tester) async {
       const pin = PinDto(
         pinId: 'pin-1',
         tripId: 'trip-id',
