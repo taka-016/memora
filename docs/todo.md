@@ -55,11 +55,6 @@
 
 ## リファクタリング
 
-- `trip_edit_modal.dart`と`trip_edit_form_view.dart`の責務境界を`task_view.dart`に近い形へ見直し、`TripEditModal`は編集画面の切り替えと保存/破棄制御に専念させる
-  - `trip_edit_modal.dart`は`expandedSection`による画面切り替え、保存処理、破棄確認、各Viewへのイベント受け渡しなど、画面遷移レベルの制御だけを担当する
-  - `trip_edit_form_view.dart`は通常編集画面の内部状態を持ち、旅行名・期間・メモ・訪問場所一覧・ピン選択・ボトムシート表示など、通常編集画面内で閉じる関心事を担当する
-  - `trip_edit_form_view.dart`の公開I/Fは`task_view.dart`を参考に粗い単位へ整理し、個別フィールドごとのcontrollerや細かいcallbackを親へ露出しないようにする
-  - `TripEditModal`は`TripEditFormView`から編集結果をまとめて受け取り、保存時の検証とモーダル全体の制御だけを行う構造へ見直す
 - `task_view.dart`のタスク一覧描画を`task_list.dart`へ分離し、`TaskView`は画面全体の状態管理とイベント連携に責務を寄せる
   - `task_list.dart`に親タスク一覧、子タスク一覧、折りたたみ表示、親子タスクの並び替えUIを集約する
   - `task_view.dart`はヘッダー、エラー表示、タスク追加、コピー・ペースト、BottomSheet連携など一覧外の制御を担当する
