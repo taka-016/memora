@@ -39,7 +39,7 @@ class TripEditFormView extends HookWidget {
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
 
-    TripEntryDto buildEditedValue() {
+    TripEntryDto buildCurrentValue() {
       final normalizedTripName = nameController.text.isEmpty
           ? null
           : nameController.text;
@@ -53,9 +53,9 @@ class TripEditFormView extends HookWidget {
     }
 
     void notifyChanged() {
-      final editedValue = buildEditedValue();
-      if (editedValue != valueRef.value) {
-        onChangedRef.value(editedValue);
+      final currentValue = buildCurrentValue();
+      if (currentValue != valueRef.value) {
+        onChangedRef.value(currentValue);
       }
     }
 
