@@ -28,6 +28,8 @@ class TripEditFormView extends HookWidget {
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: value.tripName ?? '');
     final memoController = useTextEditingController(text: value.tripMemo ?? '');
+    final latestValue = useRef(value);
+    final latestOnChanged = useRef(onChanged);
     final startDate = useState<DateTime?>(value.tripStartDate);
     final endDate = useState<DateTime?>(value.tripEndDate);
     final pins = useState<List<PinDto>>(
@@ -37,27 +39,23 @@ class TripEditFormView extends HookWidget {
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
 
-    TripEntryDto buildCurrentValue({String? tripName, String? tripMemo}) {
-      final effectiveTripName = tripName ?? nameController.text;
-      final normalizedTripName = effectiveTripName.isEmpty
+    TripEntryDto buildCurrentValue() {
+      final normalizedTripName = nameController.text.isEmpty
           ? null
-          : effectiveTripName;
-      return value.copyWith(
+          : nameController.text;
+      return latestValue.value.copyWith(
         tripName: normalizedTripName,
         tripStartDate: startDate.value,
         tripEndDate: endDate.value,
-        tripMemo: tripMemo ?? memoController.text,
+        tripMemo: memoController.text,
         pins: List<PinDto>.from(pins.value),
       );
     }
 
-    void notifyChanged({String? tripName, String? tripMemo}) {
-      final currentValue = buildCurrentValue(
-        tripName: tripName,
-        tripMemo: tripMemo,
-      );
-      if (currentValue != value) {
-        onChanged(currentValue);
+    void notifyChanged() {
+      final currentValue = buildCurrentValue();
+      if (currentValue != latestValue.value) {
+        latestOnChanged.value(currentValue);
       }
     }
 
@@ -102,9 +100,25 @@ class TripEditFormView extends HookWidget {
     }
 
     useEffect(() {
+      latestValue.value = value;
+      latestOnChanged.value = onChanged;
+      return null;
+    }, [value, onChanged]);
+
+    useEffect(() {
       syncFromValue();
       return null;
     }, [value]);
+
+    useEffect(() {
+      void listener() => notifyChanged();
+      nameController.addListener(listener);
+      memoController.addListener(listener);
+      return () {
+        nameController.removeListener(listener);
+        memoController.removeListener(listener);
+      };
+    }, [nameController, memoController]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
@@ -314,7 +328,6 @@ class TripEditFormView extends HookWidget {
             children: [
               TextFormField(
                 controller: nameController,
-                onChanged: (text) => notifyChanged(tripName: text),
                 decoration: const InputDecoration(
                   labelText: '旅行名',
                   border: OutlineInputBorder(),
@@ -351,7 +364,6 @@ class TripEditFormView extends HookWidget {
               const SizedBox(height: 16),
               TextFormField(
                 controller: memoController,
-                onChanged: (text) => notifyChanged(tripMemo: text),
                 decoration: const InputDecoration(
                   labelText: 'メモ',
                   border: OutlineInputBorder(),
