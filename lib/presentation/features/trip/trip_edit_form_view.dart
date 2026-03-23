@@ -28,8 +28,8 @@ class TripEditFormView extends HookWidget {
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: value.tripName ?? '');
     final memoController = useTextEditingController(text: value.tripMemo ?? '');
-    final latestValue = useRef(value);
-    final latestOnChanged = useRef(onChanged);
+    final valueRef = useRef(value);
+    final onChangedRef = useRef(onChanged);
     final startDate = useState<DateTime?>(value.tripStartDate);
     final endDate = useState<DateTime?>(value.tripEndDate);
     final pins = useState<List<PinDto>>(
@@ -39,11 +39,11 @@ class TripEditFormView extends HookWidget {
     final isBottomSheetVisible = useState(false);
     final scrollController = useScrollController();
 
-    TripEntryDto buildCurrentValue() {
+    TripEntryDto buildEditedValue() {
       final normalizedTripName = nameController.text.isEmpty
           ? null
           : nameController.text;
-      return latestValue.value.copyWith(
+      return valueRef.value.copyWith(
         tripName: normalizedTripName,
         tripStartDate: startDate.value,
         tripEndDate: endDate.value,
@@ -53,9 +53,9 @@ class TripEditFormView extends HookWidget {
     }
 
     void notifyChanged() {
-      final currentValue = buildCurrentValue();
-      if (currentValue != latestValue.value) {
-        latestOnChanged.value(currentValue);
+      final editedValue = buildEditedValue();
+      if (editedValue != valueRef.value) {
+        onChangedRef.value(editedValue);
       }
     }
 
@@ -100,8 +100,8 @@ class TripEditFormView extends HookWidget {
     }
 
     useEffect(() {
-      latestValue.value = value;
-      latestOnChanged.value = onChanged;
+      valueRef.value = value;
+      onChangedRef.value = onChanged;
       return null;
     }, [value, onChanged]);
 
