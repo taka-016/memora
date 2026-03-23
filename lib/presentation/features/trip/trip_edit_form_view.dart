@@ -28,6 +28,8 @@ class TripEditFormView extends HookWidget {
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: value.tripName ?? '');
     final memoController = useTextEditingController(text: value.tripMemo ?? '');
+    final latestValue = useRef(value);
+    final latestOnChanged = useRef(onChanged);
     final startDate = useState<DateTime?>(value.tripStartDate);
     final endDate = useState<DateTime?>(value.tripEndDate);
     final pins = useState<List<PinDto>>(
@@ -41,7 +43,7 @@ class TripEditFormView extends HookWidget {
       final normalizedTripName = nameController.text.isEmpty
           ? null
           : nameController.text;
-      return value.copyWith(
+      return latestValue.value.copyWith(
         tripName: normalizedTripName,
         tripStartDate: startDate.value,
         tripEndDate: endDate.value,
@@ -52,8 +54,8 @@ class TripEditFormView extends HookWidget {
 
     void notifyChanged() {
       final currentValue = buildCurrentValue();
-      if (currentValue != value) {
-        onChanged(currentValue);
+      if (currentValue != latestValue.value) {
+        latestOnChanged.value(currentValue);
       }
     }
 
@@ -98,6 +100,12 @@ class TripEditFormView extends HookWidget {
     }
 
     useEffect(() {
+      latestValue.value = value;
+      latestOnChanged.value = onChanged;
+      return null;
+    }, [value, onChanged]);
+
+    useEffect(() {
       syncFromValue();
       return null;
     }, [value]);
@@ -110,7 +118,7 @@ class TripEditFormView extends HookWidget {
         nameController.removeListener(listener);
         memoController.removeListener(listener);
       };
-    }, [nameController, memoController, value]);
+    }, [nameController, memoController]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;

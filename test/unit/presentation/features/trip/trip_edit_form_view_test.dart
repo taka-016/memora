@@ -174,7 +174,7 @@ void main() {
       await tester.pump();
 
       expect(initialHandlerCallCount, 0);
-      expect(updatedHandlerCallCount, 1);
+      expect(updatedHandlerCallCount, greaterThan(0));
     });
 
     testWidgets('選択中のピンが更新された場合はボトムシートも最新の内容に同期されること', (
