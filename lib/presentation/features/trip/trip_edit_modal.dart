@@ -298,10 +298,8 @@ class TripEditModal extends HookConsumerWidget {
             tripEntry != null ? '旅行編集' : '旅行新規作成',
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
           ),
-          if (errorMessage.value != null) ...[
-            const SizedBox(height: 16),
-            buildErrorBanner(),
-          ],
+          const SizedBox(height: 16),
+          buildErrorBanner(),
           const SizedBox(height: 16),
           Expanded(
             child: TripEditFormView(
