@@ -58,10 +58,7 @@ class TaskList extends StatelessWidget {
               onReorderChildren: (oldIndex, newIndex) =>
                   onReorderChildren(task, oldIndex, newIndex),
               buildChildTile: (childTask, childIndex) {
-                return _buildChildTile(
-                  task: childTask,
-                  childIndex: childIndex,
-                );
+                return _buildChildTile(task: childTask, childIndex: childIndex);
               },
             ),
           ),
