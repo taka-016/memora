@@ -7,6 +7,7 @@ import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.da
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/task_list.dart';
+import 'package:memora/presentation/features/trip/task_list_helpers.dart';
 import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
 import 'package:uuid/uuid.dart';
 
@@ -142,7 +143,7 @@ class TaskView extends HookConsumerWidget {
         TaskDto(
           id: uuid,
           tripId: tripId ?? '',
-          orderIndex: _parentTasks(tasksState.value).length,
+          orderIndex: parentTasks(tasksState.value).length,
           name: trimmed,
           isCompleted: false,
         ),
@@ -338,7 +339,7 @@ class TaskView extends HookConsumerWidget {
               if (newIndex > oldIndex) {
                 newIndex -= 1;
               }
-              final parents = _parentTasks(tasksState.value);
+              final parents = parentTasks(tasksState.value);
               final updatedParents = List<TaskDto>.from(parents);
               final moved = updatedParents.removeAt(oldIndex);
               updatedParents.insert(newIndex, moved);
@@ -350,12 +351,15 @@ class TaskView extends HookConsumerWidget {
               final merged = <TaskDto>[];
               for (final parent in normalizedParents) {
                 merged.add(parent);
-                merged.addAll(_childrenOf(tasksState.value, parent.id));
+                merged.addAll(childrenOfParent(tasksState.value, parent.id));
               }
               notifyChange(merged);
             },
             onReorderChildren: (parentTask, oldIndex, newIndex) {
-              final children = _childrenOf(tasksState.value, parentTask.id);
+              final children = childrenOfParent(
+                tasksState.value,
+                parentTask.id,
+              );
               final normalizedChildren = reorderChildren(
                 children,
                 oldIndex,
@@ -373,16 +377,6 @@ class TaskView extends HookConsumerWidget {
       ],
     );
   }
-}
-
-List<TaskDto> _parentTasks(List<TaskDto> tasks) {
-  return tasks.where((task) => task.parentTaskId == null).toList()
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-}
-
-List<TaskDto> _childrenOf(List<TaskDto> tasks, String parentId) {
-  return tasks.where((task) => task.parentTaskId == parentId).toList()
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 }
 
 List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {

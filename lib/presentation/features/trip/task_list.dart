@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/presentation/features/trip/task_list_helpers.dart';
 
 class TaskList extends StatelessWidget {
   const TaskList({
@@ -28,7 +29,7 @@ class TaskList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parents = _parentTasks(tasks);
+    final parents = parentTasks(tasks);
 
     return ReorderableListView.builder(
       key: const Key('parent_list'),
@@ -37,7 +38,7 @@ class TaskList extends StatelessWidget {
       onReorder: onReorderParents,
       itemBuilder: (context, index) {
         final task = parents[index];
-        final children = _childrenOf(tasks, task.id);
+        final children = childrenOfParent(tasks, task.id);
         final isCollapsed = collapsedParentIds.contains(task.id);
 
         return KeyedSubtree(
@@ -315,14 +316,4 @@ class _TaskSubtitle extends StatelessWidget {
       ),
     );
   }
-}
-
-List<TaskDto> _parentTasks(List<TaskDto> tasks) {
-  return tasks.where((task) => task.parentTaskId == null).toList()
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-}
-
-List<TaskDto> _childrenOf(List<TaskDto> tasks, String parentId) {
-  return tasks.where((task) => task.parentTaskId == parentId).toList()
-    ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
 }
