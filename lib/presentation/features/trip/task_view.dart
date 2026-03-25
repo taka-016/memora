@@ -7,7 +7,6 @@ import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.da
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/task_list.dart';
-import 'package:memora/presentation/features/trip/task_list_helpers.dart';
 import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
 import 'package:uuid/uuid.dart';
 
