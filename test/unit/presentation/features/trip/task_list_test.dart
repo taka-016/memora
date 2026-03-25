@@ -29,6 +29,50 @@ void main() {
       ),
     ];
 
+    test('親タスクだけをorderIndex順で取得できること', () {
+      final target = [
+        TaskDto(
+          id: 'parent-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '当日',
+          isCompleted: false,
+        ),
+        tasks[1],
+        tasks[0],
+      ];
+
+      final result = parentTasks(target);
+
+      expect(result.map((task) => task.id), ['parent-1', 'parent-2']);
+    });
+
+    test('指定した親の子タスクだけをorderIndex順で取得できること', () {
+      final target = [
+        TaskDto(
+          id: 'child-2',
+          tripId: 'trip-1',
+          orderIndex: 1,
+          name: '荷造り',
+          isCompleted: false,
+          parentTaskId: 'parent-1',
+        ),
+        TaskDto(
+          id: 'other-child',
+          tripId: 'trip-1',
+          orderIndex: 0,
+          name: '別親の子',
+          isCompleted: false,
+          parentTaskId: 'parent-2',
+        ),
+        tasks[1],
+      ];
+
+      final result = childrenOfParent(target, 'parent-1');
+
+      expect(result.map((task) => task.id), ['child-1', 'child-2']);
+    });
+
     testWidgets('親子タスク一覧を表示できること', (tester) async {
       await tester.pumpWidget(
         _wrapWithApp(
