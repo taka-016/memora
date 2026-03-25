@@ -773,6 +773,9 @@
   - currentMemberの取得責務をNotifier/Providerに移す
   - 各画面へのmember引数受け渡しを廃止する
 - TaskViewのbuildParentCardを分割する
+- `task_view.dart`のタスク一覧描画を`task_list.dart`へ分離し、`TaskView`は画面全体の状態管理とイベント連携に責務を寄せる
+  - `task_list.dart`に親タスク一覧、子タスク一覧、折りたたみ表示、親子タスクの並び替えUIを集約する
+  - `task_view.dart`はヘッダー、エラー表示、タスク追加、コピー・ペースト、BottomSheet連携など一覧外の制御を担当する
 - pin_detailsを廃止する
 - routesを廃止する（ER図、エンティティ、リポジトリなどを整理する）
 - `lib/application/mappers/**` が `cloud_firestore` に依存している（Firestoreの読み取り変換がapplication層に混在している）
