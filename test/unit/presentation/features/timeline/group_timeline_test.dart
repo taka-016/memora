@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
+import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
+import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
@@ -22,6 +27,8 @@ void main() {
   late GroupDto testGroupWithMembers;
   late MockTripEntryQueryService mockTripEntryQueryService;
   late DvcPointUsageQueryService dvcPointUsageQueryService;
+  late GroupEventQueryService groupEventQueryService;
+  late _FakeGroupEventRepository groupEventRepository;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -41,6 +48,8 @@ void main() {
 
     mockTripEntryQueryService = MockTripEntryQueryService();
     dvcPointUsageQueryService = const _FakeDvcPointUsageQueryService([]);
+    groupEventQueryService = const _FakeGroupEventQueryService([]);
+    groupEventRepository = _FakeGroupEventRepository();
 
     // デフォルトの挙動を設定
     when(
@@ -55,6 +64,8 @@ void main() {
   Widget createTestWidget({
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
+    GroupEventQueryService? groupEventService,
+    GroupEventRepository? groupEventRepo,
   }) {
     return ProviderScope(
       overrides: [
@@ -63,6 +74,12 @@ void main() {
         ),
         dvcPointUsageQueryServiceProvider.overrideWithValue(
           dvcPointUsageService ?? dvcPointUsageQueryService,
+        ),
+        groupEventQueryServiceProvider.overrideWithValue(
+          groupEventService ?? groupEventQueryService,
+        ),
+        groupEventRepositoryProvider.overrideWithValue(
+          groupEventRepo ?? groupEventRepository,
         ),
       ],
       child: MaterialApp(
@@ -267,6 +284,135 @@ void main() {
         find.descendant(of: nextYearCell, matching: find.text('メモ2')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('グループイベント行に対象年のメモが表示される', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '運動会',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final currentYearCell = find.byKey(Key('group_event_cell_$currentYear'));
+      expect(
+        find.descendant(of: currentYearCell, matching: find.text('運動会')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('グループイベントセルをタップすると編集ダイアログが開く', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '運動会',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('group_event_edit_dialog_$currentYear')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(Key('group_event_edit_field_$currentYear')),
+        findsOneWidget,
+      );
+      expect(find.text('運動会'), findsWidgets);
+    });
+
+    testWidgets('グループイベントのメモを保存すると更新される', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      final repository = _FakeGroupEventRepository();
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '運動会',
+            ),
+          ]),
+          groupEventRepo: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('group_event_edit_field_$currentYear')),
+        '太郎の運動会',
+      );
+      await tester.tap(find.byKey(Key('group_event_save_button_$currentYear')));
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.savedEvents,
+        [
+          GroupEvent(
+            id: 'event-1',
+            groupId: '1',
+            year: currentYear,
+            memo: '太郎の運動会',
+          ),
+        ],
+      );
+      expect(find.text('太郎の運動会'), findsOneWidget);
+    });
+
+    testWidgets('グループイベントのメモを空欄で保存すると削除される', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      final repository = _FakeGroupEventRepository();
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '運動会',
+            ),
+          ]),
+          groupEventRepo: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('group_event_edit_field_$currentYear')),
+        '',
+      );
+      await tester.tap(find.byKey(Key('group_event_save_button_$currentYear')));
+      await tester.pumpAndSettle();
+
+      expect(repository.deletedEventIds, ['event-1']);
+      expect(find.text('運動会'), findsNothing);
     });
 
     testWidgets('DVCポイント利用でメモが空の場合は末尾改行なしで表示される', (WidgetTester tester) async {
@@ -981,6 +1127,38 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
+}
+
+class _FakeGroupEventQueryService implements GroupEventQueryService {
+  const _FakeGroupEventQueryService(this.groupEvents);
+
+  final List<GroupEventDto> groupEvents;
+
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return groupEvents.where((event) => event.groupId == groupId).toList();
+  }
+}
+
+class _FakeGroupEventRepository implements GroupEventRepository {
+  final List<GroupEvent> savedEvents = [];
+  final List<String> deletedEventIds = [];
+
+  @override
+  Future<void> deleteGroupEvent(String groupEventId) async {
+    deletedEventIds.add(groupEventId);
+  }
+
+  @override
+  Future<void> deleteGroupEventsByGroupId(String groupId) async {}
+
+  @override
+  Future<void> saveGroupEvent(GroupEvent groupEvent) async {
+    savedEvents.add(groupEvent);
   }
 }
 
