@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -23,12 +22,7 @@ void main() {
     test('groupIdに紐づくグループイベント一覧を年昇順で取得できる', () async {
       const groupId = 'group-1';
       const expected = [
-        GroupEventDto(
-          id: 'event-1',
-          groupId: groupId,
-          year: 2024,
-          memo: '運動会',
-        ),
+        GroupEventDto(id: 'event-1', groupId: groupId, year: 2024, memo: '運動会'),
         GroupEventDto(
           id: 'event-2',
           groupId: groupId,

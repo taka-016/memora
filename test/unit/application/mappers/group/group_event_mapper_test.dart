@@ -65,23 +65,20 @@ void main() {
 
       final entities = GroupEventMapper.toEntityList(dtos);
 
-      expect(
-        entities,
-        const [
-          GroupEvent(
-            id: 'event-101',
-            groupId: 'group-101',
-            year: 2024,
-            memo: '入学式',
-          ),
-          GroupEvent(
-            id: 'event-102',
-            groupId: 'group-102',
-            year: 2025,
-            memo: '卒業式',
-          ),
-        ],
-      );
+      expect(entities, const [
+        GroupEvent(
+          id: 'event-101',
+          groupId: 'group-101',
+          year: 2024,
+          memo: '入学式',
+        ),
+        GroupEvent(
+          id: 'event-102',
+          groupId: 'group-102',
+          year: 2025,
+          memo: '卒業式',
+        ),
+      ]);
     });
 
     test('エンティティリストからDtoリストへ変換できる', () {
@@ -102,23 +99,20 @@ void main() {
 
       final dtos = GroupEventMapper.toDtoList(entities);
 
-      expect(
-        dtos,
-        const [
-          GroupEventDto(
-            id: 'event-201',
-            groupId: 'group-201',
-            year: 2026,
-            memo: '誕生日会',
-          ),
-          GroupEventDto(
-            id: 'event-202',
-            groupId: 'group-202',
-            year: 2027,
-            memo: '七五三',
-          ),
-        ],
-      );
+      expect(dtos, const [
+        GroupEventDto(
+          id: 'event-201',
+          groupId: 'group-201',
+          year: 2026,
+          memo: '誕生日会',
+        ),
+        GroupEventDto(
+          id: 'event-202',
+          groupId: 'group-202',
+          year: 2027,
+          memo: '七五三',
+        ),
+      ]);
     });
   });
 }

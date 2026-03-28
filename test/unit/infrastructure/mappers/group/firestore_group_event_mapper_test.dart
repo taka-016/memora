@@ -13,11 +13,9 @@ void main() {
     test('FirestoreドキュメントからGroupEventDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event001');
-      when(doc.data()).thenReturn({
-        'groupId': 'group001',
-        'year': 2025,
-        'memo': '準備あり',
-      });
+      when(
+        doc.data(),
+      ).thenReturn({'groupId': 'group001', 'year': 2025, 'memo': '準備あり'});
 
       final result = FirestoreGroupEventMapper.fromFirestore(doc);
 

@@ -42,10 +42,10 @@ void main() {
         year: 2025,
         memo: 'テストメモ',
       );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(mockDocRef.id).thenReturn('saved-event-id');
 
       await repository.saveGroupEvent(groupEvent);
 

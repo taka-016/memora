@@ -42,11 +42,9 @@ void main() {
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('event001');
-      when(mockDoc.data()).thenReturn({
-        'groupId': groupId,
-        'year': 2025,
-        'memo': '運動会',
-      });
+      when(
+        mockDoc.data(),
+      ).thenReturn({'groupId': groupId, 'year': 2025, 'memo': '運動会'});
 
       final result = await service.getGroupEventsByGroupId(
         groupId,

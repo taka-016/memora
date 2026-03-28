@@ -156,6 +156,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -197,6 +201,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -369,17 +377,14 @@ void main() {
       await tester.tap(find.byKey(Key('group_event_save_button_$currentYear')));
       await tester.pumpAndSettle();
 
-      expect(
-        repository.savedEvents,
-        [
-          GroupEvent(
-            id: 'event-1',
-            groupId: '1',
-            year: currentYear,
-            memo: '太郎の運動会',
-          ),
-        ],
-      );
+      expect(repository.savedEvents, [
+        GroupEvent(
+          id: 'event-1',
+          groupId: '1',
+          year: currentYear,
+          memo: '太郎の運動会',
+        ),
+      ]);
       expect(find.text('太郎の運動会'), findsOneWidget);
     });
 
@@ -913,6 +918,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -961,6 +970,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -1004,6 +1017,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -1093,6 +1110,10 @@ void main() {
           dvcPointUsageQueryServiceProvider.overrideWithValue(
             dvcPointUsageQueryService,
           ),
+          groupEventQueryServiceProvider.overrideWithValue(
+            groupEventQueryService,
+          ),
+          groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
           home: Scaffold(
@@ -1157,8 +1178,12 @@ class _FakeGroupEventRepository implements GroupEventRepository {
   Future<void> deleteGroupEventsByGroupId(String groupId) async {}
 
   @override
-  Future<void> saveGroupEvent(GroupEvent groupEvent) async {
+  Future<String> saveGroupEvent(GroupEvent groupEvent) async {
     savedEvents.add(groupEvent);
+    if (groupEvent.id.isNotEmpty) {
+      return groupEvent.id;
+    }
+    return 'saved-${groupEvent.groupId}-${groupEvent.year}';
   }
 }
 
