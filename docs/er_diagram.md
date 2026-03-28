@@ -49,11 +49,8 @@ erDiagram
     group_events {
         string id PK
         string groupId FK "NOT NULL"
-        string type "NOT NULL"
-        string name
-        timestamp startDate "NOT NULL"
-        timestamp endDate "NOT NULL"
-        string memo
+        number year "NOT NULL"
+        string memo "NOT NULL"
     }
     members {
         string id PK
