@@ -349,6 +349,42 @@ void main() {
       expect(find.text('運動会'), findsWidgets);
     });
 
+    testWidgets('グループイベント編集ダイアログを閉じたあとも再度開ける', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '運動会',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final cellFinder = find.byKey(Key('group_event_cell_$currentYear'));
+      final fieldFinder = find.byKey(
+        Key('group_event_edit_field_$currentYear'),
+      );
+
+      await tester.tap(cellFinder);
+      await tester.pumpAndSettle();
+      expect(fieldFinder, findsOneWidget);
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      expect(fieldFinder, findsNothing);
+
+      await tester.tap(cellFinder);
+      await tester.pumpAndSettle();
+      expect(fieldFinder, findsOneWidget);
+      expect(find.text('運動会'), findsWidgets);
+    });
+
     testWidgets('グループイベントのメモを保存すると更新される', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
       final repository = _FakeGroupEventRepository();

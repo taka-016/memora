@@ -514,77 +514,40 @@ class GroupTimeline extends HookConsumerWidget {
         startYearOffset.value,
       );
       final currentEvent = groupEventsByYearState.value[selectedYear];
-      final controller = TextEditingController(text: currentEvent?.memo ?? '');
 
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          return AlertDialog(
-            key: Key('group_event_edit_dialog_$selectedYear'),
-            title: Text('イベント編集（$selectedYear年）'),
-            content: TextField(
-              key: Key('group_event_edit_field_$selectedYear'),
-              controller: controller,
-              autofocus: true,
-              minLines: 4,
-              maxLines: 8,
-              decoration: const InputDecoration(
-                hintText: 'この年の出来事や予定を入力',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('キャンセル'),
-              ),
-              TextButton(
-                key: Key('group_event_save_button_$selectedYear'),
-                onPressed: () async {
-                  final memo = controller.text.trim();
-                  try {
-                    if (memo.isEmpty) {
-                      if (currentEvent != null) {
-                        await deleteGroupEventUsecase.execute(currentEvent.id);
-                      }
-                      final updated = Map<int, GroupEventDto>.from(
-                        groupEventsByYearState.value,
-                      );
-                      updated.remove(selectedYear);
-                      groupEventsByYearState.value = updated;
-                    } else {
-                      final savedEvent = await saveGroupEventUsecase.execute(
-                        GroupEventDto(
-                          id: currentEvent?.id ?? '',
-                          groupId: groupWithMembers.id,
-                          year: selectedYear,
-                          memo: memo,
-                        ),
-                      );
-                      final updated = Map<int, GroupEventDto>.from(
-                        groupEventsByYearState.value,
-                      );
-                      updated[selectedYear] = savedEvent;
-                      groupEventsByYearState.value = updated;
-                    }
+          return _GroupEventEditDialog(
+            selectedYear: selectedYear,
+            initialMemo: currentEvent?.memo ?? '',
+            onSave: (memo) async {
+              if (memo.isEmpty) {
+                if (currentEvent != null) {
+                  await deleteGroupEventUsecase.execute(currentEvent.id);
+                }
+                final updated = Map<int, GroupEventDto>.from(
+                  groupEventsByYearState.value,
+                );
+                updated.remove(selectedYear);
+                groupEventsByYearState.value = updated;
+                return;
+              }
 
-                    if (!dialogContext.mounted) return;
-                    Navigator.of(dialogContext).pop();
-                  } catch (e, stack) {
-                    logger.e(
-                      'GroupTimeline.showGroupEventEditDialog: ${e.toString()}',
-                      error: e,
-                      stackTrace: stack,
-                    );
-                    if (!dialogContext.mounted) return;
-                    ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      const SnackBar(content: Text('グループイベントの保存に失敗しました')),
-                    );
-                  }
-                },
-                child: const Text('保存'),
-              ),
-            ],
+              final savedEvent = await saveGroupEventUsecase.execute(
+                GroupEventDto(
+                  id: currentEvent?.id ?? '',
+                  groupId: groupWithMembers.id,
+                  year: selectedYear,
+                  memo: memo,
+                ),
+              );
+              final updated = Map<int, GroupEventDto>.from(
+                groupEventsByYearState.value,
+              );
+              updated[selectedYear] = savedEvent;
+              groupEventsByYearState.value = updated;
+            },
           );
         },
       );
@@ -1054,5 +1017,67 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     return '$age歳';
+  }
+}
+
+class _GroupEventEditDialog extends HookWidget {
+  const _GroupEventEditDialog({
+    required this.selectedYear,
+    required this.initialMemo,
+    required this.onSave,
+  });
+
+  final int selectedYear;
+  final String initialMemo;
+  final Future<void> Function(String memo) onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useTextEditingController(text: initialMemo);
+
+    return AlertDialog(
+      key: Key('group_event_edit_dialog_$selectedYear'),
+      title: Text('イベント編集（$selectedYear年）'),
+      content: TextField(
+        key: Key('group_event_edit_field_$selectedYear'),
+        controller: controller,
+        autofocus: true,
+        minLines: 4,
+        maxLines: 8,
+        decoration: const InputDecoration(
+          hintText: 'この年の出来事や予定を入力',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        TextButton(
+          key: Key('group_event_save_button_$selectedYear'),
+          onPressed: () async {
+            final memo = controller.text.trim();
+            try {
+              await onSave(memo);
+
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+            } catch (e, stack) {
+              logger.e(
+                'GroupTimeline.showGroupEventEditDialog: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('グループイベントの保存に失敗しました')),
+              );
+            }
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
   }
 }
