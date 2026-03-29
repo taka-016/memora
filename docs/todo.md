@@ -2,7 +2,9 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
-- FirestoreのMapper/Repositoryで`createdAt`/`updatedAt`の保持方針と、更新時の`set`/`update`/`merge`の扱いを統一する
+- FirestoreのMapper/Repositoryで、作成時に`createdAt`、更新時に`updatedAt`をどう保持・更新するかの方針を定義し、全実装に反映する
+- Firestore更新時に既存フィールドを意図せず消さないよう、Repositoryごとの更新方法を`update`または`set(..., merge: true)`のどちらかに統一する
+- `group_event`を含む既存のMapper/Repository/テストを見直し、旧スキーマ由来の履歴項目が更新時に欠落しないことを確認する
 
 ## マップの表示
 
