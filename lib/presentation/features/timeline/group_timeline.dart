@@ -16,10 +16,11 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/timeline/dvc_cell.dart';
-import 'package:memora/presentation/features/timeline/group_event_cell.dart';
+import 'package:memora/presentation/features/timeline/dvc_row.dart';
+import 'package:memora/presentation/features/timeline/group_event_row.dart';
+import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
-import 'package:memora/presentation/features/timeline/trip_cell.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 class GroupTimeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
@@ -110,6 +111,10 @@ class GroupTimeline extends HookConsumerWidget {
 
     final rowHeights = rowHeightsState.value;
     final displaySettings = displaySettingsState.value;
+    final visibleYears = _buildVisibleYears(
+      startYearOffset.value,
+      endYearOffset.value,
+    );
 
     void updateDisplaySettings(TimelineDisplaySettings settings) {
       displaySettingsState.value = settings;
@@ -395,22 +400,14 @@ class GroupTimeline extends HookConsumerWidget {
       endYearOffset.value = endYearOffset.value + _yearRangeIncrement;
     }
 
-    void onTripCellTapped(int columnIndex) {
+    void onTripYearSelected(int selectedYear) {
       if (onTripManagementSelected == null) {
         return;
       }
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
       onTripManagementSelected!(groupWithMembers.id, selectedYear);
     }
 
-    void showDvcPointUsageDetailsDialog(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
+    void showDvcPointUsageDetailsDialog(int selectedYear) {
       final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
 
       if (usages.isEmpty) {
@@ -459,60 +456,7 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
-    Widget buildTripCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final trips = tripsByYearState.value[selectedYear] ?? [];
-
-      return TripCell(
-        trips: trips,
-        availableHeight: rowHeights[0],
-        availableWidth: _yearColumnWidth,
-      );
-    }
-
-    Widget buildDvcPointUsageCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
-
-      if (usages.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return DvcCell(
-        usages: usages,
-        availableHeight: rowHeights[2],
-        availableWidth: _yearColumnWidth,
-      );
-    }
-
-    Widget buildGroupEventCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final event = groupEventsByYearState.value[selectedYear];
-      if (event == null) {
-        return const SizedBox.shrink();
-      }
-
-      return GroupEventCell(
-        memo: event.memo,
-        availableHeight: rowHeights[1],
-        availableWidth: _yearColumnWidth,
-      );
-    }
-
-    Future<void> showGroupEventEditDialog(int columnIndex) async {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
+    Future<void> showGroupEventEditDialog(int selectedYear) async {
       final currentEvent = groupEventsByYearState.value[selectedYear];
 
       await showDialog<void>(
@@ -553,116 +497,85 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
-    bool isMemberRow(int rowIndex) => rowIndex >= 3;
-
-    Widget buildMemberCellContent(int rowIndex, int columnIndex) {
-      if (!isMemberRow(rowIndex)) {
-        return const SizedBox.shrink();
-      }
-
-      final memberIndex = rowIndex - 3;
-      if (memberIndex >= groupWithMembers.members.length) {
-        return const SizedBox.shrink();
-      }
-
-      final member = groupWithMembers.members[memberIndex];
-      final birthday = member.birthday;
-
-      final targetYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final ageLabel = displaySettings.showAge
-          ? _buildAgeLabel(birthday, targetYear)
-          : null;
-      final gradeLabel = displaySettings.showGrade
-          ? calculateSchoolGradeUsecase.execute(birthday, targetYear)
-          : null;
-      final yakudoshiLabel = displaySettings.showYakudoshi
-          ? calculateYakudoshiUsecase.execute(
-              birthday,
-              member.gender,
-              targetYear,
-            )
-          : null;
-
-      if (ageLabel == null && gradeLabel == null && yakudoshiLabel == null) {
-        return const SizedBox.shrink();
-      }
-
-      final lines = <String?>[ageLabel, gradeLabel, yakudoshiLabel]
-          .where((label) => label != null && label.isNotEmpty)
-          .cast<String>()
-          .toList();
-
-      return Padding(
-        padding: const EdgeInsets.only(left: 8, top: 4),
-        child: Text(lines.join('\n')),
-      );
+    List<_TimelineDataRowDefinition> buildTimelineRows() {
+      return [
+        _TimelineDataRowDefinition(
+          label: '旅行',
+          buildScrollableRow: (rowHeight) {
+            return TripRow(
+              years: visibleYears,
+              tripsByYear: tripsByYearState.value,
+              rowHeight: rowHeight,
+              yearColumnWidth: _yearColumnWidth,
+              buttonColumnWidth: _buttonColumnWidth,
+              borderColor: borderColor,
+              borderWidth: _borderWidth,
+              onYearSelected: onTripYearSelected,
+            );
+          },
+        ),
+        _TimelineDataRowDefinition(
+          label: 'イベント',
+          buildScrollableRow: (rowHeight) {
+            return GroupEventRow(
+              years: visibleYears,
+              eventsByYear: groupEventsByYearState.value,
+              rowHeight: rowHeight,
+              yearColumnWidth: _yearColumnWidth,
+              buttonColumnWidth: _buttonColumnWidth,
+              borderColor: borderColor,
+              borderWidth: _borderWidth,
+              onYearSelected: showGroupEventEditDialog,
+            );
+          },
+        ),
+        _TimelineDataRowDefinition(
+          label: 'DVC',
+          onFixedCellTap: onDvcPointCalculationPressed,
+          fixedCellChild: _buildDvcPointUsageLabel(
+            onPressed: onDvcPointCalculationPressed,
+          ),
+          buildScrollableRow: (rowHeight) {
+            return DvcRow(
+              years: visibleYears,
+              usagesByYear: dvcPointUsagesByYearState.value,
+              rowHeight: rowHeight,
+              yearColumnWidth: _yearColumnWidth,
+              buttonColumnWidth: _buttonColumnWidth,
+              borderColor: borderColor,
+              borderWidth: _borderWidth,
+              onYearSelected: showDvcPointUsageDetailsDialog,
+            );
+          },
+        ),
+        ...groupWithMembers.members.map(
+          (member) => _TimelineDataRowDefinition(
+            label: member.displayName,
+            buildScrollableRow: (rowHeight) {
+              return MemberRow(
+                member: member,
+                years: visibleYears,
+                displaySettings: displaySettings,
+                rowHeight: rowHeight,
+                yearColumnWidth: _yearColumnWidth,
+                buttonColumnWidth: _buttonColumnWidth,
+                borderColor: borderColor,
+                borderWidth: _borderWidth,
+                buildSchoolGradeLabel: calculateSchoolGradeUsecase.execute,
+                buildYakudoshiLabel: calculateYakudoshiUsecase.execute,
+              );
+            },
+          ),
+        ),
+      ];
     }
 
-    Widget buildScrollableDataCells(int rowIndex) {
-      final columnCount = 2 + (endYearOffset.value - startYearOffset.value + 1);
-
-      return Row(
-        children: List.generate(columnCount, (columnIndex) {
-          final width = columnIndex == 0 || columnIndex == columnCount - 1
-              ? _buttonColumnWidth
-              : _yearColumnWidth;
-
-          final isTripRow = rowIndex == 0;
-          final isGroupEventRow = rowIndex == 1;
-          final isDvcPointUsageRow = rowIndex == 2;
-          final isYearColumn =
-              columnIndex != 0 && columnIndex != columnCount - 1;
-          final year = _yearFromColumnIndex(columnIndex, startYearOffset.value);
-          final cellKey = isDvcPointUsageRow && isYearColumn
-              ? Key('dvc_point_usage_cell_$year')
-              : isGroupEventRow && isYearColumn
-              ? Key('group_event_cell_$year')
-              : null;
-
-          return SizedBox(
-            width: width,
-            height: rowHeights[rowIndex],
-            child: GestureDetector(
-              onTap: isTripRow && isYearColumn
-                  ? () => onTripCellTapped(columnIndex)
-                  : isGroupEventRow && isYearColumn
-                  ? () => showGroupEventEditDialog(columnIndex)
-                  : isDvcPointUsageRow && isYearColumn
-                  ? () => showDvcPointUsageDetailsDialog(columnIndex)
-                  : null,
-              child: Container(
-                key: cellKey,
-                alignment: Alignment.topLeft,
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(color: borderColor, width: _borderWidth),
-                    right: BorderSide(color: borderColor, width: _borderWidth),
-                  ),
-                  color: isTripRow || isGroupEventRow || isDvcPointUsageRow
-                      ? Colors.lightBlue.shade50
-                      : Colors.transparent,
-                ),
-                child: isTripRow && isYearColumn
-                    ? buildTripCellContent(columnIndex)
-                    : isGroupEventRow && isYearColumn
-                    ? buildGroupEventCellContent(columnIndex)
-                    : isDvcPointUsageRow && isYearColumn
-                    ? buildDvcPointUsageCellContent(columnIndex)
-                    : isYearColumn
-                    ? buildMemberCellContent(rowIndex, columnIndex)
-                    : const SizedBox.shrink(),
-              ),
-            ),
-          );
-        }),
-      );
-    }
-
-    Widget buildDataRow(int rowIndex, String label) {
+    Widget buildDataRow(
+      int rowIndex,
+      _TimelineDataRowDefinition rowDefinition,
+    ) {
       final colorScheme = Theme.of(context).colorScheme;
+      final rowHeight = rowHeights[rowIndex];
 
       return Stack(
         children: [
@@ -673,10 +586,10 @@ class GroupTimeline extends HookConsumerWidget {
                 color: Colors.transparent,
                 child: InkWell(
                   key: Key('fixed_row_$rowIndex'),
-                  onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
+                  onTap: rowDefinition.onFixedCellTap,
                   child: Container(
                     width: _fixedColumnWidth,
-                    height: rowHeights[rowIndex],
+                    height: rowHeight,
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     decoration: BoxDecoration(
@@ -691,17 +604,15 @@ class GroupTimeline extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    child: rowIndex == 2
-                        ? _buildDvcPointUsageLabel(
-                            onPressed: onDvcPointCalculationPressed,
-                          )
-                        : Text(label),
+                    child:
+                        rowDefinition.fixedCellChild ??
+                        Text(rowDefinition.label),
                   ),
                 ),
               ),
               Container(
                 width: _borderWidth,
-                height: rowHeights[rowIndex],
+                height: rowHeight,
                 color: borderColor,
               ),
               Expanded(
@@ -710,8 +621,8 @@ class GroupTimeline extends HookConsumerWidget {
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     key: Key('scrollable_row_$rowIndex'),
-                    height: rowHeights[rowIndex],
-                    child: buildScrollableDataCells(rowIndex),
+                    height: rowHeight,
+                    child: rowDefinition.buildScrollableRow(rowHeight),
                   ),
                 ),
               ),
@@ -775,16 +686,10 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     List<Widget> buildDataRowsWithResizers() {
-      final members = groupWithMembers.members;
-      final dataRowLabels = [
-        '旅行',
-        'イベント',
-        'DVC',
-        ...members.map((m) => m.displayName),
-      ];
+      final timelineRows = buildTimelineRows();
 
-      return List.generate(dataRowLabels.length, (index) {
-        return buildDataRow(index, dataRowLabels[index]);
+      return List.generate(timelineRows.length, (index) {
+        return buildDataRow(index, timelineRows[index]);
       });
     }
 
@@ -977,10 +882,12 @@ class GroupTimeline extends HookConsumerWidget {
     );
   }
 
-  static int _yearFromColumnIndex(int columnIndex, int startYearOffset) {
-    final yearIndex = columnIndex - 1;
+  static List<int> _buildVisibleYears(int startYearOffset, int endYearOffset) {
     final currentYear = DateTime.now().year;
-    return currentYear + startYearOffset + yearIndex;
+    return List<int>.generate(
+      endYearOffset - startYearOffset + 1,
+      (index) => currentYear + startYearOffset + index,
+    );
   }
 
   Widget _buildDvcPointUsageLabel({required VoidCallback? onPressed}) {
@@ -1005,19 +912,20 @@ class GroupTimeline extends HookConsumerWidget {
       ),
     );
   }
+}
 
-  String? _buildAgeLabel(DateTime? birthday, int targetYear) {
-    if (birthday == null) {
-      return null;
-    }
+class _TimelineDataRowDefinition {
+  const _TimelineDataRowDefinition({
+    required this.label,
+    required this.buildScrollableRow,
+    this.onFixedCellTap,
+    this.fixedCellChild,
+  });
 
-    final age = targetYear - birthday.year;
-    if (age < 0) {
-      return null;
-    }
-
-    return '$age歳';
-  }
+  final String label;
+  final VoidCallback? onFixedCellTap;
+  final Widget? fixedCellChild;
+  final Widget Function(double rowHeight) buildScrollableRow;
 }
 
 class _GroupEventEditDialog extends HookWidget {
