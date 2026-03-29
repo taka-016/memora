@@ -346,7 +346,10 @@ void main() {
         find.byKey(Key('group_event_edit_field_$currentYear')),
         findsOneWidget,
       );
-      expect(find.text('運動会'), findsWidgets);
+      final textField = tester.widget<TextField>(
+        find.byKey(Key('group_event_edit_field_$currentYear')),
+      );
+      expect(textField.controller?.text, '運動会');
     });
 
     testWidgets('グループイベント編集ダイアログを閉じたあとも再度開ける', (WidgetTester tester) async {
@@ -382,7 +385,8 @@ void main() {
       await tester.tap(cellFinder);
       await tester.pumpAndSettle();
       expect(fieldFinder, findsOneWidget);
-      expect(find.text('運動会'), findsWidgets);
+      final reopenedTextField = tester.widget<TextField>(fieldFinder);
+      expect(reopenedTextField.controller?.text, '運動会');
     });
 
     testWidgets('グループイベントのメモを保存すると更新される', (WidgetTester tester) async {
