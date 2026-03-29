@@ -2,6 +2,7 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
+- FirestoreのMapper/Repositoryで`createdAt`/`updatedAt`の保持方針と、更新時の`set`/`update`/`merge`の扱いを統一する
 
 ## マップの表示
 
