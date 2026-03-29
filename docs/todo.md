@@ -8,7 +8,6 @@
 - FirestoreのRepositoryは既存ドキュメント更新時に全置換の`set`を使わず、`update`で差分更新する方針に統一する
   - 新規作成時のみ`add`または新規`doc`への`set`を使用する
   - 既存フィールドを保持したいが`update`を使えないケースがある場合のみ、理由を明記したうえで`set(..., SetOptions(merge: true))`を許容する
-- `group_event`を起点に既存のMapper/Repository/テストを見直し、更新時に旧スキーマ由来の`createdAt`などの履歴項目が欠落しないことを確認する
 
 ## マップの表示
 
