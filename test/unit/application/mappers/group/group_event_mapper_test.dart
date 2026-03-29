@@ -6,102 +6,113 @@ import 'package:memora/domain/entities/group/group_event.dart';
 void main() {
   group('GroupEventMapper', () {
     test('GroupEventDtoからエンティティへ変換できる', () {
-      final dto = GroupEventDto(
+      const dto = GroupEventDto(
         id: 'event-003',
         groupId: 'group-003',
-        type: 'meeting',
-        name: '定例会議',
-        startDate: DateTime(2024, 4, 5, 10),
-        endDate: DateTime(2024, 4, 5, 12),
-        memo: '資料共有あり',
+        year: 2024,
+        memo: '定例会議',
       );
 
       final entity = GroupEventMapper.toEntity(dto);
 
       expect(
         entity,
-        GroupEvent(
+        const GroupEvent(
           id: 'event-003',
           groupId: 'group-003',
-          type: 'meeting',
-          name: '定例会議',
-          startDate: DateTime(2024, 4, 5, 10),
-          endDate: DateTime(2024, 4, 5, 12),
-          memo: '資料共有あり',
+          year: 2024,
+          memo: '定例会議',
         ),
       );
     });
 
     test('GroupEventエンティティからDtoへ変換できる', () {
-      final entity = GroupEvent(
+      const entity = GroupEvent(
         id: 'event-004',
         groupId: 'group-004',
-        type: 'party',
-        name: '打ち上げ',
-        startDate: DateTime(2024, 5, 10, 19),
-        endDate: DateTime(2024, 5, 10, 22),
-        memo: '自由参加',
+        year: 2025,
+        memo: '打ち上げ',
       );
 
       final dto = GroupEventMapper.toDto(entity);
 
-      expect(dto.id, 'event-004');
-      expect(dto.groupId, 'group-004');
-      expect(dto.type, 'party');
-      expect(dto.name, '打ち上げ');
-      expect(dto.startDate, DateTime(2024, 5, 10, 19));
-      expect(dto.endDate, DateTime(2024, 5, 10, 22));
-      expect(dto.memo, '自由参加');
+      expect(
+        dto,
+        const GroupEventDto(
+          id: 'event-004',
+          groupId: 'group-004',
+          year: 2025,
+          memo: '打ち上げ',
+        ),
+      );
     });
 
     test('Dtoリストからエンティティリストへ変換できる', () {
-      final dtos = [
+      const dtos = [
         GroupEventDto(
           id: 'event-101',
           groupId: 'group-101',
-          type: 'meeting',
-          startDate: DateTime(2024, 6, 1),
-          endDate: DateTime(2024, 6, 1, 2),
+          year: 2024,
+          memo: '入学式',
         ),
         GroupEventDto(
           id: 'event-102',
           groupId: 'group-102',
-          type: 'trip',
-          startDate: DateTime(2024, 7, 10),
-          endDate: DateTime(2024, 7, 12),
+          year: 2025,
+          memo: '卒業式',
         ),
       ];
 
       final entities = GroupEventMapper.toEntityList(dtos);
 
-      expect(entities.length, 2);
-      expect(entities[0].id, 'event-101');
-      expect(entities[1].type, 'trip');
+      expect(entities, const [
+        GroupEvent(
+          id: 'event-101',
+          groupId: 'group-101',
+          year: 2024,
+          memo: '入学式',
+        ),
+        GroupEvent(
+          id: 'event-102',
+          groupId: 'group-102',
+          year: 2025,
+          memo: '卒業式',
+        ),
+      ]);
     });
 
     test('エンティティリストからDtoリストへ変換できる', () {
-      final entities = [
+      const entities = [
         GroupEvent(
           id: 'event-201',
           groupId: 'group-201',
-          type: 'meeting',
-          startDate: DateTime(2024, 8, 1),
-          endDate: DateTime(2024, 8, 1, 1),
+          year: 2026,
+          memo: '誕生日会',
         ),
         GroupEvent(
           id: 'event-202',
           groupId: 'group-202',
-          type: 'trip',
-          startDate: DateTime(2024, 9, 1),
-          endDate: DateTime(2024, 9, 3),
+          year: 2027,
+          memo: '七五三',
         ),
       ];
 
       final dtos = GroupEventMapper.toDtoList(entities);
 
-      expect(dtos.length, 2);
-      expect(dtos[0].id, 'event-201');
-      expect(dtos[1].type, 'trip');
+      expect(dtos, const [
+        GroupEventDto(
+          id: 'event-201',
+          groupId: 'group-201',
+          year: 2026,
+          memo: '誕生日会',
+        ),
+        GroupEventDto(
+          id: 'event-202',
+          groupId: 'group-202',
+          year: 2027,
+          memo: '七五三',
+        ),
+      ]);
     });
   });
 }

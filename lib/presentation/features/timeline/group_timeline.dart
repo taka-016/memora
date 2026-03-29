@@ -4,8 +4,12 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
+import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
+import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
+import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
@@ -13,6 +17,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
+import 'package:memora/presentation/features/timeline/group_event_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
@@ -57,6 +62,9 @@ class GroupTimeline extends HookConsumerWidget {
       calculateYakudoshiUsecaseProvider,
     );
     final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
+    final getGroupEventsUsecase = ref.read(getGroupEventsUsecaseProvider);
+    final saveGroupEventUsecase = ref.read(saveGroupEventUsecaseProvider);
+    final deleteGroupEventUsecase = ref.read(deleteGroupEventUsecaseProvider);
     final totalDataRows = 3 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
 
@@ -66,6 +74,7 @@ class GroupTimeline extends HookConsumerWidget {
     final tripsByYearState = useState<Map<int, List<TripEntryDto>>>({});
     final dvcPointUsagesByYearState =
         useState<Map<int, List<DvcPointUsageDto>>>({});
+    final groupEventsByYearState = useState<Map<int, GroupEventDto>>({});
     final rowHeightsState = useState<List<double>>(
       List.filled(totalDataRows, _dataRowHeight),
     );
@@ -288,12 +297,38 @@ class GroupTimeline extends HookConsumerWidget {
       }
     }
 
+    Future<void> loadGroupEventData() async {
+      try {
+        final events = await getGroupEventsUsecase.execute(groupWithMembers.id);
+
+        if (!context.mounted) return;
+
+        final grouped = <int, GroupEventDto>{};
+        for (final event in events) {
+          grouped[event.year] = event;
+        }
+
+        groupEventsByYearState.value = grouped;
+      } catch (e, stack) {
+        logger.e(
+          'GroupTimeline.loadGroupEventData: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+
+        if (!context.mounted) return;
+        groupEventsByYearState.value = {};
+      }
+    }
+
     Future<void> refreshTimelineData() async {
       tripsByYearState.value = {};
       dvcPointUsagesByYearState.value = {};
+      groupEventsByYearState.value = {};
       await Future.wait([
         loadTripDataForVisibleYears(),
         loadDvcPointUsageData(),
+        loadGroupEventData(),
       ]);
     }
 
@@ -304,6 +339,11 @@ class GroupTimeline extends HookConsumerWidget {
 
     useEffect(() {
       Future.microtask(loadDvcPointUsageData);
+      return null;
+    }, [groupWithMembers.id]);
+
+    useEffect(() {
+      Future.microtask(loadGroupEventData);
       return null;
     }, [groupWithMembers.id]);
 
@@ -451,6 +491,68 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
+    Widget buildGroupEventCellContent(int columnIndex) {
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
+      final event = groupEventsByYearState.value[selectedYear];
+      if (event == null) {
+        return const SizedBox.shrink();
+      }
+
+      return GroupEventCell(
+        memo: event.memo,
+        availableHeight: rowHeights[1],
+        availableWidth: _yearColumnWidth,
+      );
+    }
+
+    Future<void> showGroupEventEditDialog(int columnIndex) async {
+      final selectedYear = _yearFromColumnIndex(
+        columnIndex,
+        startYearOffset.value,
+      );
+      final currentEvent = groupEventsByYearState.value[selectedYear];
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return _GroupEventEditDialog(
+            selectedYear: selectedYear,
+            initialMemo: currentEvent?.memo ?? '',
+            onSave: (memo) async {
+              if (memo.isEmpty) {
+                if (currentEvent != null) {
+                  await deleteGroupEventUsecase.execute(currentEvent.id);
+                }
+                final updated = Map<int, GroupEventDto>.from(
+                  groupEventsByYearState.value,
+                );
+                updated.remove(selectedYear);
+                groupEventsByYearState.value = updated;
+                return;
+              }
+
+              final savedEvent = await saveGroupEventUsecase.execute(
+                GroupEventDto(
+                  id: currentEvent?.id ?? '',
+                  groupId: groupWithMembers.id,
+                  year: selectedYear,
+                  memo: memo,
+                ),
+              );
+              final updated = Map<int, GroupEventDto>.from(
+                groupEventsByYearState.value,
+              );
+              updated[selectedYear] = savedEvent;
+              groupEventsByYearState.value = updated;
+            },
+          );
+        },
+      );
+    }
+
     bool isMemberRow(int rowIndex) => rowIndex >= 3;
 
     Widget buildMemberCellContent(int rowIndex, int columnIndex) {
@@ -516,6 +618,8 @@ class GroupTimeline extends HookConsumerWidget {
           final year = _yearFromColumnIndex(columnIndex, startYearOffset.value);
           final cellKey = isDvcPointUsageRow && isYearColumn
               ? Key('dvc_point_usage_cell_$year')
+              : isGroupEventRow && isYearColumn
+              ? Key('group_event_cell_$year')
               : null;
 
           return SizedBox(
@@ -524,6 +628,8 @@ class GroupTimeline extends HookConsumerWidget {
             child: GestureDetector(
               onTap: isTripRow && isYearColumn
                   ? () => onTripCellTapped(columnIndex)
+                  : isGroupEventRow && isYearColumn
+                  ? () => showGroupEventEditDialog(columnIndex)
                   : isDvcPointUsageRow && isYearColumn
                   ? () => showDvcPointUsageDetailsDialog(columnIndex)
                   : null,
@@ -541,6 +647,8 @@ class GroupTimeline extends HookConsumerWidget {
                 ),
                 child: isTripRow && isYearColumn
                     ? buildTripCellContent(columnIndex)
+                    : isGroupEventRow && isYearColumn
+                    ? buildGroupEventCellContent(columnIndex)
                     : isDvcPointUsageRow && isYearColumn
                     ? buildDvcPointUsageCellContent(columnIndex)
                     : isYearColumn
@@ -909,5 +1017,67 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     return '$age歳';
+  }
+}
+
+class _GroupEventEditDialog extends HookWidget {
+  const _GroupEventEditDialog({
+    required this.selectedYear,
+    required this.initialMemo,
+    required this.onSave,
+  });
+
+  final int selectedYear;
+  final String initialMemo;
+  final Future<void> Function(String memo) onSave;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = useTextEditingController(text: initialMemo);
+
+    return AlertDialog(
+      key: Key('group_event_edit_dialog_$selectedYear'),
+      title: Text('イベント編集（$selectedYear年）'),
+      content: TextField(
+        key: Key('group_event_edit_field_$selectedYear'),
+        controller: controller,
+        autofocus: true,
+        minLines: 4,
+        maxLines: 8,
+        decoration: const InputDecoration(
+          hintText: 'この年の出来事や予定を入力',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('キャンセル'),
+        ),
+        TextButton(
+          key: Key('group_event_save_button_$selectedYear'),
+          onPressed: () async {
+            final memo = controller.text.trim();
+            try {
+              await onSave(memo);
+
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+            } catch (e, stack) {
+              logger.e(
+                'GroupTimeline.showGroupEventEditDialog: ${e.toString()}',
+                error: e,
+                stackTrace: stack,
+              );
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('グループイベントの保存に失敗しました')),
+              );
+            }
+          },
+          child: const Text('保存'),
+        ),
+      ],
+    );
   }
 }

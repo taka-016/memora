@@ -6,10 +6,7 @@ class GroupEventMapper {
     return GroupEvent(
       id: dto.id,
       groupId: dto.groupId,
-      type: dto.type,
-      name: dto.name,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
+      year: dto.year,
       memo: dto.memo,
     );
   }
@@ -18,10 +15,7 @@ class GroupEventMapper {
     return GroupEventDto(
       id: entity.id,
       groupId: entity.groupId,
-      type: entity.type,
-      name: entity.name,
-      startDate: entity.startDate,
-      endDate: entity.endDate,
+      year: entity.year,
       memo: entity.memo,
     );
   }

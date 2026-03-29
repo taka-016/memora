@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/infrastructure/mappers/group/firestore_group_event_mapper.dart';
 
 class FirestoreGroupEventRepository implements GroupEventRepository {
@@ -10,10 +10,15 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> saveGroupEvent(GroupEvent groupEvent) async {
-    await _firestore
-        .collection('group_events')
-        .add(FirestoreGroupEventMapper.toFirestore(groupEvent));
+  Future<String> saveGroupEvent(GroupEvent groupEvent) async {
+    final data = FirestoreGroupEventMapper.toFirestore(groupEvent);
+    if (groupEvent.id.isEmpty) {
+      final docRef = await _firestore.collection('group_events').add(data);
+      return docRef.id;
+    }
+
+    await _firestore.collection('group_events').doc(groupEvent.id).set(data);
+    return groupEvent.id;
   }
 
   @override

@@ -1,9 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
-import 'package:memora/domain/entities/group/group_event.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -35,20 +35,17 @@ void main() {
       repository = FirestoreGroupEventRepository(firestore: mockFirestore);
     });
 
-    test('saveGroupEventがgroup_events collectionにグループイベント情報をaddする', () async {
-      final groupEvent = GroupEvent(
-        id: 'groupevent001',
+    test('idが空の場合はgroup_events collectionにaddする', () async {
+      const groupEvent = GroupEvent(
+        id: '',
         groupId: 'group001',
-        type: 'meeting',
-        name: 'テストイベント',
-        startDate: DateTime(2025, 6, 1),
-        endDate: DateTime(2025, 6, 2),
+        year: 2025,
         memo: 'テストメモ',
       );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(mockDocRef.id).thenReturn('saved-event-id');
 
       await repository.saveGroupEvent(groupEvent);
 
@@ -57,12 +54,38 @@ void main() {
           argThat(
             allOf([
               containsPair('groupId', 'group001'),
-              containsPair('type', 'meeting'),
-              containsPair('name', 'テストイベント'),
+              containsPair('year', 2025),
               containsPair('memo', 'テストメモ'),
-              contains('startDate'),
-              contains('endDate'),
-              contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('idがある場合は該当ドキュメントをsetする', () async {
+      const groupEvent = GroupEvent(
+        id: 'groupevent001',
+        groupId: 'group001',
+        year: 2025,
+        memo: '更新後メモ',
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+      when(mockCollection.doc(groupEvent.id)).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
+
+      await repository.saveGroupEvent(groupEvent);
+
+      verify(mockCollection.doc(groupEvent.id)).called(1);
+      verify(
+        mockDocRef.set(
+          argThat(
+            allOf([
+              containsPair('groupId', 'group001'),
+              containsPair('year', 2025),
+              containsPair('memo', '更新後メモ'),
+              contains('updatedAt'),
             ]),
           ),
         ),

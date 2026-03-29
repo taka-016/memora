@@ -8,6 +8,7 @@ import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
+import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -67,6 +68,7 @@ class _TestGroupTimelineNavigationNotifier
 
 @GenerateMocks([
   GroupQueryService,
+  GroupEventQueryService,
   MemberQueryService,
   AuthService,
   AuthNotifier,
@@ -88,6 +90,7 @@ class _TestGroupTimelineNavigationNotifier
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
+  late MockGroupEventQueryService mockGroupEventQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
@@ -111,6 +114,7 @@ void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     mockGroupQueryService = MockGroupQueryService();
+    mockGroupEventQueryService = MockGroupEventQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
@@ -129,6 +133,12 @@ void main() {
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     mockMemberInvitationQueryService = MockMemberInvitationQueryService();
 
+    when(
+      mockGroupEventQueryService.getGroupEventsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
     when(
       mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
@@ -209,7 +219,9 @@ void main() {
     when(
       mockGroupEventRepository.deleteGroupEventsByGroupId(any),
     ).thenAnswer((_) async {});
-    when(mockGroupEventRepository.saveGroupEvent(any)).thenAnswer((_) async {});
+    when(
+      mockGroupEventRepository.saveGroupEvent(any),
+    ).thenAnswer((_) async => 'group-event-1');
     when(
       mockTripEntryRepository.deleteTripEntriesByGroupId(any),
     ).thenAnswer((_) async {});
@@ -357,6 +369,9 @@ void main() {
       memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
       authServiceProvider.overrideWithValue(testAuthService),
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+      groupEventQueryServiceProvider.overrideWithValue(
+        mockGroupEventQueryService,
+      ),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
         mockDvcPointContractQueryService,
