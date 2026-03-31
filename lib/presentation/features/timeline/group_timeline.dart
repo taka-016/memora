@@ -1,24 +1,13 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/group/group_event_dto.dart';
-import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
-import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
-import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
-import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
-import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
-import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/group_event_cell.dart';
-import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
 class GroupTimeline extends HookConsumerWidget {
@@ -54,70 +43,26 @@ class GroupTimeline extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
-    final calculateSchoolGradeUsecase = ref.read(
-      calculateSchoolGradeUsecaseProvider,
-    );
-    final calculateYakudoshiUsecase = ref.read(
-      calculateYakudoshiUsecaseProvider,
-    );
-    final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
-    final getGroupEventsUsecase = ref.read(getGroupEventsUsecaseProvider);
-    final saveGroupEventUsecase = ref.read(saveGroupEventUsecaseProvider);
-    final deleteGroupEventUsecase = ref.read(deleteGroupEventUsecaseProvider);
     final totalDataRows = 3 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
-
-    final startYearOffset = useState(-_initialYearRange);
-    final endYearOffset = useState(_initialYearRange);
-    final isDraggingOnFixedRow = useState(false);
-    final tripsByYearState = useState<Map<int, List<TripEntryDto>>>({});
-    final dvcPointUsagesByYearState =
-        useState<Map<int, List<DvcPointUsageDto>>>({});
-    final groupEventsByYearState = useState<Map<int, GroupEventDto>>({});
-    final rowHeightsState = useState<List<double>>(
-      List.filled(totalDataRows, _dataRowHeight),
-    );
-    final activeResizePointer = useState<int?>(null);
-    final displaySettingsState = useState(TimelineDisplaySettings.defaults);
     final dataTableKey = useMemoized(() => GlobalKey(), []);
-    final rowScrollControllers = useMemoized(
-      () => List.generate(totalDataRows + 1, (_) => ScrollController()),
-      [totalDataRows],
+    final timelineController = useGroupTimelineController(
+      context: context,
+      ref: ref,
+      groupWithMembers: groupWithMembers,
+      totalDataRows: totalDataRows,
+      initialYearRange: _initialYearRange,
+      yearRangeIncrement: _yearRangeIncrement,
+      dataRowHeight: _dataRowHeight,
+      rowMinHeight: _rowMinHeight,
+      rowMaxHeight: _rowMaxHeight,
+      buttonColumnWidth: _buttonColumnWidth,
+      yearColumnWidth: _yearColumnWidth,
+      onSetRefreshCallback: onSetRefreshCallback,
     );
-    final isSyncingRef = useRef(false);
-
-    useEffect(() {
-      Future.microtask(() async {
-        final loaded = await TimelineDisplaySettings.load();
-        if (!context.mounted) return;
-        displaySettingsState.value = loaded;
-      });
-      return null;
-    }, []);
-
-    useEffect(() {
-      final current = rowHeightsState.value;
-      if (current.length != totalDataRows) {
-        final updated = List<double>.generate(
-          totalDataRows,
-          (index) => index < current.length ? current[index] : _dataRowHeight,
-        );
-        rowHeightsState.value = updated;
-      }
-      return null;
-    }, [totalDataRows]);
-
-    final rowHeights = rowHeightsState.value;
-    final displaySettings = displaySettingsState.value;
-
-    void updateDisplaySettings(TimelineDisplaySettings settings) {
-      displaySettingsState.value = settings;
-      unawaited(settings.save());
-    }
 
     void showDisplaySettingsSheet() {
-      var localSettings = displaySettingsState.value;
+      var localSettings = timelineController.displaySettings;
       showModalBottomSheet<void>(
         context: context,
         builder: (sheetContext) {
@@ -137,7 +82,7 @@ class GroupTimeline extends HookConsumerWidget {
                             showAge: value,
                           );
                         });
-                        updateDisplaySettings(localSettings);
+                        timelineController.updateDisplaySettings(localSettings);
                       },
                     ),
                     SwitchListTile(
@@ -150,7 +95,7 @@ class GroupTimeline extends HookConsumerWidget {
                             showGrade: value,
                           );
                         });
-                        updateDisplaySettings(localSettings);
+                        timelineController.updateDisplaySettings(localSettings);
                       },
                     ),
                     SwitchListTile(
@@ -163,7 +108,7 @@ class GroupTimeline extends HookConsumerWidget {
                             showYakudoshi: value,
                           );
                         });
-                        updateDisplaySettings(localSettings);
+                        timelineController.updateDisplaySettings(localSettings);
                       },
                     ),
                   ],
@@ -175,243 +120,18 @@ class GroupTimeline extends HookConsumerWidget {
       );
     }
 
-    void syncScrollControllers(int sourceIndex) {
-      if (isSyncingRef.value) return;
-
-      final sourceController = rowScrollControllers[sourceIndex];
-      if (!sourceController.hasClients) return;
-
-      isSyncingRef.value = true;
-      final targetOffset = sourceController.offset;
-
-      for (int i = 0; i < rowScrollControllers.length; i++) {
-        if (i == sourceIndex) continue;
-        final controller = rowScrollControllers[i];
-        if (controller.hasClients) {
-          controller.jumpTo(targetOffset);
-        }
-      }
-
-      isSyncingRef.value = false;
-    }
-
-    useEffect(() {
-      final listeners = <VoidCallback>[];
-      for (int i = 0; i < rowScrollControllers.length; i++) {
-        final controller = rowScrollControllers[i];
-        void listener() => syncScrollControllers(i);
-        controller.addListener(listener);
-        listeners.add(() => controller.removeListener(listener));
-      }
-
-      return () {
-        for (final removeListener in listeners) {
-          removeListener();
-        }
-        for (final controller in rowScrollControllers) {
-          controller.dispose();
-        }
-      };
-    }, [rowScrollControllers]);
-
-    Future<void> loadTripDataForYear(int year) async {
-      if (tripsByYearState.value.containsKey(year)) {
-        return;
-      }
-
-      try {
-        final trips = await getTripEntriesUsecase.execute(
-          groupWithMembers.id,
-          year,
-        );
-
-        if (!context.mounted) return;
-
-        final updated = Map<int, List<TripEntryDto>>.from(
-          tripsByYearState.value,
-        );
-        updated[year] = trips;
-        tripsByYearState.value = updated;
-      } catch (e, stack) {
-        logger.e(
-          'GroupTimeline._loadTripDataForYear: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (!context.mounted) return;
-
-        final updated = Map<int, List<TripEntryDto>>.from(
-          tripsByYearState.value,
-        );
-        updated[year] = [];
-        tripsByYearState.value = updated;
-      }
-    }
-
-    Future<void> loadTripDataForVisibleYears() async {
-      final currentYear = DateTime.now().year;
-      for (
-        int offset = startYearOffset.value;
-        offset <= endYearOffset.value;
-        offset++
-      ) {
-        final year = currentYear + offset;
-        await loadTripDataForYear(year);
-      }
-    }
-
-    Future<void> loadDvcPointUsageData() async {
-      try {
-        final usages = await getDvcPointUsagesUsecase.execute(
-          groupWithMembers.id,
-        );
-
-        if (!context.mounted) return;
-
-        final grouped = <int, List<DvcPointUsageDto>>{};
-        for (final usage in usages) {
-          grouped.putIfAbsent(usage.usageYearMonth.year, () => []).add(usage);
-        }
-
-        for (final entry in grouped.entries) {
-          entry.value.sort((a, b) {
-            final comparedMonth = a.usageYearMonth.compareTo(b.usageYearMonth);
-            if (comparedMonth != 0) {
-              return comparedMonth;
-            }
-            return a.id.compareTo(b.id);
-          });
-        }
-
-        dvcPointUsagesByYearState.value = grouped;
-      } catch (e, stack) {
-        logger.e(
-          'GroupTimeline.loadDvcPointUsageData: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (!context.mounted) return;
-        dvcPointUsagesByYearState.value = {};
-      }
-    }
-
-    Future<void> loadGroupEventData() async {
-      try {
-        final events = await getGroupEventsUsecase.execute(groupWithMembers.id);
-
-        if (!context.mounted) return;
-
-        final grouped = <int, GroupEventDto>{};
-        for (final event in events) {
-          grouped[event.year] = event;
-        }
-
-        groupEventsByYearState.value = grouped;
-      } catch (e, stack) {
-        logger.e(
-          'GroupTimeline.loadGroupEventData: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (!context.mounted) return;
-        groupEventsByYearState.value = {};
-      }
-    }
-
-    Future<void> refreshTimelineData() async {
-      tripsByYearState.value = {};
-      dvcPointUsagesByYearState.value = {};
-      groupEventsByYearState.value = {};
-      await Future.wait([
-        loadTripDataForVisibleYears(),
-        loadDvcPointUsageData(),
-        loadGroupEventData(),
-      ]);
-    }
-
-    useEffect(() {
-      Future.microtask(loadTripDataForVisibleYears);
-      return null;
-    }, [startYearOffset.value, endYearOffset.value, groupWithMembers.id]);
-
-    useEffect(() {
-      Future.microtask(loadDvcPointUsageData);
-      return null;
-    }, [groupWithMembers.id]);
-
-    useEffect(() {
-      Future.microtask(loadGroupEventData);
-      return null;
-    }, [groupWithMembers.id]);
-
-    useEffect(() {
-      if (onSetRefreshCallback != null) {
-        onSetRefreshCallback!(refreshTimelineData);
-      }
-      return null;
-    }, [onSetRefreshCallback]);
-
-    void scrollToCurrentYear() {
-      if (rowScrollControllers.isEmpty) return;
-
-      final primaryController = rowScrollControllers.first;
-      if (!primaryController.hasClients) return;
-
-      final renderBox = context.findRenderObject() as RenderBox?;
-      if (renderBox == null) return;
-
-      final viewportWidth = renderBox.size.width;
-      final yearColumnsCount = endYearOffset.value - startYearOffset.value + 2;
-      final totalWidth =
-          2 * _buttonColumnWidth + yearColumnsCount * _yearColumnWidth;
-      final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
-
-      final maxExtent = primaryController.position.maxScrollExtent;
-      final targetOffset = scrollOffset.clamp(0.0, maxExtent);
-
-      primaryController.animateTo(
-        targetOffset,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-
-    useEffect(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) return;
-        scrollToCurrentYear();
-      });
-      return null;
-    }, [rowScrollControllers]);
-
-    void showMorePast() {
-      startYearOffset.value = startYearOffset.value - _yearRangeIncrement;
-    }
-
-    void showMoreFuture() {
-      endYearOffset.value = endYearOffset.value + _yearRangeIncrement;
-    }
-
     void onTripCellTapped(int columnIndex) {
       if (onTripManagementSelected == null) {
         return;
       }
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
       onTripManagementSelected!(groupWithMembers.id, selectedYear);
     }
 
     void showDvcPointUsageDetailsDialog(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
+      final usages =
+          timelineController.dvcPointUsagesByYear[selectedYear] ?? [];
 
       if (usages.isEmpty) {
         return;
@@ -460,25 +180,20 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     Widget buildTripCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final trips = tripsByYearState.value[selectedYear] ?? [];
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
+      final trips = timelineController.tripsByYear[selectedYear] ?? [];
 
       return TripCell(
         trips: trips,
-        availableHeight: rowHeights[0],
+        availableHeight: timelineController.rowHeights[0],
         availableWidth: _yearColumnWidth,
       );
     }
 
     Widget buildDvcPointUsageCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final usages = dvcPointUsagesByYearState.value[selectedYear] ?? [];
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
+      final usages =
+          timelineController.dvcPointUsagesByYear[selectedYear] ?? [];
 
       if (usages.isEmpty) {
         return const SizedBox.shrink();
@@ -486,34 +201,28 @@ class GroupTimeline extends HookConsumerWidget {
 
       return DvcCell(
         usages: usages,
-        availableHeight: rowHeights[2],
+        availableHeight: timelineController.rowHeights[2],
         availableWidth: _yearColumnWidth,
       );
     }
 
     Widget buildGroupEventCellContent(int columnIndex) {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final event = groupEventsByYearState.value[selectedYear];
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
+      final event = timelineController.groupEventsByYear[selectedYear];
       if (event == null) {
         return const SizedBox.shrink();
       }
 
       return GroupEventCell(
         memo: event.memo,
-        availableHeight: rowHeights[1],
+        availableHeight: timelineController.rowHeights[1],
         availableWidth: _yearColumnWidth,
       );
     }
 
     Future<void> showGroupEventEditDialog(int columnIndex) async {
-      final selectedYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
-      );
-      final currentEvent = groupEventsByYearState.value[selectedYear];
+      final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
+      final currentEvent = timelineController.groupEventsByYear[selectedYear];
 
       await showDialog<void>(
         context: context,
@@ -522,31 +231,12 @@ class GroupTimeline extends HookConsumerWidget {
             selectedYear: selectedYear,
             initialMemo: currentEvent?.memo ?? '',
             onSave: (memo) async {
-              if (memo.isEmpty) {
-                if (currentEvent != null) {
-                  await deleteGroupEventUsecase.execute(currentEvent.id);
-                }
-                final updated = Map<int, GroupEventDto>.from(
-                  groupEventsByYearState.value,
-                );
-                updated.remove(selectedYear);
-                groupEventsByYearState.value = updated;
-                return;
-              }
-
-              final savedEvent = await saveGroupEventUsecase.execute(
-                GroupEventDto(
-                  id: currentEvent?.id ?? '',
-                  groupId: groupWithMembers.id,
-                  year: selectedYear,
-                  memo: memo,
-                ),
+              await timelineController.saveGroupEvent(
+                currentEvent: currentEvent,
+                groupId: groupWithMembers.id,
+                selectedYear: selectedYear,
+                memo: memo,
               );
-              final updated = Map<int, GroupEventDto>.from(
-                groupEventsByYearState.value,
-              );
-              updated[selectedYear] = savedEvent;
-              groupEventsByYearState.value = updated;
             },
           );
         },
@@ -566,34 +256,16 @@ class GroupTimeline extends HookConsumerWidget {
       }
 
       final member = groupWithMembers.members[memberIndex];
-      final birthday = member.birthday;
-
-      final targetYear = _yearFromColumnIndex(
-        columnIndex,
-        startYearOffset.value,
+      final targetYear = timelineController.yearFromColumnIndex(columnIndex);
+      final lines = timelineController.buildMemberLabels(
+        birthday: member.birthday,
+        gender: member.gender,
+        targetYear: targetYear,
       );
-      final ageLabel = displaySettings.showAge
-          ? _buildAgeLabel(birthday, targetYear)
-          : null;
-      final gradeLabel = displaySettings.showGrade
-          ? calculateSchoolGradeUsecase.execute(birthday, targetYear)
-          : null;
-      final yakudoshiLabel = displaySettings.showYakudoshi
-          ? calculateYakudoshiUsecase.execute(
-              birthday,
-              member.gender,
-              targetYear,
-            )
-          : null;
 
-      if (ageLabel == null && gradeLabel == null && yakudoshiLabel == null) {
+      if (lines.isEmpty) {
         return const SizedBox.shrink();
       }
-
-      final lines = <String?>[ageLabel, gradeLabel, yakudoshiLabel]
-          .where((label) => label != null && label.isNotEmpty)
-          .cast<String>()
-          .toList();
 
       return Padding(
         padding: const EdgeInsets.only(left: 8, top: 4),
@@ -602,7 +274,7 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     Widget buildScrollableDataCells(int rowIndex) {
-      final columnCount = 2 + (endYearOffset.value - startYearOffset.value + 1);
+      final columnCount = 2 + timelineController.visibleYears.length;
 
       return Row(
         children: List.generate(columnCount, (columnIndex) {
@@ -615,7 +287,7 @@ class GroupTimeline extends HookConsumerWidget {
           final isDvcPointUsageRow = rowIndex == 2;
           final isYearColumn =
               columnIndex != 0 && columnIndex != columnCount - 1;
-          final year = _yearFromColumnIndex(columnIndex, startYearOffset.value);
+          final year = timelineController.yearFromColumnIndex(columnIndex);
           final cellKey = isDvcPointUsageRow && isYearColumn
               ? Key('dvc_point_usage_cell_$year')
               : isGroupEventRow && isYearColumn
@@ -624,7 +296,7 @@ class GroupTimeline extends HookConsumerWidget {
 
           return SizedBox(
             width: width,
-            height: rowHeights[rowIndex],
+            height: timelineController.rowHeights[rowIndex],
             child: GestureDetector(
               onTap: isTripRow && isYearColumn
                   ? () => onTripCellTapped(columnIndex)
@@ -676,7 +348,7 @@ class GroupTimeline extends HookConsumerWidget {
                   onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
                   child: Container(
                     width: _fixedColumnWidth,
-                    height: rowHeights[rowIndex],
+                    height: timelineController.rowHeights[rowIndex],
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     decoration: BoxDecoration(
@@ -701,58 +373,35 @@ class GroupTimeline extends HookConsumerWidget {
               ),
               Container(
                 width: _borderWidth,
-                height: rowHeights[rowIndex],
+                height: timelineController.rowHeights[rowIndex],
                 color: borderColor,
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  controller: rowScrollControllers[rowIndex + 1],
+                  controller:
+                      timelineController.rowScrollControllers[rowIndex + 1],
                   scrollDirection: Axis.horizontal,
                   child: SizedBox(
                     key: Key('scrollable_row_$rowIndex'),
-                    height: rowHeights[rowIndex],
+                    height: timelineController.rowHeights[rowIndex],
                     child: buildScrollableDataCells(rowIndex),
                   ),
                 ),
               ),
             ],
           ),
-          if (rowIndex < rowHeights.length)
+          if (rowIndex < timelineController.rowHeights.length)
             Positioned(
               left: 0,
               bottom: -19,
               child: Listener(
                 key: Key('row_resizer_icon_$rowIndex'),
-                onPointerDown: (event) {
-                  activeResizePointer.value = event.pointer;
-                  isDraggingOnFixedRow.value = true;
-                },
-                onPointerMove: (event) {
-                  if (activeResizePointer.value != event.pointer) {
-                    return;
-                  }
-                  final updatedHeights = List<double>.from(
-                    rowHeightsState.value,
-                  );
-                  final newHeight = (updatedHeights[rowIndex] + event.delta.dy)
-                      .clamp(_rowMinHeight, _rowMaxHeight);
-                  updatedHeights[rowIndex] = newHeight;
-                  rowHeightsState.value = updatedHeights;
-                },
-                onPointerUp: (event) {
-                  if (activeResizePointer.value != event.pointer) {
-                    return;
-                  }
-                  activeResizePointer.value = null;
-                  isDraggingOnFixedRow.value = false;
-                },
-                onPointerCancel: (event) {
-                  if (activeResizePointer.value != event.pointer) {
-                    return;
-                  }
-                  activeResizePointer.value = null;
-                  isDraggingOnFixedRow.value = false;
-                },
+                onPointerDown: (event) =>
+                    timelineController.onRowResizePointerDown(rowIndex, event),
+                onPointerMove: (event) =>
+                    timelineController.onRowResizePointerMove(rowIndex, event),
+                onPointerUp: timelineController.onRowResizePointerUp,
+                onPointerCancel: timelineController.onRowResizePointerUp,
                 child: MouseRegion(
                   cursor: SystemMouseCursors.resizeUpDown,
                   child: Container(
@@ -789,8 +438,7 @@ class GroupTimeline extends HookConsumerWidget {
     }
 
     Widget buildHeaderRow() {
-      final currentYear = DateTime.now().year;
-      List<Widget> cells = [];
+      final cells = <Widget>[];
 
       cells.add(
         Container(
@@ -806,14 +454,13 @@ class GroupTimeline extends HookConsumerWidget {
           ),
           child: TextButton(
             key: const Key('show_more_past'),
-            onPressed: showMorePast,
+            onPressed: timelineController.showMorePast,
             child: const Text('さらに表示'),
           ),
         ),
       );
 
-      for (int i = startYearOffset.value; i <= endYearOffset.value; i++) {
-        final year = currentYear + i;
+      for (final year in timelineController.visibleYears) {
         final eraFormatted =
             JapaneseEraFormatter.formatJapaneseEraFormatterYear(year);
         final combinedYearFormat = '$year年($eraFormatted)';
@@ -848,7 +495,7 @@ class GroupTimeline extends HookConsumerWidget {
           ),
           child: TextButton(
             key: const Key('show_more_future'),
-            onPressed: showMoreFuture,
+            onPressed: timelineController.showMoreFuture,
             child: const Text('さらに表示'),
           ),
         ),
@@ -859,7 +506,7 @@ class GroupTimeline extends HookConsumerWidget {
 
     Widget buildScrollableHeaderRow() {
       return SingleChildScrollView(
-        controller: rowScrollControllers[0],
+        controller: timelineController.rowScrollControllers[0],
         scrollDirection: Axis.horizontal,
         child: Container(key: dataTableKey, child: buildHeaderRow()),
       );
@@ -950,7 +597,7 @@ class GroupTimeline extends HookConsumerWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                physics: isDraggingOnFixedRow.value
+                physics: timelineController.isDraggingOnFixedRow
                     ? const NeverScrollableScrollPhysics()
                     : null,
                 child: Column(
@@ -977,12 +624,6 @@ class GroupTimeline extends HookConsumerWidget {
     );
   }
 
-  static int _yearFromColumnIndex(int columnIndex, int startYearOffset) {
-    final yearIndex = columnIndex - 1;
-    final currentYear = DateTime.now().year;
-    return currentYear + startYearOffset + yearIndex;
-  }
-
   Widget _buildDvcPointUsageLabel({required VoidCallback? onPressed}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1004,19 +645,6 @@ class GroupTimeline extends HookConsumerWidget {
         ],
       ),
     );
-  }
-
-  String? _buildAgeLabel(DateTime? birthday, int targetYear) {
-    if (birthday == null) {
-      return null;
-    }
-
-    final age = targetYear - birthday.year;
-    if (age < 0) {
-      return null;
-    }
-
-    return '$age歳';
   }
 }
 
