@@ -102,6 +102,7 @@ GroupTimelineController useGroupTimelineController({
 
   final viewStateState = useState(
     GroupTimelineViewState.initial(
+      baseYear: DateTime.now().year,
       totalDataRows: totalDataRows,
       initialYearRange: initialYearRange,
       dataRowHeight: dataRowHeight,

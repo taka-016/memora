@@ -1,40 +1,45 @@
 class GroupTimelineViewState {
   const GroupTimelineViewState({
+    required this.baseYear,
     required this.startYearOffset,
     required this.endYearOffset,
     required this.rowHeights,
   });
 
   factory GroupTimelineViewState.initial({
+    required int baseYear,
     required int totalDataRows,
     required int initialYearRange,
     required double dataRowHeight,
   }) {
     return GroupTimelineViewState(
+      baseYear: baseYear,
       startYearOffset: -initialYearRange,
       endYearOffset: initialYearRange,
       rowHeights: List.filled(totalDataRows, dataRowHeight),
     );
   }
 
+  final int baseYear;
   final int startYearOffset;
   final int endYearOffset;
   final List<double> rowHeights;
 
   List<int> get visibleYears {
-    final currentYear = DateTime.now().year;
     return [
       for (int offset = startYearOffset; offset <= endYearOffset; offset++)
-        currentYear + offset,
+        baseYear + offset,
     ];
   }
 
   GroupTimelineViewState copyWith({
+    int? baseYear,
     int? startYearOffset,
     int? endYearOffset,
     List<double>? rowHeights,
   }) {
     return GroupTimelineViewState(
+      baseYear: baseYear ?? this.baseYear,
       startYearOffset: startYearOffset ?? this.startYearOffset,
       endYearOffset: endYearOffset ?? this.endYearOffset,
       rowHeights: rowHeights ?? this.rowHeights,
@@ -81,8 +86,7 @@ class GroupTimelineViewState {
   }
 
   int yearFromColumnIndex(int columnIndex) {
-    final currentYear = DateTime.now().year;
     final yearIndex = columnIndex - 1;
-    return currentYear + startYearOffset + yearIndex;
+    return baseYear + startYearOffset + yearIndex;
   }
 }
