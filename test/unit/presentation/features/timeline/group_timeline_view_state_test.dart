@@ -72,5 +72,20 @@ void main() {
       expect(state.yearFromColumnIndex(6), 2026);
       expect(state.yearFromColumnIndex(11), 2031);
     });
+
+    test('rowHeightsは外部から直接変更できない', () {
+      final sourceRowHeights = <double>[100, 120];
+      final state = GroupTimelineViewState(
+        baseYear: 2026,
+        startYearOffset: -5,
+        endYearOffset: 5,
+        rowHeights: sourceRowHeights,
+      );
+
+      sourceRowHeights.add(140);
+
+      expect(state.rowHeights, [100, 120]);
+      expect(() => state.rowHeights.add(140), throwsUnsupportedError);
+    });
   });
 }

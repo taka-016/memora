@@ -1,10 +1,10 @@
 class GroupTimelineViewState {
-  const GroupTimelineViewState({
+  GroupTimelineViewState({
     required this.baseYear,
     required this.startYearOffset,
     required this.endYearOffset,
-    required this.rowHeights,
-  });
+    required List<double> rowHeights,
+  }) : rowHeights = List.unmodifiable(rowHeights);
 
   factory GroupTimelineViewState.initial({
     required int baseYear,
@@ -42,7 +42,7 @@ class GroupTimelineViewState {
       baseYear: baseYear ?? this.baseYear,
       startYearOffset: startYearOffset ?? this.startYearOffset,
       endYearOffset: endYearOffset ?? this.endYearOffset,
-      rowHeights: rowHeights ?? this.rowHeights,
+      rowHeights: rowHeights ?? List<double>.from(this.rowHeights),
     );
   }
 

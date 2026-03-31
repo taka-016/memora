@@ -121,6 +121,7 @@ GroupTimelineController useGroupTimelineController({
     [totalDataRows],
   );
   final isSyncingRef = useRef(false);
+  final loadingTripYearsRef = useRef<Set<int>>({});
   final viewState = viewStateState.value;
 
   useEffect(() {
@@ -186,9 +187,12 @@ GroupTimelineController useGroupTimelineController({
   }, [rowScrollControllers]);
 
   Future<void> loadTripDataForYear(int year) async {
-    if (tripsByYearState.value.containsKey(year)) {
+    if (tripsByYearState.value.containsKey(year) ||
+        loadingTripYearsRef.value.contains(year)) {
       return;
     }
+
+    loadingTripYearsRef.value = {...loadingTripYearsRef.value, year};
 
     try {
       final trips = await getTripEntriesUsecase.execute(
@@ -213,6 +217,8 @@ GroupTimelineController useGroupTimelineController({
       }
 
       tripsByYearState.value = {...tripsByYearState.value, year: const []};
+    } finally {
+      loadingTripYearsRef.value = {...loadingTripYearsRef.value}..remove(year);
     }
   }
 

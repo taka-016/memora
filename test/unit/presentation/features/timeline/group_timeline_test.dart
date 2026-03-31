@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1173,6 +1175,66 @@ void main() {
 
       // Assert - コールバックが設定されることを確認
       expect(capturedCallback, isNotNull);
+    });
+
+    testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
+      final firstVisibleYear = DateTime.now().year - 5;
+      final completer = Completer<List<TripEntryDto>>();
+      VoidCallback? capturedCallback;
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          firstVisibleYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => completer.future);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (callback) {
+                  capturedCallback = callback;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(capturedCallback, isNotNull);
+
+      capturedCallback!();
+      await tester.pump();
+
+      verify(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          firstVisibleYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(1);
+
+      completer.complete([]);
+      await tester.pumpAndSettle();
     });
   });
 }
