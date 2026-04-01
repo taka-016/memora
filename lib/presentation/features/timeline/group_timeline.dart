@@ -8,6 +8,7 @@ import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_util
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/group_event_cell.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
 class GroupTimeline extends HookConsumerWidget {
@@ -15,7 +16,7 @@ class GroupTimeline extends HookConsumerWidget {
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
   final VoidCallback? onDvcPointCalculationPressed;
-  final Function(VoidCallback)? onSetRefreshCallback;
+  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
 
   static const int _initialYearRange = 5;
   static const int _yearRangeIncrement = 5;

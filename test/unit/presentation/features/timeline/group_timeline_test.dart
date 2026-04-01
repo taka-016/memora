@@ -19,6 +19,7 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -1142,7 +1143,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      Future<void> Function()? capturedCallback;
+      RefreshTimelineCallback? capturedCallback;
 
       Widget widget = ProviderScope(
         overrides: [
@@ -1180,7 +1181,7 @@ void main() {
     testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
       final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
-      Future<void> Function()? capturedCallback;
+      RefreshTimelineCallback? capturedCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
@@ -1241,7 +1242,7 @@ void main() {
     testWidgets('リフレッシュコールバックは取得中の旅行ロード完了まで待つ', (WidgetTester tester) async {
       final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
-      Future<void> Function()? capturedRefreshCallback;
+      RefreshTimelineCallback? capturedRefreshCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(

@@ -16,6 +16,7 @@ import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.d
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_view_state.dart';
+import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 
 class GroupTimelineController {
@@ -88,7 +89,7 @@ GroupTimelineController useGroupTimelineController({
   required double rowMaxHeight,
   required double buttonColumnWidth,
   required double yearColumnWidth,
-  required Function(VoidCallback)? onSetRefreshCallback,
+  required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
   final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
   final calculateSchoolGradeUsecase = ref.read(
