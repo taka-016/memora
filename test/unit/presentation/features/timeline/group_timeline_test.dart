@@ -110,6 +110,7 @@ void main() {
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
+    GroupEventRepository? groupEventRepo,
   }) {
     return ProviderScope(
       overrides: [
@@ -122,7 +123,9 @@ void main() {
         groupEventQueryServiceProvider.overrideWithValue(
           groupEventService ?? groupEventQueryService,
         ),
-        groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+        groupEventRepositoryProvider.overrideWithValue(
+          groupEventRepo ?? groupEventRepository,
+        ),
       ],
       child: MaterialApp(
         home: Scaffold(
@@ -1739,6 +1742,167 @@ void main() {
         isNot(contains('旧グループイベント')),
       );
     });
+
+    testWidgets('グループ切り替え後に旧グループのイベント保存結果で新グループstateを上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final oldEvent = GroupEventDto(
+        id: 'event-1',
+        groupId: '1',
+        year: currentYear,
+        memo: '旧グループイベント',
+      );
+      final newEvent = GroupEventDto(
+        id: 'event-2',
+        groupId: '2',
+        year: currentYear,
+        memo: '新グループイベント',
+      );
+      final saveCompleter = Completer<String>();
+      final eventService = _ControlledGroupEventQueryService((groupId) async {
+        return groupId == '1' ? [oldEvent] : [newEvent];
+      });
+      final repository = _ControlledGroupEventRepository(
+        onSaveGroupEvent: (_) => saveCompleter.future,
+        onDeleteGroupEvent: (_) async {},
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final saveFuture = capturedControllers.last.saveGroupEvent(
+        currentEvent: oldEvent,
+        groupId: '1',
+        selectedYear: currentYear,
+        memo: '旧グループ更新',
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+
+      saveCompleter.complete('event-1');
+      await saveFuture;
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループ更新')),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのイベント削除結果で新グループstateを上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final oldEvent = GroupEventDto(
+        id: 'event-1',
+        groupId: '1',
+        year: currentYear,
+        memo: '旧グループイベント',
+      );
+      final newEvent = GroupEventDto(
+        id: 'event-2',
+        groupId: '2',
+        year: currentYear,
+        memo: '新グループイベント',
+      );
+      final deleteCompleter = Completer<void>();
+      final eventService = _ControlledGroupEventQueryService((groupId) async {
+        return groupId == '1' ? [oldEvent] : [newEvent];
+      });
+      final repository = _ControlledGroupEventRepository(
+        onSaveGroupEvent: (_) async => 'unused',
+        onDeleteGroupEvent: (_) => deleteCompleter.future,
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final deleteFuture = capturedControllers.last.saveGroupEvent(
+        currentEvent: oldEvent,
+        groupId: '1',
+        selectedYear: currentYear,
+        memo: '',
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+
+      deleteCompleter.complete();
+      await deleteFuture;
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(capturedControllers.last.groupEventsByYear.length, 1);
+    });
   });
 }
 
@@ -1836,6 +2000,29 @@ class _ControlledGroupEventQueryService implements GroupEventQueryService {
     List<OrderBy>? orderBy,
   }) {
     return onGetByGroupId(groupId);
+  }
+}
+
+class _ControlledGroupEventRepository implements GroupEventRepository {
+  const _ControlledGroupEventRepository({
+    required this.onSaveGroupEvent,
+    required this.onDeleteGroupEvent,
+  });
+
+  final Future<String> Function(GroupEvent groupEvent) onSaveGroupEvent;
+  final Future<void> Function(String groupEventId) onDeleteGroupEvent;
+
+  @override
+  Future<void> deleteGroupEvent(String groupEventId) {
+    return onDeleteGroupEvent(groupEventId);
+  }
+
+  @override
+  Future<void> deleteGroupEventsByGroupId(String groupId) async {}
+
+  @override
+  Future<String> saveGroupEvent(GroupEvent groupEvent) {
+    return onSaveGroupEvent(groupEvent);
   }
 }
 
