@@ -1903,6 +1903,44 @@ void main() {
       );
       expect(capturedControllers.last.groupEventsByYear.length, 1);
     });
+
+    testWidgets('メンバー数増加直後の最初のbuildでも行高さは不足しない', (WidgetTester tester) async {
+      final capturedControllers = <GroupTimelineController>[];
+      final expandedGroup = testGroupWithMembers.copyWith(
+        members: [
+          ...testGroupWithMembers.members,
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ハナちゃん',
+            email: 'hana@example.com',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: expandedGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+      expect(
+        capturedControllers.first.rowHeights.length,
+        3 + expandedGroup.members.length,
+      );
+    });
   });
 }
 

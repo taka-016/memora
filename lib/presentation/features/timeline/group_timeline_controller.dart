@@ -124,7 +124,10 @@ GroupTimelineController useGroupTimelineController({
   final isSyncingRef = useRef(false);
   final currentGroupIdRef = useRef(groupWithMembers.id);
   final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
-  final viewState = viewStateState.value;
+  final viewState = viewStateState.value.ensureRowCount(
+    totalDataRows: totalDataRows,
+    dataRowHeight: dataRowHeight,
+  );
   currentGroupIdRef.value = groupWithMembers.id;
 
   useEffect(() {
