@@ -849,6 +849,25 @@ void main() {
       expect(scrollController.offset, greaterThan(0));
     });
 
+    testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller!;
+
+      final totalWidth = (2 * 100.0) + (11 * 120.0);
+      final expectedOffset = ((totalWidth / 2) -
+              (scrollController.position.viewportDimension / 2))
+          .clamp(0.0, scrollController.position.maxScrollExtent);
+
+      expect(scrollController.offset, closeTo(expectedOffset, 0.1));
+    });
+
     testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(createTestWidget());
@@ -1176,6 +1195,48 @@ void main() {
 
       // Assert - コールバックが設定されることを確認
       expect(capturedCallback, isNotNull);
+    });
+
+    testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (WidgetTester tester) async {
+      var callbackSetCount = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (_) {
+                  callbackSetCount++;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(callbackSetCount, 1);
+
+      final showMoreFutureButton = tester.widget<TextButton>(
+        find.byKey(const Key('show_more_future')),
+      );
+      showMoreFutureButton.onPressed!.call();
+      await tester.pumpAndSettle();
+
+      expect(callbackSetCount, 1);
     });
 
     testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
