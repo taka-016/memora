@@ -97,6 +97,15 @@ void main() {
     );
   }
 
+  void setCustomViewSize(WidgetTester tester, Size size) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+  }
+
   group('GroupTimeline', () {
     testWidgets('GroupTimelineウィジェットが正しく表示される', (WidgetTester tester) async {
       // Act
@@ -829,8 +838,7 @@ void main() {
 
     testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
       // Arrange
-      tester.view.physicalSize = const Size(1001, 601);
-      tester.view.devicePixelRatio = 1.0;
+      setCustomViewSize(tester, const Size(1001, 601));
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -852,8 +860,7 @@ void main() {
     testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (
       WidgetTester tester,
     ) async {
-      tester.view.physicalSize = const Size(1001, 601);
-      tester.view.devicePixelRatio = 1.0;
+      setCustomViewSize(tester, const Size(1001, 601));
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
