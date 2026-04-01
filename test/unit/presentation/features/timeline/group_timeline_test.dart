@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
@@ -18,6 +19,7 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
@@ -96,6 +98,34 @@ void main() {
               groupWithMembers: groupWithMembers ?? testGroupWithMembers,
               onSetRefreshCallback: onSetRefreshCallback,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget createControllerProbeWidget({
+    required GroupDto groupWithMembers,
+    required void Function(GroupTimelineController controller) onBuilt,
+  }) {
+    return ProviderScope(
+      overrides: [
+        tripEntryQueryServiceProvider.overrideWithValue(
+          mockTripEntryQueryService,
+        ),
+        dvcPointUsageQueryServiceProvider.overrideWithValue(
+          dvcPointUsageQueryService,
+        ),
+        groupEventQueryServiceProvider.overrideWithValue(
+          groupEventQueryService,
+        ),
+        groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: _GroupTimelineControllerProbe(
+            groupWithMembers: groupWithMembers,
+            onBuilt: onBuilt,
           ),
         ),
       ),
@@ -1457,7 +1487,128 @@ void main() {
       expect(find.text('新グループ旅行'), findsOneWidget);
       expect(find.text('旧グループ旅行'), findsNothing);
     });
+
+    testWidgets('グループ切り替え直後の最初のbuildでは旧グループの旅行状態を返さない', (
+      WidgetTester tester,
+    ) async {
+      final secondGroupCompleter = Completer<List<TripEntryDto>>();
+      int? requestedYear;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        final groupId = invocation.positionalArguments[0] as String;
+        final year = invocation.positionalArguments[1] as int;
+        requestedYear ??= year;
+
+        if (groupId == '1') {
+          return Future.value([
+            TripEntryDto(
+              id: 'trip_1',
+              groupId: groupId,
+              tripYear: year,
+              tripName: '旧グループ旅行',
+              tripStartDate: DateTime(year, 1, 1),
+            ),
+          ]);
+        }
+
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.tripsByYear.values.expand((trips) => trips),
+        isNotEmpty,
+      );
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+      expect(capturedControllers.first.tripsByYear, isEmpty);
+
+      secondGroupCompleter.complete([
+        TripEntryDto(
+          id: 'trip_2',
+          groupId: '2',
+          tripYear: requestedYear!,
+          tripName: '新グループ旅行',
+          tripStartDate: DateTime(requestedYear!, 1, 1),
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.tripsByYear.values
+            .expand((trips) => trips)
+            .map((trip) => trip.tripName),
+        contains('新グループ旅行'),
+      );
+    });
   });
+}
+
+class _GroupTimelineControllerProbe extends StatelessWidget {
+  const _GroupTimelineControllerProbe({
+    required this.groupWithMembers,
+    required this.onBuilt,
+  });
+
+  final GroupDto groupWithMembers;
+  final void Function(GroupTimelineController controller) onBuilt;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalDataRows = 3 + groupWithMembers.members.length;
+
+    return Consumer(
+      builder: (context, ref, _) {
+        return HookBuilder(
+          builder: (context) {
+            final controller = useGroupTimelineController(
+              context: context,
+              ref: ref,
+              groupWithMembers: groupWithMembers,
+              totalDataRows: totalDataRows,
+              initialYearRange: 5,
+              yearRangeIncrement: 5,
+              dataRowHeight: 100,
+              rowMinHeight: 100,
+              rowMaxHeight: 500,
+              buttonColumnWidth: 100,
+              yearColumnWidth: 120,
+              onSetRefreshCallback: null,
+            );
+            onBuilt(controller);
+            return const SizedBox.shrink();
+          },
+        );
+      },
+    );
+  }
 }
 
 class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
