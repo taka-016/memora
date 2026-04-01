@@ -849,7 +849,9 @@ void main() {
       expect(scrollController.offset, greaterThan(0));
     });
 
-    testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (WidgetTester tester) async {
+    testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (
+      WidgetTester tester,
+    ) async {
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createTestWidget());
@@ -861,9 +863,9 @@ void main() {
           .controller!;
 
       final totalWidth = (2 * 100.0) + (11 * 120.0);
-      final expectedOffset = ((totalWidth / 2) -
-              (scrollController.position.viewportDimension / 2))
-          .clamp(0.0, scrollController.position.maxScrollExtent);
+      final expectedOffset =
+          ((totalWidth / 2) - (scrollController.position.viewportDimension / 2))
+              .clamp(0.0, scrollController.position.maxScrollExtent);
 
       expect(scrollController.offset, closeTo(expectedOffset, 0.1));
     });
@@ -1197,7 +1199,9 @@ void main() {
       expect(capturedCallback, isNotNull);
     });
 
-    testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (WidgetTester tester) async {
+    testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (
+      WidgetTester tester,
+    ) async {
       var callbackSetCount = 0;
 
       await tester.pumpWidget(
@@ -1212,7 +1216,9 @@ void main() {
             groupEventQueryServiceProvider.overrideWithValue(
               groupEventQueryService,
             ),
-            groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
           ],
           child: MaterialApp(
             home: Scaffold(

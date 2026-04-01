@@ -319,15 +319,12 @@ GroupTimelineController useGroupTimelineController({
     return null;
   }, [groupWithMembers.id]);
 
-  useEffect(
-    () {
-      if (onSetRefreshCallback != null) {
-        onSetRefreshCallback(refreshTimelineData);
-      }
-      return null;
-    },
-    [onSetRefreshCallback, groupWithMembers.id],
-  );
+  useEffect(() {
+    if (onSetRefreshCallback != null) {
+      onSetRefreshCallback(refreshTimelineData);
+    }
+    return null;
+  }, [onSetRefreshCallback, groupWithMembers.id]);
 
   void scrollToCurrentYear() {
     if (rowScrollControllers.isEmpty) {
