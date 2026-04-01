@@ -326,12 +326,7 @@ GroupTimelineController useGroupTimelineController({
       }
       return null;
     },
-    [
-      onSetRefreshCallback,
-      groupWithMembers.id,
-      viewState.startYearOffset,
-      viewState.endYearOffset,
-    ],
+    [onSetRefreshCallback, groupWithMembers.id],
   );
 
   void scrollToCurrentYear() {
@@ -344,12 +339,7 @@ GroupTimelineController useGroupTimelineController({
       return;
     }
 
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-
-    final viewportWidth = renderBox.size.width;
+    final viewportWidth = primaryController.position.viewportDimension;
     final totalWidth =
         (2 * buttonColumnWidth) +
         (viewState.visibleYears.length * yearColumnWidth);
