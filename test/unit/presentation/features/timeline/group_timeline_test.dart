@@ -829,7 +829,7 @@ void main() {
 
     testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
       // Arrange
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1001, 601);
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -852,7 +852,7 @@ void main() {
     testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (
       WidgetTester tester,
     ) async {
-      tester.view.physicalSize = const Size(800, 600);
+      tester.view.physicalSize = const Size(1001, 601);
       tester.view.devicePixelRatio = 1.0;
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
@@ -868,6 +868,11 @@ void main() {
               .clamp(0.0, scrollController.position.maxScrollExtent);
 
       expect(scrollController.offset, closeTo(expectedOffset, 0.1));
+    });
+
+    testWidgets('view設定が後続テストへ持ち越されない', (WidgetTester tester) async {
+      expect(tester.view.physicalSize, isNot(const Size(1001, 601)));
+      expect(tester.view.devicePixelRatio, isNot(1.0));
     });
 
     testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
