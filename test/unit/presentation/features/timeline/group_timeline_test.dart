@@ -107,17 +107,20 @@ void main() {
   Widget createControllerProbeWidget({
     required GroupDto groupWithMembers,
     required void Function(GroupTimelineController controller) onBuilt,
+    TripEntryQueryService? tripEntryQueryService,
+    DvcPointUsageQueryService? dvcPointUsageService,
+    GroupEventQueryService? groupEventService,
   }) {
     return ProviderScope(
       overrides: [
         tripEntryQueryServiceProvider.overrideWithValue(
-          mockTripEntryQueryService,
+          tripEntryQueryService ?? mockTripEntryQueryService,
         ),
         dvcPointUsageQueryServiceProvider.overrideWithValue(
-          dvcPointUsageQueryService,
+          dvcPointUsageService ?? dvcPointUsageQueryService,
         ),
         groupEventQueryServiceProvider.overrideWithValue(
-          groupEventQueryService,
+          groupEventService ?? groupEventQueryService,
         ),
         groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
       ],
@@ -1568,6 +1571,174 @@ void main() {
         contains('新グループ旅行'),
       );
     });
+
+    testWidgets('グループ切り替え後に旧グループのDVC取得結果で新グループ表示を上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final firstGroupCompleter = Completer<List<DvcPointUsageDto>>();
+      final secondGroupCompleter = Completer<List<DvcPointUsageDto>>();
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final dvcService = _ControlledDvcPointUsageQueryService((groupId) {
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          dvcPointUsageService: dvcService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          dvcPointUsageService: dvcService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      secondGroupCompleter.complete([
+        DvcPointUsageDto(
+          id: 'usage-2',
+          groupId: '2',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 80,
+          memo: '新グループDVC',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        contains('新グループDVC'),
+      );
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        isNot(contains('旧グループDVC')),
+      );
+
+      firstGroupCompleter.complete([
+        DvcPointUsageDto(
+          id: 'usage-1',
+          groupId: '1',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 120,
+          memo: '旧グループDVC',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        contains('新グループDVC'),
+      );
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        isNot(contains('旧グループDVC')),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのイベント取得結果で新グループ表示を上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final firstGroupCompleter = Completer<List<GroupEventDto>>();
+      final secondGroupCompleter = Completer<List<GroupEventDto>>();
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final eventService = _ControlledGroupEventQueryService((groupId) {
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      secondGroupCompleter.complete([
+        GroupEventDto(
+          id: 'event-2',
+          groupId: '2',
+          year: currentYear,
+          memo: '新グループイベント',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループイベント')),
+      );
+
+      firstGroupCompleter.complete([
+        GroupEventDto(
+          id: 'event-1',
+          groupId: '1',
+          year: currentYear,
+          memo: '旧グループイベント',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループイベント')),
+      );
+    });
   });
 }
 
@@ -1625,6 +1796,21 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }
 }
 
+class _ControlledDvcPointUsageQueryService
+    implements DvcPointUsageQueryService {
+  const _ControlledDvcPointUsageQueryService(this.onGetByGroupId);
+
+  final Future<List<DvcPointUsageDto>> Function(String groupId) onGetByGroupId;
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) {
+    return onGetByGroupId(groupId);
+  }
+}
+
 class _FakeGroupEventQueryService implements GroupEventQueryService {
   const _FakeGroupEventQueryService(this.groupEvents);
 
@@ -1636,6 +1822,20 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return groupEvents.where((event) => event.groupId == groupId).toList();
+  }
+}
+
+class _ControlledGroupEventQueryService implements GroupEventQueryService {
+  const _ControlledGroupEventQueryService(this.onGetByGroupId);
+
+  final Future<List<GroupEventDto>> Function(String groupId) onGetByGroupId;
+
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) {
+    return onGetByGroupId(groupId);
   }
 }
 

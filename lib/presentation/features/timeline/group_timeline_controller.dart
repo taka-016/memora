@@ -254,12 +254,11 @@ GroupTimelineController useGroupTimelineController({
   }
 
   Future<void> loadDvcPointUsageData() async {
+    final requestedGroupId = groupWithMembers.id;
     try {
-      final usages = await getDvcPointUsagesUsecase.execute(
-        groupWithMembers.id,
-      );
+      final usages = await getDvcPointUsagesUsecase.execute(requestedGroupId);
 
-      if (!context.mounted) {
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
         return;
       }
 
@@ -271,7 +270,7 @@ GroupTimelineController useGroupTimelineController({
         stackTrace: stack,
       );
 
-      if (!context.mounted) {
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
         return;
       }
 
@@ -280,10 +279,11 @@ GroupTimelineController useGroupTimelineController({
   }
 
   Future<void> loadGroupEventData() async {
+    final requestedGroupId = groupWithMembers.id;
     try {
-      final events = await getGroupEventsUsecase.execute(groupWithMembers.id);
+      final events = await getGroupEventsUsecase.execute(requestedGroupId);
 
-      if (!context.mounted) {
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
         return;
       }
 
@@ -297,7 +297,7 @@ GroupTimelineController useGroupTimelineController({
         stackTrace: stack,
       );
 
-      if (!context.mounted) {
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
         return;
       }
 
