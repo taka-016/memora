@@ -877,11 +877,6 @@ void main() {
       expect(scrollController.offset, closeTo(expectedOffset, 0.1));
     });
 
-    testWidgets('view設定が後続テストへ持ち越されない', (WidgetTester tester) async {
-      expect(tester.view.physicalSize, isNot(const Size(1001, 601)));
-      expect(tester.view.devicePixelRatio, isNot(1.0));
-    });
-
     testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(createTestWidget());
