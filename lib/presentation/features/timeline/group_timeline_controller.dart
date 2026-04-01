@@ -400,9 +400,13 @@ GroupTimelineController useGroupTimelineController({
     required int selectedYear,
     required String memo,
   }) async {
+    final requestedGroupId = groupId;
     if (memo.isEmpty) {
       if (currentEvent != null) {
         await deleteGroupEventUsecase.execute(currentEvent.id);
+      }
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
+        return;
       }
       final updated = Map<int, GroupEventDto>.from(
         groupEventsByYearState.value,
@@ -420,6 +424,9 @@ GroupTimelineController useGroupTimelineController({
         memo: memo,
       ),
     );
+    if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
+      return;
+    }
     groupEventsByYearState.value = {
       ...groupEventsByYearState.value,
       selectedYear: savedEvent,
