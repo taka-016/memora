@@ -121,7 +121,7 @@ GroupTimelineController useGroupTimelineController({
     [totalDataRows],
   );
   final isSyncingRef = useRef(false);
-  final loadingTripYearsRef = useRef<Set<int>>({});
+  final loadingTripYearsRef = useRef<Map<int, Future<void>>>({});
   final viewState = viewStateState.value;
 
   useEffect(() {
@@ -187,39 +187,51 @@ GroupTimelineController useGroupTimelineController({
   }, [rowScrollControllers]);
 
   Future<void> loadTripDataForYear(int year) async {
-    if (tripsByYearState.value.containsKey(year) ||
-        loadingTripYearsRef.value.contains(year)) {
+    if (tripsByYearState.value.containsKey(year)) {
       return;
     }
 
-    loadingTripYearsRef.value = {...loadingTripYearsRef.value, year};
-
-    try {
-      final trips = await getTripEntriesUsecase.execute(
-        groupWithMembers.id,
-        year,
-      );
-
-      if (!context.mounted) {
-        return;
-      }
-
-      tripsByYearState.value = {...tripsByYearState.value, year: trips};
-    } catch (e, stack) {
-      logger.e(
-        'GroupTimelineController.loadTripDataForYear: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-
-      if (!context.mounted) {
-        return;
-      }
-
-      tripsByYearState.value = {...tripsByYearState.value, year: const []};
-    } finally {
-      loadingTripYearsRef.value = {...loadingTripYearsRef.value}..remove(year);
+    final inFlightFuture = loadingTripYearsRef.value[year];
+    if (inFlightFuture != null) {
+      await inFlightFuture;
+      return;
     }
+
+    final loadFuture = () async {
+      try {
+        final trips = await getTripEntriesUsecase.execute(
+          groupWithMembers.id,
+          year,
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        tripsByYearState.value = {...tripsByYearState.value, year: trips};
+      } catch (e, stack) {
+        logger.e(
+          'GroupTimelineController.loadTripDataForYear: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+
+        if (!context.mounted) {
+          return;
+        }
+
+        tripsByYearState.value = {...tripsByYearState.value, year: const []};
+      } finally {
+        loadingTripYearsRef.value = {...loadingTripYearsRef.value}
+          ..remove(year);
+      }
+    }();
+
+    loadingTripYearsRef.value = {
+      ...loadingTripYearsRef.value,
+      year: loadFuture,
+    };
+    await loadFuture;
   }
 
   Future<void> loadTripDataForVisibleYears() async {

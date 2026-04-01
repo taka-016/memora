@@ -1236,6 +1236,71 @@ void main() {
       completer.complete([]);
       await tester.pumpAndSettle();
     });
+
+    testWidgets('リフレッシュコールバックは取得中の旅行ロード完了まで待つ', (WidgetTester tester) async {
+      final firstVisibleYear = DateTime.now().year - 5;
+      final completer = Completer<List<TripEntryDto>>();
+      VoidCallback? capturedRefreshCallback;
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          firstVisibleYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => completer.future);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (callback) {
+                  capturedRefreshCallback = callback;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(capturedRefreshCallback, isNotNull);
+
+      final refreshFuture =
+          (capturedRefreshCallback! as dynamic)() as Future<void>;
+      await tester.pump();
+
+      expect(refreshFuture, isA<Future<void>>());
+      expect(completer.isCompleted, isFalse);
+
+      var isRefreshCompleted = false;
+      refreshFuture.then((_) {
+        isRefreshCompleted = true;
+      });
+      await tester.pump();
+      expect(isRefreshCompleted, isFalse);
+
+      completer.complete([]);
+      await tester.pumpAndSettle();
+
+      expect(isRefreshCompleted, isTrue);
+    });
   });
 }
 
