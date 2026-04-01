@@ -1142,7 +1142,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      VoidCallback? capturedCallback;
+      Future<void> Function()? capturedCallback;
 
       Widget widget = ProviderScope(
         overrides: [
@@ -1180,7 +1180,7 @@ void main() {
     testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
       final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
-      VoidCallback? capturedCallback;
+      Future<void> Function()? capturedCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
@@ -1222,7 +1222,7 @@ void main() {
 
       expect(capturedCallback, isNotNull);
 
-      capturedCallback!();
+      final refreshFuture = capturedCallback!();
       await tester.pump();
 
       verify(
@@ -1234,13 +1234,14 @@ void main() {
       ).called(1);
 
       completer.complete([]);
+      await refreshFuture;
       await tester.pumpAndSettle();
     });
 
     testWidgets('リフレッシュコールバックは取得中の旅行ロード完了まで待つ', (WidgetTester tester) async {
       final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
-      VoidCallback? capturedRefreshCallback;
+      Future<void> Function()? capturedRefreshCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
@@ -1282,8 +1283,7 @@ void main() {
 
       expect(capturedRefreshCallback, isNotNull);
 
-      final refreshFuture =
-          (capturedRefreshCallback! as dynamic)() as Future<void>;
+      final refreshFuture = capturedRefreshCallback!();
       await tester.pump();
 
       expect(refreshFuture, isA<Future<void>>());
