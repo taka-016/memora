@@ -122,8 +122,10 @@ GroupTimelineController useGroupTimelineController({
     [totalDataRows],
   );
   final isSyncingRef = useRef(false);
-  final loadingTripYearsRef = useRef<Map<int, Future<void>>>({});
+  final currentGroupIdRef = useRef(groupWithMembers.id);
+  final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
   final viewState = viewStateState.value;
+  currentGroupIdRef.value = groupWithMembers.id;
 
   useEffect(() {
     Future.microtask(() async {
@@ -141,6 +143,14 @@ GroupTimelineController useGroupTimelineController({
     );
     return null;
   }, [totalDataRows]);
+
+  useEffect(() {
+    tripsByYearState.value = {};
+    dvcPointUsagesByYearState.value = {};
+    groupEventsByYearState.value = {};
+    loadingTripYearsRef.value = {};
+    return null;
+  }, [groupWithMembers.id]);
 
   void syncScrollControllers(int sourceIndex) {
     if (isSyncingRef.value) {
@@ -188,11 +198,13 @@ GroupTimelineController useGroupTimelineController({
   }, [rowScrollControllers]);
 
   Future<void> loadTripDataForYear(int year) async {
+    final requestedGroupId = groupWithMembers.id;
     if (tripsByYearState.value.containsKey(year)) {
       return;
     }
 
-    final inFlightFuture = loadingTripYearsRef.value[year];
+    final loadingKey = _buildTripLoadingKey(requestedGroupId, year);
+    final inFlightFuture = loadingTripYearsRef.value[loadingKey];
     if (inFlightFuture != null) {
       await inFlightFuture;
       return;
@@ -201,11 +213,11 @@ GroupTimelineController useGroupTimelineController({
     final loadFuture = () async {
       try {
         final trips = await getTripEntriesUsecase.execute(
-          groupWithMembers.id,
+          requestedGroupId,
           year,
         );
 
-        if (!context.mounted) {
+        if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
           return;
         }
 
@@ -217,20 +229,20 @@ GroupTimelineController useGroupTimelineController({
           stackTrace: stack,
         );
 
-        if (!context.mounted) {
+        if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
           return;
         }
 
         tripsByYearState.value = {...tripsByYearState.value, year: const []};
       } finally {
         loadingTripYearsRef.value = {...loadingTripYearsRef.value}
-          ..remove(year);
+          ..remove(loadingKey);
       }
     }();
 
     loadingTripYearsRef.value = {
       ...loadingTripYearsRef.value,
-      year: loadFuture,
+      loadingKey: loadFuture,
     };
     await loadFuture;
   }
@@ -503,4 +515,8 @@ List<String>? _buildOptionalLabel(String? value) {
     return null;
   }
   return [value];
+}
+
+String _buildTripLoadingKey(String groupId, int year) {
+  return '$groupId:$year';
 }

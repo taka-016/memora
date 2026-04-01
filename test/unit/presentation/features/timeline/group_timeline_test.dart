@@ -65,10 +65,12 @@ void main() {
   });
 
   Widget createTestWidget({
+    GroupDto? groupWithMembers,
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
     GroupEventRepository? groupEventRepo,
+    void Function(RefreshTimelineCallback)? onSetRefreshCallback,
   }) {
     return ProviderScope(
       overrides: [
@@ -90,7 +92,10 @@ void main() {
           body: SizedBox(
             width: 1200, // より広い画面サイズを設定
             height: 800,
-            child: GroupTimeline(groupWithMembers: testGroupWithMembers),
+            child: GroupTimeline(
+              groupWithMembers: groupWithMembers ?? testGroupWithMembers,
+              onSetRefreshCallback: onSetRefreshCallback,
+            ),
           ),
         ),
       ),
@@ -1253,17 +1258,23 @@ void main() {
     });
 
     testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
-      final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
+      final requestedYears = <int>[];
       RefreshTimelineCallback? capturedCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           '1',
-          firstVisibleYear,
+          any,
           orderBy: anyNamed('orderBy'),
         ),
-      ).thenAnswer((_) => completer.future);
+      ).thenAnswer((invocation) {
+        requestedYears.add(invocation.positionalArguments[1] as int);
+        if (requestedYears.length == 1) {
+          return completer.future;
+        }
+        return Future.value(<TripEntryDto>[]);
+      });
 
       await tester.pumpWidget(
         ProviderScope(
@@ -1300,13 +1311,7 @@ void main() {
       final refreshFuture = capturedCallback!();
       await tester.pump();
 
-      verify(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          '1',
-          firstVisibleYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).called(1);
+      expect(requestedYears, hasLength(1));
 
       completer.complete([]);
       await refreshFuture;
@@ -1314,17 +1319,23 @@ void main() {
     });
 
     testWidgets('リフレッシュコールバックは取得中の旅行ロード完了まで待つ', (WidgetTester tester) async {
-      final firstVisibleYear = DateTime.now().year - 5;
       final completer = Completer<List<TripEntryDto>>();
+      final requestedYears = <int>[];
       RefreshTimelineCallback? capturedRefreshCallback;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           '1',
-          firstVisibleYear,
+          any,
           orderBy: anyNamed('orderBy'),
         ),
-      ).thenAnswer((_) => completer.future);
+      ).thenAnswer((invocation) {
+        requestedYears.add(invocation.positionalArguments[1] as int);
+        if (requestedYears.length == 1) {
+          return completer.future;
+        }
+        return Future.value(<TripEntryDto>[]);
+      });
 
       await tester.pumpWidget(
         ProviderScope(
@@ -1362,6 +1373,7 @@ void main() {
       await tester.pump();
 
       expect(refreshFuture, isA<Future<void>>());
+      expect(requestedYears, hasLength(1));
       expect(completer.isCompleted, isFalse);
 
       var isRefreshCompleted = false;
@@ -1375,6 +1387,75 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(isRefreshCompleted, isTrue);
+    });
+
+    testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
+      WidgetTester tester,
+    ) async {
+      final firstGroupCompleter = Completer<List<TripEntryDto>>();
+      final requestedGroupIds = <String>[];
+      int? firstRequestedYear;
+      var hasReturnedSecondGroupTrip = false;
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        final groupId = invocation.positionalArguments[0] as String;
+        final year = invocation.positionalArguments[1] as int;
+        requestedGroupIds.add(groupId);
+        firstRequestedYear ??= year;
+
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+
+        if (!hasReturnedSecondGroupTrip) {
+          hasReturnedSecondGroupTrip = true;
+          return Future.value([
+            TripEntryDto(
+              id: 'trip_2',
+              groupId: groupId,
+              tripYear: year,
+              tripName: '新グループ旅行',
+              tripStartDate: DateTime(year, 1, 1),
+            ),
+          ]);
+        }
+
+        return Future.value(<TripEntryDto>[]);
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump();
+
+      expect(requestedGroupIds, ['1']);
+
+      await tester.pumpWidget(createTestWidget(groupWithMembers: secondGroup));
+      await tester.pump();
+
+      expect(requestedGroupIds, contains('2'));
+
+      firstGroupCompleter.complete([
+        TripEntryDto(
+          id: 'trip_1',
+          groupId: '1',
+          tripYear: firstRequestedYear!,
+          tripName: '旧グループ旅行',
+          tripStartDate: DateTime(firstRequestedYear!, 1, 1),
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('新グループ旅行'), findsOneWidget);
+      expect(find.text('旧グループ旅行'), findsNothing);
     });
   });
 }
