@@ -1941,6 +1941,57 @@ void main() {
         3 + expandedGroup.members.length,
       );
     });
+
+    testWidgets('メンバー数増加直後の新しい行も最初のbuildからリサイズできる', (
+      WidgetTester tester,
+    ) async {
+      final capturedControllers = <GroupTimelineController>[];
+      final expandedGroup = testGroupWithMembers.copyWith(
+        members: [
+          ...testGroupWithMembers.members,
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ハナちゃん',
+            email: 'hana@example.com',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: expandedGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+
+      final controller = capturedControllers.first;
+      const pointer = 1;
+      final newRowIndex = 3 + expandedGroup.members.length - 1;
+      controller.onRowResizePointerDown(
+        newRowIndex,
+        const PointerDownEvent(pointer: pointer),
+      );
+      controller.onRowResizePointerMove(
+        newRowIndex,
+        const PointerMoveEvent(pointer: pointer, delta: Offset(0, 20)),
+      );
+      await tester.pump();
+
+      expect(capturedControllers.last.rowHeights[newRowIndex], 120);
+    });
   });
 }
 
