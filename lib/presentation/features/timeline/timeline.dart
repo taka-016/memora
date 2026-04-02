@@ -7,11 +7,11 @@ import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/group_event_cell.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
-class GroupTimeline extends HookConsumerWidget {
+class Timeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Function(String groupId, int year)? onTripManagementSelected;
@@ -33,7 +33,7 @@ class GroupTimeline extends HookConsumerWidget {
   static const double _rowMinHeight = 100.0;
   static const double _rowMaxHeight = 500.0;
 
-  const GroupTimeline({
+  const Timeline({
     super.key,
     required this.groupWithMembers,
     this.onBackPressed,
@@ -47,7 +47,7 @@ class GroupTimeline extends HookConsumerWidget {
     final totalDataRows = 3 + groupWithMembers.members.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
-    final timelineController = useGroupTimelineController(
+    final timelineController = useTimelineController(
       context: context,
       ref: ref,
       groupWithMembers: groupWithMembers,
@@ -694,7 +694,7 @@ class _GroupEventEditDialog extends HookWidget {
               Navigator.of(context).pop();
             } catch (e, stack) {
               logger.e(
-                'GroupTimeline.showGroupEventEditDialog: ${e.toString()}',
+                'Timeline.showGroupEventEditDialog: ${e.toString()}',
                 error: e,
                 stackTrace: stack,
               );

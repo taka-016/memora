@@ -35,7 +35,7 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
-import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
@@ -651,7 +651,7 @@ void main() {
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(GroupTimeline), findsOneWidget);
+      expect(find.byType(Timeline), findsOneWidget);
     });
 
     testWidgets('テスト環境でもグループ管理とメンバー管理は実ウィジェットを表示する', (

@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_view_state.dart';
+import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
 
 void main() {
   group('GroupTimelineViewState', () {
     test('初期状態では現在年を基準に前後5年を表示対象年として返す', () {
-      final state = GroupTimelineViewState.initial(
+      final state = TimelineViewState.initial(
         baseYear: 2026,
         totalDataRows: 4,
         initialYearRange: 5,
@@ -20,7 +20,7 @@ void main() {
     });
 
     test('行数が増えたときは既存の高さを維持して不足分だけデフォルト値を補う', () {
-      final state = GroupTimelineViewState(
+      final state = TimelineViewState(
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
@@ -36,7 +36,7 @@ void main() {
     });
 
     test('行の高さ変更は最小値と最大値の範囲に収める', () {
-      final state = GroupTimelineViewState(
+      final state = TimelineViewState(
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
@@ -61,7 +61,7 @@ void main() {
     });
 
     test('列インデックスから求める年はbaseYearを基準に固定される', () {
-      final state = GroupTimelineViewState(
+      final state = TimelineViewState(
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
@@ -75,7 +75,7 @@ void main() {
 
     test('rowHeightsは外部から直接変更できない', () {
       final sourceRowHeights = <double>[100, 120];
-      final state = GroupTimelineViewState(
+      final state = TimelineViewState(
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
