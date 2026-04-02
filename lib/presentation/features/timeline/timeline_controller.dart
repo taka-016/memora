@@ -15,12 +15,12 @@ import 'package:memora/application/usecases/member/calculate_school_grade_usecas
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_view_state.dart';
+import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 
-class GroupTimelineController {
-  GroupTimelineController({
+class TimelineController {
+  TimelineController({
     required this.viewState,
     required this.displaySettings,
     required this.isDraggingOnFixedRow,
@@ -39,7 +39,7 @@ class GroupTimelineController {
     required this.saveGroupEvent,
   });
 
-  final GroupTimelineViewState viewState;
+  final TimelineViewState viewState;
   final TimelineDisplaySettings displaySettings;
   final bool isDraggingOnFixedRow;
   final Map<int, List<TripEntryDto>> tripsByYear;
@@ -77,7 +77,7 @@ class GroupTimelineController {
   }
 }
 
-GroupTimelineController useGroupTimelineController({
+TimelineController useTimelineController({
   required BuildContext context,
   required WidgetRef ref,
   required GroupDto groupWithMembers,
@@ -102,7 +102,7 @@ GroupTimelineController useGroupTimelineController({
   final deleteGroupEventUsecase = ref.read(deleteGroupEventUsecaseProvider);
 
   final viewStateState = useState(
-    GroupTimelineViewState.initial(
+    TimelineViewState.initial(
       baseYear: DateTime.now().year,
       totalDataRows: totalDataRows,
       initialYearRange: initialYearRange,
@@ -227,7 +227,7 @@ GroupTimelineController useGroupTimelineController({
         tripsByYearState.value = {...tripsByYearState.value, year: trips};
       } catch (e, stack) {
         logger.e(
-          'GroupTimelineController.loadTripDataForYear: ${e.toString()}',
+          'TimelineController.loadTripDataForYear: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
@@ -268,7 +268,7 @@ GroupTimelineController useGroupTimelineController({
       dvcPointUsagesByYearState.value = _groupDvcPointUsagesByYear(usages);
     } catch (e, stack) {
       logger.e(
-        'GroupTimelineController.loadDvcPointUsageData: ${e.toString()}',
+        'TimelineController.loadDvcPointUsageData: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
@@ -295,7 +295,7 @@ GroupTimelineController useGroupTimelineController({
       };
     } catch (e, stack) {
       logger.e(
-        'GroupTimelineController.loadGroupEventData: ${e.toString()}',
+        'TimelineController.loadGroupEventData: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
@@ -436,7 +436,7 @@ GroupTimelineController useGroupTimelineController({
     };
   }
 
-  return GroupTimelineController(
+  return TimelineController(
     viewState: viewState,
     displaySettings: displaySettingsState.value,
     isDraggingOnFixedRow: isDraggingOnFixedRowState.value,

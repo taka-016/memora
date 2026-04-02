@@ -19,8 +19,8 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
-import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -94,7 +94,7 @@ void main() {
           body: SizedBox(
             width: 1200, // より広い画面サイズを設定
             height: 800,
-            child: GroupTimeline(
+            child: Timeline(
               groupWithMembers: groupWithMembers ?? testGroupWithMembers,
               onSetRefreshCallback: onSetRefreshCallback,
             ),
@@ -106,7 +106,7 @@ void main() {
 
   Widget createControllerProbeWidget({
     required GroupDto groupWithMembers,
-    required void Function(GroupTimelineController controller) onBuilt,
+    required void Function(TimelineController controller) onBuilt,
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
@@ -129,7 +129,7 @@ void main() {
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: _GroupTimelineControllerProbe(
+          body: _TimelineControllerProbe(
             groupWithMembers: groupWithMembers,
             onBuilt: onBuilt,
           ),
@@ -219,7 +219,7 @@ void main() {
             body: SizedBox(
               width: 1200,
               height: 800,
-              child: GroupTimeline(
+              child: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onDvcPointCalculationPressed: () {
                   callbackCalled = true;
@@ -264,7 +264,7 @@ void main() {
             body: SizedBox(
               width: 1200,
               height: 800,
-              child: GroupTimeline(
+              child: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onDvcPointCalculationPressed: () {
                   callbackCalled = true;
@@ -1040,7 +1040,7 @@ void main() {
             body: SizedBox(
               width: 1200,
               height: 800,
-              child: GroupTimeline(
+              child: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onBackPressed: () {},
               ),
@@ -1092,7 +1092,7 @@ void main() {
             body: SizedBox(
               width: 1200,
               height: 800,
-              child: GroupTimeline(
+              child: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onBackPressed: () {
                   callbackCalled = true;
@@ -1139,7 +1139,7 @@ void main() {
             body: SizedBox(
               width: 1200,
               height: 800,
-              child: GroupTimeline(
+              child: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onTripManagementSelected: (groupId, year) {
                   selectedGroupId = groupId;
@@ -1229,7 +1229,7 @@ void main() {
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: GroupTimeline(
+            body: Timeline(
               groupWithMembers: testGroupWithMembers,
               onSetRefreshCallback: (callback) {
                 capturedCallback = callback;
@@ -1270,7 +1270,7 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: GroupTimeline(
+              body: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onSetRefreshCallback: (_) {
                   callbackSetCount++;
@@ -1330,7 +1330,7 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: GroupTimeline(
+              body: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onSetRefreshCallback: (callback) {
                   capturedCallback = callback;
@@ -1391,7 +1391,7 @@ void main() {
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: GroupTimeline(
+              body: Timeline(
                 groupWithMembers: testGroupWithMembers,
                 onSetRefreshCallback: (callback) {
                   capturedRefreshCallback = callback;
@@ -1499,7 +1499,7 @@ void main() {
     ) async {
       final secondGroupCompleter = Completer<List<TripEntryDto>>();
       int? requestedYear;
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final secondGroup = testGroupWithMembers.copyWith(
         id: '2',
         name: '切り替え後グループ',
@@ -1581,7 +1581,7 @@ void main() {
       final currentYear = DateTime.now().year;
       final firstGroupCompleter = Completer<List<DvcPointUsageDto>>();
       final secondGroupCompleter = Completer<List<DvcPointUsageDto>>();
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final secondGroup = testGroupWithMembers.copyWith(
         id: '2',
         name: '切り替え後グループ',
@@ -1666,7 +1666,7 @@ void main() {
       final currentYear = DateTime.now().year;
       final firstGroupCompleter = Completer<List<GroupEventDto>>();
       final secondGroupCompleter = Completer<List<GroupEventDto>>();
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final secondGroup = testGroupWithMembers.copyWith(
         id: '2',
         name: '切り替え後グループ',
@@ -1747,7 +1747,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final currentYear = DateTime.now().year;
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final secondGroup = testGroupWithMembers.copyWith(
         id: '2',
         name: '切り替え後グループ',
@@ -1830,7 +1830,7 @@ void main() {
       WidgetTester tester,
     ) async {
       final currentYear = DateTime.now().year;
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final secondGroup = testGroupWithMembers.copyWith(
         id: '2',
         name: '切り替え後グループ',
@@ -1905,7 +1905,7 @@ void main() {
     });
 
     testWidgets('メンバー数増加直後の最初のbuildでも行高さは不足しない', (WidgetTester tester) async {
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final expandedGroup = testGroupWithMembers.copyWith(
         members: [
           ...testGroupWithMembers.members,
@@ -1945,7 +1945,7 @@ void main() {
     testWidgets('メンバー数増加直後の新しい行も最初のbuildからリサイズできる', (
       WidgetTester tester,
     ) async {
-      final capturedControllers = <GroupTimelineController>[];
+      final capturedControllers = <TimelineController>[];
       final expandedGroup = testGroupWithMembers.copyWith(
         members: [
           ...testGroupWithMembers.members,
@@ -1995,14 +1995,14 @@ void main() {
   });
 }
 
-class _GroupTimelineControllerProbe extends StatelessWidget {
-  const _GroupTimelineControllerProbe({
+class _TimelineControllerProbe extends StatelessWidget {
+  const _TimelineControllerProbe({
     required this.groupWithMembers,
     required this.onBuilt,
   });
 
   final GroupDto groupWithMembers;
-  final void Function(GroupTimelineController controller) onBuilt;
+  final void Function(TimelineController controller) onBuilt;
 
   @override
   Widget build(BuildContext context) {
@@ -2012,7 +2012,7 @@ class _GroupTimelineControllerProbe extends StatelessWidget {
       builder: (context, ref, _) {
         return HookBuilder(
           builder: (context) {
-            final controller = useGroupTimelineController(
+            final controller = useTimelineController(
               context: context,
               ref: ref,
               groupWithMembers: groupWithMembers,

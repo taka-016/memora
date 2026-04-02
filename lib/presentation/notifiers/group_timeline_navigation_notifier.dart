@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 
 enum GroupTimelineScreenState {
@@ -22,7 +22,7 @@ class GroupTimelineNavigationState {
   final GroupTimelineScreenState currentScreen;
   final String? selectedGroupId;
   final int? selectedYear;
-  final GroupTimeline? groupTimelineInstance;
+  final Timeline? groupTimelineInstance;
   final RefreshTimelineCallback? refreshGroupTimeline;
 
   const GroupTimelineNavigationState({
@@ -37,7 +37,7 @@ class GroupTimelineNavigationState {
     GroupTimelineScreenState? currentScreen,
     String? selectedGroupId,
     int? selectedYear,
-    GroupTimeline? groupTimelineInstance,
+    Timeline? groupTimelineInstance,
     RefreshTimelineCallback? refreshGroupTimeline,
     bool clearGroupId = false,
     bool clearYear = false,
@@ -79,7 +79,7 @@ class GroupTimelineNavigationNotifier
   }
 
   void showGroupTimeline(GroupDto groupWithMembers) {
-    final groupTimeline = GroupTimeline(
+    final groupTimeline = Timeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,

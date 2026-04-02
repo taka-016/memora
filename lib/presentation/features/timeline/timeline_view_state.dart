@@ -1,18 +1,18 @@
-class GroupTimelineViewState {
-  GroupTimelineViewState({
+class TimelineViewState {
+  TimelineViewState({
     required this.baseYear,
     required this.startYearOffset,
     required this.endYearOffset,
     required List<double> rowHeights,
   }) : rowHeights = List.unmodifiable(rowHeights);
 
-  factory GroupTimelineViewState.initial({
+  factory TimelineViewState.initial({
     required int baseYear,
     required int totalDataRows,
     required int initialYearRange,
     required double dataRowHeight,
   }) {
-    return GroupTimelineViewState(
+    return TimelineViewState(
       baseYear: baseYear,
       startYearOffset: -initialYearRange,
       endYearOffset: initialYearRange,
@@ -32,13 +32,13 @@ class GroupTimelineViewState {
     ];
   }
 
-  GroupTimelineViewState copyWith({
+  TimelineViewState copyWith({
     int? baseYear,
     int? startYearOffset,
     int? endYearOffset,
     List<double>? rowHeights,
   }) {
-    return GroupTimelineViewState(
+    return TimelineViewState(
       baseYear: baseYear ?? this.baseYear,
       startYearOffset: startYearOffset ?? this.startYearOffset,
       endYearOffset: endYearOffset ?? this.endYearOffset,
@@ -46,15 +46,15 @@ class GroupTimelineViewState {
     );
   }
 
-  GroupTimelineViewState expandPast(int yearRangeIncrement) {
+  TimelineViewState expandPast(int yearRangeIncrement) {
     return copyWith(startYearOffset: startYearOffset - yearRangeIncrement);
   }
 
-  GroupTimelineViewState expandFuture(int yearRangeIncrement) {
+  TimelineViewState expandFuture(int yearRangeIncrement) {
     return copyWith(endYearOffset: endYearOffset + yearRangeIncrement);
   }
 
-  GroupTimelineViewState ensureRowCount({
+  TimelineViewState ensureRowCount({
     required int totalDataRows,
     required double dataRowHeight,
   }) {
@@ -71,7 +71,7 @@ class GroupTimelineViewState {
     );
   }
 
-  GroupTimelineViewState resizeRow({
+  TimelineViewState resizeRow({
     required int rowIndex,
     required double delta,
     required double minHeight,
