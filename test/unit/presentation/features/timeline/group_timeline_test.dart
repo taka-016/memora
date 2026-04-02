@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
@@ -16,7 +19,9 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -62,6 +67,46 @@ void main() {
   });
 
   Widget createTestWidget({
+    GroupDto? groupWithMembers,
+    TripEntryQueryService? tripEntryQueryService,
+    DvcPointUsageQueryService? dvcPointUsageService,
+    GroupEventQueryService? groupEventService,
+    GroupEventRepository? groupEventRepo,
+    void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+  }) {
+    return ProviderScope(
+      overrides: [
+        tripEntryQueryServiceProvider.overrideWithValue(
+          tripEntryQueryService ?? mockTripEntryQueryService,
+        ),
+        dvcPointUsageQueryServiceProvider.overrideWithValue(
+          dvcPointUsageService ?? dvcPointUsageQueryService,
+        ),
+        groupEventQueryServiceProvider.overrideWithValue(
+          groupEventService ?? groupEventQueryService,
+        ),
+        groupEventRepositoryProvider.overrideWithValue(
+          groupEventRepo ?? groupEventRepository,
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 1200, // より広い画面サイズを設定
+            height: 800,
+            child: GroupTimeline(
+              groupWithMembers: groupWithMembers ?? testGroupWithMembers,
+              onSetRefreshCallback: onSetRefreshCallback,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget createControllerProbeWidget({
+    required GroupDto groupWithMembers,
+    required void Function(GroupTimelineController controller) onBuilt,
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
@@ -84,14 +129,22 @@ void main() {
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: SizedBox(
-            width: 1200, // より広い画面サイズを設定
-            height: 800,
-            child: GroupTimeline(groupWithMembers: testGroupWithMembers),
+          body: _GroupTimelineControllerProbe(
+            groupWithMembers: groupWithMembers,
+            onBuilt: onBuilt,
           ),
         ),
       ),
     );
+  }
+
+  void setCustomViewSize(WidgetTester tester, Size size) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
   }
 
   group('GroupTimeline', () {
@@ -826,8 +879,7 @@ void main() {
 
     testWidgets('初期表示時に現在の年が画面の中央にスクロールされる', (WidgetTester tester) async {
       // Arrange
-      tester.view.physicalSize = const Size(800, 600);
-      tester.view.devicePixelRatio = 1.0;
+      setCustomViewSize(tester, const Size(1001, 601));
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
@@ -844,6 +896,26 @@ void main() {
 
       // スクロール位置が0（左端）ではないことを確認（中央にスクロールされている）
       expect(scrollController.offset, greaterThan(0));
+    });
+
+    testWidgets('現在年スクロール位置は実際のviewport幅を基準に計算される', (
+      WidgetTester tester,
+    ) async {
+      setCustomViewSize(tester, const Size(1001, 601));
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(scrollView)
+          .controller!;
+
+      final totalWidth = (2 * 100.0) + (11 * 120.0);
+      final expectedOffset =
+          ((totalWidth / 2) - (scrollController.position.viewportDimension / 2))
+              .clamp(0.0, scrollController.position.maxScrollExtent);
+
+      expect(scrollController.offset, closeTo(expectedOffset, 0.1));
     });
 
     testWidgets('行の高さをドラッグで変更できるリサイザーが表示される', (WidgetTester tester) async {
@@ -1140,7 +1212,7 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      VoidCallback? capturedCallback;
+      RefreshTimelineCallback? capturedCallback;
 
       Widget widget = ProviderScope(
         overrides: [
@@ -1174,7 +1246,793 @@ void main() {
       // Assert - コールバックが設定されることを確認
       expect(capturedCallback, isNotNull);
     });
+
+    testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (
+      WidgetTester tester,
+    ) async {
+      var callbackSetCount = 0;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (_) {
+                  callbackSetCount++;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(callbackSetCount, 1);
+
+      final showMoreFutureButton = tester.widget<TextButton>(
+        find.byKey(const Key('show_more_future')),
+      );
+      showMoreFutureButton.onPressed!.call();
+      await tester.pumpAndSettle();
+
+      expect(callbackSetCount, 1);
+    });
+
+    testWidgets('同一年の旅行取得が進行中の場合は重複実行しない', (WidgetTester tester) async {
+      final completer = Completer<List<TripEntryDto>>();
+      final requestedYears = <int>[];
+      RefreshTimelineCallback? capturedCallback;
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        requestedYears.add(invocation.positionalArguments[1] as int);
+        if (requestedYears.length == 1) {
+          return completer.future;
+        }
+        return Future.value(<TripEntryDto>[]);
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (callback) {
+                  capturedCallback = callback;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(capturedCallback, isNotNull);
+
+      final refreshFuture = capturedCallback!();
+      await tester.pump();
+
+      expect(requestedYears, hasLength(1));
+
+      completer.complete([]);
+      await refreshFuture;
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('リフレッシュコールバックは取得中の旅行ロード完了まで待つ', (WidgetTester tester) async {
+      final completer = Completer<List<TripEntryDto>>();
+      final requestedYears = <int>[];
+      RefreshTimelineCallback? capturedRefreshCallback;
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        requestedYears.add(invocation.positionalArguments[1] as int);
+        if (requestedYears.length == 1) {
+          return completer.future;
+        }
+        return Future.value(<TripEntryDto>[]);
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            tripEntryQueryServiceProvider.overrideWithValue(
+              mockTripEntryQueryService,
+            ),
+            dvcPointUsageQueryServiceProvider.overrideWithValue(
+              dvcPointUsageQueryService,
+            ),
+            groupEventQueryServiceProvider.overrideWithValue(
+              groupEventQueryService,
+            ),
+            groupEventRepositoryProvider.overrideWithValue(
+              groupEventRepository,
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: GroupTimeline(
+                groupWithMembers: testGroupWithMembers,
+                onSetRefreshCallback: (callback) {
+                  capturedRefreshCallback = callback;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(capturedRefreshCallback, isNotNull);
+
+      final refreshFuture = capturedRefreshCallback!();
+      await tester.pump();
+
+      expect(refreshFuture, isA<Future<void>>());
+      expect(requestedYears, hasLength(1));
+      expect(completer.isCompleted, isFalse);
+
+      var isRefreshCompleted = false;
+      refreshFuture.then((_) {
+        isRefreshCompleted = true;
+      });
+      await tester.pump();
+      expect(isRefreshCompleted, isFalse);
+
+      completer.complete([]);
+      await tester.pumpAndSettle();
+
+      expect(isRefreshCompleted, isTrue);
+    });
+
+    testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
+      WidgetTester tester,
+    ) async {
+      final firstGroupCompleter = Completer<List<TripEntryDto>>();
+      final requestedGroupIds = <String>[];
+      int? firstRequestedYear;
+      var hasReturnedSecondGroupTrip = false;
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        final groupId = invocation.positionalArguments[0] as String;
+        final year = invocation.positionalArguments[1] as int;
+        requestedGroupIds.add(groupId);
+        firstRequestedYear ??= year;
+
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+
+        if (!hasReturnedSecondGroupTrip) {
+          hasReturnedSecondGroupTrip = true;
+          return Future.value([
+            TripEntryDto(
+              id: 'trip_2',
+              groupId: groupId,
+              tripYear: year,
+              tripName: '新グループ旅行',
+              tripStartDate: DateTime(year, 1, 1),
+            ),
+          ]);
+        }
+
+        return Future.value(<TripEntryDto>[]);
+      });
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pump();
+
+      expect(requestedGroupIds, ['1']);
+
+      await tester.pumpWidget(createTestWidget(groupWithMembers: secondGroup));
+      await tester.pump();
+
+      expect(requestedGroupIds, contains('2'));
+
+      firstGroupCompleter.complete([
+        TripEntryDto(
+          id: 'trip_1',
+          groupId: '1',
+          tripYear: firstRequestedYear!,
+          tripName: '旧グループ旅行',
+          tripStartDate: DateTime(firstRequestedYear!, 1, 1),
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('新グループ旅行'), findsOneWidget);
+      expect(find.text('旧グループ旅行'), findsNothing);
+    });
+
+    testWidgets('グループ切り替え直後の最初のbuildでは旧グループの旅行状態を返さない', (
+      WidgetTester tester,
+    ) async {
+      final secondGroupCompleter = Completer<List<TripEntryDto>>();
+      int? requestedYear;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) {
+        final groupId = invocation.positionalArguments[0] as String;
+        final year = invocation.positionalArguments[1] as int;
+        requestedYear ??= year;
+
+        if (groupId == '1') {
+          return Future.value([
+            TripEntryDto(
+              id: 'trip_1',
+              groupId: groupId,
+              tripYear: year,
+              tripName: '旧グループ旅行',
+              tripStartDate: DateTime(year, 1, 1),
+            ),
+          ]);
+        }
+
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.tripsByYear.values.expand((trips) => trips),
+        isNotEmpty,
+      );
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+      expect(capturedControllers.first.tripsByYear, isEmpty);
+
+      secondGroupCompleter.complete([
+        TripEntryDto(
+          id: 'trip_2',
+          groupId: '2',
+          tripYear: requestedYear!,
+          tripName: '新グループ旅行',
+          tripStartDate: DateTime(requestedYear!, 1, 1),
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.tripsByYear.values
+            .expand((trips) => trips)
+            .map((trip) => trip.tripName),
+        contains('新グループ旅行'),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのDVC取得結果で新グループ表示を上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final firstGroupCompleter = Completer<List<DvcPointUsageDto>>();
+      final secondGroupCompleter = Completer<List<DvcPointUsageDto>>();
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final dvcService = _ControlledDvcPointUsageQueryService((groupId) {
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          dvcPointUsageService: dvcService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          dvcPointUsageService: dvcService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      secondGroupCompleter.complete([
+        DvcPointUsageDto(
+          id: 'usage-2',
+          groupId: '2',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 80,
+          memo: '新グループDVC',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        contains('新グループDVC'),
+      );
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        isNot(contains('旧グループDVC')),
+      );
+
+      firstGroupCompleter.complete([
+        DvcPointUsageDto(
+          id: 'usage-1',
+          groupId: '1',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 120,
+          memo: '旧グループDVC',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        contains('新グループDVC'),
+      );
+      expect(
+        capturedControllers.last.dvcPointUsagesByYear.values
+            .expand((usages) => usages)
+            .map((usage) => usage.memo),
+        isNot(contains('旧グループDVC')),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのイベント取得結果で新グループ表示を上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final firstGroupCompleter = Completer<List<GroupEventDto>>();
+      final secondGroupCompleter = Completer<List<GroupEventDto>>();
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final eventService = _ControlledGroupEventQueryService((groupId) {
+        if (groupId == '1') {
+          return firstGroupCompleter.future;
+        }
+        return secondGroupCompleter.future;
+      });
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pump();
+
+      secondGroupCompleter.complete([
+        GroupEventDto(
+          id: 'event-2',
+          groupId: '2',
+          year: currentYear,
+          memo: '新グループイベント',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループイベント')),
+      );
+
+      firstGroupCompleter.complete([
+        GroupEventDto(
+          id: 'event-1',
+          groupId: '1',
+          year: currentYear,
+          memo: '旧グループイベント',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループイベント')),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのイベント保存結果で新グループstateを上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final oldEvent = GroupEventDto(
+        id: 'event-1',
+        groupId: '1',
+        year: currentYear,
+        memo: '旧グループイベント',
+      );
+      final newEvent = GroupEventDto(
+        id: 'event-2',
+        groupId: '2',
+        year: currentYear,
+        memo: '新グループイベント',
+      );
+      final saveCompleter = Completer<String>();
+      final eventService = _ControlledGroupEventQueryService((groupId) async {
+        return groupId == '1' ? [oldEvent] : [newEvent];
+      });
+      final repository = _ControlledGroupEventRepository(
+        onSaveGroupEvent: (_) => saveCompleter.future,
+        onDeleteGroupEvent: (_) async {},
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final saveFuture = capturedControllers.last.saveGroupEvent(
+        currentEvent: oldEvent,
+        groupId: '1',
+        selectedYear: currentYear,
+        memo: '旧グループ更新',
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+
+      saveCompleter.complete('event-1');
+      await saveFuture;
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        isNot(contains('旧グループ更新')),
+      );
+    });
+
+    testWidgets('グループ切り替え後に旧グループのイベント削除結果で新グループstateを上書きしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final capturedControllers = <GroupTimelineController>[];
+      final secondGroup = testGroupWithMembers.copyWith(
+        id: '2',
+        name: '切り替え後グループ',
+      );
+      final oldEvent = GroupEventDto(
+        id: 'event-1',
+        groupId: '1',
+        year: currentYear,
+        memo: '旧グループイベント',
+      );
+      final newEvent = GroupEventDto(
+        id: 'event-2',
+        groupId: '2',
+        year: currentYear,
+        memo: '新グループイベント',
+      );
+      final deleteCompleter = Completer<void>();
+      final eventService = _ControlledGroupEventQueryService((groupId) async {
+        return groupId == '1' ? [oldEvent] : [newEvent];
+      });
+      final repository = _ControlledGroupEventRepository(
+        onSaveGroupEvent: (_) async => 'unused',
+        onDeleteGroupEvent: (_) => deleteCompleter.future,
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final deleteFuture = capturedControllers.last.saveGroupEvent(
+        currentEvent: oldEvent,
+        groupId: '1',
+        selectedYear: currentYear,
+        memo: '',
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: secondGroup,
+          groupEventService: eventService,
+          groupEventRepo: repository,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+
+      deleteCompleter.complete();
+      await deleteFuture;
+      await tester.pumpAndSettle();
+
+      expect(
+        capturedControllers.last.groupEventsByYear.values.map(
+          (event) => event.memo,
+        ),
+        contains('新グループイベント'),
+      );
+      expect(capturedControllers.last.groupEventsByYear.length, 1);
+    });
+
+    testWidgets('メンバー数増加直後の最初のbuildでも行高さは不足しない', (WidgetTester tester) async {
+      final capturedControllers = <GroupTimelineController>[];
+      final expandedGroup = testGroupWithMembers.copyWith(
+        members: [
+          ...testGroupWithMembers.members,
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ハナちゃん',
+            email: 'hana@example.com',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: expandedGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+      expect(
+        capturedControllers.first.rowHeights.length,
+        3 + expandedGroup.members.length,
+      );
+    });
+
+    testWidgets('メンバー数増加直後の新しい行も最初のbuildからリサイズできる', (
+      WidgetTester tester,
+    ) async {
+      final capturedControllers = <GroupTimelineController>[];
+      final expandedGroup = testGroupWithMembers.copyWith(
+        members: [
+          ...testGroupWithMembers.members,
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ハナちゃん',
+            email: 'hana@example.com',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      capturedControllers.clear();
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: expandedGroup,
+          onBuilt: capturedControllers.add,
+        ),
+      );
+
+      expect(capturedControllers, isNotEmpty);
+
+      final controller = capturedControllers.first;
+      const pointer = 1;
+      final newRowIndex = 3 + expandedGroup.members.length - 1;
+      controller.onRowResizePointerDown(
+        newRowIndex,
+        const PointerDownEvent(pointer: pointer),
+      );
+      controller.onRowResizePointerMove(
+        newRowIndex,
+        const PointerMoveEvent(pointer: pointer, delta: Offset(0, 20)),
+      );
+      await tester.pump();
+
+      expect(capturedControllers.last.rowHeights[newRowIndex], 120);
+    });
   });
+}
+
+class _GroupTimelineControllerProbe extends StatelessWidget {
+  const _GroupTimelineControllerProbe({
+    required this.groupWithMembers,
+    required this.onBuilt,
+  });
+
+  final GroupDto groupWithMembers;
+  final void Function(GroupTimelineController controller) onBuilt;
+
+  @override
+  Widget build(BuildContext context) {
+    final totalDataRows = 3 + groupWithMembers.members.length;
+
+    return Consumer(
+      builder: (context, ref, _) {
+        return HookBuilder(
+          builder: (context) {
+            final controller = useGroupTimelineController(
+              context: context,
+              ref: ref,
+              groupWithMembers: groupWithMembers,
+              totalDataRows: totalDataRows,
+              initialYearRange: 5,
+              yearRangeIncrement: 5,
+              dataRowHeight: 100,
+              rowMinHeight: 100,
+              rowMaxHeight: 500,
+              buttonColumnWidth: 100,
+              yearColumnWidth: 120,
+              onSetRefreshCallback: null,
+            );
+            onBuilt(controller);
+            return const SizedBox.shrink();
+          },
+        );
+      },
+    );
+  }
 }
 
 class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
@@ -1191,6 +2049,21 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }
 }
 
+class _ControlledDvcPointUsageQueryService
+    implements DvcPointUsageQueryService {
+  const _ControlledDvcPointUsageQueryService(this.onGetByGroupId);
+
+  final Future<List<DvcPointUsageDto>> Function(String groupId) onGetByGroupId;
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) {
+    return onGetByGroupId(groupId);
+  }
+}
+
 class _FakeGroupEventQueryService implements GroupEventQueryService {
   const _FakeGroupEventQueryService(this.groupEvents);
 
@@ -1202,6 +2075,43 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return groupEvents.where((event) => event.groupId == groupId).toList();
+  }
+}
+
+class _ControlledGroupEventQueryService implements GroupEventQueryService {
+  const _ControlledGroupEventQueryService(this.onGetByGroupId);
+
+  final Future<List<GroupEventDto>> Function(String groupId) onGetByGroupId;
+
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) {
+    return onGetByGroupId(groupId);
+  }
+}
+
+class _ControlledGroupEventRepository implements GroupEventRepository {
+  const _ControlledGroupEventRepository({
+    required this.onSaveGroupEvent,
+    required this.onDeleteGroupEvent,
+  });
+
+  final Future<String> Function(GroupEvent groupEvent) onSaveGroupEvent;
+  final Future<void> Function(String groupEventId) onDeleteGroupEvent;
+
+  @override
+  Future<void> deleteGroupEvent(String groupEventId) {
+    return onDeleteGroupEvent(groupEventId);
+  }
+
+  @override
+  Future<void> deleteGroupEventsByGroupId(String groupId) async {}
+
+  @override
+  Future<String> saveGroupEvent(GroupEvent groupEvent) {
+    return onSaveGroupEvent(groupEvent);
   }
 }
 

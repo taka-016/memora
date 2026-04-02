@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/group_timeline.dart';
+import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 
 enum GroupTimelineScreenState {
   groupList,
@@ -21,7 +23,7 @@ class GroupTimelineNavigationState {
   final String? selectedGroupId;
   final int? selectedYear;
   final GroupTimeline? groupTimelineInstance;
-  final VoidCallback? refreshGroupTimeline;
+  final RefreshTimelineCallback? refreshGroupTimeline;
 
   const GroupTimelineNavigationState({
     required this.currentScreen,
@@ -36,7 +38,7 @@ class GroupTimelineNavigationState {
     String? selectedGroupId,
     int? selectedYear,
     GroupTimeline? groupTimelineInstance,
-    VoidCallback? refreshGroupTimeline,
+    RefreshTimelineCallback? refreshGroupTimeline,
     bool clearGroupId = false,
     bool clearYear = false,
     bool clearInstance = false,
@@ -113,7 +115,10 @@ class GroupTimelineNavigationNotifier
       clearYear: true,
     );
 
-    state.refreshGroupTimeline?.call();
+    final refreshGroupTimeline = state.refreshGroupTimeline;
+    if (refreshGroupTimeline != null) {
+      unawaited(refreshGroupTimeline());
+    }
   }
 
   void showDvcPointCalculation(String selectedGroupId) {
@@ -129,7 +134,10 @@ class GroupTimelineNavigationNotifier
       clearGroupId: true,
     );
 
-    state.refreshGroupTimeline?.call();
+    final refreshGroupTimeline = state.refreshGroupTimeline;
+    if (refreshGroupTimeline != null) {
+      unawaited(refreshGroupTimeline());
+    }
   }
 
   void resetToGroupList() {

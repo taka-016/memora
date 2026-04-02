@@ -29,27 +29,6 @@
 
 ## グループ年表画面
 
-- `group_timeline.dart`の状態管理・副作用・スクロール同期を先に分離し、`GroupTimeline`本体の責務を「画面レイアウト・既存Dialog起動・行/列の組み立て」に絞る
-  - 初回対応では行描画の別ファイル化を優先しない
-  - まずは本体を小さくする効果が大きい箇所から着手する
-  - 既存の見た目、操作、`Key`名、テスト観点を原則維持し、リファクタリングによる挙動変更を入れない
-- 分離対象は以下を優先する
-  - 年の表示範囲状態と`visibleYears`算出
-  - trips / group events / DVC point usages の取得と`refreshTimelineData`
-  - 表示設定の読み書き
-  - 行高さの状態管理と更新
-  - 横スクロール用`ScrollController`の生成・破棄・同期
-  - 初期表示時の現在年へのスクロール
-  - `onSetRefreshCallback`への再読込登録
-- 分離先は`Hook`または`Controller`として、UI Widgetから副作用コードを追い出すことを優先する
-  - `GroupTimeline`から`useEffect`と`useState`の大半を移し、UI側は結果を受け取って描画する形にする
-  - usecase呼び出しは分離先に集約し、`GroupTimeline`が個別usecaseを直接読む箇所を最小化する
-- 初回対応では以下は後回しとする
-  - 行描画の別ファイル化
-  - 年表ヘッダー、設定シート、行リサイズUIの別Widget化
-  - UI仕様変更、色変更、文言変更
-  - 新規パッケージ追加
-
 ## 旅行管理画面
 
 
