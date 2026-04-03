@@ -56,10 +56,7 @@ void main() {
 
     test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
-      final editedMember = MemberDto(
-        id: '',
-        displayName: 'ミニマル',
-      );
+      final editedMember = MemberDto(id: '', displayName: 'ミニマル');
       const ownerId = 'admin-member-id';
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
