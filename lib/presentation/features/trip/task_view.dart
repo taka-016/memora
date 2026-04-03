@@ -424,9 +424,7 @@ List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
 
 List<TaskDto> _regenerateTasksForPaste(List<TaskDto> tasks, String? tripId) {
   final uuid = const Uuid();
-  final idMap = <String, String>{
-    for (final task in tasks) task.id: uuid.v7(),
-  };
+  final idMap = <String, String>{for (final task in tasks) task.id: uuid.v7()};
 
   return tasks.map((task) {
     final newParentId = task.parentTaskId == null
