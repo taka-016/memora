@@ -51,7 +51,7 @@ void main() {
       expect(savedMember.hiraganaFirstName, editedMember.hiraganaFirstName);
       expect(savedMember.gender, editedMember.gender);
       expect(savedMember.birthday, editedMember.birthday);
-      expect(savedMember.id, '');
+      expect(savedMember.id, editedMember.id);
     });
 
     test('最小限のデータでメンバーを作成すること', () async {
@@ -71,10 +71,10 @@ void main() {
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
-      expect(savedMember.id, '');
+      expect(savedMember.id, editedMember.id);
     });
 
-    test('新規作成時は入力idを無視して空文字で保存すること', () async {
+    test('ownerIdのみ更新しidは変更しないこと', () async {
       // Arrange
       final editedMember = MemberDto(
         id: 'edited-member-id',
@@ -92,7 +92,8 @@ void main() {
         mockMemberRepository.saveMember(captureAny),
       ).captured;
       final savedMember = captured[0] as Member;
-      expect(savedMember.id, '');
+      expect(savedMember.ownerId, ownerId);
+      expect(savedMember.id, editedMember.id);
     });
   });
 }
