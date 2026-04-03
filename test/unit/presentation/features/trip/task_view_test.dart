@@ -9,7 +9,9 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import '../../../../helpers/test_exception.dart';
 
-final _uuidV7Pattern = RegExp(r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$');
+final _uuidV7Pattern = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+);
 
 class FakeTaskQueryService implements TaskQueryService {
   FakeTaskQueryService(this.tasks);
