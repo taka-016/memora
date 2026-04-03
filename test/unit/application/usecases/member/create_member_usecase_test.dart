@@ -74,7 +74,7 @@ void main() {
       expect(savedMember.id, isEmpty);
     });
 
-    test('入力idがあっても保存時は空文字へ正規化すること', () async {
+    test('入力idがある場合はその値を保持したまま保存すること', () async {
       // Arrange
       final editedMember = MemberDto(id: 'edited-member-id', displayName: '新規作成');
       const ownerId = 'admin-member-id';
@@ -89,7 +89,7 @@ void main() {
         mockMemberRepository.saveMember(captureAny),
       ).captured;
       final savedMember = captured[0] as Member;
-      expect(savedMember.id, isEmpty);
+      expect(savedMember.id, editedMember.id);
       expect(savedMember.displayName, editedMember.displayName);
     });
   });
