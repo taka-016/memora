@@ -9,6 +9,10 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import '../../../../helpers/test_exception.dart';
 
+final _uuidV7Pattern = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+);
+
 class FakeTaskQueryService implements TaskQueryService {
   FakeTaskQueryService(this.tasks);
 
@@ -100,6 +104,7 @@ void main() {
       expect(find.text('航空券手配'), findsOneWidget);
       expect(lastChanged.length, 1);
       expect(lastChanged.first.name, '航空券手配');
+      expect(_uuidV7Pattern.hasMatch(lastChanged.first.id), isTrue);
     });
 
     testWidgets('チェックボックスで完了状態が更新されること', (tester) async {
@@ -1033,6 +1038,8 @@ void main() {
 
       expect(parent.id, isNot('parent-1'));
       expect(child.id, isNot('child-1'));
+      expect(_uuidV7Pattern.hasMatch(parent.id), isTrue);
+      expect(_uuidV7Pattern.hasMatch(child.id), isTrue);
       expect(parent.tripId, 'trip-2');
       expect(child.tripId, 'trip-2');
       expect(child.parentTaskId, parent.id);

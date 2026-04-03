@@ -29,7 +29,7 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
+    test('saveMemberがmembers collectionの新規ドキュメントにメンバー情報をsetする', () async {
       final member = Member(
         id: 'member001',
         hiraganaFirstName: 'たろう',
@@ -46,12 +46,14 @@ void main() {
       );
 
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(mockCollection.doc()).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveMember(member);
 
+      verify(mockCollection.doc()).called(1);
       verify(
-        mockCollection.add(
+        mockDocRef.set(
           argThat(
             allOf([
               containsPair('hiraganaFirstName', 'たろう'),

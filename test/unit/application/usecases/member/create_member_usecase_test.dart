@@ -51,7 +51,7 @@ void main() {
       expect(savedMember.hiraganaFirstName, editedMember.hiraganaFirstName);
       expect(savedMember.gender, editedMember.gender);
       expect(savedMember.birthday, editedMember.birthday);
-      expect(savedMember.id, isNot(editedMember.id)); // 新しいIDが生成されること
+      expect(savedMember.id, editedMember.id);
     });
 
     test('最小限のデータでメンバーを作成すること', () async {
@@ -74,7 +74,7 @@ void main() {
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
-      expect(savedMember.id, isNot(editedMember.id)); // 新しいIDが生成されること
+      expect(savedMember.id, editedMember.id);
     });
   });
 }
