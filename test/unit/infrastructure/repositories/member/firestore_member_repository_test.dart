@@ -77,17 +77,17 @@ void main() {
       },
     );
 
-    test('saveMemberがid設定済み時は指定idのドキュメントにメンバー情報をsetする', () async {
+    test('saveMemberがid設定済み時でも新規ドキュメントにメンバー情報をsetする', () async {
       final member = Member(id: 'member001', displayName: 'たろちゃん');
 
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.doc(member.id)).thenReturn(mockDocRef);
+      when(mockCollection.doc()).thenReturn(mockDocRef);
       when(mockDocRef.set(any)).thenAnswer((_) async {});
 
       await repository.saveMember(member);
 
-      verify(mockCollection.doc(member.id)).called(1);
-      verifyNever(mockCollection.doc());
+      verify(mockCollection.doc()).called(1);
+      verifyNever(mockCollection.doc(member.id));
       verify(
         mockDocRef.set(
           argThat(
