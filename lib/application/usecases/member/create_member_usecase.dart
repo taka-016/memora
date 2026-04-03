@@ -15,7 +15,7 @@ class CreateMemberUsecase {
 
   Future<void> execute(MemberDto editedMember, String ownerId) async {
     final editedMemberEntity = MemberMapper.toEntity(editedMember);
-    final newMember = editedMemberEntity.copyWith(ownerId: ownerId);
+    final newMember = editedMemberEntity.copyWith(id: '', ownerId: ownerId);
 
     await _memberRepository.saveMember(newMember);
   }
