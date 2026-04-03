@@ -29,9 +29,7 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test(
-      'saveMemberがid未設定時はmembers collectionの新規ドキュメントにメンバー情報をsetする',
-      () async {
+    test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
         final member = Member(
           id: '',
           hiraganaFirstName: 'たろう',
@@ -48,14 +46,12 @@ void main() {
         );
 
         final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-        when(mockCollection.doc()).thenReturn(mockDocRef);
-        when(mockDocRef.set(any)).thenAnswer((_) async {});
+        when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
 
         await repository.saveMember(member);
 
-        verify(mockCollection.doc()).called(1);
         verify(
-          mockDocRef.set(
+          mockCollection.add(
             argThat(
               allOf([
                 containsPair('hiraganaFirstName', 'たろう'),
@@ -74,30 +70,6 @@ void main() {
             ),
           ),
         ).called(1);
-      },
-    );
-
-    test('saveMemberがid設定済み時でも新規ドキュメントにメンバー情報をsetする', () async {
-      final member = Member(id: 'member001', displayName: 'たろちゃん');
-
-      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      when(mockCollection.doc()).thenReturn(mockDocRef);
-      when(mockDocRef.set(any)).thenAnswer((_) async {});
-
-      await repository.saveMember(member);
-
-      verify(mockCollection.doc()).called(1);
-      verifyNever(mockCollection.doc(member.id));
-      verify(
-        mockDocRef.set(
-          argThat(
-            allOf([
-              containsPair('displayName', 'たろちゃん'),
-              contains('createdAt'),
-            ]),
-          ),
-        ),
-      ).called(1);
     });
 
     test('deleteMemberがmembers collectionの該当ドキュメントを削除する', () async {
