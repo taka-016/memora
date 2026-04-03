@@ -238,6 +238,7 @@
 - メンバー削除時は、memberIdで紐づくテーブル（trip_participants,group_members,member_events）をすべて削除する（delete_member_usecaseで対応）
 - メール認証の有効化
 - 生年月日は未来日付も入力可能にする
+- member作成時に未使用のUUIDを生成している経路を廃止し、member IDの決定元をFirestoreドキュメントIDに統一する
 
 ## グループ管理画面
 
@@ -365,6 +366,8 @@
 - 年表画面のDVC行セルをタップした際に、対象セルの全件（利用年月・利用ポイント・メモ）を省略なしで確認できるポップアップを表示する
 
 ## 旅行管理画面
+
+- タスクIDの生成方式をUUID v7に変更する
 
 - 旅行一覧表示
   - toppage内のウィジェットとして表示する
@@ -498,6 +501,8 @@
 
 ## 地図画面
 
+- ピンIDの生成方式をUUID v7に変更する
+
 - ピンタップ時にモーダルを表示するのを廃止しボトムシートに変更する
 - 入力域やボタンの見た目がtrip_edit_modalと異なるので、trip_edit_modal側に合わせる
 - GoogleMapMarkerManagerを廃止してMapDisplayをStatelessWidgetに変更する
@@ -525,6 +530,7 @@
 
 ## 招待機能
 
+- 招待コードの生成方式をUUID v7に変更する
 - MemberInvitationエンティティを作成する
 - メンバー編集画面に(新規の時は除く)招待ボタンを配置する
 - 招待ボタンボタンクリックでMemberInvitationを作成
