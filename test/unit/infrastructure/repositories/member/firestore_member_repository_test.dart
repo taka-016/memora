@@ -30,46 +30,46 @@ void main() {
     });
 
     test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
-        final member = Member(
-          id: '',
-          hiraganaFirstName: 'たろう',
-          hiraganaLastName: 'やまだ',
-          kanjiFirstName: '太郎',
-          kanjiLastName: '山田',
-          firstName: 'Taro',
-          lastName: 'Yamada',
-          displayName: 'たろちゃん',
-          type: '一般',
-          birthday: DateTime(2000, 1, 1),
-          gender: 'male',
-          email: 'taro@example.com',
-        );
+      final member = Member(
+        id: '',
+        hiraganaFirstName: 'たろう',
+        hiraganaLastName: 'やまだ',
+        kanjiFirstName: '太郎',
+        kanjiLastName: '山田',
+        firstName: 'Taro',
+        lastName: 'Yamada',
+        displayName: 'たろちゃん',
+        type: '一般',
+        birthday: DateTime(2000, 1, 1),
+        gender: 'male',
+        email: 'taro@example.com',
+      );
 
-        final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-        when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
 
-        await repository.saveMember(member);
+      await repository.saveMember(member);
 
-        verify(
-          mockCollection.add(
-            argThat(
-              allOf([
-                containsPair('hiraganaFirstName', 'たろう'),
-                containsPair('hiraganaLastName', 'やまだ'),
-                containsPair('kanjiFirstName', '太郎'),
-                containsPair('kanjiLastName', '山田'),
-                containsPair('firstName', 'Taro'),
-                containsPair('lastName', 'Yamada'),
-                containsPair('displayName', 'たろちゃん'),
-                containsPair('type', '一般'),
-                containsPair('gender', 'male'),
-                containsPair('email', 'taro@example.com'),
-                contains('birthday'),
-                contains('createdAt'),
-              ]),
-            ),
+      verify(
+        mockCollection.add(
+          argThat(
+            allOf([
+              containsPair('hiraganaFirstName', 'たろう'),
+              containsPair('hiraganaLastName', 'やまだ'),
+              containsPair('kanjiFirstName', '太郎'),
+              containsPair('kanjiLastName', '山田'),
+              containsPair('firstName', 'Taro'),
+              containsPair('lastName', 'Yamada'),
+              containsPair('displayName', 'たろちゃん'),
+              containsPair('type', '一般'),
+              containsPair('gender', 'male'),
+              containsPair('email', 'taro@example.com'),
+              contains('birthday'),
+              contains('createdAt'),
+            ]),
           ),
-        ).called(1);
+        ),
+      ).called(1);
     });
 
     test('deleteMemberがmembers collectionの該当ドキュメントを削除する', () async {

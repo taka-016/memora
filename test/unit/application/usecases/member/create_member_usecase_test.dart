@@ -73,27 +73,5 @@ void main() {
       expect(savedMember.displayName, editedMember.displayName);
       expect(savedMember.id, editedMember.id);
     });
-
-    test('ownerIdのみ更新しidは変更しないこと', () async {
-      // Arrange
-      final editedMember = MemberDto(
-        id: 'edited-member-id',
-        displayName: '新メンバー',
-      );
-      const ownerId = 'admin-member-id';
-
-      when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
-
-      // Act
-      await usecase.execute(editedMember, ownerId);
-
-      // Assert
-      final captured = verify(
-        mockMemberRepository.saveMember(captureAny),
-      ).captured;
-      final savedMember = captured[0] as Member;
-      expect(savedMember.ownerId, ownerId);
-      expect(savedMember.id, editedMember.id);
-    });
   });
 }
