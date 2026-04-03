@@ -33,9 +33,7 @@ class FakeNearbyLocationService implements NearbyLocationService {
   }
 }
 
-final _uuidV7Pattern = RegExp(
-  r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$',
-);
+final _uuidV7Pattern = RegExp(r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$');
 
 void main() {
   group('TripEditModal', () {

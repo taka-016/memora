@@ -8,9 +8,7 @@ import 'package:memora/domain/repositories/member/member_invitation_repository.d
 
 import 'create_or_update_member_invitation_usecase_test.mocks.dart';
 
-final _uuidV7Pattern = RegExp(
-  r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$',
-);
+final _uuidV7Pattern = RegExp(r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$');
 
 @GenerateMocks([MemberInvitationRepository, MemberInvitationQueryService])
 void main() {
