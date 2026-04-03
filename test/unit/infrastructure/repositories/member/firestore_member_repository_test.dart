@@ -29,9 +29,9 @@ void main() {
       repository = FirestoreMemberRepository(firestore: mockFirestore);
     });
 
-    test('saveMemberがmembers collectionの新規ドキュメントにメンバー情報をsetする', () async {
+    test('saveMemberがid未設定時はmembers collectionの新規ドキュメントにメンバー情報をsetする', () async {
       final member = Member(
-        id: 'member001',
+        id: '',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
@@ -67,6 +67,32 @@ void main() {
               containsPair('gender', 'male'),
               containsPair('email', 'taro@example.com'),
               contains('birthday'),
+              contains('createdAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('saveMemberがid設定済み時は指定idのドキュメントにメンバー情報をsetする', () async {
+      final member = Member(
+        id: 'member001',
+        displayName: 'たろちゃん',
+      );
+
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      when(mockCollection.doc(member.id)).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
+
+      await repository.saveMember(member);
+
+      verify(mockCollection.doc(member.id)).called(1);
+      verifyNever(mockCollection.doc());
+      verify(
+        mockDocRef.set(
+          argThat(
+            allOf([
+              containsPair('displayName', 'たろちゃん'),
               contains('createdAt'),
             ]),
           ),

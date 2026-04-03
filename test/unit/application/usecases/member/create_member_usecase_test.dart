@@ -22,7 +22,7 @@ void main() {
     test('新しいメンバーを作成すること', () async {
       // Arrange
       final editedMember = MemberDto(
-        id: 'edited-member-id',
+        id: '',
         displayName: '新メンバー',
         kanjiLastName: '新田',
         kanjiFirstName: '三郎',
@@ -51,13 +51,13 @@ void main() {
       expect(savedMember.hiraganaFirstName, editedMember.hiraganaFirstName);
       expect(savedMember.gender, editedMember.gender);
       expect(savedMember.birthday, editedMember.birthday);
-      expect(savedMember.id, editedMember.id);
+      expect(savedMember.id, '');
     });
 
     test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
       final editedMember = MemberDto(
-        id: 'edited-member-id',
+        id: '',
         displayName: 'ミニマル',
       );
       const ownerId = 'admin-member-id';
@@ -74,7 +74,28 @@ void main() {
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
-      expect(savedMember.id, editedMember.id);
+      expect(savedMember.id, '');
+    });
+
+    test('新規作成時は入力idを無視して空文字で保存すること', () async {
+      // Arrange
+      final editedMember = MemberDto(
+        id: 'edited-member-id',
+        displayName: '新メンバー',
+      );
+      const ownerId = 'admin-member-id';
+
+      when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
+
+      // Act
+      await usecase.execute(editedMember, ownerId);
+
+      // Assert
+      final captured = verify(
+        mockMemberRepository.saveMember(captureAny),
+      ).captured;
+      final savedMember = captured[0] as Member;
+      expect(savedMember.id, '');
     });
   });
 }
