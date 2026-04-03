@@ -271,7 +271,10 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.pins, hasLength(1));
       expect(savedTripEntry!.pins!.first.locationName, equals('取得した場所名'));
-      expect(_uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId), isTrue);
+      expect(
+        _uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId),
+        isTrue,
+      );
     });
 
     testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
@@ -327,7 +330,10 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.pins, hasLength(1));
       expect(savedTripEntry!.pins!.first.locationName, equals('検索結果の場所名'));
-      expect(_uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId), isTrue);
+      expect(
+        _uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId),
+        isTrue,
+      );
     });
 
     testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
