@@ -33,6 +33,10 @@ class FakeNearbyLocationService implements NearbyLocationService {
   }
 }
 
+final _uuidV7Pattern = RegExp(
+  r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+);
+
 void main() {
   group('TripEditModal', () {
     testWidgets('新規作成モードでタイトルが正しく表示されること', (WidgetTester tester) async {
@@ -267,6 +271,10 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.pins, hasLength(1));
       expect(savedTripEntry!.pins!.first.locationName, equals('取得した場所名'));
+      expect(
+        _uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId),
+        isTrue,
+      );
     });
 
     testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
@@ -322,6 +330,10 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.pins, hasLength(1));
       expect(savedTripEntry!.pins!.first.locationName, equals('検索結果の場所名'));
+      expect(
+        _uuidV7Pattern.hasMatch(savedTripEntry!.pins!.first.pinId),
+        isTrue,
+      );
     });
 
     testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (

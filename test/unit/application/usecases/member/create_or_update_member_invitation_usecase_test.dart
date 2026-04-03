@@ -8,6 +8,8 @@ import 'package:memora/domain/repositories/member/member_invitation_repository.d
 
 import 'create_or_update_member_invitation_usecase_test.mocks.dart';
 
+final _uuidV7Pattern = RegExp(r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$');
+
 @GenerateMocks([MemberInvitationRepository, MemberInvitationQueryService])
 void main() {
   late MockMemberInvitationRepository mockMemberInvitationRepository;
@@ -81,7 +83,7 @@ void main() {
       ).called(1);
     });
 
-    test('招待コードはUUID形式で生成される', () async {
+    test('招待コードはUUID v7形式で生成される', () async {
       // Arrange
       const inviteeId = 'invitee123';
       const inviterId = 'inviter456';
@@ -97,10 +99,7 @@ void main() {
       );
 
       // Assert
-      // UUID形式かチェック（32文字、ハイフンなし）
-      expect(invitationCode.length, 32);
-      expect(invitationCode.contains('-'), false);
-      expect(RegExp(r'^[0-9a-f]{32}$').hasMatch(invitationCode), true);
+      expect(_uuidV7Pattern.hasMatch(invitationCode), isTrue);
     });
   });
 }

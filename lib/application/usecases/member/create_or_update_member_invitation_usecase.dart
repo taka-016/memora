@@ -32,7 +32,7 @@ class CreateOrUpdateMemberInvitationUsecase {
     final existingInvitation = await _memberInvitationQueryService
         .getByInviteeId(inviteeId);
 
-    final invitationCode = const Uuid().v4().replaceAll('-', '');
+    final invitationCode = const Uuid().v7().replaceAll('-', '');
 
     if (existingInvitation != null) {
       // 既存招待の更新

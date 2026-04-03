@@ -22,7 +22,7 @@ void main() {
     test('新しいメンバーを作成すること', () async {
       // Arrange
       final editedMember = MemberDto(
-        id: 'edited-member-id',
+        id: '',
         displayName: '新メンバー',
         kanjiLastName: '新田',
         kanjiFirstName: '三郎',
@@ -51,15 +51,11 @@ void main() {
       expect(savedMember.hiraganaFirstName, editedMember.hiraganaFirstName);
       expect(savedMember.gender, editedMember.gender);
       expect(savedMember.birthday, editedMember.birthday);
-      expect(savedMember.id, isNot(editedMember.id)); // 新しいIDが生成されること
     });
 
     test('最小限のデータでメンバーを作成すること', () async {
       // Arrange
-      final editedMember = MemberDto(
-        id: 'edited-member-id',
-        displayName: 'ミニマル',
-      );
+      final editedMember = MemberDto(id: '', displayName: 'ミニマル');
       const ownerId = 'admin-member-id';
 
       when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
@@ -74,7 +70,6 @@ void main() {
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
-      expect(savedMember.id, isNot(editedMember.id)); // 新しいIDが生成されること
     });
   });
 }

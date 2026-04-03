@@ -31,7 +31,7 @@ void main() {
 
     test('saveMemberがmembers collectionにメンバー情報をaddする', () async {
       final member = Member(
-        id: 'member001',
+        id: '',
         hiraganaFirstName: 'たろう',
         hiraganaLastName: 'やまだ',
         kanjiFirstName: '太郎',
