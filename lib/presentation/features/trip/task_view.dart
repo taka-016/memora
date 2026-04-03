@@ -136,7 +136,7 @@ class TaskView extends HookConsumerWidget {
         errorMessage.value = 'タスク名を入力してください';
         return;
       }
-      final uuid = const Uuid().v7();
+      final uuid = const Uuid().v7().replaceAll('-', '');
       final updated = [
         ...tasksState.value,
         TaskDto(
@@ -424,7 +424,9 @@ List<TaskDto> _normalizeOrder(List<TaskDto> tasks) {
 
 List<TaskDto> _regenerateTasksForPaste(List<TaskDto> tasks, String? tripId) {
   final uuid = const Uuid();
-  final idMap = <String, String>{for (final task in tasks) task.id: uuid.v7()};
+  final idMap = <String, String>{
+    for (final task in tasks) task.id: uuid.v7().replaceAll('-', ''),
+  };
 
   return tasks.map((task) {
     final newParentId = task.parentTaskId == null

@@ -125,7 +125,7 @@ class TripEditModal extends HookConsumerWidget {
 
     void addPin({required Coordinate coordinate, String? locationName}) {
       final newPin = PinDto(
-        pinId: const Uuid().v7(),
+        pinId: const Uuid().v7().replaceAll('-', ''),
         latitude: coordinate.latitude,
         longitude: coordinate.longitude,
         locationName: locationName,
