@@ -922,7 +922,9 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
-    testWidgets('Androidの戻る操作でDVCポイント計算画面からグループ年表に戻る', (WidgetTester tester) async {
+    testWidgets('Androidの戻る操作でDVCポイント計算画面からグループ年表に戻る', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
