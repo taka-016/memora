@@ -75,6 +75,7 @@ class GroupTimelineNavigationNotifier
       clearGroupId: true,
       clearYear: true,
       clearInstance: true,
+      clearRefresh: true,
     );
   }
 
