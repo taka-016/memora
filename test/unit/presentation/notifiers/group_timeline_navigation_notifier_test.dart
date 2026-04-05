@@ -231,6 +231,22 @@ void main() {
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
     });
 
+    test('グループ一覧画面以外では戻る操作を処理できる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Assert
+      expect(notifier.canHandleBackNavigation(), isFalse);
+
+      // Act
+      notifier.showGroupTimeline(testGroupWithMembers);
+
+      // Assert
+      expect(notifier.canHandleBackNavigation(), isTrue);
+    });
+
     test('スタックインデックスを正しく取得できる', () {
       // Arrange
       final notifier = container.read(

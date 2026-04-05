@@ -150,6 +150,10 @@ class GroupTimelineNavigationNotifier
     );
   }
 
+  bool canHandleBackNavigation() {
+    return state.currentScreen != GroupTimelineScreenState.groupList;
+  }
+
   bool handleBackNavigation() {
     switch (state.currentScreen) {
       case GroupTimelineScreenState.groupList:
