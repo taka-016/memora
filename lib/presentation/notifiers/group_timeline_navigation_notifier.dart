@@ -150,6 +150,22 @@ class GroupTimelineNavigationNotifier
     );
   }
 
+  bool handleBackNavigation() {
+    switch (state.currentScreen) {
+      case GroupTimelineScreenState.groupList:
+        return false;
+      case GroupTimelineScreenState.timeline:
+        showGroupList();
+        return true;
+      case GroupTimelineScreenState.tripManagement:
+        backFromTripManagement();
+        return true;
+      case GroupTimelineScreenState.dvcPointCalculation:
+        backFromDvcPointCalculation();
+        return true;
+    }
+  }
+
   int getStackIndex() {
     switch (state.currentScreen) {
       case GroupTimelineScreenState.groupList:

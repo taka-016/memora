@@ -56,11 +56,36 @@ class TopPage extends HookConsumerWidget {
       return null;
     }, [currentMemberState.status, currentMemberState.message]);
 
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      drawer: _buildDrawer(context, ref),
-      body: _buildBody(context, ref, currentMember),
+    final shouldHandleAndroidBack = _shouldHandleAndroidBack(ref);
+
+    return PopScope(
+      canPop: !shouldHandleAndroidBack,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !shouldHandleAndroidBack) {
+          return;
+        }
+        _handleAndroidBack(ref);
+      },
+      child: Scaffold(
+        appBar: _buildAppBar(context),
+        drawer: _buildDrawer(context, ref),
+        body: _buildBody(context, ref, currentMember),
+      ),
     );
+  }
+
+  bool _shouldHandleAndroidBack(WidgetRef ref) {
+    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
+    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
+
+    return selectedItem == NavigationItem.groupTimeline &&
+        timelineState.currentScreen != GroupTimelineScreenState.groupList;
+  }
+
+  void _handleAndroidBack(WidgetRef ref) {
+    ref
+        .read(groupTimelineNavigationNotifierProvider.notifier)
+        .handleBackNavigation();
   }
 
   void _onNavigationItemSelected(
