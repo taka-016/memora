@@ -124,6 +124,42 @@ void main() {
       expect(state.selectedYear, isNull);
     });
 
+    test('戻る操作で年表画面からグループ一覧画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.groupTimelineInstance, isNull);
+    });
+
+    test('戻る操作で旅行管理画面から年表画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showTripManagement(testGroupWithMembers.id, 2024);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedGroupId, isNull);
+      expect(state.selectedYear, isNull);
+    });
+
     test('グループ一覧にリセットできる', () {
       // Arrange
       final notifier = container.read(
@@ -160,6 +196,39 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.timeline);
       expect(state.selectedGroupId, isNull);
+    });
+
+    test('戻る操作でDVCポイント計算画面から年表画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedGroupId, isNull);
+    });
+
+    test('グループ一覧画面では戻る操作を処理しない', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isFalse);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
     });
 
     test('スタックインデックスを正しく取得できる', () {
