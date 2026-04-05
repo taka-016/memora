@@ -4,6 +4,17 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
+class _GroupTimelineNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.timeline,
+      refreshGroupTimeline: () async {},
+    );
+  }
+}
+
 void main() {
   group('GroupTimelineNavigationNotifier', () {
     late ProviderContainer container;
@@ -55,6 +66,31 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.groupTimelineInstance, isNull);
+    });
+
+    test('グループ一覧画面へ戻ると再読込コールバックが解放される', () {
+      // Arrange
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            _GroupTimelineNavigationNotifierWithRefresh.new,
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      notifier.showGroupList();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
     });
 
     test('グループ年表画面に遷移できる', () {
@@ -139,6 +175,32 @@ void main() {
       expect(handled, isTrue);
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.groupTimelineInstance, isNull);
+    });
+
+    test('戻る操作で年表画面を離れると再読込コールバックが解放される', () {
+      // Arrange
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            _GroupTimelineNavigationNotifierWithRefresh.new,
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
     });
 
     test('戻る操作で旅行管理画面から年表画面へ戻れる', () {
