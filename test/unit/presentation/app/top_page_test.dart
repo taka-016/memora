@@ -862,6 +862,137 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
+    testWidgets('Androidの戻る操作でグループ年表からグループ一覧に戻る', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // Act
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('Androidの戻る操作で旅行管理画面からグループ年表に戻る', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(groupsWithMembers.first);
+      await tester.pumpAndSettle();
+      notifier.showTripManagement(groupsWithMembers.first.id, 2024);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+
+      // Act
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+    });
+
+    testWidgets('Androidの戻る操作でDVCポイント計算画面からグループ年表に戻る', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('timeline_dvc_point_usage_edit_button')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsOneWidget,
+      );
+
+      // Act
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(
+        find.byKey(const Key('dvc_point_calculation_screen')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+    });
+
+    testWidgets('Drawer表示中のAndroid戻る操作はDrawerを閉じて年表画面を維持する', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsOneWidget);
+
+      // Act
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+    });
+
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
       when(

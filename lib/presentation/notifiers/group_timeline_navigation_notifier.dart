@@ -70,16 +70,12 @@ class GroupTimelineNavigationNotifier
   }
 
   void showGroupList() {
-    state = state.copyWith(
-      currentScreen: GroupTimelineScreenState.groupList,
-      clearGroupId: true,
-      clearYear: true,
-      clearInstance: true,
-    );
+    resetToGroupList();
   }
 
   void showGroupTimeline(GroupDto groupWithMembers) {
-    final groupTimeline = Timeline(
+    late final Timeline groupTimeline;
+    groupTimeline = Timeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
@@ -87,6 +83,10 @@ class GroupTimelineNavigationNotifier
           showDvcPointCalculation(groupWithMembers.id),
       onSetRefreshCallback: (callback) {
         Future(() {
+          if (state.currentScreen != GroupTimelineScreenState.timeline ||
+              state.groupTimelineInstance != groupTimeline) {
+            return;
+          }
           state = state.copyWith(refreshGroupTimeline: callback);
         });
       },
@@ -148,6 +148,26 @@ class GroupTimelineNavigationNotifier
       clearInstance: true,
       clearRefresh: true,
     );
+  }
+
+  bool canHandleBackNavigation() {
+    return state.currentScreen != GroupTimelineScreenState.groupList;
+  }
+
+  bool handleBackNavigation() {
+    switch (state.currentScreen) {
+      case GroupTimelineScreenState.groupList:
+        return false;
+      case GroupTimelineScreenState.timeline:
+        showGroupList();
+        return true;
+      case GroupTimelineScreenState.tripManagement:
+        backFromTripManagement();
+        return true;
+      case GroupTimelineScreenState.dvcPointCalculation:
+        backFromDvcPointCalculation();
+        return true;
+    }
   }
 
   int getStackIndex() {

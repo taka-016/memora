@@ -4,6 +4,50 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
+class _GroupTimelineNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.timeline,
+      refreshGroupTimeline: () async {},
+    );
+  }
+}
+
+class _TripManagementNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  _TripManagementNavigationNotifierWithRefresh(this.onRefresh);
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.tripManagement,
+      selectedGroupId: 'g1',
+      selectedYear: 2024,
+      refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
+class _DvcPointCalculationNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  _DvcPointCalculationNavigationNotifierWithRefresh(this.onRefresh);
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.dvcPointCalculation,
+      selectedGroupId: 'g1',
+      refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
 void main() {
   group('GroupTimelineNavigationNotifier', () {
     late ProviderContainer container;
@@ -55,6 +99,31 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.groupList);
       expect(state.groupTimelineInstance, isNull);
+    });
+
+    test('グループ一覧画面へ戻ると再読込コールバックが解放される', () {
+      // Arrange
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            _GroupTimelineNavigationNotifierWithRefresh.new,
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      notifier.showGroupList();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
     });
 
     test('グループ年表画面に遷移できる', () {
@@ -124,6 +193,97 @@ void main() {
       expect(state.selectedYear, isNull);
     });
 
+    test('戻る操作で年表画面からグループ一覧画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.groupTimelineInstance, isNull);
+    });
+
+    test('戻る操作で年表画面を離れると再読込コールバックが解放される', () {
+      // Arrange
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            _GroupTimelineNavigationNotifierWithRefresh.new,
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
+    });
+
+    test('戻る操作で旅行管理画面から年表画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showTripManagement(testGroupWithMembers.id, 2024);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedGroupId, isNull);
+      expect(state.selectedYear, isNull);
+    });
+
+    test('戻る操作で旅行管理画面から戻ると年表の再読込が実行される', () {
+      // Arrange
+      var refreshCount = 0;
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _TripManagementNavigationNotifierWithRefresh(() async {
+              refreshCount++;
+            }),
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(refreshCount, 1);
+    });
+
     test('グループ一覧にリセットできる', () {
       // Arrange
       final notifier = container.read(
@@ -160,6 +320,105 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.currentScreen, GroupTimelineScreenState.timeline);
       expect(state.selectedGroupId, isNull);
+    });
+
+    test('戻る操作でDVCポイント計算画面から年表画面へ戻れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.selectedGroupId, isNull);
+    });
+
+    test('戻る操作でDVCポイント計算画面から戻ると年表の再読込が実行される', () {
+      // Arrange
+      var refreshCount = 0;
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _DvcPointCalculationNavigationNotifierWithRefresh(() async {
+              refreshCount++;
+            }),
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(refreshCount, 1);
+    });
+
+    test('年表から離れた後に遅延した再読込コールバック登録で参照が復活しない', () async {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      final timeline = container
+          .read(groupTimelineNavigationNotifierProvider)
+          .groupTimelineInstance!;
+
+      // Act
+      timeline.onSetRefreshCallback?.call(() async {});
+      notifier.showGroupList();
+      await Future(() {});
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
+    });
+
+    test('グループ一覧画面では戻る操作を処理しない', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(handled, isFalse);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+    });
+
+    test('グループ一覧画面以外では戻る操作を処理できる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Assert
+      expect(notifier.canHandleBackNavigation(), isFalse);
+
+      // Act
+      notifier.showGroupTimeline(testGroupWithMembers);
+
+      // Assert
+      expect(notifier.canHandleBackNavigation(), isTrue);
     });
 
     test('スタックインデックスを正しく取得できる', () {

@@ -23,6 +23,9 @@ class TopPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
+    final isDrawerOpen = useState(false);
+
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
@@ -56,11 +59,43 @@ class TopPage extends HookConsumerWidget {
       return null;
     }, [currentMemberState.status, currentMemberState.message]);
 
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      drawer: _buildDrawer(context, ref),
-      body: _buildBody(context, ref, currentMember),
+    final shouldHandleAndroidBack = _shouldHandleAndroidBack(ref);
+    final canPop = isDrawerOpen.value || !shouldHandleAndroidBack;
+
+    return PopScope(
+      canPop: canPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || !shouldHandleAndroidBack) {
+          return;
+        }
+        _handleAndroidBack(ref);
+      },
+      child: Scaffold(
+        key: scaffoldKey,
+        onDrawerChanged: (isOpened) {
+          isDrawerOpen.value = isOpened;
+        },
+        appBar: _buildAppBar(context),
+        drawer: _buildDrawer(context, ref),
+        body: _buildBody(context, ref, currentMember),
+      ),
     );
+  }
+
+  bool _shouldHandleAndroidBack(WidgetRef ref) {
+    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
+    if (selectedItem != NavigationItem.groupTimeline) {
+      return false;
+    }
+
+    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
+    return timelineState.currentScreen != GroupTimelineScreenState.groupList;
+  }
+
+  void _handleAndroidBack(WidgetRef ref) {
+    ref
+        .read(groupTimelineNavigationNotifierProvider.notifier)
+        .handleBackNavigation();
   }
 
   void _onNavigationItemSelected(
