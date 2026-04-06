@@ -80,7 +80,8 @@ class GroupTimelineNavigationNotifier
   }
 
   void showGroupTimeline(GroupDto groupWithMembers) {
-    final groupTimeline = Timeline(
+    late final Timeline groupTimeline;
+    groupTimeline = Timeline(
       groupWithMembers: groupWithMembers,
       onBackPressed: showGroupList,
       onTripManagementSelected: showTripManagement,
@@ -88,6 +89,10 @@ class GroupTimelineNavigationNotifier
           showDvcPointCalculation(groupWithMembers.id),
       onSetRefreshCallback: (callback) {
         Future(() {
+          if (state.currentScreen != GroupTimelineScreenState.timeline ||
+              state.groupTimelineInstance != groupTimeline) {
+            return;
+          }
           state = state.copyWith(refreshGroupTimeline: callback);
         });
       },

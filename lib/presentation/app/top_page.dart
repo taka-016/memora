@@ -23,6 +23,9 @@ class TopPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
+    final isDrawerOpen = useState(false);
+
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
@@ -57,9 +60,10 @@ class TopPage extends HookConsumerWidget {
     }, [currentMemberState.status, currentMemberState.message]);
 
     final shouldHandleAndroidBack = _shouldHandleAndroidBack(ref);
+    final canPop = isDrawerOpen.value || !shouldHandleAndroidBack;
 
     return PopScope(
-      canPop: !shouldHandleAndroidBack,
+      canPop: canPop,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop || !shouldHandleAndroidBack) {
           return;
@@ -67,6 +71,10 @@ class TopPage extends HookConsumerWidget {
         _handleAndroidBack(ref);
       },
       child: Scaffold(
+        key: scaffoldKey,
+        onDrawerChanged: (isOpened) {
+          isDrawerOpen.value = isOpened;
+        },
         appBar: _buildAppBar(context),
         drawer: _buildDrawer(context, ref),
         body: _buildBody(context, ref, currentMember),
