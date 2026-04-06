@@ -15,6 +15,39 @@ class _GroupTimelineNavigationNotifierWithRefresh
   }
 }
 
+class _TripManagementNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  _TripManagementNavigationNotifierWithRefresh(this.onRefresh);
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.tripManagement,
+      selectedGroupId: 'g1',
+      selectedYear: 2024,
+      refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
+class _DvcPointCalculationNavigationNotifierWithRefresh
+    extends GroupTimelineNavigationNotifier {
+  _DvcPointCalculationNavigationNotifierWithRefresh(this.onRefresh);
+
+  final Future<void> Function() onRefresh;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      currentScreen: GroupTimelineScreenState.dvcPointCalculation,
+      selectedGroupId: 'g1',
+      refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
 void main() {
   group('GroupTimelineNavigationNotifier', () {
     late ProviderContainer container;
@@ -222,6 +255,35 @@ void main() {
       expect(state.selectedYear, isNull);
     });
 
+    test('戻る操作で旅行管理画面から戻ると年表の再読込が実行される', () {
+      // Arrange
+      var refreshCount = 0;
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _TripManagementNavigationNotifierWithRefresh(() async {
+              refreshCount++;
+            }),
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(refreshCount, 1);
+    });
+
     test('グループ一覧にリセットできる', () {
       // Arrange
       final notifier = container.read(
@@ -276,6 +338,56 @@ void main() {
       expect(handled, isTrue);
       expect(state.currentScreen, GroupTimelineScreenState.timeline);
       expect(state.selectedGroupId, isNull);
+    });
+
+    test('戻る操作でDVCポイント計算画面から戻ると年表の再読込が実行される', () {
+      // Arrange
+      var refreshCount = 0;
+      final containerWithRefresh = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _DvcPointCalculationNavigationNotifierWithRefresh(() async {
+              refreshCount++;
+            }),
+          ),
+        ],
+      );
+      addTearDown(containerWithRefresh.dispose);
+      final notifier = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithRefresh.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(refreshCount, 1);
+    });
+
+    test('年表から離れた後に遅延した再読込コールバック登録で参照が復活しない', () async {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      final timeline = container
+          .read(groupTimelineNavigationNotifierProvider)
+          .groupTimelineInstance!;
+
+      // Act
+      timeline.onSetRefreshCallback?.call(() async {});
+      notifier.showGroupList();
+      await Future(() {});
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.refreshGroupTimeline, isNull);
     });
 
     test('グループ一覧画面では戻る操作を処理しない', () {

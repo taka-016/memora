@@ -960,6 +960,39 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
+    testWidgets('Drawer表示中のAndroid戻る操作はDrawerを閉じて年表画面を維持する', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsOneWidget);
+
+      // Act
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+    });
+
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
       when(
