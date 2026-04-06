@@ -70,13 +70,7 @@ class GroupTimelineNavigationNotifier
   }
 
   void showGroupList() {
-    state = state.copyWith(
-      currentScreen: GroupTimelineScreenState.groupList,
-      clearGroupId: true,
-      clearYear: true,
-      clearInstance: true,
-      clearRefresh: true,
-    );
+    resetToGroupList();
   }
 
   void showGroupTimeline(GroupDto groupWithMembers) {
