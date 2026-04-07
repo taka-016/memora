@@ -993,6 +993,49 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
+    testWidgets('メニューから遷移した各画面でAndroidの戻る操作を行うとグループ年表に戻る', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      final menuTargets = <({String label, Finder finder})>[
+        (label: '地図表示', finder: find.byKey(const Key('map_view'))),
+        (label: 'グループ管理', finder: find.byKey(const Key('group_settings'))),
+        (label: 'メンバー管理', finder: find.byKey(const Key('member_settings'))),
+        (label: '設定', finder: find.byKey(const Key('settings'))),
+        (label: 'アカウント設定', finder: find.text('アカウント設定')),
+      ];
+
+      for (final target in menuTargets) {
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(target.label));
+        await tester.pumpAndSettle();
+
+        expect(target.finder, findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+        expect(target.finder, findsNothing);
+      }
+    });
+
     testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
       // Arrange
       when(
@@ -1066,16 +1109,16 @@ void main() {
       await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
-      // 4. 他画面遷移時にGroupTimelineインスタンスがリセットされることを検証
+      // 4. 他画面遷移時もGroupTimelineインスタンスが維持されることを検証
       expect(
         container
             .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
-        isNull,
+        isNotNull,
       );
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.groupList,
+        GroupTimelineScreenState.timeline,
       );
 
       // グループ年表に戻る
@@ -1088,27 +1131,7 @@ void main() {
       final backToTimelineStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
-      expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
-      expect(
-        container
-            .read(groupTimelineNavigationNotifierProvider)
-            .groupTimelineInstance,
-        isNull,
-      );
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.groupList,
-      );
-
-      // 再度同じグループを選択
-      await tester.tap(find.text('グループ1'));
-      await tester.pumpAndSettle();
-
-      // 6. 再選択時の状態を検証
-      final finalIndexedStack = tester.widget<IndexedStack>(
-        find.byType(IndexedStack),
-      );
-      expect(finalIndexedStack.index, 1); // GroupTimeline（index: 1）
+      expect(backToTimelineStack.index, 1); // GroupTimeline（index: 1）を維持
       expect(
         container
             .read(groupTimelineNavigationNotifierProvider)
@@ -1119,6 +1142,9 @@ void main() {
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
       );
+
+      // 再度同じグループを選択
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {

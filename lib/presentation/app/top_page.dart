@@ -85,7 +85,7 @@ class TopPage extends HookConsumerWidget {
   bool _shouldHandleAndroidBack(WidgetRef ref) {
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
     if (selectedItem != NavigationItem.groupTimeline) {
-      return false;
+      return true;
     }
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
@@ -93,6 +93,14 @@ class TopPage extends HookConsumerWidget {
   }
 
   void _handleAndroidBack(WidgetRef ref) {
+    final selectedItem = ref.read(navigationNotifierProvider).selectedItem;
+    if (selectedItem != NavigationItem.groupTimeline) {
+      ref
+          .read(navigationNotifierProvider.notifier)
+          .selectItem(NavigationItem.groupTimeline);
+      return;
+    }
+
     ref
         .read(groupTimelineNavigationNotifierProvider.notifier)
         .handleBackNavigation();
@@ -104,11 +112,6 @@ class TopPage extends HookConsumerWidget {
     NavigationItem item,
   ) {
     ref.read(navigationNotifierProvider.notifier).selectItem(item);
-    if (item != NavigationItem.groupTimeline) {
-      ref
-          .read(groupTimelineNavigationNotifierProvider.notifier)
-          .resetToGroupList();
-    }
     Navigator.of(context).pop();
   }
 
