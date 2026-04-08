@@ -61,10 +61,7 @@ void main() {
       final loaded = await TimelineDisplaySettings.load();
 
       for (final definition in TimelineDisplaySettings.definitions) {
-        expect(
-          definition.getValue(loaded),
-          definition.getValue(settings),
-        );
+        expect(definition.getValue(loaded), definition.getValue(settings));
       }
     });
   });
