@@ -23,6 +23,7 @@ import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -2017,13 +2018,7 @@ class _TimelineControllerProbe extends StatelessWidget {
               ref: ref,
               groupWithMembers: groupWithMembers,
               totalDataRows: totalDataRows,
-              initialYearRange: 5,
-              yearRangeIncrement: 5,
-              dataRowHeight: 100,
-              rowMinHeight: 100,
-              rowMaxHeight: 500,
-              buttonColumnWidth: 100,
-              yearColumnWidth: 120,
+              layoutConfig: TimelineLayoutConfig.defaults,
               onSetRefreshCallback: null,
             );
             onBuilt(controller);

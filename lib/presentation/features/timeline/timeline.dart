@@ -2,37 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
+import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/dvc_cell.dart';
 import 'package:memora/presentation/features/timeline/group_event_cell.dart';
-import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
+import 'package:memora/presentation/features/timeline/timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/trip_cell.dart';
 
 class Timeline extends HookConsumerWidget {
-  final GroupDto groupWithMembers;
-  final VoidCallback? onBackPressed;
-  final Function(String groupId, int year)? onTripManagementSelected;
-  final VoidCallback? onDvcPointCalculationPressed;
-  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
-
-  static const int _initialYearRange = 5;
-  static const int _yearRangeIncrement = 5;
-
-  static const double _dataRowHeight = 100.0;
-  static const double _headerRowHeight = 56.0;
-  static const double _borderWidth = 1.0;
-
-  static const double _fixedColumnWidth = 100.0;
-  static const double _buttonColumnWidth = 100.0;
-  static const double _yearColumnWidth = 120.0;
-
-  static const double _resizeBottomMargin = 100.0;
-  static const double _rowMinHeight = 100.0;
-  static const double _rowMaxHeight = 500.0;
-
   const Timeline({
     super.key,
     required this.groupWithMembers,
@@ -41,6 +22,15 @@ class Timeline extends HookConsumerWidget {
     this.onDvcPointCalculationPressed,
     this.onSetRefreshCallback,
   });
+
+  static const TimelineLayoutConfig _layoutConfig =
+      TimelineLayoutConfig.defaults;
+
+  final GroupDto groupWithMembers;
+  final VoidCallback? onBackPressed;
+  final Function(String groupId, int year)? onTripManagementSelected;
+  final VoidCallback? onDvcPointCalculationPressed;
+  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,13 +42,7 @@ class Timeline extends HookConsumerWidget {
       ref: ref,
       groupWithMembers: groupWithMembers,
       totalDataRows: totalDataRows,
-      initialYearRange: _initialYearRange,
-      yearRangeIncrement: _yearRangeIncrement,
-      dataRowHeight: _dataRowHeight,
-      rowMinHeight: _rowMinHeight,
-      rowMaxHeight: _rowMaxHeight,
-      buttonColumnWidth: _buttonColumnWidth,
-      yearColumnWidth: _yearColumnWidth,
+      layoutConfig: _layoutConfig,
       onSetRefreshCallback: onSetRefreshCallback,
     );
 
@@ -66,53 +50,33 @@ class Timeline extends HookConsumerWidget {
       var localSettings = timelineController.displaySettings;
       showModalBottomSheet<void>(
         context: context,
-        builder: (sheetContext) {
+        builder: (_) {
           return StatefulBuilder(
             builder: (context, setState) {
               return SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SwitchListTile(
-                      key: const Key('toggle_show_age'),
-                      title: const Text('年齢を表示'),
-                      value: localSettings.showAge,
+                  children: TimelineDisplaySettings.definitions.map((
+                    definition,
+                  ) {
+                    return SwitchListTile(
+                      key: Key(definition.toggleKey),
+                      title: Text(definition.label),
+                      value: definition.getValue(localSettings),
                       onChanged: (value) {
+                        final updatedSettings = definition.update(
+                          localSettings,
+                          value,
+                        );
                         setState(() {
-                          localSettings = localSettings.copyWith(
-                            showAge: value,
-                          );
+                          localSettings = updatedSettings;
                         });
-                        timelineController.updateDisplaySettings(localSettings);
+                        timelineController.updateDisplaySettings(
+                          updatedSettings,
+                        );
                       },
-                    ),
-                    SwitchListTile(
-                      key: const Key('toggle_show_grade'),
-                      title: const Text('学年を表示'),
-                      value: localSettings.showGrade,
-                      onChanged: (value) {
-                        setState(() {
-                          localSettings = localSettings.copyWith(
-                            showGrade: value,
-                          );
-                        });
-                        timelineController.updateDisplaySettings(localSettings);
-                      },
-                    ),
-                    SwitchListTile(
-                      key: const Key('toggle_show_yakudoshi'),
-                      title: const Text('厄年を表示'),
-                      value: localSettings.showYakudoshi,
-                      onChanged: (value) {
-                        setState(() {
-                          localSettings = localSettings.copyWith(
-                            showYakudoshi: value,
-                          );
-                        });
-                        timelineController.updateDisplaySettings(localSettings);
-                      },
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               );
             },
@@ -138,45 +102,10 @@ class Timeline extends HookConsumerWidget {
         return;
       }
 
-      showDialog<void>(
+      showDvcPointUsageDetailModal(
         context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            key: Key('dvc_point_usage_detail_dialog_$selectedYear'),
-            title: Text('DVCポイント利用詳細（$selectedYear年）'),
-            content: SizedBox(
-              width: 480,
-              height: 360,
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: usages.length,
-                separatorBuilder: (_, __) => const Divider(height: 16),
-                itemBuilder: (_, index) {
-                  final usage = usages[index];
-                  final memo = usage.memo?.trim() ?? '';
-                  final displayMemo = memo.isEmpty ? 'なし' : memo;
-
-                  return Column(
-                    key: Key('dvc_point_usage_detail_item_${usage.id}'),
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('利用年月: ${dvcFormatYearMonth(usage.usageYearMonth)}'),
-                      Text('利用ポイント: ${usage.usedPoint}pt'),
-                      Text('メモ: $displayMemo'),
-                    ],
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('閉じる'),
-              ),
-            ],
-          );
-        },
+        selectedYear: selectedYear,
+        usages: usages,
       );
     }
 
@@ -187,7 +116,7 @@ class Timeline extends HookConsumerWidget {
       return TripCell(
         trips: trips,
         availableHeight: timelineController.rowHeights[0],
-        availableWidth: _yearColumnWidth,
+        availableWidth: _layoutConfig.yearColumnWidth,
       );
     }
 
@@ -203,7 +132,7 @@ class Timeline extends HookConsumerWidget {
       return DvcCell(
         usages: usages,
         availableHeight: timelineController.rowHeights[2],
-        availableWidth: _yearColumnWidth,
+        availableWidth: _layoutConfig.yearColumnWidth,
       );
     }
 
@@ -217,7 +146,7 @@ class Timeline extends HookConsumerWidget {
       return GroupEventCell(
         memo: event.memo,
         availableHeight: timelineController.rowHeights[1],
-        availableWidth: _yearColumnWidth,
+        availableWidth: _layoutConfig.yearColumnWidth,
       );
     }
 
@@ -225,20 +154,16 @@ class Timeline extends HookConsumerWidget {
       final selectedYear = timelineController.yearFromColumnIndex(columnIndex);
       final currentEvent = timelineController.groupEventsByYear[selectedYear];
 
-      await showDialog<void>(
+      await showGroupEventEditModal(
         context: context,
-        builder: (dialogContext) {
-          return _GroupEventEditDialog(
+        selectedYear: selectedYear,
+        initialMemo: currentEvent?.memo ?? '',
+        onSave: (memo) async {
+          await timelineController.saveGroupEvent(
+            currentEvent: currentEvent,
+            groupId: groupWithMembers.id,
             selectedYear: selectedYear,
-            initialMemo: currentEvent?.memo ?? '',
-            onSave: (memo) async {
-              await timelineController.saveGroupEvent(
-                currentEvent: currentEvent,
-                groupId: groupWithMembers.id,
-                selectedYear: selectedYear,
-                memo: memo,
-              );
-            },
+            memo: memo,
           );
         },
       );
@@ -280,8 +205,8 @@ class Timeline extends HookConsumerWidget {
       return Row(
         children: List.generate(columnCount, (columnIndex) {
           final width = columnIndex == 0 || columnIndex == columnCount - 1
-              ? _buttonColumnWidth
-              : _yearColumnWidth;
+              ? _layoutConfig.buttonColumnWidth
+              : _layoutConfig.yearColumnWidth;
 
           final isTripRow = rowIndex == 0;
           final isGroupEventRow = rowIndex == 1;
@@ -311,8 +236,14 @@ class Timeline extends HookConsumerWidget {
                 alignment: Alignment.topLeft,
                 decoration: BoxDecoration(
                   border: Border(
-                    bottom: BorderSide(color: borderColor, width: _borderWidth),
-                    right: BorderSide(color: borderColor, width: _borderWidth),
+                    bottom: BorderSide(
+                      color: borderColor,
+                      width: _layoutConfig.borderWidth,
+                    ),
+                    right: BorderSide(
+                      color: borderColor,
+                      width: _layoutConfig.borderWidth,
+                    ),
                   ),
                   color: isTripRow || isGroupEventRow || isDvcPointUsageRow
                       ? Colors.lightBlue.shade50
@@ -348,19 +279,19 @@ class Timeline extends HookConsumerWidget {
                   key: Key('fixed_row_$rowIndex'),
                   onTap: rowIndex == 2 ? onDvcPointCalculationPressed : null,
                   child: Container(
-                    width: _fixedColumnWidth,
+                    width: _layoutConfig.fixedColumnWidth,
                     height: timelineController.rowHeights[rowIndex],
                     alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       border: Border(
                         left: BorderSide(
                           color: borderColor,
-                          width: _borderWidth,
+                          width: _layoutConfig.borderWidth,
                         ),
                         bottom: BorderSide(
                           color: borderColor,
-                          width: _borderWidth,
+                          width: _layoutConfig.borderWidth,
                         ),
                       ),
                     ),
@@ -373,7 +304,7 @@ class Timeline extends HookConsumerWidget {
                 ),
               ),
               Container(
-                width: _borderWidth,
+                width: _layoutConfig.borderWidth,
                 height: timelineController.rowHeights[rowIndex],
                 color: borderColor,
               ),
@@ -406,7 +337,7 @@ class Timeline extends HookConsumerWidget {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.resizeUpDown,
                   child: Container(
-                    width: _fixedColumnWidth,
+                    width: _layoutConfig.fixedColumnWidth,
                     height: 50,
                     decoration: const BoxDecoration(
                       color: Color.fromARGB(0, 255, 0, 0),
@@ -443,14 +374,23 @@ class Timeline extends HookConsumerWidget {
 
       cells.add(
         Container(
-          width: _buttonColumnWidth,
-          height: _headerRowHeight,
+          width: _layoutConfig.buttonColumnWidth,
+          height: _layoutConfig.headerRowHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: borderColor, width: _borderWidth),
-              bottom: BorderSide(color: borderColor, width: _borderWidth),
-              right: BorderSide(color: borderColor, width: _borderWidth),
+              top: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
+              bottom: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
+              right: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
             ),
           ),
           child: TextButton(
@@ -467,14 +407,23 @@ class Timeline extends HookConsumerWidget {
         final combinedYearFormat = '$year年($eraFormatted)';
         cells.add(
           Container(
-            width: _yearColumnWidth,
-            height: _headerRowHeight,
+            width: _layoutConfig.yearColumnWidth,
+            height: _layoutConfig.headerRowHeight,
             alignment: Alignment.center,
             decoration: BoxDecoration(
               border: Border(
-                top: BorderSide(color: borderColor, width: _borderWidth),
-                bottom: BorderSide(color: borderColor, width: _borderWidth),
-                right: BorderSide(color: borderColor, width: _borderWidth),
+                top: BorderSide(
+                  color: borderColor,
+                  width: _layoutConfig.borderWidth,
+                ),
+                bottom: BorderSide(
+                  color: borderColor,
+                  width: _layoutConfig.borderWidth,
+                ),
+                right: BorderSide(
+                  color: borderColor,
+                  width: _layoutConfig.borderWidth,
+                ),
               ),
             ),
             child: Text(combinedYearFormat),
@@ -484,14 +433,23 @@ class Timeline extends HookConsumerWidget {
 
       cells.add(
         Container(
-          width: _buttonColumnWidth,
-          height: _headerRowHeight,
+          width: _layoutConfig.buttonColumnWidth,
+          height: _layoutConfig.headerRowHeight,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             border: Border(
-              top: BorderSide(color: borderColor, width: _borderWidth),
-              bottom: BorderSide(color: borderColor, width: _borderWidth),
-              right: BorderSide(color: borderColor, width: _borderWidth),
+              top: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
+              bottom: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
+              right: BorderSide(
+                color: borderColor,
+                width: _layoutConfig.borderWidth,
+              ),
             ),
           ),
           child: TextButton(
@@ -515,14 +473,23 @@ class Timeline extends HookConsumerWidget {
 
     Widget buildFixedHeaderCell() {
       return Container(
-        width: _fixedColumnWidth,
-        height: _headerRowHeight,
+        width: _layoutConfig.fixedColumnWidth,
+        height: _layoutConfig.headerRowHeight,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           border: Border(
-            left: BorderSide(color: borderColor, width: _borderWidth),
-            top: BorderSide(color: borderColor, width: _borderWidth),
-            bottom: BorderSide(color: borderColor, width: _borderWidth),
+            left: BorderSide(
+              color: borderColor,
+              width: _layoutConfig.borderWidth,
+            ),
+            top: BorderSide(
+              color: borderColor,
+              width: _layoutConfig.borderWidth,
+            ),
+            bottom: BorderSide(
+              color: borderColor,
+              width: _layoutConfig.borderWidth,
+            ),
           ),
         ),
       );
@@ -589,8 +556,8 @@ class Timeline extends HookConsumerWidget {
               children: [
                 buildFixedHeaderCell(),
                 Container(
-                  width: _borderWidth,
-                  height: _headerRowHeight,
+                  width: _layoutConfig.borderWidth,
+                  height: _layoutConfig.headerRowHeight,
                   color: borderColor,
                 ),
                 Expanded(child: buildScrollableHeaderRow()),
@@ -604,7 +571,7 @@ class Timeline extends HookConsumerWidget {
                 child: Column(
                   children: [
                     ...buildDataRowsWithResizers(),
-                    SizedBox(height: _resizeBottomMargin),
+                    SizedBox(height: _layoutConfig.resizeBottomMargin),
                   ],
                 ),
               ),
@@ -645,68 +612,6 @@ class Timeline extends HookConsumerWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _GroupEventEditDialog extends HookWidget {
-  const _GroupEventEditDialog({
-    required this.selectedYear,
-    required this.initialMemo,
-    required this.onSave,
-  });
-
-  final int selectedYear;
-  final String initialMemo;
-  final Future<void> Function(String memo) onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = useTextEditingController(text: initialMemo);
-
-    return AlertDialog(
-      key: Key('group_event_edit_dialog_$selectedYear'),
-      title: Text('イベント編集（$selectedYear年）'),
-      content: TextField(
-        key: Key('group_event_edit_field_$selectedYear'),
-        controller: controller,
-        autofocus: true,
-        minLines: 4,
-        maxLines: 8,
-        decoration: const InputDecoration(
-          hintText: 'この年の出来事や予定を入力',
-          border: OutlineInputBorder(),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('キャンセル'),
-        ),
-        TextButton(
-          key: Key('group_event_save_button_$selectedYear'),
-          onPressed: () async {
-            final memo = controller.text.trim();
-            try {
-              await onSave(memo);
-
-              if (!context.mounted) return;
-              Navigator.of(context).pop();
-            } catch (e, stack) {
-              logger.e(
-                'Timeline.showGroupEventEditDialog: ${e.toString()}',
-                error: e,
-                stackTrace: stack,
-              );
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('グループイベントの保存に失敗しました')),
-              );
-            }
-          },
-          child: const Text('保存'),
-        ),
-      ],
     );
   }
 }
