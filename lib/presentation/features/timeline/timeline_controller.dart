@@ -15,9 +15,10 @@ import 'package:memora/application/usecases/member/calculate_school_grade_usecas
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
+import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
+import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
 
 class TimelineController {
   TimelineController({
@@ -82,13 +83,7 @@ TimelineController useTimelineController({
   required WidgetRef ref,
   required GroupDto groupWithMembers,
   required int totalDataRows,
-  required int initialYearRange,
-  required int yearRangeIncrement,
-  required double dataRowHeight,
-  required double rowMinHeight,
-  required double rowMaxHeight,
-  required double buttonColumnWidth,
-  required double yearColumnWidth,
+  required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
   final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
@@ -105,8 +100,8 @@ TimelineController useTimelineController({
     TimelineViewState.initial(
       baseYear: DateTime.now().year,
       totalDataRows: totalDataRows,
-      initialYearRange: initialYearRange,
-      dataRowHeight: dataRowHeight,
+      initialYearRange: layoutConfig.initialYearRange,
+      dataRowHeight: layoutConfig.dataRowHeight,
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
@@ -126,7 +121,7 @@ TimelineController useTimelineController({
   final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
   final viewState = viewStateState.value.ensureRowCount(
     totalDataRows: totalDataRows,
-    dataRowHeight: dataRowHeight,
+    dataRowHeight: layoutConfig.dataRowHeight,
   );
   currentGroupIdRef.value = groupWithMembers.id;
 
@@ -142,7 +137,7 @@ TimelineController useTimelineController({
   useEffect(() {
     viewStateState.value = viewStateState.value.ensureRowCount(
       totalDataRows: totalDataRows,
-      dataRowHeight: dataRowHeight,
+      dataRowHeight: layoutConfig.dataRowHeight,
     );
     return null;
   }, [totalDataRows]);
@@ -353,8 +348,8 @@ TimelineController useTimelineController({
 
     final viewportWidth = primaryController.position.viewportDimension;
     final totalWidth =
-        (2 * buttonColumnWidth) +
-        (viewState.visibleYears.length * yearColumnWidth);
+        (2 * layoutConfig.buttonColumnWidth) +
+        (viewState.visibleYears.length * layoutConfig.yearColumnWidth);
     final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
     final maxExtent = primaryController.position.maxScrollExtent;
     final targetOffset = scrollOffset.clamp(0.0, maxExtent);
@@ -446,12 +441,12 @@ TimelineController useTimelineController({
     rowScrollControllers: rowScrollControllers,
     showMorePast: () {
       viewStateState.value = viewStateState.value.expandPast(
-        yearRangeIncrement,
+        layoutConfig.yearRangeIncrement,
       );
     },
     showMoreFuture: () {
       viewStateState.value = viewStateState.value.expandFuture(
-        yearRangeIncrement,
+        layoutConfig.yearRangeIncrement,
       );
     },
     updateDisplaySettings: (settings) {
@@ -470,8 +465,8 @@ TimelineController useTimelineController({
       viewStateState.value = viewStateState.value.resizeRow(
         rowIndex: rowIndex,
         delta: event.delta.dy,
-        minHeight: rowMinHeight,
-        maxHeight: rowMaxHeight,
+        minHeight: layoutConfig.rowMinHeight,
+        maxHeight: layoutConfig.rowMaxHeight,
       );
     },
     onRowResizePointerUp: (event) {
