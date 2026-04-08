@@ -31,29 +31,30 @@ class TimelineDisplaySettings {
   static const String showGradeKey = 'timeline_show_grade';
   static const String showYakudoshiKey = 'timeline_show_yakudoshi';
 
-  static final List<TimelineDisplaySettingDefinition> definitions = [
-    TimelineDisplaySettingDefinition(
-      storageKey: showAgeKey,
-      toggleKey: 'toggle_show_age',
-      label: '年齢を表示',
-      getValue: (settings) => settings.showAge,
-      update: (settings, value) => settings.copyWith(showAge: value),
-    ),
-    TimelineDisplaySettingDefinition(
-      storageKey: showGradeKey,
-      toggleKey: 'toggle_show_grade',
-      label: '学年を表示',
-      getValue: (settings) => settings.showGrade,
-      update: (settings, value) => settings.copyWith(showGrade: value),
-    ),
-    TimelineDisplaySettingDefinition(
-      storageKey: showYakudoshiKey,
-      toggleKey: 'toggle_show_yakudoshi',
-      label: '厄年を表示',
-      getValue: (settings) => settings.showYakudoshi,
-      update: (settings, value) => settings.copyWith(showYakudoshi: value),
-    ),
-  ];
+  static final List<TimelineDisplaySettingDefinition> definitions =
+      List.unmodifiable([
+        TimelineDisplaySettingDefinition(
+          storageKey: showAgeKey,
+          toggleKey: 'toggle_show_age',
+          label: '年齢を表示',
+          getValue: (settings) => settings.showAge,
+          update: (settings, value) => settings.copyWith(showAge: value),
+        ),
+        TimelineDisplaySettingDefinition(
+          storageKey: showGradeKey,
+          toggleKey: 'toggle_show_grade',
+          label: '学年を表示',
+          getValue: (settings) => settings.showGrade,
+          update: (settings, value) => settings.copyWith(showGrade: value),
+        ),
+        TimelineDisplaySettingDefinition(
+          storageKey: showYakudoshiKey,
+          toggleKey: 'toggle_show_yakudoshi',
+          label: '厄年を表示',
+          getValue: (settings) => settings.showYakudoshi,
+          update: (settings, value) => settings.copyWith(showYakudoshi: value),
+        ),
+      ]);
 
   static const TimelineDisplaySettings defaults = TimelineDisplaySettings(
     showAge: true,
@@ -79,11 +80,13 @@ class TimelineDisplaySettings {
 
   static Future<TimelineDisplaySettings> load() async {
     final prefs = await SharedPreferences.getInstance();
-    return TimelineDisplaySettings(
-      showAge: prefs.getBool(showAgeKey) ?? defaults.showAge,
-      showGrade: prefs.getBool(showGradeKey) ?? defaults.showGrade,
-      showYakudoshi: prefs.getBool(showYakudoshiKey) ?? defaults.showYakudoshi,
-    );
+    var settings = defaults;
+    for (final definition in definitions) {
+      final value =
+          prefs.getBool(definition.storageKey) ?? definition.getValue(defaults);
+      settings = definition.update(settings, value);
+    }
+    return settings;
   }
 
   Future<void> save() async {
