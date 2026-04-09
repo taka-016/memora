@@ -35,6 +35,27 @@ void main() {
       expect(updated.rowHeights, [100, 120, 100, 100]);
     });
 
+    test('初期行高さも行数も未指定の場合は前提条件違反として失敗する', () {
+      expect(
+        () => TimelineViewState.initial(
+          baseYear: 2026,
+          initialYearRange: 5,
+        ),
+        throwsAssertionError,
+      );
+    });
+
+    test('行数調整時に初期行高さも行数も未指定の場合は前提条件違反として失敗する', () {
+      final state = TimelineViewState(
+        baseYear: 2026,
+        startYearOffset: -5,
+        endYearOffset: 5,
+        rowHeights: const [100],
+      );
+
+      expect(state.ensureRowCount, throwsAssertionError);
+    });
+
     test('行の高さ変更は最小値と最大値の範囲に収める', () {
       final state = TimelineViewState(
         baseYear: 2026,
