@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/application/dtos/group/group_event_dto.dart';
+import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
+import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
+import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
 class TimelineGroupEventRow extends TimelineRowDefinition {
-  const TimelineGroupEventRow({required this.initialHeight});
+  const TimelineGroupEventRow({
+    required this.groupId,
+    required this.initialHeight,
+  });
+
+  final String groupId;
 
   @override
   final double initialHeight;
@@ -23,42 +34,112 @@ class TimelineGroupEventRow extends TimelineRowDefinition {
     TimelineRowContext rowContext,
     int year,
   ) {
-    final event = rowContext.controller.groupEventsByYear[year];
-    if (event == null) {
-      return const SizedBox.shrink();
-    }
-
-    return GroupEventCell(
-      memo: event.memo,
+    return _GroupEventYearCell(
+      groupId: groupId,
+      year: year,
+      refreshKey: rowContext.controller.refreshKey,
       availableHeight: rowContext.rowHeight,
       availableWidth: rowContext.layoutConfig.yearColumnWidth,
     );
   }
+}
+
+final _groupEventsByYearProvider = FutureProvider.autoDispose
+    .family<Map<int, GroupEventDto>, _GroupEventsQuery>((ref, query) async {
+      final events = await ref
+          .read(getGroupEventsUsecaseProvider)
+          .execute(query.groupId);
+      return {for (final event in events) event.year: event};
+    });
+
+class _GroupEventYearCell extends HookConsumerWidget {
+  const _GroupEventYearCell({
+    required this.groupId,
+    required this.year,
+    required this.refreshKey,
+    required this.availableHeight,
+    required this.availableWidth,
+  });
+
+  final String groupId;
+  final int year;
+  final int refreshKey;
+  final double availableHeight;
+  final double availableWidth;
 
   @override
-  VoidCallback yearCellTapCallback(
-    BuildContext context,
-    TimelineRowContext rowContext,
-    int year,
-  ) {
-    return () async {
-      final currentEvent = rowContext.controller.groupEventsByYear[year];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final query = _GroupEventsQuery(groupId: groupId, refreshKey: refreshKey);
+    final eventsByYear = ref.watch(_groupEventsByYearProvider(query));
+    final localEvent = useState<GroupEventDto?>(null);
+    final loadedEvent = eventsByYear.valueOrNull?[year];
 
-      await showGroupEventEditModal(
-        context: context,
-        selectedYear: year,
-        initialMemo: currentEvent?.memo ?? '',
-        onSave: (memo) async {
-          await rowContext.controller.saveGroupEvent(
-            currentEvent: currentEvent,
-            groupId: rowContext.groupWithMembers.id,
-            selectedYear: year,
-            memo: memo,
-          );
-        },
-      );
-    };
+    useEffect(() {
+      localEvent.value = loadedEvent;
+      return null;
+    }, [loadedEvent]);
+
+    final currentEvent = localEvent.value;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final eventAtOpen = localEvent.value;
+        await showGroupEventEditModal(
+          context: context,
+          selectedYear: year,
+          initialMemo: eventAtOpen?.memo ?? '',
+          onSave: (memo) async {
+            if (memo.isEmpty) {
+              if (eventAtOpen != null) {
+                await ref
+                    .read(deleteGroupEventUsecaseProvider)
+                    .execute(eventAtOpen.id);
+              }
+              localEvent.value = null;
+            } else {
+              final savedEvent = await ref
+                  .read(saveGroupEventUsecaseProvider)
+                  .execute(
+                    GroupEventDto(
+                      id: eventAtOpen?.id ?? '',
+                      groupId: groupId,
+                      year: year,
+                      memo: memo,
+                    ),
+                  );
+              localEvent.value = savedEvent;
+            }
+            ref.invalidate(_groupEventsByYearProvider(query));
+          },
+        );
+      },
+      child: currentEvent == null
+          ? const SizedBox.expand()
+          : GroupEventCell(
+              memo: currentEvent.memo,
+              availableHeight: availableHeight,
+              availableWidth: availableWidth,
+            ),
+    );
   }
+}
+
+class _GroupEventsQuery {
+  const _GroupEventsQuery({required this.groupId, required this.refreshKey});
+
+  final String groupId;
+  final int refreshKey;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _GroupEventsQuery &&
+        other.groupId == groupId &&
+        other.refreshKey == refreshKey;
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, refreshKey);
 }
 
 class GroupEventCell extends StatelessWidget {

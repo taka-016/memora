@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 
 class TimelineRowContext {
   const TimelineRowContext({
-    required this.groupWithMembers,
     required this.controller,
     required this.rowIndex,
     required this.rowHeight,
     required this.layoutConfig,
   });
 
-  final GroupDto groupWithMembers;
   final TimelineController controller;
   final int rowIndex;
   final double rowHeight;

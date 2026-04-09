@@ -2,19 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/group/group_event_dto.dart';
-import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
-import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
-import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
-import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
-import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
-import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
@@ -25,53 +12,33 @@ class TimelineController {
     required this.viewState,
     required this.displaySettings,
     required this.isDraggingOnFixedRow,
-    required this.tripsByYear,
-    required this.dvcPointUsagesByYear,
-    required this.groupEventsByYear,
     required this.rowScrollControllers,
     required this.showMorePast,
     required this.showMoreFuture,
     required this.updateDisplaySettings,
-    required this.refreshTimelineData,
+    required this.refreshTimelineRows,
     required this.onRowResizePointerDown,
     required this.onRowResizePointerMove,
     required this.onRowResizePointerUp,
-    required this.buildMemberLabels,
-    required this.saveGroupEvent,
   });
 
   final TimelineViewState viewState;
   final TimelineDisplaySettings displaySettings;
   final bool isDraggingOnFixedRow;
-  final Map<int, List<TripEntryDto>> tripsByYear;
-  final Map<int, List<DvcPointUsageDto>> dvcPointUsagesByYear;
-  final Map<int, GroupEventDto> groupEventsByYear;
   final List<ScrollController> rowScrollControllers;
   final VoidCallback showMorePast;
   final VoidCallback showMoreFuture;
   final void Function(TimelineDisplaySettings settings) updateDisplaySettings;
-  final Future<void> Function() refreshTimelineData;
+  final Future<void> Function() refreshTimelineRows;
   final void Function(int rowIndex, PointerDownEvent event)
   onRowResizePointerDown;
   final void Function(int rowIndex, PointerMoveEvent event)
   onRowResizePointerMove;
   final void Function(PointerEvent event) onRowResizePointerUp;
-  final List<String> Function({
-    required DateTime? birthday,
-    required String? gender,
-    required int targetYear,
-  })
-  buildMemberLabels;
-  final Future<void> Function({
-    required GroupEventDto? currentEvent,
-    required String groupId,
-    required int selectedYear,
-    required String memo,
-  })
-  saveGroupEvent;
 
   List<double> get rowHeights => viewState.rowHeights;
   List<int> get visibleYears => viewState.visibleYears;
+  int get refreshKey => viewState.refreshKey;
 
   int yearFromColumnIndex(int columnIndex) {
     return viewState.yearFromColumnIndex(columnIndex);
@@ -80,23 +47,11 @@ class TimelineController {
 
 TimelineController useTimelineController({
   required BuildContext context,
-  required WidgetRef ref,
-  required GroupDto groupWithMembers,
   required int totalDataRows,
   required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
-  final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
-  final calculateSchoolGradeUsecase = ref.read(
-    calculateSchoolGradeUsecaseProvider,
-  );
-  final calculateYakudoshiUsecase = ref.read(calculateYakudoshiUsecaseProvider);
-  final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
-  final getGroupEventsUsecase = ref.read(getGroupEventsUsecaseProvider);
-  final saveGroupEventUsecase = ref.read(saveGroupEventUsecaseProvider);
-  final deleteGroupEventUsecase = ref.read(deleteGroupEventUsecaseProvider);
-
   final viewStateState = useState(
     TimelineViewState.initial(
       baseYear: DateTime.now().year,
@@ -107,11 +62,6 @@ TimelineController useTimelineController({
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
-  final tripsByYearState = useState<Map<int, List<TripEntryDto>>>({});
-  final dvcPointUsagesByYearState = useState<Map<int, List<DvcPointUsageDto>>>(
-    {},
-  );
-  final groupEventsByYearState = useState<Map<int, GroupEventDto>>({});
   final activeResizePointerState = useState<int?>(null);
   final displaySettingsState = useState(TimelineDisplaySettings.defaults);
   final rowScrollControllers = useMemoized(
@@ -119,19 +69,18 @@ TimelineController useTimelineController({
     [totalDataRows],
   );
   final isSyncingRef = useRef(false);
-  final currentGroupIdRef = useRef(groupWithMembers.id);
-  final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
   final viewState = viewStateState.value.ensureRowCount(
     totalDataRows: totalDataRows,
     dataRowHeight: layoutConfig.dataRowHeight,
     initialRowHeights: initialRowHeights,
   );
-  currentGroupIdRef.value = groupWithMembers.id;
 
   useEffect(() {
     Future.microtask(() async {
       final loaded = await TimelineDisplaySettings.load();
-      if (!context.mounted) return;
+      if (!context.mounted) {
+        return;
+      }
       displaySettingsState.value = loaded;
     });
     return null;
@@ -145,14 +94,6 @@ TimelineController useTimelineController({
     );
     return null;
   }, [totalDataRows]);
-
-  useEffect(() {
-    tripsByYearState.value = {};
-    dvcPointUsagesByYearState.value = {};
-    groupEventsByYearState.value = {};
-    loadingTripYearsRef.value = {};
-    return null;
-  }, [groupWithMembers.id]);
 
   void syncScrollControllers(int sourceIndex) {
     if (isSyncingRef.value) {
@@ -199,146 +140,16 @@ TimelineController useTimelineController({
     };
   }, [rowScrollControllers]);
 
-  Future<void> loadTripDataForYear(int year) async {
-    final requestedGroupId = groupWithMembers.id;
-    if (tripsByYearState.value.containsKey(year)) {
-      return;
-    }
-
-    final loadingKey = _buildTripLoadingKey(requestedGroupId, year);
-    final inFlightFuture = loadingTripYearsRef.value[loadingKey];
-    if (inFlightFuture != null) {
-      await inFlightFuture;
-      return;
-    }
-
-    final loadFuture = () async {
-      try {
-        final trips = await getTripEntriesUsecase.execute(
-          requestedGroupId,
-          year,
-        );
-
-        if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-          return;
-        }
-
-        tripsByYearState.value = {...tripsByYearState.value, year: trips};
-      } catch (e, stack) {
-        logger.e(
-          'TimelineController.loadTripDataForYear: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-
-        if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-          return;
-        }
-
-        tripsByYearState.value = {...tripsByYearState.value, year: const []};
-      } finally {
-        loadingTripYearsRef.value = {...loadingTripYearsRef.value}
-          ..remove(loadingKey);
-      }
-    }();
-
-    loadingTripYearsRef.value = {
-      ...loadingTripYearsRef.value,
-      loadingKey: loadFuture,
-    };
-    await loadFuture;
+  Future<void> refreshTimelineRows() async {
+    viewStateState.value = viewStateState.value.refreshRows();
   }
-
-  Future<void> loadTripDataForVisibleYears() async {
-    for (final year in viewStateState.value.visibleYears) {
-      await loadTripDataForYear(year);
-    }
-  }
-
-  Future<void> loadDvcPointUsageData() async {
-    final requestedGroupId = groupWithMembers.id;
-    try {
-      final usages = await getDvcPointUsagesUsecase.execute(requestedGroupId);
-
-      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-        return;
-      }
-
-      dvcPointUsagesByYearState.value = _groupDvcPointUsagesByYear(usages);
-    } catch (e, stack) {
-      logger.e(
-        'TimelineController.loadDvcPointUsageData: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-
-      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-        return;
-      }
-
-      dvcPointUsagesByYearState.value = {};
-    }
-  }
-
-  Future<void> loadGroupEventData() async {
-    final requestedGroupId = groupWithMembers.id;
-    try {
-      final events = await getGroupEventsUsecase.execute(requestedGroupId);
-
-      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-        return;
-      }
-
-      groupEventsByYearState.value = {
-        for (final event in events) event.year: event,
-      };
-    } catch (e, stack) {
-      logger.e(
-        'TimelineController.loadGroupEventData: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-
-      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-        return;
-      }
-
-      groupEventsByYearState.value = {};
-    }
-  }
-
-  Future<void> refreshTimelineData() async {
-    tripsByYearState.value = {};
-    dvcPointUsagesByYearState.value = {};
-    groupEventsByYearState.value = {};
-    await Future.wait([
-      loadTripDataForVisibleYears(),
-      loadDvcPointUsageData(),
-      loadGroupEventData(),
-    ]);
-  }
-
-  useEffect(() {
-    Future.microtask(loadTripDataForVisibleYears);
-    return null;
-  }, [viewState.startYearOffset, viewState.endYearOffset, groupWithMembers.id]);
-
-  useEffect(() {
-    Future.microtask(loadDvcPointUsageData);
-    return null;
-  }, [groupWithMembers.id]);
-
-  useEffect(() {
-    Future.microtask(loadGroupEventData);
-    return null;
-  }, [groupWithMembers.id]);
 
   useEffect(() {
     if (onSetRefreshCallback != null) {
-      onSetRefreshCallback(refreshTimelineData);
+      onSetRefreshCallback(refreshTimelineRows);
     }
     return null;
-  }, [onSetRefreshCallback, groupWithMembers.id]);
+  }, [onSetRefreshCallback]);
 
   void scrollToCurrentYear() {
     if (rowScrollControllers.isEmpty) {
@@ -375,73 +186,10 @@ TimelineController useTimelineController({
     return null;
   }, [rowScrollControllers]);
 
-  List<String> buildMemberLabels({
-    required DateTime? birthday,
-    required String? gender,
-    required int targetYear,
-  }) {
-    final displaySettings = displaySettingsState.value;
-    final labels = <String>[
-      if (displaySettings.showAge) ...?_buildAgeLabel(birthday, targetYear),
-      if (displaySettings.showGrade)
-        ...?_buildOptionalLabel(
-          calculateSchoolGradeUsecase.execute(birthday, targetYear),
-        ),
-      if (displaySettings.showYakudoshi)
-        ...?_buildOptionalLabel(
-          calculateYakudoshiUsecase.execute(birthday, gender, targetYear),
-        ),
-    ];
-
-    return labels;
-  }
-
-  Future<void> saveGroupEvent({
-    required GroupEventDto? currentEvent,
-    required String groupId,
-    required int selectedYear,
-    required String memo,
-  }) async {
-    final requestedGroupId = groupId;
-    if (memo.isEmpty) {
-      if (currentEvent != null) {
-        await deleteGroupEventUsecase.execute(currentEvent.id);
-      }
-      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-        return;
-      }
-      final updated = Map<int, GroupEventDto>.from(
-        groupEventsByYearState.value,
-      );
-      updated.remove(selectedYear);
-      groupEventsByYearState.value = updated;
-      return;
-    }
-
-    final savedEvent = await saveGroupEventUsecase.execute(
-      GroupEventDto(
-        id: currentEvent?.id ?? '',
-        groupId: groupId,
-        year: selectedYear,
-        memo: memo,
-      ),
-    );
-    if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
-      return;
-    }
-    groupEventsByYearState.value = {
-      ...groupEventsByYearState.value,
-      selectedYear: savedEvent,
-    };
-  }
-
   return TimelineController(
     viewState: viewState,
     displaySettings: displaySettingsState.value,
     isDraggingOnFixedRow: isDraggingOnFixedRowState.value,
-    tripsByYear: tripsByYearState.value,
-    dvcPointUsagesByYear: dvcPointUsagesByYearState.value,
-    groupEventsByYear: groupEventsByYearState.value,
     rowScrollControllers: rowScrollControllers,
     showMorePast: () {
       viewStateState.value = viewStateState.value.expandPast(
@@ -457,7 +205,7 @@ TimelineController useTimelineController({
       displaySettingsState.value = settings;
       unawaited(settings.save());
     },
-    refreshTimelineData: refreshTimelineData,
+    refreshTimelineRows: refreshTimelineRows,
     onRowResizePointerDown: (rowIndex, event) {
       activeResizePointerState.value = event.pointer;
       isDraggingOnFixedRowState.value = true;
@@ -480,52 +228,5 @@ TimelineController useTimelineController({
       activeResizePointerState.value = null;
       isDraggingOnFixedRowState.value = false;
     },
-    buildMemberLabels: buildMemberLabels,
-    saveGroupEvent: saveGroupEvent,
   );
-}
-
-Map<int, List<DvcPointUsageDto>> _groupDvcPointUsagesByYear(
-  List<DvcPointUsageDto> usages,
-) {
-  final grouped = <int, List<DvcPointUsageDto>>{};
-  for (final usage in usages) {
-    grouped.putIfAbsent(usage.usageYearMonth.year, () => []).add(usage);
-  }
-
-  for (final entry in grouped.entries) {
-    entry.value.sort((a, b) {
-      final comparedMonth = a.usageYearMonth.compareTo(b.usageYearMonth);
-      if (comparedMonth != 0) {
-        return comparedMonth;
-      }
-      return a.id.compareTo(b.id);
-    });
-  }
-
-  return grouped;
-}
-
-List<String>? _buildAgeLabel(DateTime? birthday, int targetYear) {
-  if (birthday == null) {
-    return null;
-  }
-
-  final age = targetYear - birthday.year;
-  if (age < 0) {
-    return null;
-  }
-
-  return ['$age歳'];
-}
-
-List<String>? _buildOptionalLabel(String? value) {
-  if (value == null || value.isEmpty) {
-    return null;
-  }
-  return [value];
-}
-
-String _buildTripLoadingKey(String groupId, int year) {
-  return '$groupId:$year';
 }

@@ -3,7 +3,6 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
-import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
@@ -14,11 +13,9 @@ class Timeline extends HookConsumerWidget {
   const Timeline({
     super.key,
     required this.groupWithMembers,
+    required this.rowDefinitions,
     this.onBackPressed,
-    this.onTripManagementSelected,
-    this.onDvcPointCalculationPressed,
     this.onSetRefreshCallback,
-    this.rowDefinitions,
   });
 
   static const TimelineLayoutConfig _layoutConfig =
@@ -26,30 +23,18 @@ class Timeline extends HookConsumerWidget {
 
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
-  final void Function(String groupId, int year)? onTripManagementSelected;
-  final VoidCallback? onDvcPointCalculationPressed;
   final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
-  final List<TimelineRowDefinition>? rowDefinitions;
+  final List<TimelineRowDefinition> rowDefinitions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final effectiveRowDefinitions =
-        rowDefinitions ??
-        buildDefaultTimelineRows(
-          groupWithMembers: groupWithMembers,
-          layoutConfig: _layoutConfig,
-          onTripManagementSelected: onTripManagementSelected,
-          onDvcPointCalculationPressed: onDvcPointCalculationPressed,
-        );
-    final totalDataRows = effectiveRowDefinitions.length;
+    final totalDataRows = rowDefinitions.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final timelineController = useTimelineController(
       context: context,
-      ref: ref,
-      groupWithMembers: groupWithMembers,
       totalDataRows: totalDataRows,
-      initialRowHeights: effectiveRowDefinitions
+      initialRowHeights: rowDefinitions
           .map((definition) => definition.initialHeight)
           .toList(),
       layoutConfig: _layoutConfig,
@@ -97,7 +82,6 @@ class Timeline extends HookConsumerWidget {
 
     TimelineRowContext buildRowContext(int rowIndex) {
       return TimelineRowContext(
-        groupWithMembers: groupWithMembers,
         controller: timelineController,
         rowIndex: rowIndex,
         rowHeight: timelineController.rowHeights[rowIndex],
@@ -246,8 +230,8 @@ class Timeline extends HookConsumerWidget {
     }
 
     List<Widget> buildDataRowsWithResizers() {
-      return List.generate(effectiveRowDefinitions.length, (index) {
-        return buildDataRow(index, effectiveRowDefinitions[index]);
+      return List.generate(rowDefinitions.length, (index) {
+        return buildDataRow(index, rowDefinitions[index]);
       });
     }
 

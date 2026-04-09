@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
 class TimelineTripRow extends TimelineRowDefinition {
   const TimelineTripRow({
+    required this.groupId,
     required this.initialHeight,
     required this.onTripManagementSelected,
   });
+
+  final String groupId;
 
   @override
   final double initialHeight;
@@ -25,10 +31,10 @@ class TimelineTripRow extends TimelineRowDefinition {
     TimelineRowContext rowContext,
     int year,
   ) {
-    final trips = rowContext.controller.tripsByYear[year] ?? [];
-
-    return TripCell(
-      trips: trips,
+    return _TripYearCell(
+      groupId: groupId,
+      year: year,
+      refreshKey: rowContext.controller.refreshKey,
       availableHeight: rowContext.rowHeight,
       availableWidth: rowContext.layoutConfig.yearColumnWidth,
     );
@@ -45,8 +51,84 @@ class TimelineTripRow extends TimelineRowDefinition {
       return null;
     }
 
-    return () => callback(rowContext.groupWithMembers.id, year);
+    return () => callback(groupId, year);
   }
+}
+
+final _tripEntriesProvider = FutureProvider.autoDispose
+    .family<List<TripEntryDto>, _TripEntriesQuery>((ref, query) async {
+      try {
+        return await ref
+            .read(getTripEntriesUsecaseProvider)
+            .execute(query.groupId, query.year);
+      } catch (e, stack) {
+        logger.e(
+          'TimelineTripRow.loadTrips: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        return [];
+      }
+    });
+
+class _TripYearCell extends ConsumerWidget {
+  const _TripYearCell({
+    required this.groupId,
+    required this.year,
+    required this.refreshKey,
+    required this.availableHeight,
+    required this.availableWidth,
+  });
+
+  final String groupId;
+  final int year;
+  final int refreshKey;
+  final double availableHeight;
+  final double availableWidth;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trips = ref
+        .watch(
+          _tripEntriesProvider(
+            _TripEntriesQuery(
+              groupId: groupId,
+              year: year,
+              refreshKey: refreshKey,
+            ),
+          ),
+        )
+        .valueOrNull;
+
+    return TripCell(
+      trips: trips ?? const [],
+      availableHeight: availableHeight,
+      availableWidth: availableWidth,
+    );
+  }
+}
+
+class _TripEntriesQuery {
+  const _TripEntriesQuery({
+    required this.groupId,
+    required this.year,
+    required this.refreshKey,
+  });
+
+  final String groupId;
+  final int year;
+  final int refreshKey;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _TripEntriesQuery &&
+        other.groupId == groupId &&
+        other.year == year &&
+        other.refreshKey == refreshKey;
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, year, refreshKey);
 }
 
 class TripCell extends StatelessWidget {
