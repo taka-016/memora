@@ -75,6 +75,7 @@ void main() {
     GroupEventQueryService? groupEventService,
     GroupEventRepository? groupEventRepo,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+    List<TimelineRowDefinition>? rowDefinitions,
   }) {
     return ProviderScope(
       overrides: [
@@ -99,6 +100,7 @@ void main() {
             child: Timeline(
               groupWithMembers: groupWithMembers ?? testGroupWithMembers,
               onSetRefreshCallback: onSetRefreshCallback,
+              rowDefinitions: rowDefinitions,
             ),
           ),
         ),
@@ -2036,6 +2038,10 @@ class _TimelineControllerProbe extends StatelessWidget {
               ref: ref,
               groupWithMembers: groupWithMembers,
               totalDataRows: totalDataRows,
+              initialRowHeights: List.filled(
+                totalDataRows,
+                TimelineLayoutConfig.defaults.dataRowHeight,
+              ),
               layoutConfig: TimelineLayoutConfig.defaults,
               onSetRefreshCallback: null,
             );

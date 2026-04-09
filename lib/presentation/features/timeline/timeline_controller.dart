@@ -83,6 +83,7 @@ TimelineController useTimelineController({
   required WidgetRef ref,
   required GroupDto groupWithMembers,
   required int totalDataRows,
+  required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
@@ -102,6 +103,7 @@ TimelineController useTimelineController({
       totalDataRows: totalDataRows,
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,
+      initialRowHeights: initialRowHeights,
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
@@ -122,6 +124,7 @@ TimelineController useTimelineController({
   final viewState = viewStateState.value.ensureRowCount(
     totalDataRows: totalDataRows,
     dataRowHeight: layoutConfig.dataRowHeight,
+    initialRowHeights: initialRowHeights,
   );
   currentGroupIdRef.value = groupWithMembers.id;
 
@@ -138,6 +141,7 @@ TimelineController useTimelineController({
     viewStateState.value = viewStateState.value.ensureRowCount(
       totalDataRows: totalDataRows,
       dataRowHeight: layoutConfig.dataRowHeight,
+      initialRowHeights: initialRowHeights,
     );
     return null;
   }, [totalDataRows]);

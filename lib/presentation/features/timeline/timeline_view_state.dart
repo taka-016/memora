@@ -11,12 +11,14 @@ class TimelineViewState {
     required int totalDataRows,
     required int initialYearRange,
     required double dataRowHeight,
+    List<double>? initialRowHeights,
   }) {
     return TimelineViewState(
       baseYear: baseYear,
       startYearOffset: -initialYearRange,
       endYearOffset: initialYearRange,
-      rowHeights: List.filled(totalDataRows, dataRowHeight),
+      rowHeights:
+          initialRowHeights ?? List.filled(totalDataRows, dataRowHeight),
     );
   }
 
@@ -57,6 +59,7 @@ class TimelineViewState {
   TimelineViewState ensureRowCount({
     required int totalDataRows,
     required double dataRowHeight,
+    List<double>? initialRowHeights,
   }) {
     if (rowHeights.length == totalDataRows) {
       return this;
@@ -65,8 +68,11 @@ class TimelineViewState {
     return copyWith(
       rowHeights: List<double>.generate(
         totalDataRows,
-        (index) =>
-            index < rowHeights.length ? rowHeights[index] : dataRowHeight,
+        (index) => index < rowHeights.length
+            ? rowHeights[index]
+            : initialRowHeights != null && index < initialRowHeights.length
+            ? initialRowHeights[index]
+            : dataRowHeight,
       ),
     );
   }

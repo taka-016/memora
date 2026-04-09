@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/presentation/features/timeline/timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
+
+class TimelineRowActions {
+  const TimelineRowActions({
+    required this.onTripManagementSelected,
+    required this.onDvcPointCalculationPressed,
+  });
+
+  final Function(String groupId, int year)? onTripManagementSelected;
+  final VoidCallback? onDvcPointCalculationPressed;
+}
+
+class TimelineRowContext {
+  const TimelineRowContext({
+    required this.groupWithMembers,
+    required this.controller,
+    required this.rowIndex,
+    required this.rowHeight,
+    required this.layoutConfig,
+    required this.actions,
+  });
+
+  final GroupDto groupWithMembers;
+  final TimelineController controller;
+  final int rowIndex;
+  final double rowHeight;
+  final TimelineLayoutConfig layoutConfig;
+  final TimelineRowActions actions;
+}
+
+abstract class TimelineRowDefinition {
+  const TimelineRowDefinition();
+
+  String get fixedColumnLabel;
+  double get initialHeight;
+  Color? get backgroundColor;
+
+  Key? yearCellKey(int year) => null;
+
+  Widget buildFixedColumn(
+    BuildContext context,
+    TimelineRowContext rowContext,
+  ) {
+    return Text(fixedColumnLabel);
+  }
+
+  Widget buildYearCell(
+    BuildContext context,
+    TimelineRowContext rowContext,
+    int year,
+  );
+
+  VoidCallback? fixedColumnTapCallback(
+    BuildContext context,
+    TimelineRowContext rowContext,
+  ) {
+    return null;
+  }
+
+  VoidCallback? yearCellTapCallback(
+    BuildContext context,
+    TimelineRowContext rowContext,
+    int year,
+  ) {
+    return null;
+  }
+}
