@@ -20,6 +20,7 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
+import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
@@ -75,8 +76,20 @@ void main() {
     GroupEventQueryService? groupEventService,
     GroupEventRepository? groupEventRepo,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+    void Function(String groupId, int year)? onTripManagementSelected,
+    VoidCallback? onDvcPointCalculationPressed,
     List<TimelineRowDefinition>? rowDefinitions,
   }) {
+    final effectiveGroupWithMembers = groupWithMembers ?? testGroupWithMembers;
+    final effectiveRowDefinitions =
+        rowDefinitions ??
+        buildDefaultTimelineRows(
+          groupWithMembers: effectiveGroupWithMembers,
+          layoutConfig: TimelineLayoutConfig.defaults,
+          onTripManagementSelected: onTripManagementSelected,
+          onDvcPointCalculationPressed: onDvcPointCalculationPressed,
+        );
+
     return ProviderScope(
       overrides: [
         tripEntryQueryServiceProvider.overrideWithValue(
@@ -98,9 +111,9 @@ void main() {
             width: 1200, // より広い画面サイズを設定
             height: 800,
             child: Timeline(
-              groupWithMembers: groupWithMembers ?? testGroupWithMembers,
+              groupWithMembers: effectiveGroupWithMembers,
               onSetRefreshCallback: onSetRefreshCallback,
-              rowDefinitions: rowDefinitions,
+              rowDefinitions: effectiveRowDefinitions,
             ),
           ),
         ),
@@ -115,6 +128,7 @@ void main() {
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
     GroupEventRepository? groupEventRepo,
+    void Function(RefreshTimelineCallback)? onSetRefreshCallback,
   }) {
     return ProviderScope(
       overrides: [
@@ -136,6 +150,7 @@ void main() {
           body: _TimelineControllerProbe(
             groupWithMembers: groupWithMembers,
             onBuilt: onBuilt,
+            onSetRefreshCallback: onSetRefreshCallback,
           ),
         ),
       ),
@@ -1251,6 +1266,32 @@ void main() {
       expect(capturedCallback, isNotNull);
     });
 
+    testWidgets('リフレッシュコールバックは行更新キーだけを進める', (
+      WidgetTester tester,
+    ) async {
+      RefreshTimelineCallback? capturedCallback;
+      final capturedControllers = <TimelineController>[];
+
+      await tester.pumpWidget(
+        createControllerProbeWidget(
+          groupWithMembers: testGroupWithMembers,
+          onBuilt: capturedControllers.add,
+          onSetRefreshCallback: (callback) {
+            capturedCallback = callback;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(capturedCallback, isNotNull);
+      expect(capturedControllers.last.refreshKey, 0);
+
+      await capturedCallback!();
+      await tester.pumpAndSettle();
+
+      expect(capturedControllers.last.refreshKey, 1);
+    });
+
     testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (
       WidgetTester tester,
     ) async {
@@ -2021,10 +2062,12 @@ class _TimelineControllerProbe extends StatelessWidget {
   const _TimelineControllerProbe({
     required this.groupWithMembers,
     required this.onBuilt,
+    this.onSetRefreshCallback,
   });
 
   final GroupDto groupWithMembers;
   final void Function(TimelineController controller) onBuilt;
+  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
 
   @override
   Widget build(BuildContext context) {
@@ -2044,7 +2087,7 @@ class _TimelineControllerProbe extends StatelessWidget {
                 TimelineLayoutConfig.defaults.dataRowHeight,
               ),
               layoutConfig: TimelineLayoutConfig.defaults,
-              onSetRefreshCallback: null,
+              onSetRefreshCallback: onSetRefreshCallback,
             );
             onBuilt(controller);
             return const SizedBox.shrink();
