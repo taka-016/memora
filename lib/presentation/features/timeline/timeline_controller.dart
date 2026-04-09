@@ -18,6 +18,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
+import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
 
 class TimelineController {
@@ -28,6 +29,7 @@ class TimelineController {
     required this.tripsByYear,
     required this.dvcPointUsagesByYear,
     required this.groupEventsByYear,
+    required this.rowContext,
     required this.rowScrollControllers,
     required this.showMorePast,
     required this.showMoreFuture,
@@ -46,6 +48,7 @@ class TimelineController {
   final Map<int, List<TripEntryDto>> tripsByYear;
   final Map<int, List<DvcPointUsageDto>> dvcPointUsagesByYear;
   final Map<int, GroupEventDto> groupEventsByYear;
+  final TimelineRowContext rowContext;
   final List<ScrollController> rowScrollControllers;
   final VoidCallback showMorePast;
   final VoidCallback showMoreFuture;
@@ -82,10 +85,15 @@ TimelineController useTimelineController({
   required BuildContext context,
   required WidgetRef ref,
   required GroupDto groupWithMembers,
-  required int totalDataRows,
+  int? totalDataRows,
+  List<double>? initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
+  final resolvedInitialRowHeights =
+      initialRowHeights ??
+      List<double>.filled(totalDataRows!, layoutConfig.dataRowHeight);
+  final resolvedTotalDataRows = resolvedInitialRowHeights.length;
   final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
   final calculateSchoolGradeUsecase = ref.read(
     calculateSchoolGradeUsecaseProvider,
@@ -99,9 +107,8 @@ TimelineController useTimelineController({
   final viewStateState = useState(
     TimelineViewState.initial(
       baseYear: DateTime.now().year,
-      totalDataRows: totalDataRows,
       initialYearRange: layoutConfig.initialYearRange,
-      dataRowHeight: layoutConfig.dataRowHeight,
+      initialRowHeights: resolvedInitialRowHeights,
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
@@ -113,15 +120,14 @@ TimelineController useTimelineController({
   final activeResizePointerState = useState<int?>(null);
   final displaySettingsState = useState(TimelineDisplaySettings.defaults);
   final rowScrollControllers = useMemoized(
-    () => List.generate(totalDataRows + 1, (_) => ScrollController()),
-    [totalDataRows],
+    () => List.generate(resolvedTotalDataRows + 1, (_) => ScrollController()),
+    [resolvedTotalDataRows],
   );
   final isSyncingRef = useRef(false);
   final currentGroupIdRef = useRef(groupWithMembers.id);
   final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
   final viewState = viewStateState.value.ensureRowCount(
-    totalDataRows: totalDataRows,
-    dataRowHeight: layoutConfig.dataRowHeight,
+    initialRowHeights: resolvedInitialRowHeights,
   );
   currentGroupIdRef.value = groupWithMembers.id;
 
@@ -136,11 +142,10 @@ TimelineController useTimelineController({
 
   useEffect(() {
     viewStateState.value = viewStateState.value.ensureRowCount(
-      totalDataRows: totalDataRows,
-      dataRowHeight: layoutConfig.dataRowHeight,
+      initialRowHeights: resolvedInitialRowHeights,
     );
     return null;
-  }, [totalDataRows]);
+  }, [resolvedTotalDataRows]);
 
   useEffect(() {
     tripsByYearState.value = {};
@@ -438,6 +443,14 @@ TimelineController useTimelineController({
     tripsByYear: tripsByYearState.value,
     dvcPointUsagesByYear: dvcPointUsagesByYearState.value,
     groupEventsByYear: groupEventsByYearState.value,
+    rowContext: TimelineRowContext(
+      groupId: groupWithMembers.id,
+      tripsByYear: tripsByYearState.value,
+      dvcPointUsagesByYear: dvcPointUsagesByYearState.value,
+      groupEventsByYear: groupEventsByYearState.value,
+      buildMemberLabels: buildMemberLabels,
+      saveGroupEvent: saveGroupEvent,
+    ),
     rowScrollControllers: rowScrollControllers,
     showMorePast: () {
       viewStateState.value = viewStateState.value.expandPast(
