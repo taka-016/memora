@@ -59,9 +59,7 @@
   - `TimelineController`は行ごとの表示に必要な取得済みデータと操作を`TimelineRowContext`などの読み取り専用APIで公開し、各行実装がController内部状態やWidgetのローカル関数へ直接依存しないようにする
   - `TimelineViewState.rowHeights`は配列ではなく`rowId`をキーにした保持方法へ変更し、行順変更や表示ON/OFF後も別の行へ高さ設定がずれないようにする
   - 行の表示設定と並び順設定は端末ローカルではなくグループ単位で共有するため、`TimelineDisplaySettings`や`SharedPreferences`には追加しない
-  - 行の表示設定と並び順設定は、Firestore上のグループに紐づく設定として保存できるデータ構造を新設し、未保存時の既定値は現行どおり`旅行 → イベント → DVC → メンバー行群`とする
-  - グループ共有の行設定は`domain`、`application`、`infrastructure`の各層に必要なEntity、DTO、Repository、QueryService、Usecase、Mapperを追加し、Presentation層がFirestoreやRepositoryを直接参照しない構成にする
-  - `timeline_display_settings.dart`は年齢・学年・厄年など端末ローカルでよい表示補助設定に限定し、グループ共有の行表示・並び順設定とは責務を混在させない
+  - 行の使用有無や並び順の設定を今後データでもつ想定だが、今回の対応では使用行と並び順をコードでベタ書きし、現行と見た目を変えない。
   - 既存の`Key`、タップ操作、モーダル起動、表示文言、配色は原則維持し、この対応ではUI仕様変更を入れない
 
 ## 不具合修正
