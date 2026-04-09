@@ -292,11 +292,10 @@ class DvcPointUsageTimelineRow extends TimelineRowDefinition {
 }
 
 class MemberTimelineRow extends TimelineRowDefinition {
-  MemberTimelineRow({required this.member, required double initialHeight})
+  MemberTimelineRow({required this.member, required super.initialHeight})
     : super(
         rowId: 'member_${member.memberId}',
         fixedColumnLabel: member.displayName,
-        initialHeight: initialHeight,
       );
 
   final GroupMemberDto member;
