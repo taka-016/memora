@@ -102,12 +102,7 @@ void main() {
         rowIds: const ['trip', 'event', 'dvc', 'member:1'],
         initialYearRange: 5,
         dataRowHeight: 100,
-      ).resizeRow(
-        rowId: 'event',
-        delta: 40,
-        minHeight: 80,
-        maxHeight: 200,
-      );
+      ).resizeRow(rowId: 'event', delta: 40, minHeight: 80, maxHeight: 200);
 
       final updated = state.ensureRows(
         rowIds: const ['dvc', 'member:1', 'event', 'trip'],
