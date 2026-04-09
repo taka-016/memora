@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class MemberTimelineRow extends TimelineRowDefinition {
-  MemberTimelineRow({required this.member, required super.initialHeight})
+class MemberRow extends TimelineRowDefinition {
+  MemberRow({required this.member, required super.initialHeight})
     : super(
         rowId: 'member_${member.memberId}',
         fixedColumnLabel: member.displayName,

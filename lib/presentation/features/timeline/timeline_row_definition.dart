@@ -3,11 +3,11 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/presentation/features/timeline/dvc_point_usage_timeline_row.dart';
-import 'package:memora/presentation/features/timeline/group_event_timeline_row.dart';
-import 'package:memora/presentation/features/timeline/member_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/dvc_point_usage_row.dart';
+import 'package:memora/presentation/features/timeline/group_event_row.dart';
+import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
-import 'package:memora/presentation/features/timeline/trip_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 class TimelineRowContext {
   TimelineRowContext({
@@ -90,17 +90,17 @@ List<TimelineRowDefinition> buildDefaultTimelineRows({
   VoidCallback? onDvcPointCalculationPressed,
 }) {
   return [
-    TripTimelineRow(
+    TripRow(
       initialHeight: layoutConfig.dataRowHeight,
       onTripManagementSelected: onTripManagementSelected,
     ),
-    GroupEventTimelineRow(initialHeight: layoutConfig.dataRowHeight),
-    DvcPointUsageTimelineRow(
+    GroupEventRow(initialHeight: layoutConfig.dataRowHeight),
+    DvcPointUsageRow(
       initialHeight: layoutConfig.dataRowHeight,
       onDvcPointCalculationPressed: onDvcPointCalculationPressed,
     ),
     ...groupWithMembers.members.map(
-      (member) => MemberTimelineRow(
+      (member) => MemberRow(
         member: member,
         initialHeight: layoutConfig.dataRowHeight,
       ),

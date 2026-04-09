@@ -3,8 +3,8 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class TripTimelineRow extends TimelineRowDefinition {
-  const TripTimelineRow({
+class TripRow extends TimelineRowDefinition {
+  const TripRow({
     required super.initialHeight,
     this.onTripManagementSelected,
   }) : super(rowId: 'trip', fixedColumnLabel: '旅行');

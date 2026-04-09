@@ -5,8 +5,8 @@ import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.da
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class DvcPointUsageTimelineRow extends TimelineRowDefinition {
-  const DvcPointUsageTimelineRow({
+class DvcPointUsageRow extends TimelineRowDefinition {
+  const DvcPointUsageRow({
     required super.initialHeight,
     this.onDvcPointCalculationPressed,
   }) : super(rowId: 'dvc_point_usage', fixedColumnLabel: 'DVC');

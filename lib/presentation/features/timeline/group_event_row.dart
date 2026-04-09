@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class GroupEventTimelineRow extends TimelineRowDefinition {
-  const GroupEventTimelineRow({required super.initialHeight})
+class GroupEventRow extends TimelineRowDefinition {
+  const GroupEventRow({required super.initialHeight})
     : super(rowId: 'group_event', fixedColumnLabel: 'イベント');
 
   @override
