@@ -10,10 +10,13 @@ void main() {
       );
 
       expect(settings.groupId, 'group-1');
-      expect(
-        settings.rows.map((row) => row.rowId),
-        ['trip', 'group_event', 'dvc', 'member:member-1', 'member:member-2'],
-      );
+      expect(settings.rows.map((row) => row.rowId), [
+        'trip',
+        'group_event',
+        'dvc',
+        'member:member-1',
+        'member:member-2',
+      ]);
       expect(settings.rows.map((row) => row.orderIndex), [0, 1, 2, 3, 4]);
       expect(settings.rows.every((row) => row.isVisible), isTrue);
     });

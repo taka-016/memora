@@ -4,6 +4,7 @@ import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dar
 import 'package:memora/domain/repositories/dvc/dvc_point_usage_repository.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
+import 'package:memora/domain/repositories/group/timeline_row_settings_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -15,6 +16,7 @@ import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contr
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_usage_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_event_repository.dart';
 import 'package:memora/infrastructure/repositories/group/firestore_group_repository.dart';
+import 'package:memora/infrastructure/repositories/group/firestore_timeline_row_settings_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_repository.dart';
@@ -27,6 +29,11 @@ final groupRepositoryProvider = Provider<GroupRepository>((ref) {
 final groupEventRepositoryProvider = Provider<GroupEventRepository>((ref) {
   return RepositoryFactory.create<GroupEventRepository>(ref: ref);
 });
+
+final timelineRowSettingsRepositoryProvider =
+    Provider<TimelineRowSettingsRepository>((ref) {
+      return RepositoryFactory.create<TimelineRowSettingsRepository>(ref: ref);
+    });
 
 final memberEventRepositoryProvider = Provider<MemberEventRepository>((ref) {
   return RepositoryFactory.create<MemberEventRepository>(ref: ref);
@@ -96,6 +103,9 @@ class RepositoryFactory {
     }
     if (T == GroupEventRepository) {
       return FirestoreGroupEventRepository() as T;
+    }
+    if (T == TimelineRowSettingsRepository) {
+      return FirestoreTimelineRowSettingsRepository() as T;
     }
     if (T == TripEntryRepository) {
       return FirestoreTripEntryRepository() as T;

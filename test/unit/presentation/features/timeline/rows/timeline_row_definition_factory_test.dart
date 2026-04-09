@@ -29,14 +29,20 @@ void main() {
 
       final definitions = buildDefaultTimelineRowDefinitions(group);
 
-      expect(
-        definitions.map((definition) => definition.rowId),
-        ['trip', 'group_event', 'dvc', 'member:member-1', 'member:member-2'],
-      );
-      expect(
-        definitions.map((definition) => definition.fixedColumnLabel),
-        ['旅行', 'イベント', 'DVC', 'タロちゃん', 'ハナちゃん'],
-      );
+      expect(definitions.map((definition) => definition.rowId), [
+        'trip',
+        'group_event',
+        'dvc',
+        'member:member-1',
+        'member:member-2',
+      ]);
+      expect(definitions.map((definition) => definition.fixedColumnLabel), [
+        '旅行',
+        'イベント',
+        'DVC',
+        'タロちゃん',
+        'ハナちゃん',
+      ]);
     });
 
     test('グループ共有の行設定に従って表示行と順番を組み替える', () {
@@ -61,16 +67,8 @@ void main() {
             isVisible: true,
             orderIndex: 0,
           ),
-          TimelineRowSettingDto(
-            rowId: 'trip',
-            isVisible: false,
-            orderIndex: 1,
-          ),
-          TimelineRowSettingDto(
-            rowId: 'dvc',
-            isVisible: true,
-            orderIndex: 2,
-          ),
+          TimelineRowSettingDto(rowId: 'trip', isVisible: false, orderIndex: 1),
+          TimelineRowSettingDto(rowId: 'dvc', isVisible: true, orderIndex: 2),
           TimelineRowSettingDto(
             rowId: 'group_event',
             isVisible: true,
@@ -84,14 +82,16 @@ void main() {
         rowSettings: settings,
       );
 
-      expect(
-        definitions.map((definition) => definition.rowId),
-        ['member:member-1', 'dvc', 'group_event'],
-      );
-      expect(
-        definitions.map((definition) => definition.fixedColumnLabel),
-        ['タロちゃん', 'DVC', 'イベント'],
-      );
+      expect(definitions.map((definition) => definition.rowId), [
+        'member:member-1',
+        'dvc',
+        'group_event',
+      ]);
+      expect(definitions.map((definition) => definition.fixedColumnLabel), [
+        'タロちゃん',
+        'DVC',
+        'イベント',
+      ]);
     });
   });
 }

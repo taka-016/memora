@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/group/timeline_row_settings_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/rows/dvc_timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/rows/group_event_timeline_row_definition.dart';
@@ -9,8 +10,9 @@ import 'package:memora/presentation/features/timeline/timeline_layout_config.dar
 List<TimelineRowDefinition> buildDefaultTimelineRowDefinitions(
   GroupDto groupWithMembers, {
   TimelineLayoutConfig layoutConfig = TimelineLayoutConfig.defaults,
+  TimelineRowSettingsDto? rowSettings,
 }) {
-  return [
+  final defaultDefinitions = [
     TripTimelineRowDefinition(initialHeight: layoutConfig.dataRowHeight),
     GroupEventTimelineRowDefinition(initialHeight: layoutConfig.dataRowHeight),
     DvcTimelineRowDefinition(initialHeight: layoutConfig.dataRowHeight),
@@ -20,5 +22,24 @@ List<TimelineRowDefinition> buildDefaultTimelineRowDefinitions(
         initialHeight: layoutConfig.dataRowHeight,
       ),
     ),
+  ];
+
+  if (rowSettings == null) {
+    return defaultDefinitions;
+  }
+
+  final definitionsByRowId = {
+    for (final definition in defaultDefinitions) definition.rowId: definition,
+  };
+  final configuredRowIds = rowSettings.rows.map((row) => row.rowId).toSet();
+  final configuredDefinitions =
+      rowSettings.rows.where((row) => row.isVisible).toList()
+        ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+  return [
+    for (final row in configuredDefinitions)
+      if (definitionsByRowId[row.rowId] != null) definitionsByRowId[row.rowId]!,
+    for (final definition in defaultDefinitions)
+      if (!configuredRowIds.contains(definition.rowId)) definition,
   ];
 }

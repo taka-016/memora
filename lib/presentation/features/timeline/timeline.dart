@@ -119,11 +119,8 @@ class Timeline extends HookConsumerWidget {
             height: rowContext.rowHeight(rowDefinition.rowId),
             child: GestureDetector(
               onTap: isYearColumn
-                  ? () => rowDefinition.onYearCellTap(
-                      context,
-                      rowContext,
-                      year!,
-                    )
+                  ? () =>
+                        rowDefinition.onYearCellTap(context, rowContext, year!)
                   : null,
               child: Container(
                 key: year == null ? null : rowDefinition.yearCellKey(year),
@@ -469,5 +466,4 @@ class Timeline extends HookConsumerWidget {
       ),
     );
   }
-
 }

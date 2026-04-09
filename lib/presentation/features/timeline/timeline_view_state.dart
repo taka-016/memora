@@ -18,9 +18,7 @@ class TimelineViewState {
       baseYear: baseYear,
       startYearOffset: -initialYearRange,
       endYearOffset: initialYearRange,
-      rowHeightsByRowId: {
-        for (final rowId in rowIds) rowId: dataRowHeight,
-      },
+      rowHeightsByRowId: {for (final rowId in rowIds) rowId: dataRowHeight},
       rowIds: rowIds,
     );
   }

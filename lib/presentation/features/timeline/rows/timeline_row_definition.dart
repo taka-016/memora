@@ -29,10 +29,7 @@ abstract class TimelineRowDefinition {
     int year,
   ) {}
 
-  Widget buildFixedColumn(
-    BuildContext context,
-    TimelineRowContext rowContext,
-  ) {
+  Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
     return Text(fixedColumnLabel);
   }
 

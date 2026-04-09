@@ -29,10 +29,7 @@ class DvcTimelineRowDefinition extends TimelineRowDefinition {
   }
 
   @override
-  void onFixedColumnTap(
-    BuildContext context,
-    TimelineRowContext rowContext,
-  ) {
+  void onFixedColumnTap(BuildContext context, TimelineRowContext rowContext) {
     rowContext.onDvcPointCalculationPressed?.call();
   }
 
@@ -56,10 +53,7 @@ class DvcTimelineRowDefinition extends TimelineRowDefinition {
   }
 
   @override
-  Widget buildFixedColumn(
-    BuildContext context,
-    TimelineRowContext rowContext,
-  ) {
+  Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
