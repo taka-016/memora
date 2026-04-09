@@ -211,10 +211,10 @@ class Timeline extends HookConsumerWidget {
               bottom: -19,
               child: Listener(
                 key: Key('row_resizer_icon_$rowIndex'),
-                onPointerDown: (event) =>
-                    timelineController.onRowResizePointerDown(rowIndex, event),
-                onPointerMove: (event) =>
-                    timelineController.onRowResizePointerMove(rowIndex, event),
+                onPointerDown: (event) => timelineController
+                    .onRowResizePointerDown(rowDefinition.rowId, event),
+                onPointerMove: (event) => timelineController
+                    .onRowResizePointerMove(rowDefinition.rowId, event),
                 onPointerUp: timelineController.onRowResizePointerUp,
                 onPointerCancel: timelineController.onRowResizePointerUp,
                 child: MouseRegion(

@@ -53,9 +53,9 @@ class TimelineController {
   final VoidCallback showMoreFuture;
   final void Function(TimelineDisplaySettings settings) updateDisplaySettings;
   final Future<void> Function() refreshTimelineData;
-  final void Function(int rowIndex, PointerDownEvent event)
+  final void Function(String rowId, PointerDownEvent event)
   onRowResizePointerDown;
-  final void Function(int rowIndex, PointerMoveEvent event)
+  final void Function(String rowId, PointerMoveEvent event)
   onRowResizePointerMove;
   final void Function(PointerEvent event) onRowResizePointerUp;
   final List<String> Function({
@@ -459,15 +459,14 @@ TimelineController useTimelineController({
       unawaited(settings.save());
     },
     refreshTimelineData: refreshTimelineData,
-    onRowResizePointerDown: (rowIndex, event) {
+    onRowResizePointerDown: (rowId, event) {
       activeResizePointerState.value = event.pointer;
       isDraggingOnFixedRowState.value = true;
     },
-    onRowResizePointerMove: (rowIndex, event) {
+    onRowResizePointerMove: (rowId, event) {
       if (activeResizePointerState.value != event.pointer) {
         return;
       }
-      final rowId = rowIds[rowIndex];
       viewStateState.value = viewStateState.value.resizeRow(
         rowId: rowId,
         delta: event.delta.dy,

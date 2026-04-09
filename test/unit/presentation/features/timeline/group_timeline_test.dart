@@ -1983,11 +1983,11 @@ void main() {
       const pointer = 1;
       final newRowIndex = 3 + expandedGroup.members.length - 1;
       controller.onRowResizePointerDown(
-        newRowIndex,
+        controller.rowIds[newRowIndex],
         const PointerDownEvent(pointer: pointer),
       );
       controller.onRowResizePointerMove(
-        newRowIndex,
+        controller.rowIds[newRowIndex],
         const PointerMoveEvent(pointer: pointer, delta: Offset(0, 20)),
       );
       await tester.pump();
