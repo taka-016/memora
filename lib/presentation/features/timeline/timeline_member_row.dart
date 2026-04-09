@@ -3,10 +3,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
 class TimelineMemberRow extends TimelineRowDefinition {
-  const TimelineMemberRow({
-    required this.member,
-    required this.initialHeight,
-  });
+  const TimelineMemberRow({required this.member, required this.initialHeight});
 
   final GroupMemberDto member;
 

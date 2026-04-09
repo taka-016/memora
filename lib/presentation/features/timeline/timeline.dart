@@ -130,11 +130,7 @@ class Timeline extends HookConsumerWidget {
             height: timelineController.rowHeights[rowIndex],
             child: GestureDetector(
               onTap: isYearColumn
-                  ? rowDefinition.yearCellTapCallback(
-                      context,
-                      rowContext,
-                      year,
-                    )
+                  ? rowDefinition.yearCellTapCallback(context, rowContext, year)
                   : null,
               child: Container(
                 key: isYearColumn ? rowDefinition.yearCellKey(year) : null,
@@ -162,10 +158,7 @@ class Timeline extends HookConsumerWidget {
       );
     }
 
-    Widget buildDataRow(
-      int rowIndex,
-      TimelineRowDefinition rowDefinition,
-    ) {
+    Widget buildDataRow(int rowIndex, TimelineRowDefinition rowDefinition) {
       final colorScheme = Theme.of(context).colorScheme;
       final rowContext = buildRowContext(rowIndex);
 
@@ -483,5 +476,4 @@ class Timeline extends HookConsumerWidget {
       ),
     );
   }
-
 }

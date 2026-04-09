@@ -17,10 +17,8 @@ List<TimelineRowDefinition> buildDefaultTimelineRows({
     TimelineGroupEventRow(initialHeight: defaultHeight),
     TimelineDvcRow(initialHeight: defaultHeight),
     ...groupWithMembers.members.map(
-      (member) => TimelineMemberRow(
-        member: member,
-        initialHeight: defaultHeight,
-      ),
+      (member) =>
+          TimelineMemberRow(member: member, initialHeight: defaultHeight),
     ),
   ];
 }

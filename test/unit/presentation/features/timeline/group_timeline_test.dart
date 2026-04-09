@@ -2009,9 +2009,10 @@ void main() {
       expect(find.text('旅行'), findsNothing);
       expect(find.text('イベント'), findsNothing);
       expect(find.text('DVC'), findsNothing);
-      expect(tester.getTopLeft(find.text('先頭行')).dy, lessThan(
-        tester.getTopLeft(find.text('後続行')).dy,
-      ));
+      expect(
+        tester.getTopLeft(find.text('先頭行')).dy,
+        lessThan(tester.getTopLeft(find.text('後続行')).dy),
+      );
     });
   });
 }

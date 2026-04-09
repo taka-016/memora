@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/presentation/features/timeline/dvc_cell.dart';
+import 'package:memora/presentation/features/timeline/timeline_dvc_row.dart';
 
 void main() {
   group('DvcCell', () {

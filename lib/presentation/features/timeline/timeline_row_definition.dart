@@ -40,10 +40,7 @@ abstract class TimelineRowDefinition {
 
   Key? yearCellKey(int year) => null;
 
-  Widget buildFixedColumn(
-    BuildContext context,
-    TimelineRowContext rowContext,
-  ) {
+  Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
     return Text(fixedColumnLabel);
   }
 
