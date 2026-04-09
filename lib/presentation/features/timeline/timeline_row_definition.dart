@@ -100,10 +100,8 @@ List<TimelineRowDefinition> buildDefaultTimelineRows({
       onDvcPointCalculationPressed: onDvcPointCalculationPressed,
     ),
     ...groupWithMembers.members.map(
-      (member) => MemberRow(
-        member: member,
-        initialHeight: layoutConfig.dataRowHeight,
-      ),
+      (member) =>
+          MemberRow(member: member, initialHeight: layoutConfig.dataRowHeight),
     ),
   ];
 }
