@@ -3,16 +3,6 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 
-class TimelineRowActions {
-  const TimelineRowActions({
-    required this.onTripManagementSelected,
-    required this.onDvcPointCalculationPressed,
-  });
-
-  final Function(String groupId, int year)? onTripManagementSelected;
-  final VoidCallback? onDvcPointCalculationPressed;
-}
-
 class TimelineRowContext {
   const TimelineRowContext({
     required this.groupWithMembers,
@@ -20,7 +10,6 @@ class TimelineRowContext {
     required this.rowIndex,
     required this.rowHeight,
     required this.layoutConfig,
-    required this.actions,
   });
 
   final GroupDto groupWithMembers;
@@ -28,7 +17,6 @@ class TimelineRowContext {
   final int rowIndex;
   final double rowHeight;
   final TimelineLayoutConfig layoutConfig;
-  final TimelineRowActions actions;
 }
 
 abstract class TimelineRowDefinition {

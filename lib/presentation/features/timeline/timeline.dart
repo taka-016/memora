@@ -26,7 +26,7 @@ class Timeline extends HookConsumerWidget {
 
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
-  final Function(String groupId, int year)? onTripManagementSelected;
+  final void Function(String groupId, int year)? onTripManagementSelected;
   final VoidCallback? onDvcPointCalculationPressed;
   final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
   final List<TimelineRowDefinition>? rowDefinitions;
@@ -38,14 +38,12 @@ class Timeline extends HookConsumerWidget {
         buildDefaultTimelineRows(
           groupWithMembers: groupWithMembers,
           layoutConfig: _layoutConfig,
+          onTripManagementSelected: onTripManagementSelected,
+          onDvcPointCalculationPressed: onDvcPointCalculationPressed,
         );
     final totalDataRows = effectiveRowDefinitions.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
-    final rowActions = TimelineRowActions(
-      onTripManagementSelected: onTripManagementSelected,
-      onDvcPointCalculationPressed: onDvcPointCalculationPressed,
-    );
     final timelineController = useTimelineController(
       context: context,
       ref: ref,
@@ -104,7 +102,6 @@ class Timeline extends HookConsumerWidget {
         rowIndex: rowIndex,
         rowHeight: timelineController.rowHeights[rowIndex],
         layoutConfig: _layoutConfig,
-        actions: rowActions,
       );
     }
 

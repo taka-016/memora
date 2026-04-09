@@ -4,10 +4,14 @@ import 'package:memora/presentation/features/timeline/timeline_row_definition.da
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
 class TimelineTripRow extends TimelineRowDefinition {
-  const TimelineTripRow({required this.initialHeight});
+  const TimelineTripRow({
+    required this.initialHeight,
+    required this.onTripManagementSelected,
+  });
 
   @override
   final double initialHeight;
+  final void Function(String groupId, int year)? onTripManagementSelected;
 
   @override
   String get fixedColumnLabel => '旅行';
@@ -36,7 +40,7 @@ class TimelineTripRow extends TimelineRowDefinition {
     TimelineRowContext rowContext,
     int year,
   ) {
-    final callback = rowContext.actions.onTripManagementSelected;
+    final callback = onTripManagementSelected;
     if (callback == null) {
       return null;
     }

@@ -6,10 +6,14 @@ import 'package:memora/presentation/features/timeline/timeline_row_definition.da
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
 class TimelineDvcRow extends TimelineRowDefinition {
-  const TimelineDvcRow({required this.initialHeight});
+  const TimelineDvcRow({
+    required this.initialHeight,
+    required this.onDvcPointCalculationPressed,
+  });
 
   @override
   final double initialHeight;
+  final VoidCallback? onDvcPointCalculationPressed;
 
   @override
   String get fixedColumnLabel => 'DVC';
@@ -32,7 +36,7 @@ class TimelineDvcRow extends TimelineRowDefinition {
           const SizedBox(width: 8),
           InkWell(
             key: const Key('timeline_dvc_point_usage_edit_button'),
-            onTap: rowContext.actions.onDvcPointCalculationPressed,
+            onTap: onDvcPointCalculationPressed,
             borderRadius: BorderRadius.circular(4),
             child: const Padding(
               padding: EdgeInsets.all(2),
@@ -67,7 +71,7 @@ class TimelineDvcRow extends TimelineRowDefinition {
     BuildContext context,
     TimelineRowContext rowContext,
   ) {
-    return rowContext.actions.onDvcPointCalculationPressed;
+    return onDvcPointCalculationPressed;
   }
 
   @override
