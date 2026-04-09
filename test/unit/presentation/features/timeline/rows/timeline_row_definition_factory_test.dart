@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/group/timeline_row_settings_dto.dart';
 import 'package:memora/presentation/features/timeline/rows/timeline_row_definition_factory.dart';
 
 void main() {
@@ -35,6 +36,61 @@ void main() {
       expect(
         definitions.map((definition) => definition.fixedColumnLabel),
         ['旅行', 'イベント', 'DVC', 'タロちゃん', 'ハナちゃん'],
+      );
+    });
+
+    test('グループ共有の行設定に従って表示行と順番を組み替える', () {
+      final group = GroupDto(
+        id: 'group-1',
+        ownerId: 'owner-1',
+        name: 'テストグループ',
+        members: [
+          GroupMemberDto(
+            memberId: 'member-1',
+            groupId: 'group-1',
+            displayName: 'タロちゃん',
+            email: 'taro@example.com',
+          ),
+        ],
+      );
+      const settings = TimelineRowSettingsDto(
+        groupId: 'group-1',
+        rows: [
+          TimelineRowSettingDto(
+            rowId: 'member:member-1',
+            isVisible: true,
+            orderIndex: 0,
+          ),
+          TimelineRowSettingDto(
+            rowId: 'trip',
+            isVisible: false,
+            orderIndex: 1,
+          ),
+          TimelineRowSettingDto(
+            rowId: 'dvc',
+            isVisible: true,
+            orderIndex: 2,
+          ),
+          TimelineRowSettingDto(
+            rowId: 'group_event',
+            isVisible: true,
+            orderIndex: 3,
+          ),
+        ],
+      );
+
+      final definitions = buildDefaultTimelineRowDefinitions(
+        group,
+        rowSettings: settings,
+      );
+
+      expect(
+        definitions.map((definition) => definition.rowId),
+        ['member:member-1', 'dvc', 'group_event'],
+      );
+      expect(
+        definitions.map((definition) => definition.fixedColumnLabel),
+        ['タロちゃん', 'DVC', 'イベント'],
       );
     });
   });
