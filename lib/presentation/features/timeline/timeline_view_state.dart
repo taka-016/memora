@@ -3,12 +3,12 @@ class TimelineViewState {
     required this.baseYear,
     required this.startYearOffset,
     required this.endYearOffset,
-    required List<double> rowHeights,
-  }) : rowHeights = List.unmodifiable(rowHeights);
+    required Map<String, double> rowHeightsByRowId,
+  }) : rowHeightsByRowId = Map.unmodifiable(rowHeightsByRowId);
 
   factory TimelineViewState.initial({
     required int baseYear,
-    required int totalDataRows,
+    required List<String> rowIds,
     required int initialYearRange,
     required double dataRowHeight,
   }) {
@@ -16,14 +16,14 @@ class TimelineViewState {
       baseYear: baseYear,
       startYearOffset: -initialYearRange,
       endYearOffset: initialYearRange,
-      rowHeights: List.filled(totalDataRows, dataRowHeight),
+      rowHeightsByRowId: {for (final rowId in rowIds) rowId: dataRowHeight},
     );
   }
 
   final int baseYear;
   final int startYearOffset;
   final int endYearOffset;
-  final List<double> rowHeights;
+  final Map<String, double> rowHeightsByRowId;
 
   List<int> get visibleYears {
     return [
@@ -36,13 +36,14 @@ class TimelineViewState {
     int? baseYear,
     int? startYearOffset,
     int? endYearOffset,
-    List<double>? rowHeights,
+    Map<String, double>? rowHeightsByRowId,
   }) {
     return TimelineViewState(
       baseYear: baseYear ?? this.baseYear,
       startYearOffset: startYearOffset ?? this.startYearOffset,
       endYearOffset: endYearOffset ?? this.endYearOffset,
-      rowHeights: rowHeights ?? List<double>.from(this.rowHeights),
+      rowHeightsByRowId:
+          rowHeightsByRowId ?? Map<String, double>.from(this.rowHeightsByRowId),
     );
   }
 
@@ -54,35 +55,39 @@ class TimelineViewState {
     return copyWith(endYearOffset: endYearOffset + yearRangeIncrement);
   }
 
-  TimelineViewState ensureRowCount({
-    required int totalDataRows,
+  TimelineViewState ensureRows({
+    required List<String> rowIds,
     required double dataRowHeight,
   }) {
-    if (rowHeights.length == totalDataRows) {
+    if (rowIds.every(rowHeightsByRowId.containsKey)) {
       return this;
     }
 
-    return copyWith(
-      rowHeights: List<double>.generate(
-        totalDataRows,
-        (index) =>
-            index < rowHeights.length ? rowHeights[index] : dataRowHeight,
-      ),
-    );
+    final updatedHeights = Map<String, double>.from(rowHeightsByRowId);
+    for (final rowId in rowIds) {
+      updatedHeights.putIfAbsent(rowId, () => dataRowHeight);
+    }
+
+    return copyWith(rowHeightsByRowId: updatedHeights);
+  }
+
+  double rowHeightFor(String rowId, {required double defaultHeight}) {
+    return rowHeightsByRowId[rowId] ?? defaultHeight;
   }
 
   TimelineViewState resizeRow({
-    required int rowIndex,
+    required String rowId,
     required double delta,
     required double minHeight,
     required double maxHeight,
   }) {
-    final updatedHeights = List<double>.from(rowHeights);
-    updatedHeights[rowIndex] = (updatedHeights[rowIndex] + delta).clamp(
-      minHeight,
-      maxHeight,
-    );
-    return copyWith(rowHeights: updatedHeights);
+    final currentHeight = rowHeightsByRowId[rowId];
+    if (currentHeight == null) {
+      return this;
+    }
+    final updatedHeights = Map<String, double>.from(rowHeightsByRowId);
+    updatedHeights[rowId] = (currentHeight + delta).clamp(minHeight, maxHeight);
+    return copyWith(rowHeightsByRowId: updatedHeights);
   }
 
   int yearFromColumnIndex(int columnIndex) {

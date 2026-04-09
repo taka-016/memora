@@ -4,6 +4,7 @@ import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/group/group_timeline_row_settings_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
@@ -16,6 +17,7 @@ import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_contract_q
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_usage_query_service.dart';
 import 'package:memora/infrastructure/queries/group/firestore_group_event_query_service.dart';
 import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
+import 'package:memora/infrastructure/queries/group/firestore_group_timeline_row_settings_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
@@ -29,6 +31,13 @@ final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
 final groupEventQueryServiceProvider = Provider<GroupEventQueryService>((ref) {
   return QueryServiceFactory.create<GroupEventQueryService>(ref: ref);
 });
+
+final groupTimelineRowSettingsQueryServiceProvider =
+    Provider<GroupTimelineRowSettingsQueryService>((ref) {
+      return QueryServiceFactory.create<GroupTimelineRowSettingsQueryService>(
+        ref: ref,
+      );
+    });
 
 final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
   return QueryServiceFactory.create<PinQueryService>(ref: ref);
@@ -87,6 +96,9 @@ class QueryServiceFactory {
   static T _createFirestoreQueryService<T>() {
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
+    }
+    if (T == GroupTimelineRowSettingsQueryService) {
+      return FirestoreGroupTimelineRowSettingsQueryService() as T;
     }
     if (T == GroupEventQueryService) {
       return FirestoreGroupEventQueryService() as T;

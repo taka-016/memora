@@ -6,10 +6,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
+import 'package:memora/application/dtos/group/group_timeline_row_settings_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
 import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
+import 'package:memora/application/usecases/group/get_group_timeline_row_settings_usecase.dart';
 import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
@@ -24,6 +26,7 @@ class TimelineController {
   TimelineController({
     required this.viewState,
     required this.displaySettings,
+    required this.rowSettings,
     required this.isDraggingOnFixedRow,
     required this.tripsByYear,
     required this.dvcPointUsagesByYear,
@@ -42,6 +45,7 @@ class TimelineController {
 
   final TimelineViewState viewState;
   final TimelineDisplaySettings displaySettings;
+  final GroupTimelineRowSettingsDto rowSettings;
   final bool isDraggingOnFixedRow;
   final Map<int, List<TripEntryDto>> tripsByYear;
   final Map<int, List<DvcPointUsageDto>> dvcPointUsagesByYear;
@@ -51,9 +55,9 @@ class TimelineController {
   final VoidCallback showMoreFuture;
   final void Function(TimelineDisplaySettings settings) updateDisplaySettings;
   final Future<void> Function() refreshTimelineData;
-  final void Function(int rowIndex, PointerDownEvent event)
+  final void Function(String rowId, PointerDownEvent event)
   onRowResizePointerDown;
-  final void Function(int rowIndex, PointerMoveEvent event)
+  final void Function(String rowId, PointerMoveEvent event)
   onRowResizePointerMove;
   final void Function(PointerEvent event) onRowResizePointerUp;
   final List<String> Function({
@@ -70,11 +74,14 @@ class TimelineController {
   })
   saveGroupEvent;
 
-  List<double> get rowHeights => viewState.rowHeights;
   List<int> get visibleYears => viewState.visibleYears;
 
   int yearFromColumnIndex(int columnIndex) {
     return viewState.yearFromColumnIndex(columnIndex);
+  }
+
+  double rowHeightFor(String rowId, {required double defaultHeight}) {
+    return viewState.rowHeightFor(rowId, defaultHeight: defaultHeight);
   }
 }
 
@@ -82,7 +89,7 @@ TimelineController useTimelineController({
   required BuildContext context,
   required WidgetRef ref,
   required GroupDto groupWithMembers,
-  required int totalDataRows,
+  required List<String> rowIds,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
@@ -93,13 +100,16 @@ TimelineController useTimelineController({
   final calculateYakudoshiUsecase = ref.read(calculateYakudoshiUsecaseProvider);
   final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
   final getGroupEventsUsecase = ref.read(getGroupEventsUsecaseProvider);
+  final getGroupTimelineRowSettingsUsecase = ref.read(
+    getGroupTimelineRowSettingsUsecaseProvider,
+  );
   final saveGroupEventUsecase = ref.read(saveGroupEventUsecaseProvider);
   final deleteGroupEventUsecase = ref.read(deleteGroupEventUsecaseProvider);
 
   final viewStateState = useState(
     TimelineViewState.initial(
       baseYear: DateTime.now().year,
-      totalDataRows: totalDataRows,
+      rowIds: rowIds,
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,
     ),
@@ -112,15 +122,18 @@ TimelineController useTimelineController({
   final groupEventsByYearState = useState<Map<int, GroupEventDto>>({});
   final activeResizePointerState = useState<int?>(null);
   final displaySettingsState = useState(TimelineDisplaySettings.defaults);
+  final rowSettingsState = useState(
+    GroupTimelineRowSettingsDto.defaultsForGroup(groupWithMembers),
+  );
   final rowScrollControllers = useMemoized(
-    () => List.generate(totalDataRows + 1, (_) => ScrollController()),
-    [totalDataRows],
+    () => List.generate(rowIds.length + 1, (_) => ScrollController()),
+    [rowIds.join('|')],
   );
   final isSyncingRef = useRef(false);
   final currentGroupIdRef = useRef(groupWithMembers.id);
   final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
-  final viewState = viewStateState.value.ensureRowCount(
-    totalDataRows: totalDataRows,
+  final viewState = viewStateState.value.ensureRows(
+    rowIds: rowIds,
     dataRowHeight: layoutConfig.dataRowHeight,
   );
   currentGroupIdRef.value = groupWithMembers.id;
@@ -135,17 +148,20 @@ TimelineController useTimelineController({
   }, []);
 
   useEffect(() {
-    viewStateState.value = viewStateState.value.ensureRowCount(
-      totalDataRows: totalDataRows,
+    viewStateState.value = viewStateState.value.ensureRows(
+      rowIds: rowIds,
       dataRowHeight: layoutConfig.dataRowHeight,
     );
     return null;
-  }, [totalDataRows]);
+  }, [rowIds.join('|')]);
 
   useEffect(() {
     tripsByYearState.value = {};
     dvcPointUsagesByYearState.value = {};
     groupEventsByYearState.value = {};
+    rowSettingsState.value = GroupTimelineRowSettingsDto.defaultsForGroup(
+      groupWithMembers,
+    );
     loadingTripYearsRef.value = {};
     return null;
   }, [groupWithMembers.id]);
@@ -303,6 +319,39 @@ TimelineController useTimelineController({
     }
   }
 
+  Future<void> loadGroupTimelineRowSettings() async {
+    final requestedGroupId = groupWithMembers.id;
+    try {
+      final settings = await getGroupTimelineRowSettingsUsecase.execute(
+        groupWithMembers,
+      );
+
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
+        return;
+      }
+
+      rowSettingsState.value = settings;
+      viewStateState.value = viewStateState.value.ensureRows(
+        rowIds: settings.rows.map((row) => row.rowId).toList(),
+        dataRowHeight: layoutConfig.dataRowHeight,
+      );
+    } catch (e, stack) {
+      logger.e(
+        'TimelineController.loadGroupTimelineRowSettings: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+
+      if (!context.mounted || currentGroupIdRef.value != requestedGroupId) {
+        return;
+      }
+
+      rowSettingsState.value = GroupTimelineRowSettingsDto.defaultsForGroup(
+        groupWithMembers,
+      );
+    }
+  }
+
   Future<void> refreshTimelineData() async {
     tripsByYearState.value = {};
     dvcPointUsagesByYearState.value = {};
@@ -326,6 +375,11 @@ TimelineController useTimelineController({
 
   useEffect(() {
     Future.microtask(loadGroupEventData);
+    return null;
+  }, [groupWithMembers.id]);
+
+  useEffect(() {
+    Future.microtask(loadGroupTimelineRowSettings);
     return null;
   }, [groupWithMembers.id]);
 
@@ -434,6 +488,7 @@ TimelineController useTimelineController({
   return TimelineController(
     viewState: viewState,
     displaySettings: displaySettingsState.value,
+    rowSettings: rowSettingsState.value,
     isDraggingOnFixedRow: isDraggingOnFixedRowState.value,
     tripsByYear: tripsByYearState.value,
     dvcPointUsagesByYear: dvcPointUsagesByYearState.value,
@@ -454,16 +509,16 @@ TimelineController useTimelineController({
       unawaited(settings.save());
     },
     refreshTimelineData: refreshTimelineData,
-    onRowResizePointerDown: (rowIndex, event) {
+    onRowResizePointerDown: (rowId, event) {
       activeResizePointerState.value = event.pointer;
       isDraggingOnFixedRowState.value = true;
     },
-    onRowResizePointerMove: (rowIndex, event) {
+    onRowResizePointerMove: (rowId, event) {
       if (activeResizePointerState.value != event.pointer) {
         return;
       }
       viewStateState.value = viewStateState.value.resizeRow(
-        rowIndex: rowIndex,
+        rowId: rowId,
         delta: event.delta.dy,
         minHeight: layoutConfig.rowMinHeight,
         maxHeight: layoutConfig.rowMaxHeight,

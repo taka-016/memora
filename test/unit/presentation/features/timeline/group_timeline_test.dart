@@ -8,8 +8,10 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_timeline_row_settings_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
+import 'package:memora/application/queries/group/group_timeline_row_settings_query_service.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
@@ -86,6 +88,9 @@ void main() {
         groupEventQueryServiceProvider.overrideWithValue(
           groupEventService ?? groupEventQueryService,
         ),
+        groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+          const _FakeGroupTimelineRowSettingsQueryService(),
+        ),
         groupEventRepositoryProvider.overrideWithValue(
           groupEventRepo ?? groupEventRepository,
         ),
@@ -123,6 +128,9 @@ void main() {
         ),
         groupEventQueryServiceProvider.overrideWithValue(
           groupEventService ?? groupEventQueryService,
+        ),
+        groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+          const _FakeGroupTimelineRowSettingsQueryService(),
         ),
         groupEventRepositoryProvider.overrideWithValue(
           groupEventRepo ?? groupEventRepository,
@@ -213,6 +221,9 @@ void main() {
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
           ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
+          ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
@@ -257,6 +268,9 @@ void main() {
           ),
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
+          ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
           ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
@@ -1034,6 +1048,9 @@ void main() {
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
           ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
+          ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
@@ -1086,6 +1103,9 @@ void main() {
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
           ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
+          ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
@@ -1132,6 +1152,9 @@ void main() {
           ),
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
+          ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
           ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
@@ -1226,6 +1249,9 @@ void main() {
           groupEventQueryServiceProvider.overrideWithValue(
             groupEventQueryService,
           ),
+          groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+            const _FakeGroupTimelineRowSettingsQueryService(),
+          ),
           groupEventRepositoryProvider.overrideWithValue(groupEventRepository),
         ],
         child: MaterialApp(
@@ -1264,6 +1290,9 @@ void main() {
             ),
             groupEventQueryServiceProvider.overrideWithValue(
               groupEventQueryService,
+            ),
+            groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+              const _FakeGroupTimelineRowSettingsQueryService(),
             ),
             groupEventRepositoryProvider.overrideWithValue(
               groupEventRepository,
@@ -1325,6 +1354,9 @@ void main() {
             groupEventQueryServiceProvider.overrideWithValue(
               groupEventQueryService,
             ),
+            groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+              const _FakeGroupTimelineRowSettingsQueryService(),
+            ),
             groupEventRepositoryProvider.overrideWithValue(
               groupEventRepository,
             ),
@@ -1385,6 +1417,9 @@ void main() {
             ),
             groupEventQueryServiceProvider.overrideWithValue(
               groupEventQueryService,
+            ),
+            groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+              const _FakeGroupTimelineRowSettingsQueryService(),
             ),
             groupEventRepositoryProvider.overrideWithValue(
               groupEventRepository,
@@ -1938,8 +1973,14 @@ void main() {
 
       expect(capturedControllers, isNotEmpty);
       expect(
-        capturedControllers.first.rowHeights.length,
-        3 + expandedGroup.members.length,
+        capturedControllers.first.viewState.rowHeightsByRowId.keys,
+        containsAll([
+          GroupTimelineRowSettingDto.tripRowId,
+          GroupTimelineRowSettingDto.groupEventRowId,
+          GroupTimelineRowSettingDto.dvcRowId,
+          GroupTimelineRowSettingDto.memberRowId('member1'),
+          GroupTimelineRowSettingDto.memberRowId('member2'),
+        ]),
       );
     });
 
@@ -1980,18 +2021,21 @@ void main() {
 
       final controller = capturedControllers.first;
       const pointer = 1;
-      final newRowIndex = 3 + expandedGroup.members.length - 1;
+      final newRowId = GroupTimelineRowSettingDto.memberRowId('member2');
       controller.onRowResizePointerDown(
-        newRowIndex,
+        newRowId,
         const PointerDownEvent(pointer: pointer),
       );
       controller.onRowResizePointerMove(
-        newRowIndex,
+        newRowId,
         const PointerMoveEvent(pointer: pointer, delta: Offset(0, 20)),
       );
       await tester.pump();
 
-      expect(capturedControllers.last.rowHeights[newRowIndex], 120);
+      expect(
+        capturedControllers.last.rowHeightFor(newRowId, defaultHeight: 100),
+        120,
+      );
     });
   });
 }
@@ -2007,7 +2051,9 @@ class _TimelineControllerProbe extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalDataRows = 3 + groupWithMembers.members.length;
+    final rowIds = GroupTimelineRowSettingsDto.defaultsForGroup(
+      groupWithMembers,
+    ).rows.map((row) => row.rowId).toList();
 
     return Consumer(
       builder: (context, ref, _) {
@@ -2017,7 +2063,7 @@ class _TimelineControllerProbe extends StatelessWidget {
               context: context,
               ref: ref,
               groupWithMembers: groupWithMembers,
-              totalDataRows: totalDataRows,
+              rowIds: rowIds,
               layoutConfig: TimelineLayoutConfig.defaults,
               onSetRefreshCallback: null,
             );
@@ -2041,6 +2087,20 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
+}
+
+class _FakeGroupTimelineRowSettingsQueryService
+    implements GroupTimelineRowSettingsQueryService {
+  const _FakeGroupTimelineRowSettingsQueryService([this.settings]);
+
+  final GroupTimelineRowSettingsDto? settings;
+
+  @override
+  Future<GroupTimelineRowSettingsDto?> getGroupTimelineRowSettings(
+    String groupId,
+  ) async {
+    return settings;
   }
 }
 
