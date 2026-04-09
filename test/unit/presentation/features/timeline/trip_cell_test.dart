@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/trip_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
-  group('TripTimelineRow', () {
+  group('TripRow', () {
     testWidgets('旅行データが空の場合、空のContainerを表示する', (WidgetTester tester) async {
       await tester.pumpWidget(
         _buildTripRowWidget(trips: const [], availableHeight: 100),
@@ -179,7 +179,7 @@ Widget _buildTripRowWidget({
   required double availableHeight,
   double availableWidth = 200,
 }) {
-  final row = const TripTimelineRow(initialHeight: 100);
+  final row = const TripRow(initialHeight: 100);
   return MaterialApp(
     home: Scaffold(
       body: Builder(

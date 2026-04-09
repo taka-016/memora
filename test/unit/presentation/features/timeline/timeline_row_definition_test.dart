@@ -1,12 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/presentation/features/timeline/dvc_point_usage_timeline_row.dart';
-import 'package:memora/presentation/features/timeline/group_event_timeline_row.dart';
-import 'package:memora/presentation/features/timeline/member_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/dvc_point_usage_row.dart';
+import 'package:memora/presentation/features/timeline/group_event_row.dart';
+import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/trip_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
   group('TimelineRowDefinition', () {
@@ -57,10 +57,10 @@ void main() {
       );
 
       final rows = <TimelineRowDefinition>[
-        const TripTimelineRow(initialHeight: 100),
-        const GroupEventTimelineRow(initialHeight: 100),
-        const DvcPointUsageTimelineRow(initialHeight: 100),
-        MemberTimelineRow(member: member, initialHeight: 100),
+        const TripRow(initialHeight: 100),
+        const GroupEventRow(initialHeight: 100),
+        const DvcPointUsageRow(initialHeight: 100),
+        MemberRow(member: member, initialHeight: 100),
       ];
 
       expect(rows.map((row) => row.rowId), [

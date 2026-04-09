@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/presentation/features/timeline/dvc_point_usage_timeline_row.dart';
+import 'package:memora/presentation/features/timeline/dvc_point_usage_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
 void main() {
-  group('DvcPointUsageTimelineRow', () {
+  group('DvcPointUsageRow', () {
     testWidgets('利用データが空の場合、ポイント表示を行わない', (WidgetTester tester) async {
       await tester.pumpWidget(
         _buildDvcRowWidget(usages: const [], availableHeight: 100),
@@ -90,7 +90,7 @@ Widget _buildDvcRowWidget({
   double availableWidth = 200,
   int year = 2023,
 }) {
-  final row = const DvcPointUsageTimelineRow(initialHeight: 100);
+  final row = const DvcPointUsageRow(initialHeight: 100);
   return MaterialApp(
     home: Scaffold(
       body: Builder(
