@@ -6,7 +6,7 @@ void main() {
     test('初期状態では現在年を基準に前後5年を表示対象年として返す', () {
       final state = TimelineViewState.initial(
         baseYear: 2026,
-        totalDataRows: 4,
+        rowIds: const ['trip', 'event', 'dvc', 'member:1'],
         initialYearRange: 5,
         dataRowHeight: 100,
       );
@@ -24,15 +24,20 @@ void main() {
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
-        rowHeights: const [100, 120],
+        rowHeightsByRowId: const {'trip': 100, 'event': 120},
       );
 
-      final updated = state.ensureRowCount(
-        totalDataRows: 4,
+      final updated = state.ensureRows(
+        rowIds: const ['event', 'member:1', 'trip', 'member:2'],
         dataRowHeight: 100,
       );
 
-      expect(updated.rowHeights, [100, 120, 100, 100]);
+      expect(updated.rowHeightsByRowId, {
+        'event': 120,
+        'member:1': 100,
+        'trip': 100,
+        'member:2': 100,
+      });
     });
 
     test('行の高さ変更は最小値と最大値の範囲に収める', () {
@@ -40,24 +45,24 @@ void main() {
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
-        rowHeights: const [100],
+        rowHeightsByRowId: const {'trip': 100},
       );
 
       final expanded = state.resizeRow(
-        rowIndex: 0,
+        rowId: 'trip',
         delta: 50,
         minHeight: 80,
         maxHeight: 120,
       );
       final collapsed = state.resizeRow(
-        rowIndex: 0,
+        rowId: 'trip',
         delta: -50,
         minHeight: 80,
         maxHeight: 120,
       );
 
-      expect(expanded.rowHeights, [120]);
-      expect(collapsed.rowHeights, [80]);
+      expect(expanded.rowHeightByRowId('trip'), 120);
+      expect(collapsed.rowHeightByRowId('trip'), 80);
     });
 
     test('列インデックスから求める年はbaseYearを基準に固定される', () {
@@ -65,7 +70,7 @@ void main() {
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
-        rowHeights: const [100],
+        rowHeightsByRowId: const {'trip': 100},
       );
 
       expect(state.yearFromColumnIndex(1), 2021);
@@ -73,19 +78,44 @@ void main() {
       expect(state.yearFromColumnIndex(11), 2031);
     });
 
-    test('rowHeightsは外部から直接変更できない', () {
-      final sourceRowHeights = <double>[100, 120];
+    test('rowHeightsByRowIdは外部から直接変更できない', () {
+      final sourceRowHeights = <String, double>{'trip': 100, 'event': 120};
       final state = TimelineViewState(
         baseYear: 2026,
         startYearOffset: -5,
         endYearOffset: 5,
-        rowHeights: sourceRowHeights,
+        rowHeightsByRowId: sourceRowHeights,
       );
 
-      sourceRowHeights.add(140);
+      sourceRowHeights['dvc'] = 140;
 
-      expect(state.rowHeights, [100, 120]);
-      expect(() => state.rowHeights.add(140), throwsUnsupportedError);
+      expect(state.rowHeightsByRowId, {'trip': 100, 'event': 120});
+      expect(
+        () => state.rowHeightsByRowId['dvc'] = 140,
+        throwsUnsupportedError,
+      );
+    });
+
+    test('行IDで高さを保持するため、行順が変わっても高さが別行へずれない', () {
+      final state = TimelineViewState.initial(
+        baseYear: 2026,
+        rowIds: const ['trip', 'event', 'dvc', 'member:1'],
+        initialYearRange: 5,
+        dataRowHeight: 100,
+      ).resizeRow(
+        rowId: 'event',
+        delta: 40,
+        minHeight: 80,
+        maxHeight: 200,
+      );
+
+      final updated = state.ensureRows(
+        rowIds: const ['dvc', 'member:1', 'event', 'trip'],
+        dataRowHeight: 100,
+      );
+
+      expect(updated.rowHeightByRowId('event'), 140);
+      expect(updated.rowHeightByRowId('dvc'), 100);
     });
   });
 }
