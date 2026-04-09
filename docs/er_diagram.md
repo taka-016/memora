@@ -52,6 +52,11 @@ erDiagram
         number year "NOT NULL"
         string memo "NOT NULL"
     }
+    timeline_row_settings {
+        string id PK
+        string groupId FK "NOT NULL"
+        json rows "rowId, isVisible, orderIndex"
+    }
     members {
         string id PK
         string accountId
@@ -117,6 +122,7 @@ erDiagram
     tasks ||--|| members : "assignedMemberId → id"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
+    groups ||--o| timeline_row_settings : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
     groups ||--o{ pins : "id → groupId"
     group_members ||--|| members : "memberId → id"
