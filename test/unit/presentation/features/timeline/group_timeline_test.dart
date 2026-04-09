@@ -22,6 +22,7 @@ import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
+import 'package:memora/presentation/features/timeline/rows/timeline_row_definition_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -2007,7 +2008,9 @@ class _TimelineControllerProbe extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalDataRows = 3 + groupWithMembers.members.length;
+    final rowIds = buildDefaultTimelineRowDefinitions(
+      groupWithMembers,
+    ).map((definition) => definition.rowId).toList(growable: false);
 
     return Consumer(
       builder: (context, ref, _) {
@@ -2017,7 +2020,7 @@ class _TimelineControllerProbe extends StatelessWidget {
               context: context,
               ref: ref,
               groupWithMembers: groupWithMembers,
-              totalDataRows: totalDataRows,
+              rowIds: rowIds,
               layoutConfig: TimelineLayoutConfig.defaults,
               onSetRefreshCallback: null,
             );

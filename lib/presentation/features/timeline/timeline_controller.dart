@@ -29,6 +29,7 @@ class TimelineController {
     required this.dvcPointUsagesByYear,
     required this.groupEventsByYear,
     required this.rowScrollControllers,
+    required this.rowIds,
     required this.showMorePast,
     required this.showMoreFuture,
     required this.updateDisplaySettings,
@@ -47,6 +48,7 @@ class TimelineController {
   final Map<int, List<DvcPointUsageDto>> dvcPointUsagesByYear;
   final Map<int, GroupEventDto> groupEventsByYear;
   final List<ScrollController> rowScrollControllers;
+  final List<String> rowIds;
   final VoidCallback showMorePast;
   final VoidCallback showMoreFuture;
   final void Function(TimelineDisplaySettings settings) updateDisplaySettings;
@@ -71,6 +73,7 @@ class TimelineController {
   saveGroupEvent;
 
   List<double> get rowHeights => viewState.rowHeights;
+  double rowHeightByRowId(String rowId) => viewState.rowHeightByRowId(rowId);
   List<int> get visibleYears => viewState.visibleYears;
 
   int yearFromColumnIndex(int columnIndex) {
@@ -82,7 +85,7 @@ TimelineController useTimelineController({
   required BuildContext context,
   required WidgetRef ref,
   required GroupDto groupWithMembers,
-  required int totalDataRows,
+  required List<String> rowIds,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
@@ -99,7 +102,7 @@ TimelineController useTimelineController({
   final viewStateState = useState(
     TimelineViewState.initial(
       baseYear: DateTime.now().year,
-      totalDataRows: totalDataRows,
+      rowIds: rowIds,
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,
     ),
@@ -113,14 +116,15 @@ TimelineController useTimelineController({
   final activeResizePointerState = useState<int?>(null);
   final displaySettingsState = useState(TimelineDisplaySettings.defaults);
   final rowScrollControllers = useMemoized(
-    () => List.generate(totalDataRows + 1, (_) => ScrollController()),
-    [totalDataRows],
+    () => List.generate(rowIds.length + 1, (_) => ScrollController()),
+    [rowIds.length],
   );
+  final rowSignature = rowIds.join('\u001f');
   final isSyncingRef = useRef(false);
   final currentGroupIdRef = useRef(groupWithMembers.id);
   final loadingTripYearsRef = useRef<Map<String, Future<void>>>({});
-  final viewState = viewStateState.value.ensureRowCount(
-    totalDataRows: totalDataRows,
+  final viewState = viewStateState.value.ensureRows(
+    rowIds: rowIds,
     dataRowHeight: layoutConfig.dataRowHeight,
   );
   currentGroupIdRef.value = groupWithMembers.id;
@@ -135,12 +139,12 @@ TimelineController useTimelineController({
   }, []);
 
   useEffect(() {
-    viewStateState.value = viewStateState.value.ensureRowCount(
-      totalDataRows: totalDataRows,
+    viewStateState.value = viewStateState.value.ensureRows(
+      rowIds: rowIds,
       dataRowHeight: layoutConfig.dataRowHeight,
     );
     return null;
-  }, [totalDataRows]);
+  }, [rowSignature]);
 
   useEffect(() {
     tripsByYearState.value = {};
@@ -439,6 +443,7 @@ TimelineController useTimelineController({
     dvcPointUsagesByYear: dvcPointUsagesByYearState.value,
     groupEventsByYear: groupEventsByYearState.value,
     rowScrollControllers: rowScrollControllers,
+    rowIds: rowIds,
     showMorePast: () {
       viewStateState.value = viewStateState.value.expandPast(
         layoutConfig.yearRangeIncrement,
@@ -462,8 +467,9 @@ TimelineController useTimelineController({
       if (activeResizePointerState.value != event.pointer) {
         return;
       }
+      final rowId = rowIds[rowIndex];
       viewStateState.value = viewStateState.value.resizeRow(
-        rowIndex: rowIndex,
+        rowId: rowId,
         delta: event.delta.dy,
         minHeight: layoutConfig.rowMinHeight,
         maxHeight: layoutConfig.rowMaxHeight,
