@@ -24,6 +24,7 @@ import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
+import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -1993,6 +1994,23 @@ void main() {
 
       expect(capturedControllers.last.rowHeights[newRowIndex], 120);
     });
+
+    testWidgets('注入した行定義の順番で固定列が表示される', (WidgetTester tester) async {
+      final firstRow = _StaticTimelineRowDefinition(label: '先頭行');
+      final secondRow = _StaticTimelineRowDefinition(label: '後続行');
+
+      await tester.pumpWidget(
+        createTestWidget(rowDefinitions: [firstRow, secondRow]),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行'), findsNothing);
+      expect(find.text('イベント'), findsNothing);
+      expect(find.text('DVC'), findsNothing);
+      expect(tester.getTopLeft(find.text('先頭行')).dy, lessThan(
+        tester.getTopLeft(find.text('後続行')).dy,
+      ));
+    });
   });
 }
 
@@ -2107,6 +2125,30 @@ class _ControlledGroupEventRepository implements GroupEventRepository {
   @override
   Future<String> saveGroupEvent(GroupEvent groupEvent) {
     return onSaveGroupEvent(groupEvent);
+  }
+}
+
+class _StaticTimelineRowDefinition extends TimelineRowDefinition {
+  const _StaticTimelineRowDefinition({required this.label});
+
+  final String label;
+
+  @override
+  String get fixedColumnLabel => label;
+
+  @override
+  double get initialHeight => TimelineLayoutConfig.defaults.dataRowHeight;
+
+  @override
+  Color? get backgroundColor => null;
+
+  @override
+  Widget buildYearCell(
+    BuildContext context,
+    TimelineRowContext rowContext,
+    int year,
+  ) {
+    return const SizedBox.shrink();
   }
 }
 
