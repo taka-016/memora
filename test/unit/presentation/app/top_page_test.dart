@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/group/group_timeline_row_settings_dto.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
@@ -10,6 +11,7 @@ import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/group/group_timeline_row_settings_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -63,6 +65,18 @@ class _TestGroupTimelineNavigationNotifier
       selectedGroupId: 'g1',
       selectedYear: 2024,
     );
+  }
+}
+
+class _FakeGroupTimelineRowSettingsQueryService
+    implements GroupTimelineRowSettingsQueryService {
+  const _FakeGroupTimelineRowSettingsQueryService();
+
+  @override
+  Future<GroupTimelineRowSettingsDto?> getGroupTimelineRowSettings(
+    String groupId,
+  ) async {
+    return null;
   }
 }
 
@@ -371,6 +385,9 @@ void main() {
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
       groupEventQueryServiceProvider.overrideWithValue(
         mockGroupEventQueryService,
+      ),
+      groupTimelineRowSettingsQueryServiceProvider.overrideWithValue(
+        const _FakeGroupTimelineRowSettingsQueryService(),
       ),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(

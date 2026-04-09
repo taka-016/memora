@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_timeline_row_settings_dto.dart';
-import 'package:memora/core/enums/group_timeline_row_type.dart';
 import 'package:memora/domain/entities/group/group_timeline_row_settings.dart';
 
 class FirestoreGroupTimelineRowSettingsMapper {

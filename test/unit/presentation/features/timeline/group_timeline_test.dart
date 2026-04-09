@@ -2092,15 +2092,13 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
 
 class _FakeGroupTimelineRowSettingsQueryService
     implements GroupTimelineRowSettingsQueryService {
-  const _FakeGroupTimelineRowSettingsQueryService([this.settings]);
-
-  final GroupTimelineRowSettingsDto? settings;
+  const _FakeGroupTimelineRowSettingsQueryService();
 
   @override
   Future<GroupTimelineRowSettingsDto?> getGroupTimelineRowSettings(
     String groupId,
   ) async {
-    return settings;
+    return null;
   }
 }
 
