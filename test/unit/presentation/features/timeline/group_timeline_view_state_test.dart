@@ -37,10 +37,7 @@ void main() {
 
     test('初期行高さも行数も未指定の場合は前提条件違反として失敗する', () {
       expect(
-        () => TimelineViewState.initial(
-          baseYear: 2026,
-          initialYearRange: 5,
-        ),
+        () => TimelineViewState.initial(baseYear: 2026, initialYearRange: 5),
         throwsAssertionError,
       );
     });

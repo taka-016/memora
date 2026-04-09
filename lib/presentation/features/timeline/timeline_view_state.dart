@@ -13,6 +13,11 @@ class TimelineViewState {
     double? dataRowHeight,
     List<double>? initialRowHeights,
   }) {
+    assert(
+      initialRowHeights != null ||
+          (totalDataRows != null && dataRowHeight != null),
+      'initialRowHeights または totalDataRows と dataRowHeight を指定してください。',
+    );
     final resolvedRowHeights =
         initialRowHeights ??
         List<double>.filled(totalDataRows!, dataRowHeight!);
@@ -63,6 +68,11 @@ class TimelineViewState {
     double? dataRowHeight,
     List<double>? initialRowHeights,
   }) {
+    assert(
+      initialRowHeights != null ||
+          (totalDataRows != null && dataRowHeight != null),
+      'initialRowHeights または totalDataRows と dataRowHeight を指定してください。',
+    );
     final resolvedInitialRowHeights =
         initialRowHeights ??
         List<double>.filled(totalDataRows!, dataRowHeight!);

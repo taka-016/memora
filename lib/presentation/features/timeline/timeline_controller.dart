@@ -90,6 +90,10 @@ TimelineController useTimelineController({
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
 }) {
+  assert(
+    initialRowHeights != null || totalDataRows != null,
+    'initialRowHeights または totalDataRows を指定してください。',
+  );
   final resolvedInitialRowHeights =
       initialRowHeights ??
       List<double>.filled(totalDataRows!, layoutConfig.dataRowHeight);

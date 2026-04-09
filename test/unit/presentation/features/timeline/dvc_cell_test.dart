@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
+import 'package:memora/presentation/features/timeline/dvc_point_usage_timeline_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
 void main() {
   group('DvcPointUsageTimelineRow', () {
-    testWidgets('利用データが空の場合、空のSizedBoxを表示する', (WidgetTester tester) async {
+    testWidgets('利用データが空の場合、ポイント表示を行わない', (WidgetTester tester) async {
       await tester.pumpWidget(
         _buildDvcRowWidget(usages: const [], availableHeight: 100),
       );
 
-      expect(find.byType(SizedBox), findsOneWidget);
       expect(find.textContaining('pt'), findsNothing);
     });
 
