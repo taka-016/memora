@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 
@@ -77,10 +78,13 @@ class GroupTimelineNavigationNotifier
     late final Timeline groupTimeline;
     groupTimeline = Timeline(
       groupWithMembers: groupWithMembers,
+      rowDefinitions: buildDefaultTimelineRows(
+        groupWithMembers: groupWithMembers,
+        onTripManagementSelected: showTripManagement,
+        onDvcPointCalculationPressed: () =>
+            showDvcPointCalculation(groupWithMembers.id),
+      ),
       onBackPressed: showGroupList,
-      onTripManagementSelected: showTripManagement,
-      onDvcPointCalculationPressed: () =>
-          showDvcPointCalculation(groupWithMembers.id),
       onSetRefreshCallback: (callback) {
         Future(() {
           if (state.currentScreen != GroupTimelineScreenState.timeline ||
