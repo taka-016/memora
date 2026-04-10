@@ -46,9 +46,8 @@ class TimelineGroupEventRow extends TimelineRowDefinition {
 
 final _groupEventsByYearProvider = FutureProvider.autoDispose
     .family<Map<int, GroupEventDto>, _GroupEventsQuery>((ref, query) async {
-      final events = await ref
-          .read(getGroupEventsUsecaseProvider)
-          .execute(query.groupId);
+      final getGroupEventsUsecase = ref.watch(getGroupEventsUsecaseProvider);
+      final events = await getGroupEventsUsecase.execute(query.groupId);
       return {for (final event in events) event.year: event};
     });
 

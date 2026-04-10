@@ -58,9 +58,8 @@ class TimelineTripRow extends TimelineRowDefinition {
 final _tripEntriesProvider = FutureProvider.autoDispose
     .family<List<TripEntryDto>, _TripEntriesQuery>((ref, query) async {
       try {
-        return await ref
-            .read(getTripEntriesUsecaseProvider)
-            .execute(query.groupId, query.year);
+        final getTripEntriesUsecase = ref.watch(getTripEntriesUsecaseProvider);
+        return await getTripEntriesUsecase.execute(query.groupId, query.year);
       } catch (e, stack) {
         logger.e(
           'TimelineTripRow.loadTrips: ${e.toString()}',

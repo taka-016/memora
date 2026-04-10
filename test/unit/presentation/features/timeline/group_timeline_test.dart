@@ -490,6 +490,127 @@ void main() {
       expect(find.text('運動会'), findsNothing);
     });
 
+    testWidgets('旅行行の取得Providerはoverride差し替え時に再評価される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          tripEntryQueryService: _FakeTripEntryQueryService([
+            TripEntryDto(
+              id: 'trip-1',
+              groupId: '1',
+              tripYear: currentYear,
+              tripName: '初回旅行',
+              tripStartDate: DateTime(currentYear, 4, 1),
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('初回旅行'), findsOneWidget);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          tripEntryQueryService: _FakeTripEntryQueryService([
+            TripEntryDto(
+              id: 'trip-2',
+              groupId: '1',
+              tripYear: currentYear,
+              tripName: '差し替え後旅行',
+              tripStartDate: DateTime(currentYear, 5, 1),
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('差し替え後旅行'), findsOneWidget);
+      expect(find.text('初回旅行'), findsNothing);
+    });
+
+    testWidgets('DVC行の取得Providerはoverride差し替え時に再評価される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage-1',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 4),
+              usedPoint: 120,
+              memo: '初回DVC',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('初回DVC'), findsOneWidget);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: _FakeDvcPointUsageQueryService([
+            DvcPointUsageDto(
+              id: 'usage-2',
+              groupId: '1',
+              usageYearMonth: DateTime(currentYear, 5),
+              usedPoint: 80,
+              memo: '差し替え後DVC',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('差し替え後DVC'), findsOneWidget);
+      expect(find.text('初回DVC'), findsNothing);
+    });
+
+    testWidgets('イベント行の取得Providerはoverride差し替え時に再評価される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '初回イベント',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('初回イベント'), findsOneWidget);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-2',
+              groupId: '1',
+              year: currentYear,
+              memo: '差し替え後イベント',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('差し替え後イベント'), findsOneWidget);
+      expect(find.text('初回イベント'), findsNothing);
+    });
+
     testWidgets('DVCポイント利用でメモが空の場合は末尾改行なしで表示される', (WidgetTester tester) async {
       // Arrange
       final currentYear = DateTime.now().year;
@@ -1452,6 +1573,37 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
+}
+
+class _FakeTripEntryQueryService implements TripEntryQueryService {
+  const _FakeTripEntryQueryService(this.tripEntries);
+
+  final List<TripEntryDto> tripEntries;
+
+  @override
+  Future<TripEntryDto?> getTripEntryById(
+    String tripId, {
+    List<OrderBy>? pinsOrderBy,
+    List<OrderBy>? tasksOrderBy,
+  }) async {
+    for (final entry in tripEntries) {
+      if (entry.id == tripId) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
+    String groupId,
+    int year, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return tripEntries
+        .where((entry) => entry.groupId == groupId && entry.tripYear == year)
+        .toList();
   }
 }
 

@@ -84,9 +84,10 @@ final _dvcPointUsagesByYearProvider = FutureProvider.autoDispose
       query,
     ) async {
       try {
-        final usages = await ref
-            .read(getDvcPointUsagesUsecaseProvider)
-            .execute(query.groupId);
+        final getDvcPointUsagesUsecase = ref.watch(
+          getDvcPointUsagesUsecaseProvider,
+        );
+        final usages = await getDvcPointUsagesUsecase.execute(query.groupId);
         return _groupDvcPointUsagesByYear(usages);
       } catch (e, stack) {
         logger.e(

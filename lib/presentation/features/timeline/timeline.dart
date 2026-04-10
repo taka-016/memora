@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
@@ -9,7 +8,7 @@ import 'package:memora/presentation/features/timeline/timeline_display_settings.
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class Timeline extends HookConsumerWidget {
+class Timeline extends HookWidget {
   const Timeline({
     super.key,
     required this.groupWithMembers,
@@ -27,7 +26,7 @@ class Timeline extends HookConsumerWidget {
   final List<TimelineRowDefinition> rowDefinitions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final totalDataRows = rowDefinitions.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
