@@ -9,11 +9,8 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class TimelineGroupEventRow extends TimelineRowDefinition {
-  const TimelineGroupEventRow({
-    required this.groupId,
-    required this.initialHeight,
-  });
+class GroupEventRow extends TimelineRowDefinition {
+  const GroupEventRow({required this.groupId, required this.initialHeight});
 
   final String groupId;
 
@@ -53,7 +50,7 @@ final _groupEventsByYearProvider = FutureProvider.autoDispose
         return {for (final event in events) event.year: event};
       } catch (e, stack) {
         logger.e(
-          'TimelineGroupEventRow.loadGroupEvents: ${e.toString()}',
+          'GroupEventRow.loadGroupEvents: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );

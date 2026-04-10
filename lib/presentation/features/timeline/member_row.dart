@@ -6,8 +6,8 @@ import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.d
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class TimelineMemberRow extends TimelineRowDefinition {
-  const TimelineMemberRow({required this.member, required this.initialHeight});
+class MemberRow extends TimelineRowDefinition {
+  const MemberRow({required this.member, required this.initialHeight});
 
   final GroupMemberDto member;
 

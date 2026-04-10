@@ -8,8 +8,8 @@ import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_util
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
-class TimelineDvcRow extends TimelineRowDefinition {
-  const TimelineDvcRow({
+class DvcRow extends TimelineRowDefinition {
+  const DvcRow({
     required this.groupId,
     required this.initialHeight,
     required this.onDvcPointCalculationPressed,
@@ -91,7 +91,7 @@ final _dvcPointUsagesByYearProvider = FutureProvider.autoDispose
         return _groupDvcPointUsagesByYear(usages);
       } catch (e, stack) {
         logger.e(
-          'TimelineDvcRow.loadDvcPointUsages: ${e.toString()}',
+          'DvcRow.loadDvcPointUsages: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );

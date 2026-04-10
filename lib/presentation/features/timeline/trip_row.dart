@@ -6,8 +6,8 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
-class TimelineTripRow extends TimelineRowDefinition {
-  const TimelineTripRow({
+class TripRow extends TimelineRowDefinition {
+  const TripRow({
     required this.groupId,
     required this.initialHeight,
     required this.onTripManagementSelected,
@@ -62,7 +62,7 @@ final _tripEntriesProvider = FutureProvider.autoDispose
         return await getTripEntriesUsecase.execute(query.groupId, query.year);
       } catch (e, stack) {
         logger.e(
-          'TimelineTripRow.loadTrips: ${e.toString()}',
+          'TripRow.loadTrips: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
