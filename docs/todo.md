@@ -50,4 +50,10 @@
 
 ## リファクタリング
 
+- グループ年表の次画面遷移を `GroupTimelineDestination` などの共通表現に整理し、行クラスごとの個別コールバック依存をなくす
+- `TripRow` と `DvcRow` の遷移要求を共通の遷移先表現へ揃え、`buildDefaultTimelineRows()` の個別引数依存を解消する
+- `group_timeline_navigation_notifier.dart` の `selectedGroupId` / `selectedYear` / 個別画面遷移管理を共通の遷移先管理へ整理する
+- `_buildGroupTimelineStack` の個別画面分岐を共通の遷移先に基づく描画へ整理する
+- グループ年表遷移まわりの notifier / widget テストを共通化後の設計に合わせて更新する
+
 ## 不具合修正
