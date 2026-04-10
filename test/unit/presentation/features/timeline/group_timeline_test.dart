@@ -86,7 +86,6 @@ void main() {
         rowDefinitions ??
         buildDefaultTimelineRows(
           groupWithMembers: effectiveGroupWithMembers,
-          layoutConfig: TimelineLayoutConfig.defaults,
           onTripManagementSelected: onTripManagementSelected,
           onDvcPointCalculationPressed: onDvcPointCalculationPressed,
         );

@@ -9,11 +9,10 @@ import 'package:memora/presentation/features/timeline/timeline_trip_row.dart';
 
 List<TimelineRowDefinition> buildDefaultTimelineRows({
   required GroupDto groupWithMembers,
-  TimelineLayoutConfig layoutConfig = TimelineLayoutConfig.defaults,
   required void Function(String groupId, int year)? onTripManagementSelected,
   required VoidCallback? onDvcPointCalculationPressed,
 }) {
-  final defaultHeight = layoutConfig.dataRowHeight;
+  final defaultHeight = TimelineLayoutConfig.defaults.dataRowHeight;
 
   return [
     TimelineTripRow(
