@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/usecases/group/delete_group_event_usecase.dart';
 import 'package:memora/application/usecases/group/get_group_events_usecase.dart';
 import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
@@ -46,9 +47,18 @@ class TimelineGroupEventRow extends TimelineRowDefinition {
 
 final _groupEventsByYearProvider = FutureProvider.autoDispose
     .family<Map<int, GroupEventDto>, _GroupEventsQuery>((ref, query) async {
-      final getGroupEventsUsecase = ref.watch(getGroupEventsUsecaseProvider);
-      final events = await getGroupEventsUsecase.execute(query.groupId);
-      return {for (final event in events) event.year: event};
+      try {
+        final getGroupEventsUsecase = ref.watch(getGroupEventsUsecaseProvider);
+        final events = await getGroupEventsUsecase.execute(query.groupId);
+        return {for (final event in events) event.year: event};
+      } catch (e, stack) {
+        logger.e(
+          'TimelineGroupEventRow.loadGroupEvents: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        return {};
+      }
     });
 
 class _GroupEventYearCell extends HookConsumerWidget {
