@@ -96,6 +96,25 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "group_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "groupId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "year",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "members",
       "queryScope": "COLLECTION",
       "fields": [

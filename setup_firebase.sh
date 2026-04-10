@@ -28,7 +28,7 @@ fi
 if ! firebase projects:list &> /dev/null; then
     echo "Firebaseにログインしてください..."
     echo "Gemini機能とデータ収集は両方ともNoを選択してください"
-    firebase login || { echo "ログインに失敗しました"; exit 1; }
+    firebase login --no-localhost || { echo "ログインに失敗しました"; exit 1; }
 fi
 
 # Flutter Firebaseの設定確認
