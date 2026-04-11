@@ -26,6 +26,7 @@ import 'package:memora/presentation/features/timeline/refresh_timeline_callback.
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'group_timeline_test.mocks.dart';
@@ -77,8 +78,7 @@ void main() {
     GroupEventRepository? groupEventRepo,
     VoidCallback? onBackPressed,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
-    void Function(String groupId, int year)? onTripManagementSelected,
-    VoidCallback? onDvcPointCalculationPressed,
+    ValueChanged<GroupTimelineDestination>? onDestinationSelected,
     List<TimelineRowDefinition>? rowDefinitions,
   }) {
     final effectiveGroupWithMembers = groupWithMembers ?? testGroupWithMembers;
@@ -86,8 +86,7 @@ void main() {
         rowDefinitions ??
         buildDefaultTimelineRows(
           groupWithMembers: effectiveGroupWithMembers,
-          onTripManagementSelected: onTripManagementSelected,
-          onDvcPointCalculationPressed: onDvcPointCalculationPressed,
+          onDestinationSelected: onDestinationSelected,
         );
 
     return ProviderScope(
@@ -216,16 +215,16 @@ void main() {
       );
     });
 
-    testWidgets('DVCポイント利用の編集ボタンをタップするとコールバック関数が呼ばれる', (
+    testWidgets('DVCポイント利用の編集ボタンをタップすると遷移要求が通知される', (
       WidgetTester tester,
     ) async {
       // Arrange
-      var callbackCalled = false;
+      GroupTimelineDestination? selectedDestination;
 
       await tester.pumpWidget(
         createTestWidget(
-          onDvcPointCalculationPressed: () {
-            callbackCalled = true;
+          onDestinationSelected: (destination) {
+            selectedDestination = destination;
           },
         ),
       );
@@ -238,17 +237,22 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(callbackCalled, isTrue);
+      expect(
+        selectedDestination,
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
     });
 
-    testWidgets('DVC行の固定セル全体をタップするとコールバック関数が呼ばれる', (WidgetTester tester) async {
+    testWidgets('DVC行の固定セル全体をタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
-      var callbackCalled = false;
+      GroupTimelineDestination? selectedDestination;
 
       await tester.pumpWidget(
         createTestWidget(
-          onDvcPointCalculationPressed: () {
-            callbackCalled = true;
+          onDestinationSelected: (destination) {
+            selectedDestination = destination;
           },
         ),
       );
@@ -259,7 +263,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(callbackCalled, isTrue);
+      expect(
+        selectedDestination,
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
     });
 
     testWidgets('DVCポイント利用行に利用年月・利用ポイント・メモが表示される', (WidgetTester tester) async {
@@ -1160,18 +1169,16 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
-    testWidgets('旅行セルをタップするとonTripManagementSelectedが呼ばれる', (
+    testWidgets('旅行セルをタップすると遷移要求が通知される', (
       WidgetTester tester,
     ) async {
       // Arrange
-      String? selectedGroupId;
-      int? selectedYear;
+      GroupTimelineDestination? selectedDestination;
 
       await tester.pumpWidget(
         createTestWidget(
-          onTripManagementSelected: (groupId, year) {
-            selectedGroupId = groupId;
-            selectedYear = year;
+          onDestinationSelected: (destination) {
+            selectedDestination = destination;
           },
         ),
       );
@@ -1186,9 +1193,13 @@ void main() {
       await tester.tap(scrollableRow);
       await tester.pumpAndSettle();
 
-      // Assert - onTripManagementSelectedが呼ばれる
-      expect(selectedGroupId, equals(testGroupWithMembers.id));
-      expect(selectedYear, isNotNull);
+      // Assert - 旅行管理画面への遷移要求が通知される
+      expect(
+        selectedDestination,
+        isA<GroupTimelineTripManagementDestination>()
+            .having((destination) => destination.groupId, 'groupId', testGroupWithMembers.id)
+            .having((destination) => destination.year, 'year', isA<int>()),
+      );
     });
 
     testWidgets('旅行行に対象年の旅行一覧が表示される', (WidgetTester tester) async {
