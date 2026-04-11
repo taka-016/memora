@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
