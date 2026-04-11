@@ -59,9 +59,10 @@ class _TestGroupTimelineNavigationNotifier
   @override
   GroupTimelineNavigationState build() {
     return const GroupTimelineNavigationState(
-      currentScreen: GroupTimelineScreenState.timeline,
-      selectedGroupId: 'g1',
-      selectedYear: 2024,
+      destination: GroupTimelineTripManagementDestination(
+        groupId: 'g1',
+        year: 2024,
+      ),
     );
   }
 }

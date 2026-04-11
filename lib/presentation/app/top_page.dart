@@ -89,7 +89,7 @@ class TopPage extends HookConsumerWidget {
     }
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
-    return timelineState.currentScreen != GroupTimelineScreenState.groupList;
+    return timelineState.destination is! GroupTimelineGroupListDestination;
   }
 
   void _handleAndroidBack(WidgetRef ref) {
@@ -131,38 +131,34 @@ class TopPage extends HookConsumerWidget {
     }
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
+    final destination = timelineState.destination;
 
     return IndexedStack(
-      index: ref
-          .read(groupTimelineNavigationNotifierProvider.notifier)
-          .getStackIndex(),
+      index: destination.stackIndex,
       children: [
         GroupSelectionList(
           onGroupSelected: (group) => _onGroupSelected(ref, group),
           title: 'グループを選択',
           listKey: const Key('group_list'),
         ),
-        timelineState.groupTimelineInstance ?? Container(),
-        timelineState.selectedGroupId != null &&
-                timelineState.selectedYear != null
+        timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
+        destination is GroupTimelineTripManagementDestination
             ? TripManagement(
-                groupId: timelineState.selectedGroupId!,
-                year: timelineState.selectedYear!,
+                groupId: destination.groupId,
+                year: destination.year,
                 onBackPressed: () => ref
                     .read(groupTimelineNavigationNotifierProvider.notifier)
                     .backFromTripManagement(),
               )
-            : Container(),
-        timelineState.currentScreen ==
-                    GroupTimelineScreenState.dvcPointCalculation &&
-                timelineState.selectedGroupId != null
+            : const SizedBox.shrink(),
+        destination is GroupTimelineDvcPointCalculationDestination
             ? DvcPointCalculationScreen(
-                groupId: timelineState.selectedGroupId!,
+                groupId: destination.groupId,
                 onBackPressed: () => ref
                     .read(groupTimelineNavigationNotifierProvider.notifier)
                     .backFromDvcPointCalculation(),
               )
-            : Container(),
+            : const SizedBox.shrink(),
       ],
     );
   }

@@ -1169,9 +1169,7 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
-    testWidgets('旅行セルをタップすると遷移要求が通知される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('旅行セルをタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
       GroupTimelineDestination? selectedDestination;
 
@@ -1197,7 +1195,11 @@ void main() {
       expect(
         selectedDestination,
         isA<GroupTimelineTripManagementDestination>()
-            .having((destination) => destination.groupId, 'groupId', testGroupWithMembers.id)
+            .having(
+              (destination) => destination.groupId,
+              'groupId',
+              testGroupWithMembers.id,
+            )
             .having((destination) => destination.year, 'year', isA<int>()),
       );
     });
