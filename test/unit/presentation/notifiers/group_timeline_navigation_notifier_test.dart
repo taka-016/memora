@@ -13,7 +13,7 @@ class _GroupTimelineNavigationNotifierWithRefresh
   @override
   GroupTimelineNavigationState build() {
     return const GroupTimelineNavigationState(
-      destination: GroupTimelineTimelineDestination(),
+      destination: GroupTimelineOverviewDestination(),
     );
   }
 }
@@ -190,7 +190,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(state.groupTimelineInstance, isNotNull);
     });
 
@@ -266,7 +266,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作で年表画面からグループ一覧画面へ戻れる', () {
@@ -331,7 +331,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isTrue);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作で旅行管理画面から戻ると年表の再読込が実行される', () {
@@ -359,7 +359,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(refreshCount, 1);
     });
 
@@ -399,7 +399,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作でDVCポイント計算画面から年表画面へ戻れる', () {
@@ -420,7 +420,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isTrue);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作でDVCポイント計算画面から戻ると年表の再読込が実行される', () {
@@ -448,7 +448,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(refreshCount, 1);
     });
 
@@ -548,7 +548,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('グループ一覧画面以外では戻る操作を処理できる', () {
@@ -694,7 +694,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.groupTimelineInstance, isNotNull);
-      expect(state.destination, const GroupTimelineTimelineDestination());
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('状態の変更が通知される', () {

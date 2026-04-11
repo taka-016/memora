@@ -30,15 +30,15 @@ class GroupTimelineGroupListDestination extends GroupTimelineDestination {
   int get hashCode => screenState.hashCode;
 }
 
-class GroupTimelineTimelineDestination extends GroupTimelineDestination {
-  const GroupTimelineTimelineDestination();
+class GroupTimelineOverviewDestination extends GroupTimelineDestination {
+  const GroupTimelineOverviewDestination();
 
   @override
   GroupTimelineScreenState get screenState => GroupTimelineScreenState.timeline;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is GroupTimelineTimelineDestination;
+      identical(this, other) || other is GroupTimelineOverviewDestination;
 
   @override
   int get hashCode => screenState.hashCode;

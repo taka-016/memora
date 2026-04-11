@@ -91,7 +91,7 @@ class GroupTimelineNavigationNotifier
       onBackPressed: showGroupList,
       onSetRefreshCallback: (callback) {
         Future(() {
-          if (state.destination is! GroupTimelineTimelineDestination ||
+          if (state.destination is! GroupTimelineOverviewDestination ||
               state.groupTimelineInstance != groupTimeline) {
             return;
           }
@@ -101,7 +101,7 @@ class GroupTimelineNavigationNotifier
     );
 
     state = state.copyWith(
-      destination: const GroupTimelineTimelineDestination(),
+      destination: const GroupTimelineOverviewDestination(),
       groupTimelineInstance: groupTimeline,
       timelineRowDefinitions: rowDefinitions,
     );
@@ -133,7 +133,7 @@ class GroupTimelineNavigationNotifier
 
   void backToTimeline() {
     state = state.copyWith(
-      destination: const GroupTimelineTimelineDestination(),
+      destination: const GroupTimelineOverviewDestination(),
     );
 
     final refreshGroupTimeline = state.refreshGroupTimeline;
@@ -167,7 +167,7 @@ class GroupTimelineNavigationNotifier
     if (currentDestination is GroupTimelineGroupListDestination) {
       return false;
     }
-    if (currentDestination is GroupTimelineTimelineDestination) {
+    if (currentDestination is GroupTimelineOverviewDestination) {
       showGroupList();
       return true;
     }
@@ -180,7 +180,7 @@ class GroupTimelineNavigationNotifier
     if (destination is GroupTimelineGroupListDestination) {
       return 0;
     }
-    if (destination is GroupTimelineTimelineDestination) {
+    if (destination is GroupTimelineOverviewDestination) {
       return 1;
     }
 
@@ -188,7 +188,7 @@ class GroupTimelineNavigationNotifier
       (definition) => definition.matches(destination),
     );
     if (destinationPageIndex == -1) {
-      return fallbackDestination() is GroupTimelineTimelineDestination ? 1 : 0;
+      return fallbackDestination() is GroupTimelineOverviewDestination ? 1 : 0;
     }
 
     return destinationPageIndex + 2;
@@ -198,7 +198,7 @@ class GroupTimelineNavigationNotifier
     GroupTimelineDestination destination,
   ) {
     if (destination is GroupTimelineGroupListDestination ||
-        destination is GroupTimelineTimelineDestination) {
+        destination is GroupTimelineOverviewDestination) {
       return destination;
     }
     final hasDestinationPage = state.destinationPageDefinitions.any(
@@ -212,7 +212,7 @@ class GroupTimelineNavigationNotifier
 
   GroupTimelineDestination fallbackDestination() {
     if (state.groupTimelineInstance != null) {
-      return const GroupTimelineTimelineDestination();
+      return const GroupTimelineOverviewDestination();
     }
     return const GroupTimelineGroupListDestination();
   }
