@@ -10,8 +10,6 @@ sealed class GroupTimelineDestination {
 
   GroupTimelineScreenState get screenState;
 
-  int get stackIndex;
-
   String? get groupId => null;
 
   int? get year => null;
@@ -23,9 +21,6 @@ class GroupTimelineGroupListDestination extends GroupTimelineDestination {
   @override
   GroupTimelineScreenState get screenState =>
       GroupTimelineScreenState.groupList;
-
-  @override
-  int get stackIndex => 0;
 
   @override
   bool operator ==(Object other) =>
@@ -40,9 +35,6 @@ class GroupTimelineTimelineDestination extends GroupTimelineDestination {
 
   @override
   GroupTimelineScreenState get screenState => GroupTimelineScreenState.timeline;
-
-  @override
-  int get stackIndex => 1;
 
   @override
   bool operator ==(Object other) =>
@@ -69,9 +61,6 @@ class GroupTimelineTripManagementDestination extends GroupTimelineDestination {
       GroupTimelineScreenState.tripManagement;
 
   @override
-  int get stackIndex => 2;
-
-  @override
   bool operator ==(Object other) {
     return identical(this, other) ||
         other is GroupTimelineTripManagementDestination &&
@@ -93,9 +82,6 @@ class GroupTimelineDvcPointCalculationDestination
   @override
   GroupTimelineScreenState get screenState =>
       GroupTimelineScreenState.dvcPointCalculation;
-
-  @override
-  int get stackIndex => 3;
 
   @override
   bool operator ==(Object other) {

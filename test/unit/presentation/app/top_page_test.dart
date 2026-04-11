@@ -1062,10 +1062,7 @@ void main() {
       final indexedStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
-      expect(
-        indexedStack.children.length,
-        4,
-      ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
+      expect(indexedStack.children.length, 2); // GroupList, GroupTimeline
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
       expect(indexedStack.children.first, isA<GroupSelectionList>());
 
@@ -1092,6 +1089,10 @@ void main() {
       final timelineIndexedStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
+      expect(
+        timelineIndexedStack.children.length,
+        4,
+      ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
       expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
       expect(
         container

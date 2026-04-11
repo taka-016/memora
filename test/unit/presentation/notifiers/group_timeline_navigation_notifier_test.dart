@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/presentation/features/timeline/dvc_row.dart';
+import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
@@ -27,6 +30,9 @@ class _TripManagementNavigationNotifierWithRefresh
         groupId: 'g1',
         year: 2024,
       ),
+      timelineRowDefinitions: const [
+        TripRow(groupId: 'g1', initialHeight: 40, onDestinationSelected: null),
+      ],
       refreshGroupTimeline: onRefresh,
     );
   }
@@ -44,7 +50,29 @@ class _DvcPointCalculationNavigationNotifierWithRefresh
       destination: const GroupTimelineDvcPointCalculationDestination(
         groupId: 'g1',
       ),
+      timelineRowDefinitions: const [
+        DvcRow(groupId: 'g1', initialHeight: 40, onDestinationSelected: null),
+      ],
       refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
+class _NavigationNotifierWithCustomRows
+    extends GroupTimelineNavigationNotifier {
+  _NavigationNotifierWithCustomRows({
+    required this.destination,
+    required this.timelineRowDefinitions,
+  });
+
+  final GroupTimelineDestination destination;
+  final List<TimelineRowDefinition> timelineRowDefinitions;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      destination: destination,
+      timelineRowDefinitions: timelineRowDefinitions,
     );
   }
 }
@@ -475,6 +503,41 @@ void main() {
           groupId: testGroupWithMembers.id,
         ),
       );
+      expect(notifier.getStackIndex(), 3);
+    });
+
+    test('スタックインデックスは行定義順から動的に算出される', () {
+      // Arrange
+      final containerWithCustomRows = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [
+                DvcRow(
+                  groupId: 'g1',
+                  initialHeight: 40,
+                  onDestinationSelected: null,
+                ),
+                TripRow(
+                  groupId: 'g1',
+                  initialHeight: 40,
+                  onDestinationSelected: null,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithCustomRows.dispose);
+      final notifier = containerWithCustomRows.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
       expect(notifier.getStackIndex(), 3);
     });
 

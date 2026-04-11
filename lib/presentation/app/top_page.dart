@@ -7,12 +7,10 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
-import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
@@ -132,9 +130,10 @@ class TopPage extends HookConsumerWidget {
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
     final destination = timelineState.destination;
+    final notifier = ref.read(groupTimelineNavigationNotifierProvider.notifier);
 
     return IndexedStack(
-      index: destination.stackIndex,
+      index: notifier.getStackIndex(),
       children: [
         GroupSelectionList(
           onGroupSelected: (group) => _onGroupSelected(ref, group),
@@ -142,23 +141,17 @@ class TopPage extends HookConsumerWidget {
           listKey: const Key('group_list'),
         ),
         timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
-        destination is GroupTimelineTripManagementDestination
-            ? TripManagement(
-                groupId: destination.groupId,
-                year: destination.year,
-                onBackPressed: () => ref
-                    .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .backFromTripManagement(),
-              )
-            : const SizedBox.shrink(),
-        destination is GroupTimelineDvcPointCalculationDestination
-            ? DvcPointCalculationScreen(
-                groupId: destination.groupId,
-                onBackPressed: () => ref
-                    .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .backFromDvcPointCalculation(),
-              )
-            : const SizedBox.shrink(),
+        ...timelineState.destinationPageDefinitions.map((definition) {
+          if (!definition.matches(destination)) {
+            return const SizedBox.shrink();
+          }
+
+          return definition.buildPage(
+            context: context,
+            destination: destination,
+            onBackPressed: notifier.backToTimeline,
+          );
+        }),
       ],
     );
   }
