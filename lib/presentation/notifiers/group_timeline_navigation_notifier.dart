@@ -108,7 +108,7 @@ class GroupTimelineNavigationNotifier
   }
 
   void showDestination(GroupTimelineDestination destination) {
-    state = state.copyWith(destination: destination);
+    state = state.copyWith(destination: normalizeDestination(destination));
   }
 
   void showTripManagement(String groupId, int year) {
@@ -157,27 +157,26 @@ class GroupTimelineNavigationNotifier
 
   bool handleBackNavigation() {
     final destination = state.destination;
-    if (destination is GroupTimelineGroupListDestination) {
+    final normalizedDestination = normalizeDestination(destination);
+    if (normalizedDestination != destination) {
+      state = state.copyWith(destination: normalizedDestination);
+      return true;
+    }
+
+    final currentDestination = normalizedDestination;
+    if (currentDestination is GroupTimelineGroupListDestination) {
       return false;
     }
-    if (destination is GroupTimelineTimelineDestination) {
+    if (currentDestination is GroupTimelineTimelineDestination) {
       showGroupList();
       return true;
     }
-
-    final hasDestinationPage = state.destinationPageDefinitions.any(
-      (definition) => definition.matches(destination),
-    );
-    if (hasDestinationPage) {
-      backToTimeline();
-      return true;
-    }
-
-    return false;
+    backToTimeline();
+    return true;
   }
 
   int getStackIndex() {
-    final destination = state.destination;
+    final destination = normalizeDestination(state.destination);
     if (destination is GroupTimelineGroupListDestination) {
       return 0;
     }
@@ -189,9 +188,32 @@ class GroupTimelineNavigationNotifier
       (definition) => definition.matches(destination),
     );
     if (destinationPageIndex == -1) {
-      return 1;
+      return fallbackDestination() is GroupTimelineTimelineDestination ? 1 : 0;
     }
 
     return destinationPageIndex + 2;
+  }
+
+  GroupTimelineDestination normalizeDestination(
+    GroupTimelineDestination destination,
+  ) {
+    if (destination is GroupTimelineGroupListDestination ||
+        destination is GroupTimelineTimelineDestination) {
+      return destination;
+    }
+    final hasDestinationPage = state.destinationPageDefinitions.any(
+      (definition) => definition.matches(destination),
+    );
+    if (hasDestinationPage) {
+      return destination;
+    }
+    return fallbackDestination();
+  }
+
+  GroupTimelineDestination fallbackDestination() {
+    if (state.groupTimelineInstance != null) {
+      return const GroupTimelineTimelineDestination();
+    }
+    return const GroupTimelineGroupListDestination();
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
+import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -72,6 +73,31 @@ class _NavigationNotifierWithCustomRows
   GroupTimelineNavigationState build() {
     return GroupTimelineNavigationState(
       destination: destination,
+      timelineRowDefinitions: timelineRowDefinitions,
+    );
+  }
+}
+
+class _NavigationNotifierWithInstanceAndCustomRows
+    extends GroupTimelineNavigationNotifier {
+  _NavigationNotifierWithInstanceAndCustomRows({
+    required this.groupWithMembers,
+    required this.destination,
+    required this.timelineRowDefinitions,
+  });
+
+  final GroupDto groupWithMembers;
+  final GroupTimelineDestination destination;
+  final List<TimelineRowDefinition> timelineRowDefinitions;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      destination: destination,
+      groupTimelineInstance: Timeline(
+        groupWithMembers: groupWithMembers,
+        rowDefinitions: timelineRowDefinitions,
+      ),
       timelineRowDefinitions: timelineRowDefinitions,
     );
   }
@@ -175,6 +201,7 @@ void main() {
       );
       const testGroupId = 'test-group-123';
       const testYear = 2024;
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // Act
       notifier.showDestination(
@@ -200,6 +227,7 @@ void main() {
       final notifier = container.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // Act
       notifier.showDestination(
@@ -223,6 +251,7 @@ void main() {
       final notifier = container.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // 旅行管理画面に遷移
       notifier.showDestination(
@@ -459,6 +488,69 @@ void main() {
       expect(state.destination, const GroupTimelineGroupListDestination());
     });
 
+    test('未定義の遷移先では戻る操作時にグループ一覧へ戻る', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.destination, const GroupTimelineGroupListDestination());
+    });
+
+    test('年表表示中の未定義の遷移先では戻る操作時に年表へ戻る', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithInstanceAndCustomRows(
+              groupWithMembers: testGroupWithMembers,
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.destination, const GroupTimelineTimelineDestination());
+    });
+
     test('グループ一覧画面以外では戻る操作を処理できる', () {
       // Arrange
       final notifier = container.read(
@@ -539,6 +631,55 @@ void main() {
 
       // Act / Assert
       expect(notifier.getStackIndex(), 3);
+    });
+
+    test('未定義の遷移先は年表未表示時にグループ一覧のインデックスへ補正される', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
+      expect(notifier.getStackIndex(), 0);
+    });
+
+    test('未定義の遷移先は年表表示時に年表のインデックスへ補正される', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithInstanceAndCustomRows(
+              groupWithMembers: testGroupWithMembers,
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
+      expect(notifier.getStackIndex(), 1);
     });
 
     test('年表表示時にGroupTimelineインスタンスが作成される', () {
