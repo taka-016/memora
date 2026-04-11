@@ -104,6 +104,7 @@ class GroupTimelineNavigationNotifier
       destination: const GroupTimelineOverviewDestination(),
       groupTimelineInstance: groupTimeline,
       timelineRowDefinitions: rowDefinitions,
+      clearRefresh: true,
     );
   }
 

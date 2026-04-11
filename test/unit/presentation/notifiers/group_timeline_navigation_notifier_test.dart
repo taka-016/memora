@@ -473,6 +473,32 @@ void main() {
       expect(state.refreshGroupTimeline, isNull);
     });
 
+    test('年表を再生成した直後は古い再読込コールバックが呼ばれない', () async {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      var oldRefreshCount = 0;
+      notifier.showGroupTimeline(testGroupWithMembers);
+      final firstTimeline = container
+          .read(groupTimelineNavigationNotifierProvider)
+          .groupTimelineInstance!;
+      firstTimeline.onSetRefreshCallback?.call(() async {
+        oldRefreshCount++;
+      });
+      await Future(() {});
+
+      // Act
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showTripManagement(testGroupWithMembers.id, 2024);
+      notifier.backFromTripManagement();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.destination, const GroupTimelineOverviewDestination());
+      expect(oldRefreshCount, 0);
+    });
+
     test('グループ一覧画面では戻る操作を処理しない', () {
       // Arrange
       final notifier = container.read(
