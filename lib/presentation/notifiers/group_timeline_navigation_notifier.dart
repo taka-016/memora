@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
@@ -36,7 +36,7 @@ class GroupTimelineNavigationState {
 
   int? get selectedYear => destination.year;
 
-  List<GroupTimelineDestinationPageDefinition> get destinationPageDefinitions {
+  List<TimelineDestinationPageDefinition> get destinationPageDefinitions {
     return timelineRowDefinitions
         .expand((rowDefinition) => rowDefinition.destinationPageDefinitions)
         .toList(growable: false);

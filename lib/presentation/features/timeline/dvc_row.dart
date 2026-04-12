@@ -6,7 +6,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_destination_page_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
@@ -34,10 +34,8 @@ class DvcRow extends TimelineRowDefinition {
   Key yearCellKey(int year) => Key('dvc_point_usage_cell_$year');
 
   @override
-  Iterable<GroupTimelineDestinationPageDefinition>
-  get destinationPageDefinitions => const [
-    _DvcPointCalculationDestinationPageDefinition(),
-  ];
+  Iterable<TimelineDestinationPageDefinition> get destinationPageDefinitions =>
+      const [_DvcPointCalculationDestinationPageDefinition()];
 
   @override
   Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
@@ -100,7 +98,7 @@ class DvcRow extends TimelineRowDefinition {
 }
 
 class _DvcPointCalculationDestinationPageDefinition
-    extends GroupTimelineDestinationPageDefinition {
+    extends TimelineDestinationPageDefinition {
   const _DvcPointCalculationDestinationPageDefinition();
 
   @override

@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_destination_page_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
@@ -29,10 +29,8 @@ class TripRow extends TimelineRowDefinition {
   Color get backgroundColor => Colors.lightBlue.shade50;
 
   @override
-  Iterable<GroupTimelineDestinationPageDefinition>
-  get destinationPageDefinitions => const [
-    _TripManagementDestinationPageDefinition(),
-  ];
+  Iterable<TimelineDestinationPageDefinition> get destinationPageDefinitions =>
+      const [_TripManagementDestinationPageDefinition()];
 
   @override
   Widget buildYearCell(
@@ -67,7 +65,7 @@ class TripRow extends TimelineRowDefinition {
 }
 
 class _TripManagementDestinationPageDefinition
-    extends GroupTimelineDestinationPageDefinition {
+    extends TimelineDestinationPageDefinition {
   const _TripManagementDestinationPageDefinition();
 
   @override

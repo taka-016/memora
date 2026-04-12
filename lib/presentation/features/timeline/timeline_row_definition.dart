@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_destination_page_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 
@@ -23,8 +23,8 @@ abstract class TimelineRowDefinition {
   String get fixedColumnLabel;
   double get initialHeight;
   Color? get backgroundColor;
-  Iterable<GroupTimelineDestinationPageDefinition>
-  get destinationPageDefinitions => const [];
+  Iterable<TimelineDestinationPageDefinition> get destinationPageDefinitions =>
+      const [];
 
   Key? yearCellKey(int year) => null;
 
