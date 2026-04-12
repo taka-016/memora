@@ -6,11 +6,11 @@ import 'package:memora/presentation/features/timeline/timeline_layout_config.dar
 import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
+import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 List<TimelineRowDefinition> buildDefaultTimelineRows({
   required GroupDto groupWithMembers,
-  required void Function(String groupId, int year)? onTripManagementSelected,
-  required VoidCallback? onDvcPointCalculationPressed,
+  required ValueChanged<GroupTimelineDestination>? onDestinationSelected,
 }) {
   final defaultHeight = TimelineLayoutConfig.defaults.dataRowHeight;
 
@@ -18,13 +18,13 @@ List<TimelineRowDefinition> buildDefaultTimelineRows({
     TripRow(
       groupId: groupWithMembers.id,
       initialHeight: defaultHeight,
-      onTripManagementSelected: onTripManagementSelected,
+      onDestinationSelected: onDestinationSelected,
     ),
     GroupEventRow(groupId: groupWithMembers.id, initialHeight: defaultHeight),
     DvcRow(
       groupId: groupWithMembers.id,
       initialHeight: defaultHeight,
-      onDvcPointCalculationPressed: onDvcPointCalculationPressed,
+      onDestinationSelected: onDestinationSelected,
     ),
     ...groupWithMembers.members.map(
       (member) => MemberRow(member: member, initialHeight: defaultHeight),

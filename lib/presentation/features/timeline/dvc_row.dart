@@ -4,22 +4,25 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
+import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 class DvcRow extends TimelineRowDefinition {
   const DvcRow({
     required this.groupId,
     required this.initialHeight,
-    required this.onDvcPointCalculationPressed,
+    required this.onDestinationSelected,
   });
 
   final String groupId;
 
   @override
   final double initialHeight;
-  final VoidCallback? onDvcPointCalculationPressed;
+  final ValueChanged<GroupTimelineDestination>? onDestinationSelected;
 
   @override
   String get fixedColumnLabel => 'DVC';
@@ -31,7 +34,15 @@ class DvcRow extends TimelineRowDefinition {
   Key yearCellKey(int year) => Key('dvc_point_usage_cell_$year');
 
   @override
+  Iterable<GroupTimelineDestinationPageDefinition>
+  get destinationPageDefinitions => const [
+    _DvcPointCalculationDestinationPageDefinition(),
+  ];
+
+  @override
   Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
+    final onTap = _buildNavigateToDvcPointCalculationCallback();
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -42,7 +53,7 @@ class DvcRow extends TimelineRowDefinition {
           const SizedBox(width: 8),
           InkWell(
             key: const Key('timeline_dvc_point_usage_edit_button'),
-            onTap: onDvcPointCalculationPressed,
+            onTap: onTap,
             borderRadius: BorderRadius.circular(4),
             child: const Padding(
               padding: EdgeInsets.all(2),
@@ -74,7 +85,41 @@ class DvcRow extends TimelineRowDefinition {
     BuildContext context,
     TimelineRowContext rowContext,
   ) {
-    return onDvcPointCalculationPressed;
+    return _buildNavigateToDvcPointCalculationCallback();
+  }
+
+  VoidCallback? _buildNavigateToDvcPointCalculationCallback() {
+    final callback = onDestinationSelected;
+    if (callback == null) {
+      return null;
+    }
+
+    return () =>
+        callback(GroupTimelineDvcPointCalculationDestination(groupId: groupId));
+  }
+}
+
+class _DvcPointCalculationDestinationPageDefinition
+    extends GroupTimelineDestinationPageDefinition {
+  const _DvcPointCalculationDestinationPageDefinition();
+
+  @override
+  bool matches(GroupTimelineDestination destination) {
+    return destination is GroupTimelineDvcPointCalculationDestination;
+  }
+
+  @override
+  Widget buildPage({
+    required BuildContext context,
+    required GroupTimelineDestination destination,
+    required VoidCallback onBackPressed,
+  }) {
+    final dvcDestination =
+        destination as GroupTimelineDvcPointCalculationDestination;
+    return DvcPointCalculationScreen(
+      groupId: dvcDestination.groupId,
+      onBackPressed: onBackPressed,
+    );
   }
 }
 

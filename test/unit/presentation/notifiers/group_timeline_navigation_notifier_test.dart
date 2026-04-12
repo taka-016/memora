@@ -1,6 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/presentation/features/timeline/dvc_row.dart';
+import 'package:memora/presentation/features/timeline/timeline.dart';
+import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
@@ -8,9 +12,8 @@ class _GroupTimelineNavigationNotifierWithRefresh
     extends GroupTimelineNavigationNotifier {
   @override
   GroupTimelineNavigationState build() {
-    return GroupTimelineNavigationState(
-      currentScreen: GroupTimelineScreenState.timeline,
-      refreshGroupTimeline: () async {},
+    return const GroupTimelineNavigationState(
+      destination: GroupTimelineOverviewDestination(),
     );
   }
 }
@@ -24,9 +27,13 @@ class _TripManagementNavigationNotifierWithRefresh
   @override
   GroupTimelineNavigationState build() {
     return GroupTimelineNavigationState(
-      currentScreen: GroupTimelineScreenState.tripManagement,
-      selectedGroupId: 'g1',
-      selectedYear: 2024,
+      destination: const GroupTimelineTripManagementDestination(
+        groupId: 'g1',
+        year: 2024,
+      ),
+      timelineRowDefinitions: const [
+        TripRow(groupId: 'g1', initialHeight: 40, onDestinationSelected: null),
+      ],
       refreshGroupTimeline: onRefresh,
     );
   }
@@ -41,9 +48,57 @@ class _DvcPointCalculationNavigationNotifierWithRefresh
   @override
   GroupTimelineNavigationState build() {
     return GroupTimelineNavigationState(
-      currentScreen: GroupTimelineScreenState.dvcPointCalculation,
-      selectedGroupId: 'g1',
+      destination: const GroupTimelineDvcPointCalculationDestination(
+        groupId: 'g1',
+      ),
+      timelineRowDefinitions: const [
+        DvcRow(groupId: 'g1', initialHeight: 40, onDestinationSelected: null),
+      ],
       refreshGroupTimeline: onRefresh,
+    );
+  }
+}
+
+class _NavigationNotifierWithCustomRows
+    extends GroupTimelineNavigationNotifier {
+  _NavigationNotifierWithCustomRows({
+    required this.destination,
+    required this.timelineRowDefinitions,
+  });
+
+  final GroupTimelineDestination destination;
+  final List<TimelineRowDefinition> timelineRowDefinitions;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      destination: destination,
+      timelineRowDefinitions: timelineRowDefinitions,
+    );
+  }
+}
+
+class _NavigationNotifierWithInstanceAndCustomRows
+    extends GroupTimelineNavigationNotifier {
+  _NavigationNotifierWithInstanceAndCustomRows({
+    required this.groupWithMembers,
+    required this.destination,
+    required this.timelineRowDefinitions,
+  });
+
+  final GroupDto groupWithMembers;
+  final GroupTimelineDestination destination;
+  final List<TimelineRowDefinition> timelineRowDefinitions;
+
+  @override
+  GroupTimelineNavigationState build() {
+    return GroupTimelineNavigationState(
+      destination: destination,
+      groupTimelineInstance: Timeline(
+        groupWithMembers: groupWithMembers,
+        rowDefinitions: timelineRowDefinitions,
+      ),
+      timelineRowDefinitions: timelineRowDefinitions,
     );
   }
 }
@@ -79,9 +134,7 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
 
       // Assert
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
-      expect(state.selectedGroupId, isNull);
-      expect(state.selectedYear, isNull);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -97,7 +150,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.groupTimelineInstance, isNull);
     });
 
@@ -122,7 +175,7 @@ void main() {
       final state = containerWithRefresh.read(
         groupTimelineNavigationNotifierProvider,
       );
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.refreshGroupTimeline, isNull);
     });
 
@@ -137,7 +190,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(state.groupTimelineInstance, isNotNull);
     });
 
@@ -148,15 +201,25 @@ void main() {
       );
       const testGroupId = 'test-group-123';
       const testYear = 2024;
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // Act
-      notifier.showTripManagement(testGroupId, testYear);
+      notifier.showDestination(
+        const GroupTimelineTripManagementDestination(
+          groupId: testGroupId,
+          year: testYear,
+        ),
+      );
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.tripManagement);
-      expect(state.selectedGroupId, testGroupId);
-      expect(state.selectedYear, testYear);
+      expect(
+        state.destination,
+        const GroupTimelineTripManagementDestination(
+          groupId: testGroupId,
+          year: testYear,
+        ),
+      );
     });
 
     test('DVCポイント計算画面に遷移できる', () {
@@ -164,14 +227,23 @@ void main() {
       final notifier = container.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // Act
-      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+      notifier.showDestination(
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.dvcPointCalculation);
-      expect(state.selectedGroupId, testGroupWithMembers.id);
+      expect(
+        state.destination,
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
     });
 
     test('旅行管理画面から戻ることができる', () {
@@ -179,18 +251,22 @@ void main() {
       final notifier = container.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
+      notifier.showGroupTimeline(testGroupWithMembers);
 
       // 旅行管理画面に遷移
-      notifier.showTripManagement('test-group', 2024);
+      notifier.showDestination(
+        const GroupTimelineTripManagementDestination(
+          groupId: 'test-group',
+          year: 2024,
+        ),
+      );
 
       // Act
       notifier.backFromTripManagement();
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedGroupId, isNull);
-      expect(state.selectedYear, isNull);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作で年表画面からグループ一覧画面へ戻れる', () {
@@ -206,7 +282,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.groupTimelineInstance, isNull);
     });
 
@@ -232,7 +308,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.refreshGroupTimeline, isNull);
     });
 
@@ -242,7 +318,12 @@ void main() {
         groupTimelineNavigationNotifierProvider.notifier,
       );
       notifier.showGroupTimeline(testGroupWithMembers);
-      notifier.showTripManagement(testGroupWithMembers.id, 2024);
+      notifier.showDestination(
+        GroupTimelineTripManagementDestination(
+          groupId: testGroupWithMembers.id,
+          year: 2024,
+        ),
+      );
 
       // Act
       final handled = notifier.handleBackNavigation();
@@ -250,9 +331,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedGroupId, isNull);
-      expect(state.selectedYear, isNull);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作で旅行管理画面から戻ると年表の再読込が実行される', () {
@@ -280,7 +359,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(refreshCount, 1);
     });
 
@@ -298,9 +377,7 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
-      expect(state.selectedGroupId, isNull);
-      expect(state.selectedYear, isNull);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.groupTimelineInstance, isNull);
       expect(state.refreshGroupTimeline, isNull);
     });
@@ -311,15 +388,18 @@ void main() {
         groupTimelineNavigationNotifierProvider.notifier,
       );
       notifier.showGroupTimeline(testGroupWithMembers);
-      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+      notifier.showDestination(
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
 
       // Act
       notifier.backFromDvcPointCalculation();
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedGroupId, isNull);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作でDVCポイント計算画面から年表画面へ戻れる', () {
@@ -328,7 +408,11 @@ void main() {
         groupTimelineNavigationNotifierProvider.notifier,
       );
       notifier.showGroupTimeline(testGroupWithMembers);
-      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+      notifier.showDestination(
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
 
       // Act
       final handled = notifier.handleBackNavigation();
@@ -336,8 +420,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
-      expect(state.selectedGroupId, isNull);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('戻る操作でDVCポイント計算画面から戻ると年表の再読込が実行される', () {
@@ -365,7 +448,7 @@ void main() {
         groupTimelineNavigationNotifierProvider,
       );
       expect(handled, isTrue);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.destination, const GroupTimelineOverviewDestination());
       expect(refreshCount, 1);
     });
 
@@ -386,8 +469,34 @@ void main() {
 
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
       expect(state.refreshGroupTimeline, isNull);
+    });
+
+    test('年表を再生成した直後は古い再読込コールバックが呼ばれない', () async {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      var oldRefreshCount = 0;
+      notifier.showGroupTimeline(testGroupWithMembers);
+      final firstTimeline = container
+          .read(groupTimelineNavigationNotifierProvider)
+          .groupTimelineInstance!;
+      firstTimeline.onSetRefreshCallback?.call(() async {
+        oldRefreshCount++;
+      });
+      await Future(() {});
+
+      // Act
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showTripManagement(testGroupWithMembers.id, 2024);
+      notifier.backFromTripManagement();
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.destination, const GroupTimelineOverviewDestination());
+      expect(oldRefreshCount, 0);
     });
 
     test('グループ一覧画面では戻る操作を処理しない', () {
@@ -402,7 +511,70 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(handled, isFalse);
-      expect(state.currentScreen, GroupTimelineScreenState.groupList);
+      expect(state.destination, const GroupTimelineGroupListDestination());
+    });
+
+    test('未定義の遷移先では戻る操作時にグループ一覧へ戻る', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.destination, const GroupTimelineGroupListDestination());
+    });
+
+    test('年表表示中の未定義の遷移先では戻る操作時に年表へ戻る', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithInstanceAndCustomRows(
+              groupWithMembers: testGroupWithMembers,
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      final handled = notifier.handleBackNavigation();
+
+      // Assert
+      final state = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider,
+      );
+      expect(handled, isTrue);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('グループ一覧画面以外では戻る操作を処理できる', () {
@@ -435,12 +607,105 @@ void main() {
       expect(notifier.getStackIndex(), 1);
 
       // 旅行管理画面の場合
-      notifier.showTripManagement('test-group', 2024);
+      notifier.showDestination(
+        const GroupTimelineTripManagementDestination(
+          groupId: 'test-group',
+          year: 2024,
+        ),
+      );
       expect(notifier.getStackIndex(), 2);
 
       // DVCポイント計算画面の場合
-      notifier.showDvcPointCalculation(testGroupWithMembers.id);
+      notifier.showDestination(
+        GroupTimelineDvcPointCalculationDestination(
+          groupId: testGroupWithMembers.id,
+        ),
+      );
       expect(notifier.getStackIndex(), 3);
+    });
+
+    test('スタックインデックスは行定義順から動的に算出される', () {
+      // Arrange
+      final containerWithCustomRows = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [
+                DvcRow(
+                  groupId: 'g1',
+                  initialHeight: 40,
+                  onDestinationSelected: null,
+                ),
+                TripRow(
+                  groupId: 'g1',
+                  initialHeight: 40,
+                  onDestinationSelected: null,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithCustomRows.dispose);
+      final notifier = containerWithCustomRows.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
+      expect(notifier.getStackIndex(), 3);
+    });
+
+    test('未定義の遷移先は年表未表示時にグループ一覧のインデックスへ補正される', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithCustomRows(
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
+      expect(notifier.getStackIndex(), 0);
+    });
+
+    test('未定義の遷移先は年表表示時に年表のインデックスへ補正される', () {
+      // Arrange
+      final containerWithUnsupportedDestination = ProviderContainer(
+        overrides: [
+          groupTimelineNavigationNotifierProvider.overrideWith(
+            () => _NavigationNotifierWithInstanceAndCustomRows(
+              groupWithMembers: testGroupWithMembers,
+              destination: const GroupTimelineTripManagementDestination(
+                groupId: 'g1',
+                year: 2024,
+              ),
+              timelineRowDefinitions: const [],
+            ),
+          ),
+        ],
+      );
+      addTearDown(containerWithUnsupportedDestination.dispose);
+      final notifier = containerWithUnsupportedDestination.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act / Assert
+      expect(notifier.getStackIndex(), 1);
     });
 
     test('年表表示時にGroupTimelineインスタンスが作成される', () {
@@ -455,7 +720,7 @@ void main() {
       // Assert
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.groupTimelineInstance, isNotNull);
-      expect(state.currentScreen, GroupTimelineScreenState.timeline);
+      expect(state.destination, const GroupTimelineOverviewDestination());
     });
 
     test('状態の変更が通知される', () {
@@ -474,7 +739,12 @@ void main() {
 
       // Act
       notifier.showGroupTimeline(testGroupWithMembers);
-      notifier.showTripManagement('test-group', 2024);
+      notifier.showDestination(
+        const GroupTimelineTripManagementDestination(
+          groupId: 'test-group',
+          year: 2024,
+        ),
+      );
       notifier.backFromTripManagement();
       notifier.resetToGroupList();
 

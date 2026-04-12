@@ -7,12 +7,10 @@ import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
-import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
@@ -89,7 +87,7 @@ class TopPage extends HookConsumerWidget {
     }
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
-    return timelineState.currentScreen != GroupTimelineScreenState.groupList;
+    return timelineState.destination is! GroupTimelineGroupListDestination;
   }
 
   void _handleAndroidBack(WidgetRef ref) {
@@ -131,38 +129,29 @@ class TopPage extends HookConsumerWidget {
     }
 
     final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
+    final destination = timelineState.destination;
+    final notifier = ref.read(groupTimelineNavigationNotifierProvider.notifier);
 
     return IndexedStack(
-      index: ref
-          .read(groupTimelineNavigationNotifierProvider.notifier)
-          .getStackIndex(),
+      index: notifier.getStackIndex(),
       children: [
         GroupSelectionList(
           onGroupSelected: (group) => _onGroupSelected(ref, group),
           title: 'グループを選択',
           listKey: const Key('group_list'),
         ),
-        timelineState.groupTimelineInstance ?? Container(),
-        timelineState.selectedGroupId != null &&
-                timelineState.selectedYear != null
-            ? TripManagement(
-                groupId: timelineState.selectedGroupId!,
-                year: timelineState.selectedYear!,
-                onBackPressed: () => ref
-                    .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .backFromTripManagement(),
-              )
-            : Container(),
-        timelineState.currentScreen ==
-                    GroupTimelineScreenState.dvcPointCalculation &&
-                timelineState.selectedGroupId != null
-            ? DvcPointCalculationScreen(
-                groupId: timelineState.selectedGroupId!,
-                onBackPressed: () => ref
-                    .read(groupTimelineNavigationNotifierProvider.notifier)
-                    .backFromDvcPointCalculation(),
-              )
-            : Container(),
+        timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
+        ...timelineState.destinationPageDefinitions.map((definition) {
+          if (!definition.matches(destination)) {
+            return const SizedBox.shrink();
+          }
+
+          return definition.buildPage(
+            context: context,
+            destination: destination,
+            onBackPressed: notifier.backToTimeline,
+          );
+        }),
       ],
     );
   }
