@@ -17,7 +17,7 @@ const defaultTimelineRowOrder = <TimelineRowType>[
   TimelineRowType.member,
 ];
 
-List<TimelineRowDefinition> buildDefaultTimelineRows({
+List<TimelineRowDefinition> buildTimelineRowDefinitions({
   required GroupDto groupWithMembers,
   required ValueChanged<GroupTimelineDestination>? onDestinationSelected,
   List<TimelineRowType>? rowOrder,
