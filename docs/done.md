@@ -292,7 +292,7 @@
 ## グループ年表画面
 
 - グループ年表の行順を将来外から指定できる形にする
-  - `lib/presentation/features/timeline/timeline_row_definitions_builder.dart` で、現在固定の `旅行 -> イベント -> DVC -> メンバー順` をそのまま並べる実装をやめ、任意の行順リストを受け取れる形に変更する
+  - `lib/presentation/features/timeline/timeline_rows.dart` で、現在固定の `旅行 -> イベント -> DVC -> メンバー順` をそのまま並べる実装をやめ、任意の行順リストを受け取れる形に変更する
   - 今回の対応では行順リストはどこからも渡さず、未指定時のデフォルト値として現在と同じ `旅行 -> イベント -> DVC -> メンバー順` を使う
   - 行順リストには `旅行` `イベント` `DVC` `メンバー` を含められるようにして、将来指定された順序で `TimelineRowDefinition` を生成できる状態にする
 - グループ年表表示の入口は「受け取れる状態」までを整える
@@ -670,7 +670,7 @@
 ## リファクタリング
 
 - グループ年表の次画面遷移を、遷移先を表す共通表現（新規型。仮称: `GroupTimelineDestination`）に整理し、行クラスごとの個別コールバック依存をなくす
-- `TripRow` と `DvcRow` の行実装を共通化するのではなく、遷移要求を受け渡す引数インタフェースのみを共通化し、`buildTimelineRowDefinitions()` の個別引数依存を解消する
+- `TripRow` と `DvcRow` の行実装を共通化するのではなく、遷移要求を受け渡す引数インタフェースのみを共通化し、`buildTimelineRows()` の個別引数依存を解消する
 - `group_timeline_navigation_notifier.dart` の `selectedGroupId` / `selectedYear` / 個別画面遷移管理を共通の遷移先管理へ整理する
 - `_buildGroupTimelineStack` の個別画面分岐を共通の遷移先に基づく描画へ整理する
 - Timelineの各行を差し替え可能な行定義インタフェースへ分離し、設定に応じて表示行と順番を組み替えられる構成にする
