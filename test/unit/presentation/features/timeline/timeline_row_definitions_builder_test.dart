@@ -1,14 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_definitions_builder.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
 import 'package:memora/presentation/features/timeline/group_event_row.dart';
 import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
 
 void main() {
-  group('buildTimelineRowDefinitions', () {
+  group('buildTimelineRows', () {
     late GroupDto testGroupWithMembers;
 
     setUp(() {
@@ -34,7 +34,7 @@ void main() {
     });
 
     test('行順未指定時は既存のデフォルト順を返す', () {
-      final rowDefinitions = buildTimelineRowDefinitions(
+      final rowDefinitions = buildTimelineRows(
         groupWithMembers: testGroupWithMembers,
         onDestinationSelected: null,
       );
@@ -48,7 +48,7 @@ void main() {
     });
 
     test('指定した行順でTimelineRowDefinitionを生成できる', () {
-      final rowDefinitions = buildTimelineRowDefinitions(
+      final rowDefinitions = buildTimelineRows(
         groupWithMembers: testGroupWithMembers,
         onDestinationSelected: null,
         rowOrder: const [
