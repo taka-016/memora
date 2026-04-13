@@ -79,10 +79,14 @@ class GroupTimelineNavigationNotifier
     resetToGroupList();
   }
 
-  void showGroupTimeline(GroupDto groupWithMembers) {
+  void showGroupTimeline(
+    GroupDto groupWithMembers, {
+    List<TimelineRowType>? rowOrder,
+  }) {
     final rowDefinitions = buildDefaultTimelineRows(
       groupWithMembers: groupWithMembers,
       onDestinationSelected: showDestination,
+      rowOrder: rowOrder,
     );
     late final Timeline groupTimeline;
     groupTimeline = Timeline(
