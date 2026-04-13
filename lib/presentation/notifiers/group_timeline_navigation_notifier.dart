@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
@@ -79,10 +79,14 @@ class GroupTimelineNavigationNotifier
     resetToGroupList();
   }
 
-  void showGroupTimeline(GroupDto groupWithMembers) {
-    final rowDefinitions = buildDefaultTimelineRows(
+  void showGroupTimeline(
+    GroupDto groupWithMembers, {
+    List<TimelineRowType>? rowOrder,
+  }) {
+    final rowDefinitions = buildTimelineRows(
       groupWithMembers: groupWithMembers,
       onDestinationSelected: showDestination,
+      rowOrder: rowOrder,
     );
     late final Timeline groupTimeline;
     groupTimeline = Timeline(

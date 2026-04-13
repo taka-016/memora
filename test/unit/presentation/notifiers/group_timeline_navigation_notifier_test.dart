@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
@@ -192,6 +193,31 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.destination, const GroupTimelineOverviewDestination());
       expect(state.groupTimelineInstance, isNotNull);
+    });
+
+    test('グループ年表画面表示時に行順指定を受け取れる', () {
+      // Arrange
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      notifier.showGroupTimeline(
+        testGroupWithMembers,
+        rowOrder: const [
+          TimelineRowType.dvc,
+          TimelineRowType.trip,
+          TimelineRowType.groupEvent,
+          TimelineRowType.member,
+        ],
+      );
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.timelineRowDefinitions[0], isA<DvcRow>());
+      expect(state.timelineRowDefinitions[1], isA<TripRow>());
+      expect(state.timelineRowDefinitions[2].fixedColumnLabel, 'イベント');
+      expect(state.timelineRowDefinitions[3].fixedColumnLabel, '花子');
     });
 
     test('旅行管理画面に遷移できる', () {

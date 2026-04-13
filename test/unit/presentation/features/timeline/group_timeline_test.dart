@@ -20,7 +20,7 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
-import 'package:memora/presentation/features/timeline/default_timeline_rows.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
@@ -84,7 +84,7 @@ void main() {
     final effectiveGroupWithMembers = groupWithMembers ?? testGroupWithMembers;
     final effectiveRowDefinitions =
         rowDefinitions ??
-        buildDefaultTimelineRows(
+        buildTimelineRows(
           groupWithMembers: effectiveGroupWithMembers,
           onDestinationSelected: onDestinationSelected,
         );

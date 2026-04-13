@@ -291,6 +291,15 @@
 
 ## グループ年表画面
 
+- グループ年表の行順を将来外から指定できる形にする
+  - `lib/presentation/features/timeline/timeline_rows.dart` で、現在固定の `旅行 -> イベント -> DVC -> メンバー順` をそのまま並べる実装をやめ、任意の行順リストを受け取れる形に変更する
+  - 今回の対応では行順リストはどこからも渡さず、未指定時のデフォルト値として現在と同じ `旅行 -> イベント -> DVC -> メンバー順` を使う
+  - 行順リストには `旅行` `イベント` `DVC` `メンバー` を含められるようにして、将来指定された順序で `TimelineRowDefinition` を生成できる状態にする
+- グループ年表表示の入口は「受け取れる状態」までを整える
+  - `lib/presentation/notifiers/group_timeline_navigation_notifier.dart` の `showGroupTimeline` に行順リストの引数を追加し、省略時は現在のデフォルト順が使われるようにする
+  - 既存呼び出し元 (`lib/presentation/app/top_page.dart`) は今回変更せず、引数省略のまま現行挙動を維持する
+  - `Timeline` にはこれまでどおり生成済みの `rowDefinitions` を渡す構成のままにして、行順の切り替え責務は行生成側に閉じ込める
+
 - TopPage配下の疑似画面遷移で、Androidの戻る操作が画面上の戻る操作と同じ結果になるようにする
   - 対象画面はグループ年表画面、旅行管理画面、DVCポイント計算画面とする
   - グループ年表画面でAndroidの戻る操作を行った場合は、グループ一覧画面へ戻す
@@ -661,7 +670,7 @@
 ## リファクタリング
 
 - グループ年表の次画面遷移を、遷移先を表す共通表現（新規型。仮称: `GroupTimelineDestination`）に整理し、行クラスごとの個別コールバック依存をなくす
-- `TripRow` と `DvcRow` の行実装を共通化するのではなく、遷移要求を受け渡す引数インタフェースのみを共通化し、`buildDefaultTimelineRows()` の個別引数依存を解消する
+- `TripRow` と `DvcRow` の行実装を共通化するのではなく、遷移要求を受け渡す引数インタフェースのみを共通化し、`buildTimelineRows()` の個別引数依存を解消する
 - `group_timeline_navigation_notifier.dart` の `selectedGroupId` / `selectedYear` / 個別画面遷移管理を共通の遷移先管理へ整理する
 - `_buildGroupTimelineStack` の個別画面分岐を共通の遷移先に基づく描画へ整理する
 - Timelineの各行を差し替え可能な行定義インタフェースへ分離し、設定に応じて表示行と順番を組み替えられる構成にする
