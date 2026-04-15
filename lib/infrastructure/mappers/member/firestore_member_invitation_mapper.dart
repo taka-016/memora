@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreMemberInvitationMapper {
   static MemberInvitationDto fromFirestore(
@@ -15,12 +16,25 @@ class FirestoreMemberInvitationMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(MemberInvitation memberInvitation) {
+  static Map<String, dynamic> toCreateFirestore(
+    MemberInvitation memberInvitation,
+  ) {
     return {
       'inviteeId': memberInvitation.inviteeId,
       'inviterId': memberInvitation.inviterId,
       'invitationCode': memberInvitation.invitationCode,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
+    };
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(
+    MemberInvitation memberInvitation,
+  ) {
+    return {
+      'inviteeId': memberInvitation.inviteeId,
+      'inviterId': memberInvitation.inviterId,
+      'invitationCode': memberInvitation.invitationCode,
+      ...FirestoreWriteMetadata.forUpdate(),
     };
   }
 }

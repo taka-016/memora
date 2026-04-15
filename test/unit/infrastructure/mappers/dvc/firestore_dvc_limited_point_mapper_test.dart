@@ -68,7 +68,7 @@ void main() {
         memo: '追加分',
       );
 
-      final map = FirestoreDvcLimitedPointMapper.toFirestore(point);
+      final map = FirestoreDvcLimitedPointMapper.toCreateFirestore(point);
 
       expect(map['groupId'], 'group001');
       expect(map['startYearMonth'], isA<Timestamp>());
@@ -76,6 +76,7 @@ void main() {
       expect(map['point'], 30);
       expect(map['memo'], '追加分');
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
   });
 }

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreMemberEventMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -25,7 +26,7 @@ class FirestoreMemberEventMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(MemberEvent memberEvent) {
+  static Map<String, dynamic> toCreateFirestore(MemberEvent memberEvent) {
     return {
       'memberId': memberEvent.memberId,
       'type': memberEvent.type,
@@ -33,7 +34,7 @@ class FirestoreMemberEventMapper {
       'startDate': Timestamp.fromDate(memberEvent.startDate),
       'endDate': Timestamp.fromDate(memberEvent.endDate),
       'memo': memberEvent.memo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
   }
 }

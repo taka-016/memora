@@ -16,13 +16,13 @@ class FirestoreGroupRepository implements GroupRepository {
     final batch = _firestore.batch();
 
     final groupDocRef = _firestore.collection('groups').doc();
-    batch.set(groupDocRef, FirestoreGroupMapper.toFirestore(group));
+    batch.set(groupDocRef, FirestoreGroupMapper.toCreateFirestore(group));
 
     for (final GroupMember member in group.members) {
       final memberDocRef = _firestore.collection('group_members').doc();
       batch.set(
         memberDocRef,
-        FirestoreGroupMemberMapper.toFirestore(
+        FirestoreGroupMemberMapper.toCreateFirestore(
           member.copyWith(groupId: groupDocRef.id),
         ),
       );
@@ -38,7 +38,7 @@ class FirestoreGroupRepository implements GroupRepository {
 
     batch.update(
       _firestore.collection('groups').doc(group.id),
-      FirestoreGroupMapper.toFirestore(group),
+      FirestoreGroupMapper.toUpdateFirestore(group),
     );
 
     final memberSnapshot = await _firestore
@@ -53,7 +53,7 @@ class FirestoreGroupRepository implements GroupRepository {
       final memberDocRef = _firestore.collection('group_members').doc();
       batch.set(
         memberDocRef,
-        FirestoreGroupMemberMapper.toFirestore(
+        FirestoreGroupMemberMapper.toCreateFirestore(
           member.copyWith(groupId: group.id),
         ),
       );

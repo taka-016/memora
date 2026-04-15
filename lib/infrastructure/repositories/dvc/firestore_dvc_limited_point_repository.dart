@@ -13,7 +13,7 @@ class FirestoreDvcLimitedPointRepository implements DvcLimitedPointRepository {
   Future<void> saveDvcLimitedPoint(DvcLimitedPoint limitedPoint) async {
     await _firestore
         .collection('dvc_limited_points')
-        .add(FirestoreDvcLimitedPointMapper.toFirestore(limitedPoint));
+        .add(FirestoreDvcLimitedPointMapper.toCreateFirestore(limitedPoint));
   }
 
   @override

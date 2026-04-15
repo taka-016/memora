@@ -18,14 +18,19 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     final batch = _firestore.batch();
 
     final tripDocRef = _firestore.collection('trip_entries').doc();
-    batch.set(tripDocRef, FirestoreTripEntryMapper.toFirestore(tripEntry));
+    batch.set(
+      tripDocRef,
+      FirestoreTripEntryMapper.toCreateFirestore(tripEntry),
+    );
     final tasksCollection = _firestore.collection('tasks');
 
     for (final Pin pin in tripEntry.pins) {
       final pinDocRef = _firestore.collection('pins').doc();
       batch.set(
         pinDocRef,
-        FirestorePinMapper.toFirestore(pin.copyWith(tripId: tripDocRef.id)),
+        FirestorePinMapper.toCreateFirestore(
+          pin.copyWith(tripId: tripDocRef.id),
+        ),
       );
     }
 
@@ -33,7 +38,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
-        FirestoreTaskMapper.toFirestore(task.copyWith(tripId: tripDocRef.id)),
+        FirestoreTaskMapper.toCreateFirestore(
+          task.copyWith(tripId: tripDocRef.id),
+        ),
       );
     }
 
@@ -48,7 +55,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
     batch.update(
       _firestore.collection('trip_entries').doc(tripEntry.id),
-      FirestoreTripEntryMapper.toFirestore(tripEntry),
+      FirestoreTripEntryMapper.toUpdateFirestore(tripEntry),
     );
 
     final pinsSnapshot = await _firestore
@@ -70,7 +77,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final pinDocRef = _firestore.collection('pins').doc();
       batch.set(
         pinDocRef,
-        FirestorePinMapper.toFirestore(
+        FirestorePinMapper.toCreateFirestore(
           pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
         ),
       );
@@ -80,7 +87,9 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       final taskDocRef = tasksCollection.doc(task.id);
       batch.set(
         taskDocRef,
-        FirestoreTaskMapper.toFirestore(task.copyWith(tripId: tripEntry.id)),
+        FirestoreTaskMapper.toCreateFirestore(
+          task.copyWith(tripId: tripEntry.id),
+        ),
       );
     }
 

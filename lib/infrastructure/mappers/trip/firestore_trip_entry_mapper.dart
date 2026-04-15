@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreTripEntryMapper {
   static TripEntryDto fromFirestore(
@@ -32,13 +33,32 @@ class FirestoreTripEntryMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(TripEntry tripEntry) {
+  static Map<String, dynamic> toCreateFirestore(TripEntry tripEntry) {
     final data = <String, dynamic>{
       'groupId': tripEntry.groupId,
       'tripYear': tripEntry.tripYear,
       'tripName': tripEntry.tripName,
       'tripMemo': tripEntry.tripMemo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
+    };
+
+    data['tripStartDate'] = tripEntry.tripStartDate != null
+        ? Timestamp.fromDate(tripEntry.tripStartDate!)
+        : null;
+    data['tripEndDate'] = tripEntry.tripEndDate != null
+        ? Timestamp.fromDate(tripEntry.tripEndDate!)
+        : null;
+
+    return data;
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(TripEntry tripEntry) {
+    final data = <String, dynamic>{
+      'groupId': tripEntry.groupId,
+      'tripYear': tripEntry.tripYear,
+      'tripName': tripEntry.tripName,
+      'tripMemo': tripEntry.tripMemo,
+      ...FirestoreWriteMetadata.forUpdate(),
     };
 
     data['tripStartDate'] = tripEntry.tripStartDate != null

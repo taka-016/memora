@@ -67,7 +67,7 @@ void main() {
         visitMemo: '観光開始',
       );
 
-      final map = FirestorePinMapper.toFirestore(pin);
+      final map = FirestorePinMapper.toCreateFirestore(pin);
 
       expect(map['pinId'], 'pin-entity-001');
       expect(map['tripId'], 'trip-entity-001');
@@ -79,6 +79,7 @@ void main() {
       expect(map['visitEndDate'], isA<Timestamp>());
       expect(map['visitMemo'], '観光開始');
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
 
     test('オプショナルプロパティがnullでもFirestoreのMapへ変換できる', () {
@@ -90,7 +91,7 @@ void main() {
         longitude: 127.6811,
       );
 
-      final map = FirestorePinMapper.toFirestore(pin);
+      final map = FirestorePinMapper.toCreateFirestore(pin);
 
       expect(map['pinId'], 'pin-entity-002');
       expect(map['tripId'], 'trip-entity-002');
@@ -102,6 +103,7 @@ void main() {
       expect(map['visitEndDate'], isNull);
       expect(map['visitMemo'], isNull);
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
 
     test('空文字列を含むPinからFirestoreのMapへ変換できる', () {
@@ -113,7 +115,7 @@ void main() {
         longitude: 0.0,
       );
 
-      final map = FirestorePinMapper.toFirestore(pin);
+      final map = FirestorePinMapper.toCreateFirestore(pin);
 
       expect(map['pinId'], '');
       expect(map['tripId'], '');
@@ -125,6 +127,7 @@ void main() {
       expect(map['visitEndDate'], isNull);
       expect(map['visitMemo'], isNull);
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
   });
 }

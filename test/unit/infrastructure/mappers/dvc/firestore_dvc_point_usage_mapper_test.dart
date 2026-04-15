@@ -52,13 +52,14 @@ void main() {
         memo: 'ホテル',
       );
 
-      final map = FirestoreDvcPointUsageMapper.toFirestore(usage);
+      final map = FirestoreDvcPointUsageMapper.toCreateFirestore(usage);
 
       expect(map['groupId'], 'group001');
       expect(map['usageYearMonth'], isA<Timestamp>());
       expect(map['usedPoint'], 60);
       expect(map['memo'], 'ホテル');
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
   });
 }

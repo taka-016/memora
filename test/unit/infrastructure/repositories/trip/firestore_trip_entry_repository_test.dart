@@ -78,6 +78,20 @@ void main() {
         expect(result, equals('generated-doc-id'));
         verify(mockFirestore.batch()).called(1);
         verify(mockCollection.doc()).called(1);
+        verify(
+          mockBatch.set(
+            mockDocRef,
+            argThat(
+              allOf([
+                containsPair('groupId', 'group001'),
+                containsPair('tripYear', 2025),
+                containsPair('tripName', 'テスト旅行'),
+                contains('createdAt'),
+                contains('updatedAt'),
+              ]),
+            ),
+          ),
+        ).called(1);
         verify(mockTasksCollection.doc('task-001')).called(1);
         verify(mockBatch.set(mockTaskDocRef, any)).called(1);
         verify(mockBatch.commit()).called(1);
@@ -133,6 +147,22 @@ void main() {
 
       await repository.updateTripEntry(tripEntry);
 
+      verify(
+        mockBatch.update(
+          mockTripDocRef,
+          argThat(
+            allOf([
+              containsPair('groupId', 'group001'),
+              containsPair('tripYear', 2025),
+              contains('updatedAt'),
+              predicate<Map<String, dynamic>>(
+                (data) => !data.containsKey('createdAt'),
+                'createdAtを含まない',
+              ),
+            ]),
+          ),
+        ),
+      ).called(1);
       verify(mockTasksCollection.doc('task-uuid')).called(1);
     });
 

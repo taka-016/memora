@@ -14,7 +14,7 @@ class FirestoreDvcPointContractRepository
   Future<void> saveDvcPointContract(DvcPointContract contract) async {
     await _firestore
         .collection('dvc_point_contracts')
-        .add(FirestoreDvcPointContractMapper.toFirestore(contract));
+        .add(FirestoreDvcPointContractMapper.toCreateFirestore(contract));
   }
 
   @override

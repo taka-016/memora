@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreTaskMapper {
   static TaskDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -19,7 +20,7 @@ class FirestoreTaskMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(Task task) {
+  static Map<String, dynamic> toCreateFirestore(Task task) {
     final data = <String, dynamic>{
       'tripId': task.tripId,
       'orderIndex': task.orderIndex,
@@ -28,7 +29,7 @@ class FirestoreTaskMapper {
       'isCompleted': task.isCompleted,
       'memo': task.memo,
       'assignedMemberId': task.assignedMemberId,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
 
     data['dueDate'] = task.dueDate != null

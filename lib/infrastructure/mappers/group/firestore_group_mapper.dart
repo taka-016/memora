@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/domain/entities/group/group.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreGroupMapper {
   static GroupDto fromFirestore(
@@ -18,12 +19,21 @@ class FirestoreGroupMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(Group group) {
+  static Map<String, dynamic> toCreateFirestore(Group group) {
     return {
       'ownerId': group.ownerId,
       'name': group.name,
       'memo': group.memo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
+    };
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(Group group) {
+    return {
+      'ownerId': group.ownerId,
+      'name': group.name,
+      'memo': group.memo,
+      ...FirestoreWriteMetadata.forUpdate(),
     };
   }
 }

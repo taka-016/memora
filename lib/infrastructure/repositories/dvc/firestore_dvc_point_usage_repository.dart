@@ -13,7 +13,7 @@ class FirestoreDvcPointUsageRepository implements DvcPointUsageRepository {
   Future<void> saveDvcPointUsage(DvcPointUsage pointUsage) async {
     await _firestore
         .collection('dvc_point_usages')
-        .add(FirestoreDvcPointUsageMapper.toFirestore(pointUsage));
+        .add(FirestoreDvcPointUsageMapper.toCreateFirestore(pointUsage));
   }
 
   @override

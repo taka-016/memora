@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreDvcLimitedPointMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -24,14 +25,14 @@ class FirestoreDvcLimitedPointMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(DvcLimitedPoint limitedPoint) {
+  static Map<String, dynamic> toCreateFirestore(DvcLimitedPoint limitedPoint) {
     return {
       'groupId': limitedPoint.groupId,
       'startYearMonth': Timestamp.fromDate(limitedPoint.startYearMonth),
       'endYearMonth': Timestamp.fromDate(limitedPoint.endYearMonth),
       'point': limitedPoint.point,
       'memo': limitedPoint.memo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
   }
 }

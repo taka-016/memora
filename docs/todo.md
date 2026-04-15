@@ -2,13 +2,6 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
-- FirestoreのMapperは新規作成用と更新用で出し分ける方針に統一する
-  - 新規作成時は`createdAt`と`updatedAt`の両方に`FieldValue.serverTimestamp()`を設定する
-  - 更新時は`createdAt`を更新データに含めず、`updatedAt`のみ更新する
-- FirestoreのRepositoryは既存ドキュメント更新時に全置換の`set`を使わず、`update`で差分更新する方針に統一する
-  - 新規作成時のみ`add`または新規`doc`への`set`を使用する
-  - 既存フィールドを保持したいが`update`を使えないケースがある場合のみ、理由を明記したうえで`set(..., SetOptions(merge: true))`を許容する
-
 ## マップの表示
 
 

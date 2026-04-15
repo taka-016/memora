@@ -12,13 +12,17 @@ class FirestoreMemberInvitationRepository
 
   @override
   Future<void> saveMemberInvitation(MemberInvitation memberInvitation) async {
-    final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+    final data = FirestoreMemberInvitationMapper.toCreateFirestore(
+      memberInvitation,
+    );
     await _firestore.collection('member_invitations').add(data);
   }
 
   @override
   Future<void> updateMemberInvitation(MemberInvitation memberInvitation) async {
-    final data = FirestoreMemberInvitationMapper.toFirestore(memberInvitation);
+    final data = FirestoreMemberInvitationMapper.toUpdateFirestore(
+      memberInvitation,
+    );
     await _firestore
         .collection('member_invitations')
         .doc(memberInvitation.id)

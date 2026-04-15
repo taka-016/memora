@@ -48,7 +48,7 @@ void main() {
       expect(result.members, isEmpty);
     });
 
-    test('GroupからFirestoreのMapへ変換できる', () {
+    test('Groupを新規作成用FirestoreのMapへ変換できる', () {
       final group = Group(
         id: 'group001',
         ownerId: 'admin001',
@@ -56,38 +56,41 @@ void main() {
         memo: 'テストメモ',
       );
 
-      final data = FirestoreGroupMapper.toFirestore(group);
+      final data = FirestoreGroupMapper.toCreateFirestore(group);
 
       expect(data['ownerId'], 'admin001');
       expect(data['name'], 'テストグループ');
       expect(data['memo'], 'テストメモ');
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
+    test('Groupを更新用FirestoreのMapへ変換できる', () {
       final group = Group(
         id: 'group002',
         ownerId: 'admin002',
         name: 'テストグループ2',
       );
 
-      final data = FirestoreGroupMapper.toFirestore(group);
+      final data = FirestoreGroupMapper.toUpdateFirestore(group);
 
       expect(data['ownerId'], 'admin002');
       expect(data['name'], 'テストグループ2');
       expect(data['memo'], null);
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(data.containsKey('createdAt'), isFalse);
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('空文字を含むGroupからFirestoreのMapへ変換できる', () {
+    test('空文字を含むGroupでも更新用FirestoreのMapへ変換できる', () {
       final group = Group(id: 'group004', ownerId: '', name: '');
 
-      final data = FirestoreGroupMapper.toFirestore(group);
+      final data = FirestoreGroupMapper.toUpdateFirestore(group);
 
       expect(data['ownerId'], '');
       expect(data['name'], '');
       expect(data['memo'], null);
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(data.containsKey('createdAt'), isFalse);
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }
