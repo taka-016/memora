@@ -168,9 +168,7 @@ void main() {
           ),
         ),
       ).called(1);
-      verify(
-        mockBatch.delete(mockExistingTaskDocRef),
-      ).called(1);
+      verify(mockBatch.delete(mockExistingTaskDocRef)).called(1);
       verify(mockTasksCollection.doc('task-uuid')).called(1);
       verify(
         mockBatch.set(

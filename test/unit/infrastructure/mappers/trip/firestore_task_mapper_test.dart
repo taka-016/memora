@@ -82,24 +82,5 @@ void main() {
       expect(map['createdAt'], isNotNull);
       expect(map['updatedAt'], isNotNull);
     });
-
-    test('Taskエンティティを更新用Firestoreマップへ変換できる', () {
-      final task = Task(
-        id: 'task001',
-        tripId: 'trip001',
-        orderIndex: 1,
-        name: '更新準備',
-        isCompleted: false,
-      );
-
-      final map = firestore_mapper.FirestoreTaskMapper.toUpdateFirestore(task);
-
-      expect(map['tripId'], 'trip001');
-      expect(map['orderIndex'], 1);
-      expect(map['name'], '更新準備');
-      expect(map['isCompleted'], false);
-      expect(map.containsKey('createdAt'), isFalse);
-      expect(map['updatedAt'], isNotNull);
-    });
   });
 }

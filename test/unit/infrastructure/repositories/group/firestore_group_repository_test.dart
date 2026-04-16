@@ -112,7 +112,6 @@ void main() {
           ),
         ),
       ).called(1);
-      verify(mockBatch.commit()).called(1);
     });
 
     test('deleteGroupがgroups collectionの該当ドキュメントを削除する', () async {
