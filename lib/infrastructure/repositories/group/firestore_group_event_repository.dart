@@ -11,13 +11,14 @@ class FirestoreGroupEventRepository implements GroupEventRepository {
 
   @override
   Future<String> saveGroupEvent(GroupEvent groupEvent) async {
-    final data = FirestoreGroupEventMapper.toFirestore(groupEvent);
     if (groupEvent.id.isEmpty) {
+      final data = FirestoreGroupEventMapper.toCreateFirestore(groupEvent);
       final docRef = await _firestore.collection('group_events').add(data);
       return docRef.id;
     }
 
-    await _firestore.collection('group_events').doc(groupEvent.id).set(data);
+    final data = FirestoreGroupEventMapper.toUpdateFirestore(groupEvent);
+    await _firestore.collection('group_events').doc(groupEvent.id).update(data);
     return groupEvent.id;
   }
 

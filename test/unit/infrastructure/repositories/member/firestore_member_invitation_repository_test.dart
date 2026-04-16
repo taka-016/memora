@@ -55,6 +55,8 @@ void main() {
                 containsPair('inviterId', 'inviter001'),
                 containsPair('inviteeId', 'invitee001'),
                 containsPair('invitationCode', 'CODE123'),
+                contains('createdAt'),
+                contains('updatedAt'),
               ]),
             ),
           ),
@@ -74,7 +76,7 @@ void main() {
 
         final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
         when(mockCollection.doc('invitation001')).thenReturn(mockDocRef);
-        when(mockDocRef.set(any)).thenAnswer((_) async {});
+        when(mockDocRef.update(any)).thenAnswer((_) async {});
 
         await repository.updateMemberInvitation(memberInvitation);
 
@@ -86,6 +88,11 @@ void main() {
                 containsPair('inviterId', 'inviter001'),
                 containsPair('inviteeId', 'invitee001'),
                 containsPair('invitationCode', 'CODE123'),
+                contains('updatedAt'),
+                predicate<Map<String, dynamic>>(
+                  (data) => !data.containsKey('createdAt'),
+                  'createdAtを含まない',
+                ),
               ]),
             ),
           ),

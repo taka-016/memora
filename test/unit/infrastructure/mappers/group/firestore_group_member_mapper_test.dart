@@ -62,7 +62,7 @@ void main() {
       expect(result.email, isNull);
     });
 
-    test('GroupMemberからFirestoreのMapへ変換できる', () {
+    test('GroupMemberを新規作成用FirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(
         groupId: 'group001',
         memberId: 'member001',
@@ -70,25 +70,27 @@ void main() {
         orderIndex: 2,
       );
 
-      final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
+      final data = FirestoreGroupMemberMapper.toCreateFirestore(groupMember);
 
       expect(data['groupId'], 'group001');
       expect(data['memberId'], 'member001');
       expect(data['isAdministrator'], true);
       expect(data['orderIndex'], 2);
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('空文字を含むGroupMemberからFirestoreのMapへ変換できる', () {
+    test('空文字を含むGroupMemberでも新規作成用FirestoreのMapへ変換できる', () {
       final groupMember = GroupMember(groupId: '', memberId: '');
 
-      final data = FirestoreGroupMemberMapper.toFirestore(groupMember);
+      final data = FirestoreGroupMemberMapper.toCreateFirestore(groupMember);
 
       expect(data['groupId'], '');
       expect(data['memberId'], '');
       expect(data['isAdministrator'], false);
       expect(data['orderIndex'], 0);
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }

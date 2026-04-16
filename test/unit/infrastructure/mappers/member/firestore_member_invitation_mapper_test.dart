@@ -40,7 +40,7 @@ void main() {
       expect(result.invitationCode, '');
     });
 
-    test('MemberInvitationからFirestoreのMapへ変換できる', () {
+    test('MemberInvitationを新規作成用FirestoreのMapへ変換できる', () {
       const memberInvitation = MemberInvitation(
         id: 'invitation001',
         inviteeId: 'invitee001',
@@ -48,7 +48,7 @@ void main() {
         invitationCode: 'code001',
       );
 
-      final data = FirestoreMemberInvitationMapper.toFirestore(
+      final data = FirestoreMemberInvitationMapper.toCreateFirestore(
         memberInvitation,
       );
 
@@ -56,9 +56,10 @@ void main() {
       expect(data['inviterId'], 'inviter001');
       expect(data['invitationCode'], 'code001');
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('空文字を含むMemberInvitationからFirestoreのMapへ変換できる', () {
+    test('空文字を含むMemberInvitationでも更新用FirestoreのMapへ変換できる', () {
       const memberInvitation = MemberInvitation(
         id: 'invitation003',
         inviteeId: '',
@@ -66,14 +67,15 @@ void main() {
         invitationCode: '',
       );
 
-      final data = FirestoreMemberInvitationMapper.toFirestore(
+      final data = FirestoreMemberInvitationMapper.toUpdateFirestore(
         memberInvitation,
       );
 
       expect(data['inviteeId'], '');
       expect(data['inviterId'], '');
       expect(data['invitationCode'], '');
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(data.containsKey('createdAt'), isFalse);
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }

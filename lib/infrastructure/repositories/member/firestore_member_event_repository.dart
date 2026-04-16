@@ -13,7 +13,7 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
   Future<void> saveMemberEvent(MemberEvent memberEvent) async {
     await _firestore
         .collection('member_events')
-        .add(FirestoreMemberEventMapper.toFirestore(memberEvent));
+        .add(FirestoreMemberEventMapper.toCreateFirestore(memberEvent));
   }
 
   @override

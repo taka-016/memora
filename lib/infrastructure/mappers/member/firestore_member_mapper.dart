@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreMemberMapper {
   static MemberDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -27,7 +28,7 @@ class FirestoreMemberMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(Member member) {
+  static Map<String, dynamic> toCreateFirestore(Member member) {
     return {
       'accountId': member.accountId,
       'ownerId': member.ownerId,
@@ -47,7 +48,31 @@ class FirestoreMemberMapper {
       'phoneNumber': member.phoneNumber,
       'passportNumber': member.passportNumber,
       'passportExpiration': member.passportExpiration,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
+    };
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(Member member) {
+    return {
+      'accountId': member.accountId,
+      'ownerId': member.ownerId,
+      'hiraganaFirstName': member.hiraganaFirstName,
+      'hiraganaLastName': member.hiraganaLastName,
+      'kanjiFirstName': member.kanjiFirstName,
+      'kanjiLastName': member.kanjiLastName,
+      'firstName': member.firstName,
+      'lastName': member.lastName,
+      'displayName': member.displayName,
+      'type': member.type,
+      'birthday': member.birthday != null
+          ? Timestamp.fromDate(member.birthday!)
+          : null,
+      'gender': member.gender,
+      'email': member.email,
+      'phoneNumber': member.phoneNumber,
+      'passportNumber': member.passportNumber,
+      'passportExpiration': member.passportExpiration,
+      ...FirestoreWriteMetadata.forUpdate(),
     };
   }
 }

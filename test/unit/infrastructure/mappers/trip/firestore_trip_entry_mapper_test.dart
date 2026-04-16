@@ -67,7 +67,7 @@ void main() {
       expect(result.tripEndDate, isNull);
     });
 
-    test('TripEntryからFirestoreのMapへ変換できる', () {
+    test('TripEntryを新規作成用FirestoreのMapへ変換できる', () {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -78,7 +78,7 @@ void main() {
         tripMemo: 'テストメモ',
       );
 
-      final data = FirestoreTripEntryMapper.toFirestore(tripEntry);
+      final data = FirestoreTripEntryMapper.toCreateFirestore(tripEntry);
 
       expect(data['groupId'], 'group001');
       expect(data['tripYear'], 2025);
@@ -87,16 +87,17 @@ void main() {
       expect(data['tripEndDate'], isA<Timestamp>());
       expect(data['tripMemo'], 'テストメモ');
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('旅行期間が未設定の場合はtripYearのみで保存できる', () {
+    test('旅行期間が未設定でも更新用FirestoreのMapへ変換できる', () {
       final tripEntry = TripEntry(
         id: 'trip002',
         groupId: 'group002',
         tripYear: 2025,
       );
 
-      final data = FirestoreTripEntryMapper.toFirestore(tripEntry);
+      final data = FirestoreTripEntryMapper.toUpdateFirestore(tripEntry);
 
       expect(data['groupId'], 'group002');
       expect(data['tripYear'], 2025);
@@ -104,7 +105,8 @@ void main() {
       expect(data['tripStartDate'], isNull);
       expect(data['tripEndDate'], isNull);
       expect(data['tripMemo'], null);
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(data.containsKey('createdAt'), isFalse);
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }

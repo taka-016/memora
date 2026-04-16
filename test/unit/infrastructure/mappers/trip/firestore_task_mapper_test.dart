@@ -69,7 +69,7 @@ void main() {
         assignedMemberId: 'member001',
       );
 
-      final map = firestore_mapper.FirestoreTaskMapper.toFirestore(task);
+      final map = firestore_mapper.FirestoreTaskMapper.toCreateFirestore(task);
 
       expect(map['tripId'], 'trip001');
       expect(map['orderIndex'], 0);
@@ -80,6 +80,7 @@ void main() {
       expect(map['assignedMemberId'], 'member001');
       expect(map['dueDate'], isNotNull);
       expect(map['createdAt'], isNotNull);
+      expect(map['updatedAt'], isNotNull);
     });
   });
 }

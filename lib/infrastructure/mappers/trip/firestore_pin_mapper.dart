@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestorePinMapper {
   static PinDto fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -21,7 +22,7 @@ class FirestorePinMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(Pin pin) {
+  static Map<String, dynamic> toCreateFirestore(Pin pin) {
     return {
       'pinId': pin.pinId,
       'tripId': pin.tripId,
@@ -36,7 +37,7 @@ class FirestorePinMapper {
           ? Timestamp.fromDate(pin.visitEndDate!)
           : null,
       'visitMemo': pin.visitMemo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
   }
 }

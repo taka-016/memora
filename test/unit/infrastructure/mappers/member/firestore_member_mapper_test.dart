@@ -45,7 +45,7 @@ void main() {
       expect(result.ownerId, isNull);
     });
 
-    test('MemberからFirestoreのMapへ変換できる', () {
+    test('Memberを新規作成用FirestoreのMapへ変換できる', () {
       final member = Member(
         id: 'member001',
         accountId: 'account001',
@@ -63,7 +63,7 @@ void main() {
         email: 'taro@example.com',
       );
 
-      final data = FirestoreMemberMapper.toFirestore(member);
+      final data = FirestoreMemberMapper.toCreateFirestore(member);
 
       expect(data['accountId'], 'account001');
       expect(data['ownerId'], 'admin001');
@@ -79,12 +79,13 @@ void main() {
       expect(data['gender'], 'male');
       expect(data['email'], 'taro@example.com');
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('nullフィールドを含むMemberからFirestoreのMapへ変換できる', () {
+    test('nullフィールドを含むMemberでも更新用FirestoreのMapへ変換できる', () {
       final member = Member(id: 'member003', displayName: 'たろちゃん');
 
-      final data = FirestoreMemberMapper.toFirestore(member);
+      final data = FirestoreMemberMapper.toUpdateFirestore(member);
 
       expect(data['accountId'], null);
       expect(data['ownerId'], null);
@@ -102,7 +103,8 @@ void main() {
       expect(data['phoneNumber'], null);
       expect(data['passportNumber'], null);
       expect(data['passportExpiration'], null);
-      expect(data['createdAt'], isA<FieldValue>());
+      expect(data.containsKey('createdAt'), isFalse);
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }

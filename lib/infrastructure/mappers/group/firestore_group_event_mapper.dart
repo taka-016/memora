@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreGroupEventMapper {
   static GroupEventDto fromFirestore(
@@ -15,12 +16,21 @@ class FirestoreGroupEventMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(GroupEvent groupEvent) {
+  static Map<String, dynamic> toCreateFirestore(GroupEvent groupEvent) {
     return {
       'groupId': groupEvent.groupId,
       'year': groupEvent.year,
       'memo': groupEvent.memo,
-      'updatedAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
+    };
+  }
+
+  static Map<String, dynamic> toUpdateFirestore(GroupEvent groupEvent) {
+    return {
+      'groupId': groupEvent.groupId,
+      'year': groupEvent.year,
+      'memo': groupEvent.memo,
+      ...FirestoreWriteMetadata.forUpdate(),
     };
   }
 }

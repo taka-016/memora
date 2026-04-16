@@ -53,7 +53,65 @@ void main() {
       expect(result, 'auto_generated_id');
       verify(mockFirestore.batch()).called(1);
       verify(mockCollection.doc()).called(1);
-      verify(mockBatch.set(mockDocRef, any)).called(1);
+      verify(
+        mockBatch.set(
+          mockDocRef,
+          argThat(
+            allOf([
+              containsPair('ownerId', 'admin001'),
+              containsPair('name', 'テストグループ'),
+              containsPair('memo', 'テストメモ'),
+              contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+      verify(mockBatch.commit()).called(1);
+    });
+
+    test('updateGroupがgroups collectionの該当ドキュメントを差分更新する', () async {
+      final group = Group(id: 'group001', ownerId: 'admin001', name: '更新後グループ');
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
+      final mockGroupMembersCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      final mockGroupMembersQuery = MockQuery<Map<String, dynamic>>();
+      final mockGroupMembersSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockCollection.doc('group001')).thenReturn(mockDocRef);
+      when(
+        mockFirestore.collection('group_members'),
+      ).thenReturn(mockGroupMembersCollection);
+      when(
+        mockGroupMembersCollection.where('groupId', isEqualTo: 'group001'),
+      ).thenReturn(mockGroupMembersQuery);
+      when(
+        mockGroupMembersQuery.get(),
+      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockGroupMembersSnapshot.docs).thenReturn([]);
+      when(mockBatch.commit()).thenAnswer((_) async {});
+
+      await repository.updateGroup(group);
+
+      verify(
+        mockBatch.update(
+          mockDocRef,
+          argThat(
+            allOf([
+              containsPair('ownerId', 'admin001'),
+              containsPair('name', '更新後グループ'),
+              contains('updatedAt'),
+              predicate<Map<String, dynamic>>(
+                (data) => !data.containsKey('createdAt'),
+                'createdAtを含まない',
+              ),
+            ]),
+          ),
+        ),
+      ).called(1);
       verify(mockBatch.commit()).called(1);
     });
 

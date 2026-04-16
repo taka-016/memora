@@ -66,6 +66,38 @@ void main() {
               containsPair('email', 'taro@example.com'),
               contains('birthday'),
               contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('updateMemberがmembers collectionの該当ドキュメントを差分更新する', () async {
+      final member = Member(
+        id: 'member001',
+        ownerId: 'admin001',
+        displayName: '更新後表示名',
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+      when(mockCollection.doc('member001')).thenReturn(mockDocRef);
+      when(mockDocRef.update(any)).thenAnswer((_) async {});
+
+      await repository.updateMember(member);
+
+      verify(mockCollection.doc('member001')).called(1);
+      verify(
+        mockDocRef.update(
+          argThat(
+            allOf([
+              containsPair('ownerId', 'admin001'),
+              containsPair('displayName', '更新後表示名'),
+              contains('updatedAt'),
+              predicate<Map<String, dynamic>>(
+                (data) => !data.containsKey('createdAt'),
+                'createdAtを含まない',
+              ),
             ]),
           ),
         ),

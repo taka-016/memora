@@ -66,7 +66,7 @@ void main() {
         annualPoint: 200,
       );
 
-      final map = FirestoreDvcPointContractMapper.toFirestore(contract);
+      final map = FirestoreDvcPointContractMapper.toCreateFirestore(contract);
 
       expect(map['groupId'], 'group001');
       expect(map['contractName'], '契約A');
@@ -75,6 +75,7 @@ void main() {
       expect(map['useYearStartMonth'], 10);
       expect(map['annualPoint'], 200);
       expect(map['createdAt'], isA<FieldValue>());
+      expect(map['updatedAt'], isA<FieldValue>());
     });
   });
 }

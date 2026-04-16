@@ -38,7 +38,7 @@ void main() {
       expect(result.memo, '');
     });
 
-    test('GroupEventからFirestoreのMapへ変換できる', () {
+    test('GroupEventを新規作成用FirestoreのMapへ変換できる', () {
       const groupEvent = GroupEvent(
         id: 'groupevent001',
         groupId: 'group001',
@@ -46,11 +46,29 @@ void main() {
         memo: 'テストメモ',
       );
 
-      final data = FirestoreGroupEventMapper.toFirestore(groupEvent);
+      final data = FirestoreGroupEventMapper.toCreateFirestore(groupEvent);
 
       expect(data['groupId'], 'group001');
       expect(data['year'], 2025);
       expect(data['memo'], 'テストメモ');
+      expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
+    });
+
+    test('GroupEventを更新用FirestoreのMapへ変換できる', () {
+      const groupEvent = GroupEvent(
+        id: 'groupevent001',
+        groupId: 'group001',
+        year: 2025,
+        memo: '更新後メモ',
+      );
+
+      final data = FirestoreGroupEventMapper.toUpdateFirestore(groupEvent);
+
+      expect(data['groupId'], 'group001');
+      expect(data['year'], 2025);
+      expect(data['memo'], '更新後メモ');
+      expect(data.containsKey('createdAt'), isFalse);
       expect(data['updatedAt'], isA<FieldValue>());
     });
   });

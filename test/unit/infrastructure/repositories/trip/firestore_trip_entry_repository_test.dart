@@ -78,13 +78,27 @@ void main() {
         expect(result, equals('generated-doc-id'));
         verify(mockFirestore.batch()).called(1);
         verify(mockCollection.doc()).called(1);
+        verify(
+          mockBatch.set(
+            mockDocRef,
+            argThat(
+              allOf([
+                containsPair('groupId', 'group001'),
+                containsPair('tripYear', 2025),
+                containsPair('tripName', 'テスト旅行'),
+                contains('createdAt'),
+                contains('updatedAt'),
+              ]),
+            ),
+          ),
+        ).called(1);
         verify(mockTasksCollection.doc('task-001')).called(1);
         verify(mockBatch.set(mockTaskDocRef, any)).called(1);
         verify(mockBatch.commit()).called(1);
       },
     );
 
-    test('updateTripEntryが既存タスクのidを保持したまま更新する', () async {
+    test('updateTripEntryが既存タスクを削除して再作成する', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -108,6 +122,10 @@ void main() {
       final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockExistingTaskDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockExistingTaskDocRef =
+          MockDocumentReference<Map<String, dynamic>>();
       final mockTaskDocRefWithId =
           MockDocumentReference<Map<String, dynamic>>();
 
@@ -124,8 +142,9 @@ void main() {
         mockTasksCollection.where('tripId', isEqualTo: 'trip001'),
       ).thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
-      when(mockTasksSnapshot.docs).thenReturn([]);
-
+      when(mockTasksSnapshot.docs).thenReturn([mockExistingTaskDoc]);
+      when(mockExistingTaskDoc.id).thenReturn('task-uuid');
+      when(mockExistingTaskDoc.reference).thenReturn(mockExistingTaskDocRef);
       when(
         mockTasksCollection.doc('task-uuid'),
       ).thenReturn(mockTaskDocRefWithId);
@@ -133,7 +152,37 @@ void main() {
 
       await repository.updateTripEntry(tripEntry);
 
+      verify(
+        mockBatch.update(
+          mockTripDocRef,
+          argThat(
+            allOf([
+              containsPair('groupId', 'group001'),
+              containsPair('tripYear', 2025),
+              contains('updatedAt'),
+              predicate<Map<String, dynamic>>(
+                (data) => !data.containsKey('createdAt'),
+                'createdAtを含まない',
+              ),
+            ]),
+          ),
+        ),
+      ).called(1);
+      verify(mockBatch.delete(mockExistingTaskDocRef)).called(1);
       verify(mockTasksCollection.doc('task-uuid')).called(1);
+      verify(
+        mockBatch.set(
+          mockTaskDocRefWithId,
+          argThat(
+            allOf([
+              containsPair('tripId', 'trip001'),
+              containsPair('name', '準備'),
+              contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
     });
 
     test(

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreDvcPointUsageMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -21,13 +22,13 @@ class FirestoreDvcPointUsageMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(DvcPointUsage pointUsage) {
+  static Map<String, dynamic> toCreateFirestore(DvcPointUsage pointUsage) {
     return {
       'groupId': pointUsage.groupId,
       'usageYearMonth': Timestamp.fromDate(pointUsage.usageYearMonth),
       'usedPoint': pointUsage.usedPoint,
       'memo': pointUsage.memo,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
   }
 }

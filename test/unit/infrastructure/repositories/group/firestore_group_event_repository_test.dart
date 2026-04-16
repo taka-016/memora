@@ -56,6 +56,7 @@ void main() {
               containsPair('groupId', 'group001'),
               containsPair('year', 2025),
               containsPair('memo', 'テストメモ'),
+              contains('createdAt'),
               contains('updatedAt'),
             ]),
           ),
@@ -63,7 +64,7 @@ void main() {
       ).called(1);
     });
 
-    test('idがある場合は該当ドキュメントをsetする', () async {
+    test('idがある場合は該当ドキュメントをupdateする', () async {
       const groupEvent = GroupEvent(
         id: 'groupevent001',
         groupId: 'group001',
@@ -73,19 +74,23 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
       when(mockCollection.doc(groupEvent.id)).thenReturn(mockDocRef);
-      when(mockDocRef.set(any)).thenAnswer((_) async {});
+      when(mockDocRef.update(any)).thenAnswer((_) async {});
 
       await repository.saveGroupEvent(groupEvent);
 
       verify(mockCollection.doc(groupEvent.id)).called(1);
       verify(
-        mockDocRef.set(
+        mockDocRef.update(
           argThat(
             allOf([
               containsPair('groupId', 'group001'),
               containsPair('year', 2025),
               containsPair('memo', '更新後メモ'),
               contains('updatedAt'),
+              predicate<Map<String, dynamic>>(
+                (data) => !data.containsKey('createdAt'),
+                'createdAtを含まない',
+              ),
             ]),
           ),
         ),

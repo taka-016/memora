@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
+import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreDvcPointContractMapper {
   static final _defaultDate = DateTime.fromMillisecondsSinceEpoch(0);
@@ -29,7 +30,7 @@ class FirestoreDvcPointContractMapper {
     );
   }
 
-  static Map<String, dynamic> toFirestore(DvcPointContract contract) {
+  static Map<String, dynamic> toCreateFirestore(DvcPointContract contract) {
     return {
       'groupId': contract.groupId,
       'contractName': contract.contractName,
@@ -39,7 +40,7 @@ class FirestoreDvcPointContractMapper {
       'contractEndYearMonth': Timestamp.fromDate(contract.contractEndYearMonth),
       'useYearStartMonth': contract.useYearStartMonth,
       'annualPoint': contract.annualPoint,
-      'createdAt': FieldValue.serverTimestamp(),
+      ...FirestoreWriteMetadata.forCreate(),
     };
   }
 }

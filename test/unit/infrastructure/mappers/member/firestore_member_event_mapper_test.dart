@@ -49,7 +49,7 @@ void main() {
       expect(result.memo, isNull);
     });
 
-    test('MemberEventからFirestoreのMapへ変換できる', () {
+    test('MemberEventを新規作成用FirestoreのMapへ変換できる', () {
       final memberEvent = MemberEvent(
         id: 'memberevent001',
         memberId: 'member001',
@@ -60,7 +60,7 @@ void main() {
         memo: 'テストメモ',
       );
 
-      final data = FirestoreMemberEventMapper.toFirestore(memberEvent);
+      final data = FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
 
       expect(data['memberId'], 'member001');
       expect(data['type'], 'birthday');
@@ -69,9 +69,10 @@ void main() {
       expect(data['endDate'], isA<Timestamp>());
       expect(data['memo'], 'テストメモ');
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
 
-    test('nullableなフィールドがnullでもFirestoreのMapへ変換できる', () {
+    test('nullableなフィールドがnullでも新規作成用FirestoreのMapへ変換できる', () {
       final memberEvent = MemberEvent(
         id: 'memberevent004',
         memberId: 'member002',
@@ -80,7 +81,7 @@ void main() {
         endDate: DateTime(2025, 8, 2),
       );
 
-      final data = FirestoreMemberEventMapper.toFirestore(memberEvent);
+      final data = FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
 
       expect(data['memberId'], 'member002');
       expect(data['type'], 'anniversary');
@@ -89,6 +90,7 @@ void main() {
       expect(data['endDate'], isA<Timestamp>());
       expect(data['memo'], isNull);
       expect(data['createdAt'], isA<FieldValue>());
+      expect(data['updatedAt'], isA<FieldValue>());
     });
   });
 }
