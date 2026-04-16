@@ -38,4 +38,23 @@ class FirestoreTaskMapper {
 
     return data;
   }
+
+  static Map<String, dynamic> toUpdateFirestore(Task task) {
+    final data = <String, dynamic>{
+      'tripId': task.tripId,
+      'orderIndex': task.orderIndex,
+      'parentTaskId': task.parentTaskId,
+      'name': task.name,
+      'isCompleted': task.isCompleted,
+      'memo': task.memo,
+      'assignedMemberId': task.assignedMemberId,
+      ...FirestoreWriteMetadata.forUpdate(),
+    };
+
+    data['dueDate'] = task.dueDate != null
+        ? Timestamp.fromDate(task.dueDate!)
+        : null;
+
+    return data;
+  }
 }

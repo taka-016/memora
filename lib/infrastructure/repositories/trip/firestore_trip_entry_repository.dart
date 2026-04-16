@@ -69,8 +69,14 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     final tasksSnapshot = await tasksCollection
         .where('tripId', isEqualTo: tripEntry.id)
         .get();
+    final existingTaskDocsById = {
+      for (final taskDoc in tasksSnapshot.docs) taskDoc.id: taskDoc,
+    };
+    final nextTaskIds = tripEntry.tasks.map((task) => task.id).toSet();
     for (final taskDoc in tasksSnapshot.docs) {
-      batch.delete(taskDoc.reference);
+      if (!nextTaskIds.contains(taskDoc.id)) {
+        batch.delete(taskDoc.reference);
+      }
     }
 
     for (final Pin pin in tripEntry.pins) {
@@ -84,13 +90,19 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     }
 
     for (final Task task in tripEntry.tasks) {
+      final updatedTask = task.copyWith(tripId: tripEntry.id);
+      final existingTaskDoc = existingTaskDocsById[task.id];
+
+      if (existingTaskDoc != null) {
+        batch.update(
+          existingTaskDoc.reference,
+          FirestoreTaskMapper.toUpdateFirestore(updatedTask),
+        );
+        continue;
+      }
+
       final taskDocRef = tasksCollection.doc(task.id);
-      batch.set(
-        taskDocRef,
-        FirestoreTaskMapper.toCreateFirestore(
-          task.copyWith(tripId: tripEntry.id),
-        ),
-      );
+      batch.set(taskDocRef, FirestoreTaskMapper.toCreateFirestore(updatedTask));
     }
 
     await batch.commit();
