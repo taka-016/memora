@@ -98,7 +98,7 @@ void main() {
       },
     );
 
-    test('updateTripEntryが既存タスクのidを保持したまま更新する', () async {
+    test('updateTripEntryが既存タスクを削除して再作成する', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -126,9 +126,7 @@ void main() {
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockExistingTaskDocRef =
           MockDocumentReference<Map<String, dynamic>>();
-      final mockDeletedTaskDoc =
-          MockQueryDocumentSnapshot<Map<String, dynamic>>();
-      final mockDeletedTaskDocRef =
+      final mockTaskDocRefWithId =
           MockDocumentReference<Map<String, dynamic>>();
 
       when(mockCollection.doc('trip001')).thenReturn(mockTripDocRef);
@@ -144,13 +142,12 @@ void main() {
         mockTasksCollection.where('tripId', isEqualTo: 'trip001'),
       ).thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
-      when(
-        mockTasksSnapshot.docs,
-      ).thenReturn([mockExistingTaskDoc, mockDeletedTaskDoc]);
+      when(mockTasksSnapshot.docs).thenReturn([mockExistingTaskDoc]);
       when(mockExistingTaskDoc.id).thenReturn('task-uuid');
       when(mockExistingTaskDoc.reference).thenReturn(mockExistingTaskDocRef);
-      when(mockDeletedTaskDoc.id).thenReturn('task-deleted');
-      when(mockDeletedTaskDoc.reference).thenReturn(mockDeletedTaskDocRef);
+      when(
+        mockTasksCollection.doc('task-uuid'),
+      ).thenReturn(mockTaskDocRefWithId);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.updateTripEntry(tripEntry);
@@ -171,24 +168,23 @@ void main() {
           ),
         ),
       ).called(1);
-      verifyNever(mockBatch.delete(mockExistingTaskDocRef));
       verify(
-        mockBatch.update(
-          mockExistingTaskDocRef,
+        mockBatch.delete(mockExistingTaskDocRef),
+      ).called(1);
+      verify(mockTasksCollection.doc('task-uuid')).called(1);
+      verify(
+        mockBatch.set(
+          mockTaskDocRefWithId,
           argThat(
             allOf([
               containsPair('tripId', 'trip001'),
               containsPair('name', '準備'),
+              contains('createdAt'),
               contains('updatedAt'),
-              predicate<Map<String, dynamic>>(
-                (data) => !data.containsKey('createdAt'),
-                'createdAtを含まない',
-              ),
             ]),
           ),
         ),
       ).called(1);
-      verify(mockBatch.delete(mockDeletedTaskDocRef)).called(1);
     });
 
     test(
