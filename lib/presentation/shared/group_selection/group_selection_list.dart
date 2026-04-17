@@ -12,12 +12,16 @@ class GroupSelectionList extends HookConsumerWidget {
   final void Function(GroupDto)? onGroupSelected;
   final String title;
   final Key listKey;
+  final Future<List<GroupDto>>? groupsFuture;
+  final VoidCallback? onRetry;
 
   const GroupSelectionList({
     super.key,
     this.onGroupSelected,
     this.title = 'グループ一覧',
     this.listKey = const Key('group_list'),
+    this.groupsFuture,
+    this.onRetry,
   });
 
   @override
@@ -35,30 +39,43 @@ class GroupSelectionList extends HookConsumerWidget {
     final groupsWithMembers = useState<List<GroupDto>>(<GroupDto>[]);
     final errorMessage = useState('');
 
-    final loadData = useCallback(() async {
-      try {
-        state.value = GroupSelectionListState.loading;
-        final fetchedGroups = await getGroupsWithMembersUsecase.execute(
-          currentMember,
-        );
+    final loadData = useCallback(
+      () async {
+        try {
+          state.value = GroupSelectionListState.loading;
+          if (groupsFuture == null && onRetry != null) {
+            return;
+          }
+          final fetchedGroups =
+              groupsFuture ??
+              getGroupsWithMembersUsecase.execute(currentMember);
+          final resolvedGroups = await fetchedGroups;
 
-        if (!context.mounted) return;
+          if (!context.mounted) return;
 
-        groupsWithMembers.value = fetchedGroups;
-        state.value = fetchedGroups.isEmpty
-            ? GroupSelectionListState.empty
-            : GroupSelectionListState.groupList;
-      } catch (e, stack) {
-        logger.e(
-          'GroupSelectionList._loadData: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (!context.mounted) return;
-        errorMessage.value = 'エラーが発生しました';
-        state.value = GroupSelectionListState.error;
-      }
-    }, [context, getGroupsWithMembersUsecase, currentMember]);
+          groupsWithMembers.value = resolvedGroups;
+          state.value = resolvedGroups.isEmpty
+              ? GroupSelectionListState.empty
+              : GroupSelectionListState.groupList;
+        } catch (e, stack) {
+          logger.e(
+            'GroupSelectionList._loadData: ${e.toString()}',
+            error: e,
+            stackTrace: stack,
+          );
+          if (!context.mounted) return;
+          errorMessage.value = 'エラーが発生しました';
+          state.value = GroupSelectionListState.error;
+        }
+      },
+      [
+        context,
+        currentMember,
+        getGroupsWithMembersUsecase,
+        groupsFuture,
+        onRetry,
+      ],
+    );
 
     useEffect(() {
       Future.microtask(loadData);
@@ -109,7 +126,17 @@ class GroupSelectionList extends HookConsumerWidget {
               children: [
                 Text(errorMessage.value, style: const TextStyle(fontSize: 18)),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: loadData, child: const Text('再読み込み')),
+                ElevatedButton(
+                  onPressed: () {
+                    if (onRetry != null) {
+                      state.value = GroupSelectionListState.loading;
+                      onRetry?.call();
+                      return;
+                    }
+                    loadData();
+                  },
+                  child: const Text('再読み込み'),
+                ),
               ],
             ),
           );

@@ -1,13 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
+import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:mockito/mockito.dart';
+
+import '../app/top_page_test.mocks.dart';
 
 class _GroupTimelineNavigationNotifierWithRefresh
     extends GroupTimelineNavigationNotifier {
@@ -107,10 +112,17 @@ class _NavigationNotifierWithInstanceAndCustomRows
 void main() {
   group('GroupTimelineNavigationNotifier', () {
     late ProviderContainer container;
+    late MockGroupQueryService mockGroupQueryService;
     late GroupDto testGroupWithMembers;
+    late MemberDto testCurrentMember;
 
     setUp(() {
-      container = ProviderContainer();
+      mockGroupQueryService = MockGroupQueryService();
+      container = ProviderContainer(
+        overrides: [
+          groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        ],
+      );
       testGroupWithMembers = GroupDto(
         id: '1',
         ownerId: 'owner1',
@@ -123,6 +135,12 @@ void main() {
             email: 'hanako@example.com',
           ),
         ],
+      );
+      testCurrentMember = MemberDto(
+        id: 'member1',
+        displayName: '花子',
+        kanjiLastName: '山田',
+        kanjiFirstName: '花子',
       );
     });
 
@@ -218,6 +236,82 @@ void main() {
       expect(state.timelineRowDefinitions[1], isA<TripRow>());
       expect(state.timelineRowDefinitions[2].fixedColumnLabel, 'イベント');
       expect(state.timelineRowDefinitions[3].fixedColumnLabel, '花子');
+    });
+
+    test('入口で所属グループが1件ならグループ年表を直接表示する', () async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testCurrentMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [testGroupWithMembers]);
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      await notifier.prepareGroupTimelineEntry(testCurrentMember);
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.destination, const GroupTimelineOverviewDestination());
+      expect(state.groupTimelineInstance, isNotNull);
+      expect(await state.groupSelectionLoadFuture, [testGroupWithMembers]);
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testCurrentMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
+    });
+
+    test('入口で所属グループが2件以上ならグループ一覧を表示し取得結果を保持する', () async {
+      // Arrange
+      final anotherGroup = GroupDto(
+        id: '2',
+        ownerId: 'owner2',
+        name: '別グループ',
+        members: [
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group2',
+            displayName: '太郎',
+            email: 'taro@example.com',
+          ),
+        ],
+      );
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testCurrentMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [testGroupWithMembers, anotherGroup]);
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      // Act
+      await notifier.prepareGroupTimelineEntry(testCurrentMember);
+
+      // Assert
+      final state = container.read(groupTimelineNavigationNotifierProvider);
+      expect(state.destination, const GroupTimelineGroupListDestination());
+      expect(state.groupTimelineInstance, isNull);
+      expect(await state.groupSelectionLoadFuture, [
+        testGroupWithMembers,
+        anotherGroup,
+      ]);
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testCurrentMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
     });
 
     test('旅行管理画面に遷移できる', () {
