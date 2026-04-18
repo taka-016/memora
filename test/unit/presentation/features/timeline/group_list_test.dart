@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
@@ -54,6 +56,30 @@ void main() {
       ],
       child: MaterialApp(
         home: const Scaffold(body: GroupSelectionList(title: 'グループを選択')),
+      ),
+    );
+  }
+
+  Widget createGroupsFutureWidget({
+    required Future<List<GroupDto>>? groupsFuture,
+    VoidCallback? onRetry,
+    MemberDto? member,
+  }) {
+    return ProviderScope(
+      overrides: [
+        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        currentMemberNotifierProvider.overrideWith(
+          () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: GroupSelectionList(
+            title: 'グループを選択',
+            groupsFuture: groupsFuture,
+            onRetry: onRetry,
+          ),
+        ),
       ),
     );
   }
@@ -241,6 +267,82 @@ void main() {
       expect(selectedGroup, isNotNull);
       expect(selectedGroup!.id, '1');
       expect(selectedGroup!.name, 'テストグループ');
+    });
+
+    testWidgets('onRetryだけ指定されてもusecase取得へフォールバックして一覧表示できる', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final groupsWithMembers = [
+        GroupDto(
+          id: '1',
+          ownerId: 'owner1',
+          name: 'テストグループ',
+          members: [testMemberDto],
+        ),
+      ];
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      // Act
+      await tester.pumpWidget(
+        createGroupsFutureWidget(groupsFuture: null, onRetry: () {}),
+      );
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('テストグループ'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('古いgroupsFutureの完了結果で新しい結果を上書きしない', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final firstCompleter = Completer<List<GroupDto>>();
+      final secondCompleter = Completer<List<GroupDto>>();
+      final oldGroups = [
+        GroupDto(
+          id: '1',
+          ownerId: 'owner1',
+          name: '古いグループ',
+          members: [testMemberDto],
+        ),
+      ];
+      final newGroups = [
+        GroupDto(
+          id: '2',
+          ownerId: 'owner2',
+          name: '新しいグループ',
+          members: [testMemberDto],
+        ),
+      ];
+
+      // Act
+      await tester.pumpWidget(
+        createGroupsFutureWidget(groupsFuture: firstCompleter.future),
+      );
+      await tester.pump();
+
+      await tester.pumpWidget(
+        createGroupsFutureWidget(groupsFuture: secondCompleter.future),
+      );
+      await tester.pump();
+
+      secondCompleter.complete(newGroups);
+      await tester.pumpAndSettle();
+
+      firstCompleter.complete(oldGroups);
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('新しいグループ'), findsOneWidget);
+      expect(find.text('古いグループ'), findsNothing);
     });
   });
 }

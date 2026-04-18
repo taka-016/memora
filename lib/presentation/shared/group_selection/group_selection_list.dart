@@ -38,20 +38,23 @@ class GroupSelectionList extends HookConsumerWidget {
     final state = useState(GroupSelectionListState.loading);
     final groupsWithMembers = useState<List<GroupDto>>(<GroupDto>[]);
     final errorMessage = useState('');
+    final latestRequestedFuture = useRef<Future<List<GroupDto>>?>(null);
 
     final loadData = useCallback(
       () async {
+        final requestedFuture =
+            groupsFuture ?? getGroupsWithMembersUsecase.execute(currentMember);
+        latestRequestedFuture.value = requestedFuture;
+
         try {
           state.value = GroupSelectionListState.loading;
-          if (groupsFuture == null && onRetry != null) {
+          errorMessage.value = '';
+          final resolvedGroups = await requestedFuture;
+
+          if (!context.mounted ||
+              latestRequestedFuture.value != requestedFuture) {
             return;
           }
-          final fetchedGroups =
-              groupsFuture ??
-              getGroupsWithMembersUsecase.execute(currentMember);
-          final resolvedGroups = await fetchedGroups;
-
-          if (!context.mounted) return;
 
           groupsWithMembers.value = resolvedGroups;
           state.value = resolvedGroups.isEmpty
@@ -63,7 +66,10 @@ class GroupSelectionList extends HookConsumerWidget {
             error: e,
             stackTrace: stack,
           );
-          if (!context.mounted) return;
+          if (!context.mounted ||
+              latestRequestedFuture.value != requestedFuture) {
+            return;
+          }
           errorMessage.value = 'エラーが発生しました';
           state.value = GroupSelectionListState.error;
         }
@@ -128,8 +134,9 @@ class GroupSelectionList extends HookConsumerWidget {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    if (onRetry != null) {
+                    if (onRetry != null && groupsFuture != null) {
                       state.value = GroupSelectionListState.loading;
+                      errorMessage.value = '';
                       onRetry?.call();
                       return;
                     }

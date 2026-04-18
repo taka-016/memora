@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/dvc_row.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
@@ -10,10 +11,12 @@ import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../app/top_page_test.mocks.dart';
+import 'group_timeline_navigation_notifier_test.mocks.dart';
 
+@GenerateMocks([GroupQueryService])
 class _GroupTimelineNavigationNotifierWithRefresh
     extends GroupTimelineNavigationNotifier {
   @override
