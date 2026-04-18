@@ -60,15 +60,15 @@ class GroupSelectionList extends HookConsumerWidget {
             ? GroupSelectionListState.empty
             : GroupSelectionListState.groupList;
       } catch (e, stack) {
+        if (!context.mounted ||
+            latestRequestedFuture.value != requestedFuture) {
+          return;
+        }
         logger.e(
           'GroupSelectionList._loadData: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
-        if (!context.mounted ||
-            latestRequestedFuture.value != requestedFuture) {
-          return;
-        }
         errorMessage.value = 'エラーが発生しました';
         state.value = GroupSelectionListState.error;
       }
