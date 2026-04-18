@@ -109,14 +109,14 @@ class GroupTimelineNavigationNotifier
         return;
       }
     } catch (e, stack) {
+      if (state.groupSelectionLoadFuture != loadFuture) {
+        return;
+      }
       logger.e(
         'GroupTimelineNavigationNotifier.prepareGroupTimelineEntry: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
-      if (state.groupSelectionLoadFuture != loadFuture) {
-        return;
-      }
     }
   }
 

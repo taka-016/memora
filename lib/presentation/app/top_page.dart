@@ -150,11 +150,11 @@ class TopPage extends HookConsumerWidget {
       final notifier = ref.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
-      notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
-
       final currentMember = ref.read(currentMemberNotifierProvider).member;
       if (currentMember != null) {
         unawaited(notifier.prepareGroupTimelineEntry(currentMember));
+      } else {
+        notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
       }
     }
 

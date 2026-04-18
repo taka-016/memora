@@ -300,6 +300,34 @@ void main() {
       expect(find.byType(CircularProgressIndicator), findsNothing);
     });
 
+    testWidgets('groupsFuture指定時のonRetryは新しいFutureが来るまでエラー状態を維持する', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      var retried = false;
+      final failingCompleter = Completer<List<GroupDto>>();
+
+      // Act
+      await tester.pumpWidget(
+        createGroupsFutureWidget(
+          groupsFuture: failingCompleter.future,
+          onRetry: () {
+            retried = true;
+          },
+        ),
+      );
+      failingCompleter.completeError(TestException('エラーテスト'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('再読み込み'));
+      await tester.pump();
+
+      // Assert
+      expect(retried, isTrue);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
     testWidgets('古いgroupsFutureの完了結果で新しい結果を上書きしない', (
       WidgetTester tester,
     ) async {

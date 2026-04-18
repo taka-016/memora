@@ -126,8 +126,6 @@ class GroupSelectionList extends HookConsumerWidget {
                 ElevatedButton(
                   onPressed: () {
                     if (onRetry != null && groupsFuture != null) {
-                      state.value = GroupSelectionListState.loading;
-                      errorMessage.value = '';
                       onRetry?.call();
                       return;
                     }
