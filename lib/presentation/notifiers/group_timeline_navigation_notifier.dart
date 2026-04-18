@@ -108,14 +108,6 @@ class GroupTimelineNavigationNotifier
         showGroupTimeline(groupsWithMembers.single);
         return;
       }
-
-      state = state.copyWith(
-        destination: const GroupTimelineGroupListDestination(),
-        groupSelectionLoadFuture: loadFuture,
-        clearInstance: true,
-        clearRowDefinitions: true,
-        clearRefresh: true,
-      );
     } catch (e, stack) {
       logger.e(
         'GroupTimelineNavigationNotifier.prepareGroupTimelineEntry: ${e.toString()}',

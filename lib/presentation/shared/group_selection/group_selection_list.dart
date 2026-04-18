@@ -40,48 +40,39 @@ class GroupSelectionList extends HookConsumerWidget {
     final errorMessage = useState('');
     final latestRequestedFuture = useRef<Future<List<GroupDto>>?>(null);
 
-    final loadData = useCallback(
-      () async {
-        final requestedFuture =
-            groupsFuture ?? getGroupsWithMembersUsecase.execute(currentMember);
-        latestRequestedFuture.value = requestedFuture;
+    final loadData = useCallback(() async {
+      final requestedFuture =
+          groupsFuture ?? getGroupsWithMembersUsecase.execute(currentMember);
+      latestRequestedFuture.value = requestedFuture;
 
-        try {
-          state.value = GroupSelectionListState.loading;
-          errorMessage.value = '';
-          final resolvedGroups = await requestedFuture;
+      try {
+        state.value = GroupSelectionListState.loading;
+        errorMessage.value = '';
+        final resolvedGroups = await requestedFuture;
 
-          if (!context.mounted ||
-              latestRequestedFuture.value != requestedFuture) {
-            return;
-          }
-
-          groupsWithMembers.value = resolvedGroups;
-          state.value = resolvedGroups.isEmpty
-              ? GroupSelectionListState.empty
-              : GroupSelectionListState.groupList;
-        } catch (e, stack) {
-          logger.e(
-            'GroupSelectionList._loadData: ${e.toString()}',
-            error: e,
-            stackTrace: stack,
-          );
-          if (!context.mounted ||
-              latestRequestedFuture.value != requestedFuture) {
-            return;
-          }
-          errorMessage.value = 'エラーが発生しました';
-          state.value = GroupSelectionListState.error;
+        if (!context.mounted ||
+            latestRequestedFuture.value != requestedFuture) {
+          return;
         }
-      },
-      [
-        context,
-        currentMember,
-        getGroupsWithMembersUsecase,
-        groupsFuture,
-        onRetry,
-      ],
-    );
+
+        groupsWithMembers.value = resolvedGroups;
+        state.value = resolvedGroups.isEmpty
+            ? GroupSelectionListState.empty
+            : GroupSelectionListState.groupList;
+      } catch (e, stack) {
+        logger.e(
+          'GroupSelectionList._loadData: ${e.toString()}',
+          error: e,
+          stackTrace: stack,
+        );
+        if (!context.mounted ||
+            latestRequestedFuture.value != requestedFuture) {
+          return;
+        }
+        errorMessage.value = 'エラーが発生しました';
+        state.value = GroupSelectionListState.error;
+      }
+    }, [context, currentMember, getGroupsWithMembersUsecase, groupsFuture]);
 
     useEffect(() {
       Future.microtask(loadData);
