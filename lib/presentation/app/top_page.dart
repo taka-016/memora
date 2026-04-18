@@ -75,6 +75,9 @@ class TopPage extends HookConsumerWidget {
         }
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
           unawaited(
             ref
                 .read(groupTimelineNavigationNotifierProvider.notifier)
