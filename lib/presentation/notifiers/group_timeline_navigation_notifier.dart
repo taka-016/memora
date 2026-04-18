@@ -117,14 +117,6 @@ class GroupTimelineNavigationNotifier
       if (state.groupSelectionLoadFuture != loadFuture) {
         return;
       }
-
-      state = state.copyWith(
-        destination: const GroupTimelineGroupListDestination(),
-        groupSelectionLoadFuture: loadFuture,
-        clearInstance: true,
-        clearRowDefinitions: true,
-        clearRefresh: true,
-      );
     }
   }
 
