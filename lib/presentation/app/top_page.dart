@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -30,9 +32,10 @@ class TopPage extends HookConsumerWidget {
           return;
         }
         ref.read(navigationNotifierProvider.notifier).resetToDefault();
-        ref
-            .read(groupTimelineNavigationNotifierProvider.notifier)
-            .resetToGroupList();
+        final notifier = ref.read(
+          groupTimelineNavigationNotifierProvider.notifier,
+        );
+        notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
       });
       return null;
     }, const []);
@@ -57,6 +60,47 @@ class TopPage extends HookConsumerWidget {
       return null;
     }, [currentMemberState.status, currentMemberState.message]);
 
+    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
+    final timelineEntryState = ref.watch(
+      groupTimelineNavigationNotifierProvider.select(
+        (state) => (
+          groupSelectionLoadFuture: state.groupSelectionLoadFuture,
+          groupTimelineInstance: state.groupTimelineInstance,
+        ),
+      ),
+    );
+
+    useEffect(
+      () {
+        if (selectedItem != NavigationItem.groupTimeline ||
+            currentMember == null) {
+          return null;
+        }
+        if (timelineEntryState.groupSelectionLoadFuture != null ||
+            timelineEntryState.groupTimelineInstance != null) {
+          return null;
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
+          unawaited(
+            ref
+                .read(groupTimelineNavigationNotifierProvider.notifier)
+                .prepareGroupTimelineEntry(currentMember),
+          );
+        });
+        return null;
+      },
+      [
+        selectedItem,
+        currentMember?.id,
+        timelineEntryState.groupSelectionLoadFuture,
+        timelineEntryState.groupTimelineInstance,
+      ],
+    );
+
     final shouldHandleAndroidBack = _shouldHandleAndroidBack(ref);
     final canPop = isDrawerOpen.value || !shouldHandleAndroidBack;
 
@@ -75,7 +119,7 @@ class TopPage extends HookConsumerWidget {
         },
         appBar: _buildAppBar(context),
         drawer: _buildDrawer(context, ref),
-        body: _buildBody(context, ref, currentMember),
+        body: _buildBody(context, ref, currentMember, selectedItem),
       ),
     );
   }
@@ -109,6 +153,30 @@ class TopPage extends HookConsumerWidget {
     WidgetRef ref,
     NavigationItem item,
   ) {
+    final currentSelectedItem = ref
+        .read(navigationNotifierProvider)
+        .selectedItem;
+    if (item == NavigationItem.groupTimeline) {
+      if (currentSelectedItem == NavigationItem.groupTimeline) {
+        Navigator.of(context).pop();
+        return;
+      }
+
+      final notifier = ref.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      final currentMember = ref.read(currentMemberNotifierProvider).member;
+      if (currentMember != null) {
+        unawaited(notifier.prepareGroupTimelineEntry(currentMember));
+      } else {
+        notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
+      }
+
+      ref.read(navigationNotifierProvider.notifier).selectItem(item);
+      Navigator.of(context).pop();
+      return;
+    }
+
     ref.read(navigationNotifierProvider.notifier).selectItem(item);
     Navigator.of(context).pop();
   }
@@ -132,14 +200,27 @@ class TopPage extends HookConsumerWidget {
     final destination = timelineState.destination;
     final notifier = ref.read(groupTimelineNavigationNotifierProvider.notifier);
 
+    final groupsFuture = timelineState.groupSelectionLoadFuture;
+
+    if (destination is GroupTimelineGroupListDestination &&
+        groupsFuture == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return IndexedStack(
       index: notifier.getStackIndex(),
       children: [
-        GroupSelectionList(
-          onGroupSelected: (group) => _onGroupSelected(ref, group),
-          title: 'グループを選択',
-          listKey: const Key('group_list'),
-        ),
+        groupsFuture == null
+            ? const SizedBox.shrink()
+            : GroupSelectionList(
+                onGroupSelected: (group) => _onGroupSelected(ref, group),
+                title: 'グループを選択',
+                listKey: const Key('group_list'),
+                groupsFuture: groupsFuture,
+                onRetry: () {
+                  unawaited(notifier.prepareGroupTimelineEntry(currentMember));
+                },
+              ),
         timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
         ...timelineState.destinationPageDefinitions.map((definition) {
           if (!definition.matches(destination)) {
@@ -160,9 +241,8 @@ class TopPage extends HookConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     MemberDto? currentMember,
+    NavigationItem selectedItem,
   ) {
-    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
-
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
         return _buildGroupTimelineStack(context, ref, currentMember);

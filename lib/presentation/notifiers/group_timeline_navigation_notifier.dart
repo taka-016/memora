@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
@@ -22,12 +25,14 @@ class GroupTimelineNavigationState {
   final Timeline? groupTimelineInstance;
   final List<TimelineRowDefinition> timelineRowDefinitions;
   final RefreshTimelineCallback? refreshGroupTimeline;
+  final Future<List<GroupDto>>? groupSelectionLoadFuture;
 
   const GroupTimelineNavigationState({
     required this.destination,
     this.groupTimelineInstance,
     this.timelineRowDefinitions = const [],
     this.refreshGroupTimeline,
+    this.groupSelectionLoadFuture,
   });
 
   GroupTimelineScreenState get currentScreen => destination.screenState;
@@ -47,9 +52,11 @@ class GroupTimelineNavigationState {
     Timeline? groupTimelineInstance,
     List<TimelineRowDefinition>? timelineRowDefinitions,
     RefreshTimelineCallback? refreshGroupTimeline,
+    Future<List<GroupDto>>? groupSelectionLoadFuture,
     bool clearInstance = false,
     bool clearRowDefinitions = false,
     bool clearRefresh = false,
+    bool clearGroupSelectionLoadFuture = false,
   }) {
     return GroupTimelineNavigationState(
       destination: destination ?? this.destination,
@@ -62,6 +69,9 @@ class GroupTimelineNavigationState {
       refreshGroupTimeline: clearRefresh
           ? null
           : (refreshGroupTimeline ?? this.refreshGroupTimeline),
+      groupSelectionLoadFuture: clearGroupSelectionLoadFuture
+          ? null
+          : (groupSelectionLoadFuture ?? this.groupSelectionLoadFuture),
     );
   }
 }
@@ -73,6 +83,41 @@ class GroupTimelineNavigationNotifier
     return const GroupTimelineNavigationState(
       destination: GroupTimelineGroupListDestination(),
     );
+  }
+
+  Future<void> prepareGroupTimelineEntry(MemberDto currentMember) async {
+    final loadFuture = ref
+        .read(getGroupsWithMembersUsecaseProvider)
+        .execute(currentMember);
+
+    state = state.copyWith(
+      destination: const GroupTimelineGroupListDestination(),
+      groupSelectionLoadFuture: loadFuture,
+      clearInstance: true,
+      clearRowDefinitions: true,
+      clearRefresh: true,
+    );
+
+    try {
+      final groupsWithMembers = await loadFuture;
+      if (state.groupSelectionLoadFuture != loadFuture) {
+        return;
+      }
+
+      if (groupsWithMembers.length == 1) {
+        showGroupTimeline(groupsWithMembers.single);
+        return;
+      }
+    } catch (e, stack) {
+      if (state.groupSelectionLoadFuture != loadFuture) {
+        return;
+      }
+      logger.e(
+        'GroupTimelineNavigationNotifier.prepareGroupTimelineEntry: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+    }
   }
 
   void showGroupList() {
@@ -147,12 +192,13 @@ class GroupTimelineNavigationNotifier
     }
   }
 
-  void resetToGroupList() {
+  void resetToGroupList({bool clearGroupSelectionLoadFuture = false}) {
     state = state.copyWith(
       destination: const GroupTimelineGroupListDestination(),
       clearInstance: true,
       clearRowDefinitions: true,
       clearRefresh: true,
+      clearGroupSelectionLoadFuture: clearGroupSelectionLoadFuture,
     );
   }
 

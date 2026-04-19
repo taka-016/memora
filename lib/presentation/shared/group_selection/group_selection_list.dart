@@ -1,64 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 enum GroupSelectionListState { loading, groupList, empty, error }
 
-class GroupSelectionList extends HookConsumerWidget {
+class GroupSelectionList extends HookWidget {
   final void Function(GroupDto)? onGroupSelected;
   final String title;
   final Key listKey;
+  final Future<List<GroupDto>> groupsFuture;
+  final VoidCallback? onRetry;
 
   const GroupSelectionList({
     super.key,
     this.onGroupSelected,
     this.title = 'グループ一覧',
     this.listKey = const Key('group_list'),
+    required this.groupsFuture,
+    this.onRetry,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentMember = ref.watch(currentMemberNotifierProvider).member;
-    if (currentMember == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final getGroupsWithMembersUsecase = ref.read(
-      getGroupsWithMembersUsecaseProvider,
-    );
-
+  Widget build(BuildContext context) {
     final state = useState(GroupSelectionListState.loading);
     final groupsWithMembers = useState<List<GroupDto>>(<GroupDto>[]);
     final errorMessage = useState('');
+    final latestRequestedFuture = useRef<Future<List<GroupDto>>>(groupsFuture);
 
     final loadData = useCallback(() async {
+      final requestedFuture = groupsFuture;
+      latestRequestedFuture.value = requestedFuture;
+
       try {
         state.value = GroupSelectionListState.loading;
-        final fetchedGroups = await getGroupsWithMembersUsecase.execute(
-          currentMember,
-        );
+        errorMessage.value = '';
+        final resolvedGroups = await requestedFuture;
 
-        if (!context.mounted) return;
+        if (!context.mounted ||
+            latestRequestedFuture.value != requestedFuture) {
+          return;
+        }
 
-        groupsWithMembers.value = fetchedGroups;
-        state.value = fetchedGroups.isEmpty
+        groupsWithMembers.value = resolvedGroups;
+        state.value = resolvedGroups.isEmpty
             ? GroupSelectionListState.empty
             : GroupSelectionListState.groupList;
       } catch (e, stack) {
+        if (!context.mounted ||
+            latestRequestedFuture.value != requestedFuture) {
+          return;
+        }
         logger.e(
           'GroupSelectionList._loadData: ${e.toString()}',
           error: e,
           stackTrace: stack,
         );
-        if (!context.mounted) return;
         errorMessage.value = 'エラーが発生しました';
         state.value = GroupSelectionListState.error;
       }
-    }, [context, getGroupsWithMembersUsecase, currentMember]);
+    }, [context, groupsFuture]);
 
     useEffect(() {
       Future.microtask(loadData);
@@ -109,7 +110,10 @@ class GroupSelectionList extends HookConsumerWidget {
               children: [
                 Text(errorMessage.value, style: const TextStyle(fontSize: 18)),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: loadData, child: const Text('再読み込み')),
+                ElevatedButton(
+                  onPressed: onRetry ?? loadData,
+                  child: const Text('再読み込み'),
+                ),
               ],
             ),
           );

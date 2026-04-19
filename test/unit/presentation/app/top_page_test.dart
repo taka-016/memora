@@ -287,6 +287,19 @@ void main() {
           ),
         ],
       ),
+      GroupDto(
+        id: '2',
+        ownerId: 'owner2',
+        name: 'グループ2',
+        members: [
+          GroupMemberDto(
+            memberId: 'member3',
+            groupId: 'group2',
+            displayName: '次郎',
+            email: 'jiro@example.com',
+          ),
+        ],
+      ),
     ];
 
     when(
@@ -309,6 +322,7 @@ void main() {
     MockAuthService? authService,
     AuthNotifier? authNotifier,
     MemberDto? currentMember,
+    List<GroupDto>? availableGroupsWithMembers,
     NavigationNotifier? navigationNotifier,
     GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
     FakeCurrentMemberNotifier? currentMemberNotifier,
@@ -322,6 +336,8 @@ void main() {
 
     final testMemberQueryService = memberQueryService ?? mockMemberQueryService;
     final testAuthService = authService ?? mockAuthService;
+    final resolvedGroupsWithMembers =
+        availableGroupsWithMembers ?? groupsWithMembers;
 
     const testUser = User(
       id: 'test_user_id',
@@ -348,7 +364,7 @@ void main() {
         groupsOrderBy: anyNamed('groupsOrderBy'),
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
-    ).thenAnswer((_) async => groupsWithMembers);
+    ).thenAnswer((_) async => resolvedGroupsWithMembers);
 
     final resolvedCurrentMemberNotifier =
         currentMemberNotifier ??
@@ -416,6 +432,7 @@ void main() {
     MockAuthService? authService,
     AuthNotifier? authNotifier,
     MemberDto? currentMember,
+    List<GroupDto>? availableGroupsWithMembers,
     NavigationNotifier? navigationNotifier,
     GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
     FakeCurrentMemberNotifier? currentMemberNotifier,
@@ -426,6 +443,7 @@ void main() {
         authService: authService,
         authNotifier: authNotifier,
         currentMember: currentMember,
+        availableGroupsWithMembers: availableGroupsWithMembers,
         navigationNotifier: navigationNotifier,
         groupTimelineNavigationNotifier: groupTimelineNavigationNotifier,
         currentMemberNotifier: currentMemberNotifier,
@@ -534,6 +552,91 @@ void main() {
       // Assert
       expect(find.byKey(const Key('group_list')), findsOneWidget);
       expect(find.byKey(const Key('map_view')), findsNothing);
+    });
+
+    testWidgets('groupSelectionLoadFutureがなくても詳細画面状態ならクラッシュしない', (
+      WidgetTester tester,
+    ) async {
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(
+          groupTimelineNavigationNotifier:
+              _TestGroupTimelineNavigationNotifier(),
+        ),
+      );
+
+      // Assert
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('所属グループが1件のみなら初回表示でグループ年表を直接開く', (WidgetTester tester) async {
+      // Arrange
+      final singleGroup = [groupsWithMembers.first];
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => singleGroup);
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(availableGroupsWithMembers: singleGroup),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('所属グループが1件のみならメニューから開いてもグループ年表を直接開く', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final singleGroup = [groupsWithMembers.first];
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => singleGroup);
+
+      // Act
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ年表'));
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
     testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
@@ -830,24 +933,21 @@ void main() {
 
     testWidgets('グループ年表から戻るボタンでグループ一覧に戻ることができる', (WidgetTester tester) async {
       // Arrange
+      final singleGroup = [groupsWithMembers.first];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
-      ).thenAnswer((_) async => groupsWithMembers);
+      ).thenAnswer((_) async => singleGroup);
       when(
         mockMemberQueryService.getMemberByAccountId(any),
       ).thenAnswer((_) async => testMember);
 
-      final widget = createTestWidget();
+      final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
 
       await tester.pumpWidget(widget);
-      await tester.pumpAndSettle();
-
-      // グループ一覧からグループ選択
-      await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
 
       // グループ年表が表示されることを確認
@@ -861,23 +961,25 @@ void main() {
       // Assert - グループ一覧に戻ることを確認
       expect(find.byKey(const Key('group_timeline')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループ1'), findsOneWidget);
     });
 
     testWidgets('Androidの戻る操作でグループ年表からグループ一覧に戻る', (WidgetTester tester) async {
       // Arrange
+      final singleGroup = [groupsWithMembers.first];
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
           groupsOrderBy: anyNamed('groupsOrderBy'),
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
-      ).thenAnswer((_) async => groupsWithMembers);
+      ).thenAnswer((_) async => singleGroup);
 
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(availableGroupsWithMembers: singleGroup),
+      );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('グループ1'));
-      await tester.pumpAndSettle();
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
 
       // Act
@@ -1037,7 +1139,9 @@ void main() {
       }
     });
 
-    testWidgets('グループ年表が遷移先から戻ったときに状態を維持している', (WidgetTester tester) async {
+    testWidgets('別画面からメニューでグループ年表を開き直すとグループ一覧から再開する', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -1133,20 +1237,54 @@ void main() {
       final backToTimelineStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
-      expect(backToTimelineStack.index, 1); // GroupTimeline（index: 1）を維持
+      expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
       expect(
         container
             .read(groupTimelineNavigationNotifierProvider)
             .groupTimelineInstance,
-        isNotNull,
+        isNull,
       );
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.timeline,
+        GroupTimelineScreenState.groupList,
       );
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+    });
 
-      // 再度同じグループを選択
+    testWidgets('グループ年表表示中に同じメニューを再タップしても状態を維持する', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ年表'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
     });
 
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
