@@ -133,6 +133,29 @@ void main() {
       expect(find.text('エラーが発生しました'), findsOneWidget);
     });
 
+    testWidgets('onRetry未指定でも再読み込みボタンは有効なままになる', (WidgetTester tester) async {
+      // Arrange
+      final failingCompleter = Completer<List<GroupDto>>();
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(groupsFuture: failingCompleter.future),
+      );
+      failingCompleter.completeError(TestException('エラーテスト'));
+      await tester.pumpAndSettle();
+
+      final retryButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '再読み込み'),
+      );
+
+      await tester.tap(find.text('再読み込み'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(retryButton.onPressed, isNotNull);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+    });
+
     testWidgets('グループ行をタップしたときにコールバック関数が呼ばれる', (WidgetTester tester) async {
       // Arrange
       GroupDto? selectedGroup;

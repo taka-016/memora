@@ -200,25 +200,27 @@ class TopPage extends HookConsumerWidget {
     final destination = timelineState.destination;
     final notifier = ref.read(groupTimelineNavigationNotifierProvider.notifier);
 
+    final groupsFuture = timelineState.groupSelectionLoadFuture;
+
     if (destination is GroupTimelineGroupListDestination &&
-        timelineState.groupSelectionLoadFuture == null) {
+        groupsFuture == null) {
       return const Center(child: CircularProgressIndicator());
     }
-
-    final groupsFuture = timelineState.groupSelectionLoadFuture!;
 
     return IndexedStack(
       index: notifier.getStackIndex(),
       children: [
-        GroupSelectionList(
-          onGroupSelected: (group) => _onGroupSelected(ref, group),
-          title: 'グループを選択',
-          listKey: const Key('group_list'),
-          groupsFuture: groupsFuture,
-          onRetry: () {
-            unawaited(notifier.prepareGroupTimelineEntry(currentMember));
-          },
-        ),
+        groupsFuture == null
+            ? const SizedBox.shrink()
+            : GroupSelectionList(
+                onGroupSelected: (group) => _onGroupSelected(ref, group),
+                title: 'グループを選択',
+                listKey: const Key('group_list'),
+                groupsFuture: groupsFuture,
+                onRetry: () {
+                  unawaited(notifier.prepareGroupTimelineEntry(currentMember));
+                },
+              ),
         timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
         ...timelineState.destinationPageDefinitions.map((definition) {
           if (!definition.matches(destination)) {

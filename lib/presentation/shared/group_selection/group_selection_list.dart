@@ -111,7 +111,10 @@ class GroupSelectionList extends HookConsumerWidget {
               children: [
                 Text(errorMessage.value, style: const TextStyle(fontSize: 18)),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+                ElevatedButton(
+                  onPressed: onRetry ?? loadData,
+                  child: const Text('再読み込み'),
+                ),
               ],
             ),
           );

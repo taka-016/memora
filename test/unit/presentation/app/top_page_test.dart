@@ -554,6 +554,21 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
+    testWidgets('groupSelectionLoadFutureがなくても詳細画面状態ならクラッシュしない', (
+      WidgetTester tester,
+    ) async {
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(
+          groupTimelineNavigationNotifier:
+              _TestGroupTimelineNavigationNotifier(),
+        ),
+      );
+
+      // Assert
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('所属グループが1件のみなら初回表示でグループ年表を直接開く', (WidgetTester tester) async {
       // Arrange
       final singleGroup = [groupsWithMembers.first];
