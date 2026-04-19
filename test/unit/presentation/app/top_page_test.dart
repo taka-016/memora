@@ -1237,6 +1237,41 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsNothing);
     });
 
+    testWidgets('グループ年表表示中に同じメニューを再タップしても状態を維持する', (WidgetTester tester) async {
+      // Arrange
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ年表'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
+    });
+
     testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
       // Arrange
       final defaultMember = MemberDto(

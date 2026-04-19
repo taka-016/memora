@@ -146,6 +146,15 @@ class TopPage extends HookConsumerWidget {
     WidgetRef ref,
     NavigationItem item,
   ) {
+    final currentSelectedItem = ref
+        .read(navigationNotifierProvider)
+        .selectedItem;
+    if (item == NavigationItem.groupTimeline &&
+        currentSelectedItem == NavigationItem.groupTimeline) {
+      Navigator.of(context).pop();
+      return;
+    }
+
     if (item == NavigationItem.groupTimeline) {
       final notifier = ref.read(
         groupTimelineNavigationNotifierProvider.notifier,
