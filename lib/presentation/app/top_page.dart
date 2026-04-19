@@ -61,7 +61,14 @@ class TopPage extends HookConsumerWidget {
     }, [currentMemberState.status, currentMemberState.message]);
 
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
-    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
+    final timelineEntryState = ref.watch(
+      groupTimelineNavigationNotifierProvider.select(
+        (state) => (
+          groupSelectionLoadFuture: state.groupSelectionLoadFuture,
+          groupTimelineInstance: state.groupTimelineInstance,
+        ),
+      ),
+    );
 
     useEffect(
       () {
@@ -69,8 +76,8 @@ class TopPage extends HookConsumerWidget {
             currentMember == null) {
           return null;
         }
-        if (timelineState.groupSelectionLoadFuture != null ||
-            timelineState.groupTimelineInstance != null) {
+        if (timelineEntryState.groupSelectionLoadFuture != null ||
+            timelineEntryState.groupTimelineInstance != null) {
           return null;
         }
 
@@ -89,8 +96,8 @@ class TopPage extends HookConsumerWidget {
       [
         selectedItem,
         currentMember?.id,
-        timelineState.groupSelectionLoadFuture,
-        timelineState.groupTimelineInstance,
+        timelineEntryState.groupSelectionLoadFuture,
+        timelineEntryState.groupTimelineInstance,
       ],
     );
 
