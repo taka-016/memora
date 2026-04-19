@@ -2,42 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:memora/application/queries/group/group_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../helpers/test_exception.dart';
 
-import '../../../../helpers/fake_current_member_notifier.dart';
-import 'group_list_test.mocks.dart';
-
-@GenerateMocks([GroupQueryService])
 void main() {
-  late MockGroupQueryService mockGroupQueryService;
-  late MemberDto testMember;
   late GroupMemberDto testMemberDto;
 
   setUp(() {
-    mockGroupQueryService = MockGroupQueryService();
-    testMember = MemberDto(
-      id: 'admin1',
-      hiraganaFirstName: 'たろう',
-      hiraganaLastName: 'やまだ',
-      kanjiFirstName: '太郎',
-      kanjiLastName: '山田',
-      firstName: 'Taro',
-      lastName: 'Yamada',
-      displayName: 'タロちゃん',
-      type: 'family',
-      birthday: DateTime(1990, 1, 1),
-      gender: 'male',
-    );
     testMemberDto = GroupMemberDto(
       memberId: 'admin1',
       groupId: 'group1',
@@ -46,38 +20,19 @@ void main() {
     );
   });
 
-  Widget createTestWidget({MemberDto? member}) {
-    return ProviderScope(
-      overrides: [
-        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        currentMemberNotifierProvider.overrideWith(
-          () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
-        ),
-      ],
-      child: MaterialApp(
-        home: const Scaffold(body: GroupSelectionList(title: 'グループを選択')),
-      ),
-    );
-  }
-
-  Widget createGroupsFutureWidget({
-    required Future<List<GroupDto>>? groupsFuture,
+  Widget createTestWidget({
+    required Future<List<GroupDto>> groupsFuture,
     VoidCallback? onRetry,
-    MemberDto? member,
+    void Function(GroupDto)? onGroupSelected,
   }) {
     return ProviderScope(
-      overrides: [
-        groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        currentMemberNotifierProvider.overrideWith(
-          () => FakeCurrentMemberNotifier.loaded(member ?? testMember),
-        ),
-      ],
       child: MaterialApp(
         home: Scaffold(
           body: GroupSelectionList(
             title: 'グループを選択',
             groupsFuture: groupsFuture,
             onRetry: onRetry,
+            onGroupSelected: onGroupSelected,
           ),
         ),
       ),
@@ -108,16 +63,11 @@ void main() {
           members: [member1, member2],
         ),
       ];
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(groupsFuture: Future.value(groupsWithMembers)),
+      );
       await tester.pumpAndSettle();
 
       // Assert
@@ -130,17 +80,8 @@ void main() {
     });
 
     testWidgets('グループが存在しない場合、空状態が表示される', (WidgetTester tester) async {
-      // Arrange
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => []);
-
       // Act
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(createTestWidget(groupsFuture: Future.value([])));
       await tester.pumpAndSettle();
 
       // Assert
@@ -150,16 +91,13 @@ void main() {
 
     testWidgets('エラーが発生した場合、エラー状態が表示される', (WidgetTester tester) async {
       // Arrange
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenThrow(TestException('エラーテスト'));
+      final failingCompleter = Completer<List<GroupDto>>();
 
       // Act
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(groupsFuture: failingCompleter.future),
+      );
+      failingCompleter.completeError(TestException('エラーテスト'));
       await tester.pumpAndSettle();
 
       // Assert
@@ -167,54 +105,32 @@ void main() {
       expect(find.text('再読み込み'), findsOneWidget);
     });
 
-    testWidgets('エラー状態で再読み込みボタンをタップすると、再度データを読み込む', (
+    testWidgets('エラー状態で再読み込みボタンをタップすると、親のonRetryが呼ばれる', (
       WidgetTester tester,
     ) async {
       // Arrange
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenThrow(TestException('エラーテスト'));
+      var retried = false;
+      final failingCompleter = Completer<List<GroupDto>>();
 
       // Act
-      await tester.pumpWidget(createTestWidget());
+      await tester.pumpWidget(
+        createTestWidget(
+          groupsFuture: failingCompleter.future,
+          onRetry: () {
+            retried = true;
+          },
+        ),
+      );
+      failingCompleter.completeError(TestException('エラーテスト'));
       await tester.pumpAndSettle();
-
-      // 正常なデータを返すように変更
-      final groupsWithMembers = [
-        GroupDto(
-          id: '1',
-          ownerId: 'owner1',
-          name: 'テストグループ',
-          members: [testMemberDto],
-        ),
-      ];
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => groupsWithMembers);
 
       // 再読み込みボタンをタップ
       await tester.tap(find.text('再読み込み'));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Assert
-      expect(find.text('グループを選択'), findsOneWidget);
-      expect(find.text('テストグループ'), findsOneWidget);
-      expect(find.text('エラーが発生しました'), findsNothing);
-      verify(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).called(2); // 最初のエラー + 再読み込み
+      expect(retried, isTrue);
+      expect(find.text('エラーが発生しました'), findsOneWidget);
     });
 
     testWidgets('グループ行をタップしたときにコールバック関数が呼ばれる', (WidgetTester tester) async {
@@ -228,33 +144,14 @@ void main() {
           members: [testMemberDto],
         ),
       ];
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => groupsWithMembers);
 
       // Act
       await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-            currentMemberNotifierProvider.overrideWith(
-              () => FakeCurrentMemberNotifier.loaded(testMember),
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: GroupSelectionList(
-                title: 'グループを選択',
-                onGroupSelected: (groupWithMembers) {
-                  selectedGroup = groupWithMembers;
-                },
-              ),
-            ),
-          ),
+        createTestWidget(
+          groupsFuture: Future.value(groupsWithMembers),
+          onGroupSelected: (groupWithMembers) {
+            selectedGroup = groupWithMembers;
+          },
         ),
       );
       await tester.pumpAndSettle();
@@ -269,38 +166,7 @@ void main() {
       expect(selectedGroup!.name, 'テストグループ');
     });
 
-    testWidgets('onRetryだけ指定されてもusecase取得へフォールバックして一覧表示できる', (
-      WidgetTester tester,
-    ) async {
-      // Arrange
-      final groupsWithMembers = [
-        GroupDto(
-          id: '1',
-          ownerId: 'owner1',
-          name: 'テストグループ',
-          members: [testMemberDto],
-        ),
-      ];
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          testMember.id,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => groupsWithMembers);
-
-      // Act
-      await tester.pumpWidget(
-        createGroupsFutureWidget(groupsFuture: null, onRetry: () {}),
-      );
-      await tester.pumpAndSettle();
-
-      // Assert
-      expect(find.text('テストグループ'), findsOneWidget);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
-
-    testWidgets('groupsFuture指定時のonRetryは新しいFutureが来るまでエラー状態を維持する', (
+    testWidgets('onRetryは新しいFutureが来るまでエラー状態を維持する', (
       WidgetTester tester,
     ) async {
       // Arrange
@@ -309,7 +175,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        createGroupsFutureWidget(
+        createTestWidget(
           groupsFuture: failingCompleter.future,
           onRetry: () {
             retried = true;
@@ -353,12 +219,12 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        createGroupsFutureWidget(groupsFuture: firstCompleter.future),
+        createTestWidget(groupsFuture: firstCompleter.future),
       );
       await tester.pump();
 
       await tester.pumpWidget(
-        createGroupsFutureWidget(groupsFuture: secondCompleter.future),
+        createTestWidget(groupsFuture: secondCompleter.future),
       );
       await tester.pump();
 

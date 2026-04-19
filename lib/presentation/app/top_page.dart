@@ -205,6 +205,8 @@ class TopPage extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final groupsFuture = timelineState.groupSelectionLoadFuture!;
+
     return IndexedStack(
       index: notifier.getStackIndex(),
       children: [
@@ -212,7 +214,7 @@ class TopPage extends HookConsumerWidget {
           onGroupSelected: (group) => _onGroupSelected(ref, group),
           title: 'グループを選択',
           listKey: const Key('group_list'),
-          groupsFuture: timelineState.groupSelectionLoadFuture,
+          groupsFuture: groupsFuture,
           onRetry: () {
             unawaited(notifier.prepareGroupTimelineEntry(currentMember));
           },
