@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/app_logger.dart';
 
 enum GroupSelectionListState { loading, groupList, empty, error }
 
-class GroupSelectionList extends HookConsumerWidget {
+class GroupSelectionList extends HookWidget {
   final void Function(GroupDto)? onGroupSelected;
   final String title;
   final Key listKey;
@@ -23,7 +22,7 @@ class GroupSelectionList extends HookConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final state = useState(GroupSelectionListState.loading);
     final groupsWithMembers = useState<List<GroupDto>>(<GroupDto>[]);
     final errorMessage = useState('');
