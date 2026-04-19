@@ -156,13 +156,12 @@ class TopPage extends HookConsumerWidget {
     final currentSelectedItem = ref
         .read(navigationNotifierProvider)
         .selectedItem;
-    if (item == NavigationItem.groupTimeline &&
-        currentSelectedItem == NavigationItem.groupTimeline) {
-      Navigator.of(context).pop();
-      return;
-    }
-
     if (item == NavigationItem.groupTimeline) {
+      if (currentSelectedItem == NavigationItem.groupTimeline) {
+        Navigator.of(context).pop();
+        return;
+      }
+
       final notifier = ref.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
@@ -172,6 +171,10 @@ class TopPage extends HookConsumerWidget {
       } else {
         notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
       }
+
+      ref.read(navigationNotifierProvider.notifier).selectItem(item);
+      Navigator.of(context).pop();
+      return;
     }
 
     ref.read(navigationNotifierProvider.notifier).selectItem(item);
