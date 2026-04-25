@@ -13,9 +13,14 @@ import 'package:memora/presentation/features/timeline/timeline_display_settings.
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
 class MemberRow extends TimelineRowDefinition {
-  const MemberRow({required this.member, required this.initialHeight});
+  const MemberRow({
+    required this.member,
+    required this.memberIds,
+    required this.initialHeight,
+  });
 
   final GroupMemberDto member;
+  final List<String> memberIds;
 
   @override
   final double initialHeight;
@@ -38,6 +43,7 @@ class MemberRow extends TimelineRowDefinition {
   ) {
     return _MemberYearCell(
       member: member,
+      memberIds: memberIds,
       targetYear: year,
       displaySettings: rowContext.controller.displaySettings,
       refreshKey: rowContext.controller.refreshKey,
@@ -45,14 +51,22 @@ class MemberRow extends TimelineRowDefinition {
   }
 }
 
-final _memberEventsByYearProvider = FutureProvider.autoDispose
-    .family<Map<int, MemberEventDto>, _MemberEventsQuery>((ref, query) async {
+final _memberEventsByMemberIdProvider = FutureProvider.autoDispose
+    .family<Map<String, Map<int, MemberEventDto>>, _MemberEventsQuery>((
+      ref,
+      query,
+    ) async {
       try {
         final getMemberEventsUsecase = ref.watch(
           getMemberEventsUsecaseProvider,
         );
-        final events = await getMemberEventsUsecase.execute([query.memberId]);
-        return {for (final event in events) event.year: event};
+        final events = await getMemberEventsUsecase.execute(query.memberIds);
+        final eventsByMemberId = <String, Map<int, MemberEventDto>>{};
+        for (final event in events) {
+          eventsByMemberId.putIfAbsent(event.memberId, () => {})[event.year] =
+              event;
+        }
+        return eventsByMemberId;
       } catch (e, stack) {
         logger.e(
           'MemberRow.loadMemberEvents: ${e.toString()}',
@@ -66,12 +80,14 @@ final _memberEventsByYearProvider = FutureProvider.autoDispose
 class _MemberYearCell extends HookConsumerWidget {
   const _MemberYearCell({
     required this.member,
+    required this.memberIds,
     required this.targetYear,
     required this.displaySettings,
     required this.refreshKey,
   });
 
   final GroupMemberDto member;
+  final List<String> memberIds;
   final int targetYear;
   final TimelineDisplaySettings displaySettings;
   final int refreshKey;
@@ -79,12 +95,13 @@ class _MemberYearCell extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final query = _MemberEventsQuery(
-      memberId: member.memberId,
+      memberIds: memberIds,
       refreshKey: refreshKey,
     );
-    final eventsByYear = ref.watch(_memberEventsByYearProvider(query));
+    final eventsByMemberId = ref.watch(_memberEventsByMemberIdProvider(query));
     final localEvent = useState<MemberEventDto?>(null);
-    final loadedEvent = eventsByYear.valueOrNull?[targetYear];
+    final loadedEvent =
+        eventsByMemberId.valueOrNull?[member.memberId]?[targetYear];
 
     useEffect(() {
       localEvent.value = loadedEvent;
@@ -127,7 +144,7 @@ class _MemberYearCell extends HookConsumerWidget {
                   ),
                 );
             localEvent.value = memo.isEmpty ? null : savedEvent;
-            ref.invalidate(_memberEventsByYearProvider(query));
+            ref.invalidate(_memberEventsByMemberIdProvider(query));
           },
         );
       },
@@ -144,20 +161,35 @@ class _MemberYearCell extends HookConsumerWidget {
 }
 
 class _MemberEventsQuery {
-  const _MemberEventsQuery({required this.memberId, required this.refreshKey});
+  _MemberEventsQuery({
+    required List<String> memberIds,
+    required this.refreshKey,
+  }) : memberIds = List.unmodifiable(memberIds);
 
-  final String memberId;
+  final List<String> memberIds;
   final int refreshKey;
 
   @override
   bool operator ==(Object other) {
     return other is _MemberEventsQuery &&
-        other.memberId == memberId &&
+        _listEquals(other.memberIds, memberIds) &&
         other.refreshKey == refreshKey;
   }
 
   @override
-  int get hashCode => Object.hash(memberId, refreshKey);
+  int get hashCode => Object.hash(Object.hashAll(memberIds), refreshKey);
+}
+
+bool _listEquals(List<String> a, List<String> b) {
+  if (a.length != b.length) {
+    return false;
+  }
+  for (var index = 0; index < a.length; index++) {
+    if (a[index] != b[index]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 List<String> _buildMemberLabels({

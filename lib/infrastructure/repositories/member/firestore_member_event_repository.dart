@@ -29,7 +29,7 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
       await existingDoc.reference.update(
         FirestoreMemberEventMapper.toUpdateFirestore(memberEvent),
       );
-      return memberEvent.id;
+      return existingDoc.id;
     }
 
     final docRef = await _firestore

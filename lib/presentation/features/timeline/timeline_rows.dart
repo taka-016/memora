@@ -68,8 +68,15 @@ Iterable<TimelineRowDefinition> _buildRowsByType({
         ),
       ];
     case TimelineRowType.member:
+      final memberIds = groupWithMembers.members
+          .map((member) => member.memberId)
+          .toList(growable: false);
       return groupWithMembers.members.map(
-        (member) => MemberRow(member: member, initialHeight: defaultHeight),
+        (member) => MemberRow(
+          member: member,
+          memberIds: memberIds,
+          initialHeight: defaultHeight,
+        ),
       );
   }
 }

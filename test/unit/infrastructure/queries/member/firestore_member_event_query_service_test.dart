@@ -38,7 +38,13 @@ void main() {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(
-        mockCollection.where('memberId', whereIn: ['member001', 'member002']),
+        mockCollection.where(
+          'memberId',
+          whereIn: argThat(
+            equals(['member001', 'member002']),
+            named: 'whereIn',
+          ),
+        ),
       ).thenReturn(mockQuery);
       when(
         mockQuery.orderBy('year', descending: false),
@@ -61,6 +67,65 @@ void main() {
       verify(mockQuery.orderBy('year', descending: false)).called(1);
     });
 
+    test('複数チャンクで取得した結果もorderByに合わせて全体を並び替える', () async {
+      final memberIds = [
+        for (var index = 1; index <= 31; index++)
+          'member${index.toString().padLeft(3, '0')}',
+      ];
+      final firstQuery = MockQuery<Map<String, dynamic>>();
+      final secondQuery = MockQuery<Map<String, dynamic>>();
+      final firstOrderedQuery = MockQuery<Map<String, dynamic>>();
+      final secondOrderedQuery = MockQuery<Map<String, dynamic>>();
+      final firstSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final secondSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final firstDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final secondDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+
+      when(
+        mockCollection.where(
+          'memberId',
+          whereIn: argThat(
+            equals(memberIds.take(30).toList()),
+            named: 'whereIn',
+          ),
+        ),
+      ).thenReturn(firstQuery);
+      when(
+        mockCollection.where(
+          'memberId',
+          whereIn: argThat(
+            equals(memberIds.skip(30).toList()),
+            named: 'whereIn',
+          ),
+        ),
+      ).thenReturn(secondQuery);
+      when(
+        firstQuery.orderBy('year', descending: false),
+      ).thenReturn(firstOrderedQuery);
+      when(
+        secondQuery.orderBy('year', descending: false),
+      ).thenReturn(secondOrderedQuery);
+      when(firstOrderedQuery.get()).thenAnswer((_) async => firstSnapshot);
+      when(secondOrderedQuery.get()).thenAnswer((_) async => secondSnapshot);
+      when(firstSnapshot.docs).thenReturn([firstDoc]);
+      when(secondSnapshot.docs).thenReturn([secondDoc]);
+      when(firstDoc.id).thenReturn('event-2027');
+      when(
+        firstDoc.data(),
+      ).thenReturn({'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
+      when(secondDoc.id).thenReturn('event-2026');
+      when(
+        secondDoc.data(),
+      ).thenReturn({'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
+
+      final result = await service.getMemberEventsByMemberIds(
+        memberIds,
+        orderBy: const [OrderBy('year', descending: false)],
+      );
+
+      expect(result.map((event) => event.year), [2026, 2027]);
+    });
+
     test('memberId一覧が空ならFirestoreへ問い合わせず空リストを返す', () async {
       final result = await service.getMemberEventsByMemberIds(const []);
 
@@ -70,7 +135,10 @@ void main() {
 
     test('例外時は空リストを返す', () async {
       when(
-        mockCollection.where('memberId', whereIn: ['member001']),
+        mockCollection.where(
+          'memberId',
+          whereIn: argThat(equals(['member001']), named: 'whereIn'),
+        ),
       ).thenThrow(TestException('firestore error'));
 
       final result = await service.getMemberEventsByMemberIds(const [

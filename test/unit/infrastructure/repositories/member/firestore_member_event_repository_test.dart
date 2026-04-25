@@ -61,12 +61,13 @@ void main() {
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.id).thenReturn('existing-event-id');
       when(mockDoc.reference).thenReturn(mockDocRef);
       when(mockDocRef.update(any)).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
-      expect(savedId, '');
+      expect(savedId, 'existing-event-id');
       verify(
         mockDocRef.update(
           argThat(

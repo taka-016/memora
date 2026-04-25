@@ -38,6 +38,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
           snapshot.docs.map(FirestoreMemberEventMapper.fromFirestore),
         );
       }
+      _sortResults(results, orderBy);
       return results;
     } catch (e, stack) {
       logger.e(
@@ -50,10 +51,42 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
   }
 
   Iterable<List<String>> _chunkMemberIds(List<String> memberIds) sync* {
-    const chunkSize = 10;
+    // Firestoreのinクエリは最大30 disjunctionsまで。
+    const chunkSize = 30;
     for (var index = 0; index < memberIds.length; index += chunkSize) {
-      final end = (index + chunkSize).clamp(0, memberIds.length);
+      final end = (index + chunkSize).clamp(0, memberIds.length).toInt();
       yield memberIds.sublist(index, end);
+    }
+  }
+
+  void _sortResults(List<MemberEventDto> results, List<OrderBy>? orderBy) {
+    if (orderBy == null || orderBy.isEmpty) {
+      return;
+    }
+
+    results.sort((a, b) {
+      for (final order in orderBy) {
+        final comparison = _compareByField(a, b, order.field);
+        if (comparison != 0) {
+          return order.descending ? -comparison : comparison;
+        }
+      }
+      return 0;
+    });
+  }
+
+  int _compareByField(MemberEventDto a, MemberEventDto b, String field) {
+    switch (field) {
+      case 'id':
+        return a.id.compareTo(b.id);
+      case 'memberId':
+        return a.memberId.compareTo(b.memberId);
+      case 'year':
+        return a.year.compareTo(b.year);
+      case 'memo':
+        return a.memo.compareTo(b.memo);
+      default:
+        return 0;
     }
   }
 }

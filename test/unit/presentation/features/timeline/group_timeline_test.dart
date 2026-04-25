@@ -64,7 +64,7 @@ void main() {
     mockTripEntryQueryService = MockTripEntryQueryService();
     dvcPointUsageQueryService = const _FakeDvcPointUsageQueryService([]);
     groupEventQueryService = const _FakeGroupEventQueryService([]);
-    memberEventQueryService = const _FakeMemberEventQueryService([]);
+    memberEventQueryService = _FakeMemberEventQueryService([]);
     groupEventRepository = _FakeGroupEventRepository();
     memberEventRepository = _FakeMemberEventRepository();
 
@@ -690,6 +690,48 @@ void main() {
         ),
       ]);
       expect(find.textContaining('入学式'), findsNothing);
+    });
+
+    testWidgets('メンバーイベントはタイムラインのメンバー一覧単位でまとめて取得される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final memberEventService = _FakeMemberEventQueryService([
+        MemberEventDto(
+          id: 'event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '入学式',
+        ),
+        MemberEventDto(
+          id: 'event-2',
+          memberId: 'member2',
+          year: currentYear,
+          memo: '卒業式',
+        ),
+      ]);
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first,
+          GroupMemberDto(
+            memberId: 'member2',
+            groupId: 'group1',
+            displayName: 'ジロちゃん',
+            email: 'jiro@example.com',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(memberEventService: memberEventService),
+      );
+      await tester.pumpAndSettle();
+
+      expect(memberEventService.requestedMemberIds, [
+        ['member1', 'member2'],
+      ]);
+      expect(find.textContaining('入学式'), findsOneWidget);
+      expect(find.textContaining('卒業式'), findsOneWidget);
     });
 
     testWidgets('旅行行の取得Providerはoverride差し替え時に再評価される', (
@@ -1828,15 +1870,17 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
 }
 
 class _FakeMemberEventQueryService implements MemberEventQueryService {
-  const _FakeMemberEventQueryService(this.memberEvents);
+  _FakeMemberEventQueryService(this.memberEvents);
 
   final List<MemberEventDto> memberEvents;
+  final List<List<String>> requestedMemberIds = [];
 
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
     List<OrderBy>? orderBy,
   }) async {
+    requestedMemberIds.add(List<String>.from(memberIds));
     return memberEvents
         .where((event) => memberIds.contains(event.memberId))
         .toList();
