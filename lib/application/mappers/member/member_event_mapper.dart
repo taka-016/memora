@@ -6,10 +6,7 @@ class MemberEventMapper {
     return MemberEvent(
       id: dto.id,
       memberId: dto.memberId,
-      type: dto.type,
-      name: dto.name,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
+      year: dto.year,
       memo: dto.memo,
     );
   }
@@ -18,10 +15,7 @@ class MemberEventMapper {
     return MemberEventDto(
       id: entity.id,
       memberId: entity.memberId,
-      type: entity.type,
-      name: entity.name,
-      startDate: entity.startDate,
-      endDate: entity.endDate,
+      year: entity.year,
       memo: entity.memo,
     );
   }

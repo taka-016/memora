@@ -10,10 +10,32 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> saveMemberEvent(MemberEvent memberEvent) async {
-    await _firestore
+  Future<String> saveMemberEvent(MemberEvent memberEvent) async {
+    final snapshot = await _firestore
+        .collection('member_events')
+        .where('memberId', isEqualTo: memberEvent.memberId)
+        .where('year', isEqualTo: memberEvent.year)
+        .get();
+    final existingDoc = snapshot.docs.isEmpty ? null : snapshot.docs.first;
+
+    if (memberEvent.memo.isEmpty) {
+      if (existingDoc != null) {
+        await existingDoc.reference.delete();
+      }
+      return '';
+    }
+
+    if (existingDoc != null) {
+      await existingDoc.reference.update(
+        FirestoreMemberEventMapper.toUpdateFirestore(memberEvent),
+      );
+      return memberEvent.id;
+    }
+
+    final docRef = await _firestore
         .collection('member_events')
         .add(FirestoreMemberEventMapper.toCreateFirestore(memberEvent));
+    return docRef.id;
   }
 
   @override

@@ -37,6 +37,15 @@ void main() {
       repository = FirestoreMemberEventRepository(firestore: mockFirestore);
     });
 
+    void stubFindByMemberIdAndYear(String memberId, int year) {
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockMemberQuery);
+      when(
+        mockMemberQuery.where('year', isEqualTo: year),
+      ).thenReturn(mockMemberYearQuery);
+    }
+
     test('saveMemberEventは同一memberId・yearの既存イベントを更新する', () async {
       const memberEvent = MemberEvent(
         id: '',
@@ -47,7 +56,7 @@ void main() {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
@@ -82,7 +91,7 @@ void main() {
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
@@ -117,7 +126,7 @@ void main() {
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
@@ -141,7 +150,7 @@ void main() {
         memo: '',
       );
 
-      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
@@ -191,14 +200,5 @@ void main() {
       verify(mockWriteBatch.delete(mockDocRef2)).called(1);
       verify(mockWriteBatch.commit()).called(1);
     });
-
-    void _stubFindByMemberIdAndYear(String memberId, int year) {
-      when(
-        mockCollection.where('memberId', isEqualTo: memberId),
-      ).thenReturn(mockMemberQuery);
-      when(
-        mockMemberQuery.where('year', isEqualTo: year),
-      ).thenReturn(mockMemberYearQuery);
-    }
   });
 }
