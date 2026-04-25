@@ -1,9 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/member/member_event.dart';
+import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:memora/infrastructure/repositories/member/firestore_member_event_repository.dart';
-import 'package:memora/domain/entities/member/member_event.dart';
 
 @GenerateMocks([
   FirebaseFirestore,
@@ -22,51 +22,135 @@ void main() {
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
     late FirestoreMemberEventRepository repository;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
-    late MockQuery<Map<String, dynamic>> mockQuery;
+    late MockQuery<Map<String, dynamic>> mockMemberQuery;
+    late MockQuery<Map<String, dynamic>> mockMemberYearQuery;
 
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      mockQuery = MockQuery<Map<String, dynamic>>();
+      mockMemberQuery = MockQuery<Map<String, dynamic>>();
+      mockMemberYearQuery = MockQuery<Map<String, dynamic>>();
       when(
         mockFirestore.collection('member_events'),
       ).thenReturn(mockCollection);
       repository = FirestoreMemberEventRepository(firestore: mockFirestore);
     });
 
-    test('saveMemberEventがmember_events collectionにメンバーイベント情報をaddする', () async {
-      final memberEvent = MemberEvent(
-        id: 'memberevent001',
+    test('saveMemberEventは同一memberId・yearの既存イベントを更新する', () async {
+      const memberEvent = MemberEvent(
+        id: '',
         memberId: 'member001',
-        type: 'birthday',
-        name: 'テストイベント',
-        startDate: DateTime(2025, 6, 1),
-        endDate: DateTime(2025, 6, 2),
-        memo: 'テストメモ',
+        year: 2026,
+        memo: '入学式',
       );
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
+      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(
-        mockCollection.add(any),
-      ).thenAnswer((_) async => MockDocumentReference<Map<String, dynamic>>());
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.reference).thenReturn(mockDocRef);
+      when(mockDocRef.update(any)).thenAnswer((_) async {});
 
-      await repository.saveMemberEvent(memberEvent);
+      final savedId = await repository.saveMemberEvent(memberEvent);
 
+      expect(savedId, '');
+      verify(
+        mockDocRef.update(
+          argThat(
+            allOf([
+              containsPair('memberId', 'member001'),
+              containsPair('year', 2026),
+              containsPair('memo', '入学式'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+      verifyNever(mockCollection.add(any));
+    });
+
+    test('saveMemberEventは既存イベントがなくメモがある場合に新規作成する', () async {
+      const memberEvent = MemberEvent(
+        id: '',
+        memberId: 'member001',
+        year: 2026,
+        memo: '入学式',
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(mockDocRef.id).thenReturn('created-event-id');
+
+      final savedId = await repository.saveMemberEvent(memberEvent);
+
+      expect(savedId, 'created-event-id');
       verify(
         mockCollection.add(
           argThat(
             allOf([
               containsPair('memberId', 'member001'),
-              containsPair('type', 'birthday'),
-              containsPair('name', 'テストイベント'),
-              containsPair('memo', 'テストメモ'),
-              contains('startDate'),
-              contains('endDate'),
+              containsPair('year', 2026),
+              containsPair('memo', '入学式'),
               contains('createdAt'),
             ]),
           ),
         ),
       ).called(1);
+    });
+
+    test('saveMemberEventは既存イベントがありメモが空の場合に削除する', () async {
+      const memberEvent = MemberEvent(
+        id: '',
+        memberId: 'member001',
+        year: 2026,
+        memo: '',
+      );
+      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.reference).thenReturn(mockDocRef);
+      when(mockDocRef.delete()).thenAnswer((_) async {});
+
+      final savedId = await repository.saveMemberEvent(memberEvent);
+
+      expect(savedId, '');
+      verify(mockDocRef.delete()).called(1);
+      verifyNever(mockDocRef.update(any));
+      verifyNever(mockCollection.add(any));
+    });
+
+    test('saveMemberEventは既存イベントがなくメモが空の場合に何もしない', () async {
+      const memberEvent = MemberEvent(
+        id: '',
+        memberId: 'member001',
+        year: 2026,
+        memo: '',
+      );
+
+      _stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+
+      final savedId = await repository.saveMemberEvent(memberEvent);
+
+      expect(savedId, '');
+      verifyNever(mockCollection.add(any));
     });
 
     test('deleteMemberEventがmember_events collectionの該当ドキュメントを削除する', () async {
@@ -92,8 +176,8 @@ void main() {
 
       when(
         mockCollection.where('memberId', isEqualTo: memberId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
+      ).thenReturn(mockMemberQuery);
+      when(mockMemberQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
       when(mockDoc1.reference).thenReturn(mockDocRef1);
       when(mockDoc2.reference).thenReturn(mockDocRef2);
@@ -107,5 +191,14 @@ void main() {
       verify(mockWriteBatch.delete(mockDocRef2)).called(1);
       verify(mockWriteBatch.commit()).called(1);
     });
+
+    void _stubFindByMemberIdAndYear(String memberId, int year) {
+      when(
+        mockCollection.where('memberId', isEqualTo: memberId),
+      ).thenReturn(mockMemberQuery);
+      when(
+        mockMemberQuery.where('year', isEqualTo: year),
+      ).thenReturn(mockMemberYearQuery);
+    }
   });
 }

@@ -8,13 +8,17 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_event_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
+import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/domain/entities/group/group_event.dart';
+import 'package:memora/domain/entities/member/member_event.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
+import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:mockito/mockito.dart';
@@ -37,7 +41,9 @@ void main() {
   late MockTripEntryQueryService mockTripEntryQueryService;
   late DvcPointUsageQueryService dvcPointUsageQueryService;
   late GroupEventQueryService groupEventQueryService;
+  late MemberEventQueryService memberEventQueryService;
   late _FakeGroupEventRepository groupEventRepository;
+  late _FakeMemberEventRepository memberEventRepository;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -58,7 +64,9 @@ void main() {
     mockTripEntryQueryService = MockTripEntryQueryService();
     dvcPointUsageQueryService = const _FakeDvcPointUsageQueryService([]);
     groupEventQueryService = const _FakeGroupEventQueryService([]);
+    memberEventQueryService = const _FakeMemberEventQueryService([]);
     groupEventRepository = _FakeGroupEventRepository();
+    memberEventRepository = _FakeMemberEventRepository();
 
     // デフォルトの挙動を設定
     when(
@@ -75,7 +83,9 @@ void main() {
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
+    MemberEventQueryService? memberEventService,
     GroupEventRepository? groupEventRepo,
+    MemberEventRepository? memberEventRepo,
     VoidCallback? onBackPressed,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
     ValueChanged<GroupTimelineDestination>? onDestinationSelected,
@@ -100,8 +110,14 @@ void main() {
         groupEventQueryServiceProvider.overrideWithValue(
           groupEventService ?? groupEventQueryService,
         ),
+        memberEventQueryServiceProvider.overrideWithValue(
+          memberEventService ?? memberEventQueryService,
+        ),
         groupEventRepositoryProvider.overrideWithValue(
           groupEventRepo ?? groupEventRepository,
+        ),
+        memberEventRepositoryProvider.overrideWithValue(
+          memberEventRepo ?? memberEventRepository,
         ),
       ],
       child: MaterialApp(
@@ -127,7 +143,9 @@ void main() {
     TripEntryQueryService? tripEntryQueryService,
     DvcPointUsageQueryService? dvcPointUsageService,
     GroupEventQueryService? groupEventService,
+    MemberEventQueryService? memberEventService,
     GroupEventRepository? groupEventRepo,
+    MemberEventRepository? memberEventRepo,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
   }) {
     return ProviderScope(
@@ -141,8 +159,14 @@ void main() {
         groupEventQueryServiceProvider.overrideWithValue(
           groupEventService ?? groupEventQueryService,
         ),
+        memberEventQueryServiceProvider.overrideWithValue(
+          memberEventService ?? memberEventQueryService,
+        ),
         groupEventRepositoryProvider.overrideWithValue(
           groupEventRepo ?? groupEventRepository,
+        ),
+        memberEventRepositoryProvider.overrideWithValue(
+          memberEventRepo ?? memberEventRepository,
         ),
       ],
       child: MaterialApp(
@@ -496,6 +520,176 @@ void main() {
 
       expect(repository.deletedEventIds, ['event-1']);
       expect(find.text('運動会'), findsNothing);
+    });
+
+    testWidgets('メンバー行に対象年のメンバーイベントメモが固定表示の次の行に表示される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final birthday = DateTime(currentYear - 6, 1, 1);
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: '入学式',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('6歳'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('入学式'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('メンバーイベントセルをタップすると編集ダイアログが開く', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: '入学式',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(Key('member_event_cell_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('member_event_edit_dialog_member1_$currentYear')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+        findsOneWidget,
+      );
+      final textField = tester.widget<TextField>(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+      );
+      expect(textField.controller?.text, '入学式');
+    });
+
+    testWidgets('メンバーイベントのメモを保存するとmemberIdとyearで更新される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final repository = _FakeMemberEventRepository();
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: '入学式',
+            ),
+          ]),
+          memberEventRepo: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(Key('member_event_cell_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+        '卒業式',
+      );
+      await tester.tap(
+        find.byKey(Key('member_event_save_button_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(repository.savedEvents, [
+        MemberEvent(
+          id: 'event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '卒業式',
+        ),
+      ]);
+      expect(find.textContaining('卒業式'), findsOneWidget);
+    });
+
+    testWidgets('メンバーイベントのメモを空欄で保存すると保存契約に空メモを渡して削除扱いにする', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final repository = _FakeMemberEventRepository();
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: '入学式',
+            ),
+          ]),
+          memberEventRepo: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(Key('member_event_cell_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+        '',
+      );
+      await tester.tap(
+        find.byKey(Key('member_event_save_button_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(repository.savedEvents, [
+        MemberEvent(
+          id: 'event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '',
+        ),
+      ]);
+      expect(find.textContaining('入学式'), findsNothing);
     });
 
     testWidgets('旅行行の取得Providerはoverride差し替え時に再評価される', (
@@ -1633,6 +1827,22 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
   }
 }
 
+class _FakeMemberEventQueryService implements MemberEventQueryService {
+  const _FakeMemberEventQueryService(this.memberEvents);
+
+  final List<MemberEventDto> memberEvents;
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return memberEvents
+        .where((event) => memberIds.contains(event.memberId))
+        .toList();
+  }
+}
+
 class _StaticTimelineRowDefinition extends TimelineRowDefinition {
   const _StaticTimelineRowDefinition({required this.label});
 
@@ -1676,6 +1886,31 @@ class _FakeGroupEventRepository implements GroupEventRepository {
       return groupEvent.id;
     }
     return 'saved-${groupEvent.groupId}-${groupEvent.year}';
+  }
+}
+
+class _FakeMemberEventRepository implements MemberEventRepository {
+  final List<MemberEvent> savedEvents = [];
+  final List<String> deletedEventIds = [];
+
+  @override
+  Future<void> deleteMemberEvent(String memberEventId) async {
+    deletedEventIds.add(memberEventId);
+  }
+
+  @override
+  Future<void> deleteMemberEventsByMemberId(String memberId) async {}
+
+  @override
+  Future<String> saveMemberEvent(MemberEvent memberEvent) async {
+    savedEvents.add(memberEvent);
+    if (memberEvent.memo.isEmpty) {
+      return '';
+    }
+    if (memberEvent.id.isNotEmpty) {
+      return memberEvent.id;
+    }
+    return 'saved-${memberEvent.memberId}-${memberEvent.year}';
   }
 }
 
