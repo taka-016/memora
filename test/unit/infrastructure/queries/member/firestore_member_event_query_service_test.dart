@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
-import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_event_query_service.dart';
 import 'package:mockito/annotations.dart';
