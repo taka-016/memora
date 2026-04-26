@@ -46,7 +46,7 @@ void main() {
       ).thenReturn(mockMemberYearQuery);
     }
 
-    test('saveMemberEventは同一memberId・yearの既存イベントを更新する', () async {
+    test('saveMemberEventは同一memberId・yearの正規ドキュメントを更新する', () async {
       const memberEvent = MemberEvent(
         id: '',
         memberId: 'member001',
@@ -57,33 +57,35 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.id).thenReturn('existing-event-id');
-      when(mockDoc.reference).thenReturn(mockDocRef);
-      when(mockDocRef.update(any)).thenAnswer((_) async {});
+      when(mockDoc.id).thenReturn('member001_2026');
+      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
-      expect(savedId, 'existing-event-id');
+      expect(savedId, 'member001_2026');
       verify(
-        mockDocRef.update(
+        mockDocRef.set(
           argThat(
             allOf([
               containsPair('memberId', 'member001'),
               containsPair('year', 2026),
               containsPair('memo', '入学式'),
               contains('updatedAt'),
+              isNot(contains('createdAt')),
             ]),
           ),
+          any,
         ),
       ).called(1);
       verifyNever(mockCollection.add(any));
     });
 
-    test('saveMemberEventは既存イベントがなくメモがある場合に新規作成する', () async {
+    test('saveMemberEventは既存イベントがなくメモがある場合に正規ドキュメントを作成する', () async {
       const memberEvent = MemberEvent(
         id: '',
         memberId: 'member001',
@@ -93,18 +95,18 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
-      when(mockCollection.add(any)).thenAnswer((_) async => mockDocRef);
-      when(mockDocRef.id).thenReturn('created-event-id');
+      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
-      expect(savedId, 'created-event-id');
+      expect(savedId, 'member001_2026');
       verify(
-        mockCollection.add(
+        mockDocRef.set(
           argThat(
             allOf([
               containsPair('memberId', 'member001'),
@@ -113,8 +115,44 @@ void main() {
               contains('createdAt'),
             ]),
           ),
+          any,
         ),
       ).called(1);
+      verifyNever(mockCollection.add(any));
+    });
+
+    test('saveMemberEventは同一memberId・yearの重複ドキュメントを削除する', () async {
+      const memberEvent = MemberEvent(
+        id: '',
+        memberId: 'member001',
+        year: 2026,
+        memo: '入学式',
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDuplicateDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockDuplicateDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
+
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
+      when(
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([mockDuplicateDoc]);
+      when(mockDuplicateDoc.id).thenReturn('legacy-event-id');
+      when(mockDuplicateDoc.reference).thenReturn(mockDuplicateDocRef);
+      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
+
+      final savedId = await repository.saveMemberEvent(memberEvent);
+
+      expect(savedId, 'member001_2026');
+      verify(mockDocRef.set(any, any)).called(1);
+      verify(mockFirestore.batch()).called(1);
+      verify(mockWriteBatch.delete(mockDuplicateDocRef)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
     });
 
     test('saveMemberEventは既存イベントがありメモが空の場合に削除する', () async {
@@ -126,40 +164,52 @@ void main() {
       );
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
+      when(mockDoc.id).thenReturn('member001_2026');
       when(mockDoc.reference).thenReturn(mockDocRef);
-      when(mockDocRef.delete()).thenAnswer((_) async {});
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
       expect(savedId, '');
-      verify(mockDocRef.delete()).called(1);
-      verifyNever(mockDocRef.update(any));
+      verify(mockWriteBatch.delete(mockDocRef)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
+      verifyNever(mockDocRef.set(any, any));
       verifyNever(mockCollection.add(any));
     });
 
-    test('saveMemberEventは既存イベントがなくメモが空の場合に何もしない', () async {
+    test('saveMemberEventは既存イベントがなくメモが空の場合に新規作成しない', () async {
       const memberEvent = MemberEvent(
         id: '',
         memberId: 'member001',
         year: 2026,
         memo: '',
       );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockWriteBatch = MockWriteBatch();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
       when(
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
+      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
+      when(mockWriteBatch.commit()).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
       expect(savedId, '');
+      verify(mockWriteBatch.delete(mockDocRef)).called(1);
+      verify(mockWriteBatch.commit()).called(1);
       verifyNever(mockCollection.add(any));
     });
 
