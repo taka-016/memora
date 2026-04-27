@@ -130,7 +130,9 @@ void main() {
       final result = await service.getMemberEventsByMemberIds(const []);
 
       expect(result, isEmpty);
-      verifyNever(mockFirestore.collection('member_events'));
+      verifyNever(
+        mockCollection.where('memberId', whereIn: anyNamed('whereIn')),
+      );
     });
 
     test('例外時は空リストを返す', () async {
