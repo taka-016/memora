@@ -94,6 +94,7 @@ void main() {
         memo: '入学式',
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
@@ -101,6 +102,8 @@ void main() {
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(false);
       when(mockDocRef.set(any, any)).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
@@ -173,6 +176,7 @@ void main() {
       final mockDuplicateDoc =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockDuplicateDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockWriteBatch = MockWriteBatch();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
@@ -183,6 +187,8 @@ void main() {
       when(mockQuerySnapshot.docs).thenReturn([mockDuplicateDoc]);
       when(mockDuplicateDoc.id).thenReturn('legacy-event-id');
       when(mockDuplicateDoc.reference).thenReturn(mockDuplicateDocRef);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(false);
       when(mockDocRef.set(any, any)).thenAnswer((_) async {});
       when(mockFirestore.batch()).thenReturn(mockWriteBatch);
       when(mockWriteBatch.commit()).thenAnswer((_) async {});

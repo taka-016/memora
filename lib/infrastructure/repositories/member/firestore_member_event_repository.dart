@@ -25,7 +25,12 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     }
 
     final existingDocIds = snapshot.docs.map((doc) => doc.id).toSet();
-    final firestoreData = existingDocIds.contains(docId)
+    final docSnapshot = existingDocIds.contains(docId)
+        ? null
+        : await docRef.get();
+    final existsCanonicalDoc =
+        existingDocIds.contains(docId) || (docSnapshot?.exists ?? false);
+    final firestoreData = existsCanonicalDoc
         ? FirestoreMemberEventMapper.toUpdateFirestore(memberEvent)
         : FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
 
