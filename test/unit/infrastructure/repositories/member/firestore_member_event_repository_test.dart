@@ -8,6 +8,7 @@ import 'package:mockito/mockito.dart';
 @GenerateMocks([
   FirebaseFirestore,
   CollectionReference,
+  DocumentSnapshot,
   DocumentReference,
   QuerySnapshot,
   QueryDocumentSnapshot,
@@ -119,6 +120,46 @@ void main() {
         ),
       ).called(1);
       verifyNever(mockCollection.add(any));
+    });
+
+    test('saveMemberEventは正規ドキュメントが存在する場合に更新として保存する', () async {
+      const memberEvent = MemberEvent(
+        id: '',
+        memberId: 'member001',
+        year: 2026,
+        memo: '入学式',
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+
+      stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
+      when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
+      when(
+        mockMemberYearQuery.get(),
+      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockQuerySnapshot.docs).thenReturn([]);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
+
+      final savedId = await repository.saveMemberEvent(memberEvent);
+
+      expect(savedId, 'member001_2026');
+      verify(mockDocRef.get()).called(1);
+      verify(
+        mockDocRef.set(
+          argThat(
+            allOf([
+              containsPair('memberId', 'member001'),
+              containsPair('year', 2026),
+              containsPair('memo', '入学式'),
+              contains('updatedAt'),
+              isNot(contains('createdAt')),
+            ]),
+          ),
+          any,
+        ),
+      ).called(1);
     });
 
     test('saveMemberEventは同一memberId・yearの重複ドキュメントを削除する', () async {
