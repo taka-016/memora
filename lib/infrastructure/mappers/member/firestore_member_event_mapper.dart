@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/domain/entities/member/member_event.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreMemberEventMapper {
@@ -11,7 +12,7 @@ class FirestoreMemberEventMapper {
     return MemberEventDto(
       id: doc.id,
       memberId: data['memberId'] as String? ?? '',
-      year: data['year'] as int? ?? 0,
+      year: FirestoreMapperValueParser.asInt(data['year']),
       memo: data['memo'] as String? ?? '',
     );
   }

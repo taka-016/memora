@@ -38,6 +38,18 @@ void main() {
       expect(result.memo, '');
     });
 
+    test('Firestoreのyearがdoubleでもintへ変換できる', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.id).thenReturn('event003');
+      when(
+        doc.data(),
+      ).thenReturn({'memberId': 'member001', 'year': 2026.0, 'memo': '入学式'});
+
+      final result = FirestoreMemberEventMapper.fromFirestore(doc);
+
+      expect(result.year, 2026);
+    });
+
     test('MemberEventを新規作成用FirestoreのMapへ変換できる', () {
       const memberEvent = MemberEvent(
         id: '',
