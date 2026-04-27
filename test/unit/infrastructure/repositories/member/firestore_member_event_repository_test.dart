@@ -194,7 +194,6 @@ void main() {
         memo: '',
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
-      final mockWriteBatch = MockWriteBatch();
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
@@ -202,14 +201,12 @@ void main() {
         mockMemberYearQuery.get(),
       ).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
-      when(mockFirestore.batch()).thenReturn(mockWriteBatch);
-      when(mockWriteBatch.commit()).thenAnswer((_) async {});
 
       final savedId = await repository.saveMemberEvent(memberEvent);
 
       expect(savedId, '');
-      verify(mockWriteBatch.delete(mockDocRef)).called(1);
-      verify(mockWriteBatch.commit()).called(1);
+      verifyNever(mockFirestore.batch());
+      verifyNever(mockDocRef.delete());
       verifyNever(mockCollection.add(any));
     });
 

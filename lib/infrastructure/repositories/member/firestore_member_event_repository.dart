@@ -20,7 +20,7 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
         .get();
 
     if (memberEvent.memo.isEmpty) {
-      await _deleteMemberEventDocs(snapshot.docs, docRef, docId);
+      await _deleteMemberEventDocs(snapshot.docs);
       return '';
     }
 
@@ -77,21 +77,15 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
 
   Future<void> _deleteMemberEventDocs(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-    DocumentReference<Map<String, dynamic>> docRef,
-    String docId,
   ) async {
-    final batch = _firestore.batch();
-    var canonicalDocFound = false;
-
-    for (final doc in docs) {
-      if (doc.id == docId) {
-        canonicalDocFound = true;
-      }
-      batch.delete(doc.reference);
+    if (docs.isEmpty) {
+      return;
     }
 
-    if (!canonicalDocFound) {
-      batch.delete(docRef);
+    final batch = _firestore.batch();
+
+    for (final doc in docs) {
+      batch.delete(doc.reference);
     }
 
     await batch.commit();
