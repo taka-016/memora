@@ -4,6 +4,7 @@ import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
@@ -16,6 +17,7 @@ import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_contract_q
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_usage_query_service.dart';
 import 'package:memora/infrastructure/queries/group/firestore_group_event_query_service.dart';
 import 'package:memora/infrastructure/queries/group/firestore_group_query_service.dart';
+import 'package:memora/infrastructure/queries/member/firestore_member_event_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
@@ -44,6 +46,12 @@ final taskQueryServiceProvider = Provider<TaskQueryService>((ref) {
 
 final memberQueryServiceProvider = Provider<MemberQueryService>((ref) {
   return QueryServiceFactory.create<MemberQueryService>(ref: ref);
+});
+
+final memberEventQueryServiceProvider = Provider<MemberEventQueryService>((
+  ref,
+) {
+  return QueryServiceFactory.create<MemberEventQueryService>(ref: ref);
 });
 
 final memberInvitationQueryServiceProvider =
@@ -102,6 +110,9 @@ class QueryServiceFactory {
     }
     if (T == MemberQueryService) {
       return FirestoreMemberQueryService() as T;
+    }
+    if (T == MemberEventQueryService) {
+      return FirestoreMemberEventQueryService() as T;
     }
     if (T == MemberInvitationQueryService) {
       return FirestoreMemberInvitationQueryService() as T;

@@ -10,10 +10,28 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> saveMemberEvent(MemberEvent memberEvent) async {
-    await _firestore
-        .collection('member_events')
-        .add(FirestoreMemberEventMapper.toCreateFirestore(memberEvent));
+  Future<String> saveMemberEvent(MemberEvent memberEvent) async {
+    final collection = _firestore.collection('member_events');
+    final docId = _memberEventDocId(memberEvent);
+    final docRef = collection.doc(docId);
+    final snapshot = await collection
+        .where('memberId', isEqualTo: memberEvent.memberId)
+        .where('year', isEqualTo: memberEvent.year)
+        .get();
+
+    if (memberEvent.memo.isEmpty) {
+      await _deleteMemberEventDocs(snapshot.docs);
+      return '';
+    }
+
+    final existingDocIds = snapshot.docs.map((doc) => doc.id).toSet();
+    final firestoreData = existingDocIds.contains(docId)
+        ? FirestoreMemberEventMapper.toUpdateFirestore(memberEvent)
+        : FirestoreMemberEventMapper.toCreateFirestore(memberEvent);
+
+    await docRef.set(firestoreData, SetOptions(merge: true));
+    await _deleteDuplicateDocs(snapshot.docs, docId);
+    return docId;
   }
 
   @override
@@ -30,6 +48,43 @@ class FirestoreMemberEventRepository implements MemberEventRepository {
         .get();
 
     for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
+
+  String _memberEventDocId(MemberEvent memberEvent) {
+    final memberId = Uri.encodeComponent(memberEvent.memberId);
+    return '${memberId}_${memberEvent.year}';
+  }
+
+  Future<void> _deleteDuplicateDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    String docId,
+  ) async {
+    final duplicateDocs = docs.where((doc) => doc.id != docId).toList();
+    if (duplicateDocs.isEmpty) {
+      return;
+    }
+
+    final batch = _firestore.batch();
+    for (final doc in duplicateDocs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
+  Future<void> _deleteMemberEventDocs(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) async {
+    if (docs.isEmpty) {
+      return;
+    }
+
+    final batch = _firestore.batch();
+
+    for (final doc in docs) {
       batch.delete(doc.reference);
     }
 

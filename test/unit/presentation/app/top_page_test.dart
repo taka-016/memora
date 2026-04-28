@@ -242,7 +242,7 @@ void main() {
     ).thenAnswer((_) async {});
     when(
       mockMemberEventRepository.saveMemberEvent(any),
-    ).thenAnswer((_) async {});
+    ).thenAnswer((_) async => 'member-event-1');
     when(
       mockMemberInvitationRepository.deleteMemberInvitation(any),
     ).thenAnswer((_) async {});
