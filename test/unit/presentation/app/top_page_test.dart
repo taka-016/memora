@@ -4,14 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
@@ -388,6 +391,9 @@ void main() {
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
       groupEventQueryServiceProvider.overrideWithValue(
         mockGroupEventQueryService,
+      ),
+      memberEventQueryServiceProvider.overrideWithValue(
+        const _EmptyMemberEventQueryService(),
       ),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
@@ -1390,4 +1396,16 @@ void main() {
       expect(fakeAuthNotifier.logoutCalled, isTrue);
     });
   });
+}
+
+class _EmptyMemberEventQueryService implements MemberEventQueryService {
+  const _EmptyMemberEventQueryService();
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return [];
+  }
 }
