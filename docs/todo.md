@@ -32,12 +32,14 @@
 
 ## 地図画面
 
-- Places API呼び出しを`googleapis`の`places_v1`経由に移行し、URL直接呼び出しを廃止する
-  - `googleapis`を依存関係に追加し、最新の利用方法を確認してから実装する
-  - 地名検索はPlaces API NewのText Searchへ寄せ、`PlacesApi.places.searchText`から`LocationCandidateDto`へ変換する
-  - ピン位置からの場所名取得は`PlacesApi.places.searchNearby`へ寄せ、`NearbyLocationService`の外部契約を維持する
-  - `http`による`maps.googleapis.com`・`places.googleapis.com`へのPlaces API直接呼び出しを削除する
-  - FieldMask、言語指定、空結果、エラー時の扱いを既存仕様に合わせてテストで確認する
+- Places API呼び出しをPlaces SDK for Android経由に移行し、URL直接呼び出しを廃止する
+  - 目的はPlaces APIキーにAndroidアプリ制限を有効化し、パッケージ名と署名証明書フィンガープリントで利用元を制限できるようにすること
+  - Android側でPlaces SDK for Android (New)を導入し、`Places.initializeWithNewPlacesApiEnabled`でPlaces API (New)を初期化する
+  - DartからはMethodChannelまたはPigeon経由でAndroidのPlaces SDK呼び出しを行い、Presentation層が`domain/*`や`infrastructure/*`を直接参照しない構成を維持する
+  - 地名検索はPlaces SDK for AndroidのText Search (New)へ寄せ、`PlacesClient.searchByText`の結果から`LocationCandidateDto`へ変換する
+  - ピン位置からの場所名取得はPlaces SDK for AndroidのNearby Search (New)へ寄せ、半径50m・最大1件・人気順で取得し、`NearbyLocationService`の外部契約を維持する
+  - 取得フィールドは現在と同等の`DISPLAY_NAME`、`FORMATTED_ADDRESS`、`LOCATION`に絞り、場所名取得では`DISPLAY_NAME`のみを要求する
+  - 日本語ロケール、空結果、APIキー未設定、SDKエラー時の扱いを既存仕様に合わせてテストで確認する
 
 ## マップピンボトムシート
 
