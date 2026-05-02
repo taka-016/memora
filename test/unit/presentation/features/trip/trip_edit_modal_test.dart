@@ -6,7 +6,7 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/nearby_location_service.dart';
+import 'package:memora/application/services/nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
