@@ -39,7 +39,6 @@ android {
         FileInputStream(localPropertiesFile).use { localProperties.load(it) }
     }
     val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
-    val placesApiKey = localProperties.getProperty("PLACES_API_KEY") ?: mapsApiKey
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -52,7 +51,7 @@ android {
         versionName = flutter.versionName
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
-        buildConfigField("String", "PLACES_API_KEY", "\"$placesApiKey\"")
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
 
     buildFeatures {

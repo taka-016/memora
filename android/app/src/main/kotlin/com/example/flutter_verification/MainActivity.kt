@@ -79,11 +79,11 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun getPlacesClient(result: MethodChannel.Result): PlacesClient? {
-        val apiKey = BuildConfig.PLACES_API_KEY
+        val apiKey = BuildConfig.MAPS_API_KEY
         if (apiKey.isBlank()) {
             result.error(
-                "PLACES_API_KEY_MISSING",
-                "PLACES_API_KEY or MAPS_API_KEY is not set in local.properties.",
+                "MAPS_API_KEY_MISSING",
+                "MAPS_API_KEY is not set in local.properties.",
                 null,
             )
             return null
