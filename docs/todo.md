@@ -32,13 +32,6 @@
 
 ## 地図画面
 
-- Places API呼び出しを`googleapis`の`places_v1`経由に移行し、URL直接呼び出しを廃止する
-  - `googleapis`を依存関係に追加し、最新の利用方法を確認してから実装する
-  - 地名検索はPlaces API NewのText Searchへ寄せ、`PlacesApi.places.searchText`から`LocationCandidateDto`へ変換する
-  - ピン位置からの場所名取得は`PlacesApi.places.searchNearby`へ寄せ、`NearbyLocationService`の外部契約を維持する
-  - `http`による`maps.googleapis.com`・`places.googleapis.com`へのPlaces API直接呼び出しを削除する
-  - FieldMask、言語指定、空結果、エラー時の扱いを既存仕様に合わせてテストで確認する
-
 ## マップピンボトムシート
 
 
