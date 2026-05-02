@@ -6,18 +6,36 @@ import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/infrastructure/services/google_api_key_client.dart';
 
 class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
-  final String apiKey;
-  final places.PlacesApi _placesApi;
-
-  GooglePlacesApiNearbyLocationService({
-    required this.apiKey,
+  factory GooglePlacesApiNearbyLocationService({
+    required String apiKey,
     http.Client? httpClient,
     places.PlacesApi? placesApi,
-  }) : _placesApi =
-           placesApi ??
-           places.PlacesApi(
-             GoogleApiKeyClient(apiKey: apiKey, inner: httpClient),
-           );
+  }) {
+    final placesHttpClient = GoogleApiKeyClient(
+      apiKey: apiKey,
+      inner: httpClient,
+    );
+    return GooglePlacesApiNearbyLocationService._(
+      apiKey: apiKey,
+      httpClient: placesHttpClient,
+      placesApi: placesApi ?? places.PlacesApi(placesHttpClient),
+    );
+  }
+
+  GooglePlacesApiNearbyLocationService._({
+    required this.apiKey,
+    required http.Client httpClient,
+    required places.PlacesApi placesApi,
+  }) : _httpClient = httpClient,
+       _placesApi = placesApi;
+
+  final String apiKey;
+  final http.Client _httpClient;
+  final places.PlacesApi _placesApi;
+
+  void close() {
+    _httpClient.close();
+  }
 
   @override
   Future<String?> getLocationName(Coordinate coordinate) async {

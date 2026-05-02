@@ -7,6 +7,8 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 
+import '../../../helpers/test_exception.dart';
+
 void main() {
   group('GooglePlacesApiNearbyLocationService', () {
     late NearbyLocationService service;
@@ -70,7 +72,7 @@ void main() {
     test('API呼び出しが失敗した場合はnullを返す', () async {
       service = GooglePlacesApiNearbyLocationService(
         apiKey: 'dummy',
-        httpClient: MockClient((_) async => http.Response('Error', 500)),
+        httpClient: MockClient((_) async => throw TestException()),
       );
 
       const location = Coordinate(latitude: 35.6586, longitude: 139.7454);

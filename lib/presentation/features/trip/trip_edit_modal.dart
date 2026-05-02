@@ -114,7 +114,7 @@ class TripEditModal extends HookConsumerWidget {
 
     useEffect(() {
       return () {
-        internalNearbyLocationService?.httpClient.close();
+        internalNearbyLocationService?.close();
       };
     }, [internalNearbyLocationService]);
 
