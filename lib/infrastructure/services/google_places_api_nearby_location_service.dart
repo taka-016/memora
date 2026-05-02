@@ -1,17 +1,23 @@
-import 'dart:convert';
-import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/core/models/coordinate.dart';
+import 'package:googleapis/places/v1.dart' as places;
 import 'package:http/http.dart' as http;
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/domain/services/nearby_location_service.dart';
+import 'package:memora/infrastructure/services/google_api_key_client.dart';
 
 class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
   final String apiKey;
-  final http.Client httpClient;
+  final places.PlacesApi _placesApi;
 
   GooglePlacesApiNearbyLocationService({
     required this.apiKey,
     http.Client? httpClient,
-  }) : httpClient = httpClient ?? http.Client();
+    places.PlacesApi? placesApi,
+  }) : _placesApi =
+           placesApi ??
+           places.PlacesApi(
+             GoogleApiKeyClient(apiKey: apiKey, inner: httpClient),
+           );
 
   @override
   Future<String?> getLocationName(Coordinate coordinate) async {
@@ -33,47 +39,32 @@ class GooglePlacesApiNearbyLocationService implements NearbyLocationService {
         return null;
       }
 
-      final url = Uri.parse(
-        'https://places.googleapis.com/v1/places:searchNearby',
+      final response = await _placesApi.places.searchNearby(
+        places.GoogleMapsPlacesV1SearchNearbyRequest(
+          maxResultCount: 1,
+          rankPreference: 'POPULARITY',
+          languageCode: 'ja',
+          locationRestriction:
+              places.GoogleMapsPlacesV1SearchNearbyRequestLocationRestriction(
+                circle: places.GoogleMapsPlacesV1Circle(
+                  center: places.GoogleTypeLatLng(
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude,
+                  ),
+                  radius: 50.0,
+                ),
+              ),
+        ),
+        $fields: 'places.displayName',
       );
 
-      final response = await httpClient.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask':
-              'places.displayName,places.primaryType,places.types',
-        },
-        body: jsonEncode({
-          'maxResultCount': 1,
-          'rankPreference': 'POPULARITY',
-          'languageCode': 'ja',
-          'locationRestriction': {
-            'circle': {
-              'center': {
-                'latitude': coordinate.latitude,
-                'longitude': coordinate.longitude,
-              },
-              'radius': 50.0,
-            },
-          },
-        }),
-      );
+      final responsePlaces = response.places;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final places = data['places'] as List?;
+      if (responsePlaces != null && responsePlaces.isNotEmpty) {
+        final displayName = responsePlaces.first.displayName?.text;
 
-        if (places != null && places.isNotEmpty) {
-          final place = places.first;
-          final displayName = place['displayName']?['text'];
-
-          if (displayName != null &&
-              displayName is String &&
-              displayName.isNotEmpty) {
-            return displayName;
-          }
+        if (displayName != null && displayName.isNotEmpty) {
+          return displayName;
         }
       }
 
