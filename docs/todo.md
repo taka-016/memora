@@ -32,7 +32,7 @@
 
 ## 地図画面
 
-- Places API呼び出しをPlaces SDK for Android経由に移行し、URL直接呼び出しと`googleapis`経由の呼び出しを廃止する
+- Places API呼び出しをPlaces SDK for Android経由に移行し、URL直接呼び出しを廃止する
   - 目的はPlaces APIキーにAndroidアプリ制限を有効化し、パッケージ名と署名証明書フィンガープリントで利用元を制限できるようにすること
   - Android側でPlaces SDK for Android (New)を導入し、`Places.initializeWithNewPlacesApiEnabled`でPlaces API (New)を初期化する
   - DartからはMethodChannelまたはPigeon経由でAndroidのPlaces SDK呼び出しを行い、Presentation層が`domain/*`や`infrastructure/*`を直接参照しない構成を維持する
