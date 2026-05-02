@@ -29,7 +29,7 @@ class RouteInfoServiceFactory {
     switch (apiType) {
       case RouteInfoApiType.googleRoutes:
         return GoogleRoutesApiRouteInfoService(
-          apiKey: Env.googleMapsApiKey,
+          apiKey: Env.googlePlacesApiKey,
           httpClient: ref.watch(routeInfoHttpClientProvider),
         );
       case RouteInfoApiType.local:
