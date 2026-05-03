@@ -547,6 +547,14 @@
 - pinデータが存在する場合、地図の初期位置は最初のpin位置とする
 - ボトムシートを開いた状態で別のピンをタップすると、ボトムシートの内容が更新されるようにする
 - 場所検索結果から追加したピンは検索結果の場所名をそのまま保存し、手動追加したピンのみ周辺検索で場所名を取得する
+- Places API呼び出しをPlaces SDK for Android経由に移行し、URL直接呼び出しを廃止する
+  - 目的はPlaces APIキーにAndroidアプリ制限を有効化し、パッケージ名と署名証明書フィンガープリントで利用元を制限できるようにすること
+  - Android側でPlaces SDK for Android (New)を導入し、`Places.initializeWithNewPlacesApiEnabled`でPlaces API (New)を初期化する
+  - DartからはMethodChannel経由でAndroidのPlaces SDK呼び出しを行い、Presentation層が`domain/*`や`infrastructure/*`を直接参照しない構成を維持する
+  - 地名検索はPlaces SDK for AndroidのText Search (New)へ寄せ、`PlacesClient.searchByText`の結果から`LocationCandidateDto`へ変換する
+  - ピン位置からの場所名取得はPlaces SDK for AndroidのNearby Search (New)へ寄せ、半径50m・最大1件・人気順で取得し、`NearbyLocationService`の外部契約を維持する
+  - 取得フィールドは現在と同等の`DISPLAY_NAME`、`FORMATTED_ADDRESS`、`LOCATION`に絞り、場所名取得では`DISPLAY_NAME`のみを要求する
+  - 日本語ロケール、空結果、APIキー未設定、SDKエラー時の扱いを既存仕様に合わせてテストで確認する
 
 ## マップピンボトムシート
 

@@ -32,7 +32,7 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    // local.properties から MAPS_API_KEY を取得して manifestPlaceholders に渡す
+    // local.properties からAPIキーを取得してAndroid側へ渡す
     val localProperties = Properties()
     val localPropertiesFile = rootProject.file("local.properties")
     if (localPropertiesFile.exists()) {
@@ -45,12 +45,17 @@ android {
         applicationId = "com.example.memora"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = maxOf(flutter.minSdkVersion, 23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
     
     signingConfigs {
@@ -73,4 +78,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.google.android.libraries.places:places:5.1.1")
 }

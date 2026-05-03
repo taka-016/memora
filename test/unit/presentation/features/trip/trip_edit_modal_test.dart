@@ -5,28 +5,37 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
-Widget _createApp({required Widget child}) {
+Widget _createApp({
+  required Widget child,
+  FakeGetNearbyLocationNameUsecase? getNearbyLocationNameUsecase,
+}) {
   return ProviderScope(
+    overrides: [
+      if (getNearbyLocationNameUsecase != null)
+        getNearbyLocationNameUsecaseProvider.overrideWithValue(
+          getNearbyLocationNameUsecase,
+        ),
+    ],
     child: MaterialApp(home: Scaffold(body: child)),
   );
 }
 
-class FakeNearbyLocationService implements NearbyLocationService {
-  FakeNearbyLocationService({this.locationName});
+class FakeGetNearbyLocationNameUsecase implements GetNearbyLocationNameUsecase {
+  FakeGetNearbyLocationNameUsecase({this.locationName});
 
   final String? locationName;
   int callCount = 0;
   Coordinate? lastCoordinate;
 
   @override
-  Future<String?> getLocationName(Coordinate coordinate) async {
+  Future<String?> execute(Coordinate coordinate) async {
     callCount += 1;
     lastCoordinate = coordinate;
     return locationName;
@@ -218,13 +227,14 @@ void main() {
     });
 
     testWidgets('手動でピンを追加した時だけ場所名を取得すること', (WidgetTester tester) async {
-      final fakeNearbyLocationService = FakeNearbyLocationService(
+      final fakeGetNearbyLocationNameUsecase = FakeGetNearbyLocationNameUsecase(
         locationName: '取得した場所名',
       );
       TripEntryDto? savedTripEntry;
 
       await tester.pumpWidget(
         _createApp(
+          getNearbyLocationNameUsecase: fakeGetNearbyLocationNameUsecase,
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
@@ -232,7 +242,6 @@ void main() {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: false,
-            nearbyLocationService: fakeNearbyLocationService,
           ),
         ),
       );
@@ -253,9 +262,9 @@ void main() {
       });
       await tester.pumpAndSettle();
 
-      expect(fakeNearbyLocationService.callCount, 1);
+      expect(fakeGetNearbyLocationNameUsecase.callCount, 1);
       expect(
-        fakeNearbyLocationService.lastCoordinate,
+        fakeGetNearbyLocationNameUsecase.lastCoordinate,
         const Coordinate(latitude: 35.681236, longitude: 139.767125),
       );
 
@@ -280,7 +289,7 @@ void main() {
     testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
       WidgetTester tester,
     ) async {
-      final fakeNearbyLocationService = FakeNearbyLocationService(
+      final fakeGetNearbyLocationNameUsecase = FakeGetNearbyLocationNameUsecase(
         locationName: '取得してはいけない場所名',
       );
       TripEntryDto? savedTripEntry;
@@ -292,6 +301,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
+          getNearbyLocationNameUsecase: fakeGetNearbyLocationNameUsecase,
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
@@ -299,7 +309,6 @@ void main() {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: false,
-            nearbyLocationService: fakeNearbyLocationService,
           ),
         ),
       );
@@ -316,7 +325,7 @@ void main() {
       googleMapView.onSearchedLocationSelected?.call(candidate);
       await tester.pumpAndSettle();
 
-      expect(fakeNearbyLocationService.callCount, 0);
+      expect(fakeGetNearbyLocationNameUsecase.callCount, 0);
 
       final selectVisitLocationView = tester.widget<SelectVisitLocationView>(
         find.byType(SelectVisitLocationView),
@@ -416,7 +425,6 @@ void main() {
             ),
             onSave: (TripEntryDto tripEntry) async {},
             isTestEnvironment: false,
-            nearbyLocationService: FakeNearbyLocationService(),
           ),
         ),
       );
@@ -1078,7 +1086,6 @@ void main() {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: false,
-            nearbyLocationService: FakeNearbyLocationService(),
           ),
         ),
       );

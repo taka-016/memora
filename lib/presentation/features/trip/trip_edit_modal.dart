@@ -7,11 +7,9 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/nearby_location_service.dart';
-import 'package:memora/env/env.dart';
-import 'package:memora/infrastructure/services/google_places_api_nearby_location_service.dart';
 import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
@@ -32,7 +30,6 @@ class TripEditModal extends HookConsumerWidget {
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
-    this.nearbyLocationService,
   });
 
   final String groupId;
@@ -41,7 +38,6 @@ class TripEditModal extends HookConsumerWidget {
   final Future<void> Function(TripEntryDto) onSave;
   final bool isTestEnvironment;
   final int? year;
-  final NearbyLocationService? nearbyLocationService;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,14 +47,9 @@ class TripEditModal extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
-    final internalNearbyLocationService = useMemoized(
-      () => nearbyLocationService == null
-          ? GooglePlacesApiNearbyLocationService(apiKey: Env.googlePlacesApiKey)
-          : null,
-      [nearbyLocationService],
+    final getNearbyLocationNameUsecase = ref.read(
+      getNearbyLocationNameUsecaseProvider,
     );
-    final effectiveNearbyLocationService =
-        nearbyLocationService ?? internalNearbyLocationService;
 
     final initialTripForComparison = useMemoized(() {
       final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
@@ -112,12 +103,6 @@ class TripEditModal extends HookConsumerWidget {
       return null;
     }, [draftTripEntry.value, initialTripForComparison]);
 
-    useEffect(() {
-      return () {
-        internalNearbyLocationService?.httpClient.close();
-      };
-    }, [internalNearbyLocationService]);
-
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
       selectedPin.value = null;
@@ -136,9 +121,7 @@ class TripEditModal extends HookConsumerWidget {
 
     Future<String?> getLocationName(Coordinate coordinate) async {
       try {
-        return await effectiveNearbyLocationService!.getLocationName(
-          coordinate,
-        );
+        return await getNearbyLocationNameUsecase.execute(coordinate);
       } catch (e, stack) {
         logger.e(
           'TripEditModal.getLocationName: ${e.toString()}',

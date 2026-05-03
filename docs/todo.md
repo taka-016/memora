@@ -30,19 +30,7 @@
   - 旅行の訪問場所・タスク管理は維持し、経路検索廃止後も既存の旅行編集フローが成立するようにする
   - 仕様書・done/todo内の経路検索に関する記述を廃止方針に合わせて整理する
 
-## 地図画面
-
-- Places API呼び出しをPlaces SDK for Android経由に移行し、URL直接呼び出しを廃止する
-  - 目的はPlaces APIキーにAndroidアプリ制限を有効化し、パッケージ名と署名証明書フィンガープリントで利用元を制限できるようにすること
-  - Android側でPlaces SDK for Android (New)を導入し、`Places.initializeWithNewPlacesApiEnabled`でPlaces API (New)を初期化する
-  - DartからはMethodChannelまたはPigeon経由でAndroidのPlaces SDK呼び出しを行い、Presentation層が`domain/*`や`infrastructure/*`を直接参照しない構成を維持する
-  - 地名検索はPlaces SDK for AndroidのText Search (New)へ寄せ、`PlacesClient.searchByText`の結果から`LocationCandidateDto`へ変換する
-  - ピン位置からの場所名取得はPlaces SDK for AndroidのNearby Search (New)へ寄せ、半径50m・最大1件・人気順で取得し、`NearbyLocationService`の外部契約を維持する
-  - 取得フィールドは現在と同等の`DISPLAY_NAME`、`FORMATTED_ADDRESS`、`LOCATION`に絞り、場所名取得では`DISPLAY_NAME`のみを要求する
-  - 日本語ロケール、空結果、APIキー未設定、SDKエラー時の扱いを既存仕様に合わせてテストで確認する
-
 ## マップピンボトムシート
-
 
 ## 招待機能
 
