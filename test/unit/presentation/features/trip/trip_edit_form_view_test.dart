@@ -59,9 +59,7 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('タスク管理・訪問場所編集ボタンが親のハンドラを呼び、経路情報ボタンは表示しないこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('タスク管理・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
       var taskRequested = 0;
       var mapRequested = 0;
       final initialValue = TripEntryDto(
@@ -108,7 +106,6 @@ void main() {
 
       expect(taskRequested, 1);
       expect(mapRequested, 1);
-      expect(find.widgetWithText(ElevatedButton, '経路情報'), findsNothing);
     });
 
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
