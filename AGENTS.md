@@ -177,11 +177,11 @@ BREAKING CHANGE: /api/v1/users を /api/v2/users に変更
 
 ## 環境設定
 
-`.env`の環境変数:
+`android/local.properties`の環境変数:
 
-- `GOOGLE_PLACES_API_KEY` - 位置検索機能に必要
+- `MAPS_API_KEY` - 地図表示・位置検索機能に必要
 
-環境変数の変更後は`dart run build_runner build --delete-conflicting-outputs`を実行してください。
+環境変数の変更後はAndroidアプリを再ビルドしてください。
 
 ## Firebase設定
 
