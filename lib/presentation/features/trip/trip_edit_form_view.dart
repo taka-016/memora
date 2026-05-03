@@ -13,7 +13,6 @@ class TripEditFormView extends HookWidget {
     required this.onChanged,
     required this.onTaskManagementRequested,
     required this.onVisitLocationEditRequested,
-    required this.onRouteInfoRequested,
     this.configuredYear,
   });
 
@@ -21,7 +20,6 @@ class TripEditFormView extends HookWidget {
   final ValueChanged<TripEntryDto> onChanged;
   final VoidCallback onTaskManagementRequested;
   final VoidCallback onVisitLocationEditRequested;
-  final VoidCallback onRouteInfoRequested;
   final int? configuredYear;
 
   @override
@@ -407,44 +405,22 @@ class TripEditFormView extends HookWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: onVisitLocationEditRequested,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.add_location, size: 20),
-                          SizedBox(width: 4),
-                          Text('編集'),
-                        ],
-                      ),
-                    ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onVisitLocationEditRequested,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: pins.value.length >= 2
-                          ? onRouteInfoRequested
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.route, size: 20),
-                          SizedBox(width: 4),
-                          Text('経路情報'),
-                        ],
-                      ),
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.add_location, size: 20),
+                      SizedBox(width: 4),
+                      Text('編集'),
+                    ],
                   ),
-                ],
+                ),
               ),
               const SizedBox(height: 16),
               buildPinsList(),

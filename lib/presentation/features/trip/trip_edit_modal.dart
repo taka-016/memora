@@ -10,7 +10,6 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/features/trip/route_info_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -19,7 +18,7 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
-enum TripEditExpandedSection { map, routeInfo, tasks }
+enum TripEditExpandedSection { map, tasks }
 
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
@@ -178,21 +177,9 @@ class TripEditModal extends HookConsumerWidget {
       expandedSection.value = TripEditExpandedSection.map;
     }
 
-    void showRouteInfoView() {
-      if (currentPins().length < 2) {
-        return;
-      }
-      expandedSection.value = TripEditExpandedSection.routeInfo;
-      hideBottomSheet();
-    }
-
     void showTaskView() {
       expandedSection.value = TripEditExpandedSection.tasks;
       hideBottomSheet();
-    }
-
-    void closeRouteInfoView() {
-      expandedSection.value = null;
     }
 
     Future<void> handleSave() async {
@@ -291,7 +278,6 @@ class TripEditModal extends HookConsumerWidget {
               onChanged: updateDraftTripEntry,
               onTaskManagementRequested: showTaskView,
               onVisitLocationEditRequested: toggleMapExpansion,
-              onRouteInfoRequested: showRouteInfoView,
             ),
           ),
           const SizedBox(height: 24),
@@ -347,12 +333,6 @@ class TripEditModal extends HookConsumerWidget {
             bottomSheet: isTestEnvironment
                 ? buildBottomSheet()
                 : const SizedBox.shrink(),
-          );
-        case TripEditExpandedSection.routeInfo:
-          return RouteInfoView(
-            pins: currentPins(),
-            isTestEnvironment: isTestEnvironment,
-            onClose: closeRouteInfoView,
           );
         case TripEditExpandedSection.tasks:
           return TaskView(
