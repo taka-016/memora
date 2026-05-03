@@ -533,6 +533,12 @@
   - タスクのIdは再生成し、親タスクIdもそれに合わせて更新する
   - ペーストは画面値を置き換えることになるため、確認ダイアログを表示する
   - 旅行の新規作成時はコピーアイコン使用不可
+- 経路検索機能を廃止する
+  - `RouteInfoView`、`RouteMap`、経路検索ボタン、経路検索結果表示、経路検索結果保存処理を削除する
+  - `FetchRouteInfoUsecase`、`RouteInfoService`、`GoogleRoutesApiRouteInfoService`、関連factory/config/providerを削除する
+  - Routes API呼び出し、Routes API用テスト、経路検索用DTO・画面テストを整理する
+  - 旅行の訪問場所・タスク管理は維持し、経路検索廃止後も既存の旅行編集フローが成立するようにする
+  - 仕様書・done/todo内の経路検索に関する記述を廃止方針に合わせて整理する
 
 ## 地図画面
 
