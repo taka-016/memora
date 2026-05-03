@@ -345,7 +345,7 @@ void main() {
       );
     });
 
-    testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
+    testWidgets('訪問場所が複数あっても経路情報ボタンと経路情報ビューを表示しないこと', (
       WidgetTester tester,
     ) async {
       final pins = [
@@ -382,24 +382,7 @@ void main() {
         ),
       );
 
-      final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
-      expect(buttonFinder, findsOneWidget);
-
-      await tester.ensureVisible(buttonFinder);
-      await tester.tap(buttonFinder);
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('route_info_view_root')), findsOneWidget);
-
-      // 経路情報ビュー内の閉じるボタンで元の画面に戻れることを確認
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(const Key('route_info_view_root')),
-          matching: find.byIcon(Icons.close),
-        ),
-      );
-      await tester.pumpAndSettle();
-
+      expect(find.widgetWithText(ElevatedButton, '経路情報'), findsNothing);
       expect(find.byKey(const Key('route_info_view_root')), findsNothing);
     });
 
