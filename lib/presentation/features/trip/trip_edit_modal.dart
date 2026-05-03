@@ -7,7 +7,6 @@ import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/services/nearby_location_service.dart';
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
@@ -31,7 +30,6 @@ class TripEditModal extends HookConsumerWidget {
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
-    this.nearbyLocationService,
   });
 
   final String groupId;
@@ -40,7 +38,6 @@ class TripEditModal extends HookConsumerWidget {
   final Future<void> Function(TripEntryDto) onSave;
   final bool isTestEnvironment;
   final int? year;
-  final NearbyLocationService? nearbyLocationService;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -124,10 +121,6 @@ class TripEditModal extends HookConsumerWidget {
 
     Future<String?> getLocationName(Coordinate coordinate) async {
       try {
-        final service = nearbyLocationService;
-        if (service != null) {
-          return await service.getLocationName(coordinate);
-        }
         return await getNearbyLocationNameUsecase.execute(coordinate);
       } catch (e, stack) {
         logger.e(
