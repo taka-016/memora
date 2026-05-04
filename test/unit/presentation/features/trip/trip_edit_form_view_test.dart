@@ -39,7 +39,6 @@ void main() {
               onChanged: (value) => latestValue = value,
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
-              onRouteInfoRequested: () {},
             ),
           ),
         ),
@@ -60,12 +59,9 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('タスク管理・訪問場所編集・経路情報ボタンが親のハンドラを呼ぶこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('タスク管理・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
       var taskRequested = 0;
       var mapRequested = 0;
-      var routeRequested = 0;
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
@@ -98,7 +94,6 @@ void main() {
               onChanged: (_) {},
               onTaskManagementRequested: () => taskRequested += 1,
               onVisitLocationEditRequested: () => mapRequested += 1,
-              onRouteInfoRequested: () => routeRequested += 1,
             ),
           ),
         ),
@@ -108,12 +103,9 @@ void main() {
       await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, '編集'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(ElevatedButton, '経路情報'));
-      await tester.pump();
 
       expect(taskRequested, 1);
       expect(mapRequested, 1);
-      expect(routeRequested, 1);
     });
 
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
@@ -153,7 +145,6 @@ void main() {
                             : (_) => initialHandlerCallCount += 1,
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
-                        onRouteInfoRequested: () {},
                       ),
                     ),
                   ),
@@ -236,7 +227,6 @@ void main() {
                         onChanged: emittedValues.add,
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
-                        onRouteInfoRequested: () {},
                       ),
                     ),
                   ),
@@ -294,7 +284,6 @@ void main() {
               onChanged: (_) {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
-              onRouteInfoRequested: () {},
             ),
           ),
         ),
@@ -318,7 +307,6 @@ void main() {
               onChanged: (_) {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
-              onRouteInfoRequested: () {},
             ),
           ),
         ),

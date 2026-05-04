@@ -345,64 +345,6 @@ void main() {
       );
     });
 
-    testWidgets('経路情報ボタンが表示され、タップで現在のダイアログ内に経路情報ビューが表示されること', (
-      WidgetTester tester,
-    ) async {
-      final pins = [
-        const PinDto(
-          pinId: 'pin-1',
-          latitude: 35.0,
-          longitude: 135.0,
-          locationName: '京都駅',
-        ),
-        const PinDto(
-          pinId: 'pin-2',
-          latitude: 35.1,
-          longitude: 135.1,
-          locationName: '清水寺',
-        ),
-      ];
-
-      final tripEntry = TripEntryDto(
-        id: 'test-trip-id',
-        groupId: 'test-group-id',
-        tripYear: 2024,
-        pins: pins,
-      );
-
-      await tester.pumpWidget(
-        _createApp(
-          child: TripEditModal(
-            groupId: 'test-group-id',
-            groupMembers: const [],
-            tripEntry: tripEntry,
-            onSave: (TripEntryDto tripEntry) async {},
-            isTestEnvironment: true,
-          ),
-        ),
-      );
-
-      final buttonFinder = find.widgetWithText(ElevatedButton, '経路情報');
-      expect(buttonFinder, findsOneWidget);
-
-      await tester.ensureVisible(buttonFinder);
-      await tester.tap(buttonFinder);
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('route_info_view_root')), findsOneWidget);
-
-      // 経路情報ビュー内の閉じるボタンで元の画面に戻れることを確認
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(const Key('route_info_view_root')),
-          matching: find.byIcon(Icons.close),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('route_info_view_root')), findsNothing);
-    });
-
     testWidgets('本番地図ではピン選択時に詳細ボトムシートが二重表示されないこと', (WidgetTester tester) async {
       const pin = PinDto(
         pinId: 'pin-1',
