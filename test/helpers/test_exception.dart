@@ -1,11 +1,9 @@
 import 'package:memora/core/app_logger.dart';
 
-class TestException implements Exception {
+class TestException implements ConsoleLogSuppressedException {
   final String message;
 
-  TestException([this.message = 'テストエラー']) {
-    AppLogger.suppressLogging(true);
-  }
+  TestException([this.message = 'テストエラー']);
 
   @override
   String toString() => 'TestException: $message';

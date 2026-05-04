@@ -18,6 +18,8 @@ Future<void> initLogger() async {
   );
 }
 
+abstract interface class ConsoleLogSuppressedException implements Exception {}
+
 class AppLogger {
   static bool _suppressLogging = false;
 
@@ -26,13 +28,21 @@ class AppLogger {
   }
 
   static bool get isLoggingSuppressed => _suppressLogging;
+
+  static bool shouldSuppressConsoleOutput(OutputEvent event) {
+    if (_suppressLogging) {
+      _suppressLogging = false;
+      return true;
+    }
+
+    return event.origin.error is ConsoleLogSuppressedException;
+  }
 }
 
 class ConsoleOutput extends LogOutput {
   @override
   void output(OutputEvent event) {
-    if (AppLogger.isLoggingSuppressed) {
-      AppLogger.suppressLogging(false);
+    if (AppLogger.shouldSuppressConsoleOutput(event)) {
       return;
     }
 
