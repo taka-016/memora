@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/infrastructure/services/places_sdk_nearby_location_service.dart';
 
@@ -46,6 +47,7 @@ void main() {
 
       final service = PlacesSdkNearbyLocationService(channel: channel);
 
+      AppLogger.suppressLogging(true);
       final result = await service.getLocationName(
         const Coordinate(latitude: 35.6586, longitude: 139.7454),
       );

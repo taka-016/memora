@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 
+import '../../../../helpers/test_exception.dart';
+
 void main() {
   group('showGroupEventEditModal', () {
     Widget buildSubject({
@@ -92,7 +94,7 @@ void main() {
     testWidgets('保存失敗時はSnackBarでフィードバックする', (tester) async {
       await tester.pumpWidget(
         buildSubject(
-          onSave: (_) async => throw Exception('保存失敗'),
+          onSave: (_) async => throw TestException('保存失敗'),
           selectedYear: 2026,
           initialMemo: '',
         ),
