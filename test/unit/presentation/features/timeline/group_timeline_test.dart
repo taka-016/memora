@@ -760,9 +760,7 @@ void main() {
       expect(find.text('太郎の入学式'), findsOneWidget);
     });
 
-    testWidgets('メンバーイベントのメモを空欄で保存すると削除される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メンバーイベントのメモを空欄で保存すると削除される', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
       final repository = _FakeMemberEventRepository();
 
@@ -798,9 +796,7 @@ void main() {
       expect(find.text('入学式'), findsNothing);
     });
 
-    testWidgets('メンバーイベント保存失敗時はSnackBarで通知される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メンバーイベント保存失敗時はSnackBarで通知される', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
       final repository = _FakeMemberEventRepository(
         saveException: TestException('保存失敗'),
