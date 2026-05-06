@@ -5,7 +5,6 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
-import 'package:memora/application/usecases/member/delete_member_event_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_events_usecase.dart';
 import 'package:memora/application/usecases/member/save_member_event_usecase.dart';
 import 'package:memora/core/app_logger.dart';
@@ -117,11 +116,16 @@ class _MemberYearCell extends HookConsumerWidget {
           initialMemo: eventAtOpen?.memo ?? '',
           onSave: (memo) async {
             if (memo.isEmpty) {
-              if (eventAtOpen != null) {
-                await ref
-                    .read(deleteMemberEventUsecaseProvider)
-                    .execute(eventAtOpen.id);
-              }
+              await ref
+                  .read(saveMemberEventUsecaseProvider)
+                  .execute(
+                    MemberEventDto(
+                      id: eventAtOpen?.id ?? '',
+                      memberId: member.memberId,
+                      year: targetYear,
+                      memo: '',
+                    ),
+                  );
               localEvent.value = null;
             } else {
               final savedEvent = await ref
