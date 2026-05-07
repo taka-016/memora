@@ -101,7 +101,7 @@ class _MemberYearCell extends HookConsumerWidget {
         calculateSchoolGrade: ref.read(calculateSchoolGradeUsecaseProvider),
         calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
       ),
-      ...?_buildOptionalLabel(currentEvent?.memo.trim()),
+      ..._buildMemoLabels(currentEvent?.memo),
     ];
 
     return GestureDetector(
@@ -152,6 +152,8 @@ class _MemberYearCell extends HookConsumerWidget {
 class _MemberCellLabels extends StatelessWidget {
   const _MemberCellLabels({required this.lines});
 
+  static const double _lineHeight = 20;
+
   final List<String> lines;
 
   @override
@@ -162,10 +164,47 @@ class _MemberCellLabels extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(left: 8, top: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: lines.map(Text.new).toList(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final visibleLineCount = (constraints.maxHeight / _lineHeight)
+              .floor();
+
+          if (visibleLineCount <= 0) {
+            return const SizedBox.shrink();
+          }
+
+          final visibleLines = _visibleLines(
+            lines: lines,
+            visibleLineCount: visibleLineCount,
+          );
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: visibleLines.map(_buildLine).toList(),
+          );
+        },
       ),
+    );
+  }
+
+  List<String> _visibleLines({
+    required List<String> lines,
+    required int visibleLineCount,
+  }) {
+    if (lines.length <= visibleLineCount) {
+      return lines;
+    }
+
+    final displayCount = (visibleLineCount - 1).clamp(0, lines.length);
+    final remainingCount = lines.length - displayCount;
+
+    return [...lines.take(displayCount), '…他$remainingCount行'];
+  }
+
+  Widget _buildLine(String line) {
+    return SizedBox(
+      height: _lineHeight,
+      child: Text(line, maxLines: 1, overflow: TextOverflow.ellipsis),
     );
   }
 }
@@ -228,4 +267,17 @@ List<String>? _buildOptionalLabel(String? value) {
     return null;
   }
   return [value];
+}
+
+List<String> _buildMemoLabels(String? memo) {
+  final trimmedMemo = memo?.trim();
+  if (trimmedMemo == null || trimmedMemo.isEmpty) {
+    return [];
+  }
+
+  return trimmedMemo
+      .split('\n')
+      .map((line) => line.trim())
+      .where((line) => line.isNotEmpty)
+      .toList();
 }
