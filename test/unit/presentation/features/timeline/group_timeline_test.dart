@@ -685,11 +685,12 @@ void main() {
       );
     });
 
-    testWidgets('メンバー行セルの表示行数がセル高を超えてもオーバーフローしない', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メンバー行セルの表示行数がセル高を超えてもオーバーフローしない', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
-      final longMemo = List.generate(10, (index) => 'メモ${index + 1}').join('\n');
+      final longMemo = List.generate(
+        10,
+        (index) => 'メモ${index + 1}',
+      ).join('\n');
       testGroupWithMembers = testGroupWithMembers.copyWith(
         members: [
           testGroupWithMembers.members.first.copyWith(
