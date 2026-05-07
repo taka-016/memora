@@ -717,9 +717,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('メンバー行セルのメモ内の空行は表示上の行として保持される', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('メンバー行セルのメモ内の空行は表示上の行として保持される', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
 
       await tester.pumpWidget(
