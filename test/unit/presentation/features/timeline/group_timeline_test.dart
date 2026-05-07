@@ -685,6 +685,36 @@ void main() {
       );
     });
 
+    testWidgets('メンバー行セルの表示行数がセル高を超えてもオーバーフローしない', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final longMemo = List.generate(10, (index) => 'メモ${index + 1}').join('\n');
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(
+            birthday: DateTime(currentYear - 6, 1, 1),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'member-event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: longMemo,
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('メンバー行セルをタップすると編集ダイアログが開く', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
 
