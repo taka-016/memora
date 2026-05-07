@@ -717,6 +717,31 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('メンバー行セルのメモ内の空行は表示上の行として保持される', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+
+      await tester.pumpWidget(
+        createTestWidget(
+          memberEventService: _FakeMemberEventQueryService([
+            MemberEventDto(
+              id: 'member-event-1',
+              memberId: 'member1',
+              year: currentYear,
+              memo: '空行前\n\n空行後',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final beforeLineTop = tester.getTopLeft(find.text('空行前')).dy;
+      final afterLineTop = tester.getTopLeft(find.text('空行後')).dy;
+
+      expect(afterLineTop - beforeLineTop, greaterThanOrEqualTo(38));
+    });
+
     testWidgets('メンバー行セルをタップすると編集ダイアログが開く', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
 
