@@ -258,9 +258,5 @@ List<String> _buildMemoLabels(String? memo) {
     return [];
   }
 
-  return trimmedMemo
-      .split('\n')
-      .map((line) => line.trim())
-      .where((line) => line.isNotEmpty)
-      .toList();
+  return trimmedMemo.split('\n');
 }
