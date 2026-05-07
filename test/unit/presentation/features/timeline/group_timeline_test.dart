@@ -713,6 +713,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.textContaining('…他'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
