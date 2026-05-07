@@ -173,10 +173,7 @@ class _MemberCellLabels extends StatelessWidget {
             return const SizedBox.shrink();
           }
 
-          final visibleLines = _visibleLines(
-            lines: lines,
-            visibleLineCount: visibleLineCount,
-          );
+          final visibleLines = lines.take(visibleLineCount);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,20 +182,6 @@ class _MemberCellLabels extends StatelessWidget {
         },
       ),
     );
-  }
-
-  List<String> _visibleLines({
-    required List<String> lines,
-    required int visibleLineCount,
-  }) {
-    if (lines.length <= visibleLineCount) {
-      return lines;
-    }
-
-    final displayCount = (visibleLineCount - 1).clamp(0, lines.length);
-    final remainingCount = lines.length - displayCount;
-
-    return [...lines.take(displayCount), '…他$remainingCount行'];
   }
 
   Widget _buildLine(String line) {
