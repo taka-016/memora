@@ -115,15 +115,15 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "members",
+      "collectionGroup": "member_events",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "ownerId",
+          "fieldPath": "memberId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "displayName",
+          "fieldPath": "year",
           "order": "ASCENDING"
         },
         {
@@ -134,15 +134,15 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "member_events",
+      "collectionGroup": "members",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "memberId",
+          "fieldPath": "ownerId",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "year",
+          "fieldPath": "displayName",
           "order": "ASCENDING"
         },
         {
