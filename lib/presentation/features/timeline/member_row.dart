@@ -41,6 +41,8 @@ class MemberRow extends TimelineRowDefinition {
       targetYear: year,
       refreshKey: rowContext.controller.refreshKey,
       displaySettings: rowContext.controller.displaySettings,
+      availableHeight: rowContext.rowHeight,
+      availableWidth: rowContext.layoutConfig.yearColumnWidth,
     );
   }
 }
@@ -69,12 +71,16 @@ class _MemberYearCell extends HookConsumerWidget {
     required this.targetYear,
     required this.refreshKey,
     required this.displaySettings,
+    required this.availableHeight,
+    required this.availableWidth,
   });
 
   final GroupMemberDto member;
   final int targetYear;
   final int refreshKey;
   final TimelineDisplaySettings displaySettings;
+  final double availableHeight;
+  final double availableWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -144,17 +150,25 @@ class _MemberYearCell extends HookConsumerWidget {
           },
         );
       },
-      child: SizedBox.expand(child: _MemberCellLabels(lines: lines)),
+      child: _MemberCellLabels(
+        lines: lines,
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+      ),
     );
   }
 }
 
 class _MemberCellLabels extends StatelessWidget {
-  const _MemberCellLabels({required this.lines});
-
-  static const double _lineHeight = 20;
+  const _MemberCellLabels({
+    required this.lines,
+    required this.availableHeight,
+    required this.availableWidth,
+  });
 
   final List<String> lines;
+  final double availableHeight;
+  final double availableWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -162,32 +176,19 @@ class _MemberCellLabels extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(left: 8, top: 4),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final visibleLineCount = (constraints.maxHeight / _lineHeight)
-              .floor();
+    final maxLines = (availableHeight / 20).floor().clamp(1, 20);
 
-          if (visibleLineCount <= 0) {
-            return const SizedBox.shrink();
-          }
-
-          final visibleLines = lines.take(visibleLineCount);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: visibleLines.map(_buildLine).toList(),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildLine(String line) {
     return SizedBox(
-      height: _lineHeight,
-      child: Text(line, maxLines: 1, overflow: TextOverflow.ellipsis),
+      width: availableWidth,
+      height: availableHeight,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Text(
+          lines.join('\n'),
+          maxLines: maxLines,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 }
