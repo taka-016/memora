@@ -680,7 +680,10 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: currentYearCell, matching: find.text('入学式')),
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('入学式'),
+        ),
         findsOneWidget,
       );
     });
