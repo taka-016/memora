@@ -734,10 +734,18 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final beforeLineTop = tester.getTopLeft(find.text('空行前')).dy;
-      final afterLineTop = tester.getTopLeft(find.text('空行後')).dy;
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
+      final memoTextFinder = find.descendant(
+        of: currentYearCell,
+        matching: find.textContaining('空行前\n\n空行後'),
+      );
 
-      expect(afterLineTop - beforeLineTop, greaterThanOrEqualTo(38));
+      expect(memoTextFinder, findsOneWidget);
+      final memoText = tester.widget<Text>(memoTextFinder);
+      expect(memoText.maxLines, greaterThan(1));
+      expect(memoText.overflow, TextOverflow.ellipsis);
     });
 
     testWidgets('メンバー行セルをタップすると編集ダイアログが開く', (WidgetTester tester) async {
