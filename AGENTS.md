@@ -2,7 +2,6 @@
 
 ## 設計資料
 
-- アプリケーション仕様： docs/app_spec.md
 - ユーザーストーリー: docs/user_stories.md
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
