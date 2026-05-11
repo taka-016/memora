@@ -12,11 +12,9 @@ import 'package:memora/domain/repositories/member/member_repository.dart';
 
 import 'accept_invitation_usecase_test.mocks.dart';
 
-class MockMemberInvitationRepository extends Mock
-    implements MemberInvitationRepository {}
-
 @GenerateMocks([
   MemberInvitationQueryService,
+  MemberInvitationRepository,
   MemberRepository,
   MemberQueryService,
 ])

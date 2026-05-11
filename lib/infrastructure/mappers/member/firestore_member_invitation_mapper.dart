@@ -13,6 +13,7 @@ class FirestoreMemberInvitationMapper {
       inviteeId: data['inviteeId'] as String? ?? '',
       inviterId: data['inviterId'] as String? ?? '',
       invitationCode: data['invitationCode'] as String? ?? '',
+      createdAt: _parseDateTime(data['createdAt']),
     );
   }
 
@@ -36,5 +37,15 @@ class FirestoreMemberInvitationMapper {
       'invitationCode': memberInvitation.invitationCode,
       ...FirestoreWriteMetadata.forUpdate(),
     };
+  }
+
+  static DateTime? _parseDateTime(Object? value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    return null;
   }
 }
