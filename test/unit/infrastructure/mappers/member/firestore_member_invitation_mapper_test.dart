@@ -12,11 +12,13 @@ void main() {
   group('FirestoreMemberInvitationMapper', () {
     test('FirestoreドキュメントからMemberInvitationDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      final createdAt = DateTime.utc(2024, 1, 1, 10, 30);
       when(doc.id).thenReturn('invitation001');
       when(doc.data()).thenReturn({
         'inviteeId': 'invitee001',
         'inviterId': 'inviter001',
         'invitationCode': 'code001',
+        'createdAt': Timestamp.fromDate(createdAt),
       });
 
       final result = FirestoreMemberInvitationMapper.fromFirestore(doc);
@@ -25,6 +27,7 @@ void main() {
       expect(result.inviteeId, 'invitee001');
       expect(result.inviterId, 'inviter001');
       expect(result.invitationCode, 'code001');
+      expect(result.createdAt, createdAt.toLocal());
     });
 
     test('Firestoreの欠損値をデフォルトで変換できる', () {
@@ -38,6 +41,7 @@ void main() {
       expect(result.inviteeId, '');
       expect(result.inviterId, '');
       expect(result.invitationCode, '');
+      expect(result.createdAt, isNull);
     });
 
     test('MemberInvitationを新規作成用FirestoreのMapへ変換できる', () {
