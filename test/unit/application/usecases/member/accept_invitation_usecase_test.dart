@@ -223,5 +223,56 @@ void main() {
         mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
       );
     });
+
+    test('招待コードが再発行されている場合は再発行日時から24時間以内ならtrueを返す', () async {
+      // Arrange
+      const invitationCode = 'reissued-invitation-code';
+      const userId = 'user-id';
+      final memberInvitation = MemberInvitationDto(
+        id: 'invitation-id',
+        inviteeId: 'invitee-id',
+        inviterId: 'inviter-id',
+        invitationCode: invitationCode,
+        createdAt: DateTime.utc(2024, 1, 1),
+        updatedAt: DateTime.utc(2024, 1, 2),
+      );
+      const member = MemberDto(id: 'invitee-id', displayName: 'Invitee User');
+      final updatedMember = Member(
+        id: 'invitee-id',
+        displayName: 'Invitee User',
+        accountId: userId,
+      );
+
+      when(
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
+      ).thenAnswer((_) async => memberInvitation);
+      when(
+        mockMemberQueryService.getMemberById('invitee-id'),
+      ).thenAnswer((_) async => member);
+      when(
+        mockMemberRepository.updateMember(updatedMember),
+      ).thenAnswer((_) async {});
+      when(
+        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
+      ).thenAnswer((_) async {});
+
+      // Act
+      final result = await useCase.execute(
+        invitationCode,
+        userId,
+        now: DateTime.utc(2024, 1, 2, 23, 59, 59),
+      );
+
+      // Assert
+      expect(result, isTrue);
+      verify(
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
+      ).called(1);
+      verify(mockMemberQueryService.getMemberById('invitee-id')).called(1);
+      verify(mockMemberRepository.updateMember(updatedMember)).called(1);
+      verify(
+        mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
+      ).called(1);
+    });
   });
 }
