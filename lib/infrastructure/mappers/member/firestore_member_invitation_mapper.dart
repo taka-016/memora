@@ -14,6 +14,7 @@ class FirestoreMemberInvitationMapper {
       inviterId: data['inviterId'] as String? ?? '',
       invitationCode: data['invitationCode'] as String? ?? '',
       createdAt: _parseDateTime(data['createdAt']),
+      updatedAt: _parseDateTime(data['updatedAt']),
     );
   }
 

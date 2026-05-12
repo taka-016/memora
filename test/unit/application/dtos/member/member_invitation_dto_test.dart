@@ -10,6 +10,7 @@ void main() {
       const inviterId = 'member-789';
       const invitationCode = 'CODE123';
       final createdAt = DateTime.utc(2024, 1, 1);
+      final updatedAt = DateTime.utc(2024, 1, 2);
 
       // Act
       final dto = MemberInvitationDto(
@@ -18,6 +19,7 @@ void main() {
         inviterId: inviterId,
         invitationCode: invitationCode,
         createdAt: createdAt,
+        updatedAt: updatedAt,
       );
 
       // Assert
@@ -26,6 +28,7 @@ void main() {
       expect(dto.inviterId, inviterId);
       expect(dto.invitationCode, invitationCode);
       expect(dto.createdAt, createdAt);
+      expect(dto.updatedAt, updatedAt);
     });
 
     test('copyWithメソッドで値が正しく更新される', () {
@@ -39,12 +42,14 @@ void main() {
 
       // Act
       final createdAt = DateTime.utc(2024, 1, 2);
+      final updatedAt = DateTime.utc(2024, 1, 3);
       final copiedDto = originalDto.copyWith(
         id: 'invitation-999',
         inviteeId: 'member-111',
         inviterId: 'member-222',
         invitationCode: 'CODE999',
         createdAt: createdAt,
+        updatedAt: updatedAt,
       );
 
       // Assert
@@ -53,6 +58,7 @@ void main() {
       expect(copiedDto.inviterId, 'member-222');
       expect(copiedDto.invitationCode, 'CODE999');
       expect(copiedDto.createdAt, createdAt);
+      expect(copiedDto.updatedAt, updatedAt);
     });
 
     test('copyWithメソッドでnullを指定しても元の値が保持される', () {

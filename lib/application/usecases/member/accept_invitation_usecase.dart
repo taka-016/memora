@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
@@ -47,7 +48,7 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      if (_isExpired(memberInvitation.createdAt, now ?? DateTime.now())) {
+      if (_isExpired(_issuedAt(memberInvitation), now ?? DateTime.now())) {
         return false;
       }
 
@@ -78,11 +79,15 @@ class AcceptInvitationUseCase {
     }
   }
 
-  bool _isExpired(DateTime? createdAt, DateTime now) {
-    if (createdAt == null) {
+  DateTime? _issuedAt(MemberInvitationDto memberInvitation) {
+    return memberInvitation.updatedAt ?? memberInvitation.createdAt;
+  }
+
+  bool _isExpired(DateTime? issuedAt, DateTime now) {
+    if (issuedAt == null) {
       return false;
     }
 
-    return now.difference(createdAt) > invitationValidDuration;
+    return now.difference(issuedAt) > invitationValidDuration;
   }
 }

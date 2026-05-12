@@ -7,6 +7,7 @@ class MemberInvitationDto extends Equatable {
     required this.inviterId,
     required this.invitationCode,
     this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
@@ -14,6 +15,7 @@ class MemberInvitationDto extends Equatable {
   final String inviterId;
   final String invitationCode;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   MemberInvitationDto copyWith({
     String? id,
@@ -21,6 +23,7 @@ class MemberInvitationDto extends Equatable {
     String? inviterId,
     String? invitationCode,
     DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return MemberInvitationDto(
       id: id ?? this.id,
@@ -28,6 +31,7 @@ class MemberInvitationDto extends Equatable {
       inviterId: inviterId ?? this.inviterId,
       invitationCode: invitationCode ?? this.invitationCode,
       createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -38,5 +42,6 @@ class MemberInvitationDto extends Equatable {
     inviterId,
     invitationCode,
     createdAt,
+    updatedAt,
   ];
 }
