@@ -52,8 +52,8 @@
   - 現行テーブルの時刻データをUTC基準へ変換する移行スクリプトを用意する
   - 移行前後の件数、対象フィールド、変換結果を検証できるドライラン手順を用意する
 - `CustomDatePickerDialog`と`DatePickerHelper`を改修し、日付のみの値がタイムゾーン変換で前日・翌日にずれないようにする
-  - `CustomDatePickerDialog`が返す値をUTC時刻としてそのまま扱わない
-  - `DatePickerHelper.showCustomDatePicker`で日付のみの値として正規化して返す
+  - `CustomDatePickerDialog`は選択した年月日をUTC基準の`DateTime`として返す
+  - `DatePickerHelper.showCustomDatePicker`はUTC基準の`DateTime`を返すAPIとして扱う
   - `DatePickerHelper.showCustomDatePicker`を利用している画面は個別変換を持たず、共通ヘルパーの結果を使用する
   - `showDatePicker`を直接使用している箇所は`DatePickerHelper`経由へ寄せる
   - 表示タイムゾーン変更時にも`CustomDatePickerDialog`で選択した日付が前日・翌日にずれないことをテストする
