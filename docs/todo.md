@@ -42,9 +42,10 @@
   - ユースケースや表示ロジックでは直接`DateTime.now()`を呼ばず、共通サービス経由で現在時刻を取得する
   - テストでは固定時刻を返す実装に差し替えられるようにする
 - 時刻情報は永続化・内部処理ともにUTCで保持する方針へ統一する
-  - Firestoreへ保存している日時フィールドを全テーブル分洗い出し、UTC変換対象フィールド一覧を作成する
-  - FirestoreMapperでTimestampからDateTimeへ変換する箇所は`toUtc()`を適用する
-  - FirestoreMapperでDateTimeをFirestoreへ保存する箇所はUTCに変換してから保存する
+  - Firestoreへ保存している日時フィールドを全テーブル分洗い出し、UTC保持対象フィールド一覧を作成する
+  - 共通の時刻取得サービスはUTCの`DateTime`を返す
+  - DTO、エンティティ、FirestoreMapperで扱うDateTimeはUTCであることを前提にし、境界でUTCでない値が入らないように検証する
+  - Firestoreへ保存するDateTimeはUTCであることをテストで保証する
   - DTOとエンティティのDateTimeフィールドはUTC前提で受け渡すようにテストを追加する
   - 有効期限や日付範囲の比較処理はUTC同士で比較するように修正する
   - 表示時のみ設定タイムゾーンへ変換する
