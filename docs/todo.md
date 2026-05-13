@@ -57,6 +57,12 @@
   - `DatePickerHelper.showCustomDatePicker`を利用している画面は個別変換を持たず、共通ヘルパーの結果を使用する
   - `showDatePicker`を直接使用している箇所は`DatePickerHelper`経由へ寄せる
   - 表示タイムゾーン変更時にも`CustomDatePickerDialog`で選択した日付が前日・翌日にずれないことをテストする
+- 時刻入力と日付・時刻の合成処理を共通化し、UTC基準の`DateTime`を生成する
+  - `PinDetailBottomSheet`の`showTimePicker`直接利用と日付・時刻合成処理を共通ヘルパーへ切り出す
+  - 共通ヘルパーはUTC基準の日付と`TimeOfDay`からUTCの`DateTime`を返す
+  - 訪問開始日時・訪問終了日時の比較は共通ヘルパーが返したUTC同士で行う
+  - 表示時はUTCの`DateTime`を設定タイムゾーンへ変換して日付・時刻に分解する
+  - タイムゾーン変更時にも時刻付き入力の保存値が意図せず前後しないことをテストする
 - 設定画面でアプリ内のタイムゾーンを変更できるようにする
   - 設定画面にタイムゾーン選択UIを追加する
   - 選択したタイムゾーンIDを永続化する
