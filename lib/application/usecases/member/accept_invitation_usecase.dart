@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/mappers/member/member_mapper.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -12,28 +14,41 @@ final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
 ) {
   return AcceptInvitationUseCase(
     ref.watch(memberInvitationQueryServiceProvider),
+    ref.watch(memberInvitationRepositoryProvider),
     ref.watch(memberRepositoryProvider),
     ref.watch(memberQueryServiceProvider),
   );
 });
 
 class AcceptInvitationUseCase {
+  static const invitationValidDuration = Duration(hours: 24);
+
   final MemberInvitationQueryService _memberInvitationQueryService;
+  final MemberInvitationRepository _memberInvitationRepository;
   final MemberRepository _memberRepository;
   final MemberQueryService _memberQueryService;
 
   AcceptInvitationUseCase(
     this._memberInvitationQueryService,
+    this._memberInvitationRepository,
     this._memberRepository,
     this._memberQueryService,
   );
 
-  Future<bool> execute(String invitationCode, String userId) async {
+  Future<bool> execute(
+    String invitationCode,
+    String userId, {
+    DateTime? now,
+  }) async {
     try {
       final memberInvitation = await _memberInvitationQueryService
           .getByInvitationCode(invitationCode);
 
       if (memberInvitation == null) {
+        return false;
+      }
+
+      if (_isExpired(_issuedAt(memberInvitation), now ?? DateTime.now())) {
         return false;
       }
 
@@ -49,6 +64,9 @@ class AcceptInvitationUseCase {
         member.copyWith(accountId: userId),
       );
       await _memberRepository.updateMember(updatedMember);
+      await _memberInvitationRepository.deleteMemberInvitation(
+        memberInvitation.id,
+      );
 
       return true;
     } catch (e, stack) {
@@ -59,5 +77,17 @@ class AcceptInvitationUseCase {
       );
       return false;
     }
+  }
+
+  DateTime? _issuedAt(MemberInvitationDto memberInvitation) {
+    return memberInvitation.updatedAt ?? memberInvitation.createdAt;
+  }
+
+  bool _isExpired(DateTime? issuedAt, DateTime now) {
+    if (issuedAt == null) {
+      return false;
+    }
+
+    return now.difference(issuedAt) > invitationValidDuration;
   }
 }
