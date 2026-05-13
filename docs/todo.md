@@ -51,11 +51,12 @@
   - 表示時のみ設定タイムゾーンへ変換する
   - 現行テーブルの時刻データをUTC基準へ変換する移行スクリプトを用意する
   - 移行前後の件数、対象フィールド、変換結果を検証できるドライラン手順を用意する
-- DatePickerの共通処理を改修し、日付のみの値がタイムゾーン変換で前日・翌日にずれないようにする
-  - DatePickerの戻り値をUTC時刻としてそのまま扱わない
-  - DatePickerの共通ヘルパーで日付のみの値として正規化する
-  - DatePickerを利用している画面は個別変換を持たず、共通ヘルパーの結果を使用する
-  - 表示タイムゾーン変更時にもDatePickerで選択した日付が前日・翌日にずれないことをテストする
+- `CustomDatePickerDialog`と`DatePickerHelper`を改修し、日付のみの値がタイムゾーン変換で前日・翌日にずれないようにする
+  - `CustomDatePickerDialog`が返す値をUTC時刻としてそのまま扱わない
+  - `DatePickerHelper.showCustomDatePicker`で日付のみの値として正規化して返す
+  - `DatePickerHelper.showCustomDatePicker`を利用している画面は個別変換を持たず、共通ヘルパーの結果を使用する
+  - `showDatePicker`を直接使用している箇所は`DatePickerHelper`経由へ寄せる
+  - 表示タイムゾーン変更時にも`CustomDatePickerDialog`で選択した日付が前日・翌日にずれないことをテストする
 - 設定画面でアプリ内のタイムゾーンを変更できるようにする
   - 設定画面にタイムゾーン選択UIを追加する
   - 選択したタイムゾーンIDを永続化する
