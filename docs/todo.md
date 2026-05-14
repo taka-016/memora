@@ -46,5 +46,15 @@
   - 内部比較や有効期限判定はUTCで行い、端末のタイムゾーンは表示用途に限定する
 
 ## リファクタリング
+- trip_entriesのフィールド名を変更し、関連箇所を修正
+  - tripName→name
+  - tripYear→year
+  - tripStartDate→startDate
+  - tripEndDate→endDate
+  - tripMemo→memo
+- pinsのフィールド名を変更し、関連箇所を修正
+  - visitStartDate→visitStartDateTime
+  - visitEndDate→visitEndDateTime
+  - visitMemo→memo
 
 ## 不具合修正
