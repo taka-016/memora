@@ -29,8 +29,8 @@ void main() {
       expect(result.inviteeId, 'invitee001');
       expect(result.inviterId, 'inviter001');
       expect(result.invitationCode, 'code001');
-      expect(result.createdAt, createdAt.toLocal());
-      expect(result.updatedAt, updatedAt.toLocal());
+      expect(result.createdAt, createdAt);
+      expect(result.updatedAt, updatedAt);
     });
 
     test('Firestoreの欠損値をデフォルトで変換できる', () {

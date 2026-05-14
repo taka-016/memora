@@ -27,8 +27,8 @@ void main() {
       expect(result.id, 'contract001');
       expect(result.groupId, 'group001');
       expect(result.contractName, '契約A');
-      expect(result.contractStartYearMonth, DateTime(2024, 10));
-      expect(result.contractEndYearMonth, DateTime(2042, 9));
+      expect(result.contractStartYearMonth, DateTime(2024, 10).toUtc());
+      expect(result.contractEndYearMonth, DateTime(2042, 9).toUtc());
       expect(result.useYearStartMonth, 10);
       expect(result.annualPoint, 200);
     });

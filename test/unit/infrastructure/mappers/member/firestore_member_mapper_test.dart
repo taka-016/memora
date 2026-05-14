@@ -27,7 +27,7 @@ void main() {
       expect(result.accountId, 'account001');
       expect(result.ownerId, 'owner001');
       expect(result.displayName, '山田太郎');
-      expect(result.birthday, DateTime(2001, 2, 3));
+      expect(result.birthday, DateTime(2001, 2, 3).toUtc());
       expect(result.email, 'taro@example.com');
     });
 

@@ -32,8 +32,8 @@ void main() {
       expect(result.latitude, 35.0);
       expect(result.longitude, 139.5);
       expect(result.locationName, '東京駅');
-      expect(result.visitStartDate, DateTime(2025, 5, 1, 10));
-      expect(result.visitEndDate, DateTime(2025, 5, 1, 11));
+      expect(result.visitStartDate, DateTime(2025, 5, 1, 10).toUtc());
+      expect(result.visitEndDate, DateTime(2025, 5, 1, 11).toUtc());
       expect(result.visitMemo, '集合');
     });
 

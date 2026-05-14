@@ -25,8 +25,8 @@ void main() {
 
       expect(result.id, 'limited001');
       expect(result.groupId, 'group001');
-      expect(result.startYearMonth, DateTime(2025, 7));
-      expect(result.endYearMonth, DateTime(2025, 12));
+      expect(result.startYearMonth, DateTime(2025, 7).toUtc());
+      expect(result.endYearMonth, DateTime(2025, 12).toUtc());
       expect(result.point, 30);
       expect(result.memo, '追加分');
     });

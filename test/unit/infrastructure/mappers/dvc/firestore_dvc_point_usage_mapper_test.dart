@@ -24,7 +24,7 @@ void main() {
 
       expect(result.id, 'usage001');
       expect(result.groupId, 'group001');
-      expect(result.usageYearMonth, DateTime(2025, 10));
+      expect(result.usageYearMonth, DateTime(2025, 10).toUtc());
       expect(result.usedPoint, 60);
       expect(result.memo, 'ホテル');
     });

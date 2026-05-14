@@ -33,7 +33,7 @@ void main() {
       expect(result.parentTaskId, 'parent001');
       expect(result.name, '荷造り');
       expect(result.isCompleted, true);
-      expect(result.dueDate, DateTime(2025, 2, 1));
+      expect(result.dueDate, DateTime(2025, 2, 1).toUtc());
       expect(result.memo, '前日まで');
       expect(result.assignedMemberId, 'member001');
     });

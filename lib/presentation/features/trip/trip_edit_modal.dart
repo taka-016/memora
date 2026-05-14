@@ -55,7 +55,6 @@ class TripEditModal extends HookConsumerWidget {
         tripEntry?.tripYear ??
         year ??
         currentTimeAsync.valueOrNull?.toLocal().year;
-    final isWaitingForCurrentYear = currentYearValue == null;
 
     final initialTripForComparison = useMemoized(() {
       return TripEntryDto(
@@ -279,10 +278,6 @@ class TripEditModal extends HookConsumerWidget {
     }
 
     Widget buildNormalLayout() {
-      if (isWaitingForCurrentYear) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

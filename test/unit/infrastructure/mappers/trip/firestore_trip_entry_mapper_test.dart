@@ -44,8 +44,8 @@ void main() {
       expect(result.groupId, 'group001');
       expect(result.tripYear, 2025);
       expect(result.tripName, '夏旅行');
-      expect(result.tripStartDate, DateTime(2025, 8, 1));
-      expect(result.tripEndDate, DateTime(2025, 8, 3));
+      expect(result.tripStartDate, DateTime(2025, 8, 1).toUtc());
+      expect(result.tripEndDate, DateTime(2025, 8, 3).toUtc());
       expect(result.tripMemo, '海に行く');
       expect(result.pins, pins);
       expect(result.tasks, tasks);
@@ -63,7 +63,7 @@ void main() {
 
       expect(result.tripYear, 2024);
       expect(result.groupId, 'group002');
-      expect(result.tripStartDate, DateTime(2024, 12, 31));
+      expect(result.tripStartDate, DateTime(2024, 12, 31).toUtc());
       expect(result.tripEndDate, isNull);
     });
 

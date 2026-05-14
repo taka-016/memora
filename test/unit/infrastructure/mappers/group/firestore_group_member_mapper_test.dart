@@ -36,7 +36,7 @@ void main() {
       expect(result.isAdministrator, true);
       expect(result.orderIndex, 2);
       expect(result.displayName, '山田太郎');
-      expect(result.birthday, DateTime(2000, 1, 1));
+      expect(result.birthday, DateTime(2000, 1, 1).toUtc());
       expect(result.email, 'taro@example.com');
     });
 
