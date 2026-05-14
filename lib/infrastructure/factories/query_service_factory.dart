@@ -10,6 +10,7 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_limited_point_query_service.dart';
@@ -78,13 +79,16 @@ final dvcPointUsageQueryServiceProvider = Provider<DvcPointUsageQueryService>((
 class QueryServiceFactory {
   static T create<T extends Object>({required Ref ref}) {
     final dbType = ref.watch(databaseTypeProvider);
-    return _createQueryServiceByType<T>(dbType);
+    return _createQueryServiceByType<T>(dbType, ref: ref);
   }
 
-  static T _createQueryServiceByType<T extends Object>(DatabaseType dbType) {
+  static T _createQueryServiceByType<T extends Object>(
+    DatabaseType dbType, {
+    required Ref ref,
+  }) {
     switch (dbType) {
       case DatabaseType.firestore:
-        return _createFirestoreQueryService<T>();
+        return _createFirestoreQueryService<T>(ref: ref);
       case DatabaseType.sqlite:
         throw UnimplementedError(
           'Supabase implementation is not yet available',
@@ -92,7 +96,7 @@ class QueryServiceFactory {
     }
   }
 
-  static T _createFirestoreQueryService<T>() {
+  static T _createFirestoreQueryService<T>({required Ref ref}) {
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
     }
@@ -103,7 +107,8 @@ class QueryServiceFactory {
       return FirestorePinQueryService() as T;
     }
     if (T == TripEntryQueryService) {
-      return FirestoreTripEntryQueryService() as T;
+      return FirestoreTripEntryQueryService(clock: ref.watch(appClockProvider))
+          as T;
     }
     if (T == TaskQueryService) {
       return FirestoreTaskQueryService() as T;

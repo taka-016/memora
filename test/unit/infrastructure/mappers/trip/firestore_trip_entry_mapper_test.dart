@@ -36,6 +36,7 @@ void main() {
 
       final result = FirestoreTripEntryMapper.fromFirestore(
         doc,
+        fallbackTripYear: 2026,
         pins: pins,
         tasks: tasks,
       );
@@ -59,7 +60,10 @@ void main() {
         'tripStartDate': Timestamp.fromDate(DateTime(2024, 12, 31)),
       });
 
-      final result = FirestoreTripEntryMapper.fromFirestore(doc);
+      final result = FirestoreTripEntryMapper.fromFirestore(
+        doc,
+        fallbackTripYear: 2026,
+      );
 
       expect(result.tripYear, 2024);
       expect(result.groupId, 'group002');

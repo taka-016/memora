@@ -154,10 +154,9 @@ void main() {
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
       when(mockDocSnapshot.exists).thenReturn(true);
       when(mockDocSnapshot.id).thenReturn(tripId);
-      when(mockDocSnapshot.data()).thenReturn({
-        'groupId': 'group001',
-        'tripName': '期間未設定旅行',
-      });
+      when(
+        mockDocSnapshot.data(),
+      ).thenReturn({'groupId': 'group001', 'tripName': '期間未設定旅行'});
       when(
         mockPinsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockPinsQuery);
