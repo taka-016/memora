@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "migrate:timestamps:utc": "node migrate_timestamps_to_utc.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
