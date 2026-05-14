@@ -401,14 +401,8 @@ void main() {
 
       // コールバックが呼ばれることを確認
       expect(callbackPin, isNotNull);
-      expect(
-        callbackPin!.visitStartDate,
-        equals(DateTime(2025, 1, 15, 10, 0)),
-      );
-      expect(
-        callbackPin!.visitEndDate,
-        equals(DateTime(2025, 1, 15, 16, 0)),
-      );
+      expect(callbackPin!.visitStartDate, equals(DateTime(2025, 1, 15, 10, 0)));
+      expect(callbackPin!.visitEndDate, equals(DateTime(2025, 1, 15, 16, 0)));
     });
 
     testWidgets('場所名が入力欄として表示される', (WidgetTester tester) async {

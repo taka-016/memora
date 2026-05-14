@@ -12,10 +12,7 @@ const timestampTargets = [
   { collection: 'member_events', fields: ['createdAt', 'updatedAt'] },
   { collection: 'member_invitations', fields: ['createdAt', 'updatedAt'] },
   { collection: 'trip_entries', fields: ['createdAt', 'updatedAt'] },
-  {
-    collection: 'pins',
-    fields: ['createdAt', 'updatedAt', 'visitStartDate', 'visitEndDate'],
-  },
+  { collection: 'pins', fields: ['createdAt', 'updatedAt'] },
   { collection: 'tasks', fields: ['createdAt', 'updatedAt'] },
   { collection: 'dvc_point_contracts', fields: ['createdAt', 'updatedAt'] },
   { collection: 'dvc_limited_points', fields: ['createdAt', 'updatedAt'] },

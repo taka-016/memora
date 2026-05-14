@@ -130,14 +130,13 @@ class TripEntry extends Equatable {
       return;
     }
 
-    if (value.toLocal().year != tripYear) {
+    if (value.year != tripYear) {
       throw ValidationException(message);
     }
   }
 
   DateTime _localDateOnly(DateTime value) {
-    final local = value.toLocal();
-    return DateTime(local.year, local.month, local.day);
+    return DateTime(value.year, value.month, value.day);
   }
 
   @override

@@ -67,28 +67,26 @@ class PinDetailBottomSheet extends HookWidget {
       locationNameController.text = pin.locationName ?? '';
 
       if (pin.visitStartDate != null) {
-        final localVisitStartDate = pin.visitStartDate!.toLocal();
         fromDate.value = DateTime(
-          localVisitStartDate.year,
-          localVisitStartDate.month,
-          localVisitStartDate.day,
+          pin.visitStartDate!.year,
+          pin.visitStartDate!.month,
+          pin.visitStartDate!.day,
         );
         fromTime.value = TimeOfDay(
-          hour: localVisitStartDate.hour,
-          minute: localVisitStartDate.minute,
+          hour: pin.visitStartDate!.hour,
+          minute: pin.visitStartDate!.minute,
         );
       }
 
       if (pin.visitEndDate != null) {
-        final localVisitEndDate = pin.visitEndDate!.toLocal();
         toDate.value = DateTime(
-          localVisitEndDate.year,
-          localVisitEndDate.month,
-          localVisitEndDate.day,
+          pin.visitEndDate!.year,
+          pin.visitEndDate!.month,
+          pin.visitEndDate!.day,
         );
         toTime.value = TimeOfDay(
-          hour: localVisitEndDate.hour,
-          minute: localVisitEndDate.minute,
+          hour: pin.visitEndDate!.hour,
+          minute: pin.visitEndDate!.minute,
         );
       }
 
@@ -172,8 +170,8 @@ class PinDetailBottomSheet extends HookWidget {
 
       if (onUpdate != null) {
         final updatedPin = pin.copyWith(
-          visitStartDate: start?.toUtc(),
-          visitEndDate: end?.toUtc(),
+          visitStartDate: start,
+          visitEndDate: end,
           visitMemo: memoController.text,
           locationName: normalizedLocationName,
         );
