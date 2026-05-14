@@ -43,10 +43,10 @@ class FirestoreTripEntryMapper {
     };
 
     data['tripStartDate'] = tripEntry.tripStartDate != null
-        ? Timestamp.fromDate(tripEntry.tripStartDate!)
+        ? Timestamp.fromDate(tripEntry.tripStartDate!.toUtc())
         : null;
     data['tripEndDate'] = tripEntry.tripEndDate != null
-        ? Timestamp.fromDate(tripEntry.tripEndDate!)
+        ? Timestamp.fromDate(tripEntry.tripEndDate!.toUtc())
         : null;
 
     return data;
@@ -62,10 +62,10 @@ class FirestoreTripEntryMapper {
     };
 
     data['tripStartDate'] = tripEntry.tripStartDate != null
-        ? Timestamp.fromDate(tripEntry.tripStartDate!)
+        ? Timestamp.fromDate(tripEntry.tripStartDate!.toUtc())
         : null;
     data['tripEndDate'] = tripEntry.tripEndDate != null
-        ? Timestamp.fromDate(tripEntry.tripEndDate!)
+        ? Timestamp.fromDate(tripEntry.tripEndDate!.toUtc())
         : null;
 
     return data;

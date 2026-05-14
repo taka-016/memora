@@ -33,7 +33,7 @@ class FirestoreTaskMapper {
     };
 
     data['dueDate'] = task.dueDate != null
-        ? Timestamp.fromDate(task.dueDate!)
+        ? Timestamp.fromDate(task.dueDate!.toUtc())
         : null;
 
     return data;

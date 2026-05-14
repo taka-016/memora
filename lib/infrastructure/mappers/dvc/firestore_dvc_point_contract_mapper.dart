@@ -35,9 +35,11 @@ class FirestoreDvcPointContractMapper {
       'groupId': contract.groupId,
       'contractName': contract.contractName,
       'contractStartYearMonth': Timestamp.fromDate(
-        contract.contractStartYearMonth,
+        contract.contractStartYearMonth.toUtc(),
       ),
-      'contractEndYearMonth': Timestamp.fromDate(contract.contractEndYearMonth),
+      'contractEndYearMonth': Timestamp.fromDate(
+        contract.contractEndYearMonth.toUtc(),
+      ),
       'useYearStartMonth': contract.useYearStartMonth,
       'annualPoint': contract.annualPoint,
       ...FirestoreWriteMetadata.forCreate(),

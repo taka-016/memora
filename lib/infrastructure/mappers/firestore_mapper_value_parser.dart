@@ -26,10 +26,10 @@ class FirestoreMapperValueParser {
 
   static DateTime? asDateTime(dynamic value) {
     if (value is Timestamp) {
-      return value.toDate();
+      return value.toDate().toUtc();
     }
     if (value is DateTime) {
-      return value;
+      return value.toUtc();
     }
     return null;
   }

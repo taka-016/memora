@@ -8,6 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/infrastructure/services/firestore_server_clock.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
@@ -32,7 +34,14 @@ Future<void> main() async {
 
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-      runApp(const ProviderScope(child: MyApp()));
+      runApp(
+        ProviderScope(
+          overrides: [
+            appClockProvider.overrideWithValue(FirestoreServerClock()),
+          ],
+          child: const MyApp(),
+        ),
+      );
     },
     (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

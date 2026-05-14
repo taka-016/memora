@@ -25,7 +25,7 @@ class FirestoreDvcPointUsageMapper {
   static Map<String, dynamic> toCreateFirestore(DvcPointUsage pointUsage) {
     return {
       'groupId': pointUsage.groupId,
-      'usageYearMonth': Timestamp.fromDate(pointUsage.usageYearMonth),
+      'usageYearMonth': Timestamp.fromDate(pointUsage.usageYearMonth.toUtc()),
       'usedPoint': pointUsage.usedPoint,
       'memo': pointUsage.memo,
       ...FirestoreWriteMetadata.forCreate(),

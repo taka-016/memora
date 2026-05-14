@@ -31,10 +31,10 @@ class FirestorePinMapper {
       'longitude': pin.longitude,
       'locationName': pin.locationName,
       'visitStartDate': pin.visitStartDate != null
-          ? Timestamp.fromDate(pin.visitStartDate!)
+          ? Timestamp.fromDate(pin.visitStartDate!.toUtc())
           : null,
       'visitEndDate': pin.visitEndDate != null
-          ? Timestamp.fromDate(pin.visitEndDate!)
+          ? Timestamp.fromDate(pin.visitEndDate!.toUtc())
           : null,
       'visitMemo': pin.visitMemo,
       ...FirestoreWriteMetadata.forCreate(),

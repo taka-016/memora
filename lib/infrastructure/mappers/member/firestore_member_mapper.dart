@@ -41,7 +41,7 @@ class FirestoreMemberMapper {
       'displayName': member.displayName,
       'type': member.type,
       'birthday': member.birthday != null
-          ? Timestamp.fromDate(member.birthday!)
+          ? Timestamp.fromDate(member.birthday!.toUtc())
           : null,
       'gender': member.gender,
       'email': member.email,
@@ -65,7 +65,7 @@ class FirestoreMemberMapper {
       'displayName': member.displayName,
       'type': member.type,
       'birthday': member.birthday != null
-          ? Timestamp.fromDate(member.birthday!)
+          ? Timestamp.fromDate(member.birthday!.toUtc())
           : null,
       'gender': member.gender,
       'email': member.email,
