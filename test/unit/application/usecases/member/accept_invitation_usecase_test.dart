@@ -6,6 +6,7 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
@@ -35,6 +36,7 @@ void main() {
       mockMemberInvitationRepository,
       mockMemberRepository,
       mockMemberQueryService,
+      FixedAppClock(DateTime.utc(2024, 1, 1, 12)),
     );
   });
 
@@ -222,6 +224,41 @@ void main() {
       verifyNever(
         mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
       );
+    });
+
+    test('現在時刻未指定時はアプリ共通クロックで有効期限を判定する', () async {
+      // Arrange
+      useCase = AcceptInvitationUseCase(
+        mockMemberInvitationQueryService,
+        mockMemberInvitationRepository,
+        mockMemberRepository,
+        mockMemberQueryService,
+        FixedAppClock(DateTime.utc(2024, 1, 2, 0, 0, 1)),
+      );
+      const invitationCode = 'clock-expired-invitation-code';
+      const userId = 'user-id';
+      final memberInvitation = MemberInvitationDto(
+        id: 'invitation-id',
+        inviteeId: 'invitee-id',
+        inviterId: 'inviter-id',
+        invitationCode: invitationCode,
+        createdAt: DateTime.utc(2024, 1, 1),
+      );
+
+      when(
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
+      ).thenAnswer((_) async => memberInvitation);
+
+      // Act
+      final result = await useCase.execute(invitationCode, userId);
+
+      // Assert
+      expect(result, isFalse);
+      verify(
+        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
+      ).called(1);
+      verifyNever(mockMemberQueryService.getMemberById(any));
+      verifyNever(mockMemberRepository.updateMember(any));
     });
 
     test('招待コードが再発行されている場合は再発行日時から24時間以内ならtrueを返す', () async {

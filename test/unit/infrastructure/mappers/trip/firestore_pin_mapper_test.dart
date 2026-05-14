@@ -12,6 +12,8 @@ void main() {
   group('FirestorePinMapper', () {
     test('FirestoreドキュメントからPinDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      final visitStartDate = DateTime.utc(2025, 5, 1, 10);
+      final visitEndDate = DateTime.utc(2025, 5, 1, 11);
       when(doc.data()).thenReturn({
         'pinId': 'pin001',
         'tripId': 'trip001',
@@ -19,8 +21,8 @@ void main() {
         'latitude': 35,
         'longitude': 139.5,
         'locationName': '東京駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2025, 5, 1, 10)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2025, 5, 1, 11)),
+        'visitStartDate': Timestamp.fromDate(visitStartDate),
+        'visitEndDate': Timestamp.fromDate(visitEndDate),
         'visitMemo': '集合',
       });
 
@@ -32,8 +34,10 @@ void main() {
       expect(result.latitude, 35.0);
       expect(result.longitude, 139.5);
       expect(result.locationName, '東京駅');
-      expect(result.visitStartDate, DateTime(2025, 5, 1, 10));
-      expect(result.visitEndDate, DateTime(2025, 5, 1, 11));
+      expect(result.visitStartDate, visitStartDate);
+      expect(result.visitStartDate!.isUtc, isTrue);
+      expect(result.visitEndDate, visitEndDate);
+      expect(result.visitEndDate!.isUtc, isTrue);
       expect(result.visitMemo, '集合');
     });
 
@@ -77,6 +81,14 @@ void main() {
       expect(map['locationName'], '大阪駅');
       expect(map['visitStartDate'], isA<Timestamp>());
       expect(map['visitEndDate'], isA<Timestamp>());
+      expect(
+        (map['visitStartDate'] as Timestamp).toDate(),
+        pin.visitStartDate!.toUtc(),
+      );
+      expect(
+        (map['visitEndDate'] as Timestamp).toDate(),
+        pin.visitEndDate!.toUtc(),
+      );
       expect(map['visitMemo'], '観光開始');
       expect(map['createdAt'], isA<FieldValue>());
       expect(map['updatedAt'], isA<FieldValue>());
