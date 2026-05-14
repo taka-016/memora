@@ -34,6 +34,15 @@ erDiagram
         string memo
         string assignedMemberId FK
     }
+    plans {
+        string id PK
+        string tripId FK "NOT NULL"
+        number orderIndex "NOT NULL"
+        string name "NOT NULL"
+        timestamp startDateTime
+        timestamp endDateTime
+        string memo
+    }
     groups {
         string id PK
         string ownerId FK "NOT NULL"
@@ -110,6 +119,7 @@ erDiagram
 
     trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
+    trip_entries ||--o{ plans : "id → tripId"
     tasks ||--o{ tasks : "id → parentTaskId"
     tasks ||--|| members : "assignedMemberId → id"
     groups ||--o{ group_members : "id → groupId"
