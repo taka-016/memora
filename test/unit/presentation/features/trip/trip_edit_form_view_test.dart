@@ -108,9 +108,7 @@ void main() {
       expect(mapRequested, 1);
     });
 
-    testWidgets('UTC保存されたピン日時はローカル時刻で一覧表示されること', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('UTC保存されたピン日時はローカル時刻で一覧表示されること', (WidgetTester tester) async {
       final startAtUtc = DateTime.utc(2026, 1, 1, 4, 30);
       final endAtUtc = DateTime.utc(2026, 1, 1, 6, 0);
       final localStartAt = startAtUtc.toLocal();
