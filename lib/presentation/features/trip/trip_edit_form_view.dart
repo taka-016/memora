@@ -185,10 +185,11 @@ class TripEditFormView extends HookWidget {
     }
 
     String formatDateTime(DateTime dateTime) {
-      final month = dateTime.month.toString().padLeft(2, '0');
-      final day = dateTime.day.toString().padLeft(2, '0');
-      final hour = dateTime.hour.toString().padLeft(2, '0');
-      final minute = dateTime.minute.toString().padLeft(2, '0');
+      final localDateTime = dateTime.toLocal();
+      final month = localDateTime.month.toString().padLeft(2, '0');
+      final day = localDateTime.day.toString().padLeft(2, '0');
+      final hour = localDateTime.hour.toString().padLeft(2, '0');
+      final minute = localDateTime.minute.toString().padLeft(2, '0');
       return '$month/$day $hour:$minute';
     }
 

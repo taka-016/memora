@@ -88,10 +88,12 @@ class TripEntry extends Equatable {
         }
       }
     } else {
-      if (pin.visitStartDate != null && pin.visitStartDate!.year != tripYear) {
+      if (pin.visitStartDate != null &&
+          pin.visitStartDate!.toLocal().year != tripYear) {
         throw ValidationException('訪問開始日時はtripYearと同じ年にしてください');
       }
-      if (pin.visitEndDate != null && pin.visitEndDate!.year != tripYear) {
+      if (pin.visitEndDate != null &&
+          pin.visitEndDate!.toLocal().year != tripYear) {
         throw ValidationException('訪問終了日時はtripYearと同じ年にしてください');
       }
     }
