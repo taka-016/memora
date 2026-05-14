@@ -82,12 +82,12 @@ void main() {
       expect(map['visitStartDate'], isA<Timestamp>());
       expect(map['visitEndDate'], isA<Timestamp>());
       expect(
-        (map['visitStartDate'] as Timestamp).toDate(),
-        pin.visitStartDate!.toUtc(),
+        (map['visitStartDate'] as Timestamp).millisecondsSinceEpoch,
+        pin.visitStartDate!.toUtc().millisecondsSinceEpoch,
       );
       expect(
-        (map['visitEndDate'] as Timestamp).toDate(),
-        pin.visitEndDate!.toUtc(),
+        (map['visitEndDate'] as Timestamp).millisecondsSinceEpoch,
+        pin.visitEndDate!.toUtc().millisecondsSinceEpoch,
       );
       expect(map['visitMemo'], '観光開始');
       expect(map['createdAt'], isA<FieldValue>());

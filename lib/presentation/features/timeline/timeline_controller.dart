@@ -47,6 +47,7 @@ class TimelineController {
 
 TimelineController useTimelineController({
   required BuildContext context,
+  required int baseYear,
   required int totalDataRows,
   required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
@@ -54,7 +55,7 @@ TimelineController useTimelineController({
 }) {
   final viewStateState = useState(
     TimelineViewState.initial(
-      baseYear: DateTime.now().year,
+      baseYear: baseYear,
       totalDataRows: totalDataRows,
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,

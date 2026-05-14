@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class TaskEditBottomSheet extends HookWidget {
@@ -11,12 +12,14 @@ class TaskEditBottomSheet extends HookWidget {
     required this.tasks,
     required this.groupMembers,
     required this.onSaved,
+    this.clock,
   });
 
   final TaskDto task;
   final List<TaskDto> tasks;
   final List<GroupMemberDto> groupMembers;
   final ValueChanged<TaskDto> onSaved;
+  final AppClock? clock;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +29,7 @@ class TaskEditBottomSheet extends HookWidget {
     final assignedMemberState = useState<String?>(task.assignedMemberId);
     final parentTaskState = useState<String?>(task.parentTaskId);
     final errorMessage = useState<String?>(null);
+    final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     bool hasChildren(String taskId) {
       return tasks.any((t) => t.parentTaskId == taskId);
@@ -65,7 +69,7 @@ class TaskEditBottomSheet extends HookWidget {
     Future<void> pickDueDate() async {
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: dueDateState.value ?? DateTime.now(),
+        initialDate: dueDateState.value ?? effectiveClock.nowLocal(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

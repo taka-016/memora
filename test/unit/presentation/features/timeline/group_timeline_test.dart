@@ -1847,6 +1847,7 @@ class _TimelineControllerProbe extends StatelessWidget {
       builder: (context) {
         final controller = useTimelineController(
           context: context,
+          baseYear: 2026,
           totalDataRows: totalDataRows,
           initialRowHeights: List.filled(
             totalDataRows,

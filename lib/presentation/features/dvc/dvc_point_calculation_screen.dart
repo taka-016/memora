@@ -18,6 +18,7 @@ import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.d
 import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_point_usage_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
@@ -56,6 +57,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final startMonthOffset = useState(0);
     final endMonthOffset = useState(_initialMonthRange);
     final tableHorizontalScrollController = useScrollController();
+    final clock = ref.watch(appClockProvider);
 
     final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
     final getGroupWithMembersByIdUsecase = ref.read(
@@ -125,7 +127,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return null;
     }, [groupId]);
 
-    final currentMonth = dvcMonthStart(DateTime.now());
+    final currentMonth = dvcMonthStart(clock.nowLocal());
     final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
     final visibleEnd = dvcAddMonths(currentMonth, endMonthOffset.value);
     final visibleMonths = _buildMonthList(visibleStart, visibleEnd);
@@ -249,6 +251,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                           context: context,
                           contracts: contractsState.value,
                           onSave: saveContractSettings,
+                          clock: clock,
                         ),
                       );
                       break;
@@ -257,6 +260,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                         showDvcLimitedPointRegistrationModal(
                           context: context,
                           onSave: saveLimitedPoint,
+                          clock: clock,
                         ),
                       );
                       break;

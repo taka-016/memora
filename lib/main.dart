@@ -8,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
@@ -28,11 +29,23 @@ Future<void> main() async {
         persistenceEnabled: false,
       );
 
+      final appClock = NtpSynchronizedAppClock();
+      try {
+        await appClock.sync();
+      } catch (e, stack) {
+        logger.w('NTP時刻の同期に失敗しました', error: e, stackTrace: stack);
+      }
+
       FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-      runApp(const ProviderScope(child: MyApp()));
+      runApp(
+        ProviderScope(
+          overrides: [appClockProvider.overrideWithValue(appClock)],
+          child: const MyApp(),
+        ),
+      );
     },
     (error, stack) {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

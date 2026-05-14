@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
@@ -14,6 +15,7 @@ class TripEditFormView extends HookWidget {
     required this.onTaskManagementRequested,
     required this.onVisitLocationEditRequested,
     this.configuredYear,
+    this.clock,
   });
 
   final TripEntryDto value;
@@ -21,6 +23,7 @@ class TripEditFormView extends HookWidget {
   final VoidCallback onTaskManagementRequested;
   final VoidCallback onVisitLocationEditRequested;
   final int? configuredYear;
+  final AppClock? clock;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +40,7 @@ class TripEditFormView extends HookWidget {
     final isBottomSheetVisible = useState(false);
     final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
+    final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     TripEntryDto buildCurrentValue() {
       final normalizedTripName = nameController.text.isEmpty
@@ -177,7 +181,7 @@ class TripEditFormView extends HookWidget {
         return DateTime(configuredYear!, 1, 1);
       }
 
-      return DateTime.now();
+      return effectiveClock.nowLocal();
     }
 
     String formatDateTime(DateTime dateTime) {
@@ -198,6 +202,7 @@ class TripEditFormView extends HookWidget {
         onUpdate: handlePinUpdated,
         onDelete: handlePinDeleted,
         onClose: hideBottomSheet,
+        clock: effectiveClock,
       );
     }
 

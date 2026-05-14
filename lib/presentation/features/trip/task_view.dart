@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/usecases/trip/get_tasks_by_trip_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/task_list.dart';
 import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
@@ -33,6 +34,7 @@ class TaskView extends HookConsumerWidget {
     final collapsedParents = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
     final copiedTripId = ref.watch(copiedTaskTripIdProvider);
+    final clock = ref.watch(appClockProvider);
     final canCopy = tripId?.isNotEmpty ?? false;
     final canPaste = copiedTripId?.isNotEmpty ?? false;
 
@@ -57,6 +59,7 @@ class TaskView extends HookConsumerWidget {
             task: task,
             tasks: tasksState.value,
             groupMembers: groupMembers,
+            clock: clock,
             onSaved: (updatedTask) {
               final updated = List<TaskDto>.from(tasksState.value);
               final index = updated.indexWhere((t) => t.id == updatedTask.id);

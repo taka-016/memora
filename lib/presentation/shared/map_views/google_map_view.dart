@@ -6,6 +6,7 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
@@ -40,6 +41,7 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedPinState = useState<PinDto?>(null);
     final previousSelectedPin = useRef<PinDto?>(null);
+    final clock = ref.watch(appClockProvider);
 
     void showErrorSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -198,6 +200,7 @@ class GoogleMapView extends HookConsumerWidget {
         onUpdate: isReadOnly ? null : handlePinUpdated,
         onDelete: isReadOnly ? null : handlePinDeleted,
         onClose: hidePinDetailBottomSheet,
+        clock: clock,
       );
     }
 

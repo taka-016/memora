@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/domain/entities/member/member_invitation.dart';
+import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 
 class FirestoreMemberInvitationMapper {
@@ -13,8 +14,8 @@ class FirestoreMemberInvitationMapper {
       inviteeId: data['inviteeId'] as String? ?? '',
       inviterId: data['inviterId'] as String? ?? '',
       invitationCode: data['invitationCode'] as String? ?? '',
-      createdAt: _parseDateTime(data['createdAt']),
-      updatedAt: _parseDateTime(data['updatedAt']),
+      createdAt: FirestoreMapperValueParser.asUtcDateTime(data['createdAt']),
+      updatedAt: FirestoreMapperValueParser.asUtcDateTime(data['updatedAt']),
     );
   }
 
@@ -38,15 +39,5 @@ class FirestoreMemberInvitationMapper {
       'invitationCode': memberInvitation.invitationCode,
       ...FirestoreWriteMetadata.forUpdate(),
     };
-  }
-
-  static DateTime? _parseDateTime(Object? value) {
-    if (value is Timestamp) {
-      return value.toDate();
-    }
-    if (value is DateTime) {
-      return value;
-    }
-    return null;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends HookWidget {
@@ -8,6 +9,7 @@ class PinDetailBottomSheet extends HookWidget {
   final VoidCallback onClose;
   final Function(PinDto pin)? onUpdate;
   final Function(String)? onDelete;
+  final AppClock? clock;
 
   const PinDetailBottomSheet({
     super.key,
@@ -15,6 +17,7 @@ class PinDetailBottomSheet extends HookWidget {
     required this.onClose,
     this.onUpdate,
     this.onDelete,
+    this.clock,
   });
 
   @override
@@ -27,6 +30,7 @@ class PinDetailBottomSheet extends HookWidget {
     final memoController = useTextEditingController();
     final dateErrorMessage = useState<String?>(null);
     final isReadOnly = onUpdate == null;
+    final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     DateTime? buildFromDateTime() {
       if (fromDate.value == null) return null;
@@ -63,26 +67,28 @@ class PinDetailBottomSheet extends HookWidget {
       locationNameController.text = pin.locationName ?? '';
 
       if (pin.visitStartDate != null) {
+        final localVisitStartDate = pin.visitStartDate!.toLocal();
         fromDate.value = DateTime(
-          pin.visitStartDate!.year,
-          pin.visitStartDate!.month,
-          pin.visitStartDate!.day,
+          localVisitStartDate.year,
+          localVisitStartDate.month,
+          localVisitStartDate.day,
         );
         fromTime.value = TimeOfDay(
-          hour: pin.visitStartDate!.hour,
-          minute: pin.visitStartDate!.minute,
+          hour: localVisitStartDate.hour,
+          minute: localVisitStartDate.minute,
         );
       }
 
       if (pin.visitEndDate != null) {
+        final localVisitEndDate = pin.visitEndDate!.toLocal();
         toDate.value = DateTime(
-          pin.visitEndDate!.year,
-          pin.visitEndDate!.month,
-          pin.visitEndDate!.day,
+          localVisitEndDate.year,
+          localVisitEndDate.month,
+          localVisitEndDate.day,
         );
         toTime.value = TimeOfDay(
-          hour: pin.visitEndDate!.hour,
-          minute: pin.visitEndDate!.minute,
+          hour: localVisitEndDate.hour,
+          minute: localVisitEndDate.minute,
         );
       }
 
@@ -92,7 +98,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectFromDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: fromDate.value ?? DateTime.now(),
+        initialDate: fromDate.value ?? effectiveClock.nowLocal(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -116,7 +122,8 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectToDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: toDate.value ?? (fromDate.value ?? DateTime.now()),
+        initialDate:
+            toDate.value ?? (fromDate.value ?? effectiveClock.nowLocal()),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -165,8 +172,8 @@ class PinDetailBottomSheet extends HookWidget {
 
       if (onUpdate != null) {
         final updatedPin = pin.copyWith(
-          visitStartDate: start,
-          visitEndDate: end,
+          visitStartDate: start?.toUtc(),
+          visitEndDate: end?.toUtc(),
           visitMemo: memoController.text,
           locationName: normalizedLocationName,
         );

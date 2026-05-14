@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
@@ -10,7 +11,9 @@ Future<void> showDvcContractManagementModal({
   required BuildContext context,
   required List<DvcPointContractDto> contracts,
   required DvcContractSaveCallback onSave,
+  required AppClock clock,
 }) async {
+  final now = clock.nowLocal();
   final editable = contracts
       .map(
         (contract) => DvcEditableContract.fromDto(
@@ -23,9 +26,9 @@ Future<void> showDvcContractManagementModal({
     editable.add(
       DvcEditableContract(
         contractName: '',
-        contractStartYearMonth: dvcMonthStart(DateTime.now()),
-        contractEndYearMonth: dvcMonthStart(DateTime.now()),
-        useYearStartMonth: DateTime.now().month,
+        contractStartYearMonth: dvcMonthStart(now),
+        contractEndYearMonth: dvcMonthStart(now),
+        useYearStartMonth: now.month,
         annualPointText: '',
         expanded: true,
       ),
@@ -111,17 +114,14 @@ Future<void> showDvcContractManagementModal({
                         key: const Key('dvc_contract_add_button'),
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () {
+                          final addNow = clock.nowLocal();
                           setState(() {
                             editable.add(
                               DvcEditableContract(
                                 contractName: '',
-                                contractStartYearMonth: dvcMonthStart(
-                                  DateTime.now(),
-                                ),
-                                contractEndYearMonth: dvcMonthStart(
-                                  DateTime.now(),
-                                ),
-                                useYearStartMonth: DateTime.now().month,
+                                contractStartYearMonth: dvcMonthStart(addNow),
+                                contractEndYearMonth: dvcMonthStart(addNow),
+                                useYearStartMonth: addNow.month,
                                 annualPointText: '',
                                 expanded: true,
                               ),
