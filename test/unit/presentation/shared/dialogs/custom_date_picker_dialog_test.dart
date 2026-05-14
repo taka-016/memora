@@ -131,7 +131,8 @@ void main() {
 
       // ダイアログが閉じて、選択された日付が返されることを期待
       expect(find.byType(Dialog), findsNothing);
-      expect(selectedDate, equals(DateTime(2025, 12, 25)));
+      expect(selectedDate, equals(DateTime.utc(2025, 12, 25)));
+      expect(selectedDate!.isUtc, isTrue);
     });
 
     testWidgets('入力フィールドでキャンセルするとカレンダービューに戻る', (tester) async {
