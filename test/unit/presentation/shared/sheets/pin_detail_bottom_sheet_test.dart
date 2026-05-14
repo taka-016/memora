@@ -403,11 +403,11 @@ void main() {
       expect(callbackPin, isNotNull);
       expect(
         callbackPin!.visitStartDate,
-        equals(DateTime(2025, 1, 15, 10, 0).toUtc()),
+        equals(DateTime(2025, 1, 15, 10, 0)),
       );
       expect(
         callbackPin!.visitEndDate,
-        equals(DateTime(2025, 1, 15, 16, 0).toUtc()),
+        equals(DateTime(2025, 1, 15, 16, 0)),
       );
     });
 

@@ -192,18 +192,13 @@ void main() {
       expect(entry.pins, hasLength(1));
     });
 
-    test('旅行期間設定時はUTC保存されたpinのローカル日付で旅行期間内かを検証する', () {
-      final yearEndInEasternTime = DateTime.utc(2026, 1, 1, 4, 30);
-      if (yearEndInEasternTime.toLocal() != DateTime(2025, 12, 31, 23, 30)) {
-        return;
-      }
-
+    test('旅行期間設定時はpin日時が保持しているタイムゾーンの日付で旅行期間内かを検証する', () {
       final entry = TripEntry(
         id: 'trip123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 12, 31),
-        tripEndDate: DateTime(2025, 12, 31),
+        tripYear: 2026,
+        tripStartDate: DateTime(2026, 1, 1),
+        tripEndDate: DateTime(2026, 1, 1),
         pins: [
           Pin(
             pinId: 'pin1',
@@ -211,7 +206,7 @@ void main() {
             groupId: 'group456',
             latitude: 0,
             longitude: 0,
-            visitStartDate: yearEndInEasternTime,
+            visitStartDate: DateTime.utc(2026, 1, 1, 4, 30),
           ),
         ],
       );
@@ -301,16 +296,11 @@ void main() {
       expect(entry.pins, hasLength(1));
     });
 
-    test('旅行期間未設定時はUTC保存されたpinのローカル年でtripYearを検証する', () {
-      final yearEndInEasternTime = DateTime.utc(2026, 1, 1, 4, 30);
-      if (yearEndInEasternTime.toLocal().year != 2025) {
-        return;
-      }
-
+    test('旅行期間未設定時はpin日時が保持しているタイムゾーンの年でtripYearを検証する', () {
       final entry = TripEntry(
         id: 'trip123',
         groupId: 'group456',
-        tripYear: 2025,
+        tripYear: 2026,
         pins: [
           Pin(
             pinId: 'pin1',
@@ -318,7 +308,7 @@ void main() {
             groupId: 'group456',
             latitude: 0,
             longitude: 0,
-            visitStartDate: yearEndInEasternTime,
+            visitStartDate: DateTime.utc(2026, 1, 1, 4, 30),
           ),
         ],
       );

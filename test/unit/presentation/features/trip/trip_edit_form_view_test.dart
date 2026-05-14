@@ -108,24 +108,13 @@ void main() {
       expect(mapRequested, 1);
     });
 
-    testWidgets('UTC保存されたピン日時はローカル時刻で一覧表示されること', (WidgetTester tester) async {
-      final startAtUtc = DateTime.utc(2026, 1, 1, 4, 30);
-      final endAtUtc = DateTime.utc(2026, 1, 1, 6, 0);
-      final localStartAt = startAtUtc.toLocal();
-      final localEndAt = endAtUtc.toLocal();
-      final expectedText =
-          '${localStartAt.month.toString().padLeft(2, '0')}/'
-          '${localStartAt.day.toString().padLeft(2, '0')} '
-          '${localStartAt.hour.toString().padLeft(2, '0')}:'
-          '${localStartAt.minute.toString().padLeft(2, '0')} - '
-          '${localEndAt.month.toString().padLeft(2, '0')}/'
-          '${localEndAt.day.toString().padLeft(2, '0')} '
-          '${localEndAt.hour.toString().padLeft(2, '0')}:'
-          '${localEndAt.minute.toString().padLeft(2, '0')}';
+    testWidgets('ピン日時は保持しているタイムゾーンのまま一覧表示されること', (WidgetTester tester) async {
+      final startAt = DateTime.utc(2026, 1, 1, 4, 30);
+      final endAt = DateTime.utc(2026, 1, 1, 6, 0);
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: localStartAt.year,
+        tripYear: startAt.year,
         pins: [
           PinDto(
             pinId: 'pin-1',
@@ -133,8 +122,8 @@ void main() {
             latitude: 35.681236,
             longitude: 139.767125,
             locationName: '年末の場所',
-            visitStartDate: startAtUtc,
-            visitEndDate: endAtUtc,
+            visitStartDate: startAt,
+            visitEndDate: endAt,
           ),
         ],
       );
@@ -154,7 +143,7 @@ void main() {
         ),
       );
 
-      expect(find.text(expectedText), findsOneWidget);
+      expect(find.text('01/01 04:30 - 01/01 06:00'), findsOneWidget);
     });
 
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
