@@ -275,12 +275,16 @@ class TripEditFormView extends HookConsumerWidget {
     }) {
       return InkWell(
         onTap: () async {
+          final initialDate = await determineInitialDate(
+            selectedDate,
+            isEndDate: isEndDate,
+          );
+          if (!context.mounted) {
+            return;
+          }
           final date = await DatePickerHelper.showCustomDatePicker(
             context,
-            initialDate: await determineInitialDate(
-              selectedDate,
-              isEndDate: isEndDate,
-            ),
+            initialDate: initialDate,
             firstDate: DateTime(2000),
             lastDate: DateTime(2100),
           );

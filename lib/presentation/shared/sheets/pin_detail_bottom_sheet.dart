@@ -67,8 +67,14 @@ class PinDetailBottomSheet extends HookConsumerWidget {
     }
 
     Future<void> selectFromDate(BuildContext context) async {
-      final initialDate =
-          fromDate.value ?? await ref.read(currentTimeProvider.future);
+      var initialDate = fromDate.value;
+      initialDate ??= await ref.read(currentTimeProvider.future);
+      if (initialDate == null) {
+        return;
+      }
+      if (!context.mounted) {
+        return;
+      }
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
         initialDate: initialDate,
@@ -83,6 +89,9 @@ class PinDetailBottomSheet extends HookConsumerWidget {
 
     Future<void> selectFromTime(BuildContext context) async {
       final currentTime = await ref.read(currentTimeProvider.future);
+      if (!context.mounted) {
+        return;
+      }
       final picked = await showTimePicker(
         context: context,
         initialTime:
@@ -95,9 +104,14 @@ class PinDetailBottomSheet extends HookConsumerWidget {
     }
 
     Future<void> selectToDate(BuildContext context) async {
-      final initialDate =
-          toDate.value ??
-          (fromDate.value ?? await ref.read(currentTimeProvider.future));
+      var initialDate = toDate.value ?? fromDate.value;
+      initialDate ??= await ref.read(currentTimeProvider.future);
+      if (initialDate == null) {
+        return;
+      }
+      if (!context.mounted) {
+        return;
+      }
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
         initialDate: initialDate,
@@ -112,6 +126,9 @@ class PinDetailBottomSheet extends HookConsumerWidget {
 
     Future<void> selectToTime(BuildContext context) async {
       final currentTime = await ref.read(currentTimeProvider.future);
+      if (!context.mounted) {
+        return;
+      }
       final picked = await showTimePicker(
         context: context,
         initialTime:

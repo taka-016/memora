@@ -65,8 +65,14 @@ class TaskEditBottomSheet extends HookConsumerWidget {
         : null;
 
     Future<void> pickDueDate() async {
-      final initialDate =
-          dueDateState.value ?? await ref.read(currentTimeProvider.future);
+      var initialDate = dueDateState.value;
+      initialDate ??= await ref.read(currentTimeProvider.future);
+      if (initialDate == null) {
+        return;
+      }
+      if (!context.mounted) {
+        return;
+      }
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
         initialDate: initialDate,

@@ -253,8 +253,14 @@ class MemberEditModal extends HookConsumerWidget {
     Widget buildBirthdayField() {
       return InkWell(
         onTap: () async {
-          final initialDate =
-              birthday.value ?? await ref.read(currentTimeProvider.future);
+          var initialDate = birthday.value;
+          initialDate ??= await ref.read(currentTimeProvider.future);
+          if (initialDate == null) {
+            return;
+          }
+          if (!context.mounted) {
+            return;
+          }
           final selectedDate = await DatePickerHelper.showCustomDatePicker(
             context,
             initialDate: initialDate,
