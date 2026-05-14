@@ -251,6 +251,31 @@ void main() {
       expect(entry.pins, hasLength(1));
     });
 
+    test('旅行期間未設定時はUTC保存されたpinのローカル年でtripYearを検証する', () {
+      final yearEndInEasternTime = DateTime.utc(2026, 1, 1, 4, 30);
+      if (yearEndInEasternTime.toLocal().year != 2025) {
+        return;
+      }
+
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        tripYear: 2025,
+        pins: [
+          Pin(
+            pinId: 'pin1',
+            tripId: 'trip123',
+            groupId: 'group456',
+            latitude: 0,
+            longitude: 0,
+            visitStartDate: yearEndInEasternTime,
+          ),
+        ],
+      );
+
+      expect(entry.pins, hasLength(1));
+    });
+
     test('存在しない親タスクが設定されていると例外が発生する', () {
       expect(
         () => TripEntry(

@@ -108,6 +108,57 @@ void main() {
       expect(mapRequested, 1);
     });
 
+    testWidgets('UTC保存されたピン日時はローカル時刻で一覧表示されること', (
+      WidgetTester tester,
+    ) async {
+      final startAtUtc = DateTime.utc(2026, 1, 1, 4, 30);
+      final endAtUtc = DateTime.utc(2026, 1, 1, 6, 0);
+      final localStartAt = startAtUtc.toLocal();
+      final localEndAt = endAtUtc.toLocal();
+      final expectedText =
+          '${localStartAt.month.toString().padLeft(2, '0')}/'
+          '${localStartAt.day.toString().padLeft(2, '0')} '
+          '${localStartAt.hour.toString().padLeft(2, '0')}:'
+          '${localStartAt.minute.toString().padLeft(2, '0')} - '
+          '${localEndAt.month.toString().padLeft(2, '0')}/'
+          '${localEndAt.day.toString().padLeft(2, '0')} '
+          '${localEndAt.hour.toString().padLeft(2, '0')}:'
+          '${localEndAt.minute.toString().padLeft(2, '0')}';
+      final initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        tripYear: localStartAt.year,
+        pins: [
+          PinDto(
+            pinId: 'pin-1',
+            tripId: 'trip-id',
+            latitude: 35.681236,
+            longitude: 139.767125,
+            locationName: '年末の場所',
+            visitStartDate: startAtUtc,
+            visitEndDate: endAtUtc,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              onChanged: (_) {},
+              onTaskManagementRequested: () {},
+              onVisitLocationEditRequested: () {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text(expectedText), findsOneWidget);
+    });
+
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
       WidgetTester tester,
     ) async {
