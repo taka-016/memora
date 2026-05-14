@@ -38,6 +38,9 @@
 
 ## 全体
 
+- pinのvisitStartDateとvisitEndDateは入力されたタイムゾーンの日時として保存し、UTC変換しない
+  - Firestore読み書き、ボトムシート更新、旅行編集画面の表示、TripEntryの期間チェックを入力タイムゾーン保存前提へ揃える
+
 ## リファクタリング
 - trip_entriesのフィールド名を変更し、関連箇所を修正
   - tripName→name
