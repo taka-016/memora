@@ -28,9 +28,7 @@ class FirestoreDvcLimitedPointMapper {
   static Map<String, dynamic> toCreateFirestore(DvcLimitedPoint limitedPoint) {
     return {
       'groupId': limitedPoint.groupId,
-      'startYearMonth': Timestamp.fromDate(
-        limitedPoint.startYearMonth.toUtc(),
-      ),
+      'startYearMonth': Timestamp.fromDate(limitedPoint.startYearMonth.toUtc()),
       'endYearMonth': Timestamp.fromDate(limitedPoint.endYearMonth.toUtc()),
       'point': limitedPoint.point,
       'memo': limitedPoint.memo,

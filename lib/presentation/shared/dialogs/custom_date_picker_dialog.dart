@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_date_time.dart';
 
 String _getWeekdayString(DateTime date) {
   const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
@@ -62,13 +63,16 @@ class _DateValidator {
       final month = int.parse(numbersOnly.substring(4, 6));
       final day = int.parse(numbersOnly.substring(6, 8));
 
-      final date = DateTime(year, month, day);
+      final date = DateTime.utc(year, month, day);
 
       if (date.year != year || date.month != month || date.day != day) {
         return null;
       }
 
-      if (date.isBefore(firstDate) || date.isAfter(lastDate)) {
+      final normalizedFirstDate = AppDateTime.dateOnlyUtc(firstDate);
+      final normalizedLastDate = AppDateTime.dateOnlyUtc(lastDate);
+      if (date.isBefore(normalizedFirstDate) ||
+          date.isAfter(normalizedLastDate)) {
         return null;
       }
 
@@ -98,8 +102,11 @@ class CustomDatePickerDialog extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedDate = useState(initialDate);
-    final displayDate = useState(initialDate);
+    final normalizedInitialDate = AppDateTime.dateOnlyUtc(initialDate);
+    final normalizedFirstDate = AppDateTime.dateOnlyUtc(firstDate);
+    final normalizedLastDate = AppDateTime.dateOnlyUtc(lastDate);
+    final selectedDate = useState(normalizedInitialDate);
+    final displayDate = useState(normalizedInitialDate);
     final isMonthChanging = useState(false);
     final isInputMode = useState(false);
     final errorMessage = useState<String?>(null);
@@ -120,9 +127,10 @@ class CustomDatePickerDialog extends HookWidget {
     }
 
     void onDateSelected(DateTime date) {
-      selectedDate.value = date;
+      selectedDate.value = AppDateTime.dateOnlyUtc(date);
 
-      if (!isMonthChanging.value && date != initialDate) {
+      if (!isMonthChanging.value &&
+          selectedDate.value != normalizedInitialDate) {
         Navigator.of(context).pop(selectedDate.value);
       }
 
@@ -145,8 +153,8 @@ class CustomDatePickerDialog extends HookWidget {
 
       final date = _DateValidator.validateAndParse(
         dateController.text,
-        firstDate,
-        lastDate,
+        normalizedFirstDate,
+        normalizedLastDate,
       );
 
       if (date == null) {
@@ -251,8 +259,8 @@ class CustomDatePickerDialog extends HookWidget {
     Widget buildCalendarView() {
       return CalendarDatePicker(
         initialDate: selectedDate.value,
-        firstDate: firstDate,
-        lastDate: lastDate,
+        firstDate: normalizedFirstDate,
+        lastDate: normalizedLastDate,
         onDateChanged: onDateSelected,
         onDisplayedMonthChanged: onDisplayedMonthChanged,
       );
@@ -294,9 +302,9 @@ Future<DateTime?> showCustomDatePickerDialog(
   return showDialog<DateTime>(
     context: context,
     builder: (context) => CustomDatePickerDialog(
-      initialDate: initialDate.add(const Duration(minutes: 1)),
-      firstDate: firstDate,
-      lastDate: lastDate,
+      initialDate: AppDateTime.dateOnlyUtc(initialDate),
+      firstDate: AppDateTime.dateOnlyUtc(firstDate),
+      lastDate: AppDateTime.dateOnlyUtc(lastDate),
     ),
   );
 }

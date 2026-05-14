@@ -10,6 +10,7 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -49,13 +50,18 @@ class TripEditModal extends HookConsumerWidget {
     final getNearbyLocationNameUsecase = ref.read(
       getNearbyLocationNameUsecaseProvider,
     );
+    final currentTimeAsync = ref.watch(currentTimeProvider);
+    final currentYearValue =
+        tripEntry?.tripYear ??
+        year ??
+        currentTimeAsync.valueOrNull?.toLocal().year;
+    final isWaitingForCurrentYear = currentYearValue == null;
 
     final initialTripForComparison = useMemoized(() {
-      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
       return TripEntryDto(
         id: tripEntry?.id ?? '',
         groupId: groupId,
-        tripYear: tripYearValue,
+        tripYear: currentYearValue ?? 0,
         tripName: tripEntry?.tripName,
         tripStartDate: tripEntry?.tripStartDate,
         tripEndDate: tripEntry?.tripEndDate,
@@ -63,7 +69,7 @@ class TripEditModal extends HookConsumerWidget {
         pins: List<PinDto>.from(tripEntry?.pins ?? const []),
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
       );
-    }, [groupId, tripEntry, year]);
+    }, [groupId, tripEntry, currentYearValue]);
 
     final draftTripEntry = useState(initialTripForComparison);
 
@@ -101,6 +107,13 @@ class TripEditModal extends HookConsumerWidget {
       updateDirtyState();
       return null;
     }, [draftTripEntry.value, initialTripForComparison]);
+
+    useEffect(() {
+      if (draftTripEntry.value.tripYear == 0 && currentYearValue != null) {
+        draftTripEntry.value = initialTripForComparison;
+      }
+      return null;
+    }, [currentYearValue, initialTripForComparison]);
 
     void hideBottomSheet() {
       isBottomSheetVisible.value = false;
@@ -187,7 +200,12 @@ class TripEditModal extends HookConsumerWidget {
       final tripToSave = draftTripEntry.value;
       final selectedStart = tripToSave.tripStartDate;
       final selectedEnd = tripToSave.tripEndDate;
-      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
+      final tripYearValue = currentYearValue;
+
+      if (tripYearValue == null) {
+        errorMessage.value = '現在時刻の取得後に保存してください';
+        return;
+      }
 
       if (selectedStart != null &&
           selectedEnd != null &&
@@ -261,6 +279,10 @@ class TripEditModal extends HookConsumerWidget {
     }
 
     Widget buildNormalLayout() {
+      if (isWaitingForCurrentYear) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

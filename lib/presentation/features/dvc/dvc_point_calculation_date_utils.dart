@@ -1,8 +1,10 @@
+import 'package:memora/core/time/app_date_time.dart';
+
 DateTime dvcMonthStart(DateTime dateTime) =>
-    DateTime(dateTime.year, dateTime.month);
+    AppDateTime.monthStartUtc(dateTime);
 
 DateTime dvcAddMonths(DateTime dateTime, int months) {
-  return DateTime(dateTime.year, dateTime.month + months);
+  return DateTime.utc(dateTime.year, dateTime.month + months);
 }
 
 String dvcMonthKey(DateTime dateTime) => '${dateTime.year}-${dateTime.month}';

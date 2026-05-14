@@ -9,8 +9,10 @@ typedef DvcContractSaveCallback =
 Future<void> showDvcContractManagementModal({
   required BuildContext context,
   required List<DvcPointContractDto> contracts,
+  required DateTime currentDate,
   required DvcContractSaveCallback onSave,
 }) async {
+  final currentMonth = dvcMonthStart(currentDate);
   final editable = contracts
       .map(
         (contract) => DvcEditableContract.fromDto(
@@ -23,9 +25,9 @@ Future<void> showDvcContractManagementModal({
     editable.add(
       DvcEditableContract(
         contractName: '',
-        contractStartYearMonth: dvcMonthStart(DateTime.now()),
-        contractEndYearMonth: dvcMonthStart(DateTime.now()),
-        useYearStartMonth: DateTime.now().month,
+        contractStartYearMonth: currentMonth,
+        contractEndYearMonth: currentMonth,
+        useYearStartMonth: currentMonth.month,
         annualPointText: '',
         expanded: true,
       ),
@@ -116,12 +118,12 @@ Future<void> showDvcContractManagementModal({
                               DvcEditableContract(
                                 contractName: '',
                                 contractStartYearMonth: dvcMonthStart(
-                                  DateTime.now(),
+                                  currentMonth,
                                 ),
                                 contractEndYearMonth: dvcMonthStart(
-                                  DateTime.now(),
+                                  currentMonth,
                                 ),
-                                useYearStartMonth: DateTime.now().month,
+                                useYearStartMonth: currentMonth.month,
                                 annualPointText: '',
                                 expanded: true,
                               ),

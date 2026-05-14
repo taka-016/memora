@@ -2,6 +2,7 @@ import 'package:memora/application/usecases/location/get_current_location_usecas
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/notifiers/coordinate_state.dart';
 
 final coordinateProvider =
@@ -22,10 +23,8 @@ class CoordinateNotifier extends Notifier<CoordinateState> {
     try {
       final coordinate = await _getCurrentLocationUsecase.execute();
       if (coordinate != null) {
-        state = state.copyWith(
-          coordinate: coordinate,
-          lastUpdated: DateTime.now(),
-        );
+        final now = await ref.read(currentTimeProvider.future);
+        state = state.copyWith(coordinate: coordinate, lastUpdated: now);
       }
     } catch (e, stack) {
       logger.e(
@@ -37,8 +36,9 @@ class CoordinateNotifier extends Notifier<CoordinateState> {
     }
   }
 
-  void setCoordinate(Coordinate coordinate) {
-    state = state.copyWith(coordinate: coordinate, lastUpdated: DateTime.now());
+  Future<void> setCoordinate(Coordinate coordinate) async {
+    final now = await ref.read(currentTimeProvider.future);
+    state = state.copyWith(coordinate: coordinate, lastUpdated: now);
   }
 
   void clearCoordinate() {

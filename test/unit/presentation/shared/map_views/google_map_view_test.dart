@@ -128,7 +128,7 @@ void main() {
       addTearDown(container.dispose);
 
       final coordinateNotifier = container.read(coordinateProvider.notifier);
-      coordinateNotifier.setCoordinate(testLocation);
+      await coordinateNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -181,7 +181,7 @@ void main() {
       addTearDown(container.dispose);
 
       final coordinateNotifier = container.read(coordinateProvider.notifier);
-      coordinateNotifier.setCoordinate(testLocation);
+      await coordinateNotifier.setCoordinate(testLocation);
 
       await tester.pumpWidget(
         UncontrolledProviderScope(

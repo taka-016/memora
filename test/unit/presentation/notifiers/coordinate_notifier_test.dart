@@ -85,12 +85,12 @@ void main() {
       expect(state.lastUpdated, isNull);
     });
 
-    test('手動で位置情報を設定できる', () {
+    test('手動で位置情報を設定できる', () async {
       final container = createContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(coordinateProvider.notifier);
-      notifier.setCoordinate(
+      await notifier.setCoordinate(
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
 
@@ -102,12 +102,12 @@ void main() {
       expect(state.lastUpdated, isNotNull);
     });
 
-    test('位置情報をクリアできる', () {
+    test('位置情報をクリアできる', () async {
       final container = createContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(coordinateProvider.notifier);
-      notifier.setCoordinate(
+      await notifier.setCoordinate(
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
       notifier.clearCoordinate();

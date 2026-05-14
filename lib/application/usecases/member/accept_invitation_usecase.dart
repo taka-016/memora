@@ -5,6 +5,7 @@ import 'package:memora/application/queries/member/member_invitation_query_servic
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/core/app_logger.dart';
@@ -17,6 +18,7 @@ final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
     ref.watch(memberInvitationRepositoryProvider),
     ref.watch(memberRepositoryProvider),
     ref.watch(memberQueryServiceProvider),
+    ref.watch(appClockProvider),
   );
 });
 
@@ -27,12 +29,14 @@ class AcceptInvitationUseCase {
   final MemberInvitationRepository _memberInvitationRepository;
   final MemberRepository _memberRepository;
   final MemberQueryService _memberQueryService;
+  final AppClock _clock;
 
   AcceptInvitationUseCase(
     this._memberInvitationQueryService,
     this._memberInvitationRepository,
     this._memberRepository,
     this._memberQueryService,
+    this._clock,
   );
 
   Future<bool> execute(
@@ -48,7 +52,8 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      if (_isExpired(_issuedAt(memberInvitation), now ?? DateTime.now())) {
+      final currentTime = now?.toUtc() ?? await _clock.nowUtc();
+      if (_isExpired(_issuedAt(memberInvitation), currentTime)) {
         return false;
       }
 

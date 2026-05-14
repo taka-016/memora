@@ -18,6 +18,7 @@ import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.d
 import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_point_usage_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
@@ -56,6 +57,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final startMonthOffset = useState(0);
     final endMonthOffset = useState(_initialMonthRange);
     final tableHorizontalScrollController = useScrollController();
+    final currentTimeAsync = ref.watch(currentTimeProvider);
 
     final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
     final getGroupWithMembersByIdUsecase = ref.read(
@@ -125,7 +127,8 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return null;
     }, [groupId]);
 
-    final currentMonth = dvcMonthStart(DateTime.now());
+    final currentTime = currentTimeAsync.valueOrNull;
+    final currentMonth = dvcMonthStart(currentTime ?? DateTime.utc(2000));
     final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
     final visibleEnd = dvcAddMonths(currentMonth, endMonthOffset.value);
     final visibleMonths = _buildMonthList(visibleStart, visibleEnd);
@@ -248,6 +251,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                         showDvcContractManagementModal(
                           context: context,
                           contracts: contractsState.value,
+                          currentDate: currentMonth,
                           onSave: saveContractSettings,
                         ),
                       );
@@ -256,6 +260,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                       unawaited(
                         showDvcLimitedPointRegistrationModal(
                           context: context,
+                          currentDate: currentMonth,
                           onSave: saveLimitedPoint,
                         ),
                       );
@@ -548,6 +553,12 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             ),
           );
         case _DvcScreenState.loaded:
+          if (currentTimeAsync.hasError) {
+            return const Center(child: Text('現在時刻の取得に失敗しました'));
+          }
+          if (currentTime == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return buildTableContent();
       }
     }

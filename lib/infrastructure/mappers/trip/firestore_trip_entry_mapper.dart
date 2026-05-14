@@ -23,7 +23,7 @@ class FirestoreTripEntryMapper {
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
-      tripYear: tripYear ?? tripStartDate?.year ?? DateTime.now().year,
+      tripYear: tripYear ?? tripStartDate?.year ?? 0,
       tripName: data['tripName'] as String?,
       tripStartDate: tripStartDate,
       tripEndDate: tripEndDate,

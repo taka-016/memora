@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
-class TaskEditBottomSheet extends HookWidget {
+class TaskEditBottomSheet extends HookConsumerWidget {
   const TaskEditBottomSheet({
     super.key,
     required this.task,
@@ -19,7 +21,7 @@ class TaskEditBottomSheet extends HookWidget {
   final ValueChanged<TaskDto> onSaved;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final nameController = useTextEditingController(text: task.name);
     final memoController = useTextEditingController(text: task.memo ?? '');
     final dueDateState = useState<DateTime?>(task.dueDate);
@@ -63,9 +65,11 @@ class TaskEditBottomSheet extends HookWidget {
         : null;
 
     Future<void> pickDueDate() async {
+      final initialDate =
+          dueDateState.value ?? await ref.read(currentTimeProvider.future);
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: dueDateState.value ?? DateTime.now(),
+        initialDate: initialDate,
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

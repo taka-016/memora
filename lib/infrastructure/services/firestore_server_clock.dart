@@ -18,7 +18,9 @@ class FirestoreServerClock implements AppClock {
       _fieldName: FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
-    final snapshot = await document.get(const GetOptions(source: Source.server));
+    final snapshot = await document.get(
+      const GetOptions(source: Source.server),
+    );
     final value = snapshot.data()?[_fieldName];
     if (value is Timestamp) {
       return value.toDate().toUtc();

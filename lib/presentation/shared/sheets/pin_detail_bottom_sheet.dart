@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/core/time/app_date_time.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
-class PinDetailBottomSheet extends HookWidget {
+class PinDetailBottomSheet extends HookConsumerWidget {
   final PinDto pin;
   final VoidCallback onClose;
   final Function(PinDto pin)? onUpdate;
@@ -18,7 +21,7 @@ class PinDetailBottomSheet extends HookWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final fromDate = useState<DateTime?>(null);
     final fromTime = useState<TimeOfDay?>(null);
     final toDate = useState<DateTime?>(null);
@@ -31,25 +34,13 @@ class PinDetailBottomSheet extends HookWidget {
     DateTime? buildFromDateTime() {
       if (fromDate.value == null) return null;
       final time = fromTime.value ?? const TimeOfDay(hour: 0, minute: 0);
-      return DateTime(
-        fromDate.value!.year,
-        fromDate.value!.month,
-        fromDate.value!.day,
-        time.hour,
-        time.minute,
-      );
+      return AppDateTime.localDateAndTimeToUtc(fromDate.value!, time);
     }
 
     DateTime? buildToDateTime() {
       if (toDate.value == null) return null;
       final time = toTime.value ?? const TimeOfDay(hour: 0, minute: 0);
-      return DateTime(
-        toDate.value!.year,
-        toDate.value!.month,
-        toDate.value!.day,
-        time.hour,
-        time.minute,
-      );
+      return AppDateTime.localDateAndTimeToUtc(toDate.value!, time);
     }
 
     void initializeFromPin() {
@@ -63,36 +54,24 @@ class PinDetailBottomSheet extends HookWidget {
       locationNameController.text = pin.locationName ?? '';
 
       if (pin.visitStartDate != null) {
-        fromDate.value = DateTime(
-          pin.visitStartDate!.year,
-          pin.visitStartDate!.month,
-          pin.visitStartDate!.day,
-        );
-        fromTime.value = TimeOfDay(
-          hour: pin.visitStartDate!.hour,
-          minute: pin.visitStartDate!.minute,
-        );
+        fromDate.value = AppDateTime.localDateFromUtc(pin.visitStartDate!);
+        fromTime.value = AppDateTime.localTimeFromUtc(pin.visitStartDate!);
       }
 
       if (pin.visitEndDate != null) {
-        toDate.value = DateTime(
-          pin.visitEndDate!.year,
-          pin.visitEndDate!.month,
-          pin.visitEndDate!.day,
-        );
-        toTime.value = TimeOfDay(
-          hour: pin.visitEndDate!.hour,
-          minute: pin.visitEndDate!.minute,
-        );
+        toDate.value = AppDateTime.localDateFromUtc(pin.visitEndDate!);
+        toTime.value = AppDateTime.localTimeFromUtc(pin.visitEndDate!);
       }
 
       memoController.text = pin.visitMemo ?? '';
     }
 
     Future<void> selectFromDate(BuildContext context) async {
+      final initialDate =
+          fromDate.value ?? await ref.read(currentTimeProvider.future);
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: fromDate.value ?? DateTime.now(),
+        initialDate: initialDate,
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -103,9 +82,11 @@ class PinDetailBottomSheet extends HookWidget {
     }
 
     Future<void> selectFromTime(BuildContext context) async {
+      final currentTime = await ref.read(currentTimeProvider.future);
       final picked = await showTimePicker(
         context: context,
-        initialTime: fromTime.value ?? TimeOfDay.now(),
+        initialTime:
+            fromTime.value ?? AppDateTime.localTimeFromUtc(currentTime),
       );
       if (picked != null) {
         fromTime.value = picked;
@@ -114,9 +95,12 @@ class PinDetailBottomSheet extends HookWidget {
     }
 
     Future<void> selectToDate(BuildContext context) async {
+      final initialDate =
+          toDate.value ??
+          (fromDate.value ?? await ref.read(currentTimeProvider.future));
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: toDate.value ?? (fromDate.value ?? DateTime.now()),
+        initialDate: initialDate,
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -127,9 +111,12 @@ class PinDetailBottomSheet extends HookWidget {
     }
 
     Future<void> selectToTime(BuildContext context) async {
+      final currentTime = await ref.read(currentTimeProvider.future);
       final picked = await showTimePicker(
         context: context,
-        initialTime: toTime.value ?? (fromTime.value ?? TimeOfDay.now()),
+        initialTime:
+            toTime.value ??
+            (fromTime.value ?? AppDateTime.localTimeFromUtc(currentTime)),
       );
       if (picked != null) {
         toTime.value = picked;

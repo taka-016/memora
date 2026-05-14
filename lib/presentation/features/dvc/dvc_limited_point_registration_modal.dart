@@ -12,10 +12,11 @@ typedef DvcLimitedPointSaveCallback =
 
 Future<void> showDvcLimitedPointRegistrationModal({
   required BuildContext context,
+  required DateTime currentDate,
   required DvcLimitedPointSaveCallback onSave,
 }) async {
-  var startYearMonth = dvcMonthStart(DateTime.now());
-  var endYearMonth = dvcMonthStart(DateTime.now());
+  var startYearMonth = dvcMonthStart(currentDate);
+  var endYearMonth = dvcMonthStart(currentDate);
   final pointController = TextEditingController();
   final memoController = TextEditingController();
   var validationError = '';

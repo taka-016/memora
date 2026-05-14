@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 
-class Timeline extends HookWidget {
+class Timeline extends HookConsumerWidget {
   const Timeline({
     super.key,
     required this.groupWithMembers,
@@ -26,13 +28,23 @@ class Timeline extends HookWidget {
   final List<TimelineRowDefinition> rowDefinitions;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTimeAsync = ref.watch(currentTimeProvider);
+    final currentTime = currentTimeAsync.valueOrNull;
+    if (currentTimeAsync.hasError) {
+      return const Center(child: Text('現在時刻の取得に失敗しました'));
+    }
+    if (currentTime == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final totalDataRows = rowDefinitions.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final timelineController = useTimelineController(
       context: context,
       totalDataRows: totalDataRows,
+      baseYear: currentTime.toLocal().year,
       initialRowHeights: rowDefinitions
           .map((definition) => definition.initialHeight)
           .toList(),

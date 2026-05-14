@@ -3,6 +3,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
@@ -35,6 +36,7 @@ void main() {
       mockMemberInvitationRepository,
       mockMemberRepository,
       mockMemberQueryService,
+      FixedAppClock(DateTime.utc(2026, 5, 14)),
     );
   });
 

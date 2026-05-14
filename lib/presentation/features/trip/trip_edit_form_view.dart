@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
-class TripEditFormView extends HookWidget {
+class TripEditFormView extends HookConsumerWidget {
   const TripEditFormView({
     super.key,
     required this.value,
@@ -23,7 +25,7 @@ class TripEditFormView extends HookWidget {
   final int? configuredYear;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final nameController = useTextEditingController(text: value.tripName ?? '');
     final memoController = useTextEditingController(text: value.tripMemo ?? '');
     final valueRef = useRef(value);
@@ -161,10 +163,10 @@ class TripEditFormView extends HookWidget {
       notifyChanged();
     }
 
-    DateTime determineInitialDate(
+    Future<DateTime> determineInitialDate(
       DateTime? selectedDate, {
       required bool isEndDate,
-    }) {
+    }) async {
       if (selectedDate != null) {
         return selectedDate;
       }
@@ -177,7 +179,7 @@ class TripEditFormView extends HookWidget {
         return DateTime(configuredYear!, 1, 1);
       }
 
-      return DateTime.now();
+      return ref.read(currentTimeProvider.future);
     }
 
     String formatDateTime(DateTime dateTime) {
@@ -275,7 +277,7 @@ class TripEditFormView extends HookWidget {
         onTap: () async {
           final date = await DatePickerHelper.showCustomDatePicker(
             context,
-            initialDate: determineInitialDate(
+            initialDate: await determineInitialDate(
               selectedDate,
               isEndDate: isEndDate,
             ),
