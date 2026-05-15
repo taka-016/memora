@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
@@ -36,7 +37,7 @@ void main() {
 
       final result = FirestoreTripEntryMapper.fromFirestore(
         doc,
-        fallbackTripYear: 2026,
+        clock: FixedAppClock(DateTime(2026)),
         pins: pins,
         tasks: tasks,
       );
@@ -62,12 +63,28 @@ void main() {
 
       final result = FirestoreTripEntryMapper.fromFirestore(
         doc,
-        fallbackTripYear: 2026,
+        clock: FixedAppClock(DateTime(2026)),
       );
 
       expect(result.tripYear, 2024);
       expect(result.groupId, 'group002');
       expect(result.tripStartDate, DateTime(2024, 12, 31));
+      expect(result.tripEndDate, isNull);
+    });
+
+    test('tripYearとtripStartDate欠損時はクロックの年を補完する', () {
+      final doc = MockDocumentSnapshot<Map<String, dynamic>>();
+      when(doc.id).thenReturn('trip003');
+      when(doc.data()).thenReturn({'groupId': 'group003'});
+
+      final result = FirestoreTripEntryMapper.fromFirestore(
+        doc,
+        clock: FixedAppClock(DateTime(2027)),
+      );
+
+      expect(result.tripYear, 2027);
+      expect(result.groupId, 'group003');
+      expect(result.tripStartDate, isNull);
       expect(result.tripEndDate, isNull);
     });
 

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/firestore_mapper_value_parser.dart';
 import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
@@ -9,7 +10,7 @@ import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 class FirestoreTripEntryMapper {
   static TripEntryDto fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc, {
-    required int fallbackTripYear,
+    required AppClock clock,
     List<PinDto> pins = const [],
     List<TaskDto> tasks = const [],
   }) {
@@ -24,7 +25,7 @@ class FirestoreTripEntryMapper {
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
-      tripYear: tripYear ?? tripStartDate?.year ?? fallbackTripYear,
+      tripYear: tripYear ?? tripStartDate?.year ?? clock.now().year,
       tripName: data['tripName'] as String?,
       tripStartDate: tripStartDate,
       tripEndDate: tripEndDate,

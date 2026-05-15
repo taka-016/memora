@@ -68,7 +68,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
-        fallbackTripYear: _clock.now().year,
+        clock: _clock,
         pins: pins,
         tasks: tasks,
       );
@@ -103,10 +103,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       final snapshot = await query.get();
       return snapshot.docs
           .map(
-            (doc) => FirestoreTripEntryMapper.fromFirestore(
-              doc,
-              fallbackTripYear: _clock.now().year,
-            ),
+            (doc) => FirestoreTripEntryMapper.fromFirestore(doc, clock: _clock),
           )
           .toList();
     } catch (e, stack) {
