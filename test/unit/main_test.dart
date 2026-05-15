@@ -7,7 +7,9 @@ import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/main.dart' as app;
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -107,6 +109,27 @@ void main() {
     });
   });
 
+  group('AppClockLifecycleSync', () {
+    testWidgets('バックグラウンド復帰時にアプリ共通クロックを再同期する', (
+      WidgetTester tester,
+    ) async {
+      final clock = _FakeSyncableAppClock(DateTime.utc(2026, 5, 15, 12));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [appClockProvider.overrideWithValue(clock)],
+          child: const app.AppClockLifecycleSync(child: SizedBox.shrink()),
+        ),
+      );
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+
+      expect(clock.syncCount, 1);
+    });
+  });
+
   group('Firestore設定', () {
     test('main関数でFirestoreのローカルキャッシュが無効化されること', () {
       // 設定オブジェクトの動作確認
@@ -114,4 +137,25 @@ void main() {
       expect(settings.persistenceEnabled, false);
     });
   });
+}
+
+class _FakeSyncableAppClock implements AppClock {
+  _FakeSyncableAppClock(this.fixedNowUtc);
+
+  final DateTime fixedNowUtc;
+  int syncCount = 0;
+
+  Future<void> sync() async {
+    syncCount += 1;
+  }
+
+  @override
+  DateTime nowUtc() {
+    return fixedNowUtc;
+  }
+
+  @override
+  DateTime nowLocal() {
+    return fixedNowUtc.toLocal();
+  }
 }
