@@ -26,7 +26,7 @@ class CoordinateNotifier extends Notifier<CoordinateState> {
       if (coordinate != null) {
         state = state.copyWith(
           coordinate: coordinate,
-          lastUpdated: _clock.nowUtc(),
+          lastUpdated: _clock.now(),
         );
       }
     } catch (e, stack) {
@@ -40,10 +40,7 @@ class CoordinateNotifier extends Notifier<CoordinateState> {
   }
 
   void setCoordinate(Coordinate coordinate) {
-    state = state.copyWith(
-      coordinate: coordinate,
-      lastUpdated: _clock.nowUtc(),
-    );
+    state = state.copyWith(coordinate: coordinate, lastUpdated: _clock.now());
   }
 
   void clearCoordinate() {

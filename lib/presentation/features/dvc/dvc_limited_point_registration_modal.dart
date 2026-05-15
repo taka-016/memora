@@ -16,7 +16,7 @@ Future<void> showDvcLimitedPointRegistrationModal({
   required DvcLimitedPointSaveCallback onSave,
   required AppClock clock,
 }) async {
-  final now = clock.nowLocal();
+  final now = clock.now();
   var startYearMonth = dvcMonthStart(now);
   var endYearMonth = dvcMonthStart(now);
   final pointController = TextEditingController();

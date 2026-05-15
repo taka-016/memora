@@ -35,7 +35,7 @@ class Timeline extends HookConsumerWidget {
     final clock = ref.watch(appClockProvider);
     final timelineController = useTimelineController(
       context: context,
-      baseYear: clock.nowLocal().year,
+      baseYear: clock.now().year,
       totalDataRows: totalDataRows,
       initialRowHeights: rowDefinitions
           .map((definition) => definition.initialHeight)

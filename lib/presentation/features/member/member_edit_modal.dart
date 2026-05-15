@@ -256,7 +256,7 @@ class MemberEditModal extends HookConsumerWidget {
         onTap: () async {
           final selectedDate = await DatePickerHelper.showCustomDatePicker(
             context,
-            initialDate: birthday.value ?? clock.nowLocal(),
+            initialDate: birthday.value ?? clock.now(),
             firstDate: DateTime(1900),
             lastDate: DateTime(2100),
           );

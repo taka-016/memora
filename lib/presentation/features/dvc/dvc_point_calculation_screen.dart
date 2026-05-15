@@ -127,7 +127,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       return null;
     }, [groupId]);
 
-    final currentMonth = dvcMonthStart(clock.nowLocal());
+    final currentMonth = dvcMonthStart(clock.now());
     final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
     final visibleEnd = dvcAddMonths(currentMonth, endMonthOffset.value);
     final visibleMonths = _buildMonthList(visibleStart, visibleEnd);

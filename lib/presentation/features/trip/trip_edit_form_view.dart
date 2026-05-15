@@ -181,7 +181,7 @@ class TripEditFormView extends HookWidget {
         return DateTime(configuredYear!, 1, 1);
       }
 
-      return effectiveClock.nowLocal();
+      return effectiveClock.now();
     }
 
     String formatDateTime(DateTime dateTime) {

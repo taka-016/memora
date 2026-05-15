@@ -53,8 +53,7 @@ class TripEditModal extends HookConsumerWidget {
     );
 
     final initialTripForComparison = useMemoized(() {
-      final tripYearValue =
-          tripEntry?.tripYear ?? year ?? clock.nowLocal().year;
+      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
       return TripEntryDto(
         id: tripEntry?.id ?? '',
         groupId: groupId,
@@ -190,8 +189,7 @@ class TripEditModal extends HookConsumerWidget {
       final tripToSave = draftTripEntry.value;
       final selectedStart = tripToSave.tripStartDate;
       final selectedEnd = tripToSave.tripEndDate;
-      final tripYearValue =
-          tripEntry?.tripYear ?? year ?? clock.nowLocal().year;
+      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
 
       if (selectedStart != null &&
           selectedEnd != null &&

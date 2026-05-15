@@ -13,7 +13,7 @@ Future<void> showDvcContractManagementModal({
   required DvcContractSaveCallback onSave,
   required AppClock clock,
 }) async {
-  final now = clock.nowLocal();
+  final now = clock.now();
   final editable = contracts
       .map(
         (contract) => DvcEditableContract.fromDto(
@@ -114,7 +114,7 @@ Future<void> showDvcContractManagementModal({
                         key: const Key('dvc_contract_add_button'),
                         icon: const Icon(Icons.add_circle_outline),
                         onPressed: () {
-                          final addNow = clock.nowLocal();
+                          final addNow = clock.now();
                           setState(() {
                             editable.add(
                               DvcEditableContract(

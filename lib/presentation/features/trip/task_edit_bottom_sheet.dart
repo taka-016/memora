@@ -69,7 +69,7 @@ class TaskEditBottomSheet extends HookWidget {
     Future<void> pickDueDate() async {
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: dueDateState.value ?? effectiveClock.nowLocal(),
+        initialDate: dueDateState.value ?? effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

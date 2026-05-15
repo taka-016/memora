@@ -138,9 +138,9 @@ void main() {
 }
 
 class _FakeSyncableAppClock implements AppClock {
-  _FakeSyncableAppClock(this.fixedNowUtc);
+  _FakeSyncableAppClock(this.fixedNow);
 
-  final DateTime fixedNowUtc;
+  final DateTime fixedNow;
   int syncCount = 0;
 
   @override
@@ -149,12 +149,7 @@ class _FakeSyncableAppClock implements AppClock {
   }
 
   @override
-  DateTime nowUtc() {
-    return fixedNowUtc;
-  }
-
-  @override
-  DateTime nowLocal() {
-    return fixedNowUtc.toLocal();
+  DateTime now() {
+    return fixedNow;
   }
 }

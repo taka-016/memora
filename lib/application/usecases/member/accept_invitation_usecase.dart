@@ -52,7 +52,7 @@ class AcceptInvitationUseCase {
         return false;
       }
 
-      if (_isExpired(_issuedAt(memberInvitation), now ?? _clock.nowUtc())) {
+      if (_isExpired(_issuedAt(memberInvitation), now ?? _clock.now())) {
         return false;
       }
 

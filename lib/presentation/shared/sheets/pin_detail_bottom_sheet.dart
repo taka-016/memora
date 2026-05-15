@@ -96,7 +96,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectFromDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: fromDate.value ?? effectiveClock.nowLocal(),
+        initialDate: fromDate.value ?? effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -120,8 +120,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectToDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate:
-            toDate.value ?? (fromDate.value ?? effectiveClock.nowLocal()),
+        initialDate: toDate.value ?? (fromDate.value ?? effectiveClock.now()),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

@@ -8,9 +8,7 @@ final appClockProvider = Provider<AppClock>((ref) {
 abstract interface class AppClock {
   Future<void> sync();
 
-  DateTime nowUtc();
-
-  DateTime nowLocal();
+  DateTime now();
 }
 
 class NtpSynchronizedAppClock implements AppClock {
@@ -36,35 +34,25 @@ class NtpSynchronizedAppClock implements AppClock {
   }
 
   @override
-  DateTime nowUtc() {
+  DateTime now() {
     final syncedAtUtc = _syncedAtUtc;
     if (syncedAtUtc == null) {
-      return _systemNow().toUtc();
+      return _systemNow();
     }
-    return syncedAtUtc.add(_stopwatch.elapsed);
-  }
-
-  @override
-  DateTime nowLocal() {
-    return nowUtc().toLocal();
+    return syncedAtUtc.add(_stopwatch.elapsed).toLocal();
   }
 }
 
 class FixedAppClock implements AppClock {
-  const FixedAppClock(this.fixedNowUtc);
+  const FixedAppClock(this.fixedNow);
 
-  final DateTime fixedNowUtc;
+  final DateTime fixedNow;
 
   @override
   Future<void> sync() async {}
 
   @override
-  DateTime nowUtc() {
-    return fixedNowUtc.toUtc();
-  }
-
-  @override
-  DateTime nowLocal() {
-    return nowUtc().toLocal();
+  DateTime now() {
+    return fixedNow;
   }
 }
