@@ -110,9 +110,7 @@ void main() {
   });
 
   group('AppClockLifecycleSync', () {
-    testWidgets('バックグラウンド復帰時にアプリ共通クロックを再同期する', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('バックグラウンド復帰時にアプリ共通クロックを再同期する', (WidgetTester tester) async {
       final clock = _FakeSyncableAppClock(DateTime.utc(2026, 5, 15, 12));
 
       await tester.pumpWidget(
@@ -145,6 +143,7 @@ class _FakeSyncableAppClock implements AppClock {
   final DateTime fixedNowUtc;
   int syncCount = 0;
 
+  @override
   Future<void> sync() async {
     syncCount += 1;
   }

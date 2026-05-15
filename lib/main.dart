@@ -43,7 +43,7 @@ Future<void> main() async {
       runApp(
         ProviderScope(
           overrides: [appClockProvider.overrideWithValue(appClock)],
-          child: const MyApp(),
+          child: const AppClockLifecycleSync(child: MyApp()),
         ),
       );
     },
@@ -51,6 +51,51 @@ Future<void> main() async {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     },
   );
+}
+
+class AppClockLifecycleSync extends ConsumerStatefulWidget {
+  const AppClockLifecycleSync({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  ConsumerState<AppClockLifecycleSync> createState() =>
+      _AppClockLifecycleSyncState();
+}
+
+class _AppClockLifecycleSyncState extends ConsumerState<AppClockLifecycleSync>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_syncClock());
+    }
+  }
+
+  Future<void> _syncClock() async {
+    try {
+      await ref.read(appClockProvider).sync();
+    } catch (e, stack) {
+      logger.w('NTP時刻の再同期に失敗しました', error: e, stackTrace: stack);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
+  }
 }
 
 class MyApp extends StatelessWidget {
