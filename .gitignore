@@ -62,3 +62,4 @@ mcp.json
 devcontainer_keys
 test/.test_optimizer.dart
 coverage/
+node_modules/
