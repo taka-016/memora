@@ -21,21 +21,24 @@ class NtpSynchronizedAppClock implements AppClock {
 
   final Future<DateTime> Function() _fetchNtpTime;
   final DateTime Function() _systemNow;
-  Duration _offset = Duration.zero;
+  final Stopwatch _stopwatch = Stopwatch();
+  DateTime? _syncedAtUtc;
 
   Future<void> sync() async {
-    final before = _systemNow().toUtc();
     final ntpNow = (await _fetchNtpTime()).toUtc();
-    final after = _systemNow().toUtc();
-    final midpoint = before.add(
-      Duration(microseconds: after.difference(before).inMicroseconds ~/ 2),
-    );
-    _offset = ntpNow.difference(midpoint);
+    _syncedAtUtc = ntpNow;
+    _stopwatch
+      ..reset()
+      ..start();
   }
 
   @override
   DateTime nowUtc() {
-    return _systemNow().toUtc().add(_offset);
+    final syncedAtUtc = _syncedAtUtc;
+    if (syncedAtUtc == null) {
+      return _systemNow().toUtc();
+    }
+    return syncedAtUtc.add(_stopwatch.elapsed);
   }
 
   @override
