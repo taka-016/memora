@@ -74,69 +74,27 @@ class TripEntry extends Equatable {
   }
 
   void _validatePinPeriod(Pin pin) {
-    if (_hasTripPeriod) {
-      _validatePinWithinTripPeriod(pin);
-      return;
+    if (tripStartDate != null && tripEndDate != null) {
+      if (pin.visitStartDate != null) {
+        if (pin.visitStartDate!.isBefore(tripStartDate!) ||
+            pin.visitStartDate!.isAfter(tripEndDate!)) {
+          throw ValidationException('訪問開始日時は旅行期間内でなければなりません');
+        }
+      }
+      if (pin.visitEndDate != null) {
+        if (pin.visitEndDate!.isBefore(tripStartDate!) ||
+            pin.visitEndDate!.isAfter(tripEndDate!)) {
+          throw ValidationException('訪問終了日時は旅行期間内でなければなりません');
+        }
+      }
+    } else {
+      if (pin.visitStartDate != null && pin.visitStartDate!.year != tripYear) {
+        throw ValidationException('訪問開始日時はtripYearと同じ年にしてください');
+      }
+      if (pin.visitEndDate != null && pin.visitEndDate!.year != tripYear) {
+        throw ValidationException('訪問終了日時はtripYearと同じ年にしてください');
+      }
     }
-    _validatePinWithinTripYear(pin);
-  }
-
-  bool get _hasTripPeriod => tripStartDate != null && tripEndDate != null;
-
-  void _validatePinWithinTripPeriod(Pin pin) {
-    final tripStartDay = _localDateOnly(tripStartDate!);
-    final tripEndDay = _localDateOnly(tripEndDate!);
-
-    _validateDateWithinRange(
-      pin.visitStartDate,
-      start: tripStartDay,
-      end: tripEndDay,
-      message: '訪問開始日時は旅行期間内でなければなりません',
-    );
-    _validateDateWithinRange(
-      pin.visitEndDate,
-      start: tripStartDay,
-      end: tripEndDay,
-      message: '訪問終了日時は旅行期間内でなければなりません',
-    );
-  }
-
-  void _validatePinWithinTripYear(Pin pin) {
-    _validateDateYear(
-      pin.visitStartDate,
-      message: '訪問開始日時はtripYearと同じ年にしてください',
-    );
-    _validateDateYear(pin.visitEndDate, message: '訪問終了日時はtripYearと同じ年にしてください');
-  }
-
-  void _validateDateWithinRange(
-    DateTime? value, {
-    required DateTime start,
-    required DateTime end,
-    required String message,
-  }) {
-    if (value == null) {
-      return;
-    }
-
-    final localDay = _localDateOnly(value);
-    if (localDay.isBefore(start) || localDay.isAfter(end)) {
-      throw ValidationException(message);
-    }
-  }
-
-  void _validateDateYear(DateTime? value, {required String message}) {
-    if (value == null) {
-      return;
-    }
-
-    if (value.year != tripYear) {
-      throw ValidationException(message);
-    }
-  }
-
-  DateTime _localDateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
   }
 
   @override

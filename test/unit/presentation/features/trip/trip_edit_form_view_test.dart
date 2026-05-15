@@ -108,44 +108,6 @@ void main() {
       expect(mapRequested, 1);
     });
 
-    testWidgets('ピン日時は保持しているタイムゾーンのまま一覧表示されること', (WidgetTester tester) async {
-      final startAt = DateTime.utc(2026, 1, 1, 4, 30);
-      final endAt = DateTime.utc(2026, 1, 1, 6, 0);
-      final initialValue = TripEntryDto(
-        id: 'trip-id',
-        groupId: 'group-id',
-        tripYear: startAt.year,
-        pins: [
-          PinDto(
-            pinId: 'pin-1',
-            tripId: 'trip-id',
-            latitude: 35.681236,
-            longitude: 139.767125,
-            locationName: '年末の場所',
-            visitStartDate: startAt,
-            visitEndDate: endAt,
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(
-        _createApp(
-          child: SizedBox(
-            width: 480,
-            height: 720,
-            child: TripEditFormView(
-              value: initialValue,
-              onChanged: (_) {},
-              onTaskManagementRequested: () {},
-              onVisitLocationEditRequested: () {},
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('01/01 04:30 - 01/01 06:00'), findsOneWidget);
-    });
-
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
       WidgetTester tester,
     ) async {

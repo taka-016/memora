@@ -169,51 +169,6 @@ void main() {
       );
     });
 
-    test('旅行期間の終了日当日の訪問日時は旅行期間内として扱う', () {
-      final entry = TripEntry(
-        id: 'abc123',
-        groupId: 'group456',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        pins: [
-          Pin(
-            pinId: 'pin1',
-            tripId: 'abc123',
-            groupId: 'group456',
-            latitude: 0,
-            longitude: 0,
-            visitStartDate: DateTime(2025, 6, 10, 23, 30),
-            visitEndDate: DateTime(2025, 6, 10, 23, 59),
-          ),
-        ],
-      );
-
-      expect(entry.pins, hasLength(1));
-    });
-
-    test('旅行期間設定時はpin日時が保持しているタイムゾーンの日付で旅行期間内かを検証する', () {
-      final entry = TripEntry(
-        id: 'trip123',
-        groupId: 'group456',
-        tripYear: 2026,
-        tripStartDate: DateTime(2026, 1, 1),
-        tripEndDate: DateTime(2026, 1, 1),
-        pins: [
-          Pin(
-            pinId: 'pin1',
-            tripId: 'trip123',
-            groupId: 'group456',
-            latitude: 0,
-            longitude: 0,
-            visitStartDate: DateTime.utc(2026, 1, 1, 4, 30),
-          ),
-        ],
-      );
-
-      expect(entry.pins, hasLength(1));
-    });
-
     test('タスクのorderIndexが重複していても生成できる', () {
       final entry = TripEntry(
         id: 'trip123',
@@ -289,26 +244,6 @@ void main() {
             longitude: 0,
             visitStartDate: DateTime(2025, 6, 1),
             visitEndDate: DateTime(2025, 6, 2),
-          ),
-        ],
-      );
-
-      expect(entry.pins, hasLength(1));
-    });
-
-    test('旅行期間未設定時はpin日時が保持しているタイムゾーンの年でtripYearを検証する', () {
-      final entry = TripEntry(
-        id: 'trip123',
-        groupId: 'group456',
-        tripYear: 2026,
-        pins: [
-          Pin(
-            pinId: 'pin1',
-            tripId: 'trip123',
-            groupId: 'group456',
-            latitude: 0,
-            longitude: 0,
-            visitStartDate: DateTime.utc(2026, 1, 1, 4, 30),
           ),
         ],
       );

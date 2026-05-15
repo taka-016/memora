@@ -33,8 +33,4 @@ class FirestoreMapperValueParser {
     }
     return null;
   }
-
-  static DateTime? asUtcDateTime(dynamic value) {
-    return asDateTime(value)?.toUtc();
-  }
 }
