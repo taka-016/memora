@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class PinDetailBottomSheet extends HookWidget {
@@ -8,6 +9,7 @@ class PinDetailBottomSheet extends HookWidget {
   final VoidCallback onClose;
   final Function(PinDto pin)? onUpdate;
   final Function(String)? onDelete;
+  final AppClock? clock;
 
   const PinDetailBottomSheet({
     super.key,
@@ -15,6 +17,7 @@ class PinDetailBottomSheet extends HookWidget {
     required this.onClose,
     this.onUpdate,
     this.onDelete,
+    this.clock,
   });
 
   @override
@@ -27,6 +30,7 @@ class PinDetailBottomSheet extends HookWidget {
     final memoController = useTextEditingController();
     final dateErrorMessage = useState<String?>(null);
     final isReadOnly = onUpdate == null;
+    final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     DateTime? buildFromDateTime() {
       if (fromDate.value == null) return null;
@@ -92,7 +96,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectFromDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: fromDate.value ?? DateTime.now(),
+        initialDate: fromDate.value ?? effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -116,7 +120,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectToDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: toDate.value ?? (fromDate.value ?? DateTime.now()),
+        initialDate: toDate.value ?? (fromDate.value ?? effectiveClock.now()),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -134,6 +135,43 @@ void main() {
       final result = await service.getTripEntryById(tripId);
 
       expect(result, isNull);
+    });
+
+    test('tripYearと旅行期間が欠損している場合はクロックの年で補完する', () async {
+      const tripId = 'tripWithoutYear';
+      service = FirestoreTripEntryQueryService(
+        firestore: mockFirestore,
+        clock: FixedAppClock(DateTime.utc(2027, 1, 2)),
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
+      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockTasksQuery = MockQuery<Map<String, dynamic>>();
+      final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+
+      when(mockTripEntriesCollection.doc(tripId)).thenReturn(mockDocRef);
+      when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
+      when(mockDocSnapshot.exists).thenReturn(true);
+      when(mockDocSnapshot.id).thenReturn(tripId);
+      when(
+        mockDocSnapshot.data(),
+      ).thenReturn({'groupId': 'group001', 'tripName': '期間未設定旅行'});
+      when(
+        mockPinsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockPinsQuery);
+      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
+      when(mockPinsSnapshot.docs).thenReturn([]);
+      when(
+        mockTasksCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockTasksQuery);
+      when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
+      when(mockTasksSnapshot.docs).thenReturn([]);
+
+      final result = await service.getTripEntryById(tripId);
+
+      expect(result, isNotNull);
+      expect(result!.tripYear, 2027);
     });
 
     test('旅行取得時に例外が発生した場合はnullを返す', () async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
@@ -13,9 +14,11 @@ typedef DvcLimitedPointSaveCallback =
 Future<void> showDvcLimitedPointRegistrationModal({
   required BuildContext context,
   required DvcLimitedPointSaveCallback onSave,
+  required AppClock clock,
 }) async {
-  var startYearMonth = dvcMonthStart(DateTime.now());
-  var endYearMonth = dvcMonthStart(DateTime.now());
+  final now = clock.now();
+  var startYearMonth = dvcMonthStart(now);
+  var endYearMonth = dvcMonthStart(now);
   final pointController = TextEditingController();
   final memoController = TextEditingController();
   var validationError = '';

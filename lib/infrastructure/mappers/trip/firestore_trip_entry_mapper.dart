@@ -9,6 +9,7 @@ import 'package:memora/infrastructure/mappers/firestore_write_metadata.dart';
 class FirestoreTripEntryMapper {
   static TripEntryDto fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> doc, {
+    required int fallbackTripYear,
     List<PinDto> pins = const [],
     List<TaskDto> tasks = const [],
   }) {
@@ -23,7 +24,7 @@ class FirestoreTripEntryMapper {
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
-      tripYear: tripYear ?? tripStartDate?.year ?? DateTime.now().year,
+      tripYear: tripYear ?? tripStartDate?.year ?? fallbackTripYear,
       tripName: data['tripName'] as String?,
       tripStartDate: tripStartDate,
       tripEndDate: tripEndDate,

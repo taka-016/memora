@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -14,6 +15,7 @@ import 'coordinate_notifier_test.mocks.dart';
 void main() {
   group('CoordinateNotifier', () {
     late MockGetCurrentLocationUsecase mockGetCurrentLocationUsecase;
+    final fixedNow = DateTime.utc(2026, 5, 14, 10, 30);
 
     setUp(() {
       mockGetCurrentLocationUsecase = MockGetCurrentLocationUsecase();
@@ -25,6 +27,7 @@ void main() {
           getCurrentLocationUsecaseProvider.overrideWithValue(
             mockGetCurrentLocationUsecase,
           ),
+          appClockProvider.overrideWithValue(FixedAppClock(fixedNow)),
         ],
       );
     }
@@ -61,7 +64,7 @@ void main() {
 
       final state = container.read(coordinateProvider);
       expect(state.coordinate, expectedCoordinate);
-      expect(state.lastUpdated, isNotNull);
+      expect(state.lastUpdated, fixedNow);
     });
 
     test('現在地取得失敗時でも状態が変更されない', () async {
@@ -99,7 +102,7 @@ void main() {
         state.coordinate,
         Coordinate(latitude: 35.6812, longitude: 139.7671),
       );
-      expect(state.lastUpdated, isNotNull);
+      expect(state.lastUpdated, fixedNow);
     });
 
     test('位置情報をクリアできる', () {

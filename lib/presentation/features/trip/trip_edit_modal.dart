@@ -10,6 +10,7 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -46,12 +47,13 @@ class TripEditModal extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
+    final clock = ref.watch(appClockProvider);
     final getNearbyLocationNameUsecase = ref.read(
       getNearbyLocationNameUsecaseProvider,
     );
 
     final initialTripForComparison = useMemoized(() {
-      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
+      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
       return TripEntryDto(
         id: tripEntry?.id ?? '',
         groupId: groupId,
@@ -63,7 +65,7 @@ class TripEditModal extends HookConsumerWidget {
         pins: List<PinDto>.from(tripEntry?.pins ?? const []),
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
       );
-    }, [groupId, tripEntry, year]);
+    }, [groupId, tripEntry, year, clock]);
 
     final draftTripEntry = useState(initialTripForComparison);
 
@@ -187,7 +189,7 @@ class TripEditModal extends HookConsumerWidget {
       final tripToSave = draftTripEntry.value;
       final selectedStart = tripToSave.tripStartDate;
       final selectedEnd = tripToSave.tripEndDate;
-      final tripYearValue = tripEntry?.tripYear ?? year ?? DateTime.now().year;
+      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
 
       if (selectedStart != null &&
           selectedEnd != null &&
@@ -257,6 +259,7 @@ class TripEditModal extends HookConsumerWidget {
         onUpdate: handlePinUpdated,
         onDelete: handlePinDeleted,
         onClose: hideBottomSheet,
+        clock: clock,
       );
     }
 
@@ -275,6 +278,7 @@ class TripEditModal extends HookConsumerWidget {
             child: TripEditFormView(
               value: draftTripEntry.value,
               configuredYear: tripEntry?.tripYear ?? year,
+              clock: clock,
               onChanged: updateDraftTripEntry,
               onTaskManagementRequested: showTaskView,
               onVisitLocationEditRequested: toggleMapExpansion,

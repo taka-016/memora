@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
@@ -9,9 +10,13 @@ import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.d
 
 class FirestoreTripEntryQueryService implements TripEntryQueryService {
   final FirebaseFirestore _firestore;
+  final AppClock _clock;
 
-  FirestoreTripEntryQueryService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreTripEntryQueryService({
+    FirebaseFirestore? firestore,
+    AppClock? clock,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _clock = clock ?? NtpSynchronizedAppClock();
 
   @override
   Future<TripEntryDto?> getTripEntryById(
@@ -63,6 +68,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
+        fallbackTripYear: _clock.now().year,
         pins: pins,
         tasks: tasks,
       );
@@ -96,7 +102,12 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final snapshot = await query.get();
       return snapshot.docs
-          .map((doc) => FirestoreTripEntryMapper.fromFirestore(doc))
+          .map(
+            (doc) => FirestoreTripEntryMapper.fromFirestore(
+              doc,
+              fallbackTripYear: _clock.now().year,
+            ),
+          )
           .toList();
     } catch (e, stack) {
       logger.e(
