@@ -477,13 +477,13 @@ void main() {
         pinId: 'pin1',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitMemo: 'ピン1のメモ',
+        memo: 'ピン1のメモ',
       );
       const pin2 = PinDto(
         pinId: 'pin2',
         latitude: 35.690000,
         longitude: 139.770000,
-        visitMemo: 'ピン2のメモ',
+        memo: 'ピン2のメモ',
       );
 
       await tester.pumpWidget(

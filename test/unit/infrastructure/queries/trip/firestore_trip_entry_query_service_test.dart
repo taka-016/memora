@@ -111,7 +111,7 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.id, equals(tripId));
-      expect(result.tripName, equals('夏旅行'));
+      expect(result.name, equals('夏旅行'));
       expect(result.pins, hasLength(1));
       final PinDto pin = result.pins!.first;
       expect(pin.locationName, equals('東京タワー'));
@@ -171,7 +171,7 @@ void main() {
       final result = await service.getTripEntryById(tripId);
 
       expect(result, isNotNull);
-      expect(result!.tripYear, 2027);
+      expect(result!.year, 2027);
     });
 
     test('旅行取得時に例外が発生した場合はnullを返す', () async {

@@ -13,9 +13,9 @@ void main() {
         latitude: 35.6762,
         longitude: 139.6503,
         locationName: '東京駅',
-        visitStartDate: DateTime(2024, 1, 1, 10, 0),
-        visitEndDate: DateTime(2024, 1, 1, 12, 0),
-        visitMemo: '観光で訪問',
+        visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+        visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
+        memo: '観光で訪問',
       );
 
       // Act
@@ -28,9 +28,9 @@ void main() {
       expect(entity.latitude, 35.6762);
       expect(entity.longitude, 139.6503);
       expect(entity.locationName, '東京駅');
-      expect(entity.visitStartDate, DateTime(2024, 1, 1, 10, 0));
-      expect(entity.visitEndDate, DateTime(2024, 1, 1, 12, 0));
-      expect(entity.visitMemo, '観光で訪問');
+      expect(entity.visitStartDateTime, DateTime(2024, 1, 1, 10, 0));
+      expect(entity.visitEndDateTime, DateTime(2024, 1, 1, 12, 0));
+      expect(entity.memo, '観光で訪問');
     });
 
     test('idがnullのDtoをエンティティに変換する際は空文字列になる', () {
@@ -72,9 +72,9 @@ void main() {
       expect(entity.latitude, 35.6762);
       expect(entity.longitude, 139.6503);
       expect(entity.locationName, isNull);
-      expect(entity.visitStartDate, isNull);
-      expect(entity.visitEndDate, isNull);
-      expect(entity.visitMemo, isNull);
+      expect(entity.visitStartDateTime, isNull);
+      expect(entity.visitEndDateTime, isNull);
+      expect(entity.memo, isNull);
     });
 
     test('PinDtoのリストを正しくエンティティリストに変換する', () {
@@ -87,8 +87,8 @@ void main() {
           latitude: 35.6762,
           longitude: 139.6503,
           locationName: '東京駅',
-          visitStartDate: DateTime(2024, 1, 1, 10, 0),
-          visitEndDate: DateTime(2024, 1, 1, 12, 0),
+          visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+          visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
         ),
         PinDto(
           pinId: 'pin-2',
@@ -97,8 +97,8 @@ void main() {
           latitude: 34.7024,
           longitude: 135.4959,
           locationName: '大阪駅',
-          visitStartDate: DateTime(2024, 2, 1, 10, 0),
-          visitEndDate: DateTime(2024, 2, 1, 12, 0),
+          visitStartDateTime: DateTime(2024, 2, 1, 10, 0),
+          visitEndDateTime: DateTime(2024, 2, 1, 12, 0),
         ),
       ];
 

@@ -10,11 +10,11 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
         pins: [
           Pin(
             pinId: 'pin1',
@@ -23,9 +23,9 @@ void main() {
             latitude: 0,
             longitude: 0,
             locationName: 'パリ',
-            visitStartDate: DateTime(2025, 6, 2),
-            visitEndDate: DateTime(2025, 6, 3),
-            visitMemo: 'エッフェル塔',
+            visitStartDateTime: DateTime(2025, 6, 2),
+            visitEndDateTime: DateTime(2025, 6, 3),
+            memo: 'エッフェル塔',
           ),
         ],
         tasks: [
@@ -40,14 +40,14 @@ void main() {
       );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
-      expect(entry.tripName, 'テスト旅行');
-      expect(entry.tripStartDate, DateTime(2025, 6, 1));
-      expect(entry.tripEndDate, DateTime(2025, 6, 10));
-      expect(entry.tripMemo, 'テストメモ');
+      expect(entry.name, 'テスト旅行');
+      expect(entry.startDate, DateTime(2025, 6, 1));
+      expect(entry.endDate, DateTime(2025, 6, 10));
+      expect(entry.memo, 'テストメモ');
       expect(entry.pins, hasLength(1));
-      expect(entry.tripYear, 2025);
+      expect(entry.year, 2025);
       expect(entry.pins.first.locationName, 'パリ');
-      expect(entry.pins.first.visitMemo, 'エッフェル塔');
+      expect(entry.pins.first.memo, 'エッフェル塔');
       expect(entry.tasks, hasLength(1));
       expect(entry.tasks.first.name, '持ち物準備');
     });
@@ -56,17 +56,17 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
+        year: 2025,
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
       );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
-      expect(entry.tripName, null);
-      expect(entry.tripStartDate, DateTime(2025, 6, 1));
-      expect(entry.tripEndDate, DateTime(2025, 6, 10));
-      expect(entry.tripMemo, null);
-      expect(entry.tripYear, 2025);
+      expect(entry.name, null);
+      expect(entry.startDate, DateTime(2025, 6, 1));
+      expect(entry.endDate, DateTime(2025, 6, 10));
+      expect(entry.memo, null);
+      expect(entry.year, 2025);
       expect(entry.pins, isEmpty);
       expect(entry.tasks, isEmpty);
     });
@@ -75,22 +75,22 @@ void main() {
       final entry1 = TripEntry(
         id: 'abc123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
         pins: const [],
         tasks: const [],
       );
       final entry2 = TripEntry(
         id: 'abc123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
         pins: const [],
         tasks: const [],
       );
@@ -101,17 +101,17 @@ void main() {
       final entry = TripEntry(
         id: 'abc123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
         pins: const [],
         tasks: const [],
       );
       final updatedEntry = entry.copyWith(
-        tripName: '新しい旅行',
-        tripEndDate: DateTime(2025, 6, 15),
+        name: '新しい旅行',
+        endDate: DateTime(2025, 6, 15),
         pins: [
           Pin(
             pinId: 'pin2',
@@ -120,8 +120,8 @@ void main() {
             latitude: 0,
             longitude: 0,
             locationName: 'ローマ',
-            visitStartDate: DateTime(2025, 6, 12),
-            visitEndDate: DateTime(2025, 6, 14),
+            visitStartDateTime: DateTime(2025, 6, 12),
+            visitEndDateTime: DateTime(2025, 6, 14),
           ),
         ],
         tasks: [
@@ -136,10 +136,10 @@ void main() {
       );
       expect(updatedEntry.id, 'abc123');
       expect(updatedEntry.groupId, 'group456');
-      expect(updatedEntry.tripName, '新しい旅行');
-      expect(updatedEntry.tripStartDate, DateTime(2025, 6, 1));
-      expect(updatedEntry.tripEndDate, DateTime(2025, 6, 15));
-      expect(updatedEntry.tripMemo, 'テストメモ');
+      expect(updatedEntry.name, '新しい旅行');
+      expect(updatedEntry.startDate, DateTime(2025, 6, 1));
+      expect(updatedEntry.endDate, DateTime(2025, 6, 15));
+      expect(updatedEntry.memo, 'テストメモ');
       expect(updatedEntry.pins, hasLength(1));
       expect(updatedEntry.tasks, hasLength(1));
       expect(updatedEntry.tasks.first.name, 'ホテル予約');
@@ -150,9 +150,9 @@ void main() {
         () => TripEntry(
           id: 'abc123',
           groupId: 'group456',
-          tripYear: 2025,
-          tripStartDate: DateTime(2025, 6, 1),
-          tripEndDate: DateTime(2025, 6, 10),
+          year: 2025,
+          startDate: DateTime(2025, 6, 1),
+          endDate: DateTime(2025, 6, 10),
           pins: [
             Pin(
               pinId: 'pin1',
@@ -160,8 +160,8 @@ void main() {
               groupId: 'group456',
               latitude: 0,
               longitude: 0,
-              visitStartDate: DateTime(2025, 5, 31),
-              visitEndDate: DateTime(2025, 6, 2),
+              visitStartDateTime: DateTime(2025, 5, 31),
+              visitEndDateTime: DateTime(2025, 6, 2),
             ),
           ],
         ),
@@ -173,9 +173,9 @@ void main() {
       final entry = TripEntry(
         id: 'trip123',
         groupId: 'group456',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
+        year: 2025,
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
         tasks: [
           Task(
             id: 'task-1',
@@ -197,24 +197,24 @@ void main() {
       expect(entry.tasks, hasLength(2));
     });
 
-    test('tripStartDateとtripEndDateが未設定でもtripYearが必須で生成できる', () {
+    test('startDateとendDateが未設定でもyearが必須で生成できる', () {
       final entry = TripEntry(
         id: 'trip789',
         groupId: 'group456',
-        tripYear: 2025,
+        year: 2025,
       );
 
-      expect(entry.tripStartDate, isNull);
-      expect(entry.tripEndDate, isNull);
-      expect(entry.tripYear, 2025);
+      expect(entry.startDate, isNull);
+      expect(entry.endDate, isNull);
+      expect(entry.year, 2025);
     });
 
-    test('旅行期間未設定時はpinの訪問日時がtripYearと異なると例外', () {
+    test('旅行期間未設定時はpinの訪問日時がyearと異なると例外', () {
       expect(
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
-          tripYear: 2025,
+          year: 2025,
           pins: [
             Pin(
               pinId: 'pin1',
@@ -222,7 +222,7 @@ void main() {
               groupId: 'group456',
               latitude: 0,
               longitude: 0,
-              visitStartDate: DateTime(2024, 6, 1),
+              visitStartDateTime: DateTime(2024, 6, 1),
             ),
           ],
         ),
@@ -230,11 +230,11 @@ void main() {
       );
     });
 
-    test('旅行期間未設定時でもpinの訪問日時がtripYearと一致すれば生成可能', () {
+    test('旅行期間未設定時でもpinの訪問日時がyearと一致すれば生成可能', () {
       final entry = TripEntry(
         id: 'trip123',
         groupId: 'group456',
-        tripYear: 2025,
+        year: 2025,
         pins: [
           Pin(
             pinId: 'pin1',
@@ -242,8 +242,8 @@ void main() {
             groupId: 'group456',
             latitude: 0,
             longitude: 0,
-            visitStartDate: DateTime(2025, 6, 1),
-            visitEndDate: DateTime(2025, 6, 2),
+            visitStartDateTime: DateTime(2025, 6, 1),
+            visitEndDateTime: DateTime(2025, 6, 2),
           ),
         ],
       );
@@ -256,7 +256,7 @@ void main() {
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
-          tripYear: 2025,
+          year: 2025,
           tasks: [
             Task(
               id: 'task-1',
@@ -284,7 +284,7 @@ void main() {
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
-          tripYear: 2025,
+          year: 2025,
           tasks: [
             Task(
               id: 'task-1',
@@ -312,7 +312,7 @@ void main() {
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
-          tripYear: 2025,
+          year: 2025,
           tasks: [
             Task(
               id: 'task-1',
@@ -340,7 +340,7 @@ void main() {
         () => TripEntry(
           id: 'trip123',
           groupId: 'group456',
-          tripYear: 2025,
+          year: 2025,
           tasks: [
             Task(
               id: 'task-1',

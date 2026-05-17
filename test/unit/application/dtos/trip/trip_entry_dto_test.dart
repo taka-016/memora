@@ -9,34 +9,34 @@ void main() {
       const dto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
+        year: 2024,
       );
 
       expect(dto.id, 'trip-entry-123');
       expect(dto.groupId, 'group-456');
-      expect(dto.tripYear, 2024);
-      expect(dto.tripName, isNull);
-      expect(dto.tripStartDate, isNull);
-      expect(dto.tripEndDate, isNull);
-      expect(dto.tripMemo, isNull);
+      expect(dto.year, 2024);
+      expect(dto.name, isNull);
+      expect(dto.startDate, isNull);
+      expect(dto.endDate, isNull);
+      expect(dto.memo, isNull);
       expect(dto.pins, isNull);
       expect(dto.tasks, isNull);
     });
 
     test('期間を指定すると開始日/終了日が保持される', () {
-      final tripStartDate = DateTime(2024, 5, 1);
-      final tripEndDate = DateTime(2024, 5, 3);
+      final startDate = DateTime(2024, 5, 1);
+      final endDate = DateTime(2024, 5, 3);
 
       final dto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripStartDate: tripStartDate,
-        tripEndDate: tripEndDate,
+        year: 2024,
+        startDate: startDate,
+        endDate: endDate,
       );
 
-      expect(dto.tripStartDate, tripStartDate);
-      expect(dto.tripEndDate, tripEndDate);
+      expect(dto.startDate, startDate);
+      expect(dto.endDate, endDate);
     });
 
     test('全パラメータでコンストラクタが正しく動作する', () {
@@ -57,17 +57,17 @@ void main() {
       final dto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '春の旅行',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
-        tripMemo: '家族旅行のメモ',
+        year: 2024,
+        name: '春の旅行',
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
+        memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
       );
 
-      expect(dto.tripName, '春の旅行');
-      expect(dto.tripMemo, '家族旅行のメモ');
+      expect(dto.name, '春の旅行');
+      expect(dto.memo, '家族旅行のメモ');
       expect(dto.pins, pins);
       expect(dto.tasks, tasks);
     });
@@ -76,31 +76,31 @@ void main() {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
+        year: 2024,
       );
 
       final copiedDto = originalDto.copyWith(
         id: 'trip-entry-999',
         groupId: 'group-888',
-        tripYear: 2025,
-        tripStartDate: DateTime(2025, 1, 1),
-        tripEndDate: DateTime(2025, 1, 5),
+        year: 2025,
+        startDate: DateTime(2025, 1, 1),
+        endDate: DateTime(2025, 1, 5),
       );
 
       expect(copiedDto.id, 'trip-entry-999');
       expect(copiedDto.groupId, 'group-888');
-      expect(copiedDto.tripYear, 2025);
-      expect(copiedDto.tripStartDate, DateTime(2025, 1, 1));
-      expect(copiedDto.tripEndDate, DateTime(2025, 1, 5));
+      expect(copiedDto.year, 2025);
+      expect(copiedDto.startDate, DateTime(2025, 1, 1));
+      expect(copiedDto.endDate, DateTime(2025, 1, 5));
     });
 
     test('copyWithでオプショナルパラメータを更新できる', () {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '元の旅行名',
-        tripMemo: '元のメモ',
+        year: 2024,
+        name: '元の旅行名',
+        memo: '元のメモ',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
         tasks: [
           TaskDto(
@@ -114,8 +114,8 @@ void main() {
       );
 
       final copiedDto = originalDto.copyWith(
-        tripName: '新しい旅行名',
-        tripMemo: '新しいメモ',
+        name: '新しい旅行名',
+        memo: '新しいメモ',
         pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
         tasks: [
           TaskDto(
@@ -128,8 +128,8 @@ void main() {
         ],
       );
 
-      expect(copiedDto.tripName, '新しい旅行名');
-      expect(copiedDto.tripMemo, '新しいメモ');
+      expect(copiedDto.name, '新しい旅行名');
+      expect(copiedDto.memo, '新しいメモ');
       expect(copiedDto.pins?.first.pinId, 'pin-2');
       expect(copiedDto.tasks?.first.id, 'task-2');
     });
@@ -138,33 +138,33 @@ void main() {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
+        year: 2024,
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
       );
 
       final copiedDto = originalDto.copyWith(
-        tripStartDate: null,
-        tripEndDate: null,
+        startDate: null,
+        endDate: null,
       );
 
-      expect(copiedDto.tripStartDate, isNull);
-      expect(copiedDto.tripEndDate, isNull);
+      expect(copiedDto.startDate, isNull);
+      expect(copiedDto.endDate, isNull);
     });
 
     test('copyWithで不正な型を渡すとArgumentErrorが発生する', () {
       const originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
+        year: 2024,
       );
 
       expect(
-        () => originalDto.copyWith(tripName: 123),
+        () => originalDto.copyWith(name: 123),
         throwsA(isA<ArgumentError>()),
       );
       expect(
-        () => originalDto.copyWith(tripStartDate: '2025/01/01'),
+        () => originalDto.copyWith(startDate: '2025/01/01'),
         throwsA(isA<ArgumentError>()),
       );
       expect(
@@ -187,11 +187,11 @@ void main() {
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '旅行名',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
-        tripMemo: '旅行のメモ',
+        year: 2024,
+        name: '旅行名',
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
+        memo: '旅行のメモ',
         pins: pins,
         tasks: tasks,
       );
@@ -216,11 +216,11 @@ void main() {
       final dto1 = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '春の旅行',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
-        tripMemo: '家族旅行のメモ',
+        year: 2024,
+        name: '春の旅行',
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
+        memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
       );
@@ -228,11 +228,11 @@ void main() {
       final dto2 = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '春の旅行',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
-        tripMemo: '家族旅行のメモ',
+        year: 2024,
+        name: '春の旅行',
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
+        memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
       );
@@ -245,11 +245,11 @@ void main() {
       final dto1 = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
-        tripYear: 2024,
-        tripName: '旅行A',
-        tripStartDate: DateTime(2024, 5, 1),
-        tripEndDate: DateTime(2024, 5, 3),
-        tripMemo: 'メモA',
+        year: 2024,
+        name: '旅行A',
+        startDate: DateTime(2024, 5, 1),
+        endDate: DateTime(2024, 5, 3),
+        memo: 'メモA',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
         tasks: [
           TaskDto(
@@ -265,11 +265,11 @@ void main() {
       final dto2 = TripEntryDto(
         id: 'trip-entry-999',
         groupId: 'group-888',
-        tripYear: 2025,
-        tripName: '旅行B',
-        tripStartDate: DateTime(2024, 6, 1),
-        tripEndDate: DateTime(2024, 6, 3),
-        tripMemo: 'メモB',
+        year: 2025,
+        name: '旅行B',
+        startDate: DateTime(2024, 6, 1),
+        endDate: DateTime(2024, 6, 3),
+        memo: 'メモB',
         pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
         tasks: [
           TaskDto(

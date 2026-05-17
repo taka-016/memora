@@ -15,9 +15,9 @@ void main() {
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'pin-1',
@@ -54,8 +54,8 @@ void main() {
       await tester.pump();
 
       expect(latestValue, isNotNull);
-      expect(latestValue!.tripName, '更新後の旅行');
-      expect(latestValue!.tripMemo, '既存メモ');
+      expect(latestValue!.name, '更新後の旅行');
+      expect(latestValue!.memo, '既存メモ');
       expect(latestValue!.pins, isEmpty);
     });
 
@@ -65,7 +65,7 @@ void main() {
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
+        year: 2024,
         pins: [
           PinDto(
             pinId: 'pin-1',
@@ -117,8 +117,8 @@ void main() {
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
+        year: 2024,
+        name: '既存旅行',
       );
 
       await tester.pumpWidget(
@@ -174,11 +174,11 @@ void main() {
       var currentValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
-        tripName: '初期旅行',
-        tripMemo: '初期メモ',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 2),
+        year: 2024,
+        name: '初期旅行',
+        memo: '初期メモ',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 2),
         pins: [
           PinDto(
             pinId: 'pin-1',
@@ -201,10 +201,10 @@ void main() {
                     onPressed: () {
                       setState(() {
                         currentValue = currentValue.copyWith(
-                          tripName: '外部更新後の旅行',
-                          tripMemo: '外部更新後のメモ',
-                          tripStartDate: DateTime(2024, 2, 1),
-                          tripEndDate: DateTime(2024, 2, 3),
+                          name: '外部更新後の旅行',
+                          memo: '外部更新後のメモ',
+                          startDate: DateTime(2024, 2, 1),
+                          endDate: DateTime(2024, 2, 3),
                           pins: [
                             const PinDto(
                               pinId: 'pin-2',
@@ -251,7 +251,7 @@ void main() {
       final initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
+        year: 2024,
         pins: [
           PinDto(
             pinId: 'pin-1',

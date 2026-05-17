@@ -27,18 +27,18 @@ void main() {
         TripEntryDto(
           id: 'trip-1',
           groupId: groupId,
-          tripYear: year,
-          tripName: '旅行1',
-          tripStartDate: DateTime(2024, 1, 1),
-          tripEndDate: DateTime(2024, 1, 3),
+          year: year,
+          name: '旅行1',
+          startDate: DateTime(2024, 1, 1),
+          endDate: DateTime(2024, 1, 3),
         ),
         TripEntryDto(
           id: 'trip-2',
           groupId: groupId,
-          tripYear: year,
-          tripName: '旅行2',
-          tripStartDate: DateTime(2024, 6, 1),
-          tripEndDate: DateTime(2024, 6, 5),
+          year: year,
+          name: '旅行2',
+          startDate: DateTime(2024, 6, 1),
+          endDate: DateTime(2024, 6, 5),
         ),
       ];
 

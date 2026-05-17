@@ -43,11 +43,11 @@ void main() {
 
       expect(result.id, 'trip001');
       expect(result.groupId, 'group001');
-      expect(result.tripYear, 2025);
-      expect(result.tripName, '夏旅行');
-      expect(result.tripStartDate, DateTime(2025, 8, 1));
-      expect(result.tripEndDate, DateTime(2025, 8, 3));
-      expect(result.tripMemo, '海に行く');
+      expect(result.year, 2025);
+      expect(result.name, '夏旅行');
+      expect(result.startDate, DateTime(2025, 8, 1));
+      expect(result.endDate, DateTime(2025, 8, 3));
+      expect(result.memo, '海に行く');
       expect(result.pins, pins);
       expect(result.tasks, tasks);
     });
@@ -65,21 +65,21 @@ void main() {
         fallbackTripYear: 2026,
       );
 
-      expect(result.tripYear, 2024);
+      expect(result.year, 2024);
       expect(result.groupId, 'group002');
-      expect(result.tripStartDate, DateTime(2024, 12, 31));
-      expect(result.tripEndDate, isNull);
+      expect(result.startDate, DateTime(2024, 12, 31));
+      expect(result.endDate, isNull);
     });
 
     test('TripEntryを新規作成用FirestoreのMapへ変換できる', () {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
       );
 
       final data = FirestoreTripEntryMapper.toCreateFirestore(tripEntry);
@@ -103,7 +103,7 @@ void main() {
       final tripEntry = TripEntry(
         id: 'trip002',
         groupId: 'group002',
-        tripYear: 2025,
+        year: 2025,
       );
 
       final data = FirestoreTripEntryMapper.toUpdateFirestore(tripEntry);

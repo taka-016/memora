@@ -32,9 +32,9 @@ void main() {
       expect(result.latitude, 35.0);
       expect(result.longitude, 139.5);
       expect(result.locationName, '東京駅');
-      expect(result.visitStartDate, DateTime(2025, 5, 1, 10));
-      expect(result.visitEndDate, DateTime(2025, 5, 1, 11));
-      expect(result.visitMemo, '集合');
+      expect(result.visitStartDateTime, DateTime(2025, 5, 1, 10));
+      expect(result.visitEndDateTime, DateTime(2025, 5, 1, 11));
+      expect(result.memo, '集合');
     });
 
     test('Firestoreの欠損値をデフォルトで変換できる', () {
@@ -49,9 +49,9 @@ void main() {
       expect(result.latitude, 0.0);
       expect(result.longitude, 0.0);
       expect(result.locationName, isNull);
-      expect(result.visitStartDate, isNull);
-      expect(result.visitEndDate, isNull);
-      expect(result.visitMemo, isNull);
+      expect(result.visitStartDateTime, isNull);
+      expect(result.visitEndDateTime, isNull);
+      expect(result.memo, isNull);
     });
 
     test('PinエンティティからFirestoreのMapへ変換できる', () {
@@ -62,9 +62,9 @@ void main() {
         latitude: 34.701909,
         longitude: 135.494977,
         locationName: '大阪駅',
-        visitStartDate: DateTime(2024, 2, 1, 9, 30),
-        visitEndDate: DateTime(2024, 2, 1, 11, 0),
-        visitMemo: '観光開始',
+        visitStartDateTime: DateTime(2024, 2, 1, 9, 30),
+        visitEndDateTime: DateTime(2024, 2, 1, 11, 0),
+        memo: '観光開始',
       );
 
       final map = FirestorePinMapper.toCreateFirestore(pin);

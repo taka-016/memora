@@ -12,9 +12,9 @@ void main() {
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
-        visitStartDate: DateTime(2025, 6, 1),
-        visitEndDate: DateTime(2025, 6, 2),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 6, 1),
+        visitEndDateTime: DateTime(2025, 6, 2),
+        memo: 'テストメモ',
       );
       expect(pin.pinId, 'pin001');
       expect(pin.tripId, 'trip001');
@@ -22,9 +22,9 @@ void main() {
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
       expect(pin.locationName, '東京駅');
-      expect(pin.visitStartDate, DateTime(2025, 6, 1));
-      expect(pin.visitEndDate, DateTime(2025, 6, 2));
-      expect(pin.visitMemo, 'テストメモ');
+      expect(pin.visitStartDateTime, DateTime(2025, 6, 1));
+      expect(pin.visitEndDateTime, DateTime(2025, 6, 2));
+      expect(pin.memo, 'テストメモ');
     });
 
     test('緯度経度の範囲外でもインスタンス生成できる', () {
@@ -48,8 +48,8 @@ void main() {
           groupId: 'group001',
           latitude: 35.0,
           longitude: 139.0,
-          visitStartDate: DateTime(2025, 6, 2),
-          visitEndDate: DateTime(2025, 6, 1),
+          visitStartDateTime: DateTime(2025, 6, 2),
+          visitEndDateTime: DateTime(2025, 6, 1),
         ),
         throwsA(isA<ValidationException>()),
       );
@@ -69,9 +69,9 @@ void main() {
       expect(pin.latitude, 35.0);
       expect(pin.longitude, 139.0);
       expect(pin.locationName, null);
-      expect(pin.visitStartDate, null);
-      expect(pin.visitEndDate, null);
-      expect(pin.visitMemo, null);
+      expect(pin.visitStartDateTime, null);
+      expect(pin.visitEndDateTime, null);
+      expect(pin.memo, null);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
@@ -82,9 +82,9 @@ void main() {
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
-        visitStartDate: DateTime(2025, 6, 1),
-        visitEndDate: DateTime(2025, 6, 2),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 6, 1),
+        visitEndDateTime: DateTime(2025, 6, 2),
+        memo: 'テストメモ',
       );
       final pin2 = Pin(
         pinId: 'pin001',
@@ -93,9 +93,9 @@ void main() {
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
-        visitStartDate: DateTime(2025, 6, 1),
-        visitEndDate: DateTime(2025, 6, 2),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 6, 1),
+        visitEndDateTime: DateTime(2025, 6, 2),
+        memo: 'テストメモ',
       );
       expect(pin1, equals(pin2));
     });
@@ -108,14 +108,14 @@ void main() {
         latitude: 35.0,
         longitude: 139.0,
         locationName: '東京駅',
-        visitStartDate: DateTime(2025, 6, 1),
-        visitEndDate: DateTime(2025, 6, 2),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 6, 1),
+        visitEndDateTime: DateTime(2025, 6, 2),
+        memo: 'テストメモ',
       );
       final updatedPin = pin.copyWith(
         latitude: 36.0,
         locationName: '新宿駅',
-        visitMemo: '新しいメモ',
+        memo: '新しいメモ',
       );
       expect(updatedPin.pinId, 'pin001');
       expect(updatedPin.tripId, 'trip001');
@@ -123,9 +123,9 @@ void main() {
       expect(updatedPin.latitude, 36.0);
       expect(updatedPin.longitude, 139.0);
       expect(updatedPin.locationName, '新宿駅');
-      expect(updatedPin.visitStartDate, DateTime(2025, 6, 1));
-      expect(updatedPin.visitEndDate, DateTime(2025, 6, 2));
-      expect(updatedPin.visitMemo, '新しいメモ');
+      expect(updatedPin.visitStartDateTime, DateTime(2025, 6, 1));
+      expect(updatedPin.visitEndDateTime, DateTime(2025, 6, 2));
+      expect(updatedPin.memo, '新しいメモ');
     });
   });
 }

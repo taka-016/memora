@@ -25,11 +25,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
-        tripName: '更新された旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '更新されたメモ',
+        year: 2024,
+        name: '更新された旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '更新されたメモ',
       );
 
       when(mockRepository.updateTripEntry(any)).thenAnswer((_) async => {});
@@ -43,8 +43,8 @@ void main() {
       ).captured;
       final updatedEntry = captured.single as TripEntry;
       expect(updatedEntry.id, tripEntry.id);
-      expect(updatedEntry.tripName, tripEntry.tripName);
-      expect(updatedEntry.tripMemo, tripEntry.tripMemo);
+      expect(updatedEntry.name, tripEntry.name);
+      expect(updatedEntry.memo, tripEntry.memo);
     });
 
     test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {
@@ -52,11 +52,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
-        tripYear: 2024,
-        tripName: '更新された旅行',
-        tripStartDate: DateTime(2024, 1, 3),
-        tripEndDate: DateTime(2024, 1, 1),
-        tripMemo: '更新されたメモ',
+        year: 2024,
+        name: '更新された旅行',
+        startDate: DateTime(2024, 1, 3),
+        endDate: DateTime(2024, 1, 1),
+        memo: '更新されたメモ',
       );
 
       // Act & Assert

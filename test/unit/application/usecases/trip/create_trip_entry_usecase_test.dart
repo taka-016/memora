@@ -25,10 +25,10 @@ void main() {
       final tripEntry = TripEntryDto(
         id: '',
         groupId: 'group123',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
       );
       const generatedId = 'generated-trip-id';
 
@@ -47,8 +47,8 @@ void main() {
       final savedEntry = captured.single as TripEntry;
       expect(savedEntry.id, tripEntry.id);
       expect(savedEntry.groupId, tripEntry.groupId);
-      expect(savedEntry.tripYear, tripEntry.tripYear);
-      expect(savedEntry.tripName, tripEntry.tripName);
+      expect(savedEntry.year, tripEntry.year);
+      expect(savedEntry.name, tripEntry.name);
     });
 
     test('有効な旅行に対してエラーなく完了すること', () async {
@@ -56,10 +56,10 @@ void main() {
       final tripEntry = TripEntryDto(
         id: '',
         groupId: 'group123',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
       );
       const generatedId = 'generated-trip-id';
 
@@ -76,10 +76,10 @@ void main() {
       final tripEntry = TripEntryDto(
         id: '',
         groupId: 'group123',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 3),
-        tripEndDate: DateTime(2024, 1, 1),
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 3),
+        endDate: DateTime(2024, 1, 1),
       );
 
       // act & assert

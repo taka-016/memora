@@ -190,9 +190,9 @@ void main() {
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitStartDate: DateTime(2025, 1, 15, 10, 30),
-        visitEndDate: DateTime(2025, 1, 15, 15, 45),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 30),
+        visitEndDateTime: DateTime(2025, 1, 15, 15, 45),
+        memo: 'テストメモ',
       );
 
       bool onUpdateCalled = false;
@@ -228,9 +228,9 @@ void main() {
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitStartDate: DateTime(2025, 1, 15, 10, 30),
-        visitEndDate: DateTime(2025, 1, 15, 15, 45),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 30),
+        visitEndDateTime: DateTime(2025, 1, 15, 15, 45),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -288,9 +288,9 @@ void main() {
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitStartDate: DateTime(2025, 1, 15, 10, 30),
-        visitEndDate: DateTime(2025, 1, 15, 15, 45),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 30),
+        visitEndDateTime: DateTime(2025, 1, 15, 15, 45),
+        memo: 'テストメモ',
       );
 
       PinDto? callbackPin;
@@ -320,7 +320,7 @@ void main() {
 
       // Pinデータがコールバックされることを確認
       expect(callbackPin, isNotNull);
-      expect(callbackPin!.visitMemo, equals('テストメモ'));
+      expect(callbackPin!.memo, equals('テストメモ'));
     });
 
     testWidgets('訪問開始日時が訪問終了日時より後の場合にエラーメッセージが表示されること', (
@@ -333,9 +333,9 @@ void main() {
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitStartDate: DateTime(2025, 1, 15, 16, 0), // 後の時間
-        visitEndDate: DateTime(2025, 1, 15, 10, 0), // 前の時間
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 16, 0), // 後の時間
+        visitEndDateTime: DateTime(2025, 1, 15, 10, 0), // 前の時間
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -372,9 +372,9 @@ void main() {
         pinId: 'test-pin-id',
         latitude: 35.681236,
         longitude: 139.767125,
-        visitStartDate: DateTime(2025, 1, 15, 10, 0), // 前の時間
-        visitEndDate: DateTime(2025, 1, 15, 16, 0), // 後の時間
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 0), // 前の時間
+        visitEndDateTime: DateTime(2025, 1, 15, 16, 0), // 後の時間
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -401,8 +401,8 @@ void main() {
 
       // コールバックが呼ばれることを確認
       expect(callbackPin, isNotNull);
-      expect(callbackPin!.visitStartDate, equals(DateTime(2025, 1, 15, 10, 0)));
-      expect(callbackPin!.visitEndDate, equals(DateTime(2025, 1, 15, 16, 0)));
+      expect(callbackPin!.visitStartDateTime, equals(DateTime(2025, 1, 15, 10, 0)));
+      expect(callbackPin!.visitEndDateTime, equals(DateTime(2025, 1, 15, 16, 0)));
     });
 
     testWidgets('場所名が入力欄として表示される', (WidgetTester tester) async {
@@ -575,8 +575,8 @@ void main() {
         latitude: 35.681236,
         longitude: 139.767125,
         locationName: '東京駅',
-        visitStartDate: DateTime(2025, 1, 15, 10, 30),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 30),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -626,9 +626,9 @@ void main() {
         latitude: 35.681236,
         longitude: 139.767125,
         locationName: '東京駅', // 場所名が既にある
-        visitStartDate: DateTime(2025, 1, 15, 10, 30),
-        visitEndDate: DateTime(2025, 1, 15, 15, 45),
-        visitMemo: 'テストメモ',
+        visitStartDateTime: DateTime(2025, 1, 15, 10, 30),
+        visitEndDateTime: DateTime(2025, 1, 15, 15, 45),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
