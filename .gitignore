@@ -62,3 +62,5 @@ mcp.json
 devcontainer_keys
 test/.test_optimizer.dart
 coverage/
+tools/migrations/*.json
+node_modules/
