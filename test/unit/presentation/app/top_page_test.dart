@@ -399,6 +399,9 @@ void main() {
       groupEventQueryServiceProvider.overrideWithValue(
         mockGroupEventQueryService,
       ),
+      memberEventQueryServiceProvider.overrideWithValue(
+        mockMemberEventQueryService,
+      ),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
         mockDvcPointContractQueryService,
