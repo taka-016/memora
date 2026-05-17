@@ -7,56 +7,48 @@ class TripEntryDto extends Equatable {
   const TripEntryDto({
     required this.id,
     required this.groupId,
-    required this.tripYear,
-    this.tripName,
-    this.tripStartDate,
-    this.tripEndDate,
-    this.tripMemo,
+    required this.year,
+    this.name,
+    this.startDate,
+    this.endDate,
+    this.memo,
     this.pins,
     this.tasks,
   });
 
   final String id;
   final String groupId;
-  final int tripYear;
-  final String? tripName;
-  final DateTime? tripStartDate;
-  final DateTime? tripEndDate;
-  final String? tripMemo;
+  final int year;
+  final String? name;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? memo;
   final List<PinDto>? pins;
   final List<TaskDto>? tasks;
 
   TripEntryDto copyWith({
     String? id,
     String? groupId,
-    int? tripYear,
-    Object? tripName = copyWithPlaceholder,
-    Object? tripStartDate = copyWithPlaceholder,
-    Object? tripEndDate = copyWithPlaceholder,
-    String? tripMemo,
+    int? year,
+    Object? name = copyWithPlaceholder,
+    Object? startDate = copyWithPlaceholder,
+    Object? endDate = copyWithPlaceholder,
+    String? memo,
     Object? pins = copyWithPlaceholder,
     Object? tasks = copyWithPlaceholder,
   }) {
     return TripEntryDto(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
-      tripYear: tripYear ?? this.tripYear,
-      tripName: resolveCopyWithValue<String>(
-        tripName,
-        this.tripName,
-        'tripName',
+      year: year ?? this.year,
+      name: resolveCopyWithValue<String>(name, this.name, 'name'),
+      startDate: resolveCopyWithValue<DateTime>(
+        startDate,
+        this.startDate,
+        'startDate',
       ),
-      tripStartDate: resolveCopyWithValue<DateTime>(
-        tripStartDate,
-        this.tripStartDate,
-        'tripStartDate',
-      ),
-      tripEndDate: resolveCopyWithValue<DateTime>(
-        tripEndDate,
-        this.tripEndDate,
-        'tripEndDate',
-      ),
-      tripMemo: tripMemo ?? this.tripMemo,
+      endDate: resolveCopyWithValue<DateTime>(endDate, this.endDate, 'endDate'),
+      memo: memo ?? this.memo,
       pins: resolveCopyWithValue<List<PinDto>>(pins, this.pins, 'pins'),
       tasks: resolveCopyWithValue<List<TaskDto>>(tasks, this.tasks, 'tasks'),
     );
@@ -66,11 +58,11 @@ class TripEntryDto extends Equatable {
   List<Object?> get props => [
     id,
     groupId,
-    tripYear,
-    tripName,
-    tripStartDate,
-    tripEndDate,
-    tripMemo,
+    year,
+    name,
+    startDate,
+    endDate,
+    memo,
     pins,
     tasks,
   ];

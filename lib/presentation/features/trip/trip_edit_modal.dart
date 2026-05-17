@@ -53,15 +53,15 @@ class TripEditModal extends HookConsumerWidget {
     );
 
     final initialTripForComparison = useMemoized(() {
-      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
+      final tripYearValue = tripEntry?.year ?? year ?? clock.now().year;
       return TripEntryDto(
         id: tripEntry?.id ?? '',
         groupId: groupId,
-        tripYear: tripYearValue,
-        tripName: tripEntry?.tripName,
-        tripStartDate: tripEntry?.tripStartDate,
-        tripEndDate: tripEntry?.tripEndDate,
-        tripMemo: tripEntry?.tripMemo ?? '',
+        year: tripYearValue,
+        name: tripEntry?.name,
+        startDate: tripEntry?.startDate,
+        endDate: tripEntry?.endDate,
+        memo: tripEntry?.memo ?? '',
         pins: List<PinDto>.from(tripEntry?.pins ?? const []),
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
       );
@@ -187,9 +187,9 @@ class TripEditModal extends HookConsumerWidget {
     Future<void> handleSave() async {
       errorMessage.value = null;
       final tripToSave = draftTripEntry.value;
-      final selectedStart = tripToSave.tripStartDate;
-      final selectedEnd = tripToSave.tripEndDate;
-      final tripYearValue = tripEntry?.tripYear ?? year ?? clock.now().year;
+      final selectedStart = tripToSave.startDate;
+      final selectedEnd = tripToSave.endDate;
+      final tripYearValue = tripEntry?.year ?? year ?? clock.now().year;
 
       if (selectedStart != null &&
           selectedEnd != null &&
@@ -208,8 +208,8 @@ class TripEditModal extends HookConsumerWidget {
           ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
         await onSave(
           tripToSave.copyWith(
-            tripStartDate: selectedStart,
-            tripEndDate: selectedEnd,
+            startDate: selectedStart,
+            endDate: selectedEnd,
             tasks: sortedTasks,
           ),
         );
@@ -277,7 +277,7 @@ class TripEditModal extends HookConsumerWidget {
           Expanded(
             child: TripEditFormView(
               value: draftTripEntry.value,
-              configuredYear: tripEntry?.tripYear ?? year,
+              configuredYear: tripEntry?.year ?? year,
               clock: clock,
               onChanged: updateDraftTripEntry,
               onTaskManagementRequested: showTaskView,

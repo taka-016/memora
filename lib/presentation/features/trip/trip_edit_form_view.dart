@@ -27,12 +27,12 @@ class TripEditFormView extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final nameController = useTextEditingController(text: value.tripName ?? '');
-    final memoController = useTextEditingController(text: value.tripMemo ?? '');
+    final nameController = useTextEditingController(text: value.name ?? '');
+    final memoController = useTextEditingController(text: value.memo ?? '');
     final valueRef = useRef(value);
     final onChangedRef = useRef(onChanged);
-    final startDate = useState<DateTime?>(value.tripStartDate);
-    final endDate = useState<DateTime?>(value.tripEndDate);
+    final startDate = useState<DateTime?>(value.startDate);
+    final endDate = useState<DateTime?>(value.endDate);
     final pins = useState<List<PinDto>>(
       List<PinDto>.from(value.pins ?? const []),
     );
@@ -47,10 +47,10 @@ class TripEditFormView extends HookWidget {
           ? null
           : nameController.text;
       return valueRef.value.copyWith(
-        tripName: normalizedTripName,
-        tripStartDate: startDate.value,
-        tripEndDate: endDate.value,
-        tripMemo: memoController.text,
+        name: normalizedTripName,
+        startDate: startDate.value,
+        endDate: endDate.value,
+        memo: memoController.text,
         pins: List<PinDto>.from(pins.value),
       );
     }
@@ -69,21 +69,21 @@ class TripEditFormView extends HookWidget {
     void syncFromValue() {
       isSyncingFromValueRef.value = true;
       try {
-        final tripName = value.tripName ?? '';
-        if (nameController.text != tripName) {
-          nameController.text = tripName;
+        final name = value.name ?? '';
+        if (nameController.text != name) {
+          nameController.text = name;
         }
 
-        final tripMemo = value.tripMemo ?? '';
-        if (memoController.text != tripMemo) {
-          memoController.text = tripMemo;
+        final memo = value.memo ?? '';
+        if (memoController.text != memo) {
+          memoController.text = memo;
         }
 
-        if (startDate.value != value.tripStartDate) {
-          startDate.value = value.tripStartDate;
+        if (startDate.value != value.startDate) {
+          startDate.value = value.startDate;
         }
-        if (endDate.value != value.tripEndDate) {
-          endDate.value = value.tripEndDate;
+        if (endDate.value != value.endDate) {
+          endDate.value = value.endDate;
         }
 
         final nextPins = List<PinDto>.from(value.pins ?? const []);
@@ -228,17 +228,18 @@ class TripEditFormView extends HookWidget {
                 ),
                 subtitle: () {
                   final subtitleParts = <String>[];
-                  if (pin.visitStartDate != null && pin.visitEndDate != null) {
+                  if (pin.visitStartDateTime != null &&
+                      pin.visitEndDateTime != null) {
                     subtitleParts.add(
-                      '${formatDateTime(pin.visitStartDate!)} - ${formatDateTime(pin.visitEndDate!)}',
+                      '${formatDateTime(pin.visitStartDateTime!)} - ${formatDateTime(pin.visitEndDateTime!)}',
                     );
-                  } else if (pin.visitStartDate != null) {
+                  } else if (pin.visitStartDateTime != null) {
                     subtitleParts.add(
-                      '開始: ${formatDateTime(pin.visitStartDate!)}',
+                      '開始: ${formatDateTime(pin.visitStartDateTime!)}',
                     );
-                  } else if (pin.visitEndDate != null) {
+                  } else if (pin.visitEndDateTime != null) {
                     subtitleParts.add(
-                      '終了: ${formatDateTime(pin.visitEndDate!)}',
+                      '終了: ${formatDateTime(pin.visitEndDateTime!)}',
                     );
                   }
 

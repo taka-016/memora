@@ -14,13 +14,13 @@ class FirestorePinMapper {
       latitude: FirestoreMapperValueParser.asDouble(data['latitude']),
       longitude: FirestoreMapperValueParser.asDouble(data['longitude']),
       locationName: data['locationName'] as String?,
-      visitStartDate: FirestoreMapperValueParser.asDateTime(
+      visitStartDateTime: FirestoreMapperValueParser.asDateTime(
         data['visitStartDateTime'],
       ),
-      visitEndDate: FirestoreMapperValueParser.asDateTime(
+      visitEndDateTime: FirestoreMapperValueParser.asDateTime(
         data['visitEndDateTime'],
       ),
-      visitMemo: data['memo'] as String?,
+      memo: data['memo'] as String?,
     );
   }
 
@@ -32,13 +32,13 @@ class FirestorePinMapper {
       'latitude': pin.latitude,
       'longitude': pin.longitude,
       'locationName': pin.locationName,
-      'visitStartDateTime': pin.visitStartDate != null
-          ? Timestamp.fromDate(pin.visitStartDate!)
+      'visitStartDateTime': pin.visitStartDateTime != null
+          ? Timestamp.fromDate(pin.visitStartDateTime!)
           : null,
-      'visitEndDateTime': pin.visitEndDate != null
-          ? Timestamp.fromDate(pin.visitEndDate!)
+      'visitEndDateTime': pin.visitEndDateTime != null
+          ? Timestamp.fromDate(pin.visitEndDateTime!)
           : null,
-      'memo': pin.visitMemo,
+      'memo': pin.memo,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }

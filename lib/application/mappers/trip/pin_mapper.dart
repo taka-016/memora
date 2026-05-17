@@ -10,9 +10,9 @@ class PinMapper {
       latitude: dto.latitude,
       longitude: dto.longitude,
       locationName: dto.locationName,
-      visitStartDate: dto.visitStartDate,
-      visitEndDate: dto.visitEndDate,
-      visitMemo: dto.visitMemo,
+      visitStartDateTime: dto.visitStartDateTime,
+      visitEndDateTime: dto.visitEndDateTime,
+      memo: dto.memo,
     );
   }
 

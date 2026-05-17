@@ -210,7 +210,7 @@ class TripCell extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(left: 8.0),
               child: Text(
-                trip.tripName ?? '旅行名未設定',
+                trip.name ?? '旅行名未設定',
                 style: textStyle,
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
@@ -223,9 +223,9 @@ class TripCell extends StatelessWidget {
   }
 
   String _formatTripDate(TripEntryDto trip) {
-    final startDate = trip.tripStartDate;
+    final startDate = trip.startDate;
     if (startDate == null) {
-      return '${trip.tripYear}年 (期間未設定)';
+      return '${trip.year}年 (期間未設定)';
     }
     final month = startDate.month.toString().padLeft(2, '0');
     final day = startDate.day.toString().padLeft(2, '0');

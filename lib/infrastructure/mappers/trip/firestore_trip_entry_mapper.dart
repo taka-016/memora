@@ -14,19 +14,17 @@ class FirestoreTripEntryMapper {
     List<TaskDto> tasks = const [],
   }) {
     final data = doc.data() ?? {};
-    final tripStartDate = FirestoreMapperValueParser.asDateTime(
-      data['startDate'],
-    );
-    final tripEndDate = FirestoreMapperValueParser.asDateTime(data['endDate']);
-    final tripYear = FirestoreMapperValueParser.asNullableInt(data['year']);
+    final startDate = FirestoreMapperValueParser.asDateTime(data['startDate']);
+    final endDate = FirestoreMapperValueParser.asDateTime(data['endDate']);
+    final year = FirestoreMapperValueParser.asNullableInt(data['year']);
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
-      tripYear: tripYear ?? tripStartDate?.year ?? fallbackTripYear,
-      tripName: data['name'] as String?,
-      tripStartDate: tripStartDate,
-      tripEndDate: tripEndDate,
-      tripMemo: data['memo'] as String?,
+      year: year ?? startDate?.year ?? fallbackTripYear,
+      name: data['name'] as String?,
+      startDate: startDate,
+      endDate: endDate,
+      memo: data['memo'] as String?,
       pins: pins,
       tasks: tasks,
     );
@@ -35,17 +33,17 @@ class FirestoreTripEntryMapper {
   static Map<String, dynamic> toCreateFirestore(TripEntry tripEntry) {
     final data = <String, dynamic>{
       'groupId': tripEntry.groupId,
-      'year': tripEntry.tripYear,
-      'name': tripEntry.tripName,
-      'memo': tripEntry.tripMemo,
+      'year': tripEntry.year,
+      'name': tripEntry.name,
+      'memo': tripEntry.memo,
       ...FirestoreWriteMetadata.forCreate(),
     };
 
-    data['startDate'] = tripEntry.tripStartDate != null
-        ? Timestamp.fromDate(tripEntry.tripStartDate!)
+    data['startDate'] = tripEntry.startDate != null
+        ? Timestamp.fromDate(tripEntry.startDate!)
         : null;
-    data['endDate'] = tripEntry.tripEndDate != null
-        ? Timestamp.fromDate(tripEntry.tripEndDate!)
+    data['endDate'] = tripEntry.endDate != null
+        ? Timestamp.fromDate(tripEntry.endDate!)
         : null;
 
     return data;
@@ -54,17 +52,17 @@ class FirestoreTripEntryMapper {
   static Map<String, dynamic> toUpdateFirestore(TripEntry tripEntry) {
     final data = <String, dynamic>{
       'groupId': tripEntry.groupId,
-      'year': tripEntry.tripYear,
-      'name': tripEntry.tripName,
-      'memo': tripEntry.tripMemo,
+      'year': tripEntry.year,
+      'name': tripEntry.name,
+      'memo': tripEntry.memo,
       ...FirestoreWriteMetadata.forUpdate(),
     };
 
-    data['startDate'] = tripEntry.tripStartDate != null
-        ? Timestamp.fromDate(tripEntry.tripStartDate!)
+    data['startDate'] = tripEntry.startDate != null
+        ? Timestamp.fromDate(tripEntry.startDate!)
         : null;
-    data['endDate'] = tripEntry.tripEndDate != null
-        ? Timestamp.fromDate(tripEntry.tripEndDate!)
+    data['endDate'] = tripEntry.endDate != null
+        ? Timestamp.fromDate(tripEntry.endDate!)
         : null;
 
     return data;

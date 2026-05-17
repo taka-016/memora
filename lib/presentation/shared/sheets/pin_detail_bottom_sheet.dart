@@ -66,31 +66,31 @@ class PinDetailBottomSheet extends HookWidget {
 
       locationNameController.text = pin.locationName ?? '';
 
-      if (pin.visitStartDate != null) {
+      if (pin.visitStartDateTime != null) {
         fromDate.value = DateTime(
-          pin.visitStartDate!.year,
-          pin.visitStartDate!.month,
-          pin.visitStartDate!.day,
+          pin.visitStartDateTime!.year,
+          pin.visitStartDateTime!.month,
+          pin.visitStartDateTime!.day,
         );
         fromTime.value = TimeOfDay(
-          hour: pin.visitStartDate!.hour,
-          minute: pin.visitStartDate!.minute,
+          hour: pin.visitStartDateTime!.hour,
+          minute: pin.visitStartDateTime!.minute,
         );
       }
 
-      if (pin.visitEndDate != null) {
+      if (pin.visitEndDateTime != null) {
         toDate.value = DateTime(
-          pin.visitEndDate!.year,
-          pin.visitEndDate!.month,
-          pin.visitEndDate!.day,
+          pin.visitEndDateTime!.year,
+          pin.visitEndDateTime!.month,
+          pin.visitEndDateTime!.day,
         );
         toTime.value = TimeOfDay(
-          hour: pin.visitEndDate!.hour,
-          minute: pin.visitEndDate!.minute,
+          hour: pin.visitEndDateTime!.hour,
+          minute: pin.visitEndDateTime!.minute,
         );
       }
 
-      memoController.text = pin.visitMemo ?? '';
+      memoController.text = pin.memo ?? '';
     }
 
     Future<void> selectFromDate(BuildContext context) async {
@@ -169,9 +169,9 @@ class PinDetailBottomSheet extends HookWidget {
 
       if (onUpdate != null) {
         final updatedPin = pin.copyWith(
-          visitStartDate: start,
-          visitEndDate: end,
-          visitMemo: memoController.text,
+          visitStartDateTime: start,
+          visitEndDateTime: end,
+          memo: memoController.text,
           locationName: normalizedLocationName,
         );
         onUpdate!(updatedPin);

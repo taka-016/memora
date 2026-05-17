@@ -9,12 +9,12 @@ class Pin extends Equatable {
     required this.latitude,
     required this.longitude,
     this.locationName,
-    this.visitStartDate,
-    this.visitEndDate,
-    this.visitMemo,
+    this.visitStartDateTime,
+    this.visitEndDateTime,
+    this.memo,
   }) {
-    final start = visitStartDate;
-    final end = visitEndDate;
+    final start = visitStartDateTime;
+    final end = visitEndDateTime;
     if (start != null && end != null && end.isBefore(start)) {
       throw ValidationException('訪問終了日時は訪問開始日時以降でなければなりません');
     }
@@ -26,9 +26,9 @@ class Pin extends Equatable {
   final double latitude;
   final double longitude;
   final String? locationName;
-  final DateTime? visitStartDate;
-  final DateTime? visitEndDate;
-  final String? visitMemo;
+  final DateTime? visitStartDateTime;
+  final DateTime? visitEndDateTime;
+  final String? memo;
 
   Pin copyWith({
     String? pinId,
@@ -37,9 +37,9 @@ class Pin extends Equatable {
     double? latitude,
     double? longitude,
     String? locationName,
-    DateTime? visitStartDate,
-    DateTime? visitEndDate,
-    String? visitMemo,
+    DateTime? visitStartDateTime,
+    DateTime? visitEndDateTime,
+    String? memo,
   }) {
     return Pin(
       pinId: pinId ?? this.pinId,
@@ -48,9 +48,9 @@ class Pin extends Equatable {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
-      visitStartDate: visitStartDate ?? this.visitStartDate,
-      visitEndDate: visitEndDate ?? this.visitEndDate,
-      visitMemo: visitMemo ?? this.visitMemo,
+      visitStartDateTime: visitStartDateTime ?? this.visitStartDateTime,
+      visitEndDateTime: visitEndDateTime ?? this.visitEndDateTime,
+      memo: memo ?? this.memo,
     );
   }
 
@@ -62,8 +62,8 @@ class Pin extends Equatable {
     latitude,
     longitude,
     locationName,
-    visitStartDate,
-    visitEndDate,
-    visitMemo,
+    visitStartDateTime,
+    visitEndDateTime,
+    memo,
   ];
 }
