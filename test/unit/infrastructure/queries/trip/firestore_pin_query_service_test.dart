@@ -88,9 +88,9 @@ void main() {
         'latitude': 35.0,
         'longitude': 139.0,
         'locationName': '東京駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2024, 1, 2)),
-        'visitMemo': 'メモ1',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 1, 1)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 1, 2)),
+        'memo': 'メモ1',
       });
 
       final mockGroup2PinsQuery = MockQuery<Map<String, dynamic>>();
@@ -111,9 +111,9 @@ void main() {
         'latitude': 36.0,
         'longitude': 140.0,
         'locationName': '京都駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2024, 2, 1)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2024, 2, 2)),
-        'visitMemo': 'メモ2',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 2, 1)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 2, 2)),
+        'memo': 'メモ2',
       });
 
       final result = await service.getPinsByMemberId(memberId);

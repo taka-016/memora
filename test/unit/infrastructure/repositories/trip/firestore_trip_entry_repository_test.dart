@@ -84,8 +84,10 @@ void main() {
             argThat(
               allOf([
                 containsPair('groupId', 'group001'),
-                containsPair('tripYear', 2025),
-                containsPair('tripName', 'テスト旅行'),
+                containsPair('year', 2025),
+                containsPair('name', 'テスト旅行'),
+                isNot(contains('tripYear')),
+                isNot(contains('tripName')),
                 contains('createdAt'),
                 contains('updatedAt'),
               ]),
@@ -158,7 +160,8 @@ void main() {
           argThat(
             allOf([
               containsPair('groupId', 'group001'),
-              containsPair('tripYear', 2025),
+              containsPair('year', 2025),
+              isNot(contains('tripYear')),
               contains('updatedAt'),
               predicate<Map<String, dynamic>>(
                 (data) => !data.containsKey('createdAt'),

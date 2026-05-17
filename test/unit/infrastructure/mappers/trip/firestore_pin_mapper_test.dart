@@ -19,9 +19,9 @@ void main() {
         'latitude': 35,
         'longitude': 139.5,
         'locationName': '東京駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2025, 5, 1, 10)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2025, 5, 1, 11)),
-        'visitMemo': '集合',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2025, 5, 1, 10)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2025, 5, 1, 11)),
+        'memo': '集合',
       });
 
       final result = FirestorePinMapper.fromFirestore(doc);
@@ -75,9 +75,12 @@ void main() {
       expect(map['latitude'], 34.701909);
       expect(map['longitude'], 135.494977);
       expect(map['locationName'], '大阪駅');
-      expect(map['visitStartDate'], isA<Timestamp>());
-      expect(map['visitEndDate'], isA<Timestamp>());
-      expect(map['visitMemo'], '観光開始');
+      expect(map['visitStartDateTime'], isA<Timestamp>());
+      expect(map['visitEndDateTime'], isA<Timestamp>());
+      expect(map['memo'], '観光開始');
+      expect(map.containsKey('visitStartDate'), isFalse);
+      expect(map.containsKey('visitEndDate'), isFalse);
+      expect(map.containsKey('visitMemo'), isFalse);
       expect(map['createdAt'], isA<FieldValue>());
       expect(map['updatedAt'], isA<FieldValue>());
     });
@@ -99,9 +102,12 @@ void main() {
       expect(map['latitude'], 26.2125);
       expect(map['longitude'], 127.6811);
       expect(map['locationName'], isNull);
-      expect(map['visitStartDate'], isNull);
-      expect(map['visitEndDate'], isNull);
-      expect(map['visitMemo'], isNull);
+      expect(map['visitStartDateTime'], isNull);
+      expect(map['visitEndDateTime'], isNull);
+      expect(map['memo'], isNull);
+      expect(map.containsKey('visitStartDate'), isFalse);
+      expect(map.containsKey('visitEndDate'), isFalse);
+      expect(map.containsKey('visitMemo'), isFalse);
       expect(map['createdAt'], isA<FieldValue>());
       expect(map['updatedAt'], isA<FieldValue>());
     });
@@ -123,9 +129,12 @@ void main() {
       expect(map['latitude'], 0.0);
       expect(map['longitude'], 0.0);
       expect(map['locationName'], isNull);
-      expect(map['visitStartDate'], isNull);
-      expect(map['visitEndDate'], isNull);
-      expect(map['visitMemo'], isNull);
+      expect(map['visitStartDateTime'], isNull);
+      expect(map['visitEndDateTime'], isNull);
+      expect(map['memo'], isNull);
+      expect(map.containsKey('visitStartDate'), isFalse);
+      expect(map.containsKey('visitEndDate'), isFalse);
+      expect(map.containsKey('visitMemo'), isFalse);
       expect(map['createdAt'], isA<FieldValue>());
       expect(map['updatedAt'], isA<FieldValue>());
     });

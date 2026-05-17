@@ -17,11 +17,11 @@ void main() {
       when(doc.id).thenReturn('trip001');
       when(doc.data()).thenReturn({
         'groupId': 'group001',
-        'tripYear': 2025,
-        'tripName': '夏旅行',
-        'tripStartDate': Timestamp.fromDate(DateTime(2025, 8, 1)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2025, 8, 3)),
-        'tripMemo': '海に行く',
+        'year': 2025,
+        'name': '夏旅行',
+        'startDate': Timestamp.fromDate(DateTime(2025, 8, 1)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 8, 3)),
+        'memo': '海に行く',
       });
       const pins = [PinDto(pinId: 'pin001', latitude: 35, longitude: 139)];
       const tasks = [
@@ -57,7 +57,7 @@ void main() {
       when(doc.id).thenReturn('trip002');
       when(doc.data()).thenReturn({
         'groupId': 'group002',
-        'tripStartDate': Timestamp.fromDate(DateTime(2024, 12, 31)),
+        'startDate': Timestamp.fromDate(DateTime(2024, 12, 31)),
       });
 
       final result = FirestoreTripEntryMapper.fromFirestore(
@@ -85,11 +85,16 @@ void main() {
       final data = FirestoreTripEntryMapper.toCreateFirestore(tripEntry);
 
       expect(data['groupId'], 'group001');
-      expect(data['tripYear'], 2025);
-      expect(data['tripName'], 'テスト旅行');
-      expect(data['tripStartDate'], isA<Timestamp>());
-      expect(data['tripEndDate'], isA<Timestamp>());
-      expect(data['tripMemo'], 'テストメモ');
+      expect(data['year'], 2025);
+      expect(data['name'], 'テスト旅行');
+      expect(data['startDate'], isA<Timestamp>());
+      expect(data['endDate'], isA<Timestamp>());
+      expect(data['memo'], 'テストメモ');
+      expect(data.containsKey('tripYear'), isFalse);
+      expect(data.containsKey('tripName'), isFalse);
+      expect(data.containsKey('tripStartDate'), isFalse);
+      expect(data.containsKey('tripEndDate'), isFalse);
+      expect(data.containsKey('tripMemo'), isFalse);
       expect(data['createdAt'], isA<FieldValue>());
       expect(data['updatedAt'], isA<FieldValue>());
     });
@@ -104,11 +109,16 @@ void main() {
       final data = FirestoreTripEntryMapper.toUpdateFirestore(tripEntry);
 
       expect(data['groupId'], 'group002');
-      expect(data['tripYear'], 2025);
-      expect(data['tripName'], null);
-      expect(data['tripStartDate'], isNull);
-      expect(data['tripEndDate'], isNull);
-      expect(data['tripMemo'], null);
+      expect(data['year'], 2025);
+      expect(data['name'], null);
+      expect(data['startDate'], isNull);
+      expect(data['endDate'], isNull);
+      expect(data['memo'], null);
+      expect(data.containsKey('tripYear'), isFalse);
+      expect(data.containsKey('tripName'), isFalse);
+      expect(data.containsKey('tripStartDate'), isFalse);
+      expect(data.containsKey('tripEndDate'), isFalse);
+      expect(data.containsKey('tripMemo'), isFalse);
       expect(data.containsKey('createdAt'), isFalse);
       expect(data['updatedAt'], isA<FieldValue>());
     });

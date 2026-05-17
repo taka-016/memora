@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -54,13 +55,16 @@ void main() {
 
       // Assert
       expect(result, equals(expectedTripEntries));
-      verify(
+      final verification = verify(
         mockQueryService.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
-          orderBy: anyNamed('orderBy'),
+          orderBy: captureAnyNamed('orderBy'),
         ),
-      ).called(1);
+      );
+      verification.called(1);
+      final orderBy = verification.captured.single as List<OrderBy>;
+      expect(orderBy.single.field, 'startDate');
     });
   });
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -40,13 +41,18 @@ void main() {
       final result = await usecase.execute(tripId);
 
       expect(result, equals(tripEntry));
-      verify(
+      final verification = verify(
         mockQueryService.getTripEntryById(
           tripId,
-          pinsOrderBy: anyNamed('pinsOrderBy'),
-          tasksOrderBy: anyNamed('tasksOrderBy'),
+          pinsOrderBy: captureAnyNamed('pinsOrderBy'),
+          tasksOrderBy: captureAnyNamed('tasksOrderBy'),
         ),
-      ).called(1);
+      );
+      verification.called(1);
+      final pinsOrderBy = verification.captured[0] as List<OrderBy>;
+      final tasksOrderBy = verification.captured[1] as List<OrderBy>;
+      expect(pinsOrderBy.single.field, 'visitStartDateTime');
+      expect(tasksOrderBy.single.field, 'orderIndex');
     });
 
     test('存在しない旅行IDの場合はnullを返すこと', () async {
