@@ -34,7 +34,7 @@ erDiagram
         string memo
         string assignedMemberId FK
     }
-    plans {
+    itinerary_items {
         string id PK
         string tripId FK "NOT NULL"
         number orderIndex "NOT NULL"
@@ -119,7 +119,7 @@ erDiagram
 
     trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
-    trip_entries ||--o{ plans : "id → tripId"
+    trip_entries ||--o{ itinerary_items : "id → tripId"
     tasks ||--o{ tasks : "id → parentTaskId"
     tasks ||--|| members : "assignedMemberId → id"
     groups ||--o{ group_members : "id → groupId"
