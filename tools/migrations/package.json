@@ -1,0 +1,12 @@
+{
+  "name": "memora-firestore-migrations",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Firestore data migration scripts for memora.",
+  "scripts": {
+    "rename-trip-entry-pin-fields": "node rename_trip_entry_pin_fields.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  }
+}

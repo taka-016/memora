@@ -180,7 +180,7 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "visitStartDate",
+          "fieldPath": "visitStartDateTime",
           "order": "ASCENDING"
         },
         {
@@ -218,11 +218,11 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "tripYear",
+          "fieldPath": "year",
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "tripStartDate",
+          "fieldPath": "startDate",
           "order": "ASCENDING"
         },
         {
