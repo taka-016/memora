@@ -9,9 +9,9 @@ class PinDto extends Equatable {
     required this.latitude,
     required this.longitude,
     this.locationName,
-    this.visitStartDate,
-    this.visitEndDate,
-    this.visitMemo,
+    this.visitStartDateTime,
+    this.visitEndDateTime,
+    this.memo,
   });
 
   final String pinId;
@@ -20,9 +20,9 @@ class PinDto extends Equatable {
   final double latitude;
   final double longitude;
   final String? locationName;
-  final DateTime? visitStartDate;
-  final DateTime? visitEndDate;
-  final String? visitMemo;
+  final DateTime? visitStartDateTime;
+  final DateTime? visitEndDateTime;
+  final String? memo;
 
   Coordinate get coordinate {
     return Coordinate(latitude: latitude, longitude: longitude);
@@ -35,9 +35,9 @@ class PinDto extends Equatable {
     double? latitude,
     double? longitude,
     String? locationName,
-    DateTime? visitStartDate,
-    DateTime? visitEndDate,
-    String? visitMemo,
+    DateTime? visitStartDateTime,
+    DateTime? visitEndDateTime,
+    String? memo,
   }) {
     return PinDto(
       pinId: pinId ?? this.pinId,
@@ -46,9 +46,9 @@ class PinDto extends Equatable {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
-      visitStartDate: visitStartDate ?? this.visitStartDate,
-      visitEndDate: visitEndDate ?? this.visitEndDate,
-      visitMemo: visitMemo ?? this.visitMemo,
+      visitStartDateTime: visitStartDateTime ?? this.visitStartDateTime,
+      visitEndDateTime: visitEndDateTime ?? this.visitEndDateTime,
+      memo: memo ?? this.memo,
     );
   }
 
@@ -60,8 +60,8 @@ class PinDto extends Equatable {
     latitude,
     longitude,
     locationName,
-    visitStartDate,
-    visitEndDate,
-    visitMemo,
+    visitStartDateTime,
+    visitEndDateTime,
+    memo,
   ];
 }

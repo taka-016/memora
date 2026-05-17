@@ -39,10 +39,5 @@
 ## 全体
 
 ## リファクタリング
-- DBのフィールド名更新し、移行スクリプト作成およびfirestore.indexes.jsonの更新
-  - pinsのフィールド名を変更し、エンティティ含め関連箇所を修正
-    - visitStartDate→visitStartDateTime
-    - visitEndDate→visitEndDateTime
-    - visitMemo→memo
 
 ## 不具合修正

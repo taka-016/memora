@@ -67,11 +67,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: 'テストメモ',
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -93,11 +93,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: 'テストメモ',
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -138,8 +138,8 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'trip-entry-1',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripStartDate: DateTime(2024, 5, 1),
+        year: 2024,
+        startDate: DateTime(2024, 5, 1),
       );
 
       await tester.pumpWidget(
@@ -169,8 +169,8 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'trip-entry-1',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripEndDate: DateTime(2024, 5, 3),
+        year: 2024,
+        endDate: DateTime(2024, 5, 3),
       );
 
       await tester.pumpWidget(
@@ -362,7 +362,7 @@ void main() {
             tripEntry: const TripEntryDto(
               id: 'trip-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
+              year: 2024,
               pins: [pin],
             ),
             onSave: (TripEntryDto tripEntry) async {},
@@ -498,11 +498,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: 'テストメモ',
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -629,7 +629,7 @@ void main() {
       // onSaveコールバックが呼ばれ、適切なTripEntryオブジェクトが渡されることを確認
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.groupId, equals('test-group-id'));
-      expect(savedTripEntry!.tripName, equals('テスト旅行'));
+      expect(savedTripEntry!.name, equals('テスト旅行'));
       expect(savedTripEntry!.id, equals(''));
     });
 
@@ -637,11 +637,11 @@ void main() {
       final existingTripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
       );
 
       TripEntryDto? updatedTripEntry;
@@ -671,7 +671,7 @@ void main() {
       expect(updatedTripEntry, isNotNull);
       expect(updatedTripEntry!.id, equals('existing-trip-id'));
       expect(updatedTripEntry!.groupId, equals('test-group-id'));
-      expect(updatedTripEntry!.tripName, equals('更新された旅行'));
+      expect(updatedTripEntry!.name, equals('更新された旅行'));
     });
 
     testWidgets('日付未設定でも保存できること', (WidgetTester tester) async {
@@ -697,9 +697,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(savedTripEntry, isNotNull);
-      expect(savedTripEntry!.tripStartDate, isNull);
-      expect(savedTripEntry!.tripEndDate, isNull);
-      expect(savedTripEntry!.tripYear, 2024);
+      expect(savedTripEntry!.startDate, isNull);
+      expect(savedTripEntry!.endDate, isNull);
+      expect(savedTripEntry!.year, 2024);
     });
 
     testWidgets('開始日が終了日より後の場合にエラーメッセージが表示されること', (WidgetTester tester) async {
@@ -713,11 +713,11 @@ void main() {
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
-              tripName: 'テスト旅行',
-              tripStartDate: DateTime(2024, 1, 3),
-              tripEndDate: DateTime(2024, 1, 1),
-              tripMemo: 'テストメモ',
+              year: 2024,
+              name: 'テスト旅行',
+              startDate: DateTime(2024, 1, 3),
+              endDate: DateTime(2024, 1, 1),
+              memo: 'テストメモ',
             ),
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
@@ -751,11 +751,11 @@ void main() {
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
-              tripName: 'テスト旅行',
-              tripStartDate: DateTime(2023, 6, 1), // 2024年以外
-              tripEndDate: DateTime(2024, 6, 10),
-              tripMemo: 'テストメモ',
+              year: 2024,
+              name: 'テスト旅行',
+              startDate: DateTime(2023, 6, 1), // 2024年以外
+              endDate: DateTime(2024, 6, 10),
+              memo: 'テストメモ',
             ),
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
@@ -789,11 +789,11 @@ void main() {
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
-              tripName: 'テスト旅行',
-              tripStartDate: DateTime(2024, 12, 30),
-              tripEndDate: DateTime(2025, 1, 3), // 年またぎ
-              tripMemo: 'テストメモ',
+              year: 2024,
+              name: 'テスト旅行',
+              startDate: DateTime(2024, 12, 30),
+              endDate: DateTime(2025, 1, 3), // 年またぎ
+              memo: 'テストメモ',
             ),
             onSave: (TripEntryDto tripEntry) async {
               savedTripEntry = tripEntry;
@@ -811,8 +811,8 @@ void main() {
       expect(find.text('開始日は2024年の日付を選択してください'), findsNothing);
       // onSaveコールバックが呼ばれることを確認
       expect(savedTripEntry, isNotNull);
-      expect(savedTripEntry!.tripStartDate, equals(DateTime(2024, 12, 30)));
-      expect(savedTripEntry!.tripEndDate, equals(DateTime(2025, 1, 3)));
+      expect(savedTripEntry!.startDate, equals(DateTime(2024, 12, 30)));
+      expect(savedTripEntry!.endDate, equals(DateTime(2025, 1, 3)));
     });
 
     testWidgets('保存時の検証エラーはアプリケーション層の例外メッセージを表示すること', (
@@ -821,11 +821,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'test-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: 'テストメモ',
+        year: 2024,
+        name: 'テスト旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: 'テストメモ',
       );
 
       await tester.pumpWidget(
@@ -859,9 +859,9 @@ void main() {
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
-              tripName: 'テスト旅行',
-              tripMemo: 'テストメモ',
+              year: 2024,
+              name: 'テスト旅行',
+              memo: 'テストメモ',
               pins: const [
                 PinDto(
                   pinId: 'pin-1',
@@ -920,9 +920,9 @@ void main() {
             tripEntry: TripEntryDto(
               id: 'test-id',
               groupId: 'test-group-id',
-              tripYear: 2024,
-              tripName: 'テスト旅行',
-              tripMemo: 'テストメモ',
+              year: 2024,
+              name: 'テスト旅行',
+              memo: 'テストメモ',
             ),
             onSave: (TripEntryDto tripEntry) async {
               throw const ApplicationValidationException(
@@ -1096,11 +1096,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1108,8 +1108,8 @@ void main() {
             latitude: 35.6762,
             longitude: 139.6503,
             locationName: '東京駅',
-            visitStartDate: DateTime(2024, 1, 1, 10, 0),
-            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+            visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+            visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
           ),
         ],
       );
@@ -1136,11 +1136,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
       );
 
       await tester.pumpWidget(
@@ -1163,11 +1163,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1175,8 +1175,8 @@ void main() {
             latitude: 35.6762,
             longitude: 139.6503,
             locationName: null,
-            visitStartDate: DateTime(2024, 1, 1, 10, 0),
-            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+            visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+            visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
           ),
         ],
       );
@@ -1204,11 +1204,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1216,8 +1216,8 @@ void main() {
             latitude: 35.6762,
             longitude: 139.6503,
             locationName: '東京駅',
-            visitStartDate: DateTime(2024, 1, 1, 10, 0),
-            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+            visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+            visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
           ),
           PinDto(
             pinId: 'test-pin-2',
@@ -1225,8 +1225,8 @@ void main() {
             latitude: 35.6585,
             longitude: 139.7454,
             locationName: '渋谷駅',
-            visitStartDate: DateTime(2024, 1, 2, 14, 0),
-            visitEndDate: DateTime(2024, 1, 2, 16, 0),
+            visitStartDateTime: DateTime(2024, 1, 2, 14, 0),
+            visitEndDateTime: DateTime(2024, 1, 2, 16, 0),
           ),
         ],
       );
@@ -1255,11 +1255,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1267,8 +1267,8 @@ void main() {
             latitude: 35.6762,
             longitude: 139.6503,
             locationName: '東京駅',
-            visitStartDate: DateTime(2024, 1, 1, 10, 0),
-            visitEndDate: DateTime(2024, 1, 1, 12, 0),
+            visitStartDateTime: DateTime(2024, 1, 1, 10, 0),
+            visitEndDateTime: DateTime(2024, 1, 1, 12, 0),
           ),
         ],
       );
@@ -1300,11 +1300,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1336,11 +1336,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',
@@ -1390,11 +1390,11 @@ void main() {
       final tripEntry = TripEntryDto(
         id: 'existing-trip-id',
         groupId: 'test-group-id',
-        tripYear: 2024,
-        tripName: '既存旅行',
-        tripStartDate: DateTime(2024, 1, 1),
-        tripEndDate: DateTime(2024, 1, 3),
-        tripMemo: '既存メモ',
+        year: 2024,
+        name: '既存旅行',
+        startDate: DateTime(2024, 1, 1),
+        endDate: DateTime(2024, 1, 3),
+        memo: '既存メモ',
         pins: [
           PinDto(
             pinId: 'test-pin-1',

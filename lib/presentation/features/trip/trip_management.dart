@@ -111,13 +111,13 @@ class TripManagement extends HookConsumerWidget {
     }
 
     String buildTripPeriodLabel(TripEntryDto tripEntry) {
-      final hasStart = tripEntry.tripStartDate != null;
-      final hasEnd = tripEntry.tripEndDate != null;
+      final hasStart = tripEntry.startDate != null;
+      final hasEnd = tripEntry.endDate != null;
       if (!hasStart && !hasEnd) {
-        return '${tripEntry.tripYear}年 (期間未設定)';
+        return '${tripEntry.year}年 (期間未設定)';
       }
-      final startLabel = hasStart ? formatDate(tripEntry.tripStartDate) : '未設定';
-      final endLabel = hasEnd ? formatDate(tripEntry.tripEndDate) : '未設定';
+      final startLabel = hasStart ? formatDate(tripEntry.startDate) : '未設定';
+      final endLabel = hasEnd ? formatDate(tripEntry.endDate) : '未設定';
       return '$startLabel - $endLabel';
     }
 
@@ -250,7 +250,7 @@ class TripManagement extends HookConsumerWidget {
         }
         await loadTripEntries();
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('${tripEntry.tripName}を削除しました')),
+          SnackBar(content: Text('${tripEntry.name}を削除しました')),
         );
       } catch (e, stack) {
         logger.e(
@@ -270,7 +270,7 @@ class TripManagement extends HookConsumerWidget {
       await DeleteConfirmDialog.show(
         context,
         title: '旅行削除',
-        content: '「${tripEntry.tripName ?? '旅行名未設定'}」を削除しますか？',
+        content: '「${tripEntry.name ?? '旅行名未設定'}」を削除しますか？',
         onConfirm: () async => deleteTripEntry(tripEntry),
       );
     }
@@ -344,7 +344,7 @@ class TripManagement extends HookConsumerWidget {
     }
 
     Widget buildTripSubtitle(TripEntryDto tripEntry) {
-      final memo = tripEntry.tripMemo?.trim();
+      final memo = tripEntry.memo?.trim();
       final memoText = memo ?? '';
       final hasMemo = memoText.isNotEmpty;
       return Column(
@@ -365,7 +365,7 @@ class TripManagement extends HookConsumerWidget {
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
-              title: Text(tripEntry.tripName ?? '旅行名未設定'),
+              title: Text(tripEntry.name ?? '旅行名未設定'),
               subtitle: buildTripSubtitle(tripEntry),
               trailing: IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),

@@ -24,9 +24,9 @@ void main() {
       expect(pinDto.tripId, isNull);
       expect(pinDto.groupId, isNull);
       expect(pinDto.locationName, isNull);
-      expect(pinDto.visitStartDate, isNull);
-      expect(pinDto.visitEndDate, isNull);
-      expect(pinDto.visitMemo, isNull);
+      expect(pinDto.visitStartDateTime, isNull);
+      expect(pinDto.visitEndDateTime, isNull);
+      expect(pinDto.memo, isNull);
     });
 
     test('全パラメータでコンストラクタが正しく動作する', () {
@@ -37,9 +37,9 @@ void main() {
       const latitude = 35.6762;
       const longitude = 139.6503;
       const locationName = '東京駅';
-      final visitStartDate = DateTime(2024, 1, 1, 10, 0);
-      final visitEndDate = DateTime(2024, 1, 1, 12, 0);
-      const visitMemo = '観光で訪問';
+      final visitStartDateTime = DateTime(2024, 1, 1, 10, 0);
+      final visitEndDateTime = DateTime(2024, 1, 1, 12, 0);
+      const memo = '観光で訪問';
 
       // Act
       final pinDto = PinDto(
@@ -49,9 +49,9 @@ void main() {
         latitude: latitude,
         longitude: longitude,
         locationName: locationName,
-        visitStartDate: visitStartDate,
-        visitEndDate: visitEndDate,
-        visitMemo: visitMemo,
+        visitStartDateTime: visitStartDateTime,
+        visitEndDateTime: visitEndDateTime,
+        memo: memo,
       );
 
       // Assert
@@ -61,9 +61,9 @@ void main() {
       expect(pinDto.latitude, latitude);
       expect(pinDto.longitude, longitude);
       expect(pinDto.locationName, locationName);
-      expect(pinDto.visitStartDate, visitStartDate);
-      expect(pinDto.visitEndDate, visitEndDate);
-      expect(pinDto.visitMemo, visitMemo);
+      expect(pinDto.visitStartDateTime, visitStartDateTime);
+      expect(pinDto.visitEndDateTime, visitEndDateTime);
+      expect(pinDto.memo, memo);
     });
 
     test('coordinateでCoordinateを取得できる', () {
@@ -120,13 +120,13 @@ void main() {
         latitude: 35.6762,
         longitude: 139.6503,
         locationName: '元の場所名',
-        visitMemo: '元のメモ',
+        memo: '元のメモ',
       );
 
       // Act
       final copiedDto = originalDto.copyWith(
         locationName: '新しい場所名',
-        visitMemo: '新しいメモ',
+        memo: '新しいメモ',
       );
 
       // Assert
@@ -134,7 +134,7 @@ void main() {
       expect(copiedDto.latitude, 35.6762);
       expect(copiedDto.longitude, 139.6503);
       expect(copiedDto.locationName, '新しい場所名');
-      expect(copiedDto.visitMemo, '新しいメモ');
+      expect(copiedDto.memo, '新しいメモ');
     });
 
     test('copyWithメソッドでnullを指定しても元の値が保持される', () {
@@ -146,7 +146,7 @@ void main() {
         latitude: 35.6762,
         longitude: 139.6503,
         locationName: '東京駅',
-        visitMemo: '観光で訪問',
+        memo: '観光で訪問',
       );
 
       // Act
@@ -159,7 +159,7 @@ void main() {
       expect(copiedDto.latitude, 35.6762);
       expect(copiedDto.longitude, 139.6503);
       expect(copiedDto.locationName, '東京駅');
-      expect(copiedDto.visitMemo, '観光で訪問');
+      expect(copiedDto.memo, '観光で訪問');
     });
 
     test('同じ値を持つインスタンスは等しい', () {
@@ -170,9 +170,9 @@ void main() {
       const latitude = 35.6762;
       const longitude = 139.6503;
       const locationName = '東京駅';
-      final visitStartDate = DateTime(2024, 1, 1, 10, 0);
-      final visitEndDate = DateTime(2024, 1, 1, 12, 0);
-      const visitMemo = '観光で訪問';
+      final visitStartDateTime = DateTime(2024, 1, 1, 10, 0);
+      final visitEndDateTime = DateTime(2024, 1, 1, 12, 0);
+      const memo = '観光で訪問';
 
       final dto1 = PinDto(
         pinId: pinId,
@@ -181,9 +181,9 @@ void main() {
         latitude: latitude,
         longitude: longitude,
         locationName: locationName,
-        visitStartDate: visitStartDate,
-        visitEndDate: visitEndDate,
-        visitMemo: visitMemo,
+        visitStartDateTime: visitStartDateTime,
+        visitEndDateTime: visitEndDateTime,
+        memo: memo,
       );
 
       final dto2 = PinDto(
@@ -193,9 +193,9 @@ void main() {
         latitude: latitude,
         longitude: longitude,
         locationName: locationName,
-        visitStartDate: visitStartDate,
-        visitEndDate: visitEndDate,
-        visitMemo: visitMemo,
+        visitStartDateTime: visitStartDateTime,
+        visitEndDateTime: visitEndDateTime,
+        memo: memo,
       );
 
       // Act & Assert
@@ -212,7 +212,7 @@ void main() {
         latitude: 35.6762,
         longitude: 139.6503,
         locationName: '東京駅',
-        visitMemo: '観光で訪問',
+        memo: '観光で訪問',
       );
 
       final dto2 = PinDto(
@@ -222,7 +222,7 @@ void main() {
         latitude: 34.0522,
         longitude: -118.2437,
         locationName: 'ロサンゼルス',
-        visitMemo: '仕事で訪問',
+        memo: '仕事で訪問',
       );
 
       // Act & Assert

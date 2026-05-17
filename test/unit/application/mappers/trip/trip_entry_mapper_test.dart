@@ -13,11 +13,11 @@ void main() {
       final dto = TripEntryDto(
         id: 'trip-003',
         groupId: 'group-003',
-        tripYear: 2024,
-        tripName: '夏の旅行',
-        tripStartDate: DateTime(2024, 7, 1),
-        tripEndDate: DateTime(2024, 7, 5),
-        tripMemo: '海水浴に行く',
+        year: 2024,
+        name: '夏の旅行',
+        startDate: DateTime(2024, 7, 1),
+        endDate: DateTime(2024, 7, 5),
+        memo: '海水浴に行く',
         pins: [
           PinDto(
             pinId: 'pin-010',
@@ -46,11 +46,11 @@ void main() {
         TripEntry(
           id: 'trip-003',
           groupId: 'group-003',
-          tripYear: 2024,
-          tripName: '夏の旅行',
-          tripStartDate: DateTime(2024, 7, 1),
-          tripEndDate: DateTime(2024, 7, 5),
-          tripMemo: '海水浴に行く',
+          year: 2024,
+          name: '夏の旅行',
+          startDate: DateTime(2024, 7, 1),
+          endDate: DateTime(2024, 7, 5),
+          memo: '海水浴に行く',
           pins: [
             Pin(
               pinId: 'pin-010',
@@ -79,16 +79,16 @@ void main() {
         TripEntryDto(
           id: 'trip-101',
           groupId: 'group-101',
-          tripYear: 2024,
-          tripStartDate: DateTime(2024, 4, 1),
-          tripEndDate: DateTime(2024, 4, 3),
+          year: 2024,
+          startDate: DateTime(2024, 4, 1),
+          endDate: DateTime(2024, 4, 3),
         ),
         TripEntryDto(
           id: 'trip-102',
           groupId: 'group-102',
-          tripYear: 2024,
-          tripStartDate: DateTime(2024, 5, 1),
-          tripEndDate: DateTime(2024, 5, 5),
+          year: 2024,
+          startDate: DateTime(2024, 5, 1),
+          endDate: DateTime(2024, 5, 5),
         ),
       ];
 

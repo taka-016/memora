@@ -12,11 +12,11 @@ class TripEntryMapper {
     return TripEntry(
       id: dto.id,
       groupId: dto.groupId,
-      tripYear: dto.tripYear,
-      tripName: dto.tripName,
-      tripStartDate: dto.tripStartDate,
-      tripEndDate: dto.tripEndDate,
-      tripMemo: dto.tripMemo,
+      year: dto.year,
+      name: dto.name,
+      startDate: dto.startDate,
+      endDate: dto.endDate,
+      memo: dto.memo,
       pins: PinMapper.toEntityList(pinDtos),
       tasks: TaskMapper.toEntityList(taskDtos),
     );

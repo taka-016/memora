@@ -28,10 +28,10 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: '北海道旅行',
-          tripStartDate: DateTime(2023, 8, 15),
-          tripEndDate: DateTime(2023, 8, 18),
+          year: 2023,
+          name: '北海道旅行',
+          startDate: DateTime(2023, 8, 15),
+          endDate: DateTime(2023, 8, 18),
         ),
       ];
 
@@ -55,10 +55,10 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: null,
-          tripStartDate: DateTime(2023, 8, 15),
-          tripEndDate: DateTime(2023, 8, 18),
+          year: 2023,
+          name: null,
+          startDate: DateTime(2023, 8, 15),
+          endDate: DateTime(2023, 8, 18),
         ),
       ];
 
@@ -82,18 +82,18 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: '北海道旅行',
-          tripStartDate: DateTime(2023, 8, 15),
-          tripEndDate: DateTime(2023, 8, 18),
+          year: 2023,
+          name: '北海道旅行',
+          startDate: DateTime(2023, 8, 15),
+          endDate: DateTime(2023, 8, 18),
         ),
         TripEntryDto(
           id: '2',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: '沖縄旅行',
-          tripStartDate: DateTime(2023, 12, 25),
-          tripEndDate: DateTime(2023, 12, 27),
+          year: 2023,
+          name: '沖縄旅行',
+          startDate: DateTime(2023, 12, 25),
+          endDate: DateTime(2023, 12, 27),
         ),
       ];
 
@@ -120,10 +120,10 @@ void main() {
         (index) => TripEntryDto(
           id: '$index',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: '旅行$index',
-          tripStartDate: DateTime(2023, index + 1, 1),
-          tripEndDate: DateTime(2023, index + 1, 3),
+          year: 2023,
+          name: '旅行$index',
+          startDate: DateTime(2023, index + 1, 1),
+          endDate: DateTime(2023, index + 1, 3),
         ),
       );
 
@@ -150,10 +150,10 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: '北海道旅行',
-          tripStartDate: DateTime(2023, 8, 15),
-          tripEndDate: DateTime(2023, 8, 18),
+          year: 2023,
+          name: '北海道旅行',
+          startDate: DateTime(2023, 8, 15),
+          endDate: DateTime(2023, 8, 18),
         ),
       ];
 
@@ -179,10 +179,10 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: 'group1',
-          tripYear: 2023,
-          tripName: 'テスト旅行',
-          tripStartDate: DateTime(2023, 1, 5), // 1桁の月・日をテスト
-          tripEndDate: DateTime(2023, 1, 7),
+          year: 2023,
+          name: 'テスト旅行',
+          startDate: DateTime(2023, 1, 5), // 1桁の月・日をテスト
+          endDate: DateTime(2023, 1, 7),
         ),
       ];
 
@@ -202,12 +202,7 @@ void main() {
 
     testWidgets('旅行期間未設定の場合は年と共に未設定表示を行う', (WidgetTester tester) async {
       final trips = [
-        TripEntryDto(
-          id: '1',
-          groupId: 'group1',
-          tripYear: 2023,
-          tripName: '期間未設定の旅行',
-        ),
+        TripEntryDto(id: '1', groupId: 'group1', year: 2023, name: '期間未設定の旅行'),
       ];
 
       final widget = TripCell(

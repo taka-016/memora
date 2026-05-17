@@ -88,9 +88,9 @@ void main() {
         'latitude': 35.0,
         'longitude': 139.0,
         'locationName': '東京駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2024, 1, 1)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2024, 1, 2)),
-        'visitMemo': 'メモ1',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 1, 1)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 1, 2)),
+        'memo': 'メモ1',
       });
 
       final mockGroup2PinsQuery = MockQuery<Map<String, dynamic>>();
@@ -111,9 +111,9 @@ void main() {
         'latitude': 36.0,
         'longitude': 140.0,
         'locationName': '京都駅',
-        'visitStartDate': Timestamp.fromDate(DateTime(2024, 2, 1)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2024, 2, 2)),
-        'visitMemo': 'メモ2',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 2, 1)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 2, 2)),
+        'memo': 'メモ2',
       });
 
       final result = await service.getPinsByMemberId(memberId);
@@ -121,8 +121,8 @@ void main() {
       expect(result, hasLength(2));
       expect(result[0].pinId, 'pin1');
       expect(result[0].groupId, 'group1');
-      expect(result[0].visitStartDate, DateTime(2024, 1, 1));
-      expect(result[0].visitEndDate, DateTime(2024, 1, 2));
+      expect(result[0].visitStartDateTime, DateTime(2024, 1, 1));
+      expect(result[0].visitEndDateTime, DateTime(2024, 1, 2));
       expect(result[1].pinId, 'pin2');
       expect(result[1].groupId, 'group2');
       expect(result[1].locationName, '京都駅');

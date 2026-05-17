@@ -17,11 +17,11 @@ void main() {
       when(doc.id).thenReturn('trip001');
       when(doc.data()).thenReturn({
         'groupId': 'group001',
-        'tripYear': 2025,
-        'tripName': '夏旅行',
-        'tripStartDate': Timestamp.fromDate(DateTime(2025, 8, 1)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2025, 8, 3)),
-        'tripMemo': '海に行く',
+        'year': 2025,
+        'name': '夏旅行',
+        'startDate': Timestamp.fromDate(DateTime(2025, 8, 1)),
+        'endDate': Timestamp.fromDate(DateTime(2025, 8, 3)),
+        'memo': '海に行く',
       });
       const pins = [PinDto(pinId: 'pin001', latitude: 35, longitude: 139)];
       const tasks = [
@@ -43,21 +43,21 @@ void main() {
 
       expect(result.id, 'trip001');
       expect(result.groupId, 'group001');
-      expect(result.tripYear, 2025);
-      expect(result.tripName, '夏旅行');
-      expect(result.tripStartDate, DateTime(2025, 8, 1));
-      expect(result.tripEndDate, DateTime(2025, 8, 3));
-      expect(result.tripMemo, '海に行く');
+      expect(result.year, 2025);
+      expect(result.name, '夏旅行');
+      expect(result.startDate, DateTime(2025, 8, 1));
+      expect(result.endDate, DateTime(2025, 8, 3));
+      expect(result.memo, '海に行く');
       expect(result.pins, pins);
       expect(result.tasks, tasks);
     });
 
-    test('tripYear欠損時はtripStartDateの年を補完する', () {
+    test('year欠損時はstartDateの年を補完する', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('trip002');
       when(doc.data()).thenReturn({
         'groupId': 'group002',
-        'tripStartDate': Timestamp.fromDate(DateTime(2024, 12, 31)),
+        'startDate': Timestamp.fromDate(DateTime(2024, 12, 31)),
       });
 
       final result = FirestoreTripEntryMapper.fromFirestore(
@@ -65,31 +65,36 @@ void main() {
         fallbackTripYear: 2026,
       );
 
-      expect(result.tripYear, 2024);
+      expect(result.year, 2024);
       expect(result.groupId, 'group002');
-      expect(result.tripStartDate, DateTime(2024, 12, 31));
-      expect(result.tripEndDate, isNull);
+      expect(result.startDate, DateTime(2024, 12, 31));
+      expect(result.endDate, isNull);
     });
 
     test('TripEntryを新規作成用FirestoreのMapへ変換できる', () {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
-        tripYear: 2025,
-        tripName: 'テスト旅行',
-        tripStartDate: DateTime(2025, 6, 1),
-        tripEndDate: DateTime(2025, 6, 10),
-        tripMemo: 'テストメモ',
+        year: 2025,
+        name: 'テスト旅行',
+        startDate: DateTime(2025, 6, 1),
+        endDate: DateTime(2025, 6, 10),
+        memo: 'テストメモ',
       );
 
       final data = FirestoreTripEntryMapper.toCreateFirestore(tripEntry);
 
       expect(data['groupId'], 'group001');
-      expect(data['tripYear'], 2025);
-      expect(data['tripName'], 'テスト旅行');
-      expect(data['tripStartDate'], isA<Timestamp>());
-      expect(data['tripEndDate'], isA<Timestamp>());
-      expect(data['tripMemo'], 'テストメモ');
+      expect(data['year'], 2025);
+      expect(data['name'], 'テスト旅行');
+      expect(data['startDate'], isA<Timestamp>());
+      expect(data['endDate'], isA<Timestamp>());
+      expect(data['memo'], 'テストメモ');
+      expect(data.containsKey('tripYear'), isFalse);
+      expect(data.containsKey('tripName'), isFalse);
+      expect(data.containsKey('tripStartDate'), isFalse);
+      expect(data.containsKey('tripEndDate'), isFalse);
+      expect(data.containsKey('tripMemo'), isFalse);
       expect(data['createdAt'], isA<FieldValue>());
       expect(data['updatedAt'], isA<FieldValue>());
     });
@@ -98,17 +103,22 @@ void main() {
       final tripEntry = TripEntry(
         id: 'trip002',
         groupId: 'group002',
-        tripYear: 2025,
+        year: 2025,
       );
 
       final data = FirestoreTripEntryMapper.toUpdateFirestore(tripEntry);
 
       expect(data['groupId'], 'group002');
-      expect(data['tripYear'], 2025);
-      expect(data['tripName'], null);
-      expect(data['tripStartDate'], isNull);
-      expect(data['tripEndDate'], isNull);
-      expect(data['tripMemo'], null);
+      expect(data['year'], 2025);
+      expect(data['name'], null);
+      expect(data['startDate'], isNull);
+      expect(data['endDate'], isNull);
+      expect(data['memo'], null);
+      expect(data.containsKey('tripYear'), isFalse);
+      expect(data.containsKey('tripName'), isFalse);
+      expect(data.containsKey('tripStartDate'), isFalse);
+      expect(data.containsKey('tripEndDate'), isFalse);
+      expect(data.containsKey('tripMemo'), isFalse);
       expect(data.containsKey('createdAt'), isFalse);
       expect(data['updatedAt'], isA<FieldValue>());
     });

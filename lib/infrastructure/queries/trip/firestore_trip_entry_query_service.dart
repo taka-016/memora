@@ -92,7 +92,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       Query<Map<String, dynamic>> query = _firestore
           .collection('trip_entries')
           .where('groupId', isEqualTo: groupId)
-          .where('tripYear', isEqualTo: year);
+          .where('year', isEqualTo: year);
 
       if (orderBy != null && orderBy.isNotEmpty) {
         for (final order in orderBy) {

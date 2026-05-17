@@ -715,6 +715,16 @@
 
 ## リファクタリング
 
+- trip_entriesのフィールド名を変更し、関連箇所を修正
+  - tripName→name
+  - tripYear→year
+  - tripStartDate→startDate
+  - tripEndDate→endDate
+  - tripMemo→memo
+- pinsのフィールド名を変更し、関連箇所を修正
+  - visitStartDate→visitStartDateTime
+  - visitEndDate→visitEndDateTime
+  - visitMemo→memo
 - グループ年表の次画面遷移を、遷移先を表す共通表現（新規型。仮称: `GroupTimelineDestination`）に整理し、行クラスごとの個別コールバック依存をなくす
 - `TripRow` と `DvcRow` の行実装を共通化するのではなく、遷移要求を受け渡す引数インタフェースのみを共通化し、`buildTimelineRows()` の個別引数依存を解消する
 - `group_timeline_navigation_notifier.dart` の `selectedGroupId` / `selectedYear` / 個別画面遷移管理を共通の遷移先管理へ整理する

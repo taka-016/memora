@@ -534,9 +534,9 @@ void main() {
             TripEntryDto(
               id: 'trip-1',
               groupId: '1',
-              tripYear: currentYear,
-              tripName: '初回旅行',
-              tripStartDate: DateTime(currentYear, 4, 1),
+              year: currentYear,
+              name: '初回旅行',
+              startDate: DateTime(currentYear, 4, 1),
             ),
           ]),
         ),
@@ -551,9 +551,9 @@ void main() {
             TripEntryDto(
               id: 'trip-2',
               groupId: '1',
-              tripYear: currentYear,
-              tripName: '差し替え後旅行',
-              tripStartDate: DateTime(currentYear, 5, 1),
+              year: currentYear,
+              name: '差し替え後旅行',
+              startDate: DateTime(currentYear, 5, 1),
             ),
           ]),
         ),
@@ -1499,18 +1499,18 @@ void main() {
         TripEntryDto(
           id: '1',
           groupId: '1',
-          tripYear: currentYear,
-          tripName: '北海道旅行',
-          tripStartDate: DateTime(currentYear, 8, 15),
-          tripEndDate: DateTime(currentYear, 8, 18),
+          year: currentYear,
+          name: '北海道旅行',
+          startDate: DateTime(currentYear, 8, 15),
+          endDate: DateTime(currentYear, 8, 18),
         ),
         TripEntryDto(
           id: '2',
           groupId: '1',
-          tripYear: currentYear,
-          tripName: null,
-          tripStartDate: DateTime(currentYear, 12, 25),
-          tripEndDate: DateTime(currentYear, 12, 27),
+          year: currentYear,
+          name: null,
+          startDate: DateTime(currentYear, 12, 25),
+          endDate: DateTime(currentYear, 12, 27),
         ),
       ];
 
@@ -1623,9 +1623,9 @@ void main() {
           TripEntryDto(
             id: 'trip_$refreshCount',
             groupId: '1',
-            tripYear: currentYear,
-            tripName: refreshCount == 1 ? '初回旅行' : '再取得旅行',
-            tripStartDate: DateTime(currentYear, 1, 1),
+            year: currentYear,
+            name: refreshCount == 1 ? '初回旅行' : '再取得旅行',
+            startDate: DateTime(currentYear, 1, 1),
           ),
         ]);
       });
@@ -1683,9 +1683,9 @@ void main() {
             TripEntryDto(
               id: 'trip_2',
               groupId: groupId,
-              tripYear: year,
-              tripName: '新グループ旅行',
-              tripStartDate: DateTime(year, 1, 1),
+              year: year,
+              name: '新グループ旅行',
+              startDate: DateTime(year, 1, 1),
             ),
           ]);
         }
@@ -1708,9 +1708,9 @@ void main() {
         TripEntryDto(
           id: 'trip_1',
           groupId: '1',
-          tripYear: firstRequestedYear!,
-          tripName: '旧グループ旅行',
-          tripStartDate: DateTime(firstRequestedYear!, 1, 1),
+          year: firstRequestedYear!,
+          name: '旧グループ旅行',
+          startDate: DateTime(firstRequestedYear!, 1, 1),
         ),
       ]);
       await tester.pumpAndSettle();
@@ -1903,7 +1903,7 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     List<OrderBy>? orderBy,
   }) async {
     return tripEntries
-        .where((entry) => entry.groupId == groupId && entry.tripYear == year)
+        .where((entry) => entry.groupId == groupId && entry.year == year)
         .toList();
   }
 }

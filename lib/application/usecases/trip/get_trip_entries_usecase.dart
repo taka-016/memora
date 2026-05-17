@@ -17,7 +17,7 @@ class GetTripEntriesUsecase {
     return await _tripEntryQueryService.getTripEntriesByGroupIdAndYear(
       groupId,
       year,
-      orderBy: [const OrderBy('tripStartDate', descending: false)],
+      orderBy: [const OrderBy('startDate', descending: false)],
     );
   }
 }

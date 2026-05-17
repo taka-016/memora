@@ -48,11 +48,11 @@ void main() {
         final tripEntry = TripEntry(
           id: 'trip001',
           groupId: 'group001',
-          tripYear: 2025,
-          tripName: 'テスト旅行',
-          tripStartDate: DateTime(2025, 6, 1),
-          tripEndDate: DateTime(2025, 6, 10),
-          tripMemo: 'テストメモ',
+          year: 2025,
+          name: 'テスト旅行',
+          startDate: DateTime(2025, 6, 1),
+          endDate: DateTime(2025, 6, 10),
+          memo: 'テストメモ',
           tasks: [
             Task(
               id: 'task-001',
@@ -84,8 +84,10 @@ void main() {
             argThat(
               allOf([
                 containsPair('groupId', 'group001'),
-                containsPair('tripYear', 2025),
-                containsPair('tripName', 'テスト旅行'),
+                containsPair('year', 2025),
+                containsPair('name', 'テスト旅行'),
+                isNot(contains('tripYear')),
+                isNot(contains('tripName')),
                 contains('createdAt'),
                 contains('updatedAt'),
               ]),
@@ -102,7 +104,7 @@ void main() {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
-        tripYear: 2025,
+        year: 2025,
         tasks: [
           Task(
             id: 'task-uuid',
@@ -158,7 +160,8 @@ void main() {
           argThat(
             allOf([
               containsPair('groupId', 'group001'),
-              containsPair('tripYear', 2025),
+              containsPair('year', 2025),
+              isNot(contains('tripYear')),
               contains('updatedAt'),
               predicate<Map<String, dynamic>>(
                 (data) => !data.containsKey('createdAt'),

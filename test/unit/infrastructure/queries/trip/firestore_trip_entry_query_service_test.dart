@@ -61,17 +61,17 @@ void main() {
       when(mockDocSnapshot.id).thenReturn(tripId);
       when(mockDocSnapshot.data()).thenReturn({
         'groupId': 'group001',
-        'tripName': '夏旅行',
-        'tripStartDate': Timestamp.fromDate(DateTime(2024, 8, 1)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2024, 8, 5)),
-        'tripMemo': '楽しかった思い出',
+        'name': '夏旅行',
+        'startDate': Timestamp.fromDate(DateTime(2024, 8, 1)),
+        'endDate': Timestamp.fromDate(DateTime(2024, 8, 5)),
+        'memo': '楽しかった思い出',
       });
 
       when(
         mockPinsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockPinsQuery);
       when(
-        mockPinsQuery.orderBy('visitStartDate', descending: false),
+        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
       ).thenReturn(mockPinsQuery);
       when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
       when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
@@ -82,9 +82,9 @@ void main() {
         'latitude': 35.0,
         'longitude': 139.0,
         'locationName': '東京タワー',
-        'visitStartDate': Timestamp.fromDate(DateTime(2024, 8, 2, 10)),
-        'visitEndDate': Timestamp.fromDate(DateTime(2024, 8, 2, 15)),
-        'visitMemo': '景色が綺麗',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 10)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 15)),
+        'memo': '景色が綺麗',
       });
 
       when(
@@ -105,20 +105,20 @@ void main() {
 
       final result = await service.getTripEntryById(
         tripId,
-        pinsOrderBy: const [OrderBy('visitStartDate', descending: false)],
+        pinsOrderBy: const [OrderBy('visitStartDateTime', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
       );
 
       expect(result, isNotNull);
       expect(result!.id, equals(tripId));
-      expect(result.tripName, equals('夏旅行'));
+      expect(result.name, equals('夏旅行'));
       expect(result.pins, hasLength(1));
       final PinDto pin = result.pins!.first;
       expect(pin.locationName, equals('東京タワー'));
       expect(result.tasks, hasLength(1));
       expect(result.tasks!.first.name, '準備');
       verify(
-        mockPinsQuery.orderBy('visitStartDate', descending: false),
+        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
       ).called(1);
       verify(mockTasksQuery.orderBy('orderIndex', descending: false)).called(1);
     });
@@ -137,7 +137,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('tripYearと旅行期間が欠損している場合はクロックの年で補完する', () async {
+    test('yearと旅行期間が欠損している場合はクロックの年で補完する', () async {
       const tripId = 'tripWithoutYear';
       service = FirestoreTripEntryQueryService(
         firestore: mockFirestore,
@@ -156,7 +156,7 @@ void main() {
       when(mockDocSnapshot.id).thenReturn(tripId);
       when(
         mockDocSnapshot.data(),
-      ).thenReturn({'groupId': 'group001', 'tripName': '期間未設定旅行'});
+      ).thenReturn({'groupId': 'group001', 'name': '期間未設定旅行'});
       when(
         mockPinsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockPinsQuery);
@@ -171,7 +171,7 @@ void main() {
       final result = await service.getTripEntryById(tripId);
 
       expect(result, isNotNull);
-      expect(result!.tripYear, 2027);
+      expect(result!.year, 2027);
     });
 
     test('旅行取得時に例外が発生した場合はnullを返す', () async {
@@ -184,7 +184,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('グループIDとtripYearで旅行一覧を取得し、orderByを適用する', () async {
+    test('グループIDとyearで旅行一覧を取得し、orderByを適用する', () async {
       const groupId = 'group001';
       const year = 2024;
       final mockQuery = MockQuery<Map<String, dynamic>>();
@@ -194,30 +194,31 @@ void main() {
       when(
         mockTripEntriesCollection.where('groupId', isEqualTo: groupId),
       ).thenReturn(mockQuery);
-      when(mockQuery.where('tripYear', isEqualTo: year)).thenReturn(mockQuery);
+      when(mockQuery.where('year', isEqualTo: year)).thenReturn(mockQuery);
       when(
-        mockQuery.orderBy('tripStartDate', descending: false),
+        mockQuery.orderBy('startDate', descending: false),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('trip001');
       when(mockDoc.data()).thenReturn({
         'groupId': groupId,
-        'tripName': '冬旅行',
-        'tripYear': year,
-        'tripStartDate': Timestamp.fromDate(DateTime(2024, 12, 20)),
-        'tripEndDate': Timestamp.fromDate(DateTime(2024, 12, 25)),
-        'tripMemo': '温泉巡り',
+        'name': '冬旅行',
+        'year': year,
+        'startDate': Timestamp.fromDate(DateTime(2024, 12, 20)),
+        'endDate': Timestamp.fromDate(DateTime(2024, 12, 25)),
+        'memo': '温泉巡り',
       });
 
       final result = await service.getTripEntriesByGroupIdAndYear(
         groupId,
         year,
-        orderBy: const [OrderBy('tripStartDate', descending: false)],
+        orderBy: const [OrderBy('startDate', descending: false)],
       );
 
       expect(result, hasLength(1));
-      verify(mockQuery.orderBy('tripStartDate', descending: false)).called(1);
+      verify(mockQuery.where('year', isEqualTo: year)).called(1);
+      verify(mockQuery.orderBy('startDate', descending: false)).called(1);
     });
 
     test('グループIDと年での取得時に例外が発生すると空リストを返す', () async {

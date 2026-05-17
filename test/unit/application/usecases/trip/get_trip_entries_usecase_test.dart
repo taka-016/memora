@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -26,18 +27,18 @@ void main() {
         TripEntryDto(
           id: 'trip-1',
           groupId: groupId,
-          tripYear: year,
-          tripName: '旅行1',
-          tripStartDate: DateTime(2024, 1, 1),
-          tripEndDate: DateTime(2024, 1, 3),
+          year: year,
+          name: '旅行1',
+          startDate: DateTime(2024, 1, 1),
+          endDate: DateTime(2024, 1, 3),
         ),
         TripEntryDto(
           id: 'trip-2',
           groupId: groupId,
-          tripYear: year,
-          tripName: '旅行2',
-          tripStartDate: DateTime(2024, 6, 1),
-          tripEndDate: DateTime(2024, 6, 5),
+          year: year,
+          name: '旅行2',
+          startDate: DateTime(2024, 6, 1),
+          endDate: DateTime(2024, 6, 5),
         ),
       ];
 
@@ -54,13 +55,16 @@ void main() {
 
       // Assert
       expect(result, equals(expectedTripEntries));
-      verify(
+      final verification = verify(
         mockQueryService.getTripEntriesByGroupIdAndYear(
           groupId,
           year,
-          orderBy: anyNamed('orderBy'),
+          orderBy: captureAnyNamed('orderBy'),
         ),
-      ).called(1);
+      );
+      verification.called(1);
+      final orderBy = verification.captured.single as List<OrderBy>;
+      expect(orderBy.single.field, 'startDate');
     });
   });
 }
