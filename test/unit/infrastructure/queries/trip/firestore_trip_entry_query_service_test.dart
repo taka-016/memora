@@ -137,7 +137,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('tripYearと旅行期間が欠損している場合はクロックの年で補完する', () async {
+    test('yearと旅行期間が欠損している場合はクロックの年で補完する', () async {
       const tripId = 'tripWithoutYear';
       service = FirestoreTripEntryQueryService(
         firestore: mockFirestore,
@@ -184,7 +184,7 @@ void main() {
       expect(result, isNull);
     });
 
-    test('グループIDとtripYearで旅行一覧を取得し、orderByを適用する', () async {
+    test('グループIDとyearで旅行一覧を取得し、orderByを適用する', () async {
       const groupId = 'group001';
       const year = 2024;
       final mockQuery = MockQuery<Map<String, dynamic>>();

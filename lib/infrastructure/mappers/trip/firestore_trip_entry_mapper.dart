@@ -17,9 +17,7 @@ class FirestoreTripEntryMapper {
     final tripStartDate = FirestoreMapperValueParser.asDateTime(
       data['startDate'],
     );
-    final tripEndDate = FirestoreMapperValueParser.asDateTime(
-      data['endDate'],
-    );
+    final tripEndDate = FirestoreMapperValueParser.asDateTime(data['endDate']);
     final tripYear = FirestoreMapperValueParser.asNullableInt(data['year']);
     return TripEntryDto(
       id: doc.id,

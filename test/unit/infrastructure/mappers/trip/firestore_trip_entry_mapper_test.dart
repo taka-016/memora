@@ -52,7 +52,7 @@ void main() {
       expect(result.tasks, tasks);
     });
 
-    test('tripYear欠損時はtripStartDateの年を補完する', () {
+    test('year欠損時はstartDateの年を補完する', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('trip002');
       when(doc.data()).thenReturn({

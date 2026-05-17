@@ -5,11 +5,11 @@ erDiagram
     trip_entries {
         string id PK
         string groupId FK "NOT NULL"
-        string tripName
-        number tripYear "NOT NULL"
-        timestamp tripStartDate
-        timestamp tripEndDate
-        string tripMemo
+        string name
+        number year "NOT NULL"
+        timestamp startDate
+        timestamp endDate
+        string memo
     }
     pins {
         string id PK
@@ -19,9 +19,9 @@ erDiagram
         number latitude "NOT NULL"
         number longitude "NOT NULL"
         string locationName
-        timestamp visitStartDate
-        timestamp visitEndDate
-        string visitMemo
+        timestamp visitStartDateTime
+        timestamp visitEndDateTime
+        string memo
     }
     tasks {
         string id PK
