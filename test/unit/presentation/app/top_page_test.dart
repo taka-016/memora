@@ -10,6 +10,7 @@ import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_event_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -70,6 +71,7 @@ class _TestGroupTimelineNavigationNotifier
 @GenerateMocks([
   GroupQueryService,
   GroupEventQueryService,
+  MemberEventQueryService,
   MemberQueryService,
   AuthService,
   AuthNotifier,
@@ -92,6 +94,7 @@ class _TestGroupTimelineNavigationNotifier
 void main() {
   late MockGroupQueryService mockGroupQueryService;
   late MockGroupEventQueryService mockGroupEventQueryService;
+  late MockMemberEventQueryService mockMemberEventQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
   late MockPinQueryService mockPinQueryService;
@@ -116,6 +119,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     mockGroupQueryService = MockGroupQueryService();
     mockGroupEventQueryService = MockGroupEventQueryService();
+    mockMemberEventQueryService = MockMemberEventQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
     mockPinQueryService = MockPinQueryService();
@@ -136,6 +140,12 @@ void main() {
 
     when(
       mockGroupEventQueryService.getGroupEventsByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockMemberEventQueryService.getMemberEventsByMemberIds(
         any,
         orderBy: anyNamed('orderBy'),
       ),
@@ -389,6 +399,9 @@ void main() {
       groupEventQueryServiceProvider.overrideWithValue(
         mockGroupEventQueryService,
       ),
+      memberEventQueryServiceProvider.overrideWithValue(
+        mockMemberEventQueryService,
+      ),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
         mockDvcPointContractQueryService,
@@ -597,6 +610,35 @@ void main() {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).called(1);
+    });
+
+    testWidgets('グループ年表表示時はメンバーイベントもテスト用QueryServiceから取得する', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final singleGroup = [groupsWithMembers.first];
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => singleGroup);
+
+      // Act
+      await tester.pumpWidget(
+        createTestWidget(availableGroupsWithMembers: singleGroup),
+      );
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Assert
+      verify(
+        mockMemberEventQueryService.getMemberEventsByMemberIds(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(greaterThan(0));
     });
 
     testWidgets('所属グループが1件のみならメニューから開いてもグループ年表を直接開く', (
