@@ -198,11 +198,7 @@ void main() {
     });
 
     test('startDateとendDateが未設定でもyearが必須で生成できる', () {
-      final entry = TripEntry(
-        id: 'trip789',
-        groupId: 'group456',
-        year: 2025,
-      );
+      final entry = TripEntry(id: 'trip789', groupId: 'group456', year: 2025);
 
       expect(entry.startDate, isNull);
       expect(entry.endDate, isNull);

@@ -143,10 +143,7 @@ void main() {
         endDate: DateTime(2024, 5, 3),
       );
 
-      final copiedDto = originalDto.copyWith(
-        startDate: null,
-        endDate: null,
-      );
+      final copiedDto = originalDto.copyWith(startDate: null, endDate: null);
 
       expect(copiedDto.startDate, isNull);
       expect(copiedDto.endDate, isNull);

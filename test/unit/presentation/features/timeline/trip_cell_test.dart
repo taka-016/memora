@@ -202,12 +202,7 @@ void main() {
 
     testWidgets('旅行期間未設定の場合は年と共に未設定表示を行う', (WidgetTester tester) async {
       final trips = [
-        TripEntryDto(
-          id: '1',
-          groupId: 'group1',
-          year: 2023,
-          name: '期間未設定の旅行',
-        ),
+        TripEntryDto(id: '1', groupId: 'group1', year: 2023, name: '期間未設定の旅行'),
       ];
 
       final widget = TripCell(
