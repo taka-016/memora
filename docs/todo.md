@@ -39,15 +39,10 @@
 ## 全体
 
 ## リファクタリング
-- trip_entriesのフィールド名を変更し、関連箇所を修正
-  - tripName→name
-  - tripYear→year
-  - tripStartDate→startDate
-  - tripEndDate→endDate
-  - tripMemo→memo
-- pinsのフィールド名を変更し、関連箇所を修正
-  - visitStartDate→visitStartDateTime
-  - visitEndDate→visitEndDateTime
-  - visitMemo→memo
+- DBのフィールド名更新し、移行スクリプト作成およびfirestore.indexes.jsonの更新
+  - pinsのフィールド名を変更し、エンティティ含め関連箇所を修正
+    - visitStartDate→visitStartDateTime
+    - visitEndDate→visitEndDateTime
+    - visitMemo→memo
 
 ## 不具合修正
