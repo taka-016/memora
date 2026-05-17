@@ -15,20 +15,20 @@ class FirestoreTripEntryMapper {
   }) {
     final data = doc.data() ?? {};
     final tripStartDate = FirestoreMapperValueParser.asDateTime(
-      data['tripStartDate'],
+      data['startDate'],
     );
     final tripEndDate = FirestoreMapperValueParser.asDateTime(
-      data['tripEndDate'],
+      data['endDate'],
     );
-    final tripYear = FirestoreMapperValueParser.asNullableInt(data['tripYear']);
+    final tripYear = FirestoreMapperValueParser.asNullableInt(data['year']);
     return TripEntryDto(
       id: doc.id,
       groupId: data['groupId'] as String? ?? '',
       tripYear: tripYear ?? tripStartDate?.year ?? fallbackTripYear,
-      tripName: data['tripName'] as String?,
+      tripName: data['name'] as String?,
       tripStartDate: tripStartDate,
       tripEndDate: tripEndDate,
-      tripMemo: data['tripMemo'] as String?,
+      tripMemo: data['memo'] as String?,
       pins: pins,
       tasks: tasks,
     );
@@ -37,16 +37,16 @@ class FirestoreTripEntryMapper {
   static Map<String, dynamic> toCreateFirestore(TripEntry tripEntry) {
     final data = <String, dynamic>{
       'groupId': tripEntry.groupId,
-      'tripYear': tripEntry.tripYear,
-      'tripName': tripEntry.tripName,
-      'tripMemo': tripEntry.tripMemo,
+      'year': tripEntry.tripYear,
+      'name': tripEntry.tripName,
+      'memo': tripEntry.tripMemo,
       ...FirestoreWriteMetadata.forCreate(),
     };
 
-    data['tripStartDate'] = tripEntry.tripStartDate != null
+    data['startDate'] = tripEntry.tripStartDate != null
         ? Timestamp.fromDate(tripEntry.tripStartDate!)
         : null;
-    data['tripEndDate'] = tripEntry.tripEndDate != null
+    data['endDate'] = tripEntry.tripEndDate != null
         ? Timestamp.fromDate(tripEntry.tripEndDate!)
         : null;
 
@@ -56,16 +56,16 @@ class FirestoreTripEntryMapper {
   static Map<String, dynamic> toUpdateFirestore(TripEntry tripEntry) {
     final data = <String, dynamic>{
       'groupId': tripEntry.groupId,
-      'tripYear': tripEntry.tripYear,
-      'tripName': tripEntry.tripName,
-      'tripMemo': tripEntry.tripMemo,
+      'year': tripEntry.tripYear,
+      'name': tripEntry.tripName,
+      'memo': tripEntry.tripMemo,
       ...FirestoreWriteMetadata.forUpdate(),
     };
 
-    data['tripStartDate'] = tripEntry.tripStartDate != null
+    data['startDate'] = tripEntry.tripStartDate != null
         ? Timestamp.fromDate(tripEntry.tripStartDate!)
         : null;
-    data['tripEndDate'] = tripEntry.tripEndDate != null
+    data['endDate'] = tripEntry.tripEndDate != null
         ? Timestamp.fromDate(tripEntry.tripEndDate!)
         : null;
 
