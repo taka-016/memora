@@ -1887,6 +1887,7 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     String tripId, {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? tasksOrderBy,
+    List<OrderBy>? itineraryItemsOrderBy,
   }) async {
     for (final entry in tripEntries) {
       if (entry.id == tripId) {

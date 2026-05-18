@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
@@ -29,6 +30,10 @@ import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_se
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
   return QueryServiceFactory.create<GroupQueryService>(ref: ref);
+});
+
+final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
 });
 
 final groupEventQueryServiceProvider = Provider<GroupEventQueryService>((ref) {
@@ -122,7 +127,10 @@ class QueryServiceFactory {
       return FirestoreTaskQueryService() as T;
     }
     if (T == ItineraryItemQueryService) {
-      return FirestoreItineraryItemQueryService() as T;
+      return FirestoreItineraryItemQueryService(
+            firestore: ref.watch(firebaseFirestoreProvider),
+          )
+          as T;
     }
     if (T == MemberQueryService) {
       return FirestoreMemberQueryService() as T;
