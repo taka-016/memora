@@ -49,5 +49,23 @@
 ## 全体
 
 ## リファクタリング
+- 手書きFake/MockをMockito生成モックへ置き換えられるテストを整理する
+  - `test/unit/application/usecases/account/get_current_user_usecase_test.dart`の手書き`MockAuthService`を`@GenerateMocks([AuthService])`へ置き換える
+  - DVCユースケースの単純な手書きRepository/QueryService Fakeを生成モックへ置き換える
+    - `test/unit/application/usecases/dvc/get_dvc_point_contracts_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/get_dvc_limited_points_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/get_dvc_point_usages_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/delete_dvc_limited_point_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/delete_dvc_point_usage_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/save_dvc_limited_point_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/save_dvc_point_usage_usecase_test.dart`
+    - `test/unit/application/usecases/dvc/save_dvc_point_contracts_usecase_test.dart`
+  - `test/unit/presentation/shared/map_views/google_map_view_test.dart`の`FakeGetCurrentLocationUsecase`と`FakeSearchLocationsUsecase`を生成モックへ置き換えられるか確認する
+  - `test/unit/presentation/shared/inputs/custom_search_bar_test.dart`の`FakeSearchLocationsUsecase`、`ThrowingSearchLocationsUsecase`、`LifecycleAwareSearchLocationsUsecase`を生成モックの`thenAnswer`/`thenThrow`で表現できるか確認する
+  - `test/unit/presentation/features/trip/task_view_test.dart`の`FakeTaskQueryService`と`FailingTaskQueryService`を生成モックへ置き換えられるか確認する
+  - `test/unit/presentation/features/trip/trip_edit_modal_test.dart`の`FakeGetNearbyLocationNameUsecase`を生成モックへ置き換え、呼び出し回数と引数検証を`verify`へ寄せられるか確認する
+  - `test/unit/presentation/features/account_setting/account_settings_test.dart`の`_TestAuthService`は逐次的な成功・失敗挙動を持つため、生成モックの連続stubと`verify`で読みやすく置き換えられる範囲を確認する
+  - `test/unit/presentation/features/dvc/dvc_point_calculation_screen_test.dart`のDVC系QueryService/Repository Fakeは保存内容や削除IDの検証が多いため、`verify`と`captureAny`で置き換え可能な箇所から段階的に生成モック化する
+  - `test/unit/presentation/features/timeline/group_timeline_test.dart`のGroupEvent/MemberEvent/DVC系Fakeはフィルタリングや保存結果生成を含むため、生成モックへ置き換えてもテスト意図が読みにくくならない範囲を見極めて対応する
 
 ## 不具合修正
