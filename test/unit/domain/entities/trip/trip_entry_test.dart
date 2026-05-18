@@ -430,6 +430,26 @@ void main() {
       expect(entry.itineraryItems, hasLength(2));
     });
 
+    test('旅行期間未設定時は旅程項目の日時がyearと異なっていても生成できる', () {
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        year: 2025,
+        itineraryItems: [
+          ItineraryItem(
+            id: 'item-1',
+            tripId: 'trip123',
+            orderIndex: 0,
+            name: '年またぎ移動',
+            startDateTime: DateTime(2024, 12, 31, 23),
+            endDateTime: DateTime(2026, 1, 1),
+          ),
+        ],
+      );
+
+      expect(entry.itineraryItems, hasLength(1));
+    });
+
     test('旅行期間の開始2日前より前の旅程項目を含むと例外が発生する', () {
       expect(
         () => TripEntry(
