@@ -14,26 +14,173 @@ void main() {
       indexes = indexJson['indexes'] as List<dynamic>;
     });
 
-    test('itinerary_itemsを旅行IDで絞りorderIndex昇順で取得する複合インデックスを定義している', () {
-      final hasItineraryItemsIndex = indexes.any((index) {
-        final indexMap = index as Map<String, dynamic>;
-        final fields = indexMap['fields'] as List<dynamic>;
+    test('アプリで使用する複合インデックスをすべて定義している', () {
+      expect(indexes, hasLength(_expectedIndexes.length));
 
-        return indexMap['collectionGroup'] == 'itinerary_items' &&
-            indexMap['queryScope'] == 'COLLECTION' &&
-            _hasField(fields, 'tripId', 'ASCENDING') &&
-            _hasField(fields, 'orderIndex', 'ASCENDING') &&
-            _hasField(fields, '__name__', 'ASCENDING');
-      });
-
-      expect(hasItineraryItemsIndex, isTrue);
+      for (final expectedIndex in _expectedIndexes) {
+        expect(indexes, containsIndex(expectedIndex));
+      }
     });
   });
 }
 
-bool _hasField(List<dynamic> fields, String fieldPath, String order) {
-  return fields.any((field) {
-    final fieldMap = field as Map<String, dynamic>;
-    return fieldMap['fieldPath'] == fieldPath && fieldMap['order'] == order;
+const _expectedIndexes = [
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'dvc_limited_points',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('startYearMonth'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'dvc_point_contracts',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('contractName'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'dvc_point_contracts',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('contractStartYearMonth'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'dvc_point_usages',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('usageYearMonth'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'group_events',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('year'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'groups',
+    fields: [
+      _ExpectedFirestoreIndexField('ownerId'),
+      _ExpectedFirestoreIndexField('name'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'itinerary_items',
+    fields: [
+      _ExpectedFirestoreIndexField('tripId'),
+      _ExpectedFirestoreIndexField('orderIndex'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'member_events',
+    fields: [
+      _ExpectedFirestoreIndexField('memberId'),
+      _ExpectedFirestoreIndexField('year'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'members',
+    fields: [
+      _ExpectedFirestoreIndexField('ownerId'),
+      _ExpectedFirestoreIndexField('displayName'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'pin_details',
+    fields: [
+      _ExpectedFirestoreIndexField('pinId'),
+      _ExpectedFirestoreIndexField('startDate'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'pins',
+    fields: [
+      _ExpectedFirestoreIndexField('tripId'),
+      _ExpectedFirestoreIndexField('visitStartDateTime'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'tasks',
+    fields: [
+      _ExpectedFirestoreIndexField('tripId'),
+      _ExpectedFirestoreIndexField('orderIndex'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+  _ExpectedFirestoreIndex(
+    collectionGroup: 'trip_entries',
+    fields: [
+      _ExpectedFirestoreIndexField('groupId'),
+      _ExpectedFirestoreIndexField('year'),
+      _ExpectedFirestoreIndexField('startDate'),
+      _ExpectedFirestoreIndexField('__name__'),
+    ],
+  ),
+];
+
+Matcher containsIndex(_ExpectedFirestoreIndex expectedIndex) {
+  return contains(
+    predicate<dynamic>(
+      (index) => expectedIndex.matches(index as Map<String, dynamic>),
+      'collectionGroup: ${expectedIndex.collectionGroup}, '
+      'fields: ${expectedIndex.fields}',
+    ),
+  );
+}
+
+class _ExpectedFirestoreIndex {
+  const _ExpectedFirestoreIndex({
+    required this.collectionGroup,
+    required this.fields,
   });
+
+  final String collectionGroup;
+  final List<_ExpectedFirestoreIndexField> fields;
+
+  bool matches(Map<String, dynamic> index) {
+    final actualFields = index['fields'] as List<dynamic>;
+
+    return index['collectionGroup'] == collectionGroup &&
+        index['queryScope'] == 'COLLECTION' &&
+        index['density'] == 'SPARSE_ALL' &&
+        actualFields.length == fields.length &&
+        fields.indexed.every((entry) {
+          return entry.$2.matches(
+            actualFields[entry.$1] as Map<String, dynamic>,
+          );
+        });
+  }
+}
+
+class _ExpectedFirestoreIndexField {
+  const _ExpectedFirestoreIndexField(
+    this.fieldPath, {
+    this.order = 'ASCENDING',
+  });
+
+  final String fieldPath;
+  final String order;
+
+  bool matches(Map<String, dynamic> field) {
+    return field['fieldPath'] == fieldPath && field['order'] == order;
+  }
+
+  @override
+  String toString() {
+    return '$fieldPath $order';
+  }
 }
