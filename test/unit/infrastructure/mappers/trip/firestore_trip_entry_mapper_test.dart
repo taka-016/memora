@@ -4,6 +4,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 
@@ -33,12 +34,21 @@ void main() {
           isCompleted: false,
         ),
       ];
+      const itineraryItems = [
+        ItineraryItemDto(
+          id: 'item001',
+          tripId: 'trip001',
+          orderIndex: 0,
+          name: '朝食',
+        ),
+      ];
 
       final result = FirestoreTripEntryMapper.fromFirestore(
         doc,
         fallbackTripYear: 2026,
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
 
       expect(result.id, 'trip001');
@@ -50,6 +60,7 @@ void main() {
       expect(result.memo, '海に行く');
       expect(result.pins, pins);
       expect(result.tasks, tasks);
+      expect(result.itineraryItems, itineraryItems);
     });
 
     test('year欠損時はstartDateの年を補完する', () {

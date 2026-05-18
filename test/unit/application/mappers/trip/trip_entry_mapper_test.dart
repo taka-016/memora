@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
+import 'package:memora/domain/entities/trip/itinerary_item.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -37,6 +39,17 @@ void main() {
             isCompleted: false,
           ),
         ],
+        itineraryItems: [
+          ItineraryItemDto(
+            id: 'item-010',
+            tripId: 'trip-003',
+            orderIndex: 0,
+            name: '朝食',
+            startDateTime: DateTime(2024, 7, 2, 8),
+            endDateTime: DateTime(2024, 7, 2, 9),
+            memo: 'ホテルで朝食',
+          ),
+        ],
       );
 
       final entity = TripEntryMapper.toEntity(dto);
@@ -68,6 +81,17 @@ void main() {
               orderIndex: 0,
               name: '準備',
               isCompleted: false,
+            ),
+          ],
+          itineraryItems: [
+            ItineraryItem(
+              id: 'item-010',
+              tripId: 'trip-003',
+              orderIndex: 0,
+              name: '朝食',
+              startDateTime: DateTime(2024, 7, 2, 8),
+              endDateTime: DateTime(2024, 7, 2, 9),
+              memo: 'ホテルで朝食',
             ),
           ],
         ),

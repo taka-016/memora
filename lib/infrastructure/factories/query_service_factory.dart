@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
@@ -7,6 +8,7 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -21,12 +23,17 @@ import 'package:memora/infrastructure/queries/group/firestore_group_query_servic
 import 'package:memora/infrastructure/queries/member/firestore_member_event_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_task_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 
 final groupQueryServiceProvider = Provider<GroupQueryService>((ref) {
   return QueryServiceFactory.create<GroupQueryService>(ref: ref);
+});
+
+final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
+  return FirebaseFirestore.instance;
 });
 
 final groupEventQueryServiceProvider = Provider<GroupEventQueryService>((ref) {
@@ -43,6 +50,12 @@ final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
 
 final taskQueryServiceProvider = Provider<TaskQueryService>((ref) {
   return QueryServiceFactory.create<TaskQueryService>(ref: ref);
+});
+
+final itineraryItemQueryServiceProvider = Provider<ItineraryItemQueryService>((
+  ref,
+) {
+  return QueryServiceFactory.create<ItineraryItemQueryService>(ref: ref);
 });
 
 final memberQueryServiceProvider = Provider<MemberQueryService>((ref) {
@@ -112,6 +125,12 @@ class QueryServiceFactory {
     }
     if (T == TaskQueryService) {
       return FirestoreTaskQueryService() as T;
+    }
+    if (T == ItineraryItemQueryService) {
+      return FirestoreItineraryItemQueryService(
+            firestore: ref.watch(firebaseFirestoreProvider),
+          )
+          as T;
     }
     if (T == MemberQueryService) {
       return FirestoreMemberQueryService() as T;

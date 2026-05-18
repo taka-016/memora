@@ -35,6 +35,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => tripEntry);
 
@@ -46,13 +47,16 @@ void main() {
           tripId,
           pinsOrderBy: captureAnyNamed('pinsOrderBy'),
           tasksOrderBy: captureAnyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: captureAnyNamed('itineraryItemsOrderBy'),
         ),
       );
       verification.called(1);
       final pinsOrderBy = verification.captured[0] as List<OrderBy>;
       final tasksOrderBy = verification.captured[1] as List<OrderBy>;
+      final itineraryItemsOrderBy = verification.captured[2] as List<OrderBy>;
       expect(pinsOrderBy.single.field, 'visitStartDateTime');
       expect(tasksOrderBy.single.field, 'orderIndex');
+      expect(itineraryItemsOrderBy.single.field, 'orderIndex');
     });
 
     test('存在しない旅行IDの場合はnullを返すこと', () async {
@@ -62,6 +66,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => null);
 
@@ -73,6 +78,7 @@ void main() {
           tripId,
           pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
     });

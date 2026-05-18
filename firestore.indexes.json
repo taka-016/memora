@@ -115,6 +115,25 @@
       "density": "SPARSE_ALL"
     },
     {
+      "collectionGroup": "itinerary_items",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tripId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orderIndex",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
       "collectionGroup": "member_events",
       "queryScope": "COLLECTION",
       "fields": [
