@@ -47,8 +47,8 @@ void main() {
         memo: 'ホテルで朝食',
       );
 
-      final map = firestore_mapper.FirestoreItineraryItemMapper
-          .toCreateFirestore(item);
+      final map =
+          firestore_mapper.FirestoreItineraryItemMapper.toCreateFirestore(item);
 
       expect(map['tripId'], 'trip001');
       expect(map['orderIndex'], 0);

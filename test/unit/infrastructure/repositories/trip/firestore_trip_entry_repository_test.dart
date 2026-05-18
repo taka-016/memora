@@ -327,8 +327,12 @@ void main() {
         when(
           mockItineraryItemsQuery.get(),
         ).thenAnswer((_) async => mockItineraryItemsSnapshot);
-        when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
-        when(mockItineraryItemDoc.reference).thenReturn(mockItineraryItemDocRef);
+        when(
+          mockItineraryItemsSnapshot.docs,
+        ).thenReturn([mockItineraryItemDoc]);
+        when(
+          mockItineraryItemDoc.reference,
+        ).thenReturn(mockItineraryItemDocRef);
 
         when(mockBatch.commit()).thenAnswer((_) async {});
 

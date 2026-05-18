@@ -4,6 +4,7 @@ import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
@@ -23,6 +24,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
     String tripId, {
     List<OrderBy>? pinsOrderBy,
     List<OrderBy>? tasksOrderBy,
+    List<OrderBy>? itineraryItemsOrderBy,
   }) async {
     try {
       final doc = await _firestore.collection('trip_entries').doc(tripId).get();
@@ -66,11 +68,34 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .map((taskDoc) => FirestoreTaskMapper.fromFirestore(taskDoc))
           .toList();
 
+      Query<Map<String, dynamic>> itineraryItemsQuery = _firestore
+          .collection('itinerary_items')
+          .where('tripId', isEqualTo: tripId);
+
+      final effectiveItineraryItemsOrderBy =
+          itineraryItemsOrderBy ??
+          const [OrderBy('orderIndex', descending: false)];
+      for (final order in effectiveItineraryItemsOrderBy) {
+        itineraryItemsQuery = itineraryItemsQuery.orderBy(
+          order.field,
+          descending: order.descending,
+        );
+      }
+
+      final itineraryItemsSnapshot = await itineraryItemsQuery.get();
+      final itineraryItems = itineraryItemsSnapshot.docs
+          .map(
+            (itineraryItemDoc) =>
+                FirestoreItineraryItemMapper.fromFirestore(itineraryItemDoc),
+          )
+          .toList();
+
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
         fallbackTripYear: _clock.now().year,
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
     } catch (e, stack) {
       logger.e(

@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
@@ -5,6 +7,13 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setupFirebaseCoreMocks();
+
+  setUpAll(() async {
+    await Firebase.initializeApp();
+  });
+
   group('QueryServiceFactory', () {
     test('ItineraryItemQueryServiceはFirestore実装を返す', () {
       final container = ProviderContainer();

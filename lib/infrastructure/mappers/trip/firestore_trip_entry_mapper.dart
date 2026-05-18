@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -12,6 +13,7 @@ class FirestoreTripEntryMapper {
     required int fallbackTripYear,
     List<PinDto> pins = const [],
     List<TaskDto> tasks = const [],
+    List<ItineraryItemDto> itineraryItems = const [],
   }) {
     final data = doc.data() ?? {};
     final startDate = FirestoreMapperValueParser.asDateTime(data['startDate']);
@@ -27,6 +29,7 @@ class FirestoreTripEntryMapper {
       memo: data['memo'] as String?,
       pins: pins,
       tasks: tasks,
+      itineraryItems: itineraryItems,
     );
   }
 

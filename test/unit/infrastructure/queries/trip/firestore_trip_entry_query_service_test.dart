@@ -140,9 +140,7 @@ void main() {
         tripId,
         pinsOrderBy: const [OrderBy('visitStartDateTime', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
-        itineraryItemsOrderBy: const [
-          OrderBy('orderIndex', descending: false),
-        ],
+        itineraryItemsOrderBy: const [OrderBy('orderIndex', descending: false)],
       );
 
       expect(result, isNotNull);
