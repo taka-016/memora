@@ -10,7 +10,7 @@
   - `TripEntry`集約に`itineraryItems`を追加し、`TripEntryRepository`、`TripEntryQueryService`、Firestore実装、Factory配線を対応させる
   - `TripEntryDto`、`TripEntryMapper`、`FirestoreTripEntryMapper`を`itineraryItems`に対応させる
   - 保存・更新・削除時に`itinerary_items`を旅行単位で同期し、取得時は`orderIndex`順に並べる
-  - `name`必須、`orderIndex`は0以上、終了日時は開始日時以降であることを検証する
+  - `name`必須、`orderIndex`は0以上、終了日時は開始日時以降、日時は旅行期間の開始2日前から終了2日後までの範囲内であることを検証する
   - 旅程項目の取得・保存に関するユースケースとテストを追加する
 
 ## マップの表示
