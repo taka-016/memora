@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -30,6 +31,14 @@ void main() {
         startDate: DateTime(2024, 1, 1),
         endDate: DateTime(2024, 1, 3),
         memo: '更新されたメモ',
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item001',
+            tripId: 'trip-id',
+            orderIndex: 0,
+            name: '朝食',
+          ),
+        ],
       );
 
       when(mockRepository.updateTripEntry(any)).thenAnswer((_) async => {});
@@ -45,6 +54,8 @@ void main() {
       expect(updatedEntry.id, tripEntry.id);
       expect(updatedEntry.name, tripEntry.name);
       expect(updatedEntry.memo, tripEntry.memo);
+      expect(updatedEntry.itineraryItems, hasLength(1));
+      expect(updatedEntry.itineraryItems.first.name, '朝食');
     });
 
     test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {

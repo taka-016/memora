@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:memora/domain/entities/trip/itinerary_item.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
@@ -23,6 +24,8 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
+    late MockCollectionReference<Map<String, dynamic>>
+    mockItineraryItemsCollection;
     late FirestoreTripEntryRepository repository;
     late MockQuerySnapshot<Map<String, dynamic>> mockQuerySnapshot;
     late MockQueryDocumentSnapshot<Map<String, dynamic>> mockDoc1;
@@ -39,6 +42,11 @@ void main() {
       when(mockFirestore.collection('trip_entries')).thenReturn(mockCollection);
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
+      mockItineraryItemsCollection =
+          MockCollectionReference<Map<String, dynamic>>();
+      when(
+        mockFirestore.collection('itinerary_items'),
+      ).thenReturn(mockItineraryItemsCollection);
       repository = FirestoreTripEntryRepository(firestore: mockFirestore);
     });
 
@@ -62,16 +70,29 @@ void main() {
               isCompleted: false,
             ),
           ],
+          itineraryItems: [
+            ItineraryItem(
+              id: 'item-001',
+              tripId: 'trip001',
+              orderIndex: 0,
+              name: '朝食',
+            ),
+          ],
         );
 
         final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
         final mockBatch = MockWriteBatch();
         final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
+        final mockItineraryItemDocRef =
+            MockDocumentReference<Map<String, dynamic>>();
         when(mockDocRef.id).thenReturn('generated-doc-id');
         when(mockCollection.doc()).thenReturn(mockDocRef);
         when(mockFirestore.batch()).thenReturn(mockBatch);
         when(mockBatch.commit()).thenAnswer((_) async {});
         when(mockTasksCollection.doc('task-001')).thenReturn(mockTaskDocRef);
+        when(
+          mockItineraryItemsCollection.doc('item-001'),
+        ).thenReturn(mockItineraryItemDocRef);
 
         final result = await repository.saveTripEntry(tripEntry);
 
@@ -96,11 +117,26 @@ void main() {
         ).called(1);
         verify(mockTasksCollection.doc('task-001')).called(1);
         verify(mockBatch.set(mockTaskDocRef, any)).called(1);
+        verify(mockItineraryItemsCollection.doc('item-001')).called(1);
+        verify(
+          mockBatch.set(
+            mockItineraryItemDocRef,
+            argThat(
+              allOf([
+                containsPair('tripId', 'generated-doc-id'),
+                containsPair('name', '朝食'),
+                containsPair('orderIndex', 0),
+                contains('createdAt'),
+                contains('updatedAt'),
+              ]),
+            ),
+          ),
+        ).called(1);
         verify(mockBatch.commit()).called(1);
       },
     );
 
-    test('updateTripEntryが既存タスクを削除して再作成する', () async {
+    test('updateTripEntryが既存の子エンティティを削除して再作成する', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -112,6 +148,14 @@ void main() {
             orderIndex: 0,
             name: '準備',
             isCompleted: false,
+          ),
+        ],
+        itineraryItems: [
+          ItineraryItem(
+            id: 'item-uuid',
+            tripId: 'trip001',
+            orderIndex: 0,
+            name: '朝食',
           ),
         ],
       );
@@ -129,6 +173,15 @@ void main() {
       final mockExistingTaskDocRef =
           MockDocumentReference<Map<String, dynamic>>();
       final mockTaskDocRefWithId =
+          MockDocumentReference<Map<String, dynamic>>();
+      final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
+      final mockItineraryItemsSnapshot =
+          MockQuerySnapshot<Map<String, dynamic>>();
+      final mockExistingItineraryItemDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockExistingItineraryItemDocRef =
+          MockDocumentReference<Map<String, dynamic>>();
+      final mockItineraryItemDocRefWithId =
           MockDocumentReference<Map<String, dynamic>>();
 
       when(mockCollection.doc('trip001')).thenReturn(mockTripDocRef);
@@ -150,6 +203,21 @@ void main() {
       when(
         mockTasksCollection.doc('task-uuid'),
       ).thenReturn(mockTaskDocRefWithId);
+      when(
+        mockItineraryItemsCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockItineraryItemsQuery);
+      when(
+        mockItineraryItemsQuery.get(),
+      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(
+        mockItineraryItemsSnapshot.docs,
+      ).thenReturn([mockExistingItineraryItemDoc]);
+      when(
+        mockExistingItineraryItemDoc.reference,
+      ).thenReturn(mockExistingItineraryItemDocRef);
+      when(
+        mockItineraryItemsCollection.doc('item-uuid'),
+      ).thenReturn(mockItineraryItemDocRefWithId);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.updateTripEntry(tripEntry);
@@ -172,6 +240,7 @@ void main() {
         ),
       ).called(1);
       verify(mockBatch.delete(mockExistingTaskDocRef)).called(1);
+      verify(mockBatch.delete(mockExistingItineraryItemDocRef)).called(1);
       verify(mockTasksCollection.doc('task-uuid')).called(1);
       verify(
         mockBatch.set(
@@ -180,6 +249,20 @@ void main() {
             allOf([
               containsPair('tripId', 'trip001'),
               containsPair('name', '準備'),
+              contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+      verify(mockItineraryItemsCollection.doc('item-uuid')).called(1);
+      verify(
+        mockBatch.set(
+          mockItineraryItemDocRefWithId,
+          argThat(
+            allOf([
+              containsPair('tripId', 'trip001'),
+              containsPair('name', '朝食'),
               contains('createdAt'),
               contains('updatedAt'),
             ]),
@@ -206,6 +289,15 @@ void main() {
         final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
         final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
         final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
+        final mockItineraryItemsCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
+        final mockItineraryItemsSnapshot =
+            MockQuerySnapshot<Map<String, dynamic>>();
+        final mockItineraryItemDoc =
+            MockQueryDocumentSnapshot<Map<String, dynamic>>();
+        final mockItineraryItemDocRef =
+            MockDocumentReference<Map<String, dynamic>>();
 
         when(mockCollection.doc(tripId)).thenReturn(mockDocRef);
         when(mockFirestore.batch()).thenReturn(mockBatch);
@@ -226,6 +318,18 @@ void main() {
         when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
         when(mockTaskDoc.reference).thenReturn(mockTaskDocRef);
 
+        when(
+          mockFirestore.collection('itinerary_items'),
+        ).thenReturn(mockItineraryItemsCollection);
+        when(
+          mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
+        ).thenReturn(mockItineraryItemsQuery);
+        when(
+          mockItineraryItemsQuery.get(),
+        ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+        when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
+        when(mockItineraryItemDoc.reference).thenReturn(mockItineraryItemDocRef);
+
         when(mockBatch.commit()).thenAnswer((_) async {});
 
         await repository.deleteTripEntry(tripId);
@@ -235,6 +339,7 @@ void main() {
         verify(mockBatch.delete(mockPinDocRef)).called(1);
         verify(mockBatch.delete(mockDocRef)).called(1);
         verify(mockBatch.delete(mockTaskDocRef)).called(1);
+        verify(mockBatch.delete(mockItineraryItemDocRef)).called(1);
         verify(mockBatch.commit()).called(1);
       },
     );
@@ -262,6 +367,18 @@ void main() {
         final mockTaskDocRef1 = MockDocumentReference<Map<String, dynamic>>();
         final mockTasksQuery2 = MockQuery<Map<String, dynamic>>();
         final mockTasksSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
+        final mockItineraryItemsCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockItineraryItemsQuery1 = MockQuery<Map<String, dynamic>>();
+        final mockItineraryItemsSnapshot1 =
+            MockQuerySnapshot<Map<String, dynamic>>();
+        final mockItineraryItemDoc1 =
+            MockQueryDocumentSnapshot<Map<String, dynamic>>();
+        final mockItineraryItemDocRef1 =
+            MockDocumentReference<Map<String, dynamic>>();
+        final mockItineraryItemsQuery2 = MockQuery<Map<String, dynamic>>();
+        final mockItineraryItemsSnapshot2 =
+            MockQuerySnapshot<Map<String, dynamic>>();
 
         when(
           mockCollection.where('groupId', isEqualTo: groupId),
@@ -305,6 +422,30 @@ void main() {
         when(mockTasksQuery2.get()).thenAnswer((_) async => mockTasksSnapshot2);
         when(mockTasksSnapshot2.docs).thenReturn([]);
 
+        when(
+          mockFirestore.collection('itinerary_items'),
+        ).thenReturn(mockItineraryItemsCollection);
+        when(
+          mockItineraryItemsCollection.where('tripId', isEqualTo: 'trip001'),
+        ).thenReturn(mockItineraryItemsQuery1);
+        when(
+          mockItineraryItemsQuery1.get(),
+        ).thenAnswer((_) async => mockItineraryItemsSnapshot1);
+        when(
+          mockItineraryItemsSnapshot1.docs,
+        ).thenReturn([mockItineraryItemDoc1]);
+        when(
+          mockItineraryItemDoc1.reference,
+        ).thenReturn(mockItineraryItemDocRef1);
+
+        when(
+          mockItineraryItemsCollection.where('tripId', isEqualTo: 'trip002'),
+        ).thenReturn(mockItineraryItemsQuery2);
+        when(
+          mockItineraryItemsQuery2.get(),
+        ).thenAnswer((_) async => mockItineraryItemsSnapshot2);
+        when(mockItineraryItemsSnapshot2.docs).thenReturn([]);
+
         when(mockBatch.commit()).thenAnswer((_) async {});
 
         await repository.deleteTripEntriesByGroupId(groupId);
@@ -316,6 +457,7 @@ void main() {
         verify(mockBatch.delete(mockDocRef1)).called(1);
         verify(mockBatch.delete(mockDocRef2)).called(1);
         verify(mockBatch.delete(mockTaskDocRef1)).called(1);
+        verify(mockBatch.delete(mockItineraryItemDocRef1)).called(1);
         verify(mockBatch.commit()).called(1);
       },
     );

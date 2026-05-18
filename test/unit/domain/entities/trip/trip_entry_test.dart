@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/domain/entities/trip/itinerary_item.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -37,6 +38,17 @@ void main() {
             isCompleted: false,
           ),
         ],
+        itineraryItems: [
+          ItineraryItem(
+            id: 'item-1',
+            tripId: 'abc123',
+            orderIndex: 0,
+            name: '朝食',
+            startDateTime: DateTime(2025, 6, 2, 8),
+            endDateTime: DateTime(2025, 6, 2, 9),
+            memo: 'ホテルで朝食',
+          ),
+        ],
       );
       expect(entry.id, 'abc123');
       expect(entry.groupId, 'group456');
@@ -50,6 +62,8 @@ void main() {
       expect(entry.pins.first.memo, 'エッフェル塔');
       expect(entry.tasks, hasLength(1));
       expect(entry.tasks.first.name, '持ち物準備');
+      expect(entry.itineraryItems, hasLength(1));
+      expect(entry.itineraryItems.first.name, '朝食');
     });
 
     test('nullableなフィールドがnullの場合でもインスタンス生成が正しく行われる', () {
@@ -69,6 +83,7 @@ void main() {
       expect(entry.year, 2025);
       expect(entry.pins, isEmpty);
       expect(entry.tasks, isEmpty);
+      expect(entry.itineraryItems, isEmpty);
     });
 
     test('同じプロパティを持つインスタンス同士は等価である', () {
@@ -82,6 +97,7 @@ void main() {
         memo: 'テストメモ',
         pins: const [],
         tasks: const [],
+        itineraryItems: const [],
       );
       final entry2 = TripEntry(
         id: 'abc123',
@@ -93,6 +109,7 @@ void main() {
         memo: 'テストメモ',
         pins: const [],
         tasks: const [],
+        itineraryItems: const [],
       );
       expect(entry1, equals(entry2));
     });
@@ -133,6 +150,14 @@ void main() {
             isCompleted: true,
           ),
         ],
+        itineraryItems: [
+          ItineraryItem(
+            id: 'item-2',
+            tripId: 'abc123',
+            orderIndex: 0,
+            name: '夕食',
+          ),
+        ],
       );
       expect(updatedEntry.id, 'abc123');
       expect(updatedEntry.groupId, 'group456');
@@ -143,6 +168,8 @@ void main() {
       expect(updatedEntry.pins, hasLength(1));
       expect(updatedEntry.tasks, hasLength(1));
       expect(updatedEntry.tasks.first.name, 'ホテル予約');
+      expect(updatedEntry.itineraryItems, hasLength(1));
+      expect(updatedEntry.itineraryItems.first.name, '夕食');
     });
 
     test('旅行期間外の訪問場所を含むと例外が発生する', () {
@@ -368,6 +395,78 @@ void main() {
               name: '子タスク3（完了）',
               isCompleted: true,
               parentTaskId: 'task-1',
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('旅行期間の開始2日前から終了2日後までの旅程項目は生成できる', () {
+      final entry = TripEntry(
+        id: 'trip123',
+        groupId: 'group456',
+        year: 2025,
+        startDate: DateTime(2025, 6, 10),
+        endDate: DateTime(2025, 6, 12),
+        itineraryItems: [
+          ItineraryItem(
+            id: 'item-1',
+            tripId: 'trip123',
+            orderIndex: 0,
+            name: '前泊移動',
+            startDateTime: DateTime(2025, 6, 8),
+          ),
+          ItineraryItem(
+            id: 'item-2',
+            tripId: 'trip123',
+            orderIndex: 1,
+            name: '帰宅',
+            endDateTime: DateTime(2025, 6, 14, 23, 59),
+          ),
+        ],
+      );
+
+      expect(entry.itineraryItems, hasLength(2));
+    });
+
+    test('旅行期間の開始2日前より前の旅程項目を含むと例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          year: 2025,
+          startDate: DateTime(2025, 6, 10),
+          endDate: DateTime(2025, 6, 12),
+          itineraryItems: [
+            ItineraryItem(
+              id: 'item-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '早すぎる移動',
+              startDateTime: DateTime(2025, 6, 7, 23, 59),
+            ),
+          ],
+        ),
+        throwsA(isA<ValidationException>()),
+      );
+    });
+
+    test('旅行期間の終了2日後より後の旅程項目を含むと例外が発生する', () {
+      expect(
+        () => TripEntry(
+          id: 'trip123',
+          groupId: 'group456',
+          year: 2025,
+          startDate: DateTime(2025, 6, 10),
+          endDate: DateTime(2025, 6, 12),
+          itineraryItems: [
+            ItineraryItem(
+              id: 'item-1',
+              tripId: 'trip123',
+              orderIndex: 0,
+              name: '遅すぎる帰宅',
+              endDateTime: DateTime(2025, 6, 15),
             ),
           ],
         ),

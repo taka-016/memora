@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -29,6 +30,14 @@ void main() {
         name: 'テスト旅行',
         startDate: DateTime(2024, 1, 1),
         endDate: DateTime(2024, 1, 3),
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item001',
+            tripId: '',
+            orderIndex: 0,
+            name: '朝食',
+          ),
+        ],
       );
       const generatedId = 'generated-trip-id';
 
@@ -49,6 +58,8 @@ void main() {
       expect(savedEntry.groupId, tripEntry.groupId);
       expect(savedEntry.year, tripEntry.year);
       expect(savedEntry.name, tripEntry.name);
+      expect(savedEntry.itineraryItems, hasLength(1));
+      expect(savedEntry.itineraryItems.first.name, '朝食');
     });
 
     test('有効な旅行に対してエラーなく完了すること', () async {

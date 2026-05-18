@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -21,6 +22,7 @@ void main() {
       expect(dto.memo, isNull);
       expect(dto.pins, isNull);
       expect(dto.tasks, isNull);
+      expect(dto.itineraryItems, isNull);
     });
 
     test('期間を指定すると開始日/終了日が保持される', () {
@@ -53,6 +55,14 @@ void main() {
           isCompleted: false,
         ),
       ];
+      const itineraryItems = [
+        ItineraryItemDto(
+          id: 'item-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '朝食',
+        ),
+      ];
 
       final dto = TripEntryDto(
         id: 'trip-entry-123',
@@ -64,12 +74,14 @@ void main() {
         memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
 
       expect(dto.name, '春の旅行');
       expect(dto.memo, '家族旅行のメモ');
       expect(dto.pins, pins);
       expect(dto.tasks, tasks);
+      expect(dto.itineraryItems, itineraryItems);
     });
 
     test('copyWithで必須パラメータを更新できる', () {
@@ -111,6 +123,14 @@ void main() {
             isCompleted: false,
           ),
         ],
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item-1',
+            tripId: 'trip-entry-123',
+            orderIndex: 0,
+            name: '朝食',
+          ),
+        ],
       );
 
       final copiedDto = originalDto.copyWith(
@@ -126,12 +146,21 @@ void main() {
             isCompleted: true,
           ),
         ],
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item-2',
+            tripId: 'trip-entry-123',
+            orderIndex: 1,
+            name: '観光',
+          ),
+        ],
       );
 
       expect(copiedDto.name, '新しい旅行名');
       expect(copiedDto.memo, '新しいメモ');
       expect(copiedDto.pins?.first.pinId, 'pin-2');
       expect(copiedDto.tasks?.first.id, 'task-2');
+      expect(copiedDto.itineraryItems?.first.id, 'item-2');
     });
 
     test('copyWithで開始日と終了日をnullにできる', () {
@@ -168,6 +197,10 @@ void main() {
         () => originalDto.copyWith(pins: 'invalid'),
         throwsA(isA<ArgumentError>()),
       );
+      expect(
+        () => originalDto.copyWith(itineraryItems: 'invalid'),
+        throwsA(isA<ArgumentError>()),
+      );
     });
 
     test('copyWithで何も指定しなければ元の値を保持する', () {
@@ -181,6 +214,14 @@ void main() {
           isCompleted: false,
         ),
       ];
+      const itineraryItems = [
+        ItineraryItemDto(
+          id: 'item-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '朝食',
+        ),
+      ];
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
         groupId: 'group-456',
@@ -191,6 +232,7 @@ void main() {
         memo: '旅行のメモ',
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
 
       final copiedDto = originalDto.copyWith();
@@ -209,6 +251,14 @@ void main() {
           isCompleted: false,
         ),
       ];
+      const itineraryItems = [
+        ItineraryItemDto(
+          id: 'item-1',
+          tripId: 'trip-entry-123',
+          orderIndex: 0,
+          name: '朝食',
+        ),
+      ];
 
       final dto1 = TripEntryDto(
         id: 'trip-entry-123',
@@ -220,6 +270,7 @@ void main() {
         memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
 
       final dto2 = TripEntryDto(
@@ -232,6 +283,7 @@ void main() {
         memo: '家族旅行のメモ',
         pins: pins,
         tasks: tasks,
+        itineraryItems: itineraryItems,
       );
 
       expect(dto1, equals(dto2));
@@ -257,6 +309,14 @@ void main() {
             isCompleted: false,
           ),
         ],
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item-1',
+            tripId: 'trip-entry-123',
+            orderIndex: 0,
+            name: '朝食',
+          ),
+        ],
       );
 
       final dto2 = TripEntryDto(
@@ -275,6 +335,14 @@ void main() {
             orderIndex: 1,
             name: '予約確認',
             isCompleted: true,
+          ),
+        ],
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item-2',
+            tripId: 'trip-entry-999',
+            orderIndex: 1,
+            name: '観光',
           ),
         ],
       );
