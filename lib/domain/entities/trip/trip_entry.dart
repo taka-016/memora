@@ -127,13 +127,6 @@ class TripEntry extends Equatable {
         allowedStart,
         allowedEndExclusive,
       );
-    } else {
-      if (item.startDateTime != null && item.startDateTime!.year != year) {
-        throw ValidationException('旅程項目の開始日時はyearと同じ年にしてください');
-      }
-      if (item.endDateTime != null && item.endDateTime!.year != year) {
-        throw ValidationException('旅程項目の終了日時はyearと同じ年にしてください');
-      }
     }
   }
 
