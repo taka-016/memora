@@ -18,7 +18,7 @@ void main() {
       expect(indexes, hasLength(_expectedIndexes.length));
 
       for (final expectedIndex in _expectedIndexes) {
-        expect(indexes, containsIndex(expectedIndex));
+        expect(indexes, _containsIndex(expectedIndex));
       }
     });
   });
@@ -132,7 +132,7 @@ const _expectedIndexes = [
   ),
 ];
 
-Matcher containsIndex(_ExpectedFirestoreIndex expectedIndex) {
+Matcher _containsIndex(_ExpectedFirestoreIndex expectedIndex) {
   return contains(
     predicate<dynamic>(
       (index) => expectedIndex.matches(index as Map<String, dynamic>),
@@ -167,20 +167,16 @@ class _ExpectedFirestoreIndex {
 }
 
 class _ExpectedFirestoreIndexField {
-  const _ExpectedFirestoreIndexField(
-    this.fieldPath, {
-    this.order = 'ASCENDING',
-  });
+  const _ExpectedFirestoreIndexField(this.fieldPath);
 
   final String fieldPath;
-  final String order;
 
   bool matches(Map<String, dynamic> field) {
-    return field['fieldPath'] == fieldPath && field['order'] == order;
+    return field['fieldPath'] == fieldPath && field['order'] == 'ASCENDING';
   }
 
   @override
   String toString() {
-    return '$fieldPath $order';
+    return '$fieldPath ASCENDING';
   }
 }
