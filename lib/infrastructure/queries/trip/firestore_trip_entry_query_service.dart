@@ -74,7 +74,10 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
 
       final effectiveItineraryItemsOrderBy =
           itineraryItemsOrderBy ??
-          const [OrderBy('orderIndex', descending: false)];
+          const [
+            OrderBy('startDateTime', descending: false),
+            OrderBy('endDateTime', descending: false),
+          ];
       for (final order in effectiveItineraryItemsOrderBy) {
         itineraryItemsQuery = itineraryItemsQuery.orderBy(
           order.field,

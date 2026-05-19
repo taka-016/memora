@@ -19,7 +19,10 @@ class GetItineraryItemsByTripIdUsecase {
   Future<List<ItineraryItemDto>> execute(String tripId) async {
     return await _itineraryItemQueryService.getItineraryItemsByTripId(
       tripId,
-      orderBy: [const OrderBy('orderIndex', descending: false)],
+      orderBy: const [
+        OrderBy('startDateTime', descending: false),
+        OrderBy('endDateTime', descending: false),
+      ],
     );
   }
 }

@@ -12,7 +12,6 @@ class FirestoreItineraryItemMapper {
     return ItineraryItemDto(
       id: doc.id,
       tripId: data['tripId'] as String? ?? '',
-      orderIndex: FirestoreMapperValueParser.asInt(data['orderIndex']),
       name: data['name'] as String? ?? '',
       startDateTime: FirestoreMapperValueParser.asDateTime(
         data['startDateTime'],
@@ -25,7 +24,6 @@ class FirestoreItineraryItemMapper {
   static Map<String, dynamic> toCreateFirestore(ItineraryItem item) {
     final data = <String, dynamic>{
       'tripId': item.tripId,
-      'orderIndex': item.orderIndex,
       'name': item.name,
       'memo': item.memo,
       ...FirestoreWriteMetadata.forCreate(),

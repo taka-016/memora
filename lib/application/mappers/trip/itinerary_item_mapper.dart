@@ -6,7 +6,6 @@ class ItineraryItemMapper {
     return entity.ItineraryItem(
       id: dto.id,
       tripId: dto.tripId,
-      orderIndex: dto.orderIndex,
       name: dto.name,
       startDateTime: dto.startDateTime,
       endDateTime: dto.endDateTime,

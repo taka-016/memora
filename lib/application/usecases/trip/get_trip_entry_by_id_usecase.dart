@@ -20,7 +20,10 @@ class GetTripEntryByIdUsecase {
       tripId,
       pinsOrderBy: [const OrderBy('visitStartDateTime', descending: false)],
       tasksOrderBy: [const OrderBy('orderIndex', descending: false)],
-      itineraryItemsOrderBy: [const OrderBy('orderIndex', descending: false)],
+      itineraryItemsOrderBy: const [
+        OrderBy('startDateTime', descending: false),
+        OrderBy('endDateTime', descending: false),
+      ],
     );
   }
 }
