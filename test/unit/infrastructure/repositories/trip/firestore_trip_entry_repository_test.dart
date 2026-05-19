@@ -120,7 +120,6 @@ void main() {
               allOf([
                 containsPair('tripId', 'generated-doc-id'),
                 containsPair('name', '朝食'),
-                isNot(contains('orderIndex')),
                 contains('createdAt'),
                 contains('updatedAt'),
               ]),

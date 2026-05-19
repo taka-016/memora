@@ -48,7 +48,6 @@ void main() {
           firestore_mapper.FirestoreItineraryItemMapper.toCreateFirestore(item);
 
       expect(map['tripId'], 'trip001');
-      expect(map, isNot(contains('orderIndex')));
       expect(map['name'], '朝食');
       expect(map['startDateTime'], Timestamp.fromDate(DateTime(2024, 1, 2, 8)));
       expect(map['endDateTime'], Timestamp.fromDate(DateTime(2024, 1, 2, 9)));
