@@ -36,37 +36,21 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
           .collection('pins')
           .where('tripId', isEqualTo: tripId);
 
-      if (pinsOrderBy != null && pinsOrderBy.isNotEmpty) {
-        for (final order in pinsOrderBy) {
-          pinsQuery = pinsQuery.orderBy(
-            order.field,
-            descending: order.descending,
-          );
-        }
-      }
-
       final pinsSnapshot = await pinsQuery.get();
-      final pins = pinsSnapshot.docs
-          .map((pinDoc) => FirestorePinMapper.fromFirestore(pinDoc))
-          .toList();
+      final pins = _sortDocuments(
+        pinsSnapshot.docs,
+        pinsOrderBy,
+      ).map((pinDoc) => FirestorePinMapper.fromFirestore(pinDoc)).toList();
 
       Query<Map<String, dynamic>> tasksQuery = _firestore
           .collection('tasks')
           .where('tripId', isEqualTo: tripId);
 
-      if (tasksOrderBy != null && tasksOrderBy.isNotEmpty) {
-        for (final order in tasksOrderBy) {
-          tasksQuery = tasksQuery.orderBy(
-            order.field,
-            descending: order.descending,
-          );
-        }
-      }
-
       final tasksSnapshot = await tasksQuery.get();
-      final tasks = tasksSnapshot.docs
-          .map((taskDoc) => FirestoreTaskMapper.fromFirestore(taskDoc))
-          .toList();
+      final tasks = _sortDocuments(
+        tasksSnapshot.docs,
+        tasksOrderBy,
+      ).map((taskDoc) => FirestoreTaskMapper.fromFirestore(taskDoc)).toList();
 
       Query<Map<String, dynamic>> itineraryItemsQuery = _firestore
           .collection('itinerary_items')
@@ -75,20 +59,19 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       final effectiveItineraryItemsOrderBy =
           itineraryItemsOrderBy ??
           const [OrderBy('orderIndex', descending: false)];
-      for (final order in effectiveItineraryItemsOrderBy) {
-        itineraryItemsQuery = itineraryItemsQuery.orderBy(
-          order.field,
-          descending: order.descending,
-        );
-      }
-
       final itineraryItemsSnapshot = await itineraryItemsQuery.get();
-      final itineraryItems = itineraryItemsSnapshot.docs
-          .map(
-            (itineraryItemDoc) =>
-                FirestoreItineraryItemMapper.fromFirestore(itineraryItemDoc),
-          )
-          .toList();
+      final itineraryItems =
+          _sortDocuments(
+                itineraryItemsSnapshot.docs,
+                effectiveItineraryItemsOrderBy,
+              )
+              .map(
+                (itineraryItemDoc) =>
+                    FirestoreItineraryItemMapper.fromFirestore(
+                      itineraryItemDoc,
+                    ),
+              )
+              .toList();
 
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
@@ -142,5 +125,65 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       );
       return [];
     }
+  }
+
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _sortDocuments(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    List<OrderBy>? orderBy,
+  ) {
+    if (orderBy == null || orderBy.isEmpty) {
+      return docs;
+    }
+
+    return List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(docs)
+      ..sort((a, b) {
+        for (final order in orderBy) {
+          final comparison = _compareFieldValues(
+            a.data()[order.field],
+            b.data()[order.field],
+          );
+          if (comparison != 0) {
+            return order.descending ? -comparison : comparison;
+          }
+        }
+        return 0;
+      });
+  }
+
+  int _compareFieldValues(Object? a, Object? b) {
+    if (a == null && b == null) {
+      return 0;
+    }
+    if (a == null) {
+      return 1;
+    }
+    if (b == null) {
+      return -1;
+    }
+
+    final normalizedA = _normalizeComparableValue(a);
+    final normalizedB = _normalizeComparableValue(b);
+
+    if (normalizedA is num && normalizedB is num) {
+      return normalizedA.compareTo(normalizedB);
+    }
+    if (normalizedA is DateTime && normalizedB is DateTime) {
+      return normalizedA.compareTo(normalizedB);
+    }
+    if (normalizedA is String && normalizedB is String) {
+      return normalizedA.compareTo(normalizedB);
+    }
+    if (normalizedA is bool && normalizedB is bool) {
+      return normalizedA == normalizedB ? 0 : (normalizedA ? 1 : -1);
+    }
+
+    return normalizedA.toString().compareTo(normalizedB.toString());
+  }
+
+  Object _normalizeComparableValue(Object value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+    return value;
   }
 }

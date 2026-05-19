@@ -118,10 +118,7 @@ void main() {
         mockTasksCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
-      when(mockTasksSnapshot.docs).thenReturn([
-        mockTaskDoc,
-        mockSecondTaskDoc,
-      ]);
+      when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc, mockSecondTaskDoc]);
       when(mockTaskDoc.data()).thenReturn({
         'tripId': tripId,
         'orderIndex': 2,
@@ -143,10 +140,9 @@ void main() {
       when(
         mockItineraryItemsQuery.get(),
       ).thenAnswer((_) async => mockItineraryItemsSnapshot);
-      when(mockItineraryItemsSnapshot.docs).thenReturn([
-        mockItineraryItemDoc,
-        mockSecondItineraryItemDoc,
-      ]);
+      when(
+        mockItineraryItemsSnapshot.docs,
+      ).thenReturn([mockItineraryItemDoc, mockSecondItineraryItemDoc]);
       when(mockItineraryItemDoc.data()).thenReturn({
         'tripId': tripId,
         'orderIndex': 3,
@@ -184,10 +180,17 @@ void main() {
       expect(result.itineraryItems, hasLength(2));
       final ItineraryItemDto itineraryItem = result.itineraryItems!.first;
       expect(itineraryItem.name, '朝食');
-      verifyNever(mockPinsQuery.orderBy(any, descending: anyNamed('descending')));
-      verifyNever(mockTasksQuery.orderBy(any, descending: anyNamed('descending')));
       verifyNever(
-        mockItineraryItemsQuery.orderBy(any, descending: anyNamed('descending')),
+        mockPinsQuery.orderBy(any, descending: anyNamed('descending')),
+      );
+      verifyNever(
+        mockTasksQuery.orderBy(any, descending: anyNamed('descending')),
+      );
+      verifyNever(
+        mockItineraryItemsQuery.orderBy(
+          any,
+          descending: anyNamed('descending'),
+        ),
       );
     });
 
@@ -251,7 +254,10 @@ void main() {
       expect(result, isNotNull);
       expect(result!.year, 2027);
       verifyNever(
-        mockItineraryItemsQuery.orderBy(any, descending: anyNamed('descending')),
+        mockItineraryItemsQuery.orderBy(
+          any,
+          descending: anyNamed('descending'),
+        ),
       );
     });
 
