@@ -38,7 +38,6 @@ void main() {
         ItineraryItemDto(
           id: 'item001',
           tripId: 'trip001',
-          orderIndex: 0,
           name: '朝食',
         ),
       ];

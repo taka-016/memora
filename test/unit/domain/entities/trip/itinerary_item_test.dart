@@ -8,7 +8,6 @@ void main() {
       final item = ItineraryItem(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -17,7 +16,6 @@ void main() {
 
       expect(item.id, 'item001');
       expect(item.tripId, 'trip001');
-      expect(item.orderIndex, 0);
       expect(item.name, '朝食');
       expect(item.startDateTime, DateTime(2024, 1, 2, 8));
       expect(item.endDateTime, DateTime(2024, 1, 2, 9));
@@ -28,19 +26,13 @@ void main() {
       final item = ItineraryItem(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
       );
 
-      final updatedItem = item.copyWith(
-        orderIndex: 1,
-        name: '昼食',
-        memo: '予約確認',
-      );
+      final updatedItem = item.copyWith(name: '昼食', memo: '予約確認');
 
       expect(updatedItem.id, 'item001');
       expect(updatedItem.tripId, 'trip001');
-      expect(updatedItem.orderIndex, 1);
       expect(updatedItem.name, '昼食');
       expect(updatedItem.memo, '予約確認');
     });
@@ -50,20 +42,7 @@ void main() {
         () => ItineraryItem(
           id: 'item001',
           tripId: 'trip001',
-          orderIndex: 0,
           name: '  ',
-        ),
-        throwsA(isA<ValidationException>()),
-      );
-    });
-
-    test('orderIndexが0未満の場合は例外が発生する', () {
-      expect(
-        () => ItineraryItem(
-          id: 'item001',
-          tripId: 'trip001',
-          orderIndex: -1,
-          name: '朝食',
         ),
         throwsA(isA<ValidationException>()),
       );
@@ -74,7 +53,6 @@ void main() {
         () => ItineraryItem(
           id: 'item001',
           tripId: 'trip001',
-          orderIndex: 0,
           name: '朝食',
           startDateTime: DateTime(2024, 1, 2, 9),
           endDateTime: DateTime(2024, 1, 2, 8),

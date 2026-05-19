@@ -42,7 +42,6 @@ void main() {
           ItineraryItem(
             id: 'item-1',
             tripId: 'abc123',
-            orderIndex: 0,
             name: '朝食',
             startDateTime: DateTime(2025, 6, 2, 8),
             endDateTime: DateTime(2025, 6, 2, 9),
@@ -154,7 +153,6 @@ void main() {
           ItineraryItem(
             id: 'item-2',
             tripId: 'abc123',
-            orderIndex: 0,
             name: '夕食',
           ),
         ],
@@ -413,14 +411,12 @@ void main() {
           ItineraryItem(
             id: 'item-1',
             tripId: 'trip123',
-            orderIndex: 0,
             name: '前泊移動',
             startDateTime: DateTime(2025, 6, 8),
           ),
           ItineraryItem(
             id: 'item-2',
             tripId: 'trip123',
-            orderIndex: 1,
             name: '帰宅',
             endDateTime: DateTime(2025, 6, 14, 23, 59),
           ),
@@ -439,7 +435,6 @@ void main() {
           ItineraryItem(
             id: 'item-1',
             tripId: 'trip123',
-            orderIndex: 0,
             name: '年またぎ移動',
             startDateTime: DateTime(2024, 12, 31, 23),
             endDateTime: DateTime(2026, 1, 1),
@@ -462,7 +457,6 @@ void main() {
             ItineraryItem(
               id: 'item-1',
               tripId: 'trip123',
-              orderIndex: 0,
               name: '早すぎる移動',
               startDateTime: DateTime(2025, 6, 7, 23, 59),
             ),
@@ -484,7 +478,6 @@ void main() {
             ItineraryItem(
               id: 'item-1',
               tripId: 'trip123',
-              orderIndex: 0,
               name: '遅すぎる帰宅',
               endDateTime: DateTime(2025, 6, 15),
             ),

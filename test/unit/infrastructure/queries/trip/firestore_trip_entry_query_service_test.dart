@@ -120,7 +120,10 @@ void main() {
         mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockItineraryItemsQuery);
       when(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
+        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
+      ).thenReturn(mockItineraryItemsQuery);
+      when(
+        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).thenReturn(mockItineraryItemsQuery);
       when(
         mockItineraryItemsQuery.get(),
@@ -128,7 +131,6 @@ void main() {
       when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
       when(mockItineraryItemDoc.data()).thenReturn({
         'tripId': tripId,
-        'orderIndex': 0,
         'name': '朝食',
         'startDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 8)),
         'endDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 9)),
@@ -140,7 +142,10 @@ void main() {
         tripId,
         pinsOrderBy: const [OrderBy('visitStartDateTime', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
-        itineraryItemsOrderBy: const [OrderBy('orderIndex', descending: false)],
+        itineraryItemsOrderBy: const [
+          OrderBy('startDateTime', descending: false),
+          OrderBy('endDateTime', descending: false),
+        ],
       );
 
       expect(result, isNotNull);
@@ -159,7 +164,10 @@ void main() {
       ).called(1);
       verify(mockTasksQuery.orderBy('orderIndex', descending: false)).called(1);
       verify(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
+        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
+      ).called(1);
+      verify(
+        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).called(1);
     });
 
@@ -214,7 +222,10 @@ void main() {
         mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockItineraryItemsQuery);
       when(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
+        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
+      ).thenReturn(mockItineraryItemsQuery);
+      when(
+        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).thenReturn(mockItineraryItemsQuery);
       when(
         mockItineraryItemsQuery.get(),
@@ -226,7 +237,10 @@ void main() {
       expect(result, isNotNull);
       expect(result!.year, 2027);
       verify(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
+        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
+      ).called(1);
+      verify(
+        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).called(1);
     });
 

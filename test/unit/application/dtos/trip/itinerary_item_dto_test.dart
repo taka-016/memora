@@ -7,7 +7,6 @@ void main() {
       final dto = ItineraryItemDto(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -16,7 +15,6 @@ void main() {
 
       expect(dto.id, 'item001');
       expect(dto.tripId, 'trip001');
-      expect(dto.orderIndex, 0);
       expect(dto.name, '朝食');
       expect(dto.startDateTime, DateTime(2024, 1, 2, 8));
       expect(dto.endDateTime, DateTime(2024, 1, 2, 9));
@@ -27,7 +25,6 @@ void main() {
       final dto = ItineraryItemDto(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -35,7 +32,6 @@ void main() {
       );
 
       final copiedDto = dto.copyWith(
-        orderIndex: 1,
         name: '昼食',
         startDateTime: null,
         endDateTime: null,
@@ -44,7 +40,6 @@ void main() {
 
       expect(copiedDto.id, 'item001');
       expect(copiedDto.tripId, 'trip001');
-      expect(copiedDto.orderIndex, 1);
       expect(copiedDto.name, '昼食');
       expect(copiedDto.startDateTime, isNull);
       expect(copiedDto.endDateTime, isNull);
@@ -55,7 +50,6 @@ void main() {
       final dto1 = ItineraryItemDto(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -64,7 +58,6 @@ void main() {
       final dto2 = ItineraryItemDto(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),

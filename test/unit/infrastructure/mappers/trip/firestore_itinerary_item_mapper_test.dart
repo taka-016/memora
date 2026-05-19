@@ -16,7 +16,6 @@ void main() {
       when(doc.id).thenReturn('item001');
       when(doc.data()).thenReturn({
         'tripId': 'trip001',
-        'orderIndex': 0,
         'name': '朝食',
         'startDateTime': Timestamp.fromDate(DateTime(2024, 1, 2, 8)),
         'endDateTime': Timestamp.fromDate(DateTime(2024, 1, 2, 9)),
@@ -29,7 +28,6 @@ void main() {
 
       expect(dto.id, 'item001');
       expect(dto.tripId, 'trip001');
-      expect(dto.orderIndex, 0);
       expect(dto.name, '朝食');
       expect(dto.startDateTime, DateTime(2024, 1, 2, 8));
       expect(dto.endDateTime, DateTime(2024, 1, 2, 9));
@@ -40,7 +38,6 @@ void main() {
       final item = ItineraryItem(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -51,7 +48,7 @@ void main() {
           firestore_mapper.FirestoreItineraryItemMapper.toCreateFirestore(item);
 
       expect(map['tripId'], 'trip001');
-      expect(map['orderIndex'], 0);
+      expect(map, isNot(contains('orderIndex')));
       expect(map['name'], '朝食');
       expect(map['startDateTime'], Timestamp.fromDate(DateTime(2024, 1, 2, 8)));
       expect(map['endDateTime'], Timestamp.fromDate(DateTime(2024, 1, 2, 9)));

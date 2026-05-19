@@ -43,7 +43,6 @@ void main() {
           ItineraryItemDto(
             id: 'item-010',
             tripId: 'trip-003',
-            orderIndex: 0,
             name: '朝食',
             startDateTime: DateTime(2024, 7, 2, 8),
             endDateTime: DateTime(2024, 7, 2, 9),
@@ -87,7 +86,6 @@ void main() {
             ItineraryItem(
               id: 'item-010',
               tripId: 'trip-003',
-              orderIndex: 0,
               name: '朝食',
               startDateTime: DateTime(2024, 7, 2, 8),
               endDateTime: DateTime(2024, 7, 2, 9),

@@ -33,7 +33,7 @@ void main() {
       service = FirestoreItineraryItemQueryService(firestore: mockFirestore);
     });
 
-    test('旅行IDで旅程項目一覧を取得しorderByを適用できる', () async {
+    test('旅行IDで旅程項目一覧を取得しorderByを複数適用できる', () async {
       const tripId = 'trip001';
       final mockQuery = MockQuery<Map<String, dynamic>>();
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
@@ -43,14 +43,16 @@ void main() {
         mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockQuery);
       when(
-        mockQuery.orderBy('orderIndex', descending: false),
+        mockQuery.orderBy('startDateTime', descending: false),
+      ).thenReturn(mockQuery);
+      when(
+        mockQuery.orderBy('endDateTime', descending: false),
       ).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('item001');
       when(mockDoc.data()).thenReturn({
         'tripId': tripId,
-        'orderIndex': 0,
         'name': '朝食',
         'startDateTime': Timestamp.fromDate(DateTime(2024, 1, 2, 8)),
         'endDateTime': Timestamp.fromDate(DateTime(2024, 1, 2, 9)),
@@ -59,14 +61,18 @@ void main() {
 
       final result = await service.getItineraryItemsByTripId(
         tripId,
-        orderBy: const [OrderBy('orderIndex', descending: false)],
+        orderBy: const [
+          OrderBy('startDateTime', descending: false),
+          OrderBy('endDateTime', descending: false),
+        ],
       );
 
       expect(result, hasLength(1));
       expect(result.first, isA<ItineraryItemDto>());
       expect(result.first.id, 'item001');
       expect(result.first.name, '朝食');
-      verify(mockQuery.orderBy('orderIndex', descending: false)).called(1);
+      verify(mockQuery.orderBy('startDateTime', descending: false)).called(1);
+      verify(mockQuery.orderBy('endDateTime', descending: false)).called(1);
     });
 
     test('取得時に例外が発生した場合は空リストを返す', () async {

@@ -59,7 +59,6 @@ void main() {
         ItineraryItemDto(
           id: 'item-1',
           tripId: 'trip-entry-123',
-          orderIndex: 0,
           name: '朝食',
         ),
       ];
@@ -127,7 +126,6 @@ void main() {
           ItineraryItemDto(
             id: 'item-1',
             tripId: 'trip-entry-123',
-            orderIndex: 0,
             name: '朝食',
           ),
         ],
@@ -150,7 +148,6 @@ void main() {
           ItineraryItemDto(
             id: 'item-2',
             tripId: 'trip-entry-123',
-            orderIndex: 1,
             name: '観光',
           ),
         ],
@@ -218,7 +215,6 @@ void main() {
         ItineraryItemDto(
           id: 'item-1',
           tripId: 'trip-entry-123',
-          orderIndex: 0,
           name: '朝食',
         ),
       ];
@@ -255,7 +251,6 @@ void main() {
         ItineraryItemDto(
           id: 'item-1',
           tripId: 'trip-entry-123',
-          orderIndex: 0,
           name: '朝食',
         ),
       ];
@@ -313,7 +308,6 @@ void main() {
           ItineraryItemDto(
             id: 'item-1',
             tripId: 'trip-entry-123',
-            orderIndex: 0,
             name: '朝食',
           ),
         ],
@@ -341,7 +335,6 @@ void main() {
           ItineraryItemDto(
             id: 'item-2',
             tripId: 'trip-entry-999',
-            orderIndex: 1,
             name: '観光',
           ),
         ],

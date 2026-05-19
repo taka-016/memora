@@ -56,7 +56,10 @@ void main() {
       final itineraryItemsOrderBy = verification.captured[2] as List<OrderBy>;
       expect(pinsOrderBy.single.field, 'visitStartDateTime');
       expect(tasksOrderBy.single.field, 'orderIndex');
-      expect(itineraryItemsOrderBy.single.field, 'orderIndex');
+      expect(
+        itineraryItemsOrderBy.map((orderBy) => orderBy.field),
+        ['startDateTime', 'endDateTime'],
+      );
     });
 
     test('存在しない旅行IDの場合はnullを返すこと', () async {

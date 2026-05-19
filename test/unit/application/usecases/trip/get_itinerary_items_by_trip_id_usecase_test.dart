@@ -19,13 +19,12 @@ void main() {
       usecase = GetItineraryItemsByTripIdUsecase(mockQueryService);
     });
 
-    test('旅行IDで旅程項目をorderIndex昇順で取得する', () async {
+    test('旅行IDで旅程項目を開始日時、終了日時の昇順で取得する', () async {
       const tripId = 'trip001';
       const items = [
         ItineraryItemDto(
           id: 'item001',
           tripId: tripId,
-          orderIndex: 0,
           name: '朝食',
         ),
       ];
@@ -42,7 +41,10 @@ void main() {
       verify(
         mockQueryService.getItineraryItemsByTripId(
           tripId,
-          orderBy: const [OrderBy('orderIndex', descending: false)],
+          orderBy: const [
+            OrderBy('startDateTime', descending: false),
+            OrderBy('endDateTime', descending: false),
+          ],
         ),
       ).called(1);
     });
