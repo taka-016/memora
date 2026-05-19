@@ -23,11 +23,7 @@ void main() {
     });
 
     test('copyWithメソッドが正しく動作する', () {
-      final item = ItineraryItem(
-        id: 'item001',
-        tripId: 'trip001',
-        name: '朝食',
-      );
+      final item = ItineraryItem(id: 'item001', tripId: 'trip001', name: '朝食');
 
       final updatedItem = item.copyWith(name: '昼食', memo: '予約確認');
 
@@ -39,11 +35,7 @@ void main() {
 
     test('nameが空の場合は例外が発生する', () {
       expect(
-        () => ItineraryItem(
-          id: 'item001',
-          tripId: 'trip001',
-          name: '  ',
-        ),
+        () => ItineraryItem(id: 'item001', tripId: 'trip001', name: '  '),
         throwsA(isA<ValidationException>()),
       );
     });

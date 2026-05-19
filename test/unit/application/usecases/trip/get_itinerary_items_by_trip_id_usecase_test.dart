@@ -22,11 +22,7 @@ void main() {
     test('旅行IDで旅程項目を開始日時、終了日時の昇順で取得する', () async {
       const tripId = 'trip001';
       const items = [
-        ItineraryItemDto(
-          id: 'item001',
-          tripId: tripId,
-          name: '朝食',
-        ),
+        ItineraryItemDto(id: 'item001', tripId: tripId, name: '朝食'),
       ];
       when(
         mockQueryService.getItineraryItemsByTripId(

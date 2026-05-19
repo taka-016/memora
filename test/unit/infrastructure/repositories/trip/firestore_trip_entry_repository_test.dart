@@ -71,11 +71,7 @@ void main() {
             ),
           ],
           itineraryItems: [
-            ItineraryItem(
-              id: 'item-001',
-              tripId: 'trip001',
-              name: '朝食',
-            ),
+            ItineraryItem(id: 'item-001', tripId: 'trip001', name: '朝食'),
           ],
         );
 
@@ -150,11 +146,7 @@ void main() {
           ),
         ],
         itineraryItems: [
-          ItineraryItem(
-            id: 'item-uuid',
-            tripId: 'trip001',
-            name: '朝食',
-          ),
+          ItineraryItem(id: 'item-uuid', tripId: 'trip001', name: '朝食'),
         ],
       );
 

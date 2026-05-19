@@ -37,7 +37,6 @@ erDiagram
     itinerary_items {
         string id PK
         string tripId FK "NOT NULL"
-        number orderIndex "NOT NULL"
         string name "NOT NULL"
         timestamp startDateTime
         timestamp endDateTime

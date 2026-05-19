@@ -150,11 +150,7 @@ void main() {
           ),
         ],
         itineraryItems: [
-          ItineraryItem(
-            id: 'item-2',
-            tripId: 'abc123',
-            name: '夕食',
-          ),
+          ItineraryItem(id: 'item-2', tripId: 'abc123', name: '夕食'),
         ],
       );
       expect(updatedEntry.id, 'abc123');

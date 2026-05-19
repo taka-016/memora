@@ -32,11 +32,7 @@ void main() {
         endDate: DateTime(2024, 1, 3),
         memo: '更新されたメモ',
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item001',
-            tripId: 'trip-id',
-            name: '朝食',
-          ),
+          ItineraryItemDto(id: 'item001', tripId: 'trip-id', name: '朝食'),
         ],
       );
 

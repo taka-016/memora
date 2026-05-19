@@ -56,11 +56,7 @@ void main() {
         ),
       ];
       const itineraryItems = [
-        ItineraryItemDto(
-          id: 'item-1',
-          tripId: 'trip-entry-123',
-          name: '朝食',
-        ),
+        ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
       ];
 
       final dto = TripEntryDto(
@@ -123,11 +119,7 @@ void main() {
           ),
         ],
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item-1',
-            tripId: 'trip-entry-123',
-            name: '朝食',
-          ),
+          ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
         ],
       );
 
@@ -145,11 +137,7 @@ void main() {
           ),
         ],
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item-2',
-            tripId: 'trip-entry-123',
-            name: '観光',
-          ),
+          ItineraryItemDto(id: 'item-2', tripId: 'trip-entry-123', name: '観光'),
         ],
       );
 
@@ -212,11 +200,7 @@ void main() {
         ),
       ];
       const itineraryItems = [
-        ItineraryItemDto(
-          id: 'item-1',
-          tripId: 'trip-entry-123',
-          name: '朝食',
-        ),
+        ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
       ];
       final originalDto = TripEntryDto(
         id: 'trip-entry-123',
@@ -248,11 +232,7 @@ void main() {
         ),
       ];
       const itineraryItems = [
-        ItineraryItemDto(
-          id: 'item-1',
-          tripId: 'trip-entry-123',
-          name: '朝食',
-        ),
+        ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
       ];
 
       final dto1 = TripEntryDto(
@@ -305,11 +285,7 @@ void main() {
           ),
         ],
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item-1',
-            tripId: 'trip-entry-123',
-            name: '朝食',
-          ),
+          ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
         ],
       );
 
@@ -332,11 +308,7 @@ void main() {
           ),
         ],
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item-2',
-            tripId: 'trip-entry-999',
-            name: '観光',
-          ),
+          ItineraryItemDto(id: 'item-2', tripId: 'trip-entry-999', name: '観光'),
         ],
       );
 

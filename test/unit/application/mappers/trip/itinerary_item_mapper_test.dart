@@ -32,16 +32,8 @@ void main() {
 
     test('ItineraryItemDtoのリストをエンティティリストに変換できる', () {
       const dtos = [
-        ItineraryItemDto(
-          id: 'item001',
-          tripId: 'trip001',
-          name: '朝食',
-        ),
-        ItineraryItemDto(
-          id: 'item002',
-          tripId: 'trip001',
-          name: '観光',
-        ),
+        ItineraryItemDto(id: 'item001', tripId: 'trip001', name: '朝食'),
+        ItineraryItemDto(id: 'item002', tripId: 'trip001', name: '観光'),
       ];
 
       final items = ItineraryItemMapper.toEntityList(dtos);

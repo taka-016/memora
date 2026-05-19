@@ -2,6 +2,9 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
+- 旅程項目から`orderIndex`を削除する
+  - DB、Entity、DTO、Mapper、Query、Repository、Usecaseから旅程項目の`orderIndex`を除外する
+  - 旅程項目の表示順は開始日時の昇順、開始日時が同じ場合は終了日時の昇順で決定する
 - ER図のitinerary_itemsテーブル定義を元に旅程項目を実装する
   - `ItineraryItem`エンティティを作成する
   - `ItineraryItemDto`を作成する
@@ -10,8 +13,8 @@
   - `ItineraryItemQueryService`と`FirestoreItineraryItemQueryService`を作成し、`tripId`で旅程項目を取得できるようにする
   - `TripEntry`集約に`itineraryItems`を追加し、`TripEntryRepository`、`TripEntryQueryService`、Firestore実装、Factory配線を対応させる
   - `TripEntryDto`、`TripEntryMapper`、`FirestoreTripEntryMapper`を`itineraryItems`に対応させる
-  - 保存・更新・削除時に`itinerary_items`を旅行単位で同期し、取得時は`orderIndex`順に並べる
-  - `name`必須、`orderIndex`は0以上、終了日時は開始日時以降、日時は旅行期間の開始2日前から終了2日後までの範囲内であることを検証する
+  - 保存・更新・削除時に`itinerary_items`を旅行単位で同期し、取得時は開始日時、終了日時順に並べる
+  - `name`必須、終了日時は開始日時以降、日時は旅行期間の開始2日前から終了2日後までの範囲内であることを検証する
 - ER図のメンバーイベントの変更に伴う対応
   - 永続化契約を `memberId` / `year` / `memo` ベースへ統一し、`id` は Firestore のドキュメントIDとして扱う
   - `MemberEvent` / `MemberEventDto` / `MemberEventMapper` / `FirestoreMemberEventMapper` から旧設計の `type` / `name` / `startDate` / `endDate` を除去し、ER図どおりの項目だけを扱うようにする。また、業務上の一意性は `memberId` + `year` で担保する前提で責務を整理する

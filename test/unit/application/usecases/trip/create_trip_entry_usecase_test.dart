@@ -31,11 +31,7 @@ void main() {
         startDate: DateTime(2024, 1, 1),
         endDate: DateTime(2024, 1, 3),
         itineraryItems: const [
-          ItineraryItemDto(
-            id: 'item001',
-            tripId: '',
-            name: '朝食',
-          ),
+          ItineraryItemDto(id: 'item001', tripId: '', name: '朝食'),
         ],
       );
       const generatedId = 'generated-trip-id';
