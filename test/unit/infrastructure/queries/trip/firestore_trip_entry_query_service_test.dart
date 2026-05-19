@@ -52,20 +52,26 @@ void main() {
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
     });
 
-    test('旅行IDで旅行情報を取得し、関連するピンも取得する', () async {
+    test('旅行IDで旅行情報を取得し、関連データを取得後に並び替える', () async {
       const tripId = 'trip123';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockPinsQuery = MockQuery<Map<String, dynamic>>();
       final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockSecondPinDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockSecondTaskDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
       final mockItineraryItemsSnapshot =
           MockQuerySnapshot<Map<String, dynamic>>();
       final mockItineraryItemDoc =
+          MockQueryDocumentSnapshot<Map<String, dynamic>>();
+      final mockSecondItineraryItemDoc =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
       when(mockTripEntriesCollection.doc(tripId)).thenReturn(mockDocRef);
@@ -83,11 +89,8 @@ void main() {
       when(
         mockPinsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockPinsQuery);
-      when(
-        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
-      ).thenReturn(mockPinsQuery);
       when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
-      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
+      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc, mockSecondPinDoc]);
       when(mockPinDoc.data()).thenReturn({
         'pinId': 'pin001',
         'tripId': tripId,
@@ -99,42 +102,69 @@ void main() {
         'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 15)),
         'memo': '景色が綺麗',
       });
+      when(mockSecondPinDoc.data()).thenReturn({
+        'pinId': 'pin002',
+        'tripId': tripId,
+        'groupId': 'group001',
+        'latitude': 34.0,
+        'longitude': 135.0,
+        'locationName': '京都駅',
+        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 8, 1, 10)),
+        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 8, 1, 15)),
+        'memo': '集合',
+      });
 
       when(
         mockTasksCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockTasksQuery);
-      when(
-        mockTasksQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
-      when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
+      when(mockTasksSnapshot.docs).thenReturn([
+        mockTaskDoc,
+        mockSecondTaskDoc,
+      ]);
       when(mockTaskDoc.data()).thenReturn({
         'tripId': tripId,
-        'orderIndex': 0,
-        'name': '準備',
+        'orderIndex': 2,
+        'name': '荷造り',
         'isCompleted': false,
       });
       when(mockTaskDoc.id).thenReturn('task001');
+      when(mockSecondTaskDoc.data()).thenReturn({
+        'tripId': tripId,
+        'orderIndex': 1,
+        'name': '予約確認',
+        'isCompleted': false,
+      });
+      when(mockSecondTaskDoc.id).thenReturn('task002');
 
       when(
         mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockItineraryItemsQuery);
       when(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
         mockItineraryItemsQuery.get(),
       ).thenAnswer((_) async => mockItineraryItemsSnapshot);
-      when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
+      when(mockItineraryItemsSnapshot.docs).thenReturn([
+        mockItineraryItemDoc,
+        mockSecondItineraryItemDoc,
+      ]);
       when(mockItineraryItemDoc.data()).thenReturn({
         'tripId': tripId,
-        'orderIndex': 0,
-        'name': '朝食',
+        'orderIndex': 3,
+        'name': '夕食',
         'startDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 8)),
         'endDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 9)),
         'memo': 'ホテルで朝食',
       });
       when(mockItineraryItemDoc.id).thenReturn('item001');
+      when(mockSecondItineraryItemDoc.data()).thenReturn({
+        'tripId': tripId,
+        'orderIndex': 1,
+        'name': '朝食',
+        'startDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 8)),
+        'endDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 9)),
+        'memo': 'ホテルで朝食',
+      });
+      when(mockSecondItineraryItemDoc.id).thenReturn('item002');
 
       final result = await service.getTripEntryById(
         tripId,
@@ -146,21 +176,19 @@ void main() {
       expect(result, isNotNull);
       expect(result!.id, equals(tripId));
       expect(result.name, equals('夏旅行'));
-      expect(result.pins, hasLength(1));
+      expect(result.pins, hasLength(2));
       final PinDto pin = result.pins!.first;
-      expect(pin.locationName, equals('東京タワー'));
-      expect(result.tasks, hasLength(1));
-      expect(result.tasks!.first.name, '準備');
-      expect(result.itineraryItems, hasLength(1));
+      expect(pin.locationName, equals('京都駅'));
+      expect(result.tasks, hasLength(2));
+      expect(result.tasks!.first.name, '予約確認');
+      expect(result.itineraryItems, hasLength(2));
       final ItineraryItemDto itineraryItem = result.itineraryItems!.first;
       expect(itineraryItem.name, '朝食');
-      verify(
-        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
-      ).called(1);
-      verify(mockTasksQuery.orderBy('orderIndex', descending: false)).called(1);
-      verify(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
-      ).called(1);
+      verifyNever(mockPinsQuery.orderBy(any, descending: anyNamed('descending')));
+      verifyNever(mockTasksQuery.orderBy(any, descending: anyNamed('descending')));
+      verifyNever(
+        mockItineraryItemsQuery.orderBy(any, descending: anyNamed('descending')),
+      );
     });
 
     test('旅行が存在しない場合はnullを返す', () async {
@@ -214,9 +242,6 @@ void main() {
         mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockItineraryItemsQuery);
       when(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
         mockItineraryItemsQuery.get(),
       ).thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([]);
@@ -225,9 +250,9 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.year, 2027);
-      verify(
-        mockItineraryItemsQuery.orderBy('orderIndex', descending: false),
-      ).called(1);
+      verifyNever(
+        mockItineraryItemsQuery.orderBy(any, descending: anyNamed('descending')),
+      );
     });
 
     test('旅行取得時に例外が発生した場合はnullを返す', () async {
