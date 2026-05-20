@@ -391,23 +391,6 @@ class TripEditFormView extends HookWidget {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: onTaskManagementRequested,
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.checklist, size: 20),
-                          SizedBox(width: 4),
-                          Text('タスク'),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
                       onPressed: onItineraryManagementRequested,
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48),
@@ -418,6 +401,23 @@ class TripEditFormView extends HookWidget {
                           Icon(Icons.event_note, size: 20),
                           SizedBox(width: 4),
                           Text('旅程'),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onTaskManagementRequested,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.checklist, size: 20),
+                          SizedBox(width: 4),
+                          Text('タスク'),
                         ],
                       ),
                     ),
