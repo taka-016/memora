@@ -557,7 +557,9 @@ void main() {
         find.byKey(const Key('itinerary_memo_field')),
         'ホテルで朝食',
       );
-      await tester.tap(find.widgetWithText(ElevatedButton, '追加'));
+      final addButton = find.widgetWithText(ElevatedButton, '追加');
+      await tester.ensureVisible(addButton);
+      await tester.tap(addButton);
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();

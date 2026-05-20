@@ -151,7 +151,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('日付を選択'), findsWidgets);
 
-      await tester.tap(find.text('キャンセル'));
+      await tester.tapAt(const Offset(10, 10));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('itinerary_start_time_field')));
@@ -202,7 +202,9 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -233,7 +235,9 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      final updatedListItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(updatedListItem);
+      await tester.tap(updatedListItem);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(TextButton, '削除'));
       await tester.pumpAndSettle();
@@ -261,7 +265,9 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
       await tester.pumpAndSettle();
 
       expect(

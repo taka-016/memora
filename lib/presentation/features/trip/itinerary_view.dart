@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:uuid/uuid.dart';
 
 class ItineraryView extends HookWidget {
@@ -20,13 +22,16 @@ class ItineraryView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController();
-    final startDateTimeController = useTextEditingController();
-    final endDateTimeController = useTextEditingController();
+    final startDate = useState<DateTime?>(null);
+    final startTime = useState<TimeOfDay?>(null);
+    final endDate = useState<DateTime?>(null);
+    final endTime = useState<TimeOfDay?>(null);
     final memoController = useTextEditingController();
     final itemsState = useState<List<ItineraryItemDto>>(
       sortItineraryItems(items),
     );
     final errorMessage = useState<String?>(null);
+    final clock = NtpSynchronizedAppClock();
 
     useEffect(() {
       itemsState.value = sortItineraryItems(items);
@@ -41,8 +46,10 @@ class ItineraryView extends HookWidget {
 
     void clearInputs() {
       nameController.clear();
-      startDateTimeController.clear();
-      endDateTimeController.clear();
+      startDate.value = null;
+      startTime.value = null;
+      endDate.value = null;
+      endTime.value = null;
       memoController.clear();
     }
 
@@ -51,8 +58,10 @@ class ItineraryView extends HookWidget {
         id: const Uuid().v7(),
         tripId: tripId ?? '',
         nameInput: nameController.text,
-        startDateTimeInput: startDateTimeController.text,
-        endDateTimeInput: endDateTimeController.text,
+        startDate: startDate.value,
+        startTime: startTime.value,
+        endDate: endDate.value,
+        endTime: endTime.value,
         memoInput: memoController.text,
       );
       if (result.errorMessage != null) {
@@ -66,6 +75,54 @@ class ItineraryView extends HookWidget {
       errorMessage.value = null;
       notifyChange([...itemsState.value, item]);
       clearInputs();
+    }
+
+    Future<void> selectStartDate() async {
+      final picked = await DatePickerHelper.showCustomDatePicker(
+        context,
+        initialDate: startDate.value ?? clock.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        startDate.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectStartTime() async {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: startTime.value ?? TimeOfDay.now(),
+      );
+      if (picked != null) {
+        startTime.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectEndDate() async {
+      final picked = await DatePickerHelper.showCustomDatePicker(
+        context,
+        initialDate: endDate.value ?? (startDate.value ?? clock.now()),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        endDate.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectEndTime() async {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: endTime.value ?? (startTime.value ?? TimeOfDay.now()),
+      );
+      if (picked != null) {
+        endTime.value = picked;
+        errorMessage.value = null;
+      }
     }
 
     Future<void> showEditBottomSheet(ItineraryItemDto item) async {
@@ -151,22 +208,24 @@ class ItineraryView extends HookWidget {
             ),
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('itinerary_start_datetime_field'),
-            controller: startDateTimeController,
-            decoration: const InputDecoration(
-              labelText: '開始日時',
-              border: OutlineInputBorder(),
-            ),
+          buildDateTimeSection(
+            label: '開始日時',
+            dateValue: formatDate(startDate.value),
+            timeValue: formatTime(startTime.value),
+            dateFieldKey: const Key('itinerary_start_date_field'),
+            timeFieldKey: const Key('itinerary_start_time_field'),
+            onDateTap: selectStartDate,
+            onTimeTap: selectStartTime,
           ),
           const SizedBox(height: 12),
-          TextField(
-            key: const Key('itinerary_end_datetime_field'),
-            controller: endDateTimeController,
-            decoration: const InputDecoration(
-              labelText: '終了日時',
-              border: OutlineInputBorder(),
-            ),
+          buildDateTimeSection(
+            label: '終了日時',
+            dateValue: formatDate(endDate.value),
+            timeValue: formatTime(endTime.value),
+            dateFieldKey: const Key('itinerary_end_date_field'),
+            timeFieldKey: const Key('itinerary_end_time_field'),
+            onDateTap: selectEndDate,
+            onTimeTap: selectEndTime,
           ),
           const SizedBox(height: 12),
           TextField(
@@ -222,13 +281,18 @@ class ItineraryView extends HookWidget {
       children: [
         buildHeader(),
         const SizedBox(height: 12),
-        buildErrorBanner(),
-        if (errorMessage.value != null) const SizedBox(height: 12),
-        buildInputArea(),
-        const SizedBox(height: 16),
         Expanded(
-          child: ListView(
-            children: itemsState.value.map(buildListItem).toList(),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildErrorBanner(),
+                if (errorMessage.value != null) const SizedBox(height: 12),
+                buildInputArea(),
+                const SizedBox(height: 16),
+                ...itemsState.value.map(buildListItem),
+              ],
+            ),
           ),
         ),
       ],
@@ -251,22 +315,75 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController(text: item.name);
-    final startDateTimeController = useTextEditingController(
-      text: formatDateTimeInput(item.startDateTime),
+    final startDate = useState<DateTime?>(
+      datePartOfDateTime(item.startDateTime),
     );
-    final endDateTimeController = useTextEditingController(
-      text: formatDateTimeInput(item.endDateTime),
+    final startTime = useState<TimeOfDay?>(
+      timePartOfDateTime(item.startDateTime),
     );
+    final endDate = useState<DateTime?>(datePartOfDateTime(item.endDateTime));
+    final endTime = useState<TimeOfDay?>(timePartOfDateTime(item.endDateTime));
     final memoController = useTextEditingController(text: item.memo ?? '');
     final errorMessage = useState<String?>(null);
+    final clock = NtpSynchronizedAppClock();
+
+    Future<void> selectStartDate() async {
+      final picked = await DatePickerHelper.showCustomDatePicker(
+        context,
+        initialDate: startDate.value ?? clock.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        startDate.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectStartTime() async {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: startTime.value ?? TimeOfDay.now(),
+      );
+      if (picked != null) {
+        startTime.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectEndDate() async {
+      final picked = await DatePickerHelper.showCustomDatePicker(
+        context,
+        initialDate: endDate.value ?? (startDate.value ?? clock.now()),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        endDate.value = picked;
+        errorMessage.value = null;
+      }
+    }
+
+    Future<void> selectEndTime() async {
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: endTime.value ?? (startTime.value ?? TimeOfDay.now()),
+      );
+      if (picked != null) {
+        endTime.value = picked;
+        errorMessage.value = null;
+      }
+    }
 
     void save() {
       final result = buildItineraryItemFromInput(
         id: item.id,
         tripId: item.tripId,
         nameInput: nameController.text,
-        startDateTimeInput: startDateTimeController.text,
-        endDateTimeInput: endDateTimeController.text,
+        startDate: startDate.value,
+        startTime: startTime.value,
+        endDate: endDate.value,
+        endTime: endTime.value,
         memoInput: memoController.text,
       );
       if (result.errorMessage != null) {
@@ -329,22 +446,24 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              TextField(
-                key: const Key('itinerary_edit_start_datetime_field'),
-                controller: startDateTimeController,
-                decoration: const InputDecoration(
-                  labelText: '開始日時',
-                  border: OutlineInputBorder(),
-                ),
+              buildDateTimeSection(
+                label: '開始日時',
+                dateValue: formatDate(startDate.value),
+                timeValue: formatTime(startTime.value),
+                dateFieldKey: const Key('itinerary_edit_start_date_field'),
+                timeFieldKey: const Key('itinerary_edit_start_time_field'),
+                onDateTap: selectStartDate,
+                onTimeTap: selectStartTime,
               ),
               const SizedBox(height: 12),
-              TextField(
-                key: const Key('itinerary_edit_end_datetime_field'),
-                controller: endDateTimeController,
-                decoration: const InputDecoration(
-                  labelText: '終了日時',
-                  border: OutlineInputBorder(),
-                ),
+              buildDateTimeSection(
+                label: '終了日時',
+                dateValue: formatDate(endDate.value),
+                timeValue: formatTime(endTime.value),
+                dateFieldKey: const Key('itinerary_edit_end_date_field'),
+                timeFieldKey: const Key('itinerary_edit_end_time_field'),
+                onDateTap: selectEndDate,
+                onTimeTap: selectEndTime,
               ),
               const SizedBox(height: 12),
               TextField(
@@ -390,8 +509,10 @@ ItineraryItemInputResult buildItineraryItemFromInput({
   required String id,
   required String tripId,
   required String nameInput,
-  required String startDateTimeInput,
-  required String endDateTimeInput,
+  required DateTime? startDate,
+  required TimeOfDay? startTime,
+  required DateTime? endDate,
+  required TimeOfDay? endTime,
   required String memoInput,
 }) {
   final name = nameInput.trim();
@@ -399,18 +520,8 @@ ItineraryItemInputResult buildItineraryItemFromInput({
     return const ItineraryItemInputResult(errorMessage: '旅程項目名を入力してください');
   }
 
-  final startDateTime = parseDateTimeInput(startDateTimeInput);
-  final endDateTime = parseDateTimeInput(endDateTimeInput);
-  if (startDateTimeInput.trim().isNotEmpty && startDateTime == null) {
-    return const ItineraryItemInputResult(
-      errorMessage: '開始日時はyyyy/MM/dd HH:mm形式で入力してください',
-    );
-  }
-  if (endDateTimeInput.trim().isNotEmpty && endDateTime == null) {
-    return const ItineraryItemInputResult(
-      errorMessage: '終了日時はyyyy/MM/dd HH:mm形式で入力してください',
-    );
-  }
+  final startDateTime = buildDateTime(startDate, startTime);
+  final endDateTime = buildDateTime(endDate, endTime);
   if (startDateTime != null &&
       endDateTime != null &&
       endDateTime.isBefore(startDateTime)) {
@@ -428,6 +539,108 @@ ItineraryItemInputResult buildItineraryItemFromInput({
       memo: memo.isEmpty ? null : memo,
     ),
   );
+}
+
+Widget buildDateTimeSection({
+  required String label,
+  required String dateValue,
+  required String timeValue,
+  required Key dateFieldKey,
+  required Key timeFieldKey,
+  required VoidCallback onDateTap,
+  required VoidCallback onTimeTap,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Align(alignment: Alignment.centerLeft, child: Text(label)),
+      const SizedBox(height: 8),
+      buildDateTimeField(
+        key: dateFieldKey,
+        value: dateValue,
+        icon: Icons.calendar_today,
+        onTap: onDateTap,
+      ),
+      const SizedBox(height: 8),
+      buildDateTimeField(
+        key: timeFieldKey,
+        value: timeValue,
+        icon: Icons.access_time,
+        onTap: onTimeTap,
+      ),
+    ],
+  );
+}
+
+Widget buildDateTimeField({
+  required Key key,
+  required String value,
+  required IconData icon,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    key: key,
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.black54),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(color: Colors.black, fontSize: 16),
+          ),
+          Icon(icon, color: Colors.black54),
+        ],
+      ),
+    ),
+  );
+}
+
+DateTime? buildDateTime(DateTime? date, TimeOfDay? time) {
+  if (date == null) {
+    return null;
+  }
+  final effectiveTime = time ?? const TimeOfDay(hour: 0, minute: 0);
+  return DateTime(
+    date.year,
+    date.month,
+    date.day,
+    effectiveTime.hour,
+    effectiveTime.minute,
+  );
+}
+
+DateTime? datePartOfDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return null;
+  }
+  return DateTime(dateTime.year, dateTime.month, dateTime.day);
+}
+
+TimeOfDay? timePartOfDateTime(DateTime? dateTime) {
+  if (dateTime == null) {
+    return null;
+  }
+  return TimeOfDay(hour: dateTime.hour, minute: dateTime.minute);
+}
+
+String formatDate(DateTime? date) {
+  if (date == null) {
+    return '日付を選択';
+  }
+  return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}';
+}
+
+String formatTime(TimeOfDay? time) {
+  if (time == null) {
+    return '時間を選択';
+  }
+  return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 }
 
 List<ItineraryItemDto> sortItineraryItems(List<ItineraryItemDto> items) {
