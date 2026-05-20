@@ -83,10 +83,6 @@ void main() {
         find.byKey(const Key('itinerary_name_field')),
         '朝食',
       );
-      await tester.enterText(
-        find.byKey(const Key('itinerary_memo_field')),
-        'ホテルで朝食',
-      );
       await tester.tap(find.widgetWithText(ElevatedButton, '追加'));
       await tester.pumpAndSettle();
 
@@ -96,10 +92,10 @@ void main() {
       expect(lastChanged.first.name, '朝食');
       expect(lastChanged.first.startDateTime, isNull);
       expect(lastChanged.first.endDateTime, isNull);
-      expect(lastChanged.first.memo, 'ホテルで朝食');
+      expect(lastChanged.first.memo, isNull);
     });
 
-    testWidgets('追加用の開始日時と終了日時は日付・時刻選択フィールドで表示されること', (tester) async {
+    testWidgets('追加用フォームは項目名のみ表示されること', (tester) async {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
@@ -111,16 +107,12 @@ void main() {
         ),
       );
 
-      expect(
-        find.byKey(const Key('itinerary_start_date_field')),
-        findsOneWidget,
-      );
-      expect(
-        find.byKey(const Key('itinerary_start_time_field')),
-        findsOneWidget,
-      );
-      expect(find.byKey(const Key('itinerary_end_date_field')), findsOneWidget);
-      expect(find.byKey(const Key('itinerary_end_time_field')), findsOneWidget);
+      expect(find.byKey(const Key('itinerary_name_field')), findsOneWidget);
+      expect(find.byKey(const Key('itinerary_start_date_field')), findsNothing);
+      expect(find.byKey(const Key('itinerary_start_time_field')), findsNothing);
+      expect(find.byKey(const Key('itinerary_end_date_field')), findsNothing);
+      expect(find.byKey(const Key('itinerary_end_time_field')), findsNothing);
+      expect(find.byKey(const Key('itinerary_memo_field')), findsNothing);
       expect(
         find.byKey(const Key('itinerary_start_datetime_field')),
         findsNothing,
@@ -129,34 +121,8 @@ void main() {
         find.byKey(const Key('itinerary_end_datetime_field')),
         findsNothing,
       );
-      expect(find.text('日付を選択'), findsNWidgets(2));
-      expect(find.text('時間を選択'), findsNWidgets(2));
-      expect(find.byIcon(Icons.calendar_today), findsNWidgets(2));
-      expect(find.byIcon(Icons.access_time), findsNWidgets(2));
-    });
-
-    testWidgets('追加用の日付・時刻フィールドのタップでPickerが表示されること', (tester) async {
-      await tester.pumpWidget(
-        _wrapWithApp(
-          ItineraryView(
-            tripId: 'trip-1',
-            items: const [],
-            onChanged: (_) {},
-            onClose: () {},
-          ),
-        ),
-      );
-
-      await tester.tap(find.byKey(const Key('itinerary_start_date_field')));
-      await tester.pumpAndSettle();
-      expect(find.text('日付を選択'), findsWidgets);
-
-      await tester.tapAt(const Offset(10, 10));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('itinerary_start_time_field')));
-      await tester.pumpAndSettle();
-      expect(find.text('時間を選択'), findsWidgets);
+      expect(find.text('日付を選択'), findsNothing);
+      expect(find.text('時間を選択'), findsNothing);
     });
 
     testWidgets('旅程項目名が未入力の場合は追加できないこと', (tester) async {

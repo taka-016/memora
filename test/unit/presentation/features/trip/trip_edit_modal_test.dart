@@ -553,10 +553,6 @@ void main() {
         find.byKey(const Key('itinerary_name_field')),
         '朝食',
       );
-      await tester.enterText(
-        find.byKey(const Key('itinerary_memo_field')),
-        'ホテルで朝食',
-      );
       final addButton = find.widgetWithText(ElevatedButton, '追加');
       await tester.ensureVisible(addButton);
       await tester.tap(addButton);
@@ -572,7 +568,7 @@ void main() {
       expect(savedTripEntry!.itineraryItems!.first.name, '朝食');
       expect(savedTripEntry!.itineraryItems!.first.startDateTime, isNull);
       expect(savedTripEntry!.itineraryItems!.first.endDateTime, isNull);
-      expect(savedTripEntry!.itineraryItems!.first.memo, 'ホテルで朝食');
+      expect(savedTripEntry!.itineraryItems!.first.memo, isNull);
     });
 
     testWidgets('新規作成時は「作成」ボタンが表示されること', (WidgetTester tester) async {
