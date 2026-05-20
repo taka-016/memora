@@ -125,6 +125,30 @@ void main() {
       expect(find.text('時間を選択'), findsNothing);
     });
 
+    testWidgets('追加用フォームはタスク画面と同じ横並びで表示されること', (tester) async {
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final nameField = find.byKey(const Key('itinerary_name_field'));
+      final addButton = find.widgetWithText(ElevatedButton, '追加');
+
+      expect(nameField, findsOneWidget);
+      expect(addButton, findsOneWidget);
+      expect(tester.getCenter(nameField).dy, tester.getCenter(addButton).dy);
+      expect(
+        tester.getRect(nameField).right,
+        lessThan(tester.getRect(addButton).left),
+      );
+    });
+
     testWidgets('旅程項目名が未入力の場合は追加できないこと', (tester) async {
       var changeCount = 0;
 
@@ -146,7 +170,7 @@ void main() {
       expect(changeCount, 0);
     });
 
-    testWidgets('旅程項目を編集・削除できること', (tester) async {
+    testWidgets('旅程項目を編集できること', (tester) async {
       List<ItineraryItemDto> lastChanged = [];
       final item = ItineraryItemDto(
         id: 'item-1',
@@ -189,26 +213,70 @@ void main() {
       expect(lastChanged.first.name, '朝食変更');
       expect(lastChanged.first.startDateTime, DateTime(2024, 1, 2, 8));
       expect(lastChanged.first.memo, '予約時間に合わせる');
+    });
+
+    testWidgets('旅程項目はリスト上の削除ボタンで削除できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+      );
 
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
             tripId: 'trip-1',
-            items: lastChanged,
+            items: [item],
             onChanged: (updated) => lastChanged = updated,
             onClose: () {},
           ),
         ),
       );
 
-      final updatedListItem = find.byKey(const Key('itineraryListItem_item-1'));
-      await tester.ensureVisible(updatedListItem);
-      await tester.tap(updatedListItem);
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, '削除'));
+      final deleteButton = find.byKey(const Key('delete_itinerary_item-1'));
+      expect(deleteButton, findsOneWidget);
+
+      await tester.tap(deleteButton);
       await tester.pumpAndSettle();
 
       expect(lastChanged, isEmpty);
+      expect(find.text('朝食'), findsNothing);
+    });
+
+    testWidgets('編集ボトムシートはタスク画面と同じ操作構成で表示されること', (tester) async {
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('itinerary_edit_bottom_sheet_handle')),
+        findsOneWidget,
+      );
+      expect(find.text('キャンセル'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, '保存'), findsOneWidget);
+      expect(find.text('旅程編集'), findsNothing);
+      expect(find.widgetWithText(TextButton, '削除'), findsNothing);
     });
 
     testWidgets('編集用の開始日時と終了日時は日付・時刻選択フィールドで初期表示されること', (tester) async {
