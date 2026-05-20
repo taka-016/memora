@@ -79,7 +79,10 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byKey(const Key('itinerary_name_field')), '朝食');
+      await tester.enterText(
+        find.byKey(const Key('itinerary_name_field')),
+        '朝食',
+      );
       await tester.enterText(
         find.byKey(const Key('itinerary_start_datetime_field')),
         '2024/01/02 08:00',
@@ -139,7 +142,10 @@ void main() {
         ),
       );
 
-      await tester.enterText(find.byKey(const Key('itinerary_name_field')), '朝食');
+      await tester.enterText(
+        find.byKey(const Key('itinerary_name_field')),
+        '朝食',
+      );
       await tester.enterText(
         find.byKey(const Key('itinerary_start_datetime_field')),
         '2024/01/02 09:00',

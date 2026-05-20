@@ -12,6 +12,7 @@ class TripEditFormView extends HookWidget {
     super.key,
     required this.value,
     required this.onChanged,
+    required this.onItineraryManagementRequested,
     required this.onTaskManagementRequested,
     required this.onVisitLocationEditRequested,
     this.configuredYear,
@@ -20,6 +21,7 @@ class TripEditFormView extends HookWidget {
 
   final TripEntryDto value;
   final ValueChanged<TripEntryDto> onChanged;
+  final VoidCallback onItineraryManagementRequested;
   final VoidCallback onTaskManagementRequested;
   final VoidCallback onVisitLocationEditRequested;
   final int? configuredYear;
@@ -385,22 +387,42 @@ class TripEditFormView extends HookWidget {
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onTaskManagementRequested,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onTaskManagementRequested,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.checklist, size: 20),
+                          SizedBox(width: 4),
+                          Text('タスク'),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.checklist, size: 20),
-                      SizedBox(width: 4),
-                      Text('タスク管理'),
-                    ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: onItineraryManagementRequested,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.event_note, size: 20),
+                          SizedBox(width: 4),
+                          Text('旅程'),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 16),
               const Align(

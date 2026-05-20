@@ -37,6 +37,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (value) => latestValue = value,
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
@@ -59,9 +60,7 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('旅程・タスク・訪問場所編集ボタンが親のハンドラを呼ぶこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('旅程・タスク・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
       var itineraryRequested = 0;
       var taskRequested = 0;
       var mapRequested = 0;

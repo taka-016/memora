@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
@@ -11,6 +12,7 @@ import 'package:memora/application/usecases/location/get_nearby_location_name_us
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -19,7 +21,7 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 import 'package:uuid/uuid.dart';
 
-enum TripEditExpandedSection { map, tasks }
+enum TripEditExpandedSection { map, itinerary, tasks }
 
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
@@ -64,6 +66,9 @@ class TripEditModal extends HookConsumerWidget {
         memo: tripEntry?.memo ?? '',
         pins: List<PinDto>.from(tripEntry?.pins ?? const []),
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
+        itineraryItems: List<ItineraryItemDto>.from(
+          tripEntry?.itineraryItems ?? const [],
+        ),
       );
     }, [groupId, tripEntry, year, clock]);
 
@@ -75,6 +80,11 @@ class TripEditModal extends HookConsumerWidget {
     List<TaskDto> currentTasks() =>
         List<TaskDto>.from(draftTripEntry.value.tasks ?? const []);
 
+    List<ItineraryItemDto> currentItineraryItems() =>
+        List<ItineraryItemDto>.from(
+          draftTripEntry.value.itineraryItems ?? const [],
+        );
+
     void updateDraftTripEntry(TripEntryDto tripEntry) {
       draftTripEntry.value = tripEntry;
       errorMessage.value = null;
@@ -83,6 +93,14 @@ class TripEditModal extends HookConsumerWidget {
     void updateDraftPins(List<PinDto> pins) {
       updateDraftTripEntry(
         draftTripEntry.value.copyWith(pins: List<PinDto>.from(pins)),
+      );
+    }
+
+    void updateDraftItineraryItems(List<ItineraryItemDto> itineraryItems) {
+      updateDraftTripEntry(
+        draftTripEntry.value.copyWith(
+          itineraryItems: List<ItineraryItemDto>.from(itineraryItems),
+        ),
       );
     }
 
@@ -184,6 +202,11 @@ class TripEditModal extends HookConsumerWidget {
       hideBottomSheet();
     }
 
+    void showItineraryView() {
+      expandedSection.value = TripEditExpandedSection.itinerary;
+      hideBottomSheet();
+    }
+
     Future<void> handleSave() async {
       errorMessage.value = null;
       final tripToSave = draftTripEntry.value;
@@ -206,11 +229,15 @@ class TripEditModal extends HookConsumerWidget {
       try {
         final sortedTasks = currentTasks()
           ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+        final sortedItineraryItems = sortItineraryItems(
+          currentItineraryItems(),
+        );
         await onSave(
           tripToSave.copyWith(
             startDate: selectedStart,
             endDate: selectedEnd,
             tasks: sortedTasks,
+            itineraryItems: sortedItineraryItems,
           ),
         );
         editStateNotifier.reset();
@@ -280,6 +307,7 @@ class TripEditModal extends HookConsumerWidget {
               configuredYear: tripEntry?.year ?? year,
               clock: clock,
               onChanged: updateDraftTripEntry,
+              onItineraryManagementRequested: showItineraryView,
               onTaskManagementRequested: showTaskView,
               onVisitLocationEditRequested: toggleMapExpansion,
             ),
@@ -344,6 +372,13 @@ class TripEditModal extends HookConsumerWidget {
             tasks: currentTasks(),
             groupMembers: groupMembers,
             onChanged: updateDraftTasks,
+            onClose: () => expandedSection.value = null,
+          );
+        case TripEditExpandedSection.itinerary:
+          return ItineraryView(
+            tripId: tripEntry?.id,
+            items: currentItineraryItems(),
+            onChanged: updateDraftItineraryItems,
             onClose: () => expandedSection.value = null,
           );
         case null:
