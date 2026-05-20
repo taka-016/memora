@@ -114,6 +114,42 @@ void main() {
       expect(mapRequested, 1);
     });
 
+    testWidgets('旅程ボタンとタスクボタンは左から旅程、タスクの順で表示されること', (
+      WidgetTester tester,
+    ) async {
+      final initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onVisitLocationEditRequested: () {},
+            ),
+          ),
+        ),
+      );
+
+      final itineraryButton = find.widgetWithText(ElevatedButton, '旅程');
+      final taskButton = find.widgetWithText(ElevatedButton, 'タスク');
+
+      expect(itineraryButton, findsOneWidget);
+      expect(taskButton, findsOneWidget);
+      expect(
+        tester.getRect(itineraryButton).left,
+        lessThan(tester.getRect(taskButton).left),
+      );
+    });
+
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
       WidgetTester tester,
     ) async {
