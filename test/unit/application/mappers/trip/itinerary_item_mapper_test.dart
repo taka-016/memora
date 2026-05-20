@@ -9,7 +9,6 @@ void main() {
       final dto = ItineraryItemDto(
         id: 'item001',
         tripId: 'trip001',
-        orderIndex: 0,
         name: '朝食',
         startDateTime: DateTime(2024, 1, 2, 8),
         endDateTime: DateTime(2024, 1, 2, 9),
@@ -23,7 +22,6 @@ void main() {
         entity.ItineraryItem(
           id: 'item001',
           tripId: 'trip001',
-          orderIndex: 0,
           name: '朝食',
           startDateTime: DateTime(2024, 1, 2, 8),
           endDateTime: DateTime(2024, 1, 2, 9),
@@ -34,18 +32,8 @@ void main() {
 
     test('ItineraryItemDtoのリストをエンティティリストに変換できる', () {
       const dtos = [
-        ItineraryItemDto(
-          id: 'item001',
-          tripId: 'trip001',
-          orderIndex: 0,
-          name: '朝食',
-        ),
-        ItineraryItemDto(
-          id: 'item002',
-          tripId: 'trip001',
-          orderIndex: 1,
-          name: '観光',
-        ),
+        ItineraryItemDto(id: 'item001', tripId: 'trip001', name: '朝食'),
+        ItineraryItemDto(id: 'item002', tripId: 'trip001', name: '観光'),
       ];
 
       final items = ItineraryItemMapper.toEntityList(dtos);

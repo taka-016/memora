@@ -5,7 +5,6 @@ class ItineraryItem extends Equatable {
   ItineraryItem({
     required this.id,
     required this.tripId,
-    required this.orderIndex,
     required this.name,
     this.startDateTime,
     this.endDateTime,
@@ -16,7 +15,6 @@ class ItineraryItem extends Equatable {
 
   final String id;
   final String tripId;
-  final int orderIndex;
   final String name;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
@@ -25,7 +23,6 @@ class ItineraryItem extends Equatable {
   ItineraryItem copyWith({
     String? id,
     String? tripId,
-    int? orderIndex,
     String? name,
     DateTime? startDateTime,
     DateTime? endDateTime,
@@ -34,7 +31,6 @@ class ItineraryItem extends Equatable {
     return ItineraryItem(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
-      orderIndex: orderIndex ?? this.orderIndex,
       name: name ?? this.name,
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
@@ -43,9 +39,6 @@ class ItineraryItem extends Equatable {
   }
 
   void _validate() {
-    if (orderIndex < 0) {
-      throw ValidationException('旅程項目の順序は0以上でなければなりません');
-    }
     if (name.trim().isEmpty) {
       throw ValidationException('旅程項目名は必須です');
     }
@@ -60,7 +53,6 @@ class ItineraryItem extends Equatable {
   List<Object?> get props => [
     id,
     tripId,
-    orderIndex,
     name,
     startDateTime,
     endDateTime,

@@ -1,9 +1,6 @@
 # ToDo List
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
-- 旅程項目から`orderIndex`を削除する
-  - DB、Entity、DTO、Mapper、Query、Repository、Usecaseから旅程項目の`orderIndex`を除外する
-  - 旅程項目の表示順は開始日時の昇順、開始日時が同じ場合は終了日時の昇順で決定する
 
 ## マップの表示
 

@@ -71,12 +71,7 @@ void main() {
             ),
           ],
           itineraryItems: [
-            ItineraryItem(
-              id: 'item-001',
-              tripId: 'trip001',
-              orderIndex: 0,
-              name: '朝食',
-            ),
+            ItineraryItem(id: 'item-001', tripId: 'trip001', name: '朝食'),
           ],
         );
 
@@ -125,7 +120,6 @@ void main() {
               allOf([
                 containsPair('tripId', 'generated-doc-id'),
                 containsPair('name', '朝食'),
-                containsPair('orderIndex', 0),
                 contains('createdAt'),
                 contains('updatedAt'),
               ]),
@@ -151,12 +145,7 @@ void main() {
           ),
         ],
         itineraryItems: [
-          ItineraryItem(
-            id: 'item-uuid',
-            tripId: 'trip001',
-            orderIndex: 0,
-            name: '朝食',
-          ),
+          ItineraryItem(id: 'item-uuid', tripId: 'trip001', name: '朝食'),
         ],
       );
 

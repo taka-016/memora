@@ -5,7 +5,6 @@ class ItineraryItemDto extends Equatable {
   const ItineraryItemDto({
     required this.id,
     required this.tripId,
-    required this.orderIndex,
     required this.name,
     this.startDateTime,
     this.endDateTime,
@@ -14,7 +13,6 @@ class ItineraryItemDto extends Equatable {
 
   final String id;
   final String tripId;
-  final int orderIndex;
   final String name;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
@@ -23,7 +21,6 @@ class ItineraryItemDto extends Equatable {
   ItineraryItemDto copyWith({
     String? id,
     String? tripId,
-    int? orderIndex,
     String? name,
     Object? startDateTime = copyWithPlaceholder,
     Object? endDateTime = copyWithPlaceholder,
@@ -32,7 +29,6 @@ class ItineraryItemDto extends Equatable {
     return ItineraryItemDto(
       id: id ?? this.id,
       tripId: tripId ?? this.tripId,
-      orderIndex: orderIndex ?? this.orderIndex,
       name: name ?? this.name,
       startDateTime: resolveCopyWithValue<DateTime>(
         startDateTime,
@@ -52,7 +48,6 @@ class ItineraryItemDto extends Equatable {
   List<Object?> get props => [
     id,
     tripId,
-    orderIndex,
     name,
     startDateTime,
     endDateTime,

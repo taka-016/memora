@@ -35,12 +35,7 @@ void main() {
         ),
       ];
       const itineraryItems = [
-        ItineraryItemDto(
-          id: 'item001',
-          tripId: 'trip001',
-          orderIndex: 0,
-          name: '朝食',
-        ),
+        ItineraryItemDto(id: 'item001', tripId: 'trip001', name: '朝食'),
       ];
 
       final result = FirestoreTripEntryMapper.fromFirestore(
