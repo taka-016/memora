@@ -10,11 +10,13 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     required this.item,
     this.tripStartDate,
     required this.onSaved,
+    this.clock,
   });
 
   final ItineraryItemDto item;
   final DateTime? tripStartDate;
   final ValueChanged<ItineraryItemDto> onSaved;
+  final AppClock? clock;
 
   @override
   Widget build(BuildContext context) {
@@ -29,10 +31,13 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final endTime = useState<TimeOfDay?>(timePartOfDateTime(item.endDateTime));
     final memoController = useTextEditingController(text: item.memo ?? '');
     final errorMessage = useState<String?>(null);
-    final clock = NtpSynchronizedAppClock();
+    final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
-      return selectedDate ?? fallbackDate ?? tripStartDate ?? clock.now();
+      return selectedDate ??
+          fallbackDate ??
+          tripStartDate ??
+          effectiveClock.now();
     }
 
     Future<void> selectStartDate() async {
