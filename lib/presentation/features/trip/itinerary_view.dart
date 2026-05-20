@@ -588,52 +588,6 @@ int compareNullableDateTime(DateTime? a, DateTime? b) {
   return a.compareTo(b);
 }
 
-DateTime? parseDateTimeInput(String input) {
-  final trimmed = input.trim();
-  if (trimmed.isEmpty) {
-    return null;
-  }
-
-  final match = RegExp(
-    r'^(\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2})$',
-  ).firstMatch(trimmed);
-  if (match == null) {
-    return null;
-  }
-
-  final year = int.parse(match.group(1)!);
-  final month = int.parse(match.group(2)!);
-  final day = int.parse(match.group(3)!);
-  final hour = int.parse(match.group(4)!);
-  final minute = int.parse(match.group(5)!);
-  final parsed = DateTime(year, month, day, hour, minute);
-  if (parsed.year != year ||
-      parsed.month != month ||
-      parsed.day != day ||
-      parsed.hour != hour ||
-      parsed.minute != minute) {
-    return null;
-  }
-  return parsed;
-}
-
-String formatDateTimeInput(DateTime? dateTime) {
-  if (dateTime == null) {
-    return '';
-  }
-  return [
-    dateTime.year.toString().padLeft(4, '0'),
-    '/',
-    dateTime.month.toString().padLeft(2, '0'),
-    '/',
-    dateTime.day.toString().padLeft(2, '0'),
-    ' ',
-    dateTime.hour.toString().padLeft(2, '0'),
-    ':',
-    dateTime.minute.toString().padLeft(2, '0'),
-  ].join();
-}
-
 String formatDateTimeLabel(DateTime dateTime) {
   return [
     dateTime.month.toString().padLeft(2, '0'),
