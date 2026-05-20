@@ -39,46 +39,6 @@ class ItineraryView extends HookWidget {
       onChanged(sorted);
     }
 
-    ItineraryItemDto? buildInputItem({
-      required String id,
-      required String itemTripId,
-    }) {
-      final name = nameController.text.trim();
-      if (name.isEmpty) {
-        errorMessage.value = '旅程項目名を入力してください';
-        return null;
-      }
-
-      final startDateTime = parseDateTimeInput(startDateTimeController.text);
-      final endDateTime = parseDateTimeInput(endDateTimeController.text);
-      if (startDateTimeController.text.trim().isNotEmpty &&
-          startDateTime == null) {
-        errorMessage.value = '開始日時はyyyy/MM/dd HH:mm形式で入力してください';
-        return null;
-      }
-      if (endDateTimeController.text.trim().isNotEmpty && endDateTime == null) {
-        errorMessage.value = '終了日時はyyyy/MM/dd HH:mm形式で入力してください';
-        return null;
-      }
-      if (startDateTime != null &&
-          endDateTime != null &&
-          endDateTime.isBefore(startDateTime)) {
-        errorMessage.value = '終了日時は開始日時以降を入力してください';
-        return null;
-      }
-
-      final memo = memoController.text.trim();
-      errorMessage.value = null;
-      return ItineraryItemDto(
-        id: id,
-        tripId: itemTripId,
-        name: name,
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        memo: memo.isEmpty ? null : memo,
-      );
-    }
-
     void clearInputs() {
       nameController.clear();
       startDateTimeController.clear();
@@ -87,13 +47,23 @@ class ItineraryView extends HookWidget {
     }
 
     void addItem() {
-      final item = buildInputItem(
+      final result = buildItineraryItemFromInput(
         id: const Uuid().v7(),
-        itemTripId: tripId ?? '',
+        tripId: tripId ?? '',
+        nameInput: nameController.text,
+        startDateTimeInput: startDateTimeController.text,
+        endDateTimeInput: endDateTimeController.text,
+        memoInput: memoController.text,
       );
+      if (result.errorMessage != null) {
+        errorMessage.value = result.errorMessage;
+        return;
+      }
+      final item = result.item;
       if (item == null) {
         return;
       }
+      errorMessage.value = null;
       notifyChange([...itemsState.value, item]);
       clearInputs();
     }
@@ -291,39 +261,23 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final errorMessage = useState<String?>(null);
 
     void save() {
-      final name = nameController.text.trim();
-      if (name.isEmpty) {
-        errorMessage.value = '旅程項目名を入力してください';
-        return;
-      }
-
-      final startDateTime = parseDateTimeInput(startDateTimeController.text);
-      final endDateTime = parseDateTimeInput(endDateTimeController.text);
-      if (startDateTimeController.text.trim().isNotEmpty &&
-          startDateTime == null) {
-        errorMessage.value = '開始日時はyyyy/MM/dd HH:mm形式で入力してください';
-        return;
-      }
-      if (endDateTimeController.text.trim().isNotEmpty && endDateTime == null) {
-        errorMessage.value = '終了日時はyyyy/MM/dd HH:mm形式で入力してください';
-        return;
-      }
-      if (startDateTime != null &&
-          endDateTime != null &&
-          endDateTime.isBefore(startDateTime)) {
-        errorMessage.value = '終了日時は開始日時以降を入力してください';
-        return;
-      }
-
-      final memo = memoController.text.trim();
-      onSaved(
-        item.copyWith(
-          name: name,
-          startDateTime: startDateTime,
-          endDateTime: endDateTime,
-          memo: memo.isEmpty ? null : memo,
-        ),
+      final result = buildItineraryItemFromInput(
+        id: item.id,
+        tripId: item.tripId,
+        nameInput: nameController.text,
+        startDateTimeInput: startDateTimeController.text,
+        endDateTimeInput: endDateTimeController.text,
+        memoInput: memoController.text,
       );
+      if (result.errorMessage != null) {
+        errorMessage.value = result.errorMessage;
+        return;
+      }
+      if (result.item == null) {
+        return;
+      }
+
+      onSaved(result.item!);
       Navigator.of(context).pop();
     }
 
@@ -423,6 +377,57 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       ),
     );
   }
+}
+
+class ItineraryItemInputResult {
+  const ItineraryItemInputResult({this.item, this.errorMessage});
+
+  final ItineraryItemDto? item;
+  final String? errorMessage;
+}
+
+ItineraryItemInputResult buildItineraryItemFromInput({
+  required String id,
+  required String tripId,
+  required String nameInput,
+  required String startDateTimeInput,
+  required String endDateTimeInput,
+  required String memoInput,
+}) {
+  final name = nameInput.trim();
+  if (name.isEmpty) {
+    return const ItineraryItemInputResult(errorMessage: '旅程項目名を入力してください');
+  }
+
+  final startDateTime = parseDateTimeInput(startDateTimeInput);
+  final endDateTime = parseDateTimeInput(endDateTimeInput);
+  if (startDateTimeInput.trim().isNotEmpty && startDateTime == null) {
+    return const ItineraryItemInputResult(
+      errorMessage: '開始日時はyyyy/MM/dd HH:mm形式で入力してください',
+    );
+  }
+  if (endDateTimeInput.trim().isNotEmpty && endDateTime == null) {
+    return const ItineraryItemInputResult(
+      errorMessage: '終了日時はyyyy/MM/dd HH:mm形式で入力してください',
+    );
+  }
+  if (startDateTime != null &&
+      endDateTime != null &&
+      endDateTime.isBefore(startDateTime)) {
+    return const ItineraryItemInputResult(errorMessage: '終了日時は開始日時以降を入力してください');
+  }
+
+  final memo = memoInput.trim();
+  return ItineraryItemInputResult(
+    item: ItineraryItemDto(
+      id: id,
+      tripId: tripId,
+      name: name,
+      startDateTime: startDateTime,
+      endDateTime: endDateTime,
+      memo: memo.isEmpty ? null : memo,
+    ),
+  );
 }
 
 List<ItineraryItemDto> sortItineraryItems(List<ItineraryItemDto> items) {
