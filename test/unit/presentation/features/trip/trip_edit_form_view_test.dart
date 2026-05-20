@@ -59,7 +59,10 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('タスク管理・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
+    testWidgets('旅程・タスク・訪問場所編集ボタンが親のハンドラを呼ぶこと', (
+      WidgetTester tester,
+    ) async {
+      var itineraryRequested = 0;
       var taskRequested = 0;
       var mapRequested = 0;
       final initialValue = TripEntryDto(
@@ -92,6 +95,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () => itineraryRequested += 1,
               onTaskManagementRequested: () => taskRequested += 1,
               onVisitLocationEditRequested: () => mapRequested += 1,
             ),
@@ -99,11 +103,14 @@ void main() {
         ),
       );
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'タスク管理'));
+      await tester.tap(find.widgetWithText(ElevatedButton, '旅程'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'タスク'));
       await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, '編集'));
       await tester.pump();
 
+      expect(itineraryRequested, 1);
       expect(taskRequested, 1);
       expect(mapRequested, 1);
     });
@@ -143,6 +150,7 @@ void main() {
                         onChanged: useUpdatedHandler
                             ? (_) => updatedHandlerCallCount += 1
                             : (_) => initialHandlerCallCount += 1,
+                        onItineraryManagementRequested: () {},
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
                       ),
@@ -225,6 +233,7 @@ void main() {
                       child: TripEditFormView(
                         value: currentValue,
                         onChanged: emittedValues.add,
+                        onItineraryManagementRequested: () {},
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
                       ),
@@ -282,6 +291,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
@@ -305,6 +315,7 @@ void main() {
             child: TripEditFormView(
               value: updatedValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
