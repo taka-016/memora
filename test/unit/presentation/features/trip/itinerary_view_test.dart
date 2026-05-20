@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
+import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
 Widget _wrapWithApp(Widget child) {
   return MaterialApp(
@@ -331,6 +332,109 @@ void main() {
       expect(find.text('2024/01/02'), findsNWidgets(2));
       expect(find.text('08:00'), findsOneWidget);
       expect(find.text('09:00'), findsOneWidget);
+    });
+
+    testWidgets('開始日未設定時は旅行開始日の年月でDatePickerを開くこと', (tester) async {
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            tripStartDate: DateTime(2024, 7),
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('itinerary_edit_start_date_field')));
+      await tester.pumpAndSettle();
+
+      final dialog = tester.widget<CustomDatePickerDialog>(
+        find.byType(CustomDatePickerDialog),
+      );
+      expect(dialog.initialDate.year, 2024);
+      expect(dialog.initialDate.month, 7);
+    });
+
+    testWidgets('終了日未設定かつ開始日未設定時は旅行開始日の年月でDatePickerを開くこと', (tester) async {
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            tripStartDate: DateTime(2024, 7),
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('itinerary_edit_end_date_field')));
+      await tester.pumpAndSettle();
+
+      final dialog = tester.widget<CustomDatePickerDialog>(
+        find.byType(CustomDatePickerDialog),
+      );
+      expect(dialog.initialDate.year, 2024);
+      expect(dialog.initialDate.month, 7);
+    });
+
+    testWidgets('終了日未設定かつ開始日設定済み時は開始日の年月でDatePickerを開くこと', (tester) async {
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 8, 3, 10),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            tripStartDate: DateTime(2024, 7),
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('itinerary_edit_end_date_field')));
+      await tester.pumpAndSettle();
+
+      final dialog = tester.widget<CustomDatePickerDialog>(
+        find.byType(CustomDatePickerDialog),
+      );
+      expect(dialog.initialDate.year, 2024);
+      expect(dialog.initialDate.month, 8);
     });
   });
 }
