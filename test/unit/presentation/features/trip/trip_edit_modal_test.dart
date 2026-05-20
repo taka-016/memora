@@ -554,14 +554,6 @@ void main() {
         '朝食',
       );
       await tester.enterText(
-        find.byKey(const Key('itinerary_start_datetime_field')),
-        '2024/01/02 08:00',
-      );
-      await tester.enterText(
-        find.byKey(const Key('itinerary_end_datetime_field')),
-        '2024/01/02 09:00',
-      );
-      await tester.enterText(
         find.byKey(const Key('itinerary_memo_field')),
         'ホテルで朝食',
       );
@@ -576,10 +568,8 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.itineraryItems, hasLength(1));
       expect(savedTripEntry!.itineraryItems!.first.name, '朝食');
-      expect(
-        savedTripEntry!.itineraryItems!.first.startDateTime,
-        DateTime(2024, 1, 2, 8),
-      );
+      expect(savedTripEntry!.itineraryItems!.first.startDateTime, isNull);
+      expect(savedTripEntry!.itineraryItems!.first.endDateTime, isNull);
       expect(savedTripEntry!.itineraryItems!.first.memo, 'ホテルで朝食');
     });
 
