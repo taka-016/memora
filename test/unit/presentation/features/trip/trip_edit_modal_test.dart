@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
@@ -479,6 +480,109 @@ void main() {
       expect(find.text('作成'), findsOneWidget);
     });
 
+    testWidgets('旅程ボタンをタップで旅程画面が表示され閉じると旅行編集へ戻ること', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: TripEntryDto(
+              id: 'trip-1',
+              groupId: 'test-group-id',
+              year: 2024,
+              itineraryItems: [
+                ItineraryItemDto(
+                  id: 'item-1',
+                  tripId: 'trip-1',
+                  name: '朝食',
+                  startDateTime: DateTime(2024, 1, 2, 8),
+                  endDateTime: DateTime(2024, 1, 2, 9),
+                  memo: 'ホテルで朝食',
+                ),
+              ],
+            ),
+            onSave: (TripEntryDto tripEntry) async {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      final itineraryButton = find.widgetWithText(ElevatedButton, '旅程');
+      await tester.ensureVisible(itineraryButton);
+      await tester.tap(itineraryButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅程'), findsOneWidget);
+      expect(find.text('朝食'), findsOneWidget);
+      expect(find.text('01/02 08:00 - 01/02 09:00'), findsOneWidget);
+      expect(find.text('キャンセル'), findsNothing);
+      expect(find.text('更新'), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.text('訪問場所'), findsOneWidget);
+      expect(find.text('更新'), findsOneWidget);
+    });
+
+    testWidgets('旅程画面で追加した項目が保存対象に含まれること', (WidgetTester tester) async {
+      TripEntryDto? savedTripEntry;
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            year: 2024,
+            onSave: (TripEntryDto tripEntry) async {
+              savedTripEntry = tripEntry;
+            },
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      final itineraryButton = find.widgetWithText(ElevatedButton, '旅程');
+      await tester.ensureVisible(itineraryButton);
+      await tester.tap(itineraryButton);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('itinerary_name_field')),
+        '朝食',
+      );
+      await tester.enterText(
+        find.byKey(const Key('itinerary_start_datetime_field')),
+        '2024/01/02 08:00',
+      );
+      await tester.enterText(
+        find.byKey(const Key('itinerary_end_datetime_field')),
+        '2024/01/02 09:00',
+      );
+      await tester.enterText(
+        find.byKey(const Key('itinerary_memo_field')),
+        'ホテルで朝食',
+      );
+      await tester.tap(find.widgetWithText(ElevatedButton, '追加'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(savedTripEntry, isNotNull);
+      expect(savedTripEntry!.itineraryItems, hasLength(1));
+      expect(savedTripEntry!.itineraryItems!.first.name, '朝食');
+      expect(
+        savedTripEntry!.itineraryItems!.first.startDateTime,
+        DateTime(2024, 1, 2, 8),
+      );
+      expect(savedTripEntry!.itineraryItems!.first.memo, 'ホテルで朝食');
+    });
+
     testWidgets('新規作成時は「作成」ボタンが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
@@ -939,7 +1043,7 @@ void main() {
 
       expect(find.text('訪問開始日時は旅行期間内でなければなりません'), findsOneWidget);
 
-      final taskManagementButton = find.widgetWithText(ElevatedButton, 'タスク管理');
+      final taskManagementButton = find.widgetWithText(ElevatedButton, 'タスク');
       await tester.ensureVisible(taskManagementButton);
       await tester.tap(taskManagementButton);
       await tester.pumpAndSettle();
