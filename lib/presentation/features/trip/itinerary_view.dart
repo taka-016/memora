@@ -9,12 +9,14 @@ class ItineraryView extends HookWidget {
   const ItineraryView({
     super.key,
     required this.tripId,
+    this.tripStartDate,
     required this.items,
     required this.onChanged,
     this.onClose,
   });
 
   final String? tripId;
+  final DateTime? tripStartDate;
   final List<ItineraryItemDto> items;
   final ValueChanged<List<ItineraryItemDto>> onChanged;
   final VoidCallback? onClose;
@@ -76,6 +78,7 @@ class ItineraryView extends HookWidget {
           return ItineraryItemEditBottomSheet(
             key: const Key('itinerary_edit_bottom_sheet'),
             item: item,
+            tripStartDate: tripStartDate,
             onSaved: (updatedItem) {
               final updated = List<ItineraryItemDto>.from(itemsState.value);
               final index = updated.indexWhere(

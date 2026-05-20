@@ -335,11 +335,7 @@ void main() {
     });
 
     testWidgets('開始日未設定時は旅行開始日の年月でDatePickerを開くこと', (tester) async {
-      final item = ItineraryItemDto(
-        id: 'item-1',
-        tripId: 'trip-1',
-        name: '朝食',
-      );
+      final item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '朝食');
 
       await tester.pumpWidget(
         _wrapWithApp(
@@ -358,7 +354,9 @@ void main() {
       await tester.tap(listItem);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byKey(const Key('itinerary_edit_start_date_field')));
+      await tester.tap(
+        find.byKey(const Key('itinerary_edit_start_date_field')),
+      );
       await tester.pumpAndSettle();
 
       final dialog = tester.widget<CustomDatePickerDialog>(
@@ -369,11 +367,7 @@ void main() {
     });
 
     testWidgets('終了日未設定かつ開始日未設定時は旅行開始日の年月でDatePickerを開くこと', (tester) async {
-      final item = ItineraryItemDto(
-        id: 'item-1',
-        tripId: 'trip-1',
-        name: '朝食',
-      );
+      final item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '朝食');
 
       await tester.pumpWidget(
         _wrapWithApp(

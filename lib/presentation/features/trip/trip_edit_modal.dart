@@ -377,6 +377,7 @@ class TripEditModal extends HookConsumerWidget {
         case TripEditExpandedSection.itinerary:
           return ItineraryView(
             tripId: tripEntry?.id,
+            tripStartDate: draftTripEntry.value.startDate,
             items: currentItineraryItems(),
             onChanged: updateDraftItineraryItems,
             onClose: () => expandedSection.value = null,

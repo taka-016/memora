@@ -8,10 +8,12 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({
     super.key,
     required this.item,
+    this.tripStartDate,
     required this.onSaved,
   });
 
   final ItineraryItemDto item;
+  final DateTime? tripStartDate;
   final ValueChanged<ItineraryItemDto> onSaved;
 
   @override
@@ -29,10 +31,14 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final errorMessage = useState<String?>(null);
     final clock = NtpSynchronizedAppClock();
 
+    DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
+      return selectedDate ?? fallbackDate ?? tripStartDate ?? clock.now();
+    }
+
     Future<void> selectStartDate() async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: startDate.value ?? clock.now(),
+        initialDate: initialDateFor(startDate.value),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -56,7 +62,10 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     Future<void> selectEndDate() async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: endDate.value ?? (startDate.value ?? clock.now()),
+        initialDate: initialDateFor(
+          endDate.value,
+          fallbackDate: startDate.value,
+        ),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
