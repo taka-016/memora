@@ -22,16 +22,10 @@ class ItineraryView extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final nameController = useTextEditingController();
-    final startDate = useState<DateTime?>(null);
-    final startTime = useState<TimeOfDay?>(null);
-    final endDate = useState<DateTime?>(null);
-    final endTime = useState<TimeOfDay?>(null);
-    final memoController = useTextEditingController();
     final itemsState = useState<List<ItineraryItemDto>>(
       sortItineraryItems(items),
     );
     final errorMessage = useState<String?>(null);
-    final clock = NtpSynchronizedAppClock();
 
     useEffect(() {
       itemsState.value = sortItineraryItems(items);
@@ -46,11 +40,6 @@ class ItineraryView extends HookWidget {
 
     void clearInputs() {
       nameController.clear();
-      startDate.value = null;
-      startTime.value = null;
-      endDate.value = null;
-      endTime.value = null;
-      memoController.clear();
     }
 
     void addItem() {
@@ -58,11 +47,11 @@ class ItineraryView extends HookWidget {
         id: const Uuid().v7(),
         tripId: tripId ?? '',
         nameInput: nameController.text,
-        startDate: startDate.value,
-        startTime: startTime.value,
-        endDate: endDate.value,
-        endTime: endTime.value,
-        memoInput: memoController.text,
+        startDate: null,
+        startTime: null,
+        endDate: null,
+        endTime: null,
+        memoInput: '',
       );
       if (result.errorMessage != null) {
         errorMessage.value = result.errorMessage;
@@ -75,54 +64,6 @@ class ItineraryView extends HookWidget {
       errorMessage.value = null;
       notifyChange([...itemsState.value, item]);
       clearInputs();
-    }
-
-    Future<void> selectStartDate() async {
-      final picked = await DatePickerHelper.showCustomDatePicker(
-        context,
-        initialDate: startDate.value ?? clock.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
-      );
-      if (picked != null) {
-        startDate.value = picked;
-        errorMessage.value = null;
-      }
-    }
-
-    Future<void> selectStartTime() async {
-      final picked = await showTimePicker(
-        context: context,
-        initialTime: startTime.value ?? TimeOfDay.now(),
-      );
-      if (picked != null) {
-        startTime.value = picked;
-        errorMessage.value = null;
-      }
-    }
-
-    Future<void> selectEndDate() async {
-      final picked = await DatePickerHelper.showCustomDatePicker(
-        context,
-        initialDate: endDate.value ?? (startDate.value ?? clock.now()),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
-      );
-      if (picked != null) {
-        endDate.value = picked;
-        errorMessage.value = null;
-      }
-    }
-
-    Future<void> selectEndTime() async {
-      final picked = await showTimePicker(
-        context: context,
-        initialTime: endTime.value ?? (startTime.value ?? TimeOfDay.now()),
-      );
-      if (picked != null) {
-        endTime.value = picked;
-        errorMessage.value = null;
-      }
     }
 
     Future<void> showEditBottomSheet(ItineraryItemDto item) async {
@@ -206,36 +147,6 @@ class ItineraryView extends HookWidget {
               labelText: '項目名',
               border: OutlineInputBorder(),
             ),
-          ),
-          const SizedBox(height: 12),
-          buildDateTimeSection(
-            label: '開始日時',
-            dateValue: formatDate(startDate.value),
-            timeValue: formatTime(startTime.value),
-            dateFieldKey: const Key('itinerary_start_date_field'),
-            timeFieldKey: const Key('itinerary_start_time_field'),
-            onDateTap: selectStartDate,
-            onTimeTap: selectStartTime,
-          ),
-          const SizedBox(height: 12),
-          buildDateTimeSection(
-            label: '終了日時',
-            dateValue: formatDate(endDate.value),
-            timeValue: formatTime(endTime.value),
-            dateFieldKey: const Key('itinerary_end_date_field'),
-            timeFieldKey: const Key('itinerary_end_time_field'),
-            onDateTap: selectEndDate,
-            onTimeTap: selectEndTime,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const Key('itinerary_memo_field'),
-            controller: memoController,
-            decoration: const InputDecoration(
-              labelText: 'メモ',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 2,
           ),
           const SizedBox(height: 12),
           Align(
