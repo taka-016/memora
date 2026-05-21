@@ -246,6 +246,125 @@ void main() {
       expect(find.text('朝食'), findsNothing);
     });
 
+    testWidgets('旅程項目は開始日の年月日ごとに区切って表示すること', (tester) async {
+      final items = [
+        ItineraryItemDto(id: 'item-no-start', tripId: 'trip-1', name: '未定'),
+        ItineraryItemDto(
+          id: 'item-3',
+          tripId: 'trip-1',
+          name: '夕食',
+          startDateTime: DateTime(2024, 1, 3, 18),
+        ),
+        ItineraryItemDto(
+          id: 'item-2',
+          tripId: 'trip-1',
+          name: '昼食',
+          startDateTime: DateTime(2024, 1, 2, 12),
+        ),
+        ItineraryItemDto(
+          id: 'item-1',
+          tripId: 'trip-1',
+          name: '朝食',
+          startDateTime: DateTime(2024, 1, 2, 8),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: items,
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      expect(
+        find.byKey(const Key('itinerary_date_group_2024-01-02')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('itinerary_date_group_2024-01-03')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('itinerary_date_group_no_start')),
+        findsOneWidget,
+      );
+      expect(find.text('2024/01/02'), findsOneWidget);
+      expect(find.text('2024/01/03'), findsOneWidget);
+      expect(find.text('開始日未設定'), findsOneWidget);
+
+      final jan2Header = tester.getTopLeft(find.text('2024/01/02')).dy;
+      final breakfast = tester.getTopLeft(find.text('朝食')).dy;
+      final lunch = tester.getTopLeft(find.text('昼食')).dy;
+      final jan3Header = tester.getTopLeft(find.text('2024/01/03')).dy;
+      final dinner = tester.getTopLeft(find.text('夕食')).dy;
+      final noStartHeader = tester.getTopLeft(find.text('開始日未設定')).dy;
+      final undecided = tester.getTopLeft(find.text('未定')).dy;
+
+      expect(jan2Header, lessThan(breakfast));
+      expect(breakfast, lessThan(lunch));
+      expect(lunch, lessThan(jan3Header));
+      expect(jan3Header, lessThan(dinner));
+      expect(dinner, lessThan(noStartHeader));
+      expect(noStartHeader, lessThan(undecided));
+    });
+
+    testWidgets('開始日グループを折りたたみ展開できること', (tester) async {
+      final items = [
+        ItineraryItemDto(
+          id: 'item-3',
+          tripId: 'trip-1',
+          name: '夕食',
+          startDateTime: DateTime(2024, 1, 3, 18),
+        ),
+        ItineraryItemDto(
+          id: 'item-2',
+          tripId: 'trip-1',
+          name: '昼食',
+          startDateTime: DateTime(2024, 1, 2, 12),
+        ),
+        ItineraryItemDto(
+          id: 'item-1',
+          tripId: 'trip-1',
+          name: '朝食',
+          startDateTime: DateTime(2024, 1, 2, 8),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: items,
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(
+        find.byKey(const Key('toggle_itinerary_date_group_2024-01-02')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('2024/01/02'), findsOneWidget);
+      expect(find.text('朝食'), findsNothing);
+      expect(find.text('昼食'), findsNothing);
+      expect(find.text('夕食'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('toggle_itinerary_date_group_2024-01-02')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('朝食'), findsOneWidget);
+      expect(find.text('昼食'), findsOneWidget);
+      expect(find.text('夕食'), findsOneWidget);
+    });
+
     testWidgets('編集ボトムシートはタイトルと削除操作なしでキャンセル・保存操作を表示すること', (tester) async {
       final item = ItineraryItemDto(
         id: 'item-1',
