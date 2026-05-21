@@ -126,7 +126,7 @@ void main() {
       expect(find.text('時間を選択'), findsNothing);
     });
 
-    testWidgets('追加用フォームはタスク画面と同じ横並びで表示されること', (tester) async {
+    testWidgets('追加用フォームは項目名と追加ボタンを横並びで表示すること', (tester) async {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
@@ -246,7 +246,7 @@ void main() {
       expect(find.text('朝食'), findsNothing);
     });
 
-    testWidgets('編集ボトムシートはタスク画面と同じ操作構成で表示されること', (tester) async {
+    testWidgets('編集ボトムシートはタイトルと削除操作なしでキャンセル・保存操作を表示すること', (tester) async {
       final item = ItineraryItemDto(
         id: 'item-1',
         tripId: 'trip-1',
