@@ -516,7 +516,7 @@ void main() {
 
       expect(find.text('旅程'), findsOneWidget);
       expect(find.text('朝食'), findsOneWidget);
-      expect(find.text('01/02 08:00 - 01/02 09:00'), findsOneWidget);
+      expect(find.text('08:00 - 09:00'), findsOneWidget);
       expect(find.text('キャンセル'), findsNothing);
       expect(find.text('更新'), findsNothing);
 

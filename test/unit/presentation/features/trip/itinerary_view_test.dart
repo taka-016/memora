@@ -56,7 +56,7 @@ void main() {
       expect(find.text('旅程'), findsOneWidget);
       expect(find.byIcon(Icons.close), findsOneWidget);
       expect(find.text('朝食'), findsOneWidget);
-      expect(find.text('01/02 08:00 - 01/02 09:00'), findsOneWidget);
+      expect(find.text('08:00 - 09:00'), findsOneWidget);
       expect(find.text('ホテルで朝食'), findsOneWidget);
 
       final first = tester.getTopLeft(find.text('朝食')).dy;
@@ -363,6 +363,79 @@ void main() {
       expect(find.text('朝食'), findsOneWidget);
       expect(find.text('昼食'), findsOneWidget);
       expect(find.text('夕食'), findsOneWidget);
+    });
+
+    testWidgets('旅程項目は時刻を項目名の上に同じフォントサイズで表示すること', (tester) async {
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+        endDateTime: DateTime(2024, 1, 2, 9),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final timeFinder = find.text('08:00 - 09:00');
+      final nameFinder = find.text('朝食');
+      final timeTextStyle = DefaultTextStyle.of(
+        tester.element(timeFinder),
+      ).style;
+      final nameTextStyle = DefaultTextStyle.of(
+        tester.element(nameFinder),
+      ).style;
+
+      expect(timeFinder, findsOneWidget);
+      expect(nameFinder, findsOneWidget);
+      expect(
+        tester.getTopLeft(timeFinder).dy,
+        lessThan(tester.getTopLeft(nameFinder).dy),
+      );
+      expect(timeTextStyle.fontSize, nameTextStyle.fontSize);
+    });
+
+    testWidgets('旅程項目の時刻は開始日を表示せず終了日が開始日と異なる場合だけ終了日を表示すること', (tester) async {
+      final items = [
+        ItineraryItemDto(
+          id: 'same-day',
+          tripId: 'trip-1',
+          name: '朝食',
+          startDateTime: DateTime(2024, 1, 2, 8),
+          endDateTime: DateTime(2024, 1, 2, 9),
+        ),
+        ItineraryItemDto(
+          id: 'next-day',
+          tripId: 'trip-1',
+          name: '夜行移動',
+          startDateTime: DateTime(2024, 1, 2, 23),
+          endDateTime: DateTime(2024, 1, 3, 1),
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: items,
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('08:00 - 09:00'), findsOneWidget);
+      expect(find.text('23:00 - 01/03 01:00'), findsOneWidget);
+      expect(find.text('01/02 08:00 - 01/02 09:00'), findsNothing);
+      expect(find.text('01/02 23:00 - 01/03 01:00'), findsNothing);
     });
 
     testWidgets('編集ボトムシートはタイトルと削除操作なしでキャンセル・保存操作を表示すること', (tester) async {
