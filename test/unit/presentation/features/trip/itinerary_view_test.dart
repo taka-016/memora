@@ -532,6 +532,70 @@ void main() {
       expect(find.text('09:00'), findsOneWidget);
     });
 
+    testWidgets('開始日時と終了日時をクリアして保存できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+        endDateTime: DateTime(2024, 1, 2, 9),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            onChanged: (updated) => lastChanged = updated,
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('itinerary_edit_start_date_field')),
+          matching: find.byKey(
+            const Key('itinerary_edit_start_datetime_clear_button'),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('itinerary_edit_end_date_field')),
+          matching: find.byKey(
+            const Key('itinerary_edit_end_datetime_clear_button'),
+          ),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('itinerary_edit_start_datetime_clear_button')),
+      );
+      await tester.tap(
+        find.byKey(const Key('itinerary_edit_end_datetime_clear_button')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('日付を選択'), findsNWidgets(2));
+      expect(find.text('時間を選択'), findsNWidgets(2));
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
+      await tester.pumpAndSettle();
+
+      expect(lastChanged, hasLength(1));
+      expect(lastChanged.first.startDateTime, isNull);
+      expect(lastChanged.first.endDateTime, isNull);
+    });
+
     testWidgets('開始日未設定時は旅行開始日の年月でDatePickerを開くこと', (tester) async {
       final item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '朝食');
 
