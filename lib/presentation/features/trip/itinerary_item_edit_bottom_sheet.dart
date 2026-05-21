@@ -91,6 +91,18 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       }
     }
 
+    void clearStartDateTime() {
+      startDate.value = null;
+      startTime.value = null;
+      errorMessage.value = null;
+    }
+
+    void clearEndDateTime() {
+      endDate.value = null;
+      endTime.value = null;
+      errorMessage.value = null;
+    }
+
     void save() {
       final result = buildItineraryItemFromInput(
         id: item.id,
@@ -173,6 +185,13 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               timeFieldKey: const Key('itinerary_edit_start_time_field'),
               onDateTap: selectStartDate,
               onTimeTap: selectStartTime,
+              clearDateFieldKey: const Key(
+                'itinerary_edit_start_datetime_clear_button',
+              ),
+              onClearDateTime:
+                  startDate.value != null || startTime.value != null
+                  ? clearStartDateTime
+                  : null,
             ),
             const SizedBox(height: 12),
             buildDateTimeSection(
@@ -183,6 +202,12 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               timeFieldKey: const Key('itinerary_edit_end_time_field'),
               onDateTap: selectEndDate,
               onTimeTap: selectEndTime,
+              clearDateFieldKey: const Key(
+                'itinerary_edit_end_datetime_clear_button',
+              ),
+              onClearDateTime: endDate.value != null || endTime.value != null
+                  ? clearEndDateTime
+                  : null,
             ),
             const SizedBox(height: 12),
             TextField(
@@ -264,26 +289,34 @@ Widget buildDateTimeSection({
   required Key timeFieldKey,
   required VoidCallback onDateTap,
   required VoidCallback onTimeTap,
+  required Key clearDateFieldKey,
+  required VoidCallback? onClearDateTime,
 }) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Align(alignment: Alignment.centerLeft, child: Text(label)),
-      const SizedBox(height: 8),
-      buildDateTimeField(
-        key: dateFieldKey,
-        value: dateValue,
-        icon: Icons.calendar_today,
-        onTap: onDateTap,
-      ),
-      const SizedBox(height: 8),
-      buildDateTimeField(
-        key: timeFieldKey,
-        value: timeValue,
-        icon: Icons.access_time,
-        onTap: onTimeTap,
-      ),
-    ],
+  return SizedBox(
+    width: double.infinity,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(alignment: Alignment.centerLeft, child: Text(label)),
+        const SizedBox(height: 8),
+        buildDateTimeField(
+          key: dateFieldKey,
+          value: dateValue,
+          icon: Icons.calendar_today,
+          onTap: onDateTap,
+          clearKey: clearDateFieldKey,
+          onClear: onClearDateTime,
+          clearTooltip: '$labelをクリア',
+        ),
+        const SizedBox(height: 8),
+        buildDateTimeField(
+          key: timeFieldKey,
+          value: timeValue,
+          icon: Icons.access_time,
+          onTap: onTimeTap,
+        ),
+      ],
+    ),
   );
 }
 
@@ -292,24 +325,47 @@ Widget buildDateTimeField({
   required String value,
   required IconData icon,
   required VoidCallback onTap,
+  Key? clearKey,
+  VoidCallback? onClear,
+  String? clearTooltip,
 }) {
   return InkWell(
     key: key,
     onTap: onTap,
     child: Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black54),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            value,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            ),
           ),
-          Icon(icon, color: Colors.black54),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (onClear != null)
+                Tooltip(
+                  message: clearTooltip ?? '日時をクリア',
+                  child: GestureDetector(
+                    key: clearKey,
+                    onTap: onClear,
+                    child: const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Icon(Icons.clear, color: Colors.black54),
+                    ),
+                  ),
+                ),
+              Icon(icon, color: Colors.black54),
+            ],
+          ),
         ],
       ),
     ),
