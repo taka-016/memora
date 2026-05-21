@@ -27,6 +27,7 @@ class ItineraryView extends HookWidget {
     final itemsState = useState<List<ItineraryItemDto>>(
       sortItineraryItems(items),
     );
+    final collapsedDateGroupKeys = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
 
     useEffect(() {
@@ -68,6 +69,16 @@ class ItineraryView extends HookWidget {
       notifyChange(
         itemsState.value.where((current) => current.id != item.id).toList(),
       );
+    }
+
+    void toggleDateGroup(String groupKey) {
+      final next = Set<String>.from(collapsedDateGroupKeys.value);
+      if (next.contains(groupKey)) {
+        next.remove(groupKey);
+      } else {
+        next.add(groupKey);
+      }
+      collapsedDateGroupKeys.value = next;
     }
 
     Future<void> showEditBottomSheet(ItineraryItemDto item) async {
@@ -171,7 +182,9 @@ class ItineraryView extends HookWidget {
         Expanded(
           child: ItineraryList(
             items: itemsState.value,
+            collapsedDateGroupKeys: collapsedDateGroupKeys.value,
             subtitleBuilder: subtitleParts,
+            onToggleDateGroup: toggleDateGroup,
             onTapItem: (item) => showEditBottomSheet(item),
             onDeleteItem: deleteItem,
           ),

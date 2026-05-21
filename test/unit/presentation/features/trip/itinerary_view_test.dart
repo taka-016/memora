@@ -448,7 +448,13 @@ void main() {
         find.byKey(const Key('itinerary_edit_end_datetime_field')),
         findsNothing,
       );
-      expect(find.text('2024/01/02'), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('itinerary_edit_bottom_sheet')),
+          matching: find.text('2024/01/02'),
+        ),
+        findsNWidgets(2),
+      );
       expect(find.text('08:00'), findsOneWidget);
       expect(find.text('09:00'), findsOneWidget);
     });
