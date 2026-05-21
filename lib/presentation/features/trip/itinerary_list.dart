@@ -6,6 +6,7 @@ class ItineraryList extends StatelessWidget {
     super.key,
     required this.items,
     required this.collapsedDateGroupKeys,
+    required this.timeLabelBuilder,
     required this.subtitleBuilder,
     required this.onToggleDateGroup,
     required this.onTapItem,
@@ -14,6 +15,7 @@ class ItineraryList extends StatelessWidget {
 
   final List<ItineraryItemDto> items;
   final Set<String> collapsedDateGroupKeys;
+  final String Function(ItineraryItemDto item) timeLabelBuilder;
   final List<String> Function(ItineraryItemDto item) subtitleBuilder;
   final ValueChanged<String> onToggleDateGroup;
   final ValueChanged<ItineraryItemDto> onTapItem;
@@ -33,6 +35,7 @@ class ItineraryList extends StatelessWidget {
         return _ItineraryDateGroupSection(
           group: group,
           isCollapsed: isCollapsed,
+          timeLabelBuilder: timeLabelBuilder,
           subtitleBuilder: subtitleBuilder,
           onToggle: () => onToggleDateGroup(group.key),
           onTapItem: onTapItem,
@@ -105,6 +108,7 @@ class _ItineraryDateGroupSection extends StatelessWidget {
   const _ItineraryDateGroupSection({
     required this.group,
     required this.isCollapsed,
+    required this.timeLabelBuilder,
     required this.subtitleBuilder,
     required this.onToggle,
     required this.onTapItem,
@@ -113,6 +117,7 @@ class _ItineraryDateGroupSection extends StatelessWidget {
 
   final ItineraryDateGroup group;
   final bool isCollapsed;
+  final String Function(ItineraryItemDto item) timeLabelBuilder;
   final List<String> Function(ItineraryItemDto item) subtitleBuilder;
   final VoidCallback onToggle;
   final ValueChanged<ItineraryItemDto> onTapItem;
@@ -132,6 +137,7 @@ class _ItineraryDateGroupSection extends StatelessWidget {
           ...group.items.map(
             (item) => _ItineraryItemCard(
               item: item,
+              timeLabel: timeLabelBuilder(item),
               subtitleParts: subtitleBuilder(item),
               onTapItem: onTapItem,
               onDeleteItem: onDeleteItem,
@@ -189,12 +195,14 @@ class _ItineraryDateGroupHeader extends StatelessWidget {
 class _ItineraryItemCard extends StatelessWidget {
   const _ItineraryItemCard({
     required this.item,
+    required this.timeLabel,
     required this.subtitleParts,
     required this.onTapItem,
     required this.onDeleteItem,
   });
 
   final ItineraryItemDto item;
+  final String timeLabel;
   final List<String> subtitleParts;
   final ValueChanged<ItineraryItemDto> onTapItem;
   final ValueChanged<ItineraryItemDto> onDeleteItem;
@@ -207,7 +215,7 @@ class _ItineraryItemCard extends StatelessWidget {
         key: Key('itineraryListItem_${item.id}'),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         visualDensity: const VisualDensity(horizontal: 0, vertical: 0),
-        title: Text(item.name),
+        title: _ItineraryItemTitle(timeLabel: timeLabel, name: item.name),
         subtitle: subtitleParts.isEmpty
             ? null
             : _ItinerarySubtitle(parts: subtitleParts),
@@ -218,6 +226,26 @@ class _ItineraryItemCard extends StatelessWidget {
         ),
         onTap: () => onTapItem(item),
       ),
+    );
+  }
+}
+
+class _ItineraryItemTitle extends StatelessWidget {
+  const _ItineraryItemTitle({required this.timeLabel, required this.name});
+
+  final String timeLabel;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    const textStyle = TextStyle(fontSize: 16);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (timeLabel.isNotEmpty) Text(timeLabel, style: textStyle),
+        Text(name, style: textStyle),
+      ],
     );
   }
 }

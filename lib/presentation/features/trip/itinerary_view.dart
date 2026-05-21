@@ -147,11 +147,12 @@ class ItineraryView extends HookWidget {
       );
     }
 
+    String timeLabel(ItineraryItemDto item) {
+      return formatDateTimeRange(item);
+    }
+
     List<String> subtitleParts(ItineraryItemDto item) {
-      return <String>[
-        if (formatDateTimeRange(item).isNotEmpty) formatDateTimeRange(item),
-        if (item.memo?.isNotEmpty == true) item.memo!,
-      ];
+      return <String>[if (item.memo?.isNotEmpty == true) item.memo!];
     }
 
     return Column(
@@ -183,6 +184,7 @@ class ItineraryView extends HookWidget {
           child: ItineraryList(
             items: itemsState.value,
             collapsedDateGroupKeys: collapsedDateGroupKeys.value,
+            timeLabelBuilder: timeLabel,
             subtitleBuilder: subtitleParts,
             onToggleDateGroup: toggleDateGroup,
             onTapItem: (item) => showEditBottomSheet(item),
@@ -240,12 +242,29 @@ String formatDateTimeLabel(DateTime dateTime) {
   ].join();
 }
 
+String formatTimeLabel(DateTime dateTime) {
+  return [
+    dateTime.hour.toString().padLeft(2, '0'),
+    ':',
+    dateTime.minute.toString().padLeft(2, '0'),
+  ].join();
+}
+
+bool isSameDate(DateTime a, DateTime b) {
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
 String formatDateTimeRange(ItineraryItemDto item) {
   if (item.startDateTime != null && item.endDateTime != null) {
-    return '${formatDateTimeLabel(item.startDateTime!)} - ${formatDateTimeLabel(item.endDateTime!)}';
+    final startDateTime = item.startDateTime!;
+    final endDateTime = item.endDateTime!;
+    final endLabel = isSameDate(startDateTime, endDateTime)
+        ? formatTimeLabel(endDateTime)
+        : formatDateTimeLabel(endDateTime);
+    return '${formatTimeLabel(startDateTime)} - $endLabel';
   }
   if (item.startDateTime != null) {
-    return '開始: ${formatDateTimeLabel(item.startDateTime!)}';
+    return formatTimeLabel(item.startDateTime!);
   }
   if (item.endDateTime != null) {
     return '終了: ${formatDateTimeLabel(item.endDateTime!)}';
