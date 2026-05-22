@@ -75,12 +75,12 @@ RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
   npm install -g npm@11
 
 # claude codeのインストール
-ARG CLAUDE_CODE_VERSION=latest
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+# ARG CLAUDE_CODE_VERSION=latest
+# RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
 
 # Codex CLIのインストール
-ARG CODEX_VERSION=latest
-RUN npm install -g @openai/codex@${CODEX_VERSION}
+# ARG CODEX_VERSION=latest
+# RUN npm install -g @openai/codex@${CODEX_VERSION}
 
 # Firebase CLIのインストール
 RUN npm install -g firebase-tools
