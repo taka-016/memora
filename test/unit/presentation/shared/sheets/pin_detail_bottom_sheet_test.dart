@@ -185,6 +185,57 @@ void main() {
       expect(find.text('時間を選択'), findsWidgets);
     });
 
+    testWidgets('訪問開始日未設定時は旅行開始日の年月をDatePickerの初期ページにする', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: defaultPin,
+              tripStartDate: DateTime(2027, 8, 12),
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('visitStartDateField')));
+      await tester.tap(find.byKey(const Key('visitStartDateField')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2027年8月12日 (木)'), findsOneWidget);
+    });
+
+    testWidgets('訪問終了日未設定時は訪問開始日の年月をDatePickerの初期ページにする', (
+      WidgetTester tester,
+    ) async {
+      final pin = PinDto(
+        pinId: 'test-pin-id',
+        latitude: 35.681236,
+        longitude: 139.767125,
+        visitStartDateTime: DateTime(2028, 9, 4, 10, 30),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PinDetailBottomSheet(
+              pin: pin,
+              tripStartDate: DateTime(2027, 8, 12),
+              onClose: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('visitEndDateField')));
+      await tester.tap(find.byKey(const Key('visitEndDateField')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2028年9月4日 (月)'), findsOneWidget);
+    });
+
     testWidgets('更新ボタンタップ時にonUpdateコールバックが呼ばれること', (WidgetTester tester) async {
       final pin = PinDto(
         pinId: 'test-pin-id',

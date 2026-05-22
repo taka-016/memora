@@ -10,6 +10,7 @@ Future<void> _openBottomSheet(
   required List<TaskDto> tasks,
   required List<GroupMemberDto> members,
   required ValueChanged<TaskDto> onSaved,
+  DateTime? tripStartDate,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -26,6 +27,7 @@ Future<void> _openBottomSheet(
                     tasks: tasks,
                     groupMembers: members,
                     onSaved: onSaved,
+                    tripStartDate: tripStartDate,
                   ),
                 );
               },
@@ -354,6 +356,74 @@ void main() {
 
       expect(called, isFalse);
       expect(find.byType(TaskEditBottomSheet), findsNothing);
+    });
+
+    testWidgets('締切日未設定時は旅行開始日の年月をDatePickerの初期ページにすること', (
+      tester,
+    ) async {
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        tripStartDate: DateTime(2027, 8, 12),
+        onSaved: (_) {},
+      );
+
+      await tester.tap(find.byKey(const Key('task_due_date_field')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2027年8月12日 (木)'), findsOneWidget);
+    });
+
+    testWidgets('締切日は入力枠内にカレンダーアイコンとクリアボタンを表示すること', (
+      tester,
+    ) async {
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+        dueDate: DateTime(2027, 8, 12),
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (_) {},
+      );
+
+      final dueDateField = find.byKey(const Key('task_due_date_field'));
+      expect(dueDateField, findsOneWidget);
+      expect(
+        find.descendant(
+          of: dueDateField,
+          matching: find.byIcon(Icons.calendar_today),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: dueDateField, matching: find.byIcon(Icons.clear)),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.descendant(of: dueDateField, matching: find.byIcon(Icons.clear)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('選択してください'), findsOneWidget);
     });
   });
 }
