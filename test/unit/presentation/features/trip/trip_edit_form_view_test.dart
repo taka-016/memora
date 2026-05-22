@@ -37,6 +37,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (value) => latestValue = value,
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
@@ -59,7 +60,8 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('タスク管理・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
+    testWidgets('旅程・タスク・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
+      var itineraryRequested = 0;
       var taskRequested = 0;
       var mapRequested = 0;
       final initialValue = TripEntryDto(
@@ -92,6 +94,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () => itineraryRequested += 1,
               onTaskManagementRequested: () => taskRequested += 1,
               onVisitLocationEditRequested: () => mapRequested += 1,
             ),
@@ -99,13 +102,52 @@ void main() {
         ),
       );
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'タスク管理'));
+      await tester.tap(find.widgetWithText(ElevatedButton, '旅程'));
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'タスク'));
       await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, '編集'));
       await tester.pump();
 
+      expect(itineraryRequested, 1);
       expect(taskRequested, 1);
       expect(mapRequested, 1);
+    });
+
+    testWidgets('旅程ボタンとタスクボタンは左から旅程、タスクの順で表示されること', (
+      WidgetTester tester,
+    ) async {
+      final initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onVisitLocationEditRequested: () {},
+            ),
+          ),
+        ),
+      );
+
+      final itineraryButton = find.widgetWithText(ElevatedButton, '旅程');
+      final taskButton = find.widgetWithText(ElevatedButton, 'タスク');
+
+      expect(itineraryButton, findsOneWidget);
+      expect(taskButton, findsOneWidget);
+      expect(
+        tester.getRect(itineraryButton).left,
+        lessThan(tester.getRect(taskButton).left),
+      );
     });
 
     testWidgets('親の再buildでonChangedが差し替わった場合は最新のハンドラを呼ぶこと', (
@@ -143,6 +185,7 @@ void main() {
                         onChanged: useUpdatedHandler
                             ? (_) => updatedHandlerCallCount += 1
                             : (_) => initialHandlerCallCount += 1,
+                        onItineraryManagementRequested: () {},
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
                       ),
@@ -225,6 +268,7 @@ void main() {
                       child: TripEditFormView(
                         value: currentValue,
                         onChanged: emittedValues.add,
+                        onItineraryManagementRequested: () {},
                         onTaskManagementRequested: () {},
                         onVisitLocationEditRequested: () {},
                       ),
@@ -282,6 +326,7 @@ void main() {
             child: TripEditFormView(
               value: initialValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
@@ -305,6 +350,7 @@ void main() {
             child: TripEditFormView(
               value: updatedValue,
               onChanged: (_) {},
+              onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
               onVisitLocationEditRequested: () {},
             ),
