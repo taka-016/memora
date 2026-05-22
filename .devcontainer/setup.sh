@@ -1,7 +1,10 @@
 #!/bin/bash
 
 # .claude/.config.jsonの存在を確認し、なければ初期化
-[ -f ~/.claude/.config.json ] || echo '{}' > ~/.claude/.config.json
+# [ -f ~/.claude/.config.json ] || echo '{}' > ~/.claude/.config.json
+
+# codexインストール
+test -x /root/.codex/packages/standalone/current/codex || curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 # SSH鍵を生成
 bash ./generate_ssh_public_key.sh
