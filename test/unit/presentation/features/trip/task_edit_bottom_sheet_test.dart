@@ -358,9 +358,7 @@ void main() {
       expect(find.byType(TaskEditBottomSheet), findsNothing);
     });
 
-    testWidgets('締切日未設定時は旅行開始日の年月をDatePickerの初期ページにすること', (
-      tester,
-    ) async {
+    testWidgets('締切日未設定時は旅行開始日の年月をDatePickerの初期ページにすること', (tester) async {
       final task = TaskDto(
         id: 'task-1',
         tripId: 'trip-1',
@@ -384,9 +382,7 @@ void main() {
       expect(find.text('2027年8月12日 (木)'), findsOneWidget);
     });
 
-    testWidgets('締切日は入力枠内にカレンダーアイコンとクリアボタンを表示すること', (
-      tester,
-    ) async {
+    testWidgets('締切日は入力枠内にカレンダーアイコンとクリアボタンを表示すること', (tester) async {
       final task = TaskDto(
         id: 'task-1',
         tripId: 'trip-1',
