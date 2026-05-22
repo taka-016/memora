@@ -363,6 +363,7 @@ class TripEditModal extends HookConsumerWidget {
             onPinTapped: handlePinTapped,
             onPinUpdated: handlePinUpdated,
             onPinDeleted: handlePinDeleted,
+            tripStartDate: draftTripEntry.value.startDate,
             bottomSheet: isTestEnvironment
                 ? buildBottomSheet()
                 : const SizedBox.shrink(),

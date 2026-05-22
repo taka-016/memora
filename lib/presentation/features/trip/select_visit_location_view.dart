@@ -18,6 +18,7 @@ class SelectVisitLocationView extends StatelessWidget {
     this.onPinUpdated,
     this.onPinDeleted,
     this.closeButtonKey,
+    this.tripStartDate,
   });
 
   final List<PinDto> pins;
@@ -31,6 +32,7 @@ class SelectVisitLocationView extends StatelessWidget {
   final ValueChanged<PinDto>? onPinUpdated;
   final ValueChanged<String>? onPinDeleted;
   final Key? closeButtonKey;
+  final DateTime? tripStartDate;
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +92,7 @@ class SelectVisitLocationView extends StatelessWidget {
       onPinUpdated: onPinUpdated,
       onPinDeleted: onPinDeleted,
       selectedPin: selectedPin,
+      tripStartDate: tripStartDate,
     );
   }
 }
