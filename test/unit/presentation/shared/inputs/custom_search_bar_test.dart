@@ -6,24 +6,25 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
 import '../../../../helpers/test_exception.dart';
+import 'custom_search_bar_test.mocks.dart';
 
-class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
-  FakeSearchLocationsUsecase(this.candidates);
-
-  final List<LocationCandidateDto> candidates;
-
-  @override
-  Future<List<LocationCandidateDto>> execute(String keyword) async {
-    return candidates;
-  }
+@GenerateMocks([SearchLocationsUsecase])
+MockSearchLocationsUsecase _mockSearchLocationsUsecase(
+  List<LocationCandidateDto> candidates,
+) {
+  final usecase = MockSearchLocationsUsecase();
+  when(usecase.execute(any)).thenAnswer((_) async => candidates);
+  return usecase;
 }
 
-class ThrowingSearchLocationsUsecase implements SearchLocationsUsecase {
-  @override
-  Future<List<LocationCandidateDto>> execute(String keyword) {
-    throw TestException('場所検索失敗');
-  }
+MockSearchLocationsUsecase _throwingSearchLocationsUsecase() {
+  final usecase = MockSearchLocationsUsecase();
+  when(usecase.execute(any)).thenThrow(TestException('場所検索失敗'));
+  return usecase;
 }
 
 class LifecycleAwareSearchLocationsUsecase implements SearchLocationsUsecase {
@@ -68,7 +69,7 @@ Widget buildTestApp({
   return ProviderScope(
     overrides: [
       searchLocationsUsecaseProvider.overrideWithValue(
-        searchLocationsUsecase ?? FakeSearchLocationsUsecase(const []),
+        searchLocationsUsecase ?? _mockSearchLocationsUsecase(const []),
       ),
     ],
     child: MaterialApp(home: Scaffold(body: child)),
@@ -92,7 +93,7 @@ void main() {
       LocationCandidateDto? tappedCandidate;
       await tester.pumpWidget(
         buildTestApp(
-          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          searchLocationsUsecase: _mockSearchLocationsUsecase(mockCandidates),
           child: CustomSearchBar(
             hintText: '場所を検索',
             onCandidateSelected: (candidate) {
@@ -136,7 +137,7 @@ void main() {
       final mockCandidates = mockCandidatesDefault;
       await tester.pumpWidget(
         buildTestApp(
-          searchLocationsUsecase: FakeSearchLocationsUsecase(mockCandidates),
+          searchLocationsUsecase: _mockSearchLocationsUsecase(mockCandidates),
           child: const CustomSearchBar(hintText: '場所を検索'),
         ),
       );
@@ -156,7 +157,7 @@ void main() {
     testWidgets('検索失敗時でもローディング表示が解除される', (WidgetTester tester) async {
       await tester.pumpWidget(
         buildTestApp(
-          searchLocationsUsecase: ThrowingSearchLocationsUsecase(),
+          searchLocationsUsecase: _throwingSearchLocationsUsecase(),
           child: const CustomSearchBar(hintText: '場所を検索'),
         ),
       );

@@ -3,7 +3,12 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'get_dvc_point_usages_usecase_test.mocks.dart';
+
+@GenerateMocks([DvcPointUsageQueryService])
 void main() {
   group('GetDvcPointUsagesUsecase', () {
     test('グループIDでDVCポイント利用が取得できること', () async {
@@ -18,37 +23,30 @@ void main() {
           memo: '春の利用',
         ),
       ];
-      final queryService = _FakeDvcPointUsageQueryService(expectedUsages);
+      final queryService = MockDvcPointUsageQueryService();
       final usecase = GetDvcPointUsagesUsecase(queryService);
+      when(
+        queryService.getDvcPointUsagesByGroupId(
+          groupId,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => expectedUsages);
 
       // Act
       final result = await usecase.execute(groupId);
 
       // Assert
       expect(result, equals(expectedUsages));
-      expect(queryService.receivedGroupId, equals(groupId));
+      final verification = verify(
+        queryService.getDvcPointUsagesByGroupId(
+          groupId,
+          orderBy: captureAnyNamed('orderBy'),
+        ),
+      )..called(1);
       expect(
-        queryService.receivedOrderBy,
+        verification.captured.single,
         equals([const OrderBy('usageYearMonth', descending: false)]),
       );
     });
   });
-}
-
-class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  _FakeDvcPointUsageQueryService(this._usages);
-
-  final List<DvcPointUsageDto> _usages;
-  String? receivedGroupId;
-  List<OrderBy>? receivedOrderBy;
-
-  @override
-  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    receivedGroupId = groupId;
-    receivedOrderBy = orderBy;
-    return _usages;
-  }
 }

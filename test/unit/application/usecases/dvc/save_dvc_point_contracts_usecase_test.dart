@@ -3,11 +3,16 @@ import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'save_dvc_point_contracts_usecase_test.mocks.dart';
+
+@GenerateMocks([DvcPointContractRepository])
 void main() {
   group('SaveDvcPointContractsUsecase', () {
     test('既存契約を削除して契約一覧を保存できること', () async {
-      final repository = _FakeDvcPointContractRepository();
+      final repository = MockDvcPointContractRepository();
       final usecase = SaveDvcPointContractsUsecase(repository);
       const groupId = 'group-1';
       final contracts = [
@@ -21,31 +26,19 @@ void main() {
           annualPoint: 200,
         ),
       ];
+      when(
+        repository.deleteDvcPointContractsByGroupId(groupId),
+      ).thenAnswer((_) async {});
+      when(repository.saveDvcPointContract(any)).thenAnswer((_) async {});
 
       await usecase.execute(groupId: groupId, contracts: contracts);
 
-      expect(repository.deletedGroupIds, equals([groupId]));
-      expect(repository.savedContracts, hasLength(1));
-      expect(repository.savedContracts.first.contractName, equals('契約A'));
-      expect(repository.savedContracts.first.groupId, equals(groupId));
+      verify(repository.deleteDvcPointContractsByGroupId(groupId)).called(1);
+      final verification = verify(repository.saveDvcPointContract(captureAny))
+        ..called(1);
+      final savedContract = verification.captured.single as DvcPointContract;
+      expect(savedContract.contractName, equals('契約A'));
+      expect(savedContract.groupId, equals(groupId));
     });
   });
-}
-
-class _FakeDvcPointContractRepository implements DvcPointContractRepository {
-  final List<String> deletedGroupIds = [];
-  final List<DvcPointContract> savedContracts = [];
-
-  @override
-  Future<void> deleteDvcPointContract(String contractId) async {}
-
-  @override
-  Future<void> deleteDvcPointContractsByGroupId(String groupId) async {
-    deletedGroupIds.add(groupId);
-  }
-
-  @override
-  Future<void> saveDvcPointContract(DvcPointContract contract) async {
-    savedContracts.add(contract);
-  }
 }

@@ -3,11 +3,16 @@ import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'save_dvc_limited_point_usecase_test.mocks.dart';
+
+@GenerateMocks([DvcLimitedPointRepository])
 void main() {
   group('SaveDvcLimitedPointUsecase', () {
     test('期間限定ポイントを保存できること', () async {
-      final repository = _FakeDvcLimitedPointRepository();
+      final repository = MockDvcLimitedPointRepository();
       final usecase = SaveDvcLimitedPointUsecase(repository);
       final limitedPoint = DvcLimitedPointDto(
         id: '',
@@ -17,28 +22,16 @@ void main() {
         point: 30,
         memo: 'メモ',
       );
+      when(repository.saveDvcLimitedPoint(any)).thenAnswer((_) async {});
 
       await usecase.execute(limitedPoint);
 
-      expect(repository.savedLimitedPoints, hasLength(1));
-      expect(repository.savedLimitedPoints.first.groupId, equals('group-1'));
-      expect(repository.savedLimitedPoints.first.point, equals(30));
-      expect(repository.savedLimitedPoints.first.memo, equals('メモ'));
+      final verification = verify(repository.saveDvcLimitedPoint(captureAny))
+        ..called(1);
+      final savedLimitedPoint = verification.captured.single as DvcLimitedPoint;
+      expect(savedLimitedPoint.groupId, equals('group-1'));
+      expect(savedLimitedPoint.point, equals(30));
+      expect(savedLimitedPoint.memo, equals('メモ'));
     });
   });
-}
-
-class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
-  final List<DvcLimitedPoint> savedLimitedPoints = [];
-
-  @override
-  Future<void> deleteDvcLimitedPoint(String limitedPointId) async {}
-
-  @override
-  Future<void> deleteDvcLimitedPointsByGroupId(String groupId) async {}
-
-  @override
-  Future<void> saveDvcLimitedPoint(DvcLimitedPoint limitedPoint) async {
-    savedLimitedPoints.add(limitedPoint);
-  }
 }
