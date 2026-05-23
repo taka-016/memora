@@ -4,37 +4,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
-import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
 import '../../../../helpers/test_exception.dart';
+import 'task_view_test.mocks.dart';
 
 final _uuidV7Pattern = RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
 );
 
-class FakeTaskQueryService implements TaskQueryService {
-  FakeTaskQueryService(this.tasks);
-
-  final List<TaskDto> tasks;
-
-  @override
-  Future<List<TaskDto>> getTasksByTripId(
-    String tripId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    return tasks;
-  }
+@GenerateMocks([TaskQueryService])
+MockTaskQueryService _mockTaskQueryService(List<TaskDto> tasks) {
+  final queryService = MockTaskQueryService();
+  when(
+    queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')),
+  ).thenAnswer((_) async => tasks);
+  return queryService;
 }
 
-class FailingTaskQueryService implements TaskQueryService {
-  @override
-  Future<List<TaskDto>> getTasksByTripId(
-    String tripId, {
-    List<OrderBy>? orderBy,
-  }) {
-    throw TestException('通信エラー');
-  }
+MockTaskQueryService _failingTaskQueryService() {
+  final queryService = MockTaskQueryService();
+  when(
+    queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')),
+  ).thenThrow(TestException('通信エラー'));
+  return queryService;
 }
 
 Widget _wrapWithApp(Widget child, {List<Override> overrides = const []}) {
@@ -868,7 +864,7 @@ void main() {
           isCompleted: false,
         ),
       ];
-      final fakeQueryService = FakeTaskQueryService(copiedTasks);
+      final mockQueryService = _mockTaskQueryService(copiedTasks);
 
       await tester.pumpWidget(
         _wrapWithApp(
@@ -881,7 +877,7 @@ void main() {
             },
           ),
           overrides: [
-            taskQueryServiceProvider.overrideWithValue(fakeQueryService),
+            taskQueryServiceProvider.overrideWithValue(mockQueryService),
           ],
         ),
       );
@@ -920,7 +916,7 @@ void main() {
           isCompleted: false,
         ),
       ];
-      final fakeQueryService = FakeTaskQueryService(copiedTasks);
+      final mockQueryService = _mockTaskQueryService(copiedTasks);
 
       await tester.pumpWidget(
         _wrapWithApp(
@@ -933,7 +929,7 @@ void main() {
             },
           ),
           overrides: [
-            taskQueryServiceProvider.overrideWithValue(fakeQueryService),
+            taskQueryServiceProvider.overrideWithValue(mockQueryService),
           ],
         ),
       );
@@ -972,7 +968,7 @@ void main() {
           ),
           overrides: [
             taskQueryServiceProvider.overrideWithValue(
-              FailingTaskQueryService(),
+              _failingTaskQueryService(),
             ),
           ],
         ),
@@ -1008,7 +1004,7 @@ void main() {
           parentTaskId: 'parent-1',
         ),
       ];
-      final fakeQueryService = FakeTaskQueryService(copiedTasks);
+      final mockQueryService = _mockTaskQueryService(copiedTasks);
 
       await tester.pumpWidget(
         _wrapWithApp(
@@ -1021,7 +1017,7 @@ void main() {
             },
           ),
           overrides: [
-            taskQueryServiceProvider.overrideWithValue(fakeQueryService),
+            taskQueryServiceProvider.overrideWithValue(mockQueryService),
           ],
         ),
       );

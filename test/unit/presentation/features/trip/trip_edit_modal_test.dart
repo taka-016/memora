@@ -12,10 +12,14 @@ import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+import 'trip_edit_modal_test.mocks.dart';
 
 Widget _createApp({
   required Widget child,
-  FakeGetNearbyLocationNameUsecase? getNearbyLocationNameUsecase,
+  GetNearbyLocationNameUsecase? getNearbyLocationNameUsecase,
 }) {
   return ProviderScope(
     overrides: [
@@ -28,19 +32,13 @@ Widget _createApp({
   );
 }
 
-class FakeGetNearbyLocationNameUsecase implements GetNearbyLocationNameUsecase {
-  FakeGetNearbyLocationNameUsecase({this.locationName});
-
-  final String? locationName;
-  int callCount = 0;
-  Coordinate? lastCoordinate;
-
-  @override
-  Future<String?> execute(Coordinate coordinate) async {
-    callCount += 1;
-    lastCoordinate = coordinate;
-    return locationName;
-  }
+@GenerateMocks([GetNearbyLocationNameUsecase])
+MockGetNearbyLocationNameUsecase _mockGetNearbyLocationNameUsecase({
+  String? locationName,
+}) {
+  final usecase = MockGetNearbyLocationNameUsecase();
+  when(usecase.execute(any)).thenAnswer((_) async => locationName);
+  return usecase;
 }
 
 final _uuidV7Pattern = RegExp(
@@ -228,14 +226,13 @@ void main() {
     });
 
     testWidgets('手動でピンを追加した時だけ場所名を取得すること', (WidgetTester tester) async {
-      final fakeGetNearbyLocationNameUsecase = FakeGetNearbyLocationNameUsecase(
-        locationName: '取得した場所名',
-      );
+      final mockGetNearbyLocationNameUsecase =
+          _mockGetNearbyLocationNameUsecase(locationName: '取得した場所名');
       TripEntryDto? savedTripEntry;
 
       await tester.pumpWidget(
         _createApp(
-          getNearbyLocationNameUsecase: fakeGetNearbyLocationNameUsecase,
+          getNearbyLocationNameUsecase: mockGetNearbyLocationNameUsecase,
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
@@ -263,9 +260,11 @@ void main() {
       });
       await tester.pumpAndSettle();
 
-      expect(fakeGetNearbyLocationNameUsecase.callCount, 1);
+      final verification = verify(
+        mockGetNearbyLocationNameUsecase.execute(captureAny),
+      )..called(1);
       expect(
-        fakeGetNearbyLocationNameUsecase.lastCoordinate,
+        verification.captured.single,
         const Coordinate(latitude: 35.681236, longitude: 139.767125),
       );
 
@@ -290,9 +289,8 @@ void main() {
     testWidgets('検索結果からピンを追加した時は選択した場所名をそのまま使用すること', (
       WidgetTester tester,
     ) async {
-      final fakeGetNearbyLocationNameUsecase = FakeGetNearbyLocationNameUsecase(
-        locationName: '取得してはいけない場所名',
-      );
+      final mockGetNearbyLocationNameUsecase =
+          _mockGetNearbyLocationNameUsecase(locationName: '取得してはいけない場所名');
       TripEntryDto? savedTripEntry;
       const candidate = LocationCandidateDto(
         name: '検索結果の場所名',
@@ -302,7 +300,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          getNearbyLocationNameUsecase: fakeGetNearbyLocationNameUsecase,
+          getNearbyLocationNameUsecase: mockGetNearbyLocationNameUsecase,
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
@@ -326,7 +324,7 @@ void main() {
       googleMapView.onSearchedLocationSelected?.call(candidate);
       await tester.pumpAndSettle();
 
-      expect(fakeGetNearbyLocationNameUsecase.callCount, 0);
+      verifyNever(mockGetNearbyLocationNameUsecase.execute(any));
 
       final selectVisitLocationView = tester.widget<SelectVisitLocationView>(
         find.byType(SelectVisitLocationView),

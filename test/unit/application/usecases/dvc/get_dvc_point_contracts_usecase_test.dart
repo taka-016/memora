@@ -3,7 +3,12 @@ import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_contracts_usecase.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import 'get_dvc_point_contracts_usecase_test.mocks.dart';
+
+@GenerateMocks([DvcPointContractQueryService])
 void main() {
   group('GetDvcPointContractsUsecase', () {
     test('グループIDで契約一覧を取得できること', () async {
@@ -19,36 +24,28 @@ void main() {
           annualPoint: 200,
         ),
       ];
-      final queryService = _FakeDvcPointContractQueryService(expectedContracts);
+      final queryService = MockDvcPointContractQueryService();
       final usecase = GetDvcPointContractsUsecase(queryService);
+      when(
+        queryService.getDvcPointContractsByGroupId(
+          groupId,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => expectedContracts);
 
       final result = await usecase.execute(groupId);
 
       expect(result, equals(expectedContracts));
-      expect(queryService.receivedGroupId, equals(groupId));
+      final verification = verify(
+        queryService.getDvcPointContractsByGroupId(
+          groupId,
+          orderBy: captureAnyNamed('orderBy'),
+        ),
+      )..called(1);
       expect(
-        queryService.receivedOrderBy,
+        verification.captured.single,
         equals([const OrderBy('contractName', descending: false)]),
       );
     });
   });
-}
-
-class _FakeDvcPointContractQueryService
-    implements DvcPointContractQueryService {
-  _FakeDvcPointContractQueryService(this._contracts);
-
-  final List<DvcPointContractDto> _contracts;
-  String? receivedGroupId;
-  List<OrderBy>? receivedOrderBy;
-
-  @override
-  Future<List<DvcPointContractDto>> getDvcPointContractsByGroupId(
-    String groupId, {
-    List<OrderBy>? orderBy,
-  }) async {
-    receivedGroupId = groupId;
-    receivedOrderBy = orderBy;
-    return _contracts;
-  }
 }

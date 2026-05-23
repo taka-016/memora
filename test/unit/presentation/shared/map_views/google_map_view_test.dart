@@ -10,27 +10,26 @@ import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
-class FakeGetCurrentLocationUsecase implements GetCurrentLocationUsecase {
-  FakeGetCurrentLocationUsecase([this._coordinate]);
+import 'google_map_view_test.mocks.dart';
 
-  final Coordinate? _coordinate;
-
-  @override
-  Future<Coordinate?> execute() async {
-    return _coordinate;
-  }
+@GenerateMocks([GetCurrentLocationUsecase, SearchLocationsUsecase])
+MockGetCurrentLocationUsecase _mockGetCurrentLocationUsecase([
+  Coordinate? coordinate,
+]) {
+  final usecase = MockGetCurrentLocationUsecase();
+  when(usecase.execute()).thenAnswer((_) async => coordinate);
+  return usecase;
 }
 
-class FakeSearchLocationsUsecase implements SearchLocationsUsecase {
-  FakeSearchLocationsUsecase(this._candidates);
-
-  final List<LocationCandidateDto> _candidates;
-
-  @override
-  Future<List<LocationCandidateDto>> execute(String keyword) async {
-    return _candidates;
-  }
+MockSearchLocationsUsecase _mockSearchLocationsUsecase(
+  List<LocationCandidateDto> candidates,
+) {
+  final usecase = MockSearchLocationsUsecase();
+  when(usecase.execute(any)).thenAnswer((_) async => candidates);
+  return usecase;
 }
 
 void main() {
@@ -80,10 +79,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           getCurrentLocationUsecaseProvider.overrideWithValue(
-            FakeGetCurrentLocationUsecase(),
+            _mockGetCurrentLocationUsecase(),
           ),
           searchLocationsUsecaseProvider.overrideWithValue(
-            FakeSearchLocationsUsecase(const []),
+            _mockSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -118,10 +117,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           getCurrentLocationUsecaseProvider.overrideWithValue(
-            FakeGetCurrentLocationUsecase(),
+            _mockGetCurrentLocationUsecase(),
           ),
           searchLocationsUsecaseProvider.overrideWithValue(
-            FakeSearchLocationsUsecase(const []),
+            _mockSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -171,10 +170,10 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           getCurrentLocationUsecaseProvider.overrideWithValue(
-            FakeGetCurrentLocationUsecase(),
+            _mockGetCurrentLocationUsecase(),
           ),
           searchLocationsUsecaseProvider.overrideWithValue(
-            FakeSearchLocationsUsecase(const []),
+            _mockSearchLocationsUsecase(const []),
           ),
         ],
       );
@@ -274,10 +273,10 @@ void main() {
         ProviderScope(
           overrides: [
             searchLocationsUsecaseProvider.overrideWithValue(
-              FakeSearchLocationsUsecase(searchCandidates),
+              _mockSearchLocationsUsecase(searchCandidates),
             ),
             getCurrentLocationUsecaseProvider.overrideWithValue(
-              FakeGetCurrentLocationUsecase(),
+              _mockGetCurrentLocationUsecase(),
             ),
           ],
           child: MaterialApp(

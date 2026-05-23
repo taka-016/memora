@@ -3,22 +3,13 @@ import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../../helpers/test_exception.dart';
+import 'get_current_user_usecase_test.mocks.dart';
 
-class MockAuthService extends Mock implements AuthService {
-  @override
-  Future<User?> getCurrentUser() {
-    return super.noSuchMethod(
-          Invocation.method(#getCurrentUser, []),
-          returnValue: Future<User?>.value(),
-          returnValueForMissingStub: Future<User?>.value(),
-        )
-        as Future<User?>;
-  }
-}
-
+@GenerateMocks([AuthService])
 void main() {
   group('GetCurrentUserUseCase', () {
     late MockAuthService mockAuthService;
