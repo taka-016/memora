@@ -12,6 +12,7 @@ abstract class MapViewBuilder {
     ValueChanged<PinDto>? onPinUpdated,
     ValueChanged<String>? onPinDeleted,
     PinDto? selectedPin,
+    DateTime? tripStartDate,
     bool isReadOnly = false,
   });
 }

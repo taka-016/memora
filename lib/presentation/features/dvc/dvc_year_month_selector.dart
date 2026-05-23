@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
 class DvcYearMonthSelector extends StatelessWidget {
   const DvcYearMonthSelector({
@@ -20,8 +21,8 @@ class DvcYearMonthSelector extends StatelessWidget {
         Expanded(child: Text(label)),
         TextButton(
           onPressed: () async {
-            final picked = await showDatePicker(
-              context: context,
+            final picked = await DatePickerHelper.showCustomDatePicker(
+              context,
               initialDate: selected,
               firstDate: DateTime(2000, 1),
               lastDate: DateTime(2100, 12),

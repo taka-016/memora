@@ -17,6 +17,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     ValueChanged<PinDto>? onPinUpdated,
     ValueChanged<String>? onPinDeleted,
     PinDto? selectedPin,
+    DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
     return GoogleMapView(
@@ -27,6 +28,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
       onPinUpdated: onPinUpdated,
       onPinDeleted: onPinDeleted,
       selectedPin: selectedPin,
+      tripStartDate: tripStartDate,
       isReadOnly: isReadOnly,
     );
   }

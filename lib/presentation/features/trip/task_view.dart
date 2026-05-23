@@ -18,6 +18,7 @@ class TaskView extends HookConsumerWidget {
     required this.tasks,
     required this.groupMembers,
     required this.onChanged,
+    this.tripStartDate,
     this.onClose,
   });
 
@@ -25,6 +26,7 @@ class TaskView extends HookConsumerWidget {
   final List<TaskDto> tasks;
   final List<GroupMemberDto> groupMembers;
   final ValueChanged<List<TaskDto>> onChanged;
+  final DateTime? tripStartDate;
   final VoidCallback? onClose;
 
   @override
@@ -59,6 +61,7 @@ class TaskView extends HookConsumerWidget {
             task: task,
             tasks: tasksState.value,
             groupMembers: groupMembers,
+            tripStartDate: tripStartDate,
             clock: clock,
             onSaved: (updatedTask) {
               final updated = List<TaskDto>.from(tasksState.value);

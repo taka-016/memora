@@ -346,6 +346,37 @@ void main() {
       );
     });
 
+    testWidgets('本番地図フローに旅行開始日を渡すこと', (WidgetTester tester) async {
+      final tripStartDate = DateTime(2027, 8, 12);
+
+      await tester.pumpWidget(
+        _createApp(
+          child: TripEditModal(
+            groupId: 'test-group-id',
+            groupMembers: const [],
+            tripEntry: TripEntryDto(
+              id: 'trip-id',
+              groupId: 'test-group-id',
+              year: 2027,
+              startDate: tripStartDate,
+            ),
+            onSave: (TripEntryDto tripEntry) async {},
+            isTestEnvironment: false,
+          ),
+        ),
+      );
+
+      final editButton = find.widgetWithText(ElevatedButton, '編集');
+      await tester.ensureVisible(editButton);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      final googleMapView = tester.widget<GoogleMapView>(
+        find.byType(GoogleMapView),
+      );
+      expect(googleMapView.tripStartDate, tripStartDate);
+    });
+
     testWidgets('本番地図ではピン選択時に詳細ボトムシートが二重表示されないこと', (WidgetTester tester) async {
       const pin = PinDto(
         pinId: 'pin-1',

@@ -19,6 +19,7 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<PinDto>? onPinUpdated;
   final ValueChanged<String>? onPinDeleted;
   final PinDto? selectedPin;
+  final DateTime? tripStartDate;
   final bool isReadOnly;
 
   const GoogleMapView({
@@ -30,6 +31,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onPinUpdated,
     this.onPinDeleted,
     this.selectedPin,
+    this.tripStartDate,
     this.isReadOnly = false,
   });
 
@@ -200,6 +202,7 @@ class GoogleMapView extends HookConsumerWidget {
         onUpdate: isReadOnly ? null : handlePinUpdated,
         onDelete: isReadOnly ? null : handlePinDeleted,
         onClose: hidePinDetailBottomSheet,
+        tripStartDate: tripStartDate,
         clock: clock,
       );
     }

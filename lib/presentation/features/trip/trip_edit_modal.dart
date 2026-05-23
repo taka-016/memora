@@ -286,6 +286,7 @@ class TripEditModal extends HookConsumerWidget {
         onUpdate: handlePinUpdated,
         onDelete: handlePinDeleted,
         onClose: hideBottomSheet,
+        tripStartDate: draftTripEntry.value.startDate,
         clock: clock,
       );
     }
@@ -362,6 +363,7 @@ class TripEditModal extends HookConsumerWidget {
             onPinTapped: handlePinTapped,
             onPinUpdated: handlePinUpdated,
             onPinDeleted: handlePinDeleted,
+            tripStartDate: draftTripEntry.value.startDate,
             bottomSheet: isTestEnvironment
                 ? buildBottomSheet()
                 : const SizedBox.shrink(),
@@ -371,6 +373,7 @@ class TripEditModal extends HookConsumerWidget {
             tripId: tripEntry?.id,
             tasks: currentTasks(),
             groupMembers: groupMembers,
+            tripStartDate: draftTripEntry.value.startDate,
             onChanged: updateDraftTasks,
             onClose: () => expandedSection.value = null,
           );

@@ -12,6 +12,7 @@ class TaskEditBottomSheet extends HookWidget {
     required this.tasks,
     required this.groupMembers,
     required this.onSaved,
+    this.tripStartDate,
     this.clock,
   });
 
@@ -19,6 +20,7 @@ class TaskEditBottomSheet extends HookWidget {
   final List<TaskDto> tasks;
   final List<GroupMemberDto> groupMembers;
   final ValueChanged<TaskDto> onSaved;
+  final DateTime? tripStartDate;
   final AppClock? clock;
 
   @override
@@ -69,7 +71,8 @@ class TaskEditBottomSheet extends HookWidget {
     Future<void> pickDueDate() async {
       final selected = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: dueDateState.value ?? effectiveClock.now(),
+        initialDate:
+            dueDateState.value ?? tripStartDate ?? effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -210,11 +213,18 @@ class TaskEditBottomSheet extends HookWidget {
               children: [
                 Expanded(
                   child: InkWell(
+                    key: const Key('task_due_date_field'),
                     onTap: pickDueDate,
                     child: InputDecorator(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: '締切日',
-                        border: OutlineInputBorder(),
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.calendar_today),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () => dueDateState.value = null,
+                          tooltip: '締切日をクリア',
+                        ),
                       ),
                       child: Text(
                         dueDateState.value != null
@@ -223,11 +233,6 @@ class TaskEditBottomSheet extends HookWidget {
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () => dueDateState.value = null,
-                  tooltip: '締切日をクリア',
                 ),
               ],
             ),

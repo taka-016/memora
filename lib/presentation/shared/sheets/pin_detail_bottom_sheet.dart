@@ -9,6 +9,7 @@ class PinDetailBottomSheet extends HookWidget {
   final VoidCallback onClose;
   final Function(PinDto pin)? onUpdate;
   final Function(String)? onDelete;
+  final DateTime? tripStartDate;
   final AppClock? clock;
 
   const PinDetailBottomSheet({
@@ -17,6 +18,7 @@ class PinDetailBottomSheet extends HookWidget {
     required this.onClose,
     this.onUpdate,
     this.onDelete,
+    this.tripStartDate,
     this.clock,
   });
 
@@ -96,7 +98,7 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectFromDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: fromDate.value ?? effectiveClock.now(),
+        initialDate: fromDate.value ?? tripStartDate ?? effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );
@@ -120,7 +122,11 @@ class PinDetailBottomSheet extends HookWidget {
     Future<void> selectToDate(BuildContext context) async {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
-        initialDate: toDate.value ?? (fromDate.value ?? effectiveClock.now()),
+        initialDate:
+            toDate.value ??
+            fromDate.value ??
+            tripStartDate ??
+            effectiveClock.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
       );

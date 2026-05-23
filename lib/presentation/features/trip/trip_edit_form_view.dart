@@ -204,6 +204,7 @@ class TripEditFormView extends HookWidget {
         onUpdate: handlePinUpdated,
         onDelete: handlePinDeleted,
         onClose: hideBottomSheet,
+        tripStartDate: startDate.value,
         clock: effectiveClock,
       );
     }
