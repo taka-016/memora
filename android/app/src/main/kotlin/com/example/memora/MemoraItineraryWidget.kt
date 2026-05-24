@@ -218,7 +218,7 @@ private fun TimeText(text: String) {
         text = text,
         modifier = GlanceModifier
             .fillMaxWidth()
-            .height(12.dp),
+            .height(10.dp),
         maxLines = 1,
         style = TextStyle(
             fontSize = 11.sp,
@@ -230,12 +230,16 @@ private fun TimeText(text: String) {
 
 @Composable
 private fun ItineraryDivider() {
-    Box(
-        modifier = GlanceModifier
-            .fillMaxWidth()
-            .height(1.dp)
-            .background(Color(0xFFE0E0E0)),
-    ) {}
+    Column(modifier = GlanceModifier.fillMaxWidth()) {
+        Spacer(modifier = GlanceModifier.height(4.dp))
+        Box(
+            modifier = GlanceModifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color(0xFFE0E0E0)),
+        ) {}
+        Spacer(modifier = GlanceModifier.height(2.dp))
+    }
 }
 
 private fun buildItineraryListEntries(
