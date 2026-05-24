@@ -144,9 +144,13 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         return
     }
 
+    val indexedItems = itineraryDate.items.withIndex().toList()
     LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
-        items(itineraryDate.items) { item ->
-            ItineraryItemRow(item)
+        items(indexedItems) { indexedItem ->
+            ItineraryItemRow(indexedItem.value)
+            if (indexedItem.index < itineraryDate.items.lastIndex) {
+                ItineraryDivider()
+            }
         }
     }
 }
@@ -207,14 +211,26 @@ private fun ItineraryTimeColumn(timeParts: List<String>, fallbackLabel: String) 
 private fun TimeText(text: String) {
     Text(
         text = text,
-        modifier = GlanceModifier.fillMaxWidth(),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(12.dp),
         maxLines = 1,
         style = TextStyle(
-            fontSize = 14.sp,
+            fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
         ),
     )
+}
+
+@Composable
+private fun ItineraryDivider() {
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(Color(0xFFE0E0E0)),
+    ) {}
 }
 
 @Composable
