@@ -131,6 +131,17 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   Future<void> execute(
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
+    try {
+      await _execute(direction);
+    } catch (_) {
+      await _cacheStorage.saveErrorMessage('切り替えに失敗しました');
+      await _cacheStorage.updateWidget();
+    }
+  }
+
+  Future<void> _execute(
+    AndroidWidgetItineraryDateMoveDirection direction,
+  ) async {
     final cache = await _cacheStorage.loadItineraryCache();
     if (cache == null || cache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();

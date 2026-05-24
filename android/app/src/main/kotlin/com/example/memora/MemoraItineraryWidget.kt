@@ -31,6 +31,7 @@ import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetGlanceState
@@ -176,33 +177,7 @@ private fun ItineraryItemRow(item: WidgetItineraryItem) {
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (timeParts.size == 2) {
-            Text(
-                text = timeParts[0],
-                modifier = GlanceModifier.width(64.dp),
-                maxLines = 1,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-            )
-            Text(
-                text = "-",
-                modifier = GlanceModifier.width(12.dp),
-                maxLines = 1,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-            )
-            Text(
-                text = timeParts[1],
-                modifier = GlanceModifier.width(76.dp),
-                maxLines = 1,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-            )
-        } else {
-            Text(
-                text = item.timeLabel,
-                modifier = GlanceModifier.width(152.dp),
-                maxLines = 1,
-                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-            )
-        }
+        ItineraryTimeColumn(timeParts, item.timeLabel)
         Text(
             text = item.name,
             modifier = GlanceModifier.wrapContentWidth(),
@@ -213,6 +188,36 @@ private fun ItineraryItemRow(item: WidgetItineraryItem) {
 }
 
 @Composable
+private fun ItineraryTimeColumn(timeParts: List<String>, fallbackLabel: String) {
+    Column(
+        modifier = GlanceModifier.width(72.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (timeParts.size == 2) {
+            TimeText(timeParts[0])
+            TimeText("-")
+            TimeText(timeParts[1])
+        } else {
+            TimeText(fallbackLabel)
+        }
+    }
+}
+
+@Composable
+private fun TimeText(text: String) {
+    Text(
+        text = text,
+        modifier = GlanceModifier.fillMaxWidth(),
+        maxLines = 1,
+        style = TextStyle(
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        ),
+    )
+}
+
+@Composable
 private fun ArrowButton(
     text: String,
     action: androidx.glance.action.Action,
@@ -220,12 +225,12 @@ private fun ArrowButton(
     Box(
         modifier = GlanceModifier
             .width(48.dp)
-            .height(48.dp),
+            .height(48.dp)
+            .clickable(action),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            modifier = GlanceModifier.clickable(action),
             style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
         )
     }
