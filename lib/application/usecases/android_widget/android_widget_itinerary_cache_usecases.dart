@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
-import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
@@ -181,8 +181,8 @@ class MoveAndroidWidgetSelectedTripUsecase {
   ) async {
     final trips = await _tripEntryQueryService.getTripEntriesByGroupId(
       cache.groupId,
-      orderBy: const [OrderBy('startDate', descending: false)],
     );
+    trips.sort(_compareTripsByStartDate);
     final selectedIndex = trips.indexWhere(
       (trip) => trip.id == cache.selectedTripId,
     );
@@ -196,5 +196,20 @@ class MoveAndroidWidgetSelectedTripUsecase {
       return null;
     }
     return trips[targetIndex].id;
+  }
+
+  int _compareTripsByStartDate(TripEntryDto a, TripEntryDto b) {
+    final aStartDate = a.startDate;
+    final bStartDate = b.startDate;
+    if (aStartDate == null && bStartDate == null) {
+      return 0;
+    }
+    if (aStartDate == null) {
+      return 1;
+    }
+    if (bStartDate == null) {
+      return -1;
+    }
+    return aStartDate.compareTo(bStartDate);
   }
 }

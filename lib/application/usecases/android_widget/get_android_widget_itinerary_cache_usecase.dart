@@ -34,10 +34,7 @@ class GetAndroidWidgetItineraryCacheUsecase {
     required String groupId,
     String? selectedTripId,
   }) async {
-    final trips = await _tripEntryQueryService.getTripEntriesByGroupId(
-      groupId,
-      orderBy: const [OrderBy('startDate', descending: false)],
-    );
+    final trips = await _tripEntryQueryService.getTripEntriesByGroupId(groupId);
     final sortedTrips = [...trips]..sort(_compareTripsByStartDate);
     final selectedTrip = _selectTrip(sortedTrips, selectedTripId);
     final cachedTrips = _selectCacheRange(sortedTrips, selectedTrip);
