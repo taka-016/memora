@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -15,6 +16,7 @@ import 'package:memora/application/queries/member/member_invitation_query_servic
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
+import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
@@ -29,6 +31,7 @@ import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
+import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -66,6 +69,52 @@ class _TestGroupTimelineNavigationNotifier
       ),
     );
   }
+}
+
+class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
+  String? targetGroupId;
+
+  @override
+  Future<void> clear() async {
+    targetGroupId = null;
+  }
+
+  @override
+  Future<void> clearTargetGroupId() async {
+    targetGroupId = null;
+  }
+
+  @override
+  Future<String?> getSelectedItineraryDateId() async {
+    return null;
+  }
+
+  @override
+  Future<String?> getTargetGroupId() async {
+    return targetGroupId;
+  }
+
+  @override
+  Future<AndroidWidgetItineraryCacheDto?> loadItineraryCache() async {
+    return null;
+  }
+
+  @override
+  Future<void> saveErrorMessage(String? message) async {}
+
+  @override
+  Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}
+
+  @override
+  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {}
+
+  @override
+  Future<void> saveTargetGroupId(String groupId) async {
+    targetGroupId = groupId;
+  }
+
+  @override
+  Future<void> updateWidget() async {}
 }
 
 @GenerateMocks([
@@ -392,6 +441,9 @@ void main() {
         ),
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
+      ),
+      androidWidgetCacheStorageProvider.overrideWithValue(
+        _FakeAndroidWidgetCacheStorage(),
       ),
       memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
       authServiceProvider.overrideWithValue(testAuthService),
