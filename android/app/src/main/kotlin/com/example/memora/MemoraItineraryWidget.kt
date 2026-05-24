@@ -144,12 +144,12 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         return
     }
 
-    val indexedItems = itineraryDate.items.withIndex().toList()
+    val listEntries = buildItineraryListEntries(itineraryDate.items)
     LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
-        items(indexedItems) { indexedItem ->
-            ItineraryItemRow(indexedItem.value)
-            if (indexedItem.index < itineraryDate.items.lastIndex) {
-                ItineraryDivider()
+        items(listEntries) { entry ->
+            when (entry) {
+                is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
+                WidgetItineraryListEntry.Divider -> ItineraryDivider()
             }
         }
     }
@@ -231,6 +231,17 @@ private fun ItineraryDivider() {
             .height(1.dp)
             .background(Color(0xFFE0E0E0)),
     ) {}
+}
+
+private fun buildItineraryListEntries(
+    items: List<WidgetItineraryItem>,
+): List<WidgetItineraryListEntry> = buildList {
+    items.forEachIndexed { index, item ->
+        add(WidgetItineraryListEntry.Item(item))
+        if (index < items.lastIndex) {
+            add(WidgetItineraryListEntry.Divider)
+        }
+    }
 }
 
 @Composable
@@ -393,6 +404,11 @@ private data class WidgetItineraryItem(
     val name: String,
     val timeLabel: String,
 )
+
+private sealed interface WidgetItineraryListEntry {
+    data class Item(val item: WidgetItineraryItem) : WidgetItineraryListEntry
+    object Divider : WidgetItineraryListEntry
+}
 
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
 private const val SELECTED_ITINERARY_DATE_ID_KEY =
