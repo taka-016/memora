@@ -127,6 +127,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   final TripEntryQueryService _tripEntryQueryService;
   final ItineraryItemQueryService _itineraryItemQueryService;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
+  static const _moveFailedMessage = '切り替えに失敗しました';
 
   Future<void> execute(
     AndroidWidgetItineraryDateMoveDirection direction,
@@ -134,7 +135,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     try {
       await _execute(direction);
     } catch (_) {
-      await _cacheStorage.saveErrorMessage('切り替えに失敗しました');
+      await _cacheStorage.saveErrorMessage(_moveFailedMessage);
       await _cacheStorage.updateWidget();
     }
   }
