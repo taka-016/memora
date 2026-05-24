@@ -26,6 +26,7 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
+import androidx.glance.layout.wrapContentWidth
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
 import androidx.glance.text.FontWeight
@@ -107,49 +108,107 @@ private fun HeaderRow() {
 
 @Composable
 private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
-    Row(
-        modifier = GlanceModifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(60.dp),
     ) {
-        ArrowButton("<", actionRunCallback<PreviousItineraryDateAction>())
-        Column(
-            modifier = GlanceModifier
-                .width(180.dp)
-                .padding(horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.CenterStart,
         ) {
-            Text(
-                text = itineraryDate.tripName,
-                maxLines = 1,
-                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
-            )
-            Text(
-                text = itineraryDate.dateLabel,
-                maxLines = 1,
-                style = TextStyle(fontSize = 12.sp),
-            )
+            ArrowButton("<", actionRunCallback<PreviousItineraryDateAction>())
         }
-        ArrowButton(">", actionRunCallback<NextItineraryDateAction>())
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            TripHeader(itineraryDate)
+        }
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
+            ArrowButton(">", actionRunCallback<NextItineraryDateAction>())
+        }
     }
     Text(
-        text = itineraryDate.tripPeriodLabel,
+        text = itineraryDate.dateLabel,
         maxLines = 1,
-        style = TextStyle(fontSize = 11.sp),
+        style = TextStyle(fontSize = 12.sp),
     )
     Spacer(modifier = GlanceModifier.height(6.dp))
     if (itineraryDate.items.isEmpty()) {
-        Text(text = "旅程項目がありません", style = TextStyle(fontSize = 12.sp))
+        Text(text = "旅程項目がありません", style = TextStyle(fontSize = 14.sp))
         return
     }
 
     LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         items(itineraryDate.items) { item ->
+            ItineraryItemRow(item)
+        }
+    }
+}
+
+@Composable
+private fun TripHeader(itineraryDate: WidgetItineraryDate) {
+    Column(
+        modifier = GlanceModifier.width(180.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = itineraryDate.tripName,
+            maxLines = 1,
+            style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+        )
+        Text(
+            text = itineraryDate.tripPeriodLabel,
+            maxLines = 1,
+            style = TextStyle(fontSize = 11.sp),
+        )
+    }
+}
+
+@Composable
+private fun ItineraryItemRow(item: WidgetItineraryItem) {
+    val timeParts = item.timeLabel.split(" - ", limit = 2)
+    Row(
+        modifier = GlanceModifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (timeParts.size == 2) {
             Text(
-                text = "${item.timeLabel}  ${item.name}",
-                maxLines = 2,
-                style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                text = timeParts[0],
+                modifier = GlanceModifier.width(64.dp),
+                maxLines = 1,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            )
+            Text(
+                text = "-",
+                modifier = GlanceModifier.width(12.dp),
+                maxLines = 1,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            )
+            Text(
+                text = timeParts[1],
+                modifier = GlanceModifier.width(76.dp),
+                maxLines = 1,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+            )
+        } else {
+            Text(
+                text = item.timeLabel,
+                modifier = GlanceModifier.width(152.dp),
+                maxLines = 1,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
             )
         }
+        Text(
+            text = item.name,
+            modifier = GlanceModifier.wrapContentWidth(),
+            maxLines = 2,
+            style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
+        )
     }
 }
 
@@ -160,14 +219,14 @@ private fun ArrowButton(
 ) {
     Box(
         modifier = GlanceModifier
-            .width(44.dp)
-            .height(44.dp)
-            .clickable(action),
+            .width(48.dp)
+            .height(48.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold),
+            modifier = GlanceModifier.clickable(action),
+            style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
         )
     }
 }

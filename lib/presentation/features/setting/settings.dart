@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
-class Settings extends ConsumerWidget {
+class Settings extends ConsumerStatefulWidget {
   const Settings({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Settings> createState() => _SettingsState();
+}
+
+class _SettingsState extends ConsumerState<Settings> {
+  String? _loadedMemberId;
+  Future<List<GroupDto>>? _groupsFuture;
+  Future<String?>? _targetGroupIdFuture;
+  String? _selectedAndroidWidgetGroupId;
+  bool _isTargetGroupIdLoaded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
 
     return Container(
@@ -33,7 +45,7 @@ class Settings extends ConsumerWidget {
           const SizedBox(height: 32),
           Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
+          _buildAndroidWidgetGroupSetting(context, currentMemberState),
           const SizedBox(height: 40),
           ElevatedButton(
             onPressed: () {
@@ -52,7 +64,6 @@ class Settings extends ConsumerWidget {
 
   Widget _buildAndroidWidgetGroupSetting(
     BuildContext context,
-    WidgetRef ref,
     CurrentMemberState currentMemberState,
   ) {
     if (currentMemberState.status == CurrentMemberStatus.loading) {
@@ -64,8 +75,9 @@ class Settings extends ConsumerWidget {
       return const Text('メンバー情報を取得できないため設定できません');
     }
 
+    _loadAndroidWidgetSetting(member);
     return FutureBuilder<List<GroupDto>>(
-      future: ref.read(getGroupsWithMembersUsecaseProvider).execute(member),
+      future: _groupsFuture,
       builder: (context, groupsSnapshot) {
         if (!groupsSnapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -76,11 +88,12 @@ class Settings extends ConsumerWidget {
         }
 
         return FutureBuilder<String?>(
-          future: ref
-              .read(androidWidgetCacheStorageProvider)
-              .getTargetGroupId(),
+          future: _targetGroupIdFuture,
           builder: (context, targetGroupSnapshot) {
-            final selectedGroupId = targetGroupSnapshot.data;
+            if (!_isTargetGroupIdLoaded && !targetGroupSnapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final selectedGroupId = _selectedAndroidWidgetGroupId;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -96,6 +109,12 @@ class Settings extends ConsumerWidget {
                       await ref
                           .read(selectAndroidWidgetTargetGroupUsecaseProvider)
                           .execute(group.id);
+                      if (mounted) {
+                        setState(() {
+                          _selectedAndroidWidgetGroupId = group.id;
+                          _isTargetGroupIdLoaded = true;
+                        });
+                      }
                       if (!context.mounted) {
                         return;
                       }
@@ -114,6 +133,12 @@ class Settings extends ConsumerWidget {
                                 clearAndroidWidgetTargetGroupUsecaseProvider,
                               )
                               .execute();
+                          if (mounted) {
+                            setState(() {
+                              _selectedAndroidWidgetGroupId = null;
+                              _isTargetGroupIdLoaded = true;
+                            });
+                          }
                           if (!context.mounted) {
                             return;
                           }
@@ -129,5 +154,30 @@ class Settings extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void _loadAndroidWidgetSetting(MemberDto member) {
+    if (_loadedMemberId == member.id) {
+      return;
+    }
+
+    _loadedMemberId = member.id;
+    _isTargetGroupIdLoaded = false;
+    _selectedAndroidWidgetGroupId = null;
+    _groupsFuture = ref
+        .read(getGroupsWithMembersUsecaseProvider)
+        .execute(member);
+    _targetGroupIdFuture = ref
+        .read(androidWidgetCacheStorageProvider)
+        .getTargetGroupId()
+        .then((groupId) {
+          if (mounted && _loadedMemberId == member.id) {
+            setState(() {
+              _selectedAndroidWidgetGroupId = groupId;
+              _isTargetGroupIdLoaded = true;
+            });
+          }
+          return groupId;
+        });
   }
 }

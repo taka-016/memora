@@ -20,49 +20,54 @@ import '../../../../helpers/fake_current_member_notifier.dart';
 
 void main() {
   group('Settings', () {
-    testWidgets('Androidウィジェットの表示対象グループを選択すると画面に即時反映される', (
-      tester,
-    ) async {
+    testWidgets('Androidウィジェットの表示対象グループを選択すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
         _buildTestApp(
           storage: storage,
           groups: const [
-            GroupDto(id: 'group-a', ownerId: 'owner', name: 'グループA', members: []),
-            GroupDto(id: 'group-b', ownerId: 'owner', name: 'グループB', members: []),
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+            GroupDto(
+              id: 'group-b',
+              ownerId: 'owner',
+              name: 'グループB',
+              members: [],
+            ),
           ],
         ),
       );
       await tester.pumpAndSettle();
 
       expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_checked);
-      expect(
-        _radioIconFor(tester, 'グループB').icon,
-        Icons.radio_button_unchecked,
-      );
+      expect(_radioIconFor(tester, 'グループB').icon, Icons.radio_button_unchecked);
 
       await tester.tap(find.text('グループB'));
       await tester.pumpAndSettle();
 
-      expect(
-        _radioIconFor(tester, 'グループA').icon,
-        Icons.radio_button_unchecked,
-      );
+      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_unchecked);
       expect(_radioIconFor(tester, 'グループB').icon, Icons.radio_button_checked);
       expect(storage.targetGroupId, 'group-b');
     });
 
-    testWidgets('Androidウィジェットの表示対象グループを解除すると画面に即時反映される', (
-      tester,
-    ) async {
+    testWidgets('Androidウィジェットの表示対象グループを解除すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
         _buildTestApp(
           storage: storage,
           groups: const [
-            GroupDto(id: 'group-a', ownerId: 'owner', name: 'グループA', members: []),
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
           ],
         ),
       );
@@ -77,10 +82,7 @@ void main() {
       await tester.tap(find.text('表示対象を解除'));
       await tester.pumpAndSettle();
 
-      expect(
-        _radioIconFor(tester, 'グループA').icon,
-        Icons.radio_button_unchecked,
-      );
+      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_unchecked);
       expect(
         tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
         isNull,
@@ -102,7 +104,9 @@ Widget _buildTestApp({
         () => FakeCurrentMemberNotifier.loaded(member),
       ),
       androidWidgetCacheStorageProvider.overrideWithValue(storage),
-      groupQueryServiceProvider.overrideWithValue(_FakeGroupQueryService(groups)),
+      groupQueryServiceProvider.overrideWithValue(
+        _FakeGroupQueryService(groups),
+      ),
       tripEntryQueryServiceProvider.overrideWithValue(
         _FakeTripEntryQueryService(),
       ),
@@ -115,7 +119,9 @@ Widget _buildTestApp({
 }
 
 Icon _radioIconFor(WidgetTester tester, String groupName) {
-  final tile = tester.widget<ListTile>(find.widgetWithText(ListTile, groupName));
+  final tile = tester.widget<ListTile>(
+    find.widgetWithText(ListTile, groupName),
+  );
   return tile.leading! as Icon;
 }
 
