@@ -1898,6 +1898,14 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
   }
 
   @override
+  Future<List<TripEntryDto>> getTripEntriesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    return tripEntries.where((entry) => entry.groupId == groupId).toList();
+  }
+
+  @override
   Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {

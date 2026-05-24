@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/usecases/android_widget/android_widget_interactivity_callback.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
@@ -20,6 +21,7 @@ Future<void> main() async {
   runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      registerAndroidWidgetInteractivityCallback();
       await initLogger();
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,

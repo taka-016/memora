@@ -37,16 +37,13 @@ void main() {
       final cache = await usecase.execute(groupId: 'group001');
 
       expect(cache.selectedTripId, 'nearest-trip');
-      expect(
-        cache.trips.map((trip) => trip.id),
-        [
-          'previous-trip',
-          'nearest-trip',
-          'future-trip-1',
-          'future-trip-2',
-          'future-trip-3',
-        ],
-      );
+      expect(cache.trips.map((trip) => trip.id), [
+        'previous-trip',
+        'nearest-trip',
+        'future-trip-1',
+        'future-trip-2',
+        'future-trip-3',
+      ]);
       expect(itineraryItemQueryService.requestedTripIds, [
         'previous-trip',
         'nearest-trip',
@@ -80,9 +77,7 @@ void main() {
     });
 
     test('旅程項目は開始日時、終了日時の昇順に並べる', () async {
-      tripEntryQueryService.trips = [
-        _trip('trip-1', DateTime(2026, 5, 25)),
-      ];
+      tripEntryQueryService.trips = [_trip('trip-1', DateTime(2026, 5, 25))];
       itineraryItemQueryService.itemsByTripId['trip-1'] = [
         _item(
           'item-3',
@@ -111,7 +106,10 @@ void main() {
         'item-2',
         'item-3',
       ]);
-      expect(cache.trips.single.itineraryItems.first.timeLabel, '5/25 9:00 - 9:30');
+      expect(
+        cache.trips.single.itineraryItems.first.timeLabel,
+        '5/25 9:00 - 9:30',
+      );
     });
   });
 }

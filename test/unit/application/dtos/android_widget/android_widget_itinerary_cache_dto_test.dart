@@ -30,9 +30,7 @@ void main() {
         ],
       );
 
-      final restored = AndroidWidgetItineraryCacheDto.fromJson(
-        cache.toJson(),
-      );
+      final restored = AndroidWidgetItineraryCacheDto.fromJson(cache.toJson());
 
       expect(restored, cache);
     });
