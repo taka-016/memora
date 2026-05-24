@@ -89,6 +89,7 @@ class SelectAndroidWidgetTargetGroupUsecase {
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
 
   Future<void> execute(String groupId) async {
+    await _cacheStorage.clear();
     await _cacheStorage.saveTargetGroupId(groupId);
     await _refreshCacheUsecase.execute(groupId: groupId);
   }
