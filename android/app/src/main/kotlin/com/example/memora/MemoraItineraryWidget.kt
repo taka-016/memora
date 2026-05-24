@@ -144,7 +144,12 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         return
     }
 
-    val listEntries = buildItineraryListEntries(itineraryDate.items)
+    ItineraryList(itineraryDate.items)
+}
+
+@Composable
+private fun ItineraryList(items: List<WidgetItineraryItem>) {
+    val listEntries = buildItineraryListEntries(items)
     LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         items(listEntries) { entry ->
             when (entry) {
