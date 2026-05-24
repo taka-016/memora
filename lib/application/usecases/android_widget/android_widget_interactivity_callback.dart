@@ -39,7 +39,7 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
     cacheStorage: storage,
     getCacheUsecase: getCacheUsecase,
   );
-  final moveUsecase = MoveAndroidWidgetSelectedTripUsecase(
+  final moveUsecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
     cacheStorage: storage,
     tripEntryQueryService: FirestoreTripEntryQueryService(
       firestore: FirebaseFirestore.instance,
@@ -53,10 +53,12 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
 
   switch (uri?.host) {
     case 'previous':
-      await moveUsecase.execute(AndroidWidgetTripMoveDirection.previous);
+      await moveUsecase.execute(
+        AndroidWidgetItineraryDateMoveDirection.previous,
+      );
       break;
     case 'next':
-      await moveUsecase.execute(AndroidWidgetTripMoveDirection.next);
+      await moveUsecase.execute(AndroidWidgetItineraryDateMoveDirection.next);
       break;
     case 'refresh':
       final groupId = await storage.getTargetGroupId();

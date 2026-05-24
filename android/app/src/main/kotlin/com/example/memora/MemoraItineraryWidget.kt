@@ -21,7 +21,6 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
-import androidx.glance.layout.defaultWeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
@@ -112,10 +111,10 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ArrowButton("<", actionRunCallback<PreviousTripAction>())
+        ArrowButton("<", actionRunCallback<PreviousItineraryDateAction>())
         Column(
             modifier = GlanceModifier
-                .defaultWeight()
+                .width(180.dp)
                 .padding(horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -130,7 +129,7 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
                 style = TextStyle(fontSize = 12.sp),
             )
         }
-        ArrowButton(">", actionRunCallback<NextTripAction>())
+        ArrowButton(">", actionRunCallback<NextItineraryDateAction>())
     }
     Text(
         text = itineraryDate.tripPeriodLabel,
@@ -143,7 +142,7 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         return
     }
 
-    LazyColumn(modifier = GlanceModifier.defaultWeight()) {
+    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         items(itineraryDate.items) { item ->
             Text(
                 text = "${item.timeLabel}  ${item.name}",
@@ -206,7 +205,7 @@ class RefreshWidgetAction : ActionCallback {
     }
 }
 
-class PreviousTripAction : ActionCallback {
+class PreviousItineraryDateAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
@@ -216,7 +215,7 @@ class PreviousTripAction : ActionCallback {
     }
 }
 
-class NextTripAction : ActionCallback {
+class NextItineraryDateAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
