@@ -7,14 +7,21 @@ const _widgetSourcePath =
 
 void main() {
   group('MemoraItineraryWidget', () {
-    test('旅程時刻は小さいフォントと詰めた高さで表示し、旅程間に横線を入れる', () {
+    test('旅程時刻は隠れない高さで表示し、旅程間に横線を入れる', () {
       final source = _readWidgetSource();
 
       expect(source, contains('TimeText(timeParts[0])'));
       expect(source, contains('fontSize = 11.sp'));
-      expect(source, contains('private const val TIME_TEXT_HEIGHT_DP = 10'));
+      expect(source, contains('private const val TIME_TEXT_HEIGHT_DP = 12'));
       expect(source, contains('.height(TIME_TEXT_HEIGHT_DP.dp)'));
       expect(source, contains('ItineraryDivider()'));
+    });
+
+    test('開始時刻と終了時刻の区切り文字は縦線で表示する', () {
+      final source = _readWidgetSource();
+
+      expect(source, contains('TimeText("|")'));
+      expect(source, isNot(contains('TimeText("-")')));
     });
 
     test('旅程区切り線は旅程行とは別のリスト項目として表示する', () {
