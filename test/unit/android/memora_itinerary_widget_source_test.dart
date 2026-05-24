@@ -15,6 +15,14 @@ void main() {
       expect(source, contains('.height(12.dp)'));
       expect(source, contains('ItineraryDivider()'));
     });
+
+    test('旅程区切り線は旅程行とは別のリスト項目として表示する', () {
+      final source = _readWidgetSource();
+
+      expect(source, contains('WidgetItineraryListEntry.Item'));
+      expect(source, contains('WidgetItineraryListEntry.Divider'));
+      expect(source, contains('buildItineraryListEntries'));
+    });
   });
 }
 
