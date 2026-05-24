@@ -204,7 +204,7 @@ private fun ItineraryTimeColumn(timeParts: List<String>, fallbackLabel: String) 
     ) {
         if (timeParts.size == 2) {
             TimeText(timeParts[0])
-            TimeText("-")
+            TimeText("|")
             TimeText(timeParts[1])
         } else {
             TimeText(fallbackLabel)
@@ -424,6 +424,6 @@ private const val SELECTED_ITINERARY_DATE_ID_KEY =
     "memora_widget_selected_itinerary_date_id"
 private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
-private const val TIME_TEXT_HEIGHT_DP = 10
+private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
