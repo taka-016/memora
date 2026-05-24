@@ -12,7 +12,8 @@ void main() {
 
       expect(source, contains('TimeText(timeParts[0])'));
       expect(source, contains('fontSize = 11.sp'));
-      expect(source, contains('.height(10.dp)'));
+      expect(source, contains('private const val TIME_TEXT_HEIGHT_DP = 10'));
+      expect(source, contains('.height(TIME_TEXT_HEIGHT_DP.dp)'));
       expect(source, contains('ItineraryDivider()'));
     });
 
@@ -27,13 +28,19 @@ void main() {
     test('終了時刻と区切り線の間に余白を入れる', () {
       final source = _readWidgetSource();
 
+      expect(source, contains('private const val DIVIDER_TOP_SPACE_DP = 4'));
+      expect(source, contains('private const val DIVIDER_BOTTOM_SPACE_DP = 2'));
       expect(
         source,
-        contains('Spacer(modifier = GlanceModifier.height(4.dp))'),
+        contains(
+          'Spacer(modifier = GlanceModifier.height(DIVIDER_TOP_SPACE_DP.dp))',
+        ),
       );
       expect(
         source,
-        contains('Spacer(modifier = GlanceModifier.height(2.dp))'),
+        contains(
+          'Spacer(modifier = GlanceModifier.height(DIVIDER_BOTTOM_SPACE_DP.dp))',
+        ),
       );
     });
   });

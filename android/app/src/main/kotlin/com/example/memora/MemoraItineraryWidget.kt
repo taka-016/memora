@@ -218,7 +218,7 @@ private fun TimeText(text: String) {
         text = text,
         modifier = GlanceModifier
             .fillMaxWidth()
-            .height(10.dp),
+            .height(TIME_TEXT_HEIGHT_DP.dp),
         maxLines = 1,
         style = TextStyle(
             fontSize = 11.sp,
@@ -231,14 +231,14 @@ private fun TimeText(text: String) {
 @Composable
 private fun ItineraryDivider() {
     Column(modifier = GlanceModifier.fillMaxWidth()) {
-        Spacer(modifier = GlanceModifier.height(4.dp))
+        Spacer(modifier = GlanceModifier.height(DIVIDER_TOP_SPACE_DP.dp))
         Box(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(Color(0xFFE0E0E0)),
         ) {}
-        Spacer(modifier = GlanceModifier.height(2.dp))
+        Spacer(modifier = GlanceModifier.height(DIVIDER_BOTTOM_SPACE_DP.dp))
     }
 }
 
@@ -424,3 +424,6 @@ private const val SELECTED_ITINERARY_DATE_ID_KEY =
     "memora_widget_selected_itinerary_date_id"
 private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
+private const val TIME_TEXT_HEIGHT_DP = 10
+private const val DIVIDER_TOP_SPACE_DP = 4
+private const val DIVIDER_BOTTOM_SPACE_DP = 2
