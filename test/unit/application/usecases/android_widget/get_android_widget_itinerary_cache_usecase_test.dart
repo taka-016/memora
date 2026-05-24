@@ -23,7 +23,7 @@ void main() {
       );
     });
 
-    test('現在日付以降で開始日が最も近い旅行を選択し、過去1件と未来3件を含める', () async {
+    test('現在日付以降で最も近い旅程日付を選択し、過去1件と未来3件を含める', () async {
       tripEntryQueryService.trips = [
         _trip('old-trip', DateTime(2026, 4, 10)),
         _trip('previous-trip', DateTime(2026, 5, 1)),
@@ -33,28 +33,53 @@ void main() {
         _trip('future-trip-3', DateTime(2026, 8, 1)),
         _trip('future-trip-4', DateTime(2026, 9, 1)),
       ];
+      itineraryItemQueryService.itemsByTripId.addAll({
+        'old-trip': [
+          _item('old-item', '過去', DateTime(2026, 4, 10, 9), null),
+        ],
+        'previous-trip': [
+          _item('previous-item', '前回', DateTime(2026, 5, 1, 9), null),
+        ],
+        'nearest-trip': [
+          _item('nearest-item', '直近', DateTime(2026, 5, 25, 9), null),
+        ],
+        'future-trip-1': [
+          _item('future-item-1', '未来1', DateTime(2026, 6, 1, 9), null),
+        ],
+        'future-trip-2': [
+          _item('future-item-2', '未来2', DateTime(2026, 7, 1, 9), null),
+        ],
+        'future-trip-3': [
+          _item('future-item-3', '未来3', DateTime(2026, 8, 1, 9), null),
+        ],
+        'future-trip-4': [
+          _item('future-item-4', '未来4', DateTime(2026, 9, 1, 9), null),
+        ],
+      });
 
       final cache = await usecase.execute(groupId: 'group001');
 
-      expect(cache.selectedTripId, 'nearest-trip');
-      expect(cache.trips.map((trip) => trip.id), [
-        'previous-trip',
-        'nearest-trip',
-        'future-trip-1',
-        'future-trip-2',
-        'future-trip-3',
+      expect(cache.selectedItineraryDateId, 'nearest-trip_2026-05-25');
+      expect(cache.itineraryDates.map((date) => date.id), [
+        'previous-trip_2026-05-01',
+        'nearest-trip_2026-05-25',
+        'future-trip-1_2026-06-01',
+        'future-trip-2_2026-07-01',
+        'future-trip-3_2026-08-01',
       ]);
       expect(itineraryItemQueryService.requestedTripIds, [
+        'old-trip',
         'previous-trip',
         'nearest-trip',
         'future-trip-1',
         'future-trip-2',
         'future-trip-3',
+        'future-trip-4',
       ]);
       expect(tripEntryQueryService.receivedOrderBy, isNull);
     });
 
-    test('表示中旅行IDを指定した場合はその旅行を基準にキャッシュ範囲を作る', () async {
+    test('表示中旅程日付IDを指定した場合はその日付を基準にキャッシュ範囲を作る', () async {
       tripEntryQueryService.trips = [
         _trip('trip-1', DateTime(2026, 5, 1)),
         _trip('trip-2', DateTime(2026, 5, 25)),
@@ -62,22 +87,29 @@ void main() {
         _trip('trip-4', DateTime(2026, 7, 1)),
         _trip('trip-5', DateTime(2026, 8, 1)),
       ];
+      itineraryItemQueryService.itemsByTripId.addAll({
+        'trip-1': [_item('item-1', '1日目', DateTime(2026, 5, 1, 9), null)],
+        'trip-2': [_item('item-2', '2日目', DateTime(2026, 5, 25, 9), null)],
+        'trip-3': [_item('item-3', '3日目', DateTime(2026, 6, 1, 9), null)],
+        'trip-4': [_item('item-4', '4日目', DateTime(2026, 7, 1, 9), null)],
+        'trip-5': [_item('item-5', '5日目', DateTime(2026, 8, 1, 9), null)],
+      });
 
       final cache = await usecase.execute(
         groupId: 'group001',
-        selectedTripId: 'trip-3',
+        selectedItineraryDateId: 'trip-3_2026-06-01',
       );
 
-      expect(cache.selectedTripId, 'trip-3');
-      expect(cache.trips.map((trip) => trip.id), [
-        'trip-2',
-        'trip-3',
-        'trip-4',
-        'trip-5',
+      expect(cache.selectedItineraryDateId, 'trip-3_2026-06-01');
+      expect(cache.itineraryDates.map((date) => date.id), [
+        'trip-2_2026-05-25',
+        'trip-3_2026-06-01',
+        'trip-4_2026-07-01',
+        'trip-5_2026-08-01',
       ]);
     });
 
-    test('旅程項目は開始日時、終了日時の昇順に並べる', () async {
+    test('旅程項目は日付単位にまとめ、開始日時、終了日時の昇順に並べる', () async {
       tripEntryQueryService.trips = [_trip('trip-1', DateTime(2026, 5, 25))];
       itineraryItemQueryService.itemsByTripId['trip-1'] = [
         _item(
@@ -85,6 +117,12 @@ void main() {
           '昼食',
           DateTime(2026, 5, 25, 12),
           DateTime(2026, 5, 25, 13),
+        ),
+        _item(
+          'item-4',
+          '夕食',
+          DateTime(2026, 5, 26, 18),
+          DateTime(2026, 5, 26, 19),
         ),
         _item(
           'item-2',
@@ -102,14 +140,17 @@ void main() {
 
       final cache = await usecase.execute(groupId: 'group001');
 
-      expect(cache.trips.single.itineraryItems.map((item) => item.id), [
+      expect(cache.itineraryDates, hasLength(2));
+      expect(cache.itineraryDates.first.tripName, 'trip-1');
+      expect(cache.itineraryDates.first.dateLabel, '2026/5/25');
+      expect(cache.itineraryDates.first.itineraryItems.map((item) => item.id), [
         'item-1',
         'item-2',
         'item-3',
       ]);
       expect(
-        cache.trips.single.itineraryItems.first.timeLabel,
-        '5/25 9:00 - 9:30',
+        cache.itineraryDates.first.itineraryItems.first.timeLabel,
+        '9:00 - 9:30',
       );
     });
   });
@@ -130,14 +171,15 @@ ItineraryItemDto _item(
   String id,
   String name,
   DateTime startDateTime,
-  DateTime endDateTime,
+  DateTime? endDateTime,
 ) {
   return ItineraryItemDto(
     id: id,
-    tripId: 'trip-1',
+    tripId: id.split('-').first,
     name: name,
     startDateTime: startDateTime,
     endDateTime: endDateTime,
+    memo: 'ウィジェットには表示しないメモ',
   );
 }
 
