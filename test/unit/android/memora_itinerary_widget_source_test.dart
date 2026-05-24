@@ -12,7 +12,7 @@ void main() {
 
       expect(source, contains('TimeText(timeParts[0])'));
       expect(source, contains('fontSize = 11.sp'));
-      expect(source, contains('.height(12.dp)'));
+      expect(source, contains('.height(10.dp)'));
       expect(source, contains('ItineraryDivider()'));
     });
 
@@ -22,6 +22,19 @@ void main() {
       expect(source, contains('WidgetItineraryListEntry.Item'));
       expect(source, contains('WidgetItineraryListEntry.Divider'));
       expect(source, contains('buildItineraryListEntries'));
+    });
+
+    test('終了時刻と区切り線の間に余白を入れる', () {
+      final source = _readWidgetSource();
+
+      expect(
+        source,
+        contains('Spacer(modifier = GlanceModifier.height(4.dp))'),
+      );
+      expect(
+        source,
+        contains('Spacer(modifier = GlanceModifier.height(2.dp))'),
+      );
     });
   });
 }
