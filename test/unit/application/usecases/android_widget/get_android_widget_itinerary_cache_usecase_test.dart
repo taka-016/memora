@@ -34,9 +34,7 @@ void main() {
         _trip('future-trip-4', DateTime(2026, 9, 1)),
       ];
       itineraryItemQueryService.itemsByTripId.addAll({
-        'old-trip': [
-          _item('old-item', '過去', DateTime(2026, 4, 10, 9), null),
-        ],
+        'old-trip': [_item('old-item', '過去', DateTime(2026, 4, 10, 9), null)],
         'previous-trip': [
           _item('previous-item', '前回', DateTime(2026, 5, 1, 9), null),
         ],
