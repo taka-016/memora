@@ -10,7 +10,8 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   const HomeWidgetAndroidWidgetCacheStorage();
 
   static const targetGroupIdKey = 'memora_widget_target_group_id';
-  static const selectedTripIdKey = 'memora_widget_selected_trip_id';
+  static const selectedItineraryDateIdKey =
+      'memora_widget_selected_itinerary_date_id';
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
   static const errorMessageKey = 'memora_widget_error_message';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
@@ -34,14 +35,19 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<String?> getSelectedTripId() async {
-    final value = await HomeWidget.getWidgetData<String>(selectedTripIdKey);
+  Future<String?> getSelectedItineraryDateId() async {
+    final value = await HomeWidget.getWidgetData<String>(
+      selectedItineraryDateIdKey,
+    );
     return value == null || value.isEmpty ? null : value;
   }
 
   @override
-  Future<void> saveSelectedTripId(String? tripId) async {
-    await HomeWidget.saveWidgetData<String>(selectedTripIdKey, tripId ?? '');
+  Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
+    await HomeWidget.saveWidgetData<String>(
+      selectedItineraryDateIdKey,
+      itineraryDateId ?? '',
+    );
   }
 
   @override
@@ -71,7 +77,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       extension: 'json',
     );
     await Future.wait([
-      saveSelectedTripId(cache.selectedTripId),
+      saveSelectedItineraryDateId(cache.selectedItineraryDateId),
       HomeWidget.saveWidgetData<String>(
         lastUpdatedAtKey,
         cache.lastUpdatedAt.toIso8601String(),
@@ -88,7 +94,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
-      saveSelectedTripId(null),
+      saveSelectedItineraryDateId(null),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(errorMessageKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, ''),

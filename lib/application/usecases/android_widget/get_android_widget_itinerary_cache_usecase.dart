@@ -32,15 +32,13 @@ class GetAndroidWidgetItineraryCacheUsecase {
 
   Future<AndroidWidgetItineraryCacheDto> execute({
     required String groupId,
-    String? selectedTripId,
+    String? selectedItineraryDateId,
   }) async {
     final trips = await _tripEntryQueryService.getTripEntriesByGroupId(groupId);
     final sortedTrips = [...trips]..sort(_compareTripsByStartDate);
-    final selectedTrip = _selectTrip(sortedTrips, selectedTripId);
-    final cachedTrips = _selectCacheRange(sortedTrips, selectedTrip);
-    final tripCaches = <AndroidWidgetTripCacheDto>[];
+    final allItineraryDates = <AndroidWidgetItineraryDateCacheDto>[];
 
-    for (final trip in cachedTrips) {
+    for (final trip in sortedTrips) {
       final items = await _itineraryItemQueryService.getItineraryItemsByTripId(
         trip.id,
         orderBy: const [
@@ -48,83 +46,110 @@ class GetAndroidWidgetItineraryCacheUsecase {
           OrderBy('endDateTime', descending: false),
         ],
       );
-      tripCaches.add(_toTripCache(trip, items));
+      allItineraryDates.addAll(_toItineraryDateCaches(trip, items));
     }
+
+    allItineraryDates.sort(_compareItineraryDateCaches);
+    final selectedItineraryDate = _selectItineraryDate(
+      allItineraryDates,
+      selectedItineraryDateId,
+    );
+    final cachedItineraryDates = _selectCacheRange(
+      allItineraryDates,
+      selectedItineraryDate,
+    );
 
     return AndroidWidgetItineraryCacheDto(
       version: 1,
       groupId: groupId,
-      selectedTripId: selectedTrip?.id,
+      selectedItineraryDateId: selectedItineraryDate?.id,
       lastUpdatedAt: _clock.now(),
-      trips: tripCaches,
+      itineraryDates: cachedItineraryDates,
     );
   }
 
-  TripEntryDto? _selectTrip(List<TripEntryDto> trips, String? selectedTripId) {
-    if (selectedTripId != null) {
-      for (final trip in trips) {
-        if (trip.id == selectedTripId) {
-          return trip;
+  AndroidWidgetItineraryDateCacheDto? _selectItineraryDate(
+    List<AndroidWidgetItineraryDateCacheDto> itineraryDates,
+    String? selectedItineraryDateId,
+  ) {
+    if (selectedItineraryDateId != null) {
+      for (final itineraryDate in itineraryDates) {
+        if (itineraryDate.id == selectedItineraryDateId) {
+          return itineraryDate;
         }
       }
     }
 
     final today = _dateOnly(_clock.now());
-    for (final trip in trips) {
-      final startDate = trip.startDate;
-      if (startDate != null && !_dateOnly(startDate).isBefore(today)) {
-        return trip;
+    for (final itineraryDate in itineraryDates) {
+      if (!itineraryDate.date.isBefore(today)) {
+        return itineraryDate;
       }
     }
-    return trips.lastOrNull;
+    return itineraryDates.lastOrNull;
   }
 
-  List<TripEntryDto> _selectCacheRange(
-    List<TripEntryDto> trips,
-    TripEntryDto? selectedTrip,
+  List<AndroidWidgetItineraryDateCacheDto> _selectCacheRange(
+    List<AndroidWidgetItineraryDateCacheDto> itineraryDates,
+    AndroidWidgetItineraryDateCacheDto? selectedItineraryDate,
   ) {
-    if (selectedTrip == null) {
+    if (selectedItineraryDate == null) {
       return [];
     }
 
-    final selectedIndex = trips.indexWhere(
-      (trip) => trip.id == selectedTrip.id,
+    final selectedIndex = itineraryDates.indexWhere(
+      (itineraryDate) => itineraryDate.id == selectedItineraryDate.id,
     );
     if (selectedIndex < 0) {
       return [];
     }
 
     final startIndex = selectedIndex - 1 < 0 ? 0 : selectedIndex - 1;
-    final endExclusive = selectedIndex + 4 > trips.length
-        ? trips.length
+    final endExclusive = selectedIndex + 4 > itineraryDates.length
+        ? itineraryDates.length
         : selectedIndex + 4;
-    return trips.sublist(startIndex, endExclusive);
+    return itineraryDates.sublist(startIndex, endExclusive);
   }
 
-  AndroidWidgetTripCacheDto _toTripCache(
+  List<AndroidWidgetItineraryDateCacheDto> _toItineraryDateCaches(
     TripEntryDto trip,
     List<ItineraryItemDto> itineraryItems,
   ) {
     final sortedItems = [...itineraryItems]..sort(_compareItineraryItems);
-    return AndroidWidgetTripCacheDto(
-      id: trip.id,
-      name: trip.name?.isNotEmpty == true ? trip.name! : '名称未設定',
-      periodLabel: _formatPeriodLabel(trip.startDate, trip.endDate),
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      itineraryItems: sortedItems
-          .map(
-            (item) => AndroidWidgetItineraryItemCacheDto(
-              id: item.id,
-              name: item.name,
-              timeLabel: _formatTimeLabel(item.startDateTime, item.endDateTime),
-              startDateTime: item.startDateTime,
-              endDateTime: item.endDateTime,
-              memo: item.memo,
-            ),
-          )
-          .toList(),
-    );
+    final itemsByDate = <DateTime, List<ItineraryItemDto>>{};
+    for (final item in sortedItems) {
+      final startDateTime = item.startDateTime;
+      if (startDateTime == null) {
+        continue;
+      }
+      final date = _dateOnly(startDateTime);
+      itemsByDate.putIfAbsent(date, () => []).add(item);
+    }
+
+    return itemsByDate.entries.map((entry) {
+      return AndroidWidgetItineraryDateCacheDto(
+        id: _buildItineraryDateId(trip.id, entry.key),
+        tripId: trip.id,
+        tripName: trip.name?.isNotEmpty == true ? trip.name! : '名称未設定',
+        tripPeriodLabel: _formatPeriodLabel(trip.startDate, trip.endDate),
+        dateLabel: _formatDate(entry.key),
+        date: entry.key,
+        itineraryItems: entry.value
+            .map(
+              (item) => AndroidWidgetItineraryItemCacheDto(
+                id: item.id,
+                name: item.name,
+                timeLabel: _formatTimeLabel(
+                  item.startDateTime,
+                  item.endDateTime,
+                ),
+                startDateTime: item.startDateTime,
+                endDateTime: item.endDateTime,
+              ),
+            )
+            .toList(),
+      );
+    }).toList();
   }
 
   int _compareTripsByStartDate(TripEntryDto a, TripEntryDto b) {
@@ -142,6 +167,17 @@ class GetAndroidWidgetItineraryCacheUsecase {
     return _compareNullableDateTime(a.endDateTime, b.endDateTime);
   }
 
+  int _compareItineraryDateCaches(
+    AndroidWidgetItineraryDateCacheDto a,
+    AndroidWidgetItineraryDateCacheDto b,
+  ) {
+    final dateComparison = a.date.compareTo(b.date);
+    if (dateComparison != 0) {
+      return dateComparison;
+    }
+    return a.tripId.compareTo(b.tripId);
+  }
+
   int _compareNullableDateTime(DateTime? a, DateTime? b) {
     if (a == null && b == null) {
       return 0;
@@ -157,6 +193,12 @@ class GetAndroidWidgetItineraryCacheUsecase {
 
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);
+  }
+
+  String _buildItineraryDateId(String tripId, DateTime date) {
+    return '${tripId}_${date.year}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
   }
 
   String _formatPeriodLabel(DateTime? startDate, DateTime? endDate) {
@@ -182,10 +224,11 @@ class GetAndroidWidgetItineraryCacheUsecase {
     if (endDateTime == null) {
       return '${_formatDateTime(startDateTime)}から';
     }
+    final startLabel = _formatTime(startDateTime);
     final endLabel = _isSameDate(startDateTime, endDateTime)
         ? _formatTime(endDateTime)
         : _formatDateTime(endDateTime);
-    return '${_formatDateTime(startDateTime)} - $endLabel';
+    return '$startLabel - $endLabel';
   }
 
   bool _isSameDate(DateTime a, DateTime b) {

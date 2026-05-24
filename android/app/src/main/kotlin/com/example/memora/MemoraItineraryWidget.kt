@@ -21,11 +21,14 @@ import androidx.glance.layout.Box
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
+import androidx.glance.layout.defaultWeight
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.width
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -59,9 +62,10 @@ private fun MemoraItineraryWidgetContent(
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
     val errorMessage = prefs.getString(ERROR_MESSAGE_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
-    val selectedTripId = prefs.getString(SELECTED_TRIP_ID_KEY, null)
-        ?: cache?.selectedTripId
-    val selectedTrip = cache?.trips?.firstOrNull { it.id == selectedTripId }
+    val selectedItineraryDateId = prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)
+        ?: cache?.selectedItineraryDateId
+    val selectedItineraryDate = cache?.itineraryDates
+        ?.firstOrNull { it.id == selectedItineraryDateId }
 
     Box(
         modifier = GlanceModifier
@@ -74,8 +78,8 @@ private fun MemoraItineraryWidgetContent(
             Spacer(modifier = GlanceModifier.height(4.dp))
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
-                selectedTrip == null -> EmptyMessage("表示できる旅行がありません")
-                else -> TripContent(selectedTrip)
+                selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
+                else -> ItineraryDateContent(selectedItineraryDate)
             }
             FooterRow(cache?.lastUpdatedAt, errorMessage)
         }
@@ -84,9 +88,9 @@ private fun MemoraItineraryWidgetContent(
 
 @Composable
 private fun HeaderRow() {
-    Row(
+    Box(
         modifier = GlanceModifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        contentAlignment = Alignment.TopEnd,
     ) {
         Text(
             text = "更新",
@@ -99,58 +103,73 @@ private fun HeaderRow() {
                 fontWeight = FontWeight.Bold,
             ),
         )
-        Spacer(modifier = GlanceModifier.width(120.dp))
-        Text(
-            text = "<",
-            modifier = GlanceModifier
-                .padding(horizontal = 8.dp)
-                .clickable(actionRunCallback<PreviousTripAction>()),
-            style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
-        )
-        Spacer(modifier = GlanceModifier.width(12.dp))
-        Text(
-            text = ">",
-            modifier = GlanceModifier
-                .padding(horizontal = 8.dp)
-                .clickable(actionRunCallback<NextTripAction>()),
-            style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
-        )
     }
 }
 
 @Composable
-private fun TripContent(trip: WidgetTrip) {
+private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
+    Row(
+        modifier = GlanceModifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ArrowButton("<", actionRunCallback<PreviousTripAction>())
+        Column(
+            modifier = GlanceModifier
+                .defaultWeight()
+                .padding(horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = itineraryDate.tripName,
+                maxLines = 1,
+                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+            )
+            Text(
+                text = itineraryDate.dateLabel,
+                maxLines = 1,
+                style = TextStyle(fontSize = 12.sp),
+            )
+        }
+        ArrowButton(">", actionRunCallback<NextTripAction>())
+    }
     Text(
-        text = trip.name,
+        text = itineraryDate.tripPeriodLabel,
         maxLines = 1,
-        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Bold),
-    )
-    Text(
-        text = trip.periodLabel,
-        maxLines = 1,
-        style = TextStyle(fontSize = 12.sp),
+        style = TextStyle(fontSize = 11.sp),
     )
     Spacer(modifier = GlanceModifier.height(6.dp))
-    if (trip.items.isEmpty()) {
+    if (itineraryDate.items.isEmpty()) {
         Text(text = "旅程項目がありません", style = TextStyle(fontSize = 12.sp))
         return
     }
 
-    Column {
-        trip.items.take(3).forEach { item ->
+    LazyColumn(modifier = GlanceModifier.defaultWeight()) {
+        items(itineraryDate.items) { item ->
             Text(
                 text = "${item.timeLabel}  ${item.name}",
-                maxLines = 1,
+                maxLines = 2,
                 style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
             )
-            if (item.memo.isNotBlank()) {
-                Text(
-                    text = item.memo,
-                    maxLines = 1,
-                    style = TextStyle(fontSize = 11.sp),
-                )
-            }
         }
+    }
+}
+
+@Composable
+private fun ArrowButton(
+    text: String,
+    action: androidx.glance.action.Action,
+) {
+    Box(
+        modifier = GlanceModifier
+            .width(44.dp)
+            .height(44.dp)
+            .clickable(action),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.Bold),
+        )
     }
 }
 
@@ -224,26 +243,29 @@ private fun readCache(path: String?): WidgetCache? {
     return runCatching {
         val root = JSONObject(file.readText(Charsets.UTF_8))
         WidgetCache(
-            selectedTripId = root.optString("selectedTripId").ifBlank { null },
+            selectedItineraryDateId = root
+                .optString("selectedItineraryDateId")
+                .ifBlank { null },
             lastUpdatedAt = formatLastUpdatedAt(root.optString("lastUpdatedAt")),
-            trips = root.optJSONArray("trips").toTrips(),
+            itineraryDates = root.optJSONArray("itineraryDates").toItineraryDates(),
         )
     }.getOrNull()
 }
 
-private fun JSONArray?.toTrips(): List<WidgetTrip> {
+private fun JSONArray?.toItineraryDates(): List<WidgetItineraryDate> {
     if (this == null) {
         return emptyList()
     }
     return buildList {
         for (index in 0 until length()) {
-            val trip = optJSONObject(index) ?: continue
+            val itineraryDate = optJSONObject(index) ?: continue
             add(
-                WidgetTrip(
-                    id = trip.optString("id"),
-                    name = trip.optString("name"),
-                    periodLabel = trip.optString("periodLabel"),
-                    items = trip.optJSONArray("itineraryItems").toItems(),
+                WidgetItineraryDate(
+                    id = itineraryDate.optString("id"),
+                    tripName = itineraryDate.optString("tripName"),
+                    tripPeriodLabel = itineraryDate.optString("tripPeriodLabel"),
+                    dateLabel = itineraryDate.optString("dateLabel"),
+                    items = itineraryDate.optJSONArray("itineraryItems").toItems(),
                 ),
             )
         }
@@ -261,7 +283,6 @@ private fun JSONArray?.toItems(): List<WidgetItineraryItem> {
                 WidgetItineraryItem(
                     name = item.optString("name"),
                     timeLabel = item.optString("timeLabel"),
-                    memo = item.optString("memo"),
                 ),
             )
         }
@@ -276,25 +297,26 @@ private fun formatLastUpdatedAt(value: String): String {
 }
 
 private data class WidgetCache(
-    val selectedTripId: String?,
+    val selectedItineraryDateId: String?,
     val lastUpdatedAt: String,
-    val trips: List<WidgetTrip>,
+    val itineraryDates: List<WidgetItineraryDate>,
 )
 
-private data class WidgetTrip(
+private data class WidgetItineraryDate(
     val id: String,
-    val name: String,
-    val periodLabel: String,
+    val tripName: String,
+    val tripPeriodLabel: String,
+    val dateLabel: String,
     val items: List<WidgetItineraryItem>,
 )
 
 private data class WidgetItineraryItem(
     val name: String,
     val timeLabel: String,
-    val memo: String,
 )
 
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
-private const val SELECTED_TRIP_ID_KEY = "memora_widget_selected_trip_id"
+private const val SELECTED_ITINERARY_DATE_ID_KEY =
+    "memora_widget_selected_itinerary_date_id"
 private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"

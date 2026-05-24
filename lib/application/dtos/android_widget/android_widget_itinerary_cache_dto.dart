@@ -4,24 +4,26 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   const AndroidWidgetItineraryCacheDto({
     required this.version,
     required this.groupId,
-    required this.selectedTripId,
+    required this.selectedItineraryDateId,
     required this.lastUpdatedAt,
-    required this.trips,
+    required this.itineraryDates,
   });
 
   final int version;
   final String groupId;
-  final String? selectedTripId;
+  final String? selectedItineraryDateId;
   final DateTime lastUpdatedAt;
-  final List<AndroidWidgetTripCacheDto> trips;
+  final List<AndroidWidgetItineraryDateCacheDto> itineraryDates;
 
   Map<String, dynamic> toJson() {
     return {
       'version': version,
       'groupId': groupId,
-      'selectedTripId': selectedTripId,
+      'selectedItineraryDateId': selectedItineraryDateId,
       'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
-      'trips': trips.map((trip) => trip.toJson()).toList(),
+      'itineraryDates': itineraryDates
+          .map((itineraryDate) => itineraryDate.toJson())
+          .toList(),
     };
   }
 
@@ -29,13 +31,13 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
     return AndroidWidgetItineraryCacheDto(
       version: json['version'] as int? ?? 1,
       groupId: json['groupId'] as String? ?? '',
-      selectedTripId: json['selectedTripId'] as String?,
+      selectedItineraryDateId: json['selectedItineraryDateId'] as String?,
       lastUpdatedAt:
           DateTime.tryParse(json['lastUpdatedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      trips: ((json['trips'] as List<dynamic>?) ?? [])
+      itineraryDates: ((json['itineraryDates'] as List<dynamic>?) ?? [])
           .whereType<Map<String, dynamic>>()
-          .map(AndroidWidgetTripCacheDto.fromJson)
+          .map(AndroidWidgetItineraryDateCacheDto.fromJson)
           .toList(),
     );
   }
@@ -44,47 +46,55 @@ class AndroidWidgetItineraryCacheDto extends Equatable {
   List<Object?> get props => [
     version,
     groupId,
-    selectedTripId,
+    selectedItineraryDateId,
     lastUpdatedAt,
-    trips,
+    itineraryDates,
   ];
 }
 
-class AndroidWidgetTripCacheDto extends Equatable {
-  const AndroidWidgetTripCacheDto({
+class AndroidWidgetItineraryDateCacheDto extends Equatable {
+  const AndroidWidgetItineraryDateCacheDto({
     required this.id,
-    required this.name,
-    required this.periodLabel,
-    required this.startDate,
-    required this.endDate,
+    required this.tripId,
+    required this.tripName,
+    required this.tripPeriodLabel,
+    required this.dateLabel,
+    required this.date,
     required this.itineraryItems,
   });
 
   final String id;
-  final String name;
-  final String periodLabel;
-  final DateTime? startDate;
-  final DateTime? endDate;
+  final String tripId;
+  final String tripName;
+  final String tripPeriodLabel;
+  final String dateLabel;
+  final DateTime date;
   final List<AndroidWidgetItineraryItemCacheDto> itineraryItems;
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
-      'periodLabel': periodLabel,
-      'startDate': startDate?.toIso8601String(),
-      'endDate': endDate?.toIso8601String(),
+      'tripId': tripId,
+      'tripName': tripName,
+      'tripPeriodLabel': tripPeriodLabel,
+      'dateLabel': dateLabel,
+      'date': date.toIso8601String(),
       'itineraryItems': itineraryItems.map((item) => item.toJson()).toList(),
     };
   }
 
-  factory AndroidWidgetTripCacheDto.fromJson(Map<String, dynamic> json) {
-    return AndroidWidgetTripCacheDto(
+  factory AndroidWidgetItineraryDateCacheDto.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return AndroidWidgetItineraryDateCacheDto(
       id: json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      periodLabel: json['periodLabel'] as String? ?? '',
-      startDate: DateTime.tryParse(json['startDate'] as String? ?? ''),
-      endDate: DateTime.tryParse(json['endDate'] as String? ?? ''),
+      tripId: json['tripId'] as String? ?? '',
+      tripName: json['tripName'] as String? ?? '',
+      tripPeriodLabel: json['tripPeriodLabel'] as String? ?? '',
+      dateLabel: json['dateLabel'] as String? ?? '',
+      date:
+          DateTime.tryParse(json['date'] as String? ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0),
       itineraryItems: ((json['itineraryItems'] as List<dynamic>?) ?? [])
           .whereType<Map<String, dynamic>>()
           .map(AndroidWidgetItineraryItemCacheDto.fromJson)
@@ -95,10 +105,11 @@ class AndroidWidgetTripCacheDto extends Equatable {
   @override
   List<Object?> get props => [
     id,
-    name,
-    periodLabel,
-    startDate,
-    endDate,
+    tripId,
+    tripName,
+    tripPeriodLabel,
+    dateLabel,
+    date,
     itineraryItems,
   ];
 }
@@ -110,7 +121,6 @@ class AndroidWidgetItineraryItemCacheDto extends Equatable {
     required this.timeLabel,
     required this.startDateTime,
     required this.endDateTime,
-    this.memo,
   });
 
   final String id;
@@ -118,7 +128,6 @@ class AndroidWidgetItineraryItemCacheDto extends Equatable {
   final String timeLabel;
   final DateTime? startDateTime;
   final DateTime? endDateTime;
-  final String? memo;
 
   Map<String, dynamic> toJson() {
     return {
@@ -127,7 +136,6 @@ class AndroidWidgetItineraryItemCacheDto extends Equatable {
       'timeLabel': timeLabel,
       'startDateTime': startDateTime?.toIso8601String(),
       'endDateTime': endDateTime?.toIso8601String(),
-      'memo': memo,
     };
   }
 
@@ -140,17 +148,9 @@ class AndroidWidgetItineraryItemCacheDto extends Equatable {
       timeLabel: json['timeLabel'] as String? ?? '',
       startDateTime: DateTime.tryParse(json['startDateTime'] as String? ?? ''),
       endDateTime: DateTime.tryParse(json['endDateTime'] as String? ?? ''),
-      memo: json['memo'] as String?,
     );
   }
 
   @override
-  List<Object?> get props => [
-    id,
-    name,
-    timeLabel,
-    startDateTime,
-    endDateTime,
-    memo,
-  ];
+  List<Object?> get props => [id, name, timeLabel, startDateTime, endDateTime];
 }

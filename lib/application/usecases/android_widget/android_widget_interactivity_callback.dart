@@ -45,6 +45,9 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
       firestore: FirebaseFirestore.instance,
       clock: NtpSynchronizedAppClock(),
     ),
+    itineraryItemQueryService: FirestoreItineraryItemQueryService(
+      firestore: FirebaseFirestore.instance,
+    ),
     refreshCacheUsecase: refreshUsecase,
   );
 
@@ -61,10 +64,11 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
         await storage.updateWidget();
         return;
       }
-      final selectedTripId = await storage.getSelectedTripId();
+      final selectedItineraryDateId = await storage
+          .getSelectedItineraryDateId();
       await refreshUsecase.execute(
         groupId: groupId,
-        selectedTripId: selectedTripId,
+        selectedItineraryDateId: selectedItineraryDateId,
       );
       break;
   }
