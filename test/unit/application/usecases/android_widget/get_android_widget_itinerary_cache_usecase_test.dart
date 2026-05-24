@@ -51,6 +51,7 @@ void main() {
         'future-trip-2',
         'future-trip-3',
       ]);
+      expect(tripEntryQueryService.receivedOrderBy, isNull);
     });
 
     test('表示中旅行IDを指定した場合はその旅行を基準にキャッシュ範囲を作る', () async {
@@ -142,6 +143,7 @@ ItineraryItemDto _item(
 
 class _FakeTripEntryQueryService implements TripEntryQueryService {
   List<TripEntryDto> trips = [];
+  List<OrderBy>? receivedOrderBy;
 
   @override
   Future<TripEntryDto?> getTripEntryById(
@@ -158,6 +160,7 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
+    receivedOrderBy = orderBy;
     return trips.where((trip) => trip.groupId == groupId).toList();
   }
 
