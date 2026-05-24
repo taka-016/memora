@@ -8,7 +8,7 @@ const _widgetSourcePath =
 void main() {
   group('MemoraItineraryWidget', () {
     test('旅程時刻は小さいフォントと詰めた高さで表示し、旅程間に横線を入れる', () {
-      final source = File(_widgetSourcePath).readAsStringSync();
+      final source = _readWidgetSource();
 
       expect(source, contains('TimeText(timeParts[0])'));
       expect(source, contains('fontSize = 11.sp'));
@@ -17,3 +17,5 @@ void main() {
     });
   });
 }
+
+String _readWidgetSource() => File(_widgetSourcePath).readAsStringSync();
