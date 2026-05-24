@@ -109,12 +109,7 @@ class _SettingsState extends ConsumerState<Settings> {
                       await ref
                           .read(selectAndroidWidgetTargetGroupUsecaseProvider)
                           .execute(group.id);
-                      if (mounted) {
-                        setState(() {
-                          _selectedAndroidWidgetGroupId = group.id;
-                          _isTargetGroupIdLoaded = true;
-                        });
-                      }
+                      _updateSelectedAndroidWidgetGroupId(group.id);
                       if (!context.mounted) {
                         return;
                       }
@@ -133,12 +128,7 @@ class _SettingsState extends ConsumerState<Settings> {
                                 clearAndroidWidgetTargetGroupUsecaseProvider,
                               )
                               .execute();
-                          if (mounted) {
-                            setState(() {
-                              _selectedAndroidWidgetGroupId = null;
-                              _isTargetGroupIdLoaded = true;
-                            });
-                          }
+                          _updateSelectedAndroidWidgetGroupId(null);
                           if (!context.mounted) {
                             return;
                           }
@@ -172,12 +162,19 @@ class _SettingsState extends ConsumerState<Settings> {
         .getTargetGroupId()
         .then((groupId) {
           if (mounted && _loadedMemberId == member.id) {
-            setState(() {
-              _selectedAndroidWidgetGroupId = groupId;
-              _isTargetGroupIdLoaded = true;
-            });
+            _updateSelectedAndroidWidgetGroupId(groupId);
           }
           return groupId;
         });
+  }
+
+  void _updateSelectedAndroidWidgetGroupId(String? groupId) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _selectedAndroidWidgetGroupId = groupId;
+      _isTargetGroupIdLoaded = true;
+    });
   }
 }
