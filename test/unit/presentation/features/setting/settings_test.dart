@@ -20,7 +20,20 @@ import '../../../../helpers/fake_current_member_notifier.dart';
 
 void main() {
   group('Settings', () {
-    testWidgets('Androidウィジェットの表示対象グループを選択すると画面に即時反映される', (tester) async {
+    testWidgets('設定アイコンとログアウトボタンを表示しない', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.settings), findsNothing);
+      expect(find.text('ログアウト（テスト用）'), findsNothing);
+    });
+
+    testWidgets('Androidウィジェットの表示対象グループをプルダウンで選択すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
@@ -44,18 +57,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_checked);
-      expect(_radioIconFor(tester, 'グループB').icon, Icons.radio_button_unchecked);
+      expect(_selectedDropdownValue(tester), 'group-a');
 
-      await tester.tap(find.text('グループB'));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
 
-      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_unchecked);
-      expect(_radioIconFor(tester, 'グループB').icon, Icons.radio_button_checked);
+      await tester.tap(find.text('グループB').last);
+      await tester.pumpAndSettle();
+
+      expect(_selectedDropdownValue(tester), 'group-b');
       expect(storage.targetGroupId, 'group-b');
     });
 
-    testWidgets('Androidウィジェットの表示対象グループを解除すると画面に即時反映される', (tester) async {
+    testWidgets('Androidウィジェットの表示対象グループを未選択にすると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
@@ -73,20 +87,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_checked);
-      expect(
-        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
-        isNotNull,
-      );
+      expect(_selectedDropdownValue(tester), 'group-a');
+      expect(find.text('表示対象を解除'), findsNothing);
 
-      await tester.tap(find.text('表示対象を解除'));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
 
-      expect(_radioIconFor(tester, 'グループA').icon, Icons.radio_button_unchecked);
-      expect(
-        tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
-        isNull,
-      );
+      await tester.tap(find.text('未選択').last);
+      await tester.pumpAndSettle();
+
+      expect(_selectedDropdownValue(tester), isNull);
       expect(storage.targetGroupId, isNull);
     });
   });
@@ -118,11 +128,12 @@ Widget _buildTestApp({
   );
 }
 
-Icon _radioIconFor(WidgetTester tester, String groupName) {
-  final tile = tester.widget<ListTile>(
-    find.widgetWithText(ListTile, groupName),
-  );
-  return tile.leading! as Icon;
+String? _selectedDropdownValue(WidgetTester tester) {
+  return tester
+      .widget<DropdownButtonFormField<String>>(
+        find.byType(DropdownButtonFormField<String>),
+      )
+      .initialValue;
 }
 
 class _FakeGroupQueryService implements GroupQueryService {

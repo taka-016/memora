@@ -50,6 +50,26 @@ void main() {
         ),
       );
     });
+
+    test('更新ボタンと矢印ボタンを大きめに表示する', () {
+      final source = _readWidgetSource();
+
+      expect(
+        source,
+        contains('private const val REFRESH_BUTTON_WIDTH_DP = 72'),
+      );
+      expect(
+        source,
+        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 36'),
+      );
+      expect(
+        source,
+        contains('private const val REFRESH_BUTTON_END_PADDING_DP = 12'),
+      );
+      expect(source, contains('private const val ARROW_BUTTON_WIDTH_DP = 56'));
+      expect(source, contains('private const val ARROW_BUTTON_HEIGHT_DP = 64'));
+      expect(source, contains('private const val ARROW_BUTTON_FONT_SP = 36'));
+    });
   });
 }
 

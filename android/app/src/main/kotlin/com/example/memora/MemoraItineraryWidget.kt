@@ -90,20 +90,28 @@ private fun MemoraItineraryWidgetContent(
 @Composable
 private fun HeaderRow() {
     Box(
-        modifier = GlanceModifier.fillMaxWidth(),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .padding(end = REFRESH_BUTTON_END_PADDING_DP.dp),
         contentAlignment = Alignment.TopEnd,
     ) {
-        Text(
-            text = "更新",
-            modifier = GlanceModifier.clickable(
-                actionRunCallback<RefreshWidgetAction>(),
-            ),
-            style = TextStyle(
-                color = androidx.glance.unit.ColorProvider(Color(0xFF1565C0)),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-            ),
-        )
+        Box(
+            modifier = GlanceModifier
+                .width(REFRESH_BUTTON_WIDTH_DP.dp)
+                .height(REFRESH_BUTTON_HEIGHT_DP.dp)
+                .clickable(actionRunCallback<RefreshWidgetAction>()),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "更新",
+                style = TextStyle(
+                    color = androidx.glance.unit.ColorProvider(Color(0xFF1565C0)),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                ),
+            )
+        }
     }
 }
 
@@ -260,14 +268,17 @@ private fun ArrowButton(
 ) {
     Box(
         modifier = GlanceModifier
-            .width(48.dp)
-            .height(48.dp)
+            .width(ARROW_BUTTON_WIDTH_DP.dp)
+            .height(ARROW_BUTTON_HEIGHT_DP.dp)
             .clickable(action),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = text,
-            style = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
+            style = TextStyle(
+                fontSize = ARROW_BUTTON_FONT_SP.sp,
+                fontWeight = FontWeight.Bold,
+            ),
         )
     }
 }
@@ -427,3 +438,9 @@ private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
+private const val REFRESH_BUTTON_WIDTH_DP = 72
+private const val REFRESH_BUTTON_HEIGHT_DP = 36
+private const val REFRESH_BUTTON_END_PADDING_DP = 12
+private const val ARROW_BUTTON_WIDTH_DP = 56
+private const val ARROW_BUTTON_HEIGHT_DP = 64
+private const val ARROW_BUTTON_FONT_SP = 36
