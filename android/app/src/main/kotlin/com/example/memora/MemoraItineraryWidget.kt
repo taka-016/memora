@@ -103,18 +103,7 @@ private fun HeaderRow() {
                 .clickable(actionRunCallback<RefreshWidgetAction>()),
             contentAlignment = Alignment.Center,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RefreshIconText()
-                Spacer(modifier = GlanceModifier.width(2.dp))
-                Text(
-                    text = "更新",
-                    style = TextStyle(
-                        color = ColorProvider(Color.Black),
-                        fontSize = REFRESH_TEXT_FONT_SP.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                )
-            }
+            RefreshIconText()
         }
     }
 }
@@ -456,11 +445,10 @@ private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
-private const val REFRESH_BUTTON_WIDTH_DP = 68
-private const val REFRESH_BUTTON_HEIGHT_DP = 28
+private const val REFRESH_BUTTON_WIDTH_DP = 36
+private const val REFRESH_BUTTON_HEIGHT_DP = 36
 private const val REFRESH_BUTTON_END_PADDING_DP = 8
-private const val REFRESH_TEXT_FONT_SP = 15
-private const val REFRESH_ICON_FONT_SP = 17
+private const val REFRESH_ICON_FONT_SP = 26
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36

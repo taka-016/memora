@@ -65,6 +65,7 @@ void main() {
       );
       expect(source, contains('RefreshIconText()'));
       expect(source, contains('ColorProvider(Color.Black)'));
+      expect(source, isNot(contains('text = "更新"')));
       expect(
         source,
         contains(
@@ -75,18 +76,18 @@ void main() {
       expect(source, contains('private const val CONTENT_TOP_SPACE_DP = 10'));
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_WIDTH_DP = 68'),
+        contains('private const val REFRESH_BUTTON_WIDTH_DP = 36'),
       );
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 28'),
+        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 36'),
       );
       expect(
         source,
         contains('private const val REFRESH_BUTTON_END_PADDING_DP = 8'),
       );
-      expect(source, contains('private const val REFRESH_TEXT_FONT_SP = 15'));
-      expect(source, contains('private const val REFRESH_ICON_FONT_SP = 17'));
+      expect(source, isNot(contains('REFRESH_TEXT_FONT_SP')));
+      expect(source, contains('private const val REFRESH_ICON_FONT_SP = 26'));
       expect(source, contains('private const val ARROW_BUTTON_WIDTH_DP = 56'));
       expect(source, contains('private const val ARROW_BUTTON_HEIGHT_DP = 64'));
       expect(source, contains('private const val ARROW_BUTTON_FONT_SP = 36'));
