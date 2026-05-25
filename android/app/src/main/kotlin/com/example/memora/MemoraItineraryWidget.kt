@@ -73,9 +73,10 @@ private fun MemoraItineraryWidgetContent(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(12.dp),
+            .padding(WIDGET_PADDING_DP.dp),
     ) {
         Column(modifier = GlanceModifier.fillMaxSize()) {
+            Spacer(modifier = GlanceModifier.height(CONTENT_TOP_SPACE_DP.dp))
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
@@ -109,7 +110,7 @@ private fun HeaderRow() {
                     text = "更新",
                     style = TextStyle(
                         color = ColorProvider(Color.Black),
-                        fontSize = 13.sp,
+                        fontSize = REFRESH_TEXT_FONT_SP.sp,
                         fontWeight = FontWeight.Bold,
                     ),
                 )
@@ -124,7 +125,7 @@ private fun RefreshIconText() {
         text = "↻",
         style = TextStyle(
             color = ColorProvider(Color.Black),
-            fontSize = 14.sp,
+            fontSize = REFRESH_ICON_FONT_SP.sp,
             fontWeight = FontWeight.Bold,
         ),
     )
@@ -450,12 +451,16 @@ private const val SELECTED_ITINERARY_DATE_ID_KEY =
     "memora_widget_selected_itinerary_date_id"
 private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
+private const val WIDGET_PADDING_DP = 8
+private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
-private const val REFRESH_BUTTON_WIDTH_DP = 64
+private const val REFRESH_BUTTON_WIDTH_DP = 68
 private const val REFRESH_BUTTON_HEIGHT_DP = 28
 private const val REFRESH_BUTTON_END_PADDING_DP = 8
+private const val REFRESH_TEXT_FONT_SP = 15
+private const val REFRESH_ICON_FONT_SP = 17
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36

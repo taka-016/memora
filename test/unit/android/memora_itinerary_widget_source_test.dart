@@ -67,7 +67,15 @@ void main() {
       expect(source, contains('ColorProvider(Color.Black)'));
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_WIDTH_DP = 64'),
+        contains(
+          'Spacer(modifier = GlanceModifier.height(CONTENT_TOP_SPACE_DP.dp))',
+        ),
+      );
+      expect(source, contains('private const val WIDGET_PADDING_DP = 8'));
+      expect(source, contains('private const val CONTENT_TOP_SPACE_DP = 10'));
+      expect(
+        source,
+        contains('private const val REFRESH_BUTTON_WIDTH_DP = 68'),
       );
       expect(
         source,
@@ -77,6 +85,8 @@ void main() {
         source,
         contains('private const val REFRESH_BUTTON_END_PADDING_DP = 8'),
       );
+      expect(source, contains('private const val REFRESH_TEXT_FONT_SP = 15'));
+      expect(source, contains('private const val REFRESH_ICON_FONT_SP = 17'));
       expect(source, contains('private const val ARROW_BUTTON_WIDTH_DP = 56'));
       expect(source, contains('private const val ARROW_BUTTON_HEIGHT_DP = 64'));
       expect(source, contains('private const val ARROW_BUTTON_FONT_SP = 36'));
