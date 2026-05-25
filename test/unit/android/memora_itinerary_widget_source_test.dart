@@ -63,12 +63,26 @@ void main() {
           ),
         ),
       );
-      expect(source, contains('RefreshIconText()'));
-      expect(source, contains('ColorProvider(Color.Black)'));
+      expect(source, contains('RefreshIcon()'));
+      expect(source, contains('ImageProvider(R.drawable.ic_widget_refresh)'));
+      expect(source, isNot(contains('ColorProvider(Color.Black)')));
       expect(source, isNot(contains('text = "更新"')));
       expect(source, contains('HeaderRow(cache?.lastUpdatedAt)'));
       expect(source, contains('LastUpdatedText(lastUpdatedAt)'));
-      expect(source, contains('private const val HEADER_ITEM_SPACE_DP = 1'));
+      expect(source, contains('RefreshIcon()'));
+      expect(
+        source,
+        contains(
+          'modifier = GlanceModifier.padding('
+          'top = LAST_UPDATED_TOP_PADDING_DP.dp)',
+        ),
+      );
+      expect(source, contains('contentAlignment = Alignment.TopStart'));
+      expect(source, contains('private const val HEADER_ITEM_SPACE_DP = 0'));
+      expect(
+        source,
+        contains('private const val LAST_UPDATED_TOP_PADDING_DP = 6'),
+      );
       expect(source, isNot(contains('FooterRow(cache?.lastUpdatedAt')));
       expect(source, contains('value.replace("-", "/").replace("T", " ")'));
       expect(
@@ -99,7 +113,12 @@ void main() {
         contains('private const val REFRESH_BUTTON_END_PADDING_DP = 8'),
       );
       expect(source, isNot(contains('REFRESH_TEXT_FONT_SP')));
-      expect(source, contains('private const val REFRESH_ICON_FONT_SP = 26'));
+      expect(source, isNot(contains('REFRESH_ICON_FONT_SP')));
+      expect(source, contains('private const val REFRESH_ICON_SIZE_DP = 24'));
+      expect(
+        source,
+        contains('private const val REFRESH_ICON_TOP_SPACE_DP = 5'),
+      );
       expect(source, contains('private const val ARROW_BUTTON_WIDTH_DP = 56'));
       expect(source, contains('private const val ARROW_BUTTON_HEIGHT_DP = 64'));
       expect(source, contains('private const val ARROW_BUTTON_FONT_SP = 36'));

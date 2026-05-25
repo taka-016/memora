@@ -7,6 +7,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -33,7 +35,6 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
-import androidx.glance.unit.ColorProvider
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
@@ -109,9 +110,9 @@ private fun HeaderRow(lastUpdatedAt: String?) {
                     .width(REFRESH_BUTTON_WIDTH_DP.dp)
                     .height(REFRESH_BUTTON_HEIGHT_DP.dp)
                     .clickable(actionRunCallback<RefreshWidgetAction>()),
-                contentAlignment = Alignment.Center,
+                contentAlignment = Alignment.TopStart,
             ) {
-                RefreshIconText()
+                RefreshIcon()
             }
         }
     }
@@ -121,21 +122,24 @@ private fun HeaderRow(lastUpdatedAt: String?) {
 private fun LastUpdatedText(lastUpdatedAt: String) {
     Text(
         text = "最終更新 $lastUpdatedAt",
+        modifier = GlanceModifier.padding(top = LAST_UPDATED_TOP_PADDING_DP.dp),
         maxLines = 1,
         style = TextStyle(fontSize = 10.sp),
     )
 }
 
 @Composable
-private fun RefreshIconText() {
-    Text(
-        text = "↻",
-        style = TextStyle(
-            color = ColorProvider(Color.Black),
-            fontSize = REFRESH_ICON_FONT_SP.sp,
-            fontWeight = FontWeight.Bold,
-        ),
-    )
+private fun RefreshIcon() {
+    Column {
+        Spacer(modifier = GlanceModifier.height(REFRESH_ICON_TOP_SPACE_DP.dp))
+        Image(
+            provider = ImageProvider(R.drawable.ic_widget_refresh),
+            contentDescription = "更新",
+            modifier = GlanceModifier
+                .width(REFRESH_ICON_SIZE_DP.dp)
+                .height(REFRESH_ICON_SIZE_DP.dp),
+        )
+    }
 }
 
 @Composable
@@ -458,11 +462,13 @@ private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
-private const val HEADER_ITEM_SPACE_DP = 1
+private const val HEADER_ITEM_SPACE_DP = 0
+private const val LAST_UPDATED_TOP_PADDING_DP = 6
 private const val REFRESH_BUTTON_WIDTH_DP = 36
 private const val REFRESH_BUTTON_HEIGHT_DP = 28
 private const val REFRESH_BUTTON_END_PADDING_DP = 8
-private const val REFRESH_ICON_FONT_SP = 26
+private const val REFRESH_ICON_SIZE_DP = 24
+private const val REFRESH_ICON_TOP_SPACE_DP = 5
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36
