@@ -72,40 +72,58 @@ private fun MemoraItineraryWidgetContent(
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(WIDGET_PADDING_DP.dp),
+            .background(Color.White),
     ) {
-        Column(modifier = GlanceModifier.fillMaxSize()) {
+        Column(
+            modifier = GlanceModifier
+                .fillMaxSize()
+                .padding(WIDGET_PADDING_DP.dp),
+        ) {
             Spacer(modifier = GlanceModifier.height(CONTENT_TOP_SPACE_DP.dp))
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
                 else -> ItineraryDateContent(selectedItineraryDate)
             }
-            FooterRow(cache?.lastUpdatedAt, errorMessage)
+            FooterRow(errorMessage)
         }
-        HeaderRow()
+        HeaderRow(cache?.lastUpdatedAt)
     }
 }
 
 @Composable
-private fun HeaderRow() {
+private fun HeaderRow(lastUpdatedAt: String?) {
     Box(
         modifier = GlanceModifier
             .fillMaxWidth()
             .padding(end = REFRESH_BUTTON_END_PADDING_DP.dp),
         contentAlignment = Alignment.TopEnd,
     ) {
-        Box(
-            modifier = GlanceModifier
-                .width(REFRESH_BUTTON_WIDTH_DP.dp)
-                .height(REFRESH_BUTTON_HEIGHT_DP.dp)
-                .clickable(actionRunCallback<RefreshWidgetAction>()),
-            contentAlignment = Alignment.Center,
-        ) {
-            RefreshIconText()
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (!lastUpdatedAt.isNullOrBlank()) {
+                LastUpdatedText(lastUpdatedAt)
+                Spacer(modifier = GlanceModifier.width(4.dp))
+            }
+            Box(
+                modifier = GlanceModifier
+                    .width(REFRESH_BUTTON_WIDTH_DP.dp)
+                    .height(REFRESH_BUTTON_HEIGHT_DP.dp)
+                    .clickable(actionRunCallback<RefreshWidgetAction>()),
+                contentAlignment = Alignment.Center,
+            ) {
+                RefreshIconText()
+            }
         }
     }
+}
+
+@Composable
+private fun LastUpdatedText(lastUpdatedAt: String) {
+    Text(
+        text = "最終更新 $lastUpdatedAt",
+        maxLines = 1,
+        style = TextStyle(fontSize = 10.sp),
+    )
 }
 
 @Composable
@@ -299,16 +317,11 @@ private fun EmptyMessage(message: String) {
 }
 
 @Composable
-private fun FooterRow(lastUpdatedAt: String?, errorMessage: String) {
-    val message = when {
-        errorMessage.isNotBlank() -> errorMessage
-        !lastUpdatedAt.isNullOrBlank() -> "最終更新 $lastUpdatedAt"
-        else -> ""
-    }
-    if (message.isBlank()) {
+private fun FooterRow(errorMessage: String) {
+    if (errorMessage.isBlank()) {
         return
     }
-    Text(text = message, maxLines = 1, style = TextStyle(fontSize = 10.sp))
+    Text(text = errorMessage, maxLines = 1, style = TextStyle(fontSize = 10.sp))
 }
 
 class RefreshWidgetAction : ActionCallback {
@@ -408,7 +421,7 @@ private fun formatLastUpdatedAt(value: String): String {
     if (value.isBlank()) {
         return ""
     }
-    return value.replace("T", " ").take(16)
+    return value.replace("-", "/").replace("T", " ").take(16)
 }
 
 private data class WidgetCache(

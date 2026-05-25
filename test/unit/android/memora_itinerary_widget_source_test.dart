@@ -66,6 +66,17 @@ void main() {
       expect(source, contains('RefreshIconText()'));
       expect(source, contains('ColorProvider(Color.Black)'));
       expect(source, isNot(contains('text = "更新"')));
+      expect(source, contains('HeaderRow(cache?.lastUpdatedAt)'));
+      expect(source, contains('LastUpdatedText(lastUpdatedAt)'));
+      expect(source, isNot(contains('FooterRow(cache?.lastUpdatedAt')));
+      expect(source, contains('value.replace("-", "/").replace("T", " ")'));
+      expect(
+        source,
+        contains(
+          '.fillMaxSize()\n'
+          '                .padding(WIDGET_PADDING_DP.dp)',
+        ),
+      );
       expect(
         source,
         contains(
