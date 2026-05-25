@@ -29,6 +29,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.widgetWithText(AppBar, '設定'), findsOneWidget);
       expect(find.byIcon(Icons.settings), findsNothing);
       expect(find.text('ログアウト（テスト用）'), findsNothing);
     });
@@ -124,7 +125,7 @@ Widget _buildTestApp({
         _FakeItineraryItemQueryService(),
       ),
     ],
-    child: const MaterialApp(home: Scaffold(body: Settings())),
+    child: const MaterialApp(home: Settings()),
   );
 }
 

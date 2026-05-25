@@ -33,6 +33,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
@@ -75,8 +76,6 @@ private fun MemoraItineraryWidgetContent(
             .padding(12.dp),
     ) {
         Column(modifier = GlanceModifier.fillMaxSize()) {
-            HeaderRow()
-            Spacer(modifier = GlanceModifier.height(4.dp))
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
@@ -84,6 +83,7 @@ private fun MemoraItineraryWidgetContent(
             }
             FooterRow(cache?.lastUpdatedAt, errorMessage)
         }
+        HeaderRow()
     }
 }
 
@@ -102,17 +102,32 @@ private fun HeaderRow() {
                 .clickable(actionRunCallback<RefreshWidgetAction>()),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = "更新",
-                style = TextStyle(
-                    color = androidx.glance.unit.ColorProvider(Color(0xFF1565C0)),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                ),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RefreshIconText()
+                Spacer(modifier = GlanceModifier.width(2.dp))
+                Text(
+                    text = "更新",
+                    style = TextStyle(
+                        color = ColorProvider(Color.Black),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun RefreshIconText() {
+    Text(
+        text = "↻",
+        style = TextStyle(
+            color = ColorProvider(Color.Black),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+        ),
+    )
 }
 
 @Composable
@@ -438,9 +453,9 @@ private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
-private const val REFRESH_BUTTON_WIDTH_DP = 72
-private const val REFRESH_BUTTON_HEIGHT_DP = 36
-private const val REFRESH_BUTTON_END_PADDING_DP = 12
+private const val REFRESH_BUTTON_WIDTH_DP = 64
+private const val REFRESH_BUTTON_HEIGHT_DP = 28
+private const val REFRESH_BUTTON_END_PADDING_DP = 8
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36

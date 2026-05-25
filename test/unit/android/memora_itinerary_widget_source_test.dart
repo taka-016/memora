@@ -56,15 +56,26 @@ void main() {
 
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_WIDTH_DP = 72'),
+        isNot(
+          contains(
+            'HeaderRow()\n'
+            '            Spacer(modifier = GlanceModifier.height(4.dp))',
+          ),
+        ),
+      );
+      expect(source, contains('RefreshIconText()'));
+      expect(source, contains('ColorProvider(Color.Black)'));
+      expect(
+        source,
+        contains('private const val REFRESH_BUTTON_WIDTH_DP = 64'),
       );
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 36'),
+        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 28'),
       );
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_END_PADDING_DP = 12'),
+        contains('private const val REFRESH_BUTTON_END_PADDING_DP = 8'),
       );
       expect(source, contains('private const val ARROW_BUTTON_WIDTH_DP = 56'));
       expect(source, contains('private const val ARROW_BUTTON_HEIGHT_DP = 64'));

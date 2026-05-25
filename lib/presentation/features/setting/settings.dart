@@ -25,13 +25,12 @@ class _SettingsState extends ConsumerState<Settings> {
   Widget build(BuildContext context) {
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
 
-    return Container(
+    return Scaffold(
       key: const Key('settings'),
-      child: ListView(
+      appBar: AppBar(title: const Text('設定')),
+      body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          Text('設定', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 24),
           Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildAndroidWidgetGroupSetting(context, currentMemberState),
