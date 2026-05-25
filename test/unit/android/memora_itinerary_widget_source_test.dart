@@ -68,6 +68,7 @@ void main() {
       expect(source, isNot(contains('text = "更新"')));
       expect(source, contains('HeaderRow(cache?.lastUpdatedAt)'));
       expect(source, contains('LastUpdatedText(lastUpdatedAt)'));
+      expect(source, contains('private const val HEADER_ITEM_SPACE_DP = 1'));
       expect(source, isNot(contains('FooterRow(cache?.lastUpdatedAt')));
       expect(source, contains('value.replace("-", "/").replace("T", " ")'));
       expect(
@@ -91,7 +92,7 @@ void main() {
       );
       expect(
         source,
-        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 36'),
+        contains('private const val REFRESH_BUTTON_HEIGHT_DP = 28'),
       );
       expect(
         source,

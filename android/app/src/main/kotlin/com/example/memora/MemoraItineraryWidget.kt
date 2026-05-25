@@ -102,7 +102,7 @@ private fun HeaderRow(lastUpdatedAt: String?) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (!lastUpdatedAt.isNullOrBlank()) {
                 LastUpdatedText(lastUpdatedAt)
-                Spacer(modifier = GlanceModifier.width(4.dp))
+                Spacer(modifier = GlanceModifier.width(HEADER_ITEM_SPACE_DP.dp))
             }
             Box(
                 modifier = GlanceModifier
@@ -458,8 +458,9 @@ private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12
 private const val DIVIDER_TOP_SPACE_DP = 4
 private const val DIVIDER_BOTTOM_SPACE_DP = 2
+private const val HEADER_ITEM_SPACE_DP = 1
 private const val REFRESH_BUTTON_WIDTH_DP = 36
-private const val REFRESH_BUTTON_HEIGHT_DP = 36
+private const val REFRESH_BUTTON_HEIGHT_DP = 28
 private const val REFRESH_BUTTON_END_PADDING_DP = 8
 private const val REFRESH_ICON_FONT_SP = 26
 private const val ARROW_BUTTON_WIDTH_DP = 56
