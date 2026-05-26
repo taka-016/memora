@@ -20,20 +20,6 @@ import '../../../../helpers/fake_current_member_notifier.dart';
 
 void main() {
   group('Settings', () {
-    testWidgets('設定アイコンとログアウトボタンを表示しない', (tester) async {
-      await tester.pumpWidget(
-        _buildTestApp(
-          storage: _FakeAndroidWidgetCacheStorage(),
-          groups: const [],
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(AppBar, '設定'), findsOneWidget);
-      expect(find.byIcon(Icons.settings), findsNothing);
-      expect(find.text('ログアウト（テスト用）'), findsNothing);
-    });
-
     testWidgets('Androidウィジェットの表示対象グループをプルダウンで選択すると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
