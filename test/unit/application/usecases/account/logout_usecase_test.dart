@@ -26,7 +26,9 @@ void main() {
 
     test('ログアウトが正常に実行される', () async {
       when(mockAndroidWidgetCacheStorage.clear()).thenAnswer((_) async {});
-      when(mockAndroidWidgetCacheStorage.updateWidget()).thenAnswer((_) async {});
+      when(
+        mockAndroidWidgetCacheStorage.updateWidget(),
+      ).thenAnswer((_) async {});
       when(mockAuthService.signOut()).thenAnswer((_) async {});
 
       await expectLater(useCase.execute(), completes);
@@ -36,7 +38,9 @@ void main() {
 
     test('ログアウト時にウィジェットキャッシュを削除して即時更新する', () async {
       when(mockAndroidWidgetCacheStorage.clear()).thenAnswer((_) async {});
-      when(mockAndroidWidgetCacheStorage.updateWidget()).thenAnswer((_) async {});
+      when(
+        mockAndroidWidgetCacheStorage.updateWidget(),
+      ).thenAnswer((_) async {});
       when(mockAuthService.signOut()).thenAnswer((_) async {});
 
       await useCase.execute();
@@ -50,7 +54,9 @@ void main() {
 
     test('ログアウトでエラーが発生した場合は例外を再スローする', () async {
       when(mockAndroidWidgetCacheStorage.clear()).thenAnswer((_) async {});
-      when(mockAndroidWidgetCacheStorage.updateWidget()).thenAnswer((_) async {});
+      when(
+        mockAndroidWidgetCacheStorage.updateWidget(),
+      ).thenAnswer((_) async {});
       when(mockAuthService.signOut()).thenThrow(TestException('ログアウトエラー'));
 
       await expectLater(useCase.execute(), throwsA(isA<TestException>()));
