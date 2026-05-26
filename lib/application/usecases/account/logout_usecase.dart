@@ -22,6 +22,7 @@ class LogoutUseCase {
 
   Future<void> execute() async {
     await androidWidgetCacheStorage?.clear();
+    await androidWidgetCacheStorage?.updateWidget();
     await authService.signOut();
   }
 }
