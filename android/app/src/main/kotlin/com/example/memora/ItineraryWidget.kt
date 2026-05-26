@@ -42,22 +42,22 @@ import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-class MemoraItineraryWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = MemoraItineraryWidget()
+class ItineraryWidgetReceiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = ItineraryWidget()
 }
 
-class MemoraItineraryWidget : GlanceAppWidget() {
+class ItineraryWidget : GlanceAppWidget() {
     override val stateDefinition = HomeWidgetGlanceStateDefinition()
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
-            MemoraItineraryWidgetContent(context, currentState())
+            ItineraryWidgetContent(context, currentState())
         }
     }
 }
 
 @Composable
-private fun MemoraItineraryWidgetContent(
+private fun ItineraryWidgetContent(
     context: Context,
     state: HomeWidgetGlanceState,
 ) {

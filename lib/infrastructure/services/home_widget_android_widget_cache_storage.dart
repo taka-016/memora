@@ -16,7 +16,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   static const errorMessageKey = 'memora_widget_error_message';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const qualifiedAndroidName =
-      'com.example.memora.MemoraItineraryWidgetReceiver';
+      'com.example.memora.ItineraryWidgetReceiver';
 
   @override
   Future<String?> getTargetGroupId() async {
