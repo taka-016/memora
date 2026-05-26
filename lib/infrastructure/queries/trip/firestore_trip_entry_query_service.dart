@@ -111,6 +111,41 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   }
 
   @override
+  Future<List<TripEntryDto>> getTripEntriesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection('trip_entries')
+          .where('groupId', isEqualTo: groupId);
+
+      if (orderBy != null && orderBy.isNotEmpty) {
+        for (final order in orderBy) {
+          query = query.orderBy(order.field, descending: order.descending);
+        }
+      }
+
+      final snapshot = await query.get();
+      return snapshot.docs
+          .map(
+            (doc) => FirestoreTripEntryMapper.fromFirestore(
+              doc,
+              fallbackTripYear: _clock.now().year,
+            ),
+          )
+          .toList();
+    } catch (e, stack) {
+      logger.e(
+        'FirestoreTripEntryQueryService.getTripEntriesByGroupId: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      return [];
+    }
+  }
+
+  @override
   Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {

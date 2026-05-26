@@ -9,6 +9,11 @@ abstract class TripEntryQueryService {
     List<OrderBy>? itineraryItemsOrderBy,
   });
 
+  Future<List<TripEntryDto>> getTripEntriesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  });
+
   Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
     String groupId,
     int year, {

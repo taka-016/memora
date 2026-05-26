@@ -7,6 +7,7 @@ plugins {
     id("com.google.gms.google-services")
     // END: FlutterFire Configuration
     id("kotlin-android")
+    id("org.jetbrains.kotlin.plugin.compose")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -56,6 +57,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
     
     signingConfigs {
@@ -80,6 +82,12 @@ flutter {
     source = "../.."
 }
 
+configurations.all {
+    resolutionStrategy.force("androidx.glance:glance-appwidget:1.1.1")
+}
+
 dependencies {
     implementation("com.google.android.libraries.places:places:5.1.1")
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
 }
