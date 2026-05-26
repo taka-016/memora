@@ -38,8 +38,6 @@ Future<void> main() async {
 
       FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
 
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-
       runApp(
         ProviderScope(
           overrides: [appClockProvider.overrideWithValue(appClock)],
