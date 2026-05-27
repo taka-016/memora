@@ -27,9 +27,9 @@ erDiagram
         string id PK
         string tripId FK
         string groupId FK
+        string name
         number latitude "NOT NULL"
         number longitude "NOT NULL"
-        string locationName
     }
     tasks {
         string id PK
