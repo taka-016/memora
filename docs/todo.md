@@ -27,6 +27,9 @@
   - ドメインエンティティ、DTO、アプリケーションマッパーに`locationId`を追加する
   - Firestoreマッパーで`locationId`を読み書きできるようにする
   - 旅程項目の追加・更新時に`locationId`を保存できるようにする
+- itinerary_itemsのクエリでlocationを紐付けて取得できるようにする
+  - `locationId`が設定されている旅程項目は対応するlocationも取得する
+  - `locationId`が未設定または参照先locationが存在しない場合はlocationなしで取得する
 - location削除時に参照中の旅程項目の`locationId`をnullへ更新する
 
 ## マップの表示
