@@ -20,6 +20,8 @@
   - グループIDで場所一覧を取得できるようにする
   - Firestoreから取得したlocationsをDTOへ変換して返す
 - locationsのユースケースを作成する
+  - 旅行に紐づく場所一覧を取得する
+  - グループに紐づく場所一覧を取得する
   - 場所を追加・更新・削除する
 - itinerary_itemsの`locationId`追加に対応する
   - ドメインエンティティ、DTO、アプリケーションマッパーに`locationId`を追加する
