@@ -131,7 +131,7 @@ erDiagram
     trip_entries ||--o{ itinerary_items : "id → tripId"
     tasks ||--o{ tasks : "id → parentTaskId"
     tasks ||--|| members : "assignedMemberId → id"
-    itinerary_items ||--|| locations : "locationsId → id"
+    locations |o--o{ itinerary_items : "id → locationId"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
