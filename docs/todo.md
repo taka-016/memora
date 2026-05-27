@@ -4,6 +4,7 @@
 
 - locationsのドメインエンティティを作成する
   - `id`, `tripId`, `groupId`, `name`, `latitude`, `longitude`を保持する
+  - trip_entryの子エンティティとして扱う
   - `latitude`と`longitude`の必須制約を表現する
 - locationsのリポジトリインターフェースを作成する
   - 場所の追加・更新・削除をできるようにする
