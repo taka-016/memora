@@ -23,6 +23,14 @@ erDiagram
         timestamp visitEndDateTime
         string memo
     }
+    locations {
+        string id PK
+        string tripId FK
+        string groupId FK
+        number latitude "NOT NULL"
+        number longitude "NOT NULL"
+        string locationName
+    }
     tasks {
         string id PK
         string tripId FK "NOT NULL"
@@ -41,6 +49,7 @@ erDiagram
         timestamp startDateTime
         timestamp endDateTime
         string memo
+        string locationId FK
     }
     groups {
         string id PK
@@ -117,14 +126,17 @@ erDiagram
     }
 
     trip_entries ||--o{ pins : "id → tripId"
+    trip_entries ||--o{ locations : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
     trip_entries ||--o{ itinerary_items : "id → tripId"
     tasks ||--o{ tasks : "id → parentTaskId"
     tasks ||--|| members : "assignedMemberId → id"
+    itinerary_items ||--|| locations : "locationsId → id"
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
     groups ||--o{ pins : "id → groupId"
+    groups ||--o{ locations : "id → groupId"
     group_members ||--|| members : "memberId → id"
     members ||--o{ member_events : "id → memberId"
     members ||--o{ members : "id → ownerId"
