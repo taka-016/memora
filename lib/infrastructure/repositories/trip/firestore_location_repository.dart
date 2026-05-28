@@ -11,15 +11,17 @@ class FirestoreLocationRepository implements LocationRepository {
 
   @override
   Future<void> saveLocation(Location location) async {
-    final collection = _firestore.collection('locations');
-    if (location.id.isEmpty) {
-      await collection.add(FirestoreLocationMapper.toCreateFirestore(location));
-      return;
-    }
+    await _firestore
+        .collection('locations')
+        .add(FirestoreLocationMapper.toCreateFirestore(location));
+  }
 
-    await collection
+  @override
+  Future<void> updateLocation(Location location) async {
+    await _firestore
+        .collection('locations')
         .doc(location.id)
-        .set(FirestoreLocationMapper.toUpdateFirestore(location));
+        .update(FirestoreLocationMapper.toUpdateFirestore(location));
   }
 
   @override

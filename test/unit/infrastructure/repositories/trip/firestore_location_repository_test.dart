@@ -24,8 +24,7 @@ void main() {
 
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
-      mockLocationsCollection =
-          MockCollectionReference<Map<String, dynamic>>();
+      mockLocationsCollection = MockCollectionReference<Map<String, dynamic>>();
       when(
         mockFirestore.collection('locations'),
       ).thenReturn(mockLocationsCollection);
@@ -43,7 +42,9 @@ void main() {
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
-      when(mockLocationsCollection.add(any)).thenAnswer((_) async => mockDocRef);
+      when(
+        mockLocationsCollection.add(any),
+      ).thenAnswer((_) async => mockDocRef);
 
       await repository.saveLocation(location);
 
