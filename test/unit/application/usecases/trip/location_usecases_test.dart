@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/trip/delete_location_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/trip/save_location_usecase.dart';
+import 'package:memora/application/usecases/trip/update_location_usecase.dart';
 import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/repositories/trip/location_repository.dart';
 
@@ -58,9 +59,9 @@ void main() {
       expect(queryService.requestedGroupIds, ['group-1']);
     });
 
-    test('場所を保存する', () async {
+    test('場所を追加する', () async {
       const dto = LocationDto(
-        id: 'location-1',
+        id: '',
         tripId: 'trip-1',
         groupId: 'group-1',
         name: '東京駅',
@@ -73,6 +74,23 @@ void main() {
       expect(repository.savedLocations.single, isA<Location>());
       expect(repository.savedLocations.single.id, dto.id);
       expect(repository.savedLocations.single.name, dto.name);
+    });
+
+    test('場所を更新する', () async {
+      const dto = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
+      await UpdateLocationUsecase(repository).execute(dto);
+
+      expect(repository.updatedLocations.single, isA<Location>());
+      expect(repository.updatedLocations.single.id, dto.id);
+      expect(repository.updatedLocations.single.name, dto.name);
     });
 
     test('場所を削除する', () async {
@@ -104,11 +122,17 @@ class _FakeLocationQueryService implements LocationQueryService {
 
 class _FakeLocationRepository implements LocationRepository {
   final savedLocations = <Location>[];
+  final updatedLocations = <Location>[];
   final deletedLocationIds = <String>[];
 
   @override
   Future<void> saveLocation(Location location) async {
     savedLocations.add(location);
+  }
+
+  @override
+  Future<void> updateLocation(Location location) async {
+    updatedLocations.add(location);
   }
 
   @override
