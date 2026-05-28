@@ -3,6 +3,17 @@ import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 
 void main() {
   group('ItineraryItemDto', () {
+    test('locationIdを保持できる', () {
+      const dto = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '昼食',
+        locationId: 'location-1',
+      );
+
+      expect(dto.locationId, 'location-1');
+    });
+
     test('全パラメータでコンストラクタが正しく動作する', () {
       final dto = ItineraryItemDto(
         id: 'item001',
