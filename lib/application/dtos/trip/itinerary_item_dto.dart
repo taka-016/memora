@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/copy_with_helper.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 
 class ItineraryItemDto extends Equatable {
   const ItineraryItemDto({
@@ -10,6 +11,7 @@ class ItineraryItemDto extends Equatable {
     this.endDateTime,
     this.memo,
     this.locationId,
+    this.location,
   });
 
   final String id;
@@ -19,6 +21,7 @@ class ItineraryItemDto extends Equatable {
   final DateTime? endDateTime;
   final String? memo;
   final String? locationId;
+  final LocationDto? location;
 
   ItineraryItemDto copyWith({
     String? id,
@@ -28,6 +31,7 @@ class ItineraryItemDto extends Equatable {
     Object? endDateTime = copyWithPlaceholder,
     Object? memo = copyWithPlaceholder,
     Object? locationId = copyWithPlaceholder,
+    Object? location = copyWithPlaceholder,
   }) {
     return ItineraryItemDto(
       id: id ?? this.id,
@@ -49,6 +53,11 @@ class ItineraryItemDto extends Equatable {
         this.locationId,
         'locationId',
       ),
+      location: resolveCopyWithValue<LocationDto>(
+        location,
+        this.location,
+        'location',
+      ),
     );
   }
 
@@ -61,5 +70,6 @@ class ItineraryItemDto extends Equatable {
     endDateTime,
     memo,
     locationId,
+    location,
   ];
 }

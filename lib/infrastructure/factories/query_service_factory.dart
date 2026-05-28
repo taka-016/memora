@@ -9,6 +9,7 @@ import 'package:memora/application/queries/member/member_event_query_service.dar
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
+import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -24,6 +25,7 @@ import 'package:memora/infrastructure/queries/member/firestore_member_event_quer
 import 'package:memora/infrastructure/queries/member/firestore_member_invitation_query_service.dart';
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/firestore_location_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_task_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
@@ -56,6 +58,10 @@ final itineraryItemQueryServiceProvider = Provider<ItineraryItemQueryService>((
   ref,
 ) {
   return QueryServiceFactory.create<ItineraryItemQueryService>(ref: ref);
+});
+
+final locationQueryServiceProvider = Provider<LocationQueryService>((ref) {
+  return QueryServiceFactory.create<LocationQueryService>(ref: ref);
 });
 
 final memberQueryServiceProvider = Provider<MemberQueryService>((ref) {
@@ -128,6 +134,12 @@ class QueryServiceFactory {
     }
     if (T == ItineraryItemQueryService) {
       return FirestoreItineraryItemQueryService(
+            firestore: ref.watch(firebaseFirestoreProvider),
+          )
+          as T;
+    }
+    if (T == LocationQueryService) {
+      return FirestoreLocationQueryService(
             firestore: ref.watch(firebaseFirestoreProvider),
           )
           as T;
