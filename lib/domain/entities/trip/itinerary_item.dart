@@ -9,6 +9,7 @@ class ItineraryItem extends Equatable {
     this.startDateTime,
     this.endDateTime,
     this.memo,
+    this.locationId,
   }) {
     _validate();
   }
@@ -19,6 +20,7 @@ class ItineraryItem extends Equatable {
   final DateTime? startDateTime;
   final DateTime? endDateTime;
   final String? memo;
+  final String? locationId;
 
   ItineraryItem copyWith({
     String? id,
@@ -27,6 +29,7 @@ class ItineraryItem extends Equatable {
     DateTime? startDateTime,
     DateTime? endDateTime,
     String? memo,
+    String? locationId,
   }) {
     return ItineraryItem(
       id: id ?? this.id,
@@ -35,6 +38,7 @@ class ItineraryItem extends Equatable {
       startDateTime: startDateTime ?? this.startDateTime,
       endDateTime: endDateTime ?? this.endDateTime,
       memo: memo ?? this.memo,
+      locationId: locationId ?? this.locationId,
     );
   }
 
@@ -57,5 +61,6 @@ class ItineraryItem extends Equatable {
     startDateTime,
     endDateTime,
     memo,
+    locationId,
   ];
 }

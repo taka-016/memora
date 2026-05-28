@@ -9,6 +9,7 @@ class ItineraryItemDto extends Equatable {
     this.startDateTime,
     this.endDateTime,
     this.memo,
+    this.locationId,
   });
 
   final String id;
@@ -17,6 +18,7 @@ class ItineraryItemDto extends Equatable {
   final DateTime? startDateTime;
   final DateTime? endDateTime;
   final String? memo;
+  final String? locationId;
 
   ItineraryItemDto copyWith({
     String? id,
@@ -25,6 +27,7 @@ class ItineraryItemDto extends Equatable {
     Object? startDateTime = copyWithPlaceholder,
     Object? endDateTime = copyWithPlaceholder,
     Object? memo = copyWithPlaceholder,
+    Object? locationId = copyWithPlaceholder,
   }) {
     return ItineraryItemDto(
       id: id ?? this.id,
@@ -41,6 +44,11 @@ class ItineraryItemDto extends Equatable {
         'endDateTime',
       ),
       memo: resolveCopyWithValue<String>(memo, this.memo, 'memo'),
+      locationId: resolveCopyWithValue<String>(
+        locationId,
+        this.locationId,
+        'locationId',
+      ),
     );
   }
 
@@ -52,5 +60,6 @@ class ItineraryItemDto extends Equatable {
     startDateTime,
     endDateTime,
     memo,
+    locationId,
   ];
 }
