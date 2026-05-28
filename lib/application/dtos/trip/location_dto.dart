@@ -19,10 +19,8 @@ class LocationDto extends Equatable {
   final double latitude;
   final double longitude;
 
-  Coordinate get coordinate => Coordinate(
-    latitude: latitude,
-    longitude: longitude,
-  );
+  Coordinate get coordinate =>
+      Coordinate(latitude: latitude, longitude: longitude);
 
   LocationDto copyWith({
     String? id,
