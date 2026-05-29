@@ -315,6 +315,7 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -347,6 +348,7 @@ void main() {
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -365,6 +367,7 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -395,6 +398,7 @@ void main() {
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -413,6 +417,7 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -456,6 +461,7 @@ void main() {
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -475,6 +481,7 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),

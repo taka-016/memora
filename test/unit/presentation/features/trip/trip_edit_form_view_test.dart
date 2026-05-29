@@ -45,9 +45,7 @@ void main() {
       expect(latestValue!.memo, '既存メモ');
     });
 
-    testWidgets('旅程・タスクボタンが親のハンドラを呼び訪問場所UIは表示されないこと', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('旅程・タスクボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
       var itineraryRequested = 0;
       var taskRequested = 0;
       final initialValue = TripEntryDto(
@@ -78,11 +76,6 @@ void main() {
 
       expect(itineraryRequested, 1);
       expect(taskRequested, 1);
-      expect(find.text('訪問場所'), findsNothing);
-      expect(
-        find.widgetWithIcon(ElevatedButton, Icons.add_location),
-        findsNothing,
-      );
     });
 
     testWidgets('旅程ボタンとタスクボタンは左から旅程、タスクの順で表示されること', (

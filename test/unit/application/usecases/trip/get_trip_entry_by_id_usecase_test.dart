@@ -33,6 +33,7 @@ void main() {
       when(
         mockQueryService.getTripEntryById(
           tripId,
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -44,6 +45,7 @@ void main() {
       final verification = verify(
         mockQueryService.getTripEntryById(
           tripId,
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: captureAnyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: captureAnyNamed('itineraryItemsOrderBy'),
         ),
@@ -63,6 +65,7 @@ void main() {
       when(
         mockQueryService.getTripEntryById(
           tripId,
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -74,6 +77,7 @@ void main() {
       verify(
         mockQueryService.getTripEntryById(
           tripId,
+          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),

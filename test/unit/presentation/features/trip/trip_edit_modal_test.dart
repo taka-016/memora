@@ -61,25 +61,6 @@ void main() {
       expect(find.text('テストメモ'), findsOneWidget);
     });
 
-    testWidgets('訪問場所関連UIは表示されないこと', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        _createApp(
-          child: TripEditModal(
-            groupId: 'test-group-id',
-            groupMembers: const [],
-            onSave: (TripEntryDto tripEntry) async {},
-            isTestEnvironment: true,
-          ),
-        ),
-      );
-
-      expect(find.text('訪問場所'), findsNothing);
-      expect(
-        find.widgetWithIcon(ElevatedButton, Icons.add_location),
-        findsNothing,
-      );
-    });
-
     testWidgets('旅行期間From、旅行期間Toの入力フィールドが表示されること', (WidgetTester tester) async {
       await tester.pumpWidget(
         _createApp(
@@ -177,7 +158,6 @@ void main() {
       expect(savedTripEntry!.name, 'テスト旅行');
       expect(savedTripEntry!.groupId, 'test-group-id');
       expect(savedTripEntry!.year, 2024);
-      expect(savedTripEntry!.pins, isNull);
     });
 
     testWidgets('開始日が終了日より後の場合はエラーを表示し保存しないこと', (WidgetTester tester) async {
