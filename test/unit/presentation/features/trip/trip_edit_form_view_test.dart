@@ -60,7 +60,7 @@ void main() {
       expect(latestValue!.pins, isEmpty);
     });
 
-    testWidgets('旅程・タスク・訪問場所編集ボタンが親のハンドラを呼ぶこと', (WidgetTester tester) async {
+    testWidgets('旅程・タスクボタンが親のハンドラを呼び訪問場所UIは表示されないこと', (WidgetTester tester) async {
       var itineraryRequested = 0;
       var taskRequested = 0;
       var mapRequested = 0;
@@ -106,12 +106,12 @@ void main() {
       await tester.pump();
       await tester.tap(find.widgetWithText(ElevatedButton, 'タスク'));
       await tester.pump();
-      await tester.tap(find.widgetWithText(ElevatedButton, '編集'));
-      await tester.pump();
 
       expect(itineraryRequested, 1);
       expect(taskRequested, 1);
-      expect(mapRequested, 1);
+      expect(mapRequested, 0);
+      expect(find.text('訪問場所'), findsNothing);
+      expect(find.widgetWithIcon(ElevatedButton, Icons.add_location), findsNothing);
     });
 
     testWidgets('旅程ボタンとタスクボタンは左から旅程、タスクの順で表示されること', (
