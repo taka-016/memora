@@ -18,7 +18,6 @@ class GetTripEntryByIdUsecase {
   Future<TripEntryDto?> execute(String tripId) async {
     return await _tripEntryQueryService.getTripEntryById(
       tripId,
-      pinsOrderBy: [const OrderBy('visitStartDateTime', descending: false)],
       tasksOrderBy: [const OrderBy('orderIndex', descending: false)],
       itineraryItemsOrderBy: const [
         OrderBy('startDateTime', descending: false),

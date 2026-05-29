@@ -1,11 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
 
 class TripEditFormView extends HookWidget {
   const TripEditFormView({
@@ -14,7 +11,6 @@ class TripEditFormView extends HookWidget {
     required this.onChanged,
     required this.onItineraryManagementRequested,
     required this.onTaskManagementRequested,
-    required this.onVisitLocationEditRequested,
     this.configuredYear,
     this.clock,
   });
@@ -23,7 +19,6 @@ class TripEditFormView extends HookWidget {
   final ValueChanged<TripEntryDto> onChanged;
   final VoidCallback onItineraryManagementRequested;
   final VoidCallback onTaskManagementRequested;
-  final VoidCallback onVisitLocationEditRequested;
   final int? configuredYear;
   final AppClock? clock;
 
@@ -35,11 +30,6 @@ class TripEditFormView extends HookWidget {
     final onChangedRef = useRef(onChanged);
     final startDate = useState<DateTime?>(value.startDate);
     final endDate = useState<DateTime?>(value.endDate);
-    final pins = useState<List<PinDto>>(
-      List<PinDto>.from(value.pins ?? const []),
-    );
-    final selectedPin = useState<PinDto?>(null);
-    final isBottomSheetVisible = useState(false);
     final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
@@ -53,7 +43,6 @@ class TripEditFormView extends HookWidget {
         startDate: startDate.value,
         endDate: endDate.value,
         memo: memoController.text,
-        pins: List<PinDto>.from(pins.value),
       );
     }
 
@@ -87,27 +76,6 @@ class TripEditFormView extends HookWidget {
         if (endDate.value != value.endDate) {
           endDate.value = value.endDate;
         }
-
-        final nextPins = List<PinDto>.from(value.pins ?? const []);
-        if (!listEquals(pins.value, nextPins)) {
-          pins.value = nextPins;
-        }
-
-        final currentSelectedPin = selectedPin.value;
-        if (currentSelectedPin != null) {
-          final matchingPins = nextPins.where(
-            (pin) => pin.pinId == currentSelectedPin.pinId,
-          );
-          if (matchingPins.isEmpty) {
-            isBottomSheetVisible.value = false;
-            selectedPin.value = null;
-          } else {
-            final nextSelectedPin = matchingPins.first;
-            if (nextSelectedPin != currentSelectedPin) {
-              selectedPin.value = nextSelectedPin;
-            }
-          }
-        }
       } finally {
         isSyncingFromValueRef.value = false;
       }
@@ -134,39 +102,6 @@ class TripEditFormView extends HookWidget {
       };
     }, [nameController, memoController]);
 
-    void hideBottomSheet() {
-      isBottomSheetVisible.value = false;
-      selectedPin.value = null;
-    }
-
-    void handlePinTapped(PinDto pin) {
-      selectedPin.value = pin;
-      isBottomSheetVisible.value = true;
-    }
-
-    void handlePinDeleted(String pinId) {
-      pins.value = pins.value.where((pin) => pin.pinId != pinId).toList();
-      if (selectedPin.value?.pinId == pinId) {
-        selectedPin.value = null;
-      }
-      hideBottomSheet();
-      notifyChanged();
-    }
-
-    void handlePinUpdated(PinDto pin) {
-      final updatedPins = List<PinDto>.from(pins.value);
-      final index = updatedPins.indexWhere(
-        (current) => current.pinId == pin.pinId,
-      );
-      if (index == -1) {
-        return;
-      }
-      updatedPins[index] = pin;
-      pins.value = updatedPins;
-      hideBottomSheet();
-      notifyChanged();
-    }
-
     DateTime determineInitialDate(
       DateTime? selectedDate, {
       required bool isEndDate,
@@ -184,92 +119,6 @@ class TripEditFormView extends HookWidget {
       }
 
       return effectiveClock.now();
-    }
-
-    String formatDateTime(DateTime dateTime) {
-      final month = dateTime.month.toString().padLeft(2, '0');
-      final day = dateTime.day.toString().padLeft(2, '0');
-      final hour = dateTime.hour.toString().padLeft(2, '0');
-      final minute = dateTime.minute.toString().padLeft(2, '0');
-      return '$month/$day $hour:$minute';
-    }
-
-    Widget buildBottomSheet() {
-      if (!isBottomSheetVisible.value || selectedPin.value == null) {
-        return const SizedBox.shrink();
-      }
-
-      return PinDetailBottomSheet(
-        pin: selectedPin.value!,
-        onUpdate: handlePinUpdated,
-        onDelete: handlePinDeleted,
-        onClose: hideBottomSheet,
-        tripStartDate: startDate.value,
-        clock: effectiveClock,
-      );
-    }
-
-    Widget buildPinsList() {
-      if (pins.value.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...List.generate(pins.value.length, (index) {
-            final pin = pins.value[index];
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-              child: ListTile(
-                key: Key('pinListItem_${pin.pinId}'),
-                dense: true,
-                contentPadding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-                title: Text(
-                  pin.locationName?.isNotEmpty == true ? pin.locationName! : '',
-                  style: const TextStyle(fontSize: 14),
-                ),
-                subtitle: () {
-                  final subtitleParts = <String>[];
-                  if (pin.visitStartDateTime != null &&
-                      pin.visitEndDateTime != null) {
-                    subtitleParts.add(
-                      '${formatDateTime(pin.visitStartDateTime!)} - ${formatDateTime(pin.visitEndDateTime!)}',
-                    );
-                  } else if (pin.visitStartDateTime != null) {
-                    subtitleParts.add(
-                      '開始: ${formatDateTime(pin.visitStartDateTime!)}',
-                    );
-                  } else if (pin.visitEndDateTime != null) {
-                    subtitleParts.add(
-                      '終了: ${formatDateTime(pin.visitEndDateTime!)}',
-                    );
-                  }
-
-                  if (subtitleParts.isEmpty) {
-                    return null;
-                  }
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: subtitleParts
-                        .map(
-                          (text) =>
-                              Text(text, style: const TextStyle(fontSize: 12)),
-                        )
-                        .toList(),
-                  );
-                }(),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => handlePinDeleted(pin.pinId),
-                ),
-                onTap: () => handlePinTapped(pin),
-              ),
-            );
-          }),
-        ],
-      );
     }
 
     Widget buildDatePickerField({
@@ -426,38 +275,9 @@ class TripEditFormView extends HookWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '訪問場所',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: onVisitLocationEditRequested,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.add_location, size: 20),
-                      SizedBox(width: 4),
-                      Text('編集'),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              buildPinsList(),
-              const SizedBox(height: 16),
             ],
           ),
         ),
-        buildBottomSheet(),
       ],
     );
   }

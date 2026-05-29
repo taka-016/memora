@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -24,7 +23,6 @@ void main() {
   late MockTripEntryQueryService mockTripEntryQueryService;
   late MockGroupQueryService mockGroupQueryService;
   late List<TripEntryDto> testTripEntries;
-  late PinDto testPin;
   late TripEntryDto detailedTripEntry;
   late List<GroupMemberDto> testGroupMembers;
   late GroupDto testGroup;
@@ -66,18 +64,6 @@ void main() {
       ),
     ).thenAnswer((_) async => testGroup);
 
-    testPin = PinDto(
-      pinId: 'pin-1',
-      tripId: 'trip-1',
-      groupId: 'test-group-id',
-      latitude: 43.06417,
-      longitude: 141.34694,
-      locationName: '札幌駅',
-      visitStartDateTime: DateTime(2025, 7, 1, 9),
-      visitEndDateTime: DateTime(2025, 7, 1, 12),
-      memo: '待ち合わせ',
-    );
-
     testTripEntries = [
       TripEntryDto(
         id: 'trip-1',
@@ -87,7 +73,6 @@ void main() {
         startDate: DateTime(2025, 7, 1),
         endDate: DateTime(2025, 7, 5),
         memo: '夏の北海道を楽しむ',
-        pins: [testPin],
       ),
       TripEntryDto(
         id: 'trip-2',
@@ -97,7 +82,6 @@ void main() {
         startDate: DateTime(2025, 9, 15),
         endDate: DateTime(2025, 9, 18),
         memo: null,
-        pins: [],
       ),
     ];
 
@@ -331,7 +315,6 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -360,12 +343,10 @@ void main() {
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
-      expect(find.text('札幌駅'), findsOneWidget);
 
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -384,7 +365,6 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -415,7 +395,6 @@ void main() {
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -434,7 +413,6 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -478,7 +456,6 @@ void main() {
       verify(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -498,7 +475,6 @@ void main() {
       when(
         mockTripEntryQueryService.getTripEntryById(
           'trip-1',
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
