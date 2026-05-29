@@ -10,6 +10,7 @@ class ItineraryItemMapper {
       startDateTime: dto.startDateTime,
       endDateTime: dto.endDateTime,
       memo: dto.memo,
+      locationId: dto.locationId,
     );
   }
 

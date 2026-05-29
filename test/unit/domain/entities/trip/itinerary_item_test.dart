@@ -4,6 +4,17 @@ import 'package:memora/domain/exceptions/validation_exception.dart';
 
 void main() {
   group('ItineraryItem', () {
+    test('locationIdを保持できる', () {
+      final item = ItineraryItem(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '昼食',
+        locationId: 'location-1',
+      );
+
+      expect(item.locationId, 'location-1');
+    });
+
     test('インスタンス生成が正しく行われる', () {
       final item = ItineraryItem(
         id: 'item001',
