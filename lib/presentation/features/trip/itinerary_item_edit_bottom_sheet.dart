@@ -194,8 +194,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          buildLocationButton(),
-          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -207,13 +205,15 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ElevatedButton(onPressed: save, child: const Text('保存')),
             ],
           ),
+          const SizedBox(height: 8),
+          buildLocationButton(),
         ],
       );
     }
 
     final maxSheetHeight = MediaQuery.of(context).size.height * 0.9;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+    return SizedBox(
+      height: maxSheetHeight,
       child: Padding(
         padding: EdgeInsets.only(
           left: 16,

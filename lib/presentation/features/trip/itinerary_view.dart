@@ -40,11 +40,17 @@ class ItineraryView extends HookWidget {
     );
     final collapsedDateGroupKeys = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
+    final locationsState = useState<List<LocationDto>>(locations);
 
     useEffect(() {
       itemsState.value = sortItineraryItems(items);
       return null;
     }, [items]);
+
+    useEffect(() {
+      locationsState.value = List<LocationDto>.from(locations);
+      return null;
+    }, [locations]);
 
     void notifyChange(List<ItineraryItemDto> updated) {
       final sorted = sortItineraryItems(updated);
@@ -106,10 +112,12 @@ class ItineraryView extends HookWidget {
       BuildContext sheetContext,
       ItineraryItemDto item,
     ) async {
+      final currentLocations = locationsState.value;
       final currentLocation =
-          item.location ?? _locationById(locations, item.locationId);
+          item.location ?? _locationById(currentLocations, item.locationId);
       return showModalBottomSheet<LocationDto?>(
         context: sheetContext,
+        enableDrag: false,
         isScrollControlled: true,
         builder: (context) {
           return FractionallySizedBox(
@@ -119,19 +127,21 @@ class ItineraryView extends HookWidget {
               child: ItineraryLocationSelectView(
                 key: const Key('itinerary_location_select_view'),
                 item: item,
-                locations: locations,
+                locations: currentLocations,
                 isTestEnvironment: isTestEnvironment,
                 onMapLongTapped: (coordinate) {
                   final location = LocationDto(
                     id: const Uuid().v7(),
                     tripId: tripId ?? '',
-                    groupId: locations.isNotEmpty
-                        ? locations.first.groupId
+                    groupId: currentLocations.isNotEmpty
+                        ? currentLocations.first.groupId
                         : '',
                     latitude: coordinate.latitude,
                     longitude: coordinate.longitude,
                   );
-                  onLocationsChanged?.call([...locations, location]);
+                  final updatedLocations = [...currentLocations, location];
+                  locationsState.value = updatedLocations;
+                  onLocationsChanged?.call(updatedLocations);
                   updateItemLocation(item, location);
                   Navigator.of(context).pop(location);
                 },
