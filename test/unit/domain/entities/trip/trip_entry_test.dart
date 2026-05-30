@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -38,6 +39,16 @@ void main() {
             isCompleted: false,
           ),
         ],
+        locations: [
+          Location(
+            id: 'location-1',
+            tripId: 'abc123',
+            groupId: 'group456',
+            latitude: 35.0,
+            longitude: 139.0,
+            name: 'ホテル',
+          ),
+        ],
         itineraryItems: [
           ItineraryItem(
             id: 'item-1',
@@ -61,6 +72,8 @@ void main() {
       expect(entry.pins.first.memo, 'エッフェル塔');
       expect(entry.tasks, hasLength(1));
       expect(entry.tasks.first.name, '持ち物準備');
+      expect(entry.locations, hasLength(1));
+      expect(entry.locations.first.name, 'ホテル');
       expect(entry.itineraryItems, hasLength(1));
       expect(entry.itineraryItems.first.name, '朝食');
     });
@@ -81,6 +94,7 @@ void main() {
       expect(entry.memo, null);
       expect(entry.year, 2025);
       expect(entry.pins, isEmpty);
+      expect(entry.locations, isEmpty);
       expect(entry.tasks, isEmpty);
       expect(entry.itineraryItems, isEmpty);
     });
@@ -95,6 +109,7 @@ void main() {
         endDate: DateTime(2025, 6, 10),
         memo: 'テストメモ',
         pins: const [],
+        locations: const [],
         tasks: const [],
         itineraryItems: const [],
       );
@@ -107,6 +122,7 @@ void main() {
         endDate: DateTime(2025, 6, 10),
         memo: 'テストメモ',
         pins: const [],
+        locations: const [],
         tasks: const [],
         itineraryItems: const [],
       );
@@ -149,6 +165,16 @@ void main() {
             isCompleted: true,
           ),
         ],
+        locations: [
+          Location(
+            id: 'location-2',
+            tripId: 'abc123',
+            groupId: 'group456',
+            latitude: 36.0,
+            longitude: 140.0,
+            name: 'レストラン',
+          ),
+        ],
         itineraryItems: [
           ItineraryItem(id: 'item-2', tripId: 'abc123', name: '夕食'),
         ],
@@ -162,6 +188,8 @@ void main() {
       expect(updatedEntry.pins, hasLength(1));
       expect(updatedEntry.tasks, hasLength(1));
       expect(updatedEntry.tasks.first.name, 'ホテル予約');
+      expect(updatedEntry.locations, hasLength(1));
+      expect(updatedEntry.locations.first.name, 'レストラン');
       expect(updatedEntry.itineraryItems, hasLength(1));
       expect(updatedEntry.itineraryItems.first.name, '夕食');
     });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
@@ -214,6 +215,133 @@ void main() {
       expect(lastChanged.first.name, '朝食変更');
       expect(lastChanged.first.startDateTime, DateTime(2024, 1, 2, 8));
       expect(lastChanged.first.memo, '予約時間に合わせる');
+    });
+
+    testWidgets('場所未指定の旅程編集では場所を指定ボタンを表示すること', (tester) async {
+      final item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '朝食');
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            locations: const [],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
+    });
+
+    testWidgets('場所指定画面では既存locationと選択中locationを表示し紐付けを更新できること', (
+      tester,
+    ) async {
+      List<ItineraryItemDto> lastChanged = [];
+      const hotel = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        latitude: 35.0,
+        longitude: 139.0,
+        name: 'ホテル',
+      );
+      const restaurant = LocationDto(
+        id: 'location-2',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        latitude: 36.0,
+        longitude: 140.0,
+        name: 'レストラン',
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        locationId: 'location-1',
+        location: hotel,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [hotel, restaurant],
+            onChanged: (updated) => lastChanged = updated,
+            onClose: () {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('itinerary_location_select_view')),
+        findsOneWidget,
+      );
+      expect(find.text('ホテル'), findsOneWidget);
+      expect(find.text('レストラン'), findsOneWidget);
+
+      await tester.tap(
+        find.byKey(const Key('select_itinerary_location_location-2')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(lastChanged, hasLength(1));
+      expect(lastChanged.first.locationId, 'location-2');
+      expect(lastChanged.first.location, restaurant);
+    });
+
+    testWidgets('選択中locationは旅程との紐付けを解除できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      const hotel = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        latitude: 35.0,
+        longitude: 139.0,
+        name: 'ホテル',
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        locationId: 'location-1',
+        location: hotel,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [hotel],
+            onChanged: (updated) => lastChanged = updated,
+            onClose: () {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('clear_itinerary_location')));
+      await tester.pumpAndSettle();
+
+      expect(lastChanged, hasLength(1));
+      expect(lastChanged.first.locationId, isNull);
+      expect(lastChanged.first.location, isNull);
     });
 
     testWidgets('旅程項目はリスト上の削除ボタンで削除できること', (tester) async {

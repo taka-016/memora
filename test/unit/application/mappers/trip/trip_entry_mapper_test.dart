@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
@@ -37,6 +39,16 @@ void main() {
             orderIndex: 0,
             name: '準備',
             isCompleted: false,
+          ),
+        ],
+        locations: const [
+          LocationDto(
+            id: 'location-010',
+            tripId: 'trip-003',
+            groupId: 'group-003',
+            latitude: 35.0,
+            longitude: 139.0,
+            name: 'ホテル',
           ),
         ],
         itineraryItems: [
@@ -80,6 +92,16 @@ void main() {
               orderIndex: 0,
               name: '準備',
               isCompleted: false,
+            ),
+          ],
+          locations: [
+            Location(
+              id: 'location-010',
+              tripId: 'trip-003',
+              groupId: 'group-003',
+              latitude: 35.0,
+              longitude: 139.0,
+              name: 'ホテル',
             ),
           ],
           itineraryItems: [

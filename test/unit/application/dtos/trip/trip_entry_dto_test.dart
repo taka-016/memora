@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -21,6 +22,7 @@ void main() {
       expect(dto.endDate, isNull);
       expect(dto.memo, isNull);
       expect(dto.pins, isNull);
+      expect(dto.locations, isNull);
       expect(dto.tasks, isNull);
       expect(dto.itineraryItems, isNull);
     });
@@ -58,6 +60,16 @@ void main() {
       const itineraryItems = [
         ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
       ];
+      const locations = [
+        LocationDto(
+          id: 'location-1',
+          tripId: 'trip-entry-123',
+          groupId: 'group-456',
+          latitude: 35.0,
+          longitude: 139.0,
+          name: 'ホテル',
+        ),
+      ];
 
       final dto = TripEntryDto(
         id: 'trip-entry-123',
@@ -68,6 +80,7 @@ void main() {
         endDate: DateTime(2024, 5, 3),
         memo: '家族旅行のメモ',
         pins: pins,
+        locations: locations,
         tasks: tasks,
         itineraryItems: itineraryItems,
       );
@@ -75,6 +88,7 @@ void main() {
       expect(dto.name, '春の旅行');
       expect(dto.memo, '家族旅行のメモ');
       expect(dto.pins, pins);
+      expect(dto.locations, locations);
       expect(dto.tasks, tasks);
       expect(dto.itineraryItems, itineraryItems);
     });
@@ -109,6 +123,15 @@ void main() {
         name: '元の旅行名',
         memo: '元のメモ',
         pins: [PinDto(pinId: 'pin-1', latitude: 35.0, longitude: 139.0)],
+        locations: const [
+          LocationDto(
+            id: 'location-1',
+            tripId: 'trip-entry-123',
+            groupId: 'group-456',
+            latitude: 35.0,
+            longitude: 139.0,
+          ),
+        ],
         tasks: [
           TaskDto(
             id: 'task-1',
@@ -127,6 +150,15 @@ void main() {
         name: '新しい旅行名',
         memo: '新しいメモ',
         pins: [PinDto(pinId: 'pin-2', latitude: 36.0, longitude: 140.0)],
+        locations: const [
+          LocationDto(
+            id: 'location-2',
+            tripId: 'trip-entry-123',
+            groupId: 'group-456',
+            latitude: 36.0,
+            longitude: 140.0,
+          ),
+        ],
         tasks: [
           TaskDto(
             id: 'task-2',
@@ -144,6 +176,7 @@ void main() {
       expect(copiedDto.name, '新しい旅行名');
       expect(copiedDto.memo, '新しいメモ');
       expect(copiedDto.pins?.first.pinId, 'pin-2');
+      expect(copiedDto.locations?.first.id, 'location-2');
       expect(copiedDto.tasks?.first.id, 'task-2');
       expect(copiedDto.itineraryItems?.first.id, 'item-2');
     });
