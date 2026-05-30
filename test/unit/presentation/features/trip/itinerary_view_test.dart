@@ -239,9 +239,7 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
-    testWidgets('旅程編集ボトムシートは場所指定を操作ボタンの上に表示しナビゲーション下端を避けること', (
-      tester,
-    ) async {
+    testWidgets('旅程編集ボトムシートは場所指定を操作ボタンの上に表示しナビゲーション下端を避けること', (tester) async {
       tester.view.physicalSize = const Size(320, 400);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(bottom: 48);
