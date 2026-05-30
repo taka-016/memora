@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:uuid/uuid.dart';
 
 class TripEditFormView extends HookWidget {
   const TripEditFormView({
@@ -13,6 +20,7 @@ class TripEditFormView extends HookWidget {
     required this.onTaskManagementRequested,
     this.configuredYear,
     this.clock,
+    this.isTestEnvironment = true,
   });
 
   final TripEntryDto value;
@@ -21,6 +29,7 @@ class TripEditFormView extends HookWidget {
   final VoidCallback onTaskManagementRequested;
   final int? configuredYear;
   final AppClock? clock;
+  final bool isTestEnvironment;
 
   @override
   Widget build(BuildContext context) {
@@ -275,10 +284,131 @@ class TripEditFormView extends HookWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              SizedBox(
+                key: const Key('trip_locations_map_container'),
+                height: 260,
+                child: TripLocationsMapView(
+                  key: const Key('trip_locations_map_view'),
+                  value: valueRef.value,
+                  isTestEnvironment: isTestEnvironment,
+                  onChanged: (updatedTrip) {
+                    valueRef.value = updatedTrip;
+                    onChangedRef.value(updatedTrip);
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class TripLocationsMapView extends StatefulWidget {
+  const TripLocationsMapView({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.isTestEnvironment = false,
+  });
+
+  final TripEntryDto value;
+  final ValueChanged<TripEntryDto> onChanged;
+  final bool isTestEnvironment;
+
+  @override
+  State<TripLocationsMapView> createState() => TripLocationsMapViewState();
+}
+
+class TripLocationsMapViewState extends State<TripLocationsMapView> {
+  void debugAddLocationForTest({
+    required double latitude,
+    required double longitude,
+  }) {
+    _addLocation(Coordinate(latitude: latitude, longitude: longitude));
+  }
+
+  List<LocationDto> get _locations =>
+      List<LocationDto>.from(widget.value.locations ?? const []);
+
+  List<ItineraryItemDto> get _items =>
+      List<ItineraryItemDto>.from(widget.value.itineraryItems ?? const []);
+
+  void _addLocation(Coordinate coordinate) {
+    final location = LocationDto(
+      id: const Uuid().v7(),
+      tripId: widget.value.id,
+      groupId: widget.value.groupId,
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+    );
+    widget.onChanged(
+      widget.value.copyWith(locations: [..._locations, location]),
+    );
+  }
+
+  void _deleteLocation(String locationId) {
+    final updatedItems = _items
+        .map(
+          (item) => item.locationId == locationId
+              ? item.copyWith(locationId: null, location: null)
+              : item,
+        )
+        .toList();
+    widget.onChanged(
+      widget.value.copyWith(
+        locations: _locations
+            .where((location) => location.id != locationId)
+            .toList(),
+        itineraryItems: updatedItems,
+      ),
+    );
+  }
+
+  List<PinDto> _pins() {
+    return _locations.map((location) {
+      final linkedItemNames = _items
+          .where((item) => item.locationId == location.id)
+          .map((item) => item.name)
+          .toList();
+      final name = linkedItemNames.isNotEmpty
+          ? linkedItemNames.join('、')
+          : location.name;
+      return PinDto(
+        pinId: location.id,
+        tripId: location.tripId,
+        groupId: location.groupId,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        locationName: name,
+      );
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child:
+            MapViewFactory.create(
+              widget.isTestEnvironment
+                  ? MapViewType.placeholder
+                  : MapViewType.google,
+            ).createMapView(
+              pins: _pins(),
+              onMapLongTapped: _addLocation,
+              onPinDeleted: _deleteLocation,
+              isReadOnly: false,
+              defaultMarkerHue: BitmapDescriptor.hueRed,
+            ),
+      ),
     );
   }
 }

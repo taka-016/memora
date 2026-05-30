@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/features/trip/itinerary_item_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/itinerary_list.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:uuid/uuid.dart';
 
 class ItineraryView extends HookWidget {
@@ -11,15 +16,21 @@ class ItineraryView extends HookWidget {
     required this.tripId,
     this.tripStartDate,
     required this.items,
+    this.locations = const [],
     required this.onChanged,
+    this.onLocationsChanged,
     this.onClose,
+    this.isTestEnvironment = false,
   });
 
   final String? tripId;
   final DateTime? tripStartDate;
   final List<ItineraryItemDto> items;
+  final List<LocationDto> locations;
   final ValueChanged<List<ItineraryItemDto>> onChanged;
+  final ValueChanged<List<LocationDto>>? onLocationsChanged;
   final VoidCallback? onClose;
+  final bool isTestEnvironment;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +40,7 @@ class ItineraryView extends HookWidget {
     );
     final collapsedDateGroupKeys = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
+    final locationSelectionItem = useState<ItineraryItemDto?>(null);
 
     useEffect(() {
       itemsState.value = sortItineraryItems(items);
@@ -82,6 +94,8 @@ class ItineraryView extends HookWidget {
     }
 
     Future<void> showEditBottomSheet(ItineraryItemDto item) async {
+      final itemLocation =
+          item.location ?? _locationById(locations, item.locationId);
       await showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
@@ -90,6 +104,11 @@ class ItineraryView extends HookWidget {
             key: const Key('itinerary_edit_bottom_sheet'),
             item: item,
             tripStartDate: tripStartDate,
+            location: itemLocation,
+            onLocationSelectionRequested: () {
+              Navigator.of(context).pop();
+              locationSelectionItem.value = item;
+            },
             onSaved: (updatedItem) {
               final updated = List<ItineraryItemDto>.from(itemsState.value);
               final index = updated.indexWhere(
@@ -104,6 +123,32 @@ class ItineraryView extends HookWidget {
           );
         },
       );
+    }
+
+    void updateItemLocation(ItineraryItemDto item, LocationDto? location) {
+      final updated = itemsState.value.map((current) {
+        if (current.id != item.id) {
+          return current;
+        }
+        return current.copyWith(locationId: location?.id, location: location);
+      }).toList();
+      notifyChange(updated);
+      locationSelectionItem.value = null;
+    }
+
+    void addLocationFromMap(Coordinate coordinate) {
+      final location = LocationDto(
+        id: const Uuid().v7(),
+        tripId: tripId ?? '',
+        groupId: locations.isNotEmpty ? locations.first.groupId : '',
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      );
+      onLocationsChanged?.call([...locations, location]);
+      final item = locationSelectionItem.value;
+      if (item != null) {
+        updateItemLocation(item, location);
+      }
     }
 
     Widget buildHeader() {
@@ -155,6 +200,23 @@ class ItineraryView extends HookWidget {
       return <String>[if (item.memo?.isNotEmpty == true) item.memo!];
     }
 
+    if (locationSelectionItem.value != null) {
+      return ItineraryLocationSelectView(
+        key: const Key('itinerary_location_select_view'),
+        item: locationSelectionItem.value!,
+        locations: locations,
+        isTestEnvironment: isTestEnvironment,
+        onMapLongTapped: addLocationFromMap,
+        onLocationSelected: (location) {
+          updateItemLocation(locationSelectionItem.value!, location);
+        },
+        onLocationCleared: () {
+          updateItemLocation(locationSelectionItem.value!, null);
+        },
+        onClose: () => locationSelectionItem.value = null,
+      );
+    }
+
     return Column(
       key: const Key('itinerary_view_root'),
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,6 +251,124 @@ class ItineraryView extends HookWidget {
             onToggleDateGroup: toggleDateGroup,
             onTapItem: (item) => showEditBottomSheet(item),
             onDeleteItem: deleteItem,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+LocationDto? _locationById(List<LocationDto> locations, String? locationId) {
+  if (locationId == null) {
+    return null;
+  }
+  for (final location in locations) {
+    if (location.id == locationId) {
+      return location;
+    }
+  }
+  return null;
+}
+
+class ItineraryLocationSelectView extends StatelessWidget {
+  const ItineraryLocationSelectView({
+    super.key,
+    required this.item,
+    required this.locations,
+    required this.onLocationSelected,
+    required this.onLocationCleared,
+    required this.onMapLongTapped,
+    required this.onClose,
+    this.isTestEnvironment = false,
+  });
+
+  final ItineraryItemDto item;
+  final List<LocationDto> locations;
+  final ValueChanged<LocationDto> onLocationSelected;
+  final VoidCallback onLocationCleared;
+  final ValueChanged<Coordinate> onMapLongTapped;
+  final VoidCallback onClose;
+  final bool isTestEnvironment;
+
+  @override
+  Widget build(BuildContext context) {
+    final pins = locations
+        .map(
+          (location) => PinDto(
+            pinId: location.id,
+            tripId: location.tripId,
+            groupId: location.groupId,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            locationName: location.name,
+          ),
+        )
+        .toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              '場所を指定',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+            const Spacer(),
+            IconButton(onPressed: onClose, icon: const Icon(Icons.close)),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 220,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.all(Radius.circular(8)),
+            child:
+                MapViewFactory.create(
+                  isTestEnvironment
+                      ? MapViewType.placeholder
+                      : MapViewType.google,
+                ).createMapView(
+                  pins: pins,
+                  onMapLongTapped: onMapLongTapped,
+                  isReadOnly: true,
+                  defaultMarkerHue: BitmapDescriptor.hueAzure,
+                  highlightedPinIds: {
+                    if (item.locationId != null) item.locationId!,
+                  },
+                  highlightedMarkerHue: BitmapDescriptor.hueRed,
+                ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        if (item.locationId != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const Key('clear_itinerary_location'),
+              onPressed: onLocationCleared,
+              icon: const Icon(Icons.link_off),
+              label: const Text('紐付けを解除'),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            itemCount: locations.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final location = locations[index];
+              final selected = location.id == item.locationId;
+              return ListTile(
+                key: Key('select_itinerary_location_${location.id}'),
+                leading: Icon(
+                  Icons.place,
+                  color: selected ? Colors.red : Colors.grey,
+                ),
+                title: Text(location.name ?? '名称未設定'),
+                trailing: selected ? const Icon(Icons.check) : null,
+                onTap: () => onLocationSelected(location),
+              );
+            },
           ),
         ),
       ],

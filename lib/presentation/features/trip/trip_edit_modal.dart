@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -53,6 +54,7 @@ class TripEditModal extends HookConsumerWidget {
         endDate: tripEntry?.endDate,
         memo: tripEntry?.memo ?? '',
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
+        locations: List<LocationDto>.from(tripEntry?.locations ?? const []),
         itineraryItems: List<ItineraryItemDto>.from(
           tripEntry?.itineraryItems ?? const [],
         ),
@@ -69,6 +71,9 @@ class TripEditModal extends HookConsumerWidget {
           draftTripEntry.value.itineraryItems ?? const [],
         );
 
+    List<LocationDto> currentLocations() =>
+        List<LocationDto>.from(draftTripEntry.value.locations ?? const []);
+
     void updateDraftTripEntry(TripEntryDto tripEntry) {
       draftTripEntry.value = tripEntry;
       errorMessage.value = null;
@@ -78,6 +83,14 @@ class TripEditModal extends HookConsumerWidget {
       updateDraftTripEntry(
         draftTripEntry.value.copyWith(
           itineraryItems: List<ItineraryItemDto>.from(itineraryItems),
+        ),
+      );
+    }
+
+    void updateDraftLocations(List<LocationDto> locations) {
+      updateDraftTripEntry(
+        draftTripEntry.value.copyWith(
+          locations: List<LocationDto>.from(locations),
         ),
       );
     }
@@ -196,6 +209,7 @@ class TripEditModal extends HookConsumerWidget {
               onChanged: updateDraftTripEntry,
               onItineraryManagementRequested: showItineraryView,
               onTaskManagementRequested: showTaskView,
+              isTestEnvironment: isTestEnvironment,
             ),
           ),
           const SizedBox(height: 24),
@@ -251,7 +265,9 @@ class TripEditModal extends HookConsumerWidget {
             tripId: tripEntry?.id,
             tripStartDate: draftTripEntry.value.startDate,
             items: currentItineraryItems(),
+            locations: currentLocations(),
             onChanged: updateDraftItineraryItems,
+            onLocationsChanged: updateDraftLocations,
             onClose: () => expandedSection.value = null,
           );
         case null:

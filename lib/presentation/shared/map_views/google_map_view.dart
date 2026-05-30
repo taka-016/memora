@@ -21,6 +21,9 @@ class GoogleMapView extends HookConsumerWidget {
   final PinDto? selectedPin;
   final DateTime? tripStartDate;
   final bool isReadOnly;
+  final double defaultMarkerHue;
+  final Set<String> highlightedPinIds;
+  final double highlightedMarkerHue;
 
   const GoogleMapView({
     super.key,
@@ -33,6 +36,9 @@ class GoogleMapView extends HookConsumerWidget {
     this.selectedPin,
     this.tripStartDate,
     this.isReadOnly = false,
+    this.defaultMarkerHue = BitmapDescriptor.hueRed,
+    this.highlightedPinIds = const {},
+    this.highlightedMarkerHue = BitmapDescriptor.hueRed,
   });
 
   @override
@@ -146,6 +152,11 @@ class GoogleMapView extends HookConsumerWidget {
             (pin) => Marker(
               markerId: MarkerId(pin.pinId),
               position: LatLng(pin.latitude, pin.longitude),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                highlightedPinIds.contains(pin.pinId)
+                    ? highlightedMarkerHue
+                    : defaultMarkerHue,
+              ),
               onTap: () => handlePinTapped(pin),
             ),
           )

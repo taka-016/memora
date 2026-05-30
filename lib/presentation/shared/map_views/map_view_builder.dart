@@ -14,5 +14,8 @@ abstract class MapViewBuilder {
     PinDto? selectedPin,
     DateTime? tripStartDate,
     bool isReadOnly = false,
+    double defaultMarkerHue = 0,
+    Set<String> highlightedPinIds = const {},
+    double highlightedMarkerHue = 0,
   });
 }

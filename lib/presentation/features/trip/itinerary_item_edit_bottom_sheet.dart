@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 
@@ -9,12 +10,16 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     super.key,
     required this.item,
     this.tripStartDate,
+    this.location,
+    this.onLocationSelectionRequested,
     required this.onSaved,
     this.clock,
   });
 
   final ItineraryItemDto item;
   final DateTime? tripStartDate;
+  final LocationDto? location;
+  final VoidCallback? onLocationSelectionRequested;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock? clock;
 
@@ -223,6 +228,12 @@ class ItineraryItemEditBottomSheet extends HookWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
+                OutlinedButton.icon(
+                  onPressed: onLocationSelectionRequested,
+                  icon: const Icon(Icons.place),
+                  label: Text(location == null ? '場所を指定' : '場所を変更'),
+                ),
+                const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text('キャンセル'),
@@ -231,6 +242,13 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                 ElevatedButton(onPressed: save, child: const Text('保存')),
               ],
             ),
+            if (location?.name?.isNotEmpty == true) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(location!.name!),
+              ),
+            ],
           ],
         ),
       ),

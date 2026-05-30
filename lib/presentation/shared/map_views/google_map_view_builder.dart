@@ -19,6 +19,9 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     PinDto? selectedPin,
     DateTime? tripStartDate,
     bool isReadOnly = false,
+    double defaultMarkerHue = 0,
+    Set<String> highlightedPinIds = const {},
+    double highlightedMarkerHue = 0,
   }) {
     return GoogleMapView(
       pins: pins,
@@ -30,6 +33,9 @@ class GoogleMapViewBuilder implements MapViewBuilder {
       selectedPin: selectedPin,
       tripStartDate: tripStartDate,
       isReadOnly: isReadOnly,
+      defaultMarkerHue: defaultMarkerHue,
+      highlightedPinIds: highlightedPinIds,
+      highlightedMarkerHue: highlightedMarkerHue,
     );
   }
 }

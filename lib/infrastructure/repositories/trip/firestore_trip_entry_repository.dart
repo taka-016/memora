@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_location_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 
@@ -25,6 +27,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       FirestoreTripEntryMapper.toCreateFirestore(tripEntry),
     );
     final tasksCollection = _firestore.collection('tasks');
+    final locationsCollection = _firestore.collection('locations');
     final itineraryItemsCollection = _firestore.collection('itinerary_items');
 
     for (final Pin pin in tripEntry.pins) {
@@ -47,6 +50,16 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       );
     }
 
+    for (final Location location in tripEntry.locations) {
+      final locationDocRef = locationsCollection.doc(location.id);
+      batch.set(
+        locationDocRef,
+        FirestoreLocationMapper.toCreateFirestore(
+          location.copyWith(tripId: tripDocRef.id, groupId: tripEntry.groupId),
+        ),
+      );
+    }
+
     for (final ItineraryItem item in tripEntry.itineraryItems) {
       final itemDocRef = itineraryItemsCollection.doc(item.id);
       batch.set(
@@ -65,6 +78,7 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   Future<void> updateTripEntry(TripEntry tripEntry) async {
     final batch = _firestore.batch();
     final tasksCollection = _firestore.collection('tasks');
+    final locationsCollection = _firestore.collection('locations');
     final itineraryItemsCollection = _firestore.collection('itinerary_items');
 
     batch.update(
@@ -85,6 +99,13 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         .get();
     for (final taskDoc in tasksSnapshot.docs) {
       batch.delete(taskDoc.reference);
+    }
+
+    final locationsSnapshot = await locationsCollection
+        .where('tripId', isEqualTo: tripEntry.id)
+        .get();
+    for (final locationDoc in locationsSnapshot.docs) {
+      batch.delete(locationDoc.reference);
     }
 
     final itineraryItemsSnapshot = await itineraryItemsCollection
@@ -110,6 +131,16 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         taskDocRef,
         FirestoreTaskMapper.toCreateFirestore(
           task.copyWith(tripId: tripEntry.id),
+        ),
+      );
+    }
+
+    for (final Location location in tripEntry.locations) {
+      final locationDocRef = locationsCollection.doc(location.id);
+      batch.set(
+        locationDocRef,
+        FirestoreLocationMapper.toCreateFirestore(
+          location.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
         ),
       );
     }
@@ -147,6 +178,14 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       batch.delete(taskDoc.reference);
     }
 
+    final locationsSnapshot = await _firestore
+        .collection('locations')
+        .where('tripId', isEqualTo: tripId)
+        .get();
+    for (final locationDoc in locationsSnapshot.docs) {
+      batch.delete(locationDoc.reference);
+    }
+
     final itineraryItemsSnapshot = await _firestore
         .collection('itinerary_items')
         .where('tripId', isEqualTo: tripId)
@@ -181,6 +220,13 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
           .get();
       for (final taskDoc in tasksSnapshot.docs) {
         batch.delete(taskDoc.reference);
+      }
+      final locationsSnapshot = await _firestore
+          .collection('locations')
+          .where('tripId', isEqualTo: tripEntryDoc.id)
+          .get();
+      for (final locationDoc in locationsSnapshot.docs) {
+        batch.delete(locationDoc.reference);
       }
       final itineraryItemsSnapshot = await _firestore
           .collection('itinerary_items')
