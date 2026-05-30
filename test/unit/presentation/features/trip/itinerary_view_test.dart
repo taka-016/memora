@@ -238,9 +238,7 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
-    testWidgets('旅程編集ボトムシートは小さい画面でも場所指定ボタンまでスクロールできること', (
-      tester,
-    ) async {
+    testWidgets('旅程編集ボトムシートは小さい画面でも場所指定ボタンまでスクロールできること', (tester) async {
       tester.view.physicalSize = const Size(320, 400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);

@@ -150,105 +150,138 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
+    Widget buildLocationButton() {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: onLocationSelectionRequested,
+          icon: const Icon(Icons.place),
+          label: Text(location == null ? '場所を指定' : '場所を変更'),
+        ),
+      );
+    }
+
+    Widget buildActions() {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          buildLocationButton(),
+          if (location?.name?.isNotEmpty == true) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(location!.name!),
+            ),
+          ],
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('キャンセル'),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(onPressed: save, child: const Text('保存')),
+            ],
+          ),
+        ],
+      );
+    }
+
+    final maxSheetHeight = MediaQuery.of(context).size.height * 0.9;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              key: const Key('itinerary_edit_bottom_sheet_handle'),
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            buildErrorBanner(),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('itinerary_edit_name_field'),
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: '項目名',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            buildDateTimeSection(
-              label: '開始日時',
-              dateValue: formatDate(startDate.value),
-              timeValue: formatTime(startTime.value),
-              dateFieldKey: const Key('itinerary_edit_start_date_field'),
-              timeFieldKey: const Key('itinerary_edit_start_time_field'),
-              onDateTap: selectStartDate,
-              onTimeTap: selectStartTime,
-              clearDateFieldKey: const Key(
-                'itinerary_edit_start_datetime_clear_button',
-              ),
-              onClearDateTime:
-                  startDate.value != null || startTime.value != null
-                  ? clearStartDateTime
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            buildDateTimeSection(
-              label: '終了日時',
-              dateValue: formatDate(endDate.value),
-              timeValue: formatTime(endTime.value),
-              dateFieldKey: const Key('itinerary_edit_end_date_field'),
-              timeFieldKey: const Key('itinerary_edit_end_time_field'),
-              onDateTap: selectEndDate,
-              onTimeTap: selectEndTime,
-              clearDateFieldKey: const Key(
-                'itinerary_edit_end_datetime_clear_button',
-              ),
-              onClearDateTime: endDate.value != null || endTime.value != null
-                  ? clearEndDateTime
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('itinerary_edit_memo_field'),
-              controller: memoController,
-              decoration: const InputDecoration(
-                labelText: 'メモ',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onLocationSelectionRequested,
-                  icon: const Icon(Icons.place),
-                  label: Text(location == null ? '場所を指定' : '場所を変更'),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      key: const Key('itinerary_edit_bottom_sheet_handle'),
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    buildErrorBanner(),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('itinerary_edit_name_field'),
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: '項目名',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    buildDateTimeSection(
+                      label: '開始日時',
+                      dateValue: formatDate(startDate.value),
+                      timeValue: formatTime(startTime.value),
+                      dateFieldKey: const Key(
+                        'itinerary_edit_start_date_field',
+                      ),
+                      timeFieldKey: const Key(
+                        'itinerary_edit_start_time_field',
+                      ),
+                      onDateTap: selectStartDate,
+                      onTimeTap: selectStartTime,
+                      clearDateFieldKey: const Key(
+                        'itinerary_edit_start_datetime_clear_button',
+                      ),
+                      onClearDateTime:
+                          startDate.value != null || startTime.value != null
+                          ? clearStartDateTime
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    buildDateTimeSection(
+                      label: '終了日時',
+                      dateValue: formatDate(endDate.value),
+                      timeValue: formatTime(endTime.value),
+                      dateFieldKey: const Key('itinerary_edit_end_date_field'),
+                      timeFieldKey: const Key('itinerary_edit_end_time_field'),
+                      onDateTap: selectEndDate,
+                      onTimeTap: selectEndTime,
+                      clearDateFieldKey: const Key(
+                        'itinerary_edit_end_datetime_clear_button',
+                      ),
+                      onClearDateTime:
+                          endDate.value != null || endTime.value != null
+                          ? clearEndDateTime
+                          : null,
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      key: const Key('itinerary_edit_memo_field'),
+                      controller: memoController,
+                      decoration: const InputDecoration(
+                        labelText: 'メモ',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(onPressed: save, child: const Text('保存')),
-              ],
-            ),
-            if (location?.name?.isNotEmpty == true) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(location!.name!),
               ),
-            ],
+            ),
+            buildActions(),
           ],
         ),
       ),
