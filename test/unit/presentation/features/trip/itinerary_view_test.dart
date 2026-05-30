@@ -239,11 +239,17 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
-    testWidgets('旅程編集ボトムシートは小さい画面でも下部操作ボタンを表示できること', (tester) async {
+    testWidgets('旅程編集ボトムシートは場所指定を操作ボタンの上に表示しナビゲーション下端を避けること', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(320, 400);
       tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(bottom: 48);
+      tester.view.viewPadding = const FakeViewPadding(bottom: 48);
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
 
       final item = ItineraryItemDto(
         id: 'item-1',
@@ -274,24 +280,30 @@ void main() {
       final saveButton = find.widgetWithText(ElevatedButton, '保存');
 
       expect(
-        tester.getRect(cancelButton).top,
-        lessThan(tester.getRect(locationButton).top),
-      );
-      expect(
-        tester.getRect(saveButton).top,
-        lessThan(tester.getRect(locationButton).top),
+        tester.getRect(locationButton).bottom,
+        lessThan(tester.getRect(cancelButton).top),
       );
       expect(
         tester.getRect(locationButton).bottom,
-        lessThanOrEqualTo(tester.view.physicalSize.height),
+        lessThan(tester.getRect(saveButton).top),
+      );
+      expect(
+        tester.getRect(locationButton).bottom,
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
+        ),
       );
       expect(
         tester.getRect(cancelButton).bottom,
-        lessThanOrEqualTo(tester.view.physicalSize.height),
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
+        ),
       );
       expect(
         tester.getRect(saveButton).bottom,
-        lessThanOrEqualTo(tester.view.physicalSize.height),
+        lessThanOrEqualTo(
+          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
+        ),
       );
     });
 
