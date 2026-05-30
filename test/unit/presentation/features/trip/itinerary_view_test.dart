@@ -238,7 +238,7 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
-    testWidgets('旅程編集ボトムシートは小さい画面でも場所指定ボタンまでスクロールできること', (tester) async {
+    testWidgets('旅程編集ボトムシートは小さい画面でも下部操作ボタンを表示できること', (tester) async {
       tester.view.physicalSize = const Size(320, 400);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -269,13 +269,76 @@ void main() {
       await tester.pumpAndSettle();
 
       final locationButton = find.widgetWithText(OutlinedButton, '場所を指定');
-      await tester.ensureVisible(locationButton);
-      await tester.pumpAndSettle();
+      final cancelButton = find.widgetWithText(TextButton, 'キャンセル');
+      final saveButton = find.widgetWithText(ElevatedButton, '保存');
 
       expect(
         tester.getRect(locationButton).bottom,
         lessThanOrEqualTo(tester.view.physicalSize.height),
       );
+      expect(
+        tester.getRect(cancelButton).bottom,
+        lessThanOrEqualTo(tester.view.physicalSize.height),
+      );
+      expect(
+        tester.getRect(saveButton).bottom,
+        lessThanOrEqualTo(tester.view.physicalSize.height),
+      );
+    });
+
+    testWidgets('場所指定画面を閉じても旅程編集ボトムシートは閉じないこと', (tester) async {
+      const hotel = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        latitude: 35.0,
+        longitude: 139.0,
+        name: 'ホテル',
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        locationId: 'location-1',
+        location: hotel,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [hotel],
+            onChanged: (_) {},
+            onClose: () {},
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('itinerary_location_select_view')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byIcon(Icons.close).last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('itinerary_location_select_view')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('itinerary_edit_bottom_sheet')),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextButton, 'キャンセル'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, '保存'), findsOneWidget);
     });
 
     testWidgets('場所指定画面では既存locationと選択中locationを表示し紐付けを更新できること', (
@@ -339,6 +402,12 @@ void main() {
       expect(lastChanged, hasLength(1));
       expect(lastChanged.first.locationId, 'location-2');
       expect(lastChanged.first.location, restaurant);
+      expect(
+        find.byKey(const Key('itinerary_edit_bottom_sheet')),
+        findsOneWidget,
+      );
+      expect(find.widgetWithText(TextButton, 'キャンセル'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, '保存'), findsOneWidget);
     });
 
     testWidgets('選択中locationは旅程との紐付けを解除できること', (tester) async {
