@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/sheets/bottom_sheet_padding.dart';
 
 class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({
@@ -213,10 +214,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
     final mediaQuery = MediaQuery.of(context);
     final maxSheetHeight = mediaQuery.size.height * 0.9;
-    final bottomSafePadding =
-        mediaQuery.viewInsets.bottom > mediaQuery.viewPadding.bottom
-        ? mediaQuery.viewInsets.bottom
-        : mediaQuery.viewPadding.bottom;
     return SizedBox(
       height: maxSheetHeight,
       child: Padding(
@@ -224,7 +221,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           left: 16,
           right: 16,
           top: 16,
-          bottom: bottomSafePadding + 16,
+          bottom: bottomSheetBottomPadding(mediaQuery),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

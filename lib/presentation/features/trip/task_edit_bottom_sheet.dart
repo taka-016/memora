@@ -4,6 +4,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/sheets/bottom_sheet_padding.dart';
 
 class TaskEditBottomSheet extends HookWidget {
   const TaskEditBottomSheet({
@@ -121,142 +122,161 @@ class TaskEditBottomSheet extends HookWidget {
       );
     }
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
+    Widget buildActions() {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('キャンセル'),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(onPressed: save, child: const Text('保存')),
+        ],
+      );
+    }
+
+    final mediaQuery = MediaQuery.of(context);
+    final maxSheetHeight = mediaQuery.size.height * 0.9;
+    return SizedBox(
+      height: maxSheetHeight,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: bottomSheetBottomPadding(mediaQuery),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade400,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            buildErrorBanner(),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'タスク名',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String?>(
-              key: const Key('assigned_member_dropdown'),
-              initialValue: selectedAssignedMemberId,
-              decoration: const InputDecoration(
-                labelText: '担当者',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(
-                  value: null,
-                  child: Text('未選択'),
-                ),
-                ...groupMembers.map(
-                  (member) => DropdownMenuItem(
-                    value: member.memberId,
-                    child: Text(member.displayName),
-                  ),
-                ),
-              ],
-              onChanged: (value) {
-                assignedMemberState.value = value;
-              },
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String?>(
-              key: const Key('parent_task_dropdown'),
-              initialValue: selectedParentTaskId,
-              decoration: const InputDecoration(
-                labelText: '親タスク',
-                border: OutlineInputBorder(),
-              ),
-              items: [
-                const DropdownMenuItem<String?>(value: null, child: Text('なし')),
-                ...filteredParentCandidates.map(
-                  (candidate) => DropdownMenuItem<String?>(
-                    value: candidate.id,
-                    child: Text(candidate.name),
-                  ),
-                ),
-              ],
-              onChanged: hasChildren(task.id)
-                  ? null
-                  : (value) {
-                      parentTaskState.value = value;
-                    },
-            ),
-            if (hasChildren(task.id))
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '子タスクがあるため親タスクは変更できません',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    key: const Key('task_due_date_field'),
-                    onTap: pickDueDate,
-                    child: InputDecorator(
-                      decoration: InputDecoration(
-                        labelText: '締切日',
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.calendar_today),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () => dueDateState.value = null,
-                          tooltip: '締切日をクリア',
-                        ),
-                      ),
-                      child: Text(
-                        dueDateState.value != null
-                            ? '${dueDateState.value!.year}/${dueDateState.value!.month.toString().padLeft(2, '0')}/${dueDateState.value!.day.toString().padLeft(2, '0')}'
-                            : '選択してください',
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ),
+                    buildErrorBanner(),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'タスク名',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String?>(
+                      key: const Key('assigned_member_dropdown'),
+                      initialValue: selectedAssignedMemberId,
+                      decoration: const InputDecoration(
+                        labelText: '担当者',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('未選択'),
+                        ),
+                        ...groupMembers.map(
+                          (member) => DropdownMenuItem(
+                            value: member.memberId,
+                            child: Text(member.displayName),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        assignedMemberState.value = value;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String?>(
+                      key: const Key('parent_task_dropdown'),
+                      initialValue: selectedParentTaskId,
+                      decoration: const InputDecoration(
+                        labelText: '親タスク',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('なし'),
+                        ),
+                        ...filteredParentCandidates.map(
+                          (candidate) => DropdownMenuItem<String?>(
+                            value: candidate.id,
+                            child: Text(candidate.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: hasChildren(task.id)
+                          ? null
+                          : (value) {
+                              parentTaskState.value = value;
+                            },
+                    ),
+                    if (hasChildren(task.id))
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '子タスクがあるため親タスクは変更できません',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            key: const Key('task_due_date_field'),
+                            onTap: pickDueDate,
+                            child: InputDecorator(
+                              decoration: InputDecoration(
+                                labelText: '締切日',
+                                border: const OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.calendar_today),
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () => dueDateState.value = null,
+                                  tooltip: '締切日をクリア',
+                                ),
+                              ),
+                              child: Text(
+                                dueDateState.value != null
+                                    ? '${dueDateState.value!.year}/${dueDateState.value!.month.toString().padLeft(2, '0')}/${dueDateState.value!.day.toString().padLeft(2, '0')}'
+                                    : '選択してください',
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: memoController,
+                      decoration: const InputDecoration(
+                        labelText: 'メモ',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: memoController,
-              decoration: const InputDecoration(
-                labelText: 'メモ',
-                border: OutlineInputBorder(),
               ),
-              maxLines: 3,
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('キャンセル'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(onPressed: save, child: const Text('保存')),
-              ],
-            ),
+            buildActions(),
           ],
         ),
       ),
