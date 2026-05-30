@@ -275,19 +275,11 @@ void main() {
 
       final cancelButton = find.widgetWithText(TextButton, 'キャンセル');
       final saveButton = find.widgetWithText(ElevatedButton, '保存');
+      final safeBottom =
+          tester.view.physicalSize.height - tester.view.viewPadding.bottom;
 
-      expect(
-        tester.getRect(cancelButton).bottom,
-        lessThanOrEqualTo(
-          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
-        ),
-      );
-      expect(
-        tester.getRect(saveButton).bottom,
-        lessThanOrEqualTo(
-          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
-        ),
-      );
+      expect(tester.getRect(cancelButton).bottom, closeTo(safeBottom, 1));
+      expect(tester.getRect(saveButton).bottom, closeTo(safeBottom, 1));
     });
 
     testWidgets('場所指定画面を閉じても旅程編集ボトムシートは閉じないこと', (tester) async {
