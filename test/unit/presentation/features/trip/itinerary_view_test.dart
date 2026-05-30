@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
@@ -273,6 +274,14 @@ void main() {
       final saveButton = find.widgetWithText(ElevatedButton, '保存');
 
       expect(
+        tester.getRect(cancelButton).top,
+        lessThan(tester.getRect(locationButton).top),
+      );
+      expect(
+        tester.getRect(saveButton).top,
+        lessThan(tester.getRect(locationButton).top),
+      );
+      expect(
         tester.getRect(locationButton).bottom,
         lessThanOrEqualTo(tester.view.physicalSize.height),
       );
@@ -339,6 +348,59 @@ void main() {
       );
       expect(find.widgetWithText(TextButton, 'キャンセル'), findsOneWidget);
       expect(find.widgetWithText(ElevatedButton, '保存'), findsOneWidget);
+    });
+
+    testWidgets('マップ長押しで追加した場所は再度地図を開いたときも選択状態で表示されること', (tester) async {
+      var currentLocations = <LocationDto>[];
+      List<ItineraryItemDto> lastChanged = [];
+      const item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '朝食');
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          StatefulBuilder(
+            builder: (context, setState) {
+              return ItineraryView(
+                tripId: 'trip-1',
+                items: const [item],
+                locations: currentLocations,
+                onChanged: (updated) => lastChanged = updated,
+                onLocationsChanged: (updated) {
+                  setState(() {
+                    currentLocations = updated;
+                  });
+                },
+                onClose: () {},
+                isTestEnvironment: true,
+              );
+            },
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所を指定'));
+      await tester.pumpAndSettle();
+
+      tester
+          .widget<ItineraryLocationSelectView>(
+            find.byKey(const Key('itinerary_location_select_view')),
+          )
+          .onMapLongTapped(Coordinate(latitude: 35.0, longitude: 139.0));
+      await tester.pumpAndSettle();
+
+      expect(lastChanged, hasLength(1));
+      final addedLocationId = lastChanged.first.locationId;
+      expect(addedLocationId, isNotNull);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('select_itinerary_location_$addedLocationId')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('clear_itinerary_location')), findsOneWidget);
     });
 
     testWidgets('場所指定画面では既存locationと選択中locationを表示し紐付けを更新できること', (
