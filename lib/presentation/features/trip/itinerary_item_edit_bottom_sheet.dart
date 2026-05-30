@@ -212,7 +212,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     }
 
     final mediaQuery = MediaQuery.of(context);
-    final maxSheetHeight = MediaQuery.of(context).size.height * 0.9;
+    final maxSheetHeight = mediaQuery.size.height * 0.9;
     final bottomSafePadding =
         mediaQuery.viewInsets.bottom > mediaQuery.viewPadding.bottom
         ? mediaQuery.viewInsets.bottom
