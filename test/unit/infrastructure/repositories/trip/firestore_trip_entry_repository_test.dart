@@ -23,6 +23,7 @@ void main() {
   group('FirestoreTripEntryRepository', () {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>> mockCollection;
+    late MockCollectionReference<Map<String, dynamic>> mockLocationsCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
     late MockCollectionReference<Map<String, dynamic>>
     mockItineraryItemsCollection;
@@ -40,6 +41,10 @@ void main() {
       mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       mockQuery = MockQuery<Map<String, dynamic>>();
       when(mockFirestore.collection('trip_entries')).thenReturn(mockCollection);
+      mockLocationsCollection = MockCollectionReference<Map<String, dynamic>>();
+      when(
+        mockFirestore.collection('locations'),
+      ).thenReturn(mockLocationsCollection);
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
       mockItineraryItemsCollection =
@@ -157,6 +162,8 @@ void main() {
       final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+      final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockExistingTaskDoc =
           MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockExistingTaskDocRef =
@@ -192,6 +199,13 @@ void main() {
       when(
         mockTasksCollection.doc('task-uuid'),
       ).thenReturn(mockTaskDocRefWithId);
+      when(
+        mockLocationsCollection.where('tripId', isEqualTo: 'trip001'),
+      ).thenReturn(mockLocationsQuery);
+      when(
+        mockLocationsQuery.get(),
+      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocationsSnapshot.docs).thenReturn([]);
       when(
         mockItineraryItemsCollection.where('tripId', isEqualTo: 'trip001'),
       ).thenReturn(mockItineraryItemsQuery);
@@ -278,6 +292,10 @@ void main() {
         final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
         final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
         final mockTaskDocRef = MockDocumentReference<Map<String, dynamic>>();
+        final mockLocationsCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+        final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
         final mockItineraryItemsCollection =
             MockCollectionReference<Map<String, dynamic>>();
         final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
@@ -306,6 +324,17 @@ void main() {
         when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
         when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
         when(mockTaskDoc.reference).thenReturn(mockTaskDocRef);
+
+        when(
+          mockFirestore.collection('locations'),
+        ).thenReturn(mockLocationsCollection);
+        when(
+          mockLocationsCollection.where('tripId', isEqualTo: tripId),
+        ).thenReturn(mockLocationsQuery);
+        when(
+          mockLocationsQuery.get(),
+        ).thenAnswer((_) async => mockLocationsSnapshot);
+        when(mockLocationsSnapshot.docs).thenReturn([]);
 
         when(
           mockFirestore.collection('itinerary_items'),
@@ -360,6 +389,14 @@ void main() {
         final mockTaskDocRef1 = MockDocumentReference<Map<String, dynamic>>();
         final mockTasksQuery2 = MockQuery<Map<String, dynamic>>();
         final mockTasksSnapshot2 = MockQuerySnapshot<Map<String, dynamic>>();
+        final mockLocationsCollection =
+            MockCollectionReference<Map<String, dynamic>>();
+        final mockLocationsQuery1 = MockQuery<Map<String, dynamic>>();
+        final mockLocationsSnapshot1 =
+            MockQuerySnapshot<Map<String, dynamic>>();
+        final mockLocationsQuery2 = MockQuery<Map<String, dynamic>>();
+        final mockLocationsSnapshot2 =
+            MockQuerySnapshot<Map<String, dynamic>>();
         final mockItineraryItemsCollection =
             MockCollectionReference<Map<String, dynamic>>();
         final mockItineraryItemsQuery1 = MockQuery<Map<String, dynamic>>();
@@ -414,6 +451,24 @@ void main() {
         ).thenReturn(mockTasksQuery2);
         when(mockTasksQuery2.get()).thenAnswer((_) async => mockTasksSnapshot2);
         when(mockTasksSnapshot2.docs).thenReturn([]);
+
+        when(
+          mockFirestore.collection('locations'),
+        ).thenReturn(mockLocationsCollection);
+        when(
+          mockLocationsCollection.where('tripId', isEqualTo: 'trip001'),
+        ).thenReturn(mockLocationsQuery1);
+        when(
+          mockLocationsQuery1.get(),
+        ).thenAnswer((_) async => mockLocationsSnapshot1);
+        when(mockLocationsSnapshot1.docs).thenReturn([]);
+        when(
+          mockLocationsCollection.where('tripId', isEqualTo: 'trip002'),
+        ).thenReturn(mockLocationsQuery2);
+        when(
+          mockLocationsQuery2.get(),
+        ).thenAnswer((_) async => mockLocationsSnapshot2);
+        when(mockLocationsSnapshot2.docs).thenReturn([]);
 
         when(
           mockFirestore.collection('itinerary_items'),
