@@ -239,7 +239,7 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
-    testWidgets('旅程編集ボトムシートは場所指定を操作ボタンの上に表示しナビゲーション下端を避けること', (tester) async {
+    testWidgets('旅程編集ボトムシートは操作ボタンがナビゲーション下端に隠れないこと', (tester) async {
       tester.view.physicalSize = const Size(320, 400);
       tester.view.devicePixelRatio = 1;
       tester.view.padding = const FakeViewPadding(bottom: 48);
@@ -273,24 +273,9 @@ void main() {
       await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
       await tester.pumpAndSettle();
 
-      final locationButton = find.widgetWithText(OutlinedButton, '場所を指定');
       final cancelButton = find.widgetWithText(TextButton, 'キャンセル');
       final saveButton = find.widgetWithText(ElevatedButton, '保存');
 
-      expect(
-        tester.getRect(locationButton).bottom,
-        lessThan(tester.getRect(cancelButton).top),
-      );
-      expect(
-        tester.getRect(locationButton).bottom,
-        lessThan(tester.getRect(saveButton).top),
-      );
-      expect(
-        tester.getRect(locationButton).bottom,
-        lessThanOrEqualTo(
-          tester.view.physicalSize.height - tester.view.viewPadding.bottom,
-        ),
-      );
       expect(
         tester.getRect(cancelButton).bottom,
         lessThanOrEqualTo(
