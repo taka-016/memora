@@ -19,7 +19,11 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final ItineraryItemDto item;
   final DateTime? tripStartDate;
   final LocationDto? location;
-  final VoidCallback? onLocationSelectionRequested;
+  final Future<LocationDto?> Function(
+    BuildContext context,
+    ItineraryItemDto currentItem,
+  )?
+  onLocationSelectionRequested;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock? clock;
 
@@ -36,6 +40,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final endTime = useState<TimeOfDay?>(timePartOfDateTime(item.endDateTime));
     final memoController = useTextEditingController(text: item.memo ?? '');
     final errorMessage = useState<String?>(null);
+    final selectedLocation = useState<LocationDto?>(location);
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
@@ -127,7 +132,12 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         return;
       }
 
-      onSaved(result.item!);
+      onSaved(
+        result.item!.copyWith(
+          locationId: selectedLocation.value?.id,
+          location: selectedLocation.value,
+        ),
+      );
       Navigator.of(context).pop();
     }
 
@@ -150,13 +160,31 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
     }
 
+    ItineraryItemDto currentItemWithLocation() {
+      return item.copyWith(
+        locationId: selectedLocation.value?.id,
+        location: selectedLocation.value,
+      );
+    }
+
+    Future<void> requestLocationSelection() async {
+      final callback = onLocationSelectionRequested;
+      if (callback == null) {
+        return;
+      }
+      selectedLocation.value = await callback(
+        context,
+        currentItemWithLocation(),
+      );
+    }
+
     Widget buildLocationButton() {
       return SizedBox(
         width: double.infinity,
         child: OutlinedButton.icon(
-          onPressed: onLocationSelectionRequested,
+          onPressed: requestLocationSelection,
           icon: const Icon(Icons.place),
-          label: Text(location == null ? '場所を指定' : '場所を変更'),
+          label: Text(selectedLocation.value == null ? '場所を指定' : '場所を変更'),
         ),
       );
     }
@@ -167,13 +195,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           buildLocationButton(),
-          if (location?.name?.isNotEmpty == true) ...[
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(location!.name!),
-            ),
-          ],
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,

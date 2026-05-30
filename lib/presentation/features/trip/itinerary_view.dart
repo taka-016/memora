@@ -40,7 +40,6 @@ class ItineraryView extends HookWidget {
     );
     final collapsedDateGroupKeys = useState<Set<String>>({});
     final errorMessage = useState<String?>(null);
-    final locationSelectionItem = useState<ItineraryItemDto?>(null);
 
     useEffect(() {
       itemsState.value = sortItineraryItems(items);
@@ -93,6 +92,65 @@ class ItineraryView extends HookWidget {
       collapsedDateGroupKeys.value = next;
     }
 
+    void updateItemLocation(ItineraryItemDto item, LocationDto? location) {
+      final updated = itemsState.value.map((current) {
+        if (current.id != item.id) {
+          return current;
+        }
+        return current.copyWith(locationId: location?.id, location: location);
+      }).toList();
+      notifyChange(updated);
+    }
+
+    Future<LocationDto?> showLocationSelectionBottomSheet(
+      BuildContext sheetContext,
+      ItineraryItemDto item,
+    ) async {
+      final currentLocation =
+          item.location ?? _locationById(locations, item.locationId);
+      return showModalBottomSheet<LocationDto?>(
+        context: sheetContext,
+        isScrollControlled: true,
+        builder: (context) {
+          return FractionallySizedBox(
+            heightFactor: 0.9,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ItineraryLocationSelectView(
+                key: const Key('itinerary_location_select_view'),
+                item: item,
+                locations: locations,
+                isTestEnvironment: isTestEnvironment,
+                onMapLongTapped: (coordinate) {
+                  final location = LocationDto(
+                    id: const Uuid().v7(),
+                    tripId: tripId ?? '',
+                    groupId: locations.isNotEmpty
+                        ? locations.first.groupId
+                        : '',
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude,
+                  );
+                  onLocationsChanged?.call([...locations, location]);
+                  updateItemLocation(item, location);
+                  Navigator.of(context).pop(location);
+                },
+                onLocationSelected: (location) {
+                  updateItemLocation(item, location);
+                  Navigator.of(context).pop(location);
+                },
+                onLocationCleared: () {
+                  updateItemLocation(item, null);
+                  Navigator.of(context).pop(null);
+                },
+                onClose: () => Navigator.of(context).pop(currentLocation),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     Future<void> showEditBottomSheet(ItineraryItemDto item) async {
       final itemLocation =
           item.location ?? _locationById(locations, item.locationId);
@@ -105,10 +163,7 @@ class ItineraryView extends HookWidget {
             item: item,
             tripStartDate: tripStartDate,
             location: itemLocation,
-            onLocationSelectionRequested: () {
-              Navigator.of(context).pop();
-              locationSelectionItem.value = item;
-            },
+            onLocationSelectionRequested: showLocationSelectionBottomSheet,
             onSaved: (updatedItem) {
               final updated = List<ItineraryItemDto>.from(itemsState.value);
               final index = updated.indexWhere(
@@ -123,32 +178,6 @@ class ItineraryView extends HookWidget {
           );
         },
       );
-    }
-
-    void updateItemLocation(ItineraryItemDto item, LocationDto? location) {
-      final updated = itemsState.value.map((current) {
-        if (current.id != item.id) {
-          return current;
-        }
-        return current.copyWith(locationId: location?.id, location: location);
-      }).toList();
-      notifyChange(updated);
-      locationSelectionItem.value = null;
-    }
-
-    void addLocationFromMap(Coordinate coordinate) {
-      final location = LocationDto(
-        id: const Uuid().v7(),
-        tripId: tripId ?? '',
-        groupId: locations.isNotEmpty ? locations.first.groupId : '',
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-      );
-      onLocationsChanged?.call([...locations, location]);
-      final item = locationSelectionItem.value;
-      if (item != null) {
-        updateItemLocation(item, location);
-      }
     }
 
     Widget buildHeader() {
@@ -198,23 +227,6 @@ class ItineraryView extends HookWidget {
 
     List<String> subtitleParts(ItineraryItemDto item) {
       return <String>[if (item.memo?.isNotEmpty == true) item.memo!];
-    }
-
-    if (locationSelectionItem.value != null) {
-      return ItineraryLocationSelectView(
-        key: const Key('itinerary_location_select_view'),
-        item: locationSelectionItem.value!,
-        locations: locations,
-        isTestEnvironment: isTestEnvironment,
-        onMapLongTapped: addLocationFromMap,
-        onLocationSelected: (location) {
-          updateItemLocation(locationSelectionItem.value!, location);
-        },
-        onLocationCleared: () {
-          updateItemLocation(locationSelectionItem.value!, null);
-        },
-        onClose: () => locationSelectionItem.value = null,
-      );
     }
 
     return Column(
