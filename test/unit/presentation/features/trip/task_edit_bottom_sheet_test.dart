@@ -358,6 +358,37 @@ void main() {
       expect(find.byType(TaskEditBottomSheet), findsNothing);
     });
 
+    testWidgets('Androidのナビゲーション領域を避ける下余白を持つこと', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.viewPadding = const FakeViewPadding(bottom: 48);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewPadding);
+      final task = TaskDto(
+        id: 'task-1',
+        tripId: 'trip-1',
+        orderIndex: 0,
+        name: '準備',
+        isCompleted: false,
+      );
+
+      await _openBottomSheet(
+        tester,
+        task: task,
+        tasks: [task],
+        members: members,
+        onSaved: (_) {},
+      );
+
+      final contentPadding = tester.widget<Padding>(
+        find.byKey(const Key('task_edit_bottom_sheet_content_padding')),
+      );
+
+      expect(
+        contentPadding.padding,
+        const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 64),
+      );
+    });
+
     testWidgets('締切日未設定時は旅行開始日の年月をDatePickerの初期ページにすること', (tester) async {
       final task = TaskDto(
         id: 'task-1',

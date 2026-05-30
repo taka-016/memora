@@ -472,6 +472,44 @@ void main() {
       expect(find.widgetWithText(TextButton, '削除'), findsNothing);
     });
 
+    testWidgets('編集ボトムシートはAndroidのナビゲーション領域を避ける下余白を持つこと', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.viewPadding = const FakeViewPadding(bottom: 48);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetViewPadding);
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      final listItem = find.byKey(const Key('itineraryListItem_item-1'));
+      await tester.ensureVisible(listItem);
+      await tester.tap(listItem);
+      await tester.pumpAndSettle();
+
+      final contentPadding = tester.widget<Padding>(
+        find.byKey(const Key('itinerary_edit_bottom_sheet_content_padding')),
+      );
+
+      expect(
+        contentPadding.padding,
+        const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 64),
+      );
+    });
+
     testWidgets('編集用の開始日時と終了日時は日付・時刻選択フィールドで初期表示されること', (tester) async {
       final item = ItineraryItemDto(
         id: 'item-1',

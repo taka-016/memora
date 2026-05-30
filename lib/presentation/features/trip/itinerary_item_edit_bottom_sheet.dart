@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 
 class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({
@@ -146,12 +147,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     }
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
+      key: const Key('itinerary_edit_bottom_sheet_content_padding'),
+      padding: bottomSheetContentPadding(context),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
