@@ -238,6 +238,48 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所を指定'), findsOneWidget);
     });
 
+    testWidgets('旅程編集ボトムシートは小さい画面でも場所指定ボタンまでスクロールできること', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '朝食',
+        startDateTime: DateTime(2024, 1, 2, 8),
+        endDateTime: DateTime(2024, 1, 2, 9),
+        memo: 'ホテルで朝食',
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: [item],
+            locations: const [],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+
+      final locationButton = find.widgetWithText(OutlinedButton, '場所を指定');
+      await tester.ensureVisible(locationButton);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(locationButton).bottom,
+        lessThanOrEqualTo(tester.view.physicalSize.height),
+      );
+    });
+
     testWidgets('場所指定画面では既存locationと選択中locationを表示し紐付けを更新できること', (
       tester,
     ) async {
