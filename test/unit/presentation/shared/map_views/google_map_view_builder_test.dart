@@ -1,36 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/presentation/shared/map_views/google_map_view_builder.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/google_map_view.dart';
+import 'package:memora/presentation/shared/map_views/google_map_view_builder.dart';
 
 void main() {
   group('GoogleMapViewBuilder', () {
     test('createMapViewでGoogleMapViewを作成する', () {
       const service = GoogleMapViewBuilder();
-      final pins = <PinDto>[];
+      final locations = <LocationDto>[];
 
-      final widget = service.createMapView(pins: pins);
+      final widget = service.createMapView(locations: locations);
 
       expect(widget, isA<GoogleMapView>());
     });
 
-    test('コールバック関数を正しく渡す', () {
+    test('locations用のコールバックを渡せる', () {
       const service = GoogleMapViewBuilder();
-      final pins = <PinDto>[];
+      final locations = <LocationDto>[];
 
       void onMapLongTapped(Coordinate coordinate) {}
       void onSearchedLocationSelected(LocationCandidateDto candidate) {}
-      void onPinTapped(PinDto pin) {}
-      void onPinDeleted(String pinId) {}
+      void onLocationTapped(LocationDto location) {}
 
       final widget = service.createMapView(
-        pins: pins,
+        locations: locations,
         onMapLongTapped: onMapLongTapped,
         onSearchedLocationSelected: onSearchedLocationSelected,
-        onPinTapped: onPinTapped,
-        onPinDeleted: onPinDeleted,
+        onLocationTapped: onLocationTapped,
       );
 
       expect(widget, isA<GoogleMapView>());

@@ -5,7 +5,6 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 
 import 'firestore_trip_entry_mapper_test.mocks.dart';
@@ -24,7 +23,6 @@ void main() {
         'endDate': Timestamp.fromDate(DateTime(2025, 8, 3)),
         'memo': '海に行く',
       });
-      const pins = [PinDto(pinId: 'pin001', latitude: 35, longitude: 139)];
       const tasks = [
         TaskDto(
           id: 'task001',
@@ -41,7 +39,6 @@ void main() {
       final result = FirestoreTripEntryMapper.fromFirestore(
         doc,
         fallbackTripYear: 2026,
-        pins: pins,
         tasks: tasks,
         itineraryItems: itineraryItems,
       );
@@ -53,7 +50,6 @@ void main() {
       expect(result.startDate, DateTime(2025, 8, 1));
       expect(result.endDate, DateTime(2025, 8, 3));
       expect(result.memo, '海に行く');
-      expect(result.pins, pins);
       expect(result.tasks, tasks);
       expect(result.itineraryItems, itineraryItems);
     });

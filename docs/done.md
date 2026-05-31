@@ -2,6 +2,16 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
+- pinsを廃止してlocationsへ統一する
+  - ER図から`pins`テーブルと`trip_entries`/`groups`から`pins`への関連を削除する
+  - `Pin`エンティティ、`PinDto`、`PinMapper`、`FirestorePinMapper`を削除する
+  - `TripEntry`集約、`TripEntryDto`、`TripEntryMapper`から`pins`を削除する
+  - `TripEntry`の訪問開始日時・訪問終了日時に関する`pins`由来の検証を削除し、旅程項目とlocationsの検証に責務を寄せる
+  - `TripEntryQueryService.getTripEntryById`の`pinsOrderBy`引数を削除する
+  - `FirestoreTripEntryQueryService`で`pins`コレクションを取得して`TripEntryDto`へ詰める処理を削除する
+  - `FirestoreTripEntryRepository`で旅行作成・更新・削除時に`pins`コレクションへ保存・削除する処理を削除する
+  - `PinQueryService`、`FirestorePinQueryService`、`GetPinsByMemberIdUsecase`、`pinQueryServiceProvider`を削除する
+  - Firestore上の既存`pins`データは破棄する想定(手動でやるため対応不要)
 - locationsのドメインエンティティを作成する
   - `id`, `tripId`, `groupId`, `name`, `latitude`, `longitude`を保持する
   - trip_entryの子エンティティとして扱う
@@ -157,6 +167,12 @@
 
 ## マップの表示
 
+- 地図表示画面で表示するデータをpinsからlocationsに変更する
+  - `GetPinsByMemberIdUsecase`ではなく、所属グループのlocationsを取得するユースケースを使用する
+  - `MapViewBuilder`、`GoogleMapViewBuilder`、`PlaceholderMapViewBuilder`、`GoogleMapView`の入力を`PinDto`から`LocationDto`中心に変更する
+  - 地図上のmarker生成を`pinId`ではなく`location.id`または安定したlocation識別子で行う
+  - 読み取り専用地図で表示するボトムシートを`PinDetailBottomSheet`依存からlocations用の表示へ変更する
+  - 地図表示画面のテストをlocations取得・表示の期待値へ更新し、pins関連のモックを削除する
 - ~~起動時に現在地に移動~~→仕様変更により廃止
 - 地図表示画面はMapViewを直接表示するのではなく、mapDisplayウィジェットを表示してその上にMapViewを生成する形にする
 - PinQueryServiceのgetPinsByMemberIdを使用してログインユーザー(ユーザーIDに紐づくmember)が所属するグループに紐づくpinsを取得する
@@ -512,6 +528,17 @@
 
 ## 旅行管理画面
 
+- 旅行編集画面から訪問場所関連のUIを廃止する
+  - 訪問場所表示を削除する
+  - 訪問場所編集ボタンを削除する
+  - 訪問場所一覧を削除する
+- 旅行管理画面からpins関連の処理を取り除く
+  - pins取得・表示・更新に関する状態管理を削除する
+  - pins関連のユースケース・DTO・マッパー参照を削除する
+  - `TripEditModal`の`PinDto`ドラフト、ピン追加・更新・削除、`PinDetailBottomSheet`表示を削除する
+  - `TripEditFormView`の`pins`入力、訪問場所一覧、ピン削除ハンドラを削除する
+  - `SelectVisitLocationView`を削除する
+  - 旅行保存時に`TripEntryDto.pins`へ反映していた処理を削除する
 - タスクIDの生成方式をUUID v7に変更する
 - 旅行編集画面から旅程画面へ遷移できるようにする
   - `TripEditExpandedSection`に旅程入力用のセクションを追加する
@@ -705,6 +732,10 @@
 
 ## マップピンボトムシート
 
+- `PinDetailBottomSheet`を廃止する
+  - pinsの`locationName`、`visitStartDateTime`、`visitEndDateTime`、`memo`を編集するUIを削除する
+  - 地図上のlocations表示で必要な情報表示は、locations用の軽量な表示へ置き換える
+  - `PinDetailBottomSheet`関連テストを削除する
 - 訪問開始日と訪問終了日は時分まで入力できるようにする
 - 保存ボタンタップで呼び出し元にコールバックする
 - Pinデータを受け取り、各項目に初期セットする
@@ -836,6 +867,11 @@
 
 ## 全体
 
+- pins廃止に伴う仕様・テストを整理する
+  - `pin_dto_test`、`pin_mapper_test`、`pin_test`、`firestore_pin_mapper_test`、`firestore_pin_query_service_test`を削除する
+  - `TripEntryDto`、`TripEntry`、`TripEntryMapper`、`FirestoreTripEntryMapper`、`FirestoreTripEntryQueryService`、`FirestoreTripEntryRepository`のテストからpins期待値を削除する
+  - `GoogleMapView`、`MapViewBuilder`、`TripEditModal`、`TripEditFormView`、`TripManagement`、`MapScreen`のテストをlocations前提に更新する
+  - `rg "PinDto|PinQueryService|FirestorePin|pinsOrderBy|collection\\('pins'\\)|PinDetailBottomSheet|pinId"`でpins廃止漏れがないことを確認する
 - 画面の一部にポップアップして表示する画面のファイル名の末尾は"dialog"ではなく"modal"で統一する
 - エンティティの設計をuser.dartに合わせる
 - DatePickerの操作性改善（日付タップで直接確定）

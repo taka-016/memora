@@ -11,18 +11,6 @@ erDiagram
         timestamp endDate
         string memo
     }
-    pins {
-        string id PK
-        string pinId UK "NOT NULL"
-        string tripId FK
-        string groupId FK
-        number latitude "NOT NULL"
-        number longitude "NOT NULL"
-        string locationName
-        timestamp visitStartDateTime
-        timestamp visitEndDateTime
-        string memo
-    }
     locations {
         string id PK
         string tripId FK
@@ -125,7 +113,6 @@ erDiagram
         string memo
     }
 
-    trip_entries ||--o{ pins : "id → tripId"
     trip_entries ||--o{ locations : "id → tripId"
     trip_entries ||--o{ tasks : "id → tripId"
     trip_entries ||--o{ itinerary_items : "id → tripId"
@@ -135,7 +122,6 @@ erDiagram
     groups ||--o{ group_members : "id → groupId"
     groups ||--o{ group_events : "id → groupId"
     groups ||--o{ trip_entries : "id → groupId"
-    groups ||--o{ pins : "id → groupId"
     groups ||--o{ locations : "id → groupId"
     group_members ||--|| members : "memberId → id"
     members ||--o{ member_events : "id → memberId"

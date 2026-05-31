@@ -33,7 +33,6 @@ void main() {
       when(
         mockQueryService.getTripEntryById(
           tripId,
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -45,16 +44,13 @@ void main() {
       final verification = verify(
         mockQueryService.getTripEntryById(
           tripId,
-          pinsOrderBy: captureAnyNamed('pinsOrderBy'),
           tasksOrderBy: captureAnyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: captureAnyNamed('itineraryItemsOrderBy'),
         ),
       );
       verification.called(1);
-      final pinsOrderBy = verification.captured[0] as List<OrderBy>;
-      final tasksOrderBy = verification.captured[1] as List<OrderBy>;
-      final itineraryItemsOrderBy = verification.captured[2] as List<OrderBy>;
-      expect(pinsOrderBy.single.field, 'visitStartDateTime');
+      final tasksOrderBy = verification.captured[0] as List<OrderBy>;
+      final itineraryItemsOrderBy = verification.captured[1] as List<OrderBy>;
       expect(tasksOrderBy.single.field, 'orderIndex');
       expect(itineraryItemsOrderBy.map((orderBy) => orderBy.field), [
         'startDateTime',
@@ -67,7 +63,6 @@ void main() {
       when(
         mockQueryService.getTripEntryById(
           tripId,
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
@@ -79,7 +74,6 @@ void main() {
       verify(
         mockQueryService.getTripEntryById(
           tripId,
-          pinsOrderBy: anyNamed('pinsOrderBy'),
           tasksOrderBy: anyNamed('tasksOrderBy'),
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),

@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
@@ -25,7 +24,6 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>>
     mockTripEntriesCollection;
-    late MockCollectionReference<Map<String, dynamic>> mockPinsCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
     late MockCollectionReference<Map<String, dynamic>>
     mockItineraryItemsCollection;
@@ -35,7 +33,6 @@ void main() {
       mockFirestore = MockFirebaseFirestore();
       mockTripEntriesCollection =
           MockCollectionReference<Map<String, dynamic>>();
-      mockPinsCollection = MockCollectionReference<Map<String, dynamic>>();
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
       mockItineraryItemsCollection =
           MockCollectionReference<Map<String, dynamic>>();
@@ -43,7 +40,6 @@ void main() {
       when(
         mockFirestore.collection('trip_entries'),
       ).thenReturn(mockTripEntriesCollection);
-      when(mockFirestore.collection('pins')).thenReturn(mockPinsCollection);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
       when(
         mockFirestore.collection('itinerary_items'),
@@ -52,13 +48,10 @@ void main() {
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
     });
 
-    test('旅行IDで旅行情報を取得し、関連するピンも取得する', () async {
+    test('旅行IDで旅行情報を取得し、tasksとitinerary_itemsも取得する', () async {
       const tripId = 'trip123';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
-      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
-      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockPinDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
@@ -78,26 +71,6 @@ void main() {
         'startDate': Timestamp.fromDate(DateTime(2024, 8, 1)),
         'endDate': Timestamp.fromDate(DateTime(2024, 8, 5)),
         'memo': '楽しかった思い出',
-      });
-
-      when(
-        mockPinsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockPinsQuery);
-      when(
-        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
-      ).thenReturn(mockPinsQuery);
-      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
-      when(mockPinsSnapshot.docs).thenReturn([mockPinDoc]);
-      when(mockPinDoc.data()).thenReturn({
-        'pinId': 'pin001',
-        'tripId': tripId,
-        'groupId': 'group001',
-        'latitude': 35.0,
-        'longitude': 139.0,
-        'locationName': '東京タワー',
-        'visitStartDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 10)),
-        'visitEndDateTime': Timestamp.fromDate(DateTime(2024, 8, 2, 15)),
-        'memo': '景色が綺麗',
       });
 
       when(
@@ -140,7 +113,6 @@ void main() {
 
       final result = await service.getTripEntryById(
         tripId,
-        pinsOrderBy: const [OrderBy('visitStartDateTime', descending: false)],
         tasksOrderBy: const [OrderBy('orderIndex', descending: false)],
         itineraryItemsOrderBy: const [
           OrderBy('startDateTime', descending: false),
@@ -151,17 +123,11 @@ void main() {
       expect(result, isNotNull);
       expect(result!.id, equals(tripId));
       expect(result.name, equals('夏旅行'));
-      expect(result.pins, hasLength(1));
-      final PinDto pin = result.pins!.first;
-      expect(pin.locationName, equals('東京タワー'));
       expect(result.tasks, hasLength(1));
       expect(result.tasks!.first.name, '準備');
       expect(result.itineraryItems, hasLength(1));
       final ItineraryItemDto itineraryItem = result.itineraryItems!.first;
       expect(itineraryItem.name, '朝食');
-      verify(
-        mockPinsQuery.orderBy('visitStartDateTime', descending: false),
-      ).called(1);
       verify(mockTasksQuery.orderBy('orderIndex', descending: false)).called(1);
       verify(
         mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
@@ -169,6 +135,8 @@ void main() {
       verify(
         mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).called(1);
+      const removedCollection = 'pins';
+      verifyNever(mockFirestore.collection(removedCollection));
     });
 
     test('旅行が存在しない場合はnullを返す', () async {
@@ -193,8 +161,6 @@ void main() {
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
-      final mockPinsQuery = MockQuery<Map<String, dynamic>>();
-      final mockPinsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
@@ -208,11 +174,6 @@ void main() {
       when(
         mockDocSnapshot.data(),
       ).thenReturn({'groupId': 'group001', 'name': '期間未設定旅行'});
-      when(
-        mockPinsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockPinsQuery);
-      when(mockPinsQuery.get()).thenAnswer((_) async => mockPinsSnapshot);
-      when(mockPinsSnapshot.docs).thenReturn([]);
       when(
         mockTasksCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockTasksQuery);
@@ -236,75 +197,14 @@ void main() {
 
       expect(result, isNotNull);
       expect(result!.year, 2027);
-      verify(
-        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
-      ).called(1);
-      verify(
-        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
-      ).called(1);
     });
 
-    test('旅行取得時に例外が発生した場合はnullを返す', () async {
-      when(
-        mockTripEntriesCollection.doc(any),
-      ).thenThrow(TestException('Firestore error'));
+    test('例外発生時はnullを返す', () async {
+      when(mockTripEntriesCollection.doc(any)).thenThrow(TestException('取得失敗'));
 
-      final result = await service.getTripEntryById('trip001');
+      final result = await service.getTripEntryById('trip1');
 
       expect(result, isNull);
-    });
-
-    test('グループIDとyearで旅行一覧を取得し、orderByを適用する', () async {
-      const groupId = 'group001';
-      const year = 2024;
-      final mockQuery = MockQuery<Map<String, dynamic>>();
-      final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
-      final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
-
-      when(
-        mockTripEntriesCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
-      when(mockQuery.where('year', isEqualTo: year)).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('startDate', descending: false),
-      ).thenReturn(mockQuery);
-      when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
-      when(mockSnapshot.docs).thenReturn([mockDoc]);
-      when(mockDoc.id).thenReturn('trip001');
-      when(mockDoc.data()).thenReturn({
-        'groupId': groupId,
-        'name': '冬旅行',
-        'year': year,
-        'startDate': Timestamp.fromDate(DateTime(2024, 12, 20)),
-        'endDate': Timestamp.fromDate(DateTime(2024, 12, 25)),
-        'memo': '温泉巡り',
-      });
-
-      final result = await service.getTripEntriesByGroupIdAndYear(
-        groupId,
-        year,
-        orderBy: const [OrderBy('startDate', descending: false)],
-      );
-
-      expect(result, hasLength(1));
-      verify(mockQuery.where('year', isEqualTo: year)).called(1);
-      verify(mockQuery.orderBy('startDate', descending: false)).called(1);
-    });
-
-    test('グループIDと年での取得時に例外が発生すると空リストを返す', () async {
-      when(
-        mockTripEntriesCollection.where(
-          'groupId',
-          isEqualTo: anyNamed('isEqualTo'),
-        ),
-      ).thenThrow(TestException('Firestore error'));
-
-      final result = await service.getTripEntriesByGroupIdAndYear(
-        'group',
-        2024,
-      );
-
-      expect(result, isEmpty);
     });
   });
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/usecases/trip/get_pins_by_member_id_usecase.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
@@ -18,17 +19,37 @@ class MapScreen extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final getPinsByMemberIdUsecase = useMemoized(
-      () => ref.read(getPinsByMemberIdUsecaseProvider),
+    final getGroupsWithMembersUsecase = useMemoized(
+      () => ref.read(getGroupsWithMembersUsecaseProvider),
     );
-    final pins = useState<List<PinDto>>([]);
+    final getLocationsByGroupIdUsecase = useMemoized(
+      () => ref.read(getLocationsByGroupIdUsecaseProvider),
+    );
+    final locations = useState<List<LocationDto>>([]);
 
-    useEffect(() {
-      Future.microtask(() async {
-        pins.value = await getPinsByMemberIdUsecase.execute(currentMember.id);
-      });
-      return null;
-    }, [getPinsByMemberIdUsecase, currentMember.id]);
+    useEffect(
+      () {
+        Future.microtask(() async {
+          final groups = await getGroupsWithMembersUsecase.execute(
+            currentMember,
+          );
+          final locationLists = await Future.wait(
+            groups.map(
+              (group) => getLocationsByGroupIdUsecase.execute(group.id),
+            ),
+          );
+          locations.value = [
+            for (final groupLocations in locationLists) ...groupLocations,
+          ];
+        });
+        return null;
+      },
+      [
+        getGroupsWithMembersUsecase,
+        getLocationsByGroupIdUsecase,
+        currentMember,
+      ],
+    );
 
     final mapViewType = isTestEnvironment
         ? MapViewType.placeholder
@@ -36,6 +57,6 @@ class MapScreen extends HookConsumerWidget {
 
     return MapViewFactory.create(
       mapViewType,
-    ).createMapView(pins: pins.value, isReadOnly: true);
+    ).createMapView(locations: locations.value, isReadOnly: true);
   }
 }

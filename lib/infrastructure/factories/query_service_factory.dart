@@ -10,7 +10,6 @@ import 'package:memora/application/queries/member/member_invitation_query_servic
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/location_query_service.dart';
-import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
@@ -26,7 +25,6 @@ import 'package:memora/infrastructure/queries/member/firestore_member_invitation
 import 'package:memora/infrastructure/queries/member/firestore_member_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_location_query_service.dart';
-import 'package:memora/infrastructure/queries/trip/firestore_pin_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_task_query_service.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 
@@ -40,10 +38,6 @@ final firebaseFirestoreProvider = Provider<FirebaseFirestore>((ref) {
 
 final groupEventQueryServiceProvider = Provider<GroupEventQueryService>((ref) {
   return QueryServiceFactory.create<GroupEventQueryService>(ref: ref);
-});
-
-final pinQueryServiceProvider = Provider<PinQueryService>((ref) {
-  return QueryServiceFactory.create<PinQueryService>(ref: ref);
 });
 
 final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
@@ -121,9 +115,6 @@ class QueryServiceFactory {
     }
     if (T == GroupEventQueryService) {
       return FirestoreGroupEventQueryService() as T;
-    }
-    if (T == PinQueryService) {
-      return FirestorePinQueryService() as T;
     }
     if (T == TripEntryQueryService) {
       return FirestoreTripEntryQueryService(clock: ref.watch(appClockProvider))

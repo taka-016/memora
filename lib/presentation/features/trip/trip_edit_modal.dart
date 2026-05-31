@@ -3,25 +3,18 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
-import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
-import 'package:memora/presentation/features/trip/select_visit_location_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
-import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
-import 'package:uuid/uuid.dart';
 
-enum TripEditExpandedSection { map, itinerary, tasks }
+enum TripEditExpandedSection { itinerary, tasks }
 
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
@@ -45,14 +38,9 @@ class TripEditModal extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final errorMessage = useState<String?>(null);
     final expandedSection = useState<TripEditExpandedSection?>(null);
-    final selectedPin = useState<PinDto?>(null);
-    final isBottomSheetVisible = useState(false);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
     final clock = ref.watch(appClockProvider);
-    final getNearbyLocationNameUsecase = ref.read(
-      getNearbyLocationNameUsecaseProvider,
-    );
 
     final initialTripForComparison = useMemoized(() {
       final tripYearValue = tripEntry?.year ?? year ?? clock.now().year;
@@ -64,7 +52,6 @@ class TripEditModal extends HookConsumerWidget {
         startDate: tripEntry?.startDate,
         endDate: tripEntry?.endDate,
         memo: tripEntry?.memo ?? '',
-        pins: List<PinDto>.from(tripEntry?.pins ?? const []),
         tasks: List<TaskDto>.from(tripEntry?.tasks ?? const []),
         itineraryItems: List<ItineraryItemDto>.from(
           tripEntry?.itineraryItems ?? const [],
@@ -73,9 +60,6 @@ class TripEditModal extends HookConsumerWidget {
     }, [groupId, tripEntry, year, clock]);
 
     final draftTripEntry = useState(initialTripForComparison);
-
-    List<PinDto> currentPins() =>
-        List<PinDto>.from(draftTripEntry.value.pins ?? const []);
 
     List<TaskDto> currentTasks() =>
         List<TaskDto>.from(draftTripEntry.value.tasks ?? const []);
@@ -88,12 +72,6 @@ class TripEditModal extends HookConsumerWidget {
     void updateDraftTripEntry(TripEntryDto tripEntry) {
       draftTripEntry.value = tripEntry;
       errorMessage.value = null;
-    }
-
-    void updateDraftPins(List<PinDto> pins) {
-      updateDraftTripEntry(
-        draftTripEntry.value.copyWith(pins: List<PinDto>.from(pins)),
-      );
     }
 
     void updateDraftItineraryItems(List<ItineraryItemDto> itineraryItems) {
@@ -122,89 +100,12 @@ class TripEditModal extends HookConsumerWidget {
       return null;
     }, [draftTripEntry.value, initialTripForComparison]);
 
-    void hideBottomSheet() {
-      isBottomSheetVisible.value = false;
-      selectedPin.value = null;
-    }
-
-    void addPin({required Coordinate coordinate, String? locationName}) {
-      final newPin = PinDto(
-        pinId: const Uuid().v7(),
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-        locationName: locationName,
-      );
-      updateDraftPins([...currentPins(), newPin]);
-      selectedPin.value = newPin;
-    }
-
-    Future<String?> getLocationName(Coordinate coordinate) async {
-      try {
-        return await getNearbyLocationNameUsecase.execute(coordinate);
-      } catch (e, stack) {
-        logger.e(
-          'TripEditModal.getLocationName: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        return null;
-      }
-    }
-
-    Future<void> handleMapLongTapped(Coordinate coordinate) async {
-      final locationName = await getLocationName(coordinate);
-      addPin(coordinate: coordinate, locationName: locationName);
-    }
-
-    void handleSearchedLocationSelected(LocationCandidateDto candidate) {
-      addPin(coordinate: candidate.coordinate, locationName: candidate.name);
-    }
-
-    void handlePinTapped(PinDto pin) {
-      selectedPin.value = pin;
-      isBottomSheetVisible.value = true;
-    }
-
-    void handlePinDeleted(String pinId) {
-      updateDraftPins(
-        currentPins().where((pin) => pin.pinId != pinId).toList(),
-      );
-      if (selectedPin.value?.pinId == pinId) {
-        selectedPin.value = null;
-      }
-      hideBottomSheet();
-    }
-
-    void handlePinUpdated(PinDto pin) {
-      final updatedPins = currentPins();
-      final index = updatedPins.indexWhere(
-        (current) => current.pinId == pin.pinId,
-      );
-      if (index == -1) {
-        return;
-      }
-      updatedPins[index] = pin;
-      updateDraftPins(updatedPins);
-      hideBottomSheet();
-    }
-
-    void toggleMapExpansion() {
-      if (expandedSection.value == TripEditExpandedSection.map) {
-        expandedSection.value = null;
-        hideBottomSheet();
-        return;
-      }
-      expandedSection.value = TripEditExpandedSection.map;
-    }
-
     void showTaskView() {
       expandedSection.value = TripEditExpandedSection.tasks;
-      hideBottomSheet();
     }
 
     void showItineraryView() {
       expandedSection.value = TripEditExpandedSection.itinerary;
-      hideBottomSheet();
     }
 
     Future<void> handleSave() async {
@@ -276,21 +177,6 @@ class TripEditModal extends HookConsumerWidget {
       );
     }
 
-    Widget buildBottomSheet() {
-      if (!isBottomSheetVisible.value || selectedPin.value == null) {
-        return const SizedBox.shrink();
-      }
-
-      return PinDetailBottomSheet(
-        pin: selectedPin.value!,
-        onUpdate: handlePinUpdated,
-        onDelete: handlePinDeleted,
-        onClose: hideBottomSheet,
-        tripStartDate: draftTripEntry.value.startDate,
-        clock: clock,
-      );
-    }
-
     Widget buildNormalLayout() {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,7 +196,6 @@ class TripEditModal extends HookConsumerWidget {
               onChanged: updateDraftTripEntry,
               onItineraryManagementRequested: showItineraryView,
               onTaskManagementRequested: showTaskView,
-              onVisitLocationEditRequested: toggleMapExpansion,
             ),
           ),
           const SizedBox(height: 24),
@@ -352,22 +237,6 @@ class TripEditModal extends HookConsumerWidget {
 
     Widget buildDialogContent() {
       switch (expandedSection.value) {
-        case TripEditExpandedSection.map:
-          return SelectVisitLocationView(
-            pins: currentPins(),
-            selectedPin: selectedPin.value,
-            isTestEnvironment: isTestEnvironment,
-            onClose: toggleMapExpansion,
-            onMapLongTapped: handleMapLongTapped,
-            onSearchedLocationSelected: handleSearchedLocationSelected,
-            onPinTapped: handlePinTapped,
-            onPinUpdated: handlePinUpdated,
-            onPinDeleted: handlePinDeleted,
-            tripStartDate: draftTripEntry.value.startDate,
-            bottomSheet: isTestEnvironment
-                ? buildBottomSheet()
-                : const SizedBox.shrink(),
-          );
         case TripEditExpandedSection.tasks:
           return TaskView(
             tripId: tripEntry?.id,

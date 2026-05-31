@@ -6,7 +6,6 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
-import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/main.dart' as app;
@@ -20,12 +19,7 @@ import 'package:mockito/mockito.dart';
 import '../helpers/fake_auth_notifier.dart';
 import 'main_test.mocks.dart';
 
-@GenerateMocks([
-  GroupQueryService,
-  MemberQueryService,
-  AuthService,
-  PinQueryService,
-])
+@GenerateMocks([GroupQueryService, MemberQueryService, AuthService])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
   late MockMemberQueryService mockMemberQueryService;
@@ -69,7 +63,6 @@ void main() {
         memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
-        // pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       ],
       child: MaterialApp(
         title: 'memora',
