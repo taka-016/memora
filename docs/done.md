@@ -157,6 +157,7 @@
 
 ## マップの表示
 
+- 地図表示画面で表示するデータをpinsからlocationsに変更する
 - ~~起動時に現在地に移動~~→仕様変更により廃止
 - 地図表示画面はMapViewを直接表示するのではなく、mapDisplayウィジェットを表示してその上にMapViewを生成する形にする
 - PinQueryServiceのgetPinsByMemberIdを使用してログインユーザー(ユーザーIDに紐づくmember)が所属するグループに紐づくpinsを取得する
