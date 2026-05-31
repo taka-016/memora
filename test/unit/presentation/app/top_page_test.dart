@@ -14,6 +14,7 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
@@ -124,6 +125,7 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   MemberQueryService,
   AuthService,
   AuthNotifier,
+  LocationQueryService,
   PinQueryService,
   DvcPointContractQueryService,
   DvcLimitedPointQueryService,
@@ -146,6 +148,7 @@ void main() {
   late MockMemberEventQueryService mockMemberEventQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
+  late MockLocationQueryService mockLocationQueryService;
   late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
   late MemberDto testMember;
@@ -171,6 +174,7 @@ void main() {
     mockMemberEventQueryService = MockMemberEventQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
+    mockLocationQueryService = MockLocationQueryService();
     mockPinQueryService = MockPinQueryService();
     mockDvcPointContractQueryService = MockDvcPointContractQueryService();
     mockDvcLimitedPointQueryService = MockDvcLimitedPointQueryService();
@@ -198,6 +202,12 @@ void main() {
         any,
         orderBy: anyNamed('orderBy'),
       ),
+    ).thenAnswer((_) async => []);
+    when(
+      mockLocationQueryService.getLocationsByGroupId(any),
+    ).thenAnswer((_) async => []);
+    when(
+      mockLocationQueryService.getLocationsByTripId(any),
     ).thenAnswer((_) async => []);
     when(
       mockPinQueryService.getPinsByMemberId(any),
@@ -454,6 +464,7 @@ void main() {
       memberEventQueryServiceProvider.overrideWithValue(
         mockMemberEventQueryService,
       ),
+      locationQueryServiceProvider.overrideWithValue(mockLocationQueryService),
       pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
         mockDvcPointContractQueryService,
