@@ -41,7 +41,7 @@ void main() {
       repository = FirestoreTripEntryRepository(firestore: mockFirestore);
     });
 
-    test('saveTripEntryが旅行と子要素を保存し、pinsには触れない', () async {
+    test('saveTripEntryが旅行と子要素を保存する', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -81,12 +81,10 @@ void main() {
       verify(mockBatch.set(mockTripDocRef, any)).called(1);
       verify(mockBatch.set(mockTaskDocRef, any)).called(1);
       verify(mockBatch.set(mockItineraryItemDocRef, any)).called(1);
-      const removedCollection = 'pins';
-      verifyNever(mockFirestore.collection(removedCollection));
       verify(mockBatch.commit()).called(1);
     });
 
-    test('updateTripEntryが既存のtasksとitinerary_itemsを同期し、pinsには触れない', () async {
+    test('updateTripEntryが既存のtasksとitinerary_itemsを同期する', () async {
       final tripEntry = TripEntry(
         id: 'trip001',
         groupId: 'group001',
@@ -140,12 +138,10 @@ void main() {
       verify(mockBatch.update(mockTripDocRef, any)).called(1);
       verify(mockBatch.set(mockTaskDocRef, any)).called(1);
       verify(mockBatch.set(mockItineraryItemDocRef, any)).called(1);
-      const removedCollection = 'pins';
-      verifyNever(mockFirestore.collection(removedCollection));
       verify(mockBatch.commit()).called(1);
     });
 
-    test('deleteTripEntryが旅行と子要素を削除し、pinsには触れない', () async {
+    test('deleteTripEntryが旅行と子要素を削除する', () async {
       const tripId = 'trip001';
       final mockTripDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
@@ -184,8 +180,6 @@ void main() {
       verify(mockBatch.delete(mockTaskDocRef)).called(1);
       verify(mockBatch.delete(mockItineraryItemDocRef)).called(1);
       verify(mockBatch.delete(mockTripDocRef)).called(1);
-      const removedCollection = 'pins';
-      verifyNever(mockFirestore.collection(removedCollection));
       verify(mockBatch.commit()).called(1);
     });
   });

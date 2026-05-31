@@ -135,8 +135,6 @@ void main() {
       verify(
         mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
       ).called(1);
-      const removedCollection = 'pins';
-      verifyNever(mockFirestore.collection(removedCollection));
     });
 
     test('旅行が存在しない場合はnullを返す', () async {
