@@ -36,11 +36,11 @@ class MapScreen extends HookConsumerWidget {
     final mapViewType = isTestEnvironment
         ? MapViewType.placeholder
         : MapViewType.google;
-    final pins = locations.value.map(_locationToPin).toList();
+    final mapPins = locations.value.map(_locationToPin).toList();
 
     return MapViewFactory.create(
       mapViewType,
-    ).createMapView(pins: pins, isReadOnly: true);
+    ).createMapView(pins: mapPins, isReadOnly: true);
   }
 
   PinDto _locationToPin(LocationDto location) {
