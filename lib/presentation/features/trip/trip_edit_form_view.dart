@@ -9,6 +9,7 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:uuid/uuid.dart';
 
 typedef TripLocationCreated =
@@ -197,96 +198,66 @@ class TripEditFormView extends HookWidget {
       ) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
         final maxDetailHeight = MediaQuery.sizeOf(context).height * 0.45;
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Material(
-            elevation: 8,
-            child: SafeArea(
-              top: false,
-              child: Container(
-                key: const Key('trip_location_detail_panel'),
-                width: double.infinity,
-                constraints: BoxConstraints(maxHeight: maxDetailHeight),
-                padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        tooltip: '閉じる',
-                        onPressed: onClose,
-                        icon: const Icon(Icons.close),
-                      ),
+        return LocationDetailPanelFrame(
+          panelKey: const Key('trip_location_detail_panel'),
+          onClose: onClose,
+          maxHeight: maxDetailHeight,
+          child: Flexible(
+            child: SingleChildScrollView(
+              key: const Key('trip_location_detail_scroll_view'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextFormField(
+                    key: ValueKey('trip_location_name_${location.id}'),
+                    initialValue: location.name ?? '',
+                    decoration: const InputDecoration(
+                      labelText: '場所名',
+                      border: OutlineInputBorder(),
+                      isDense: true,
                     ),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        key: const Key('trip_location_detail_scroll_view'),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            TextFormField(
-                              key: ValueKey(
-                                'trip_location_name_${location.id}',
-                              ),
-                              initialValue: location.name ?? '',
-                              decoration: const InputDecoration(
-                                labelText: '場所名',
-                                border: OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                              onChanged: (value) {
-                                unawaited(
-                                  onLocationNameUpdated(
-                                    location.copyWith(
-                                      name: value.trim().isEmpty
-                                          ? null
-                                          : value.trim(),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            if (linkedItineraryNames.isEmpty)
-                              const Text('関連する旅程なし')
-                            else ...[
-                              const Text('関連する旅程:'),
-                              const SizedBox(height: 4),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 12),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: linkedItineraryNames
-                                      .map(Text.new)
-                                      .toList(),
-                                ),
-                              ),
-                            ],
-                            if (linkedItineraryNames.isEmpty &&
-                                onLocationDeleted != null) ...[
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    await onLocationDeletedFromMap(location);
-                                    onClose();
-                                  },
-                                  icon: const Icon(Icons.delete),
-                                  label: const Text('削除'),
-                                ),
-                              ),
-                            ],
-                          ],
+                    onChanged: (value) {
+                      unawaited(
+                        onLocationNameUpdated(
+                          location.copyWith(
+                            name: value.trim().isEmpty ? null : value.trim(),
+                          ),
                         ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  if (linkedItineraryNames.isEmpty)
+                    const Text('関連する旅程なし')
+                  else ...[
+                    const Text('関連する旅程'),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: linkedItineraryNames.map(Text.new).toList(),
                       ),
                     ),
                   ],
-                ),
+                  if (linkedItineraryNames.isEmpty &&
+                      onLocationDeleted != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await onLocationDeletedFromMap(location);
+                          onClose();
+                        },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('削除'),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),

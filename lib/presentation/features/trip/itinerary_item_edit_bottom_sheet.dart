@@ -10,6 +10,7 @@ import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:uuid/uuid.dart';
 
 typedef ItineraryLocationCreated =
@@ -310,87 +311,69 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                 ) {
                   final isSelectedLocation =
                       selectedLocation.value?.id == location.id;
-                  return Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Material(
-                      elevation: 8,
-                      child: SafeArea(
-                        top: false,
-                        child: Container(
-                          key: const Key('itinerary_location_detail_panel'),
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: IconButton(
-                                  tooltip: '閉じる',
-                                  onPressed: onClose,
-                                  icon: const Icon(Icons.close),
-                                ),
-                              ),
-                              if (isSelectedLocation)
-                                TextFormField(
-                                  key: ValueKey(
-                                    'itinerary_location_name_${location.id}',
-                                  ),
-                                  initialValue: location.name ?? '',
-                                  decoration: const InputDecoration(
-                                    labelText: '場所名',
-                                    border: OutlineInputBorder(),
-                                    isDense: true,
-                                  ),
-                                  onChanged: (value) {
-                                    unawaited(
-                                      updateLocationName(location, value).then((
-                                        savedLocation,
-                                      ) {
-                                        dialogLocations = upsertLocation(
-                                          dialogLocations,
-                                          savedLocation,
-                                        );
-                                        setDialogState(() {});
-                                      }),
-                                    );
-                                  },
-                                )
-                              else ...[
-                                Text(
-                                  locationName(location),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: ElevatedButton.icon(
-                                    onPressed: () {
-                                      final latestLocation =
-                                          findLocationById(
-                                            mapLocations.value,
-                                            location.id,
-                                          ) ??
-                                          location;
-                                      selectLocation(latestLocation);
-                                      dialogLocations = List<LocationDto>.from(
-                                        mapLocations.value,
-                                      );
-                                      setDialogState(() {});
-                                    },
-                                    icon: const Icon(Icons.place),
-                                    label: const Text('この場所を指定する'),
-                                  ),
-                                ),
-                              ],
-                            ],
+                  return LocationDetailPanelFrame(
+                    panelKey: const Key('itinerary_location_detail_panel'),
+                    onClose: onClose,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (isSelectedLocation)
+                          TextFormField(
+                            key: ValueKey(
+                              'itinerary_location_name_${location.id}',
+                            ),
+                            initialValue: location.name ?? '',
+                            decoration: const InputDecoration(
+                              labelText: '場所名',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            onChanged: (value) {
+                              unawaited(
+                                updateLocationName(location, value).then((
+                                  savedLocation,
+                                ) {
+                                  dialogLocations = upsertLocation(
+                                    dialogLocations,
+                                    savedLocation,
+                                  );
+                                  setDialogState(() {});
+                                }),
+                              );
+                            },
+                          )
+                        else ...[
+                          Text(
+                            locationName(location),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final latestLocation =
+                                    findLocationById(
+                                      mapLocations.value,
+                                      location.id,
+                                    ) ??
+                                    location;
+                                selectLocation(latestLocation);
+                                dialogLocations = List<LocationDto>.from(
+                                  mapLocations.value,
+                                );
+                                setDialogState(() {});
+                              },
+                              icon: const Icon(Icons.place),
+                              label: const Text('この場所を指定する'),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   );
                 }

@@ -6,11 +6,13 @@ class LocationDetailPanelFrame extends StatelessWidget {
     required this.panelKey,
     required this.onClose,
     required this.child,
+    this.maxHeight,
   });
 
   final Key panelKey;
   final VoidCallback onClose;
   final Widget child;
+  final double? maxHeight;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +25,9 @@ class LocationDetailPanelFrame extends StatelessWidget {
           child: Container(
             key: panelKey,
             width: double.infinity,
+            constraints: maxHeight == null
+                ? const BoxConstraints()
+                : BoxConstraints(maxHeight: maxHeight!),
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
