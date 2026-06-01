@@ -194,6 +194,9 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       }
 
       onSaved(result.item!);
+      if (!context.mounted) {
+        return;
+      }
       Navigator.of(context).pop();
     }
 
