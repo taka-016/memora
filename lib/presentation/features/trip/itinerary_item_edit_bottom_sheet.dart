@@ -318,68 +318,73 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                           key: const Key('itinerary_location_detail_panel'),
                           width: double.infinity,
                           padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    TextFormField(
-                                      initialValue: location.name ?? '',
-                                      decoration: const InputDecoration(
-                                        labelText: '場所名',
-                                        border: OutlineInputBorder(),
-                                        isDense: true,
-                                      ),
-                                      onChanged: (value) {
-                                        unawaited(
-                                          updateLocationName(
-                                            location,
-                                            value,
-                                          ).then((savedLocation) {
-                                            dialogLocations = upsertLocation(
-                                              dialogLocations,
-                                              savedLocation,
-                                            );
-                                            setDialogState(() {});
-                                          }),
-                                        );
-                                      },
-                                    ),
-                                    if (!isSelectedLocation) ...[
-                                      const SizedBox(height: 8),
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            final latestLocation =
-                                                findLocationById(
-                                                  mapLocations.value,
-                                                  location.id,
-                                                ) ??
-                                                location;
-                                            selectLocation(latestLocation);
-                                            dialogLocations =
-                                                List<LocationDto>.from(
-                                                  mapLocations.value,
-                                                );
-                                            setDialogState(() {});
-                                          },
-                                          icon: const Icon(Icons.place),
-                                          label: const Text('ここに変更する'),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: IconButton(
+                                  tooltip: '閉じる',
+                                  onPressed: onClose,
+                                  icon: const Icon(Icons.close),
                                 ),
                               ),
-                              IconButton(
-                                tooltip: '閉じる',
-                                onPressed: onClose,
-                                icon: const Icon(Icons.close),
-                              ),
+                              if (isSelectedLocation)
+                                TextFormField(
+                                  key: ValueKey(
+                                    'itinerary_location_name_${location.id}',
+                                  ),
+                                  initialValue: location.name ?? '',
+                                  decoration: const InputDecoration(
+                                    labelText: '場所名',
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                  onChanged: (value) {
+                                    unawaited(
+                                      updateLocationName(location, value).then((
+                                        savedLocation,
+                                      ) {
+                                        dialogLocations = upsertLocation(
+                                          dialogLocations,
+                                          savedLocation,
+                                        );
+                                        setDialogState(() {});
+                                      }),
+                                    );
+                                  },
+                                )
+                              else ...[
+                                Text(
+                                  locationName(location),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      final latestLocation =
+                                          findLocationById(
+                                            mapLocations.value,
+                                            location.id,
+                                          ) ??
+                                          location;
+                                      selectLocation(latestLocation);
+                                      dialogLocations = List<LocationDto>.from(
+                                        mapLocations.value,
+                                      );
+                                      setDialogState(() {});
+                                    },
+                                    icon: const Icon(Icons.place),
+                                    label: const Text('ここに変更する'),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),

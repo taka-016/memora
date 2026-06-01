@@ -206,61 +206,64 @@ class TripEditFormView extends HookWidget {
                 key: const Key('trip_location_detail_panel'),
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TextFormField(
-                            initialValue: location.name ?? '',
-                            decoration: const InputDecoration(
-                              labelText: '場所名',
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            onChanged: (value) {
-                              unawaited(
-                                onLocationNameUpdated(
-                                  location.copyWith(
-                                    name: value.trim().isEmpty
-                                        ? null
-                                        : value.trim(),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            linkedItineraryNames.isEmpty
-                                ? '紐づく旅程なし'
-                                : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
-                          ),
-                          if (linkedItineraryNames.isEmpty &&
-                              onLocationDeleted != null) ...[
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: OutlinedButton.icon(
-                                onPressed: () async {
-                                  await onLocationDeletedFromMap(location);
-                                  onClose();
-                                },
-                                icon: const Icon(Icons.delete),
-                                label: const Text('削除'),
-                              ),
-                            ),
-                          ],
-                        ],
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: '閉じる',
+                        onPressed: onClose,
+                        icon: const Icon(Icons.close),
                       ),
                     ),
-                    IconButton(
-                      tooltip: '閉じる',
-                      onPressed: onClose,
-                      icon: const Icon(Icons.close),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          key: ValueKey('trip_location_name_${location.id}'),
+                          initialValue: location.name ?? '',
+                          decoration: const InputDecoration(
+                            labelText: '場所名',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          onChanged: (value) {
+                            unawaited(
+                              onLocationNameUpdated(
+                                location.copyWith(
+                                  name: value.trim().isEmpty
+                                      ? null
+                                      : value.trim(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          linkedItineraryNames.isEmpty
+                              ? '紐づく旅程なし'
+                              : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
+                        ),
+                        if (linkedItineraryNames.isEmpty &&
+                            onLocationDeleted != null) ...[
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                await onLocationDeletedFromMap(location);
+                                onClose();
+                              },
+                              icon: const Icon(Icons.delete),
+                              label: const Text('削除'),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
