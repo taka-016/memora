@@ -48,6 +48,7 @@ class TripEditFormView extends HookWidget {
     final endDate = useState<DateTime?>(value.endDate);
     final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
+    final selectedTripLocation = useState<LocationDto?>(null);
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     TripEntryDto buildCurrentValue() {
@@ -176,8 +177,68 @@ class TripEditFormView extends HookWidget {
           locations: locations,
           onMapLongTapped: createLocationFromCoordinate,
           onSearchedLocationSelected: createLocationFromCandidate,
-          onLocationTapped: (_) {},
+          onLocationTapped: (location) {
+            selectedTripLocation.value = location;
+          },
           tripStartDate: value.startDate,
+        );
+      }
+
+      String locationName(LocationDto location) {
+        return location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
+      }
+
+      List<String> itineraryNamesForLocation(LocationDto location) {
+        return (value.itineraryItems ?? const [])
+            .where((item) => item.locationId == location.id)
+            .map((item) => item.name)
+            .toList();
+      }
+
+      Widget buildSelectedLocationPanel() {
+        final location = selectedTripLocation.value;
+        if (location == null) {
+          return const SizedBox.shrink();
+        }
+
+        final linkedItineraryNames = itineraryNamesForLocation(location);
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black12),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                locationName(location),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                linkedItineraryNames.isEmpty
+                    ? '紐づく旅程なし'
+                    : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
+              ),
+              if (linkedItineraryNames.isEmpty &&
+                  onLocationDeleted != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await onLocationDeleted?.call(location);
+                      selectedTripLocation.value = null;
+                    },
+                    icon: const Icon(Icons.delete),
+                    label: const Text('削除'),
+                  ),
+                ),
+              ],
+            ],
+          ),
         );
       }
 
@@ -236,6 +297,8 @@ class TripEditFormView extends HookWidget {
             width: double.infinity,
             child: createMap(),
           ),
+          const SizedBox(height: 8),
+          buildSelectedLocationPanel(),
         ],
       );
     }
