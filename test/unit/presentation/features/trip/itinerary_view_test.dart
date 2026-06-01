@@ -423,6 +423,8 @@ void main() {
       await tester.pumpAndSettle();
 
       googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(find.text('新場所'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '新場所'), findsNothing);
       expect(
         googleMap.markers.map((marker) => marker.markerId.value),
         contains('location-old'),
@@ -436,6 +438,7 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, 'ここに変更する'));
       await tester.pumpAndSettle();
 
+      expect(find.widgetWithText(TextFormField, '新場所'), findsOneWidget);
       googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       expect(
         googleMap.markers.map((marker) => marker.markerId.value),
@@ -529,6 +532,18 @@ void main() {
           .onTap
           ?.call();
       await tester.pumpAndSettle();
+      final panel = find.byKey(const Key('itinerary_location_detail_panel'));
+      final nameField = find.descendant(
+        of: panel,
+        matching: find.byType(TextFormField),
+      );
+      final closeButton = find
+          .descendant(of: panel, matching: find.byTooltip('閉じる'))
+          .first;
+      expect(
+        tester.getTopLeft(closeButton).dy,
+        lessThan(tester.getTopLeft(nameField).dy),
+      );
       await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '守礼門');
       await tester.tap(
         find

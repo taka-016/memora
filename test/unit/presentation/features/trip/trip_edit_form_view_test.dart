@@ -313,6 +313,77 @@ void main() {
       expect(find.widgetWithText(OutlinedButton, '場所名を更新'), findsNothing);
       expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
     });
+
+    testWidgets('旅行編集マップで別ピン選択時に場所名入力欄と閉じるボタン位置を更新すること', (tester) async {
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+      const firstLocation = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+      const secondLocation = LocationDto(
+        id: 'location-2',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '上野駅',
+        latitude: 35.713768,
+        longitude: 139.777254,
+      );
+
+      await tester.pumpWidget(
+        _createMapApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              locations: const [firstLocation, secondLocation],
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (location) async => location,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '訪問場所'));
+      await tester.pumpAndSettle();
+      final markersById = {
+        for (final marker
+            in tester.widget<GoogleMap>(find.byType(GoogleMap)).markers)
+          marker.markerId.value: marker,
+      };
+
+      markersById['location-1']!.onTap?.call();
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(TextFormField, '東京駅'), findsOneWidget);
+
+      markersById['location-2']!.onTap?.call();
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
+      final panel = find.byKey(const Key('trip_location_detail_panel'));
+      final nameField = find.descendant(
+        of: panel,
+        matching: find.byType(TextFormField),
+      );
+      final closeButton = find
+          .descendant(of: panel, matching: find.byTooltip('閉じる'))
+          .first;
+      expect(
+        tester.getTopLeft(closeButton).dy,
+        lessThan(tester.getTopLeft(nameField).dy),
+      );
+    });
   });
 }
 
