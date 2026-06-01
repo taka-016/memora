@@ -107,10 +107,7 @@ void main() {
 
       await tester.pumpWidget(
         _createApp(
-          GoogleMapView(
-            locations: locations,
-            selectedLocation: locations.last,
-          ),
+          GoogleMapView(locations: locations, selectedLocation: locations.last),
         ),
       );
 
