@@ -372,7 +372,7 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
-    testWidgets('旅程マップで場所変更後に未使用の前のピンが消えること', (tester) async {
+    testWidgets('旅程マップの灰色ピンは確認ボタンで場所変更すること', (tester) async {
       const oldLocation = LocationDto(
         id: 'location-old',
         tripId: 'trip-1',
@@ -425,6 +425,20 @@ void main() {
       googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       expect(
         googleMap.markers.map((marker) => marker.markerId.value),
+        contains('location-old'),
+      );
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        contains('location-new'),
+      );
+      expect(find.widgetWithText(ElevatedButton, 'ここに変更する'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'ここに変更する'));
+      await tester.pumpAndSettle();
+
+      googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
         isNot(contains('location-old')),
       );
       expect(
@@ -465,7 +479,7 @@ void main() {
       expect(find.widgetWithText(TextFormField, '取得済み場所'), findsOneWidget);
     });
 
-    testWidgets('旅程の場所名を手動変更して保存できること', (tester) async {
+    testWidgets('旅程編集内の場所名は表示のみでマップの詳細表示内から手動変更できること', (tester) async {
       List<ItineraryItemDto> lastChanged = [];
       LocationDto? upsertedLocation;
       const location = LocationDto(
@@ -485,7 +499,7 @@ void main() {
       );
 
       await tester.pumpWidget(
-        _wrapWithApp(
+        _wrapWithMapApp(
           ItineraryView(
             tripId: 'trip-1',
             groupId: 'group-1',
@@ -503,7 +517,28 @@ void main() {
 
       await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
       await tester.pumpAndSettle();
+      expect(find.text('首里城'), findsWidgets);
+      expect(find.widgetWithText(TextFormField, '場所名'), findsNothing);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .markers
+          .single
+          .onTap
+          ?.call();
+      await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '守礼門');
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byKey(const Key('itinerary_location_expanded_map')),
+              matching: find.byTooltip('閉じる'),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.widgetWithText(ElevatedButton, '保存'));
       await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
       await tester.pumpAndSettle();

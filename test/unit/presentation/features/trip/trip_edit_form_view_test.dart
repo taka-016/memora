@@ -258,7 +258,7 @@ void main() {
       expect(googleMap.markers, isEmpty);
     });
 
-    testWidgets('旅行編集マップで場所名を手動変更できること', (tester) async {
+    testWidgets('旅行編集マップで場所名を入力後に即時反映すること', (tester) async {
       const initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
@@ -306,12 +306,12 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '上野駅');
-      await tester.tap(find.widgetWithText(OutlinedButton, '場所名を更新'));
       await tester.pumpAndSettle();
 
       expect(updatedLocation?.id, 'location-1');
       expect(updatedLocation?.name, '上野駅');
-      expect(find.text('上野駅'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, '場所名を更新'), findsNothing);
+      expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
     });
   });
 }
