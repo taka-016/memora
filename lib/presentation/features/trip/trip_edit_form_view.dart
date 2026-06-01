@@ -245,8 +245,8 @@ class TripEditFormView extends HookWidget {
                         const SizedBox(height: 8),
                         Text(
                           linkedItineraryNames.isEmpty
-                              ? '紐づく旅程なし'
-                              : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
+                              ? '関連する旅程なし'
+                              : '関連する旅程: ${linkedItineraryNames.join(', ')}',
                         ),
                         if (linkedItineraryNames.isEmpty &&
                             onLocationDeleted != null) ...[

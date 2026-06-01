@@ -288,6 +288,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     Widget buildLocationSection() {
       final location = selectedLocation.value;
       final hasMapCallbacks = locations.isNotEmpty || onLocationCreated != null;
+      final textTheme = Theme.of(context).textTheme;
+      final colorScheme = Theme.of(context).colorScheme;
       if (location == null && !hasMapCallbacks) {
         return const SizedBox.shrink();
       }
@@ -485,9 +487,26 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(locationName(location)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '訪問場所',
+                  style: textTheme.labelMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    locationName(location),
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ],
