@@ -774,6 +774,7 @@
 
 ## マップピンボトムシート
 
+- マップピン詳細パネルの場所名表示・編集項目を共通化する
 - マップピンタップ時の詳細表示の枠組みを地図表示・旅行編集・旅程編集で共通化する
 - `PinDetailBottomSheet`を廃止する
   - pinsの`locationName`、`visitStartDateTime`、`visitEndDateTime`、`memo`を編集するUIを削除する
