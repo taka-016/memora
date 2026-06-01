@@ -293,6 +293,9 @@ void main() {
 
       await tester.tap(find.widgetWithText(OutlinedButton, '指定を解除'));
       await tester.pumpAndSettle();
+
+      expect(deletedLocations, isEmpty);
+
       final saveButton = find.widgetWithText(ElevatedButton, '保存');
       await tester.ensureVisible(saveButton);
       await tester.tap(saveButton);
@@ -301,6 +304,45 @@ void main() {
       expect(lastChanged.single.locationId, isNull);
       expect(lastChanged.single.location, isNull);
       expect(deletedLocations, [location]);
+    });
+
+    testWidgets('旅程の場所指定マップは単独表示し、場所選択後も閉じないこと', (tester) async {
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [location],
+            isTestEnvironment: true,
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を指定'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('itinerary_location_expanded_map')), findsOneWidget);
+      expect(find.byKey(const Key('itinerary_location_map')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
     testWidgets('旅程項目はリスト上の削除ボタンで削除できること', (tester) async {

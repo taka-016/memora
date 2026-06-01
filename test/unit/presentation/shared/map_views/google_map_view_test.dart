@@ -204,6 +204,34 @@ void main() {
 
       expect(find.byType(LocationDetailBottomSheet), findsOneWidget);
       expect(find.text('東京駅'), findsOneWidget);
+      expect(find.text('35.6812, 139.7671'), findsNothing);
+    });
+
+    testWidgets('ピン選択時の詳細表示を差し替えられる', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+        name: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: const [location],
+            selectedLocation: location,
+            locationDetailBuilder: (location, onClose) {
+              return Text('詳細: ${location.name}');
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('詳細: 東京駅'), findsOneWidget);
+      expect(find.byType(LocationDetailBottomSheet), findsNothing);
     });
   });
 }

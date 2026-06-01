@@ -79,7 +79,7 @@ void main() {
       expect(taskRequested, 1);
     });
 
-    testWidgets('旅程・タスクボタンの下に旅行のlocationsマップを表示すること', (
+    testWidgets('訪問場所ボタンから旅行のlocationsマップを単独表示すること', (
       WidgetTester tester,
     ) async {
       const initialValue = TripEntryDto(
@@ -120,45 +120,18 @@ void main() {
       final taskButton = find.widgetWithText(ElevatedButton, 'タスク');
       await tester.ensureVisible(taskButton);
 
-      expect(find.text('訪問場所'), findsOneWidget);
-      expect(find.byKey(const Key('trip_locations_map')), findsOneWidget);
-      expect(find.byKey(const Key('map_view')), findsOneWidget);
-    });
+      expect(find.widgetWithText(ElevatedButton, '訪問場所'), findsOneWidget);
+      expect(find.byKey(const Key('trip_locations_map')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsNothing);
 
-    testWidgets('旅行のlocationsマップを拡大表示できること', (WidgetTester tester) async {
-      const initialValue = TripEntryDto(
-        id: 'trip-id',
-        groupId: 'group-id',
-        year: 2024,
-      );
-
-      await tester.pumpWidget(
-        _createApp(
-          child: SizedBox(
-            width: 480,
-            height: 720,
-            child: TripEditFormView(
-              value: initialValue,
-              isTestEnvironment: true,
-              onChanged: (_) {},
-              onItineraryManagementRequested: () {},
-              onTaskManagementRequested: () {},
-              onLocationDeleted: (_) async {},
-              onLocationCreated: (location) async => location,
-            ),
-          ),
-        ),
-      );
-
-      await tester.ensureVisible(find.byKey(const Key('trip_locations_map')));
-      await tester.tap(find.byKey(const Key('trip_locations_expand_button')));
+      await tester.tap(find.widgetWithText(ElevatedButton, '訪問場所'));
       await tester.pumpAndSettle();
 
       expect(
         find.byKey(const Key('trip_locations_expanded_map')),
         findsOneWidget,
       );
-      expect(find.byKey(const Key('map_view')), findsWidgets);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
