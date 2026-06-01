@@ -202,6 +202,17 @@ class TripEditFormView extends HookWidget {
           panelKey: const Key('trip_location_detail_panel'),
           onClose: onClose,
           maxHeight: maxDetailHeight,
+          locationName: location.name ?? '',
+          locationNameFieldKey: ValueKey('trip_location_name_${location.id}'),
+          onLocationNameChanged: (value) {
+            unawaited(
+              onLocationNameUpdated(
+                location.copyWith(
+                  name: value.trim().isEmpty ? null : value.trim(),
+                ),
+              ),
+            );
+          },
           child: Flexible(
             child: SingleChildScrollView(
               key: const Key('trip_location_detail_scroll_view'),
@@ -209,25 +220,6 @@ class TripEditFormView extends HookWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextFormField(
-                    key: ValueKey('trip_location_name_${location.id}'),
-                    initialValue: location.name ?? '',
-                    decoration: const InputDecoration(
-                      labelText: '場所名',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    onChanged: (value) {
-                      unawaited(
-                        onLocationNameUpdated(
-                          location.copyWith(
-                            name: value.trim().isEmpty ? null : value.trim(),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
                   if (linkedItineraryNames.isEmpty)
                     const Text('関連する旅程なし')
                   else ...[

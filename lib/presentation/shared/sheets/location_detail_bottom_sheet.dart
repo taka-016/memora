@@ -18,13 +18,8 @@ class LocationDetailBottomSheet extends StatelessWidget {
     return LocationDetailPanelFrame(
       panelKey: const Key('location_detail_bottom_sheet'),
       onClose: onClose,
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          name,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
+      locationName: name,
+      child: const SizedBox.shrink(),
     );
   }
 }

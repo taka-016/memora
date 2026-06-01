@@ -314,44 +314,30 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   return LocationDetailPanelFrame(
                     panelKey: const Key('itinerary_location_detail_panel'),
                     onClose: onClose,
+                    locationName: location.name ?? '',
+                    locationNameFieldKey: ValueKey(
+                      'itinerary_location_name_${location.id}',
+                    ),
+                    onLocationNameChanged: isSelectedLocation
+                        ? (value) {
+                            unawaited(
+                              updateLocationName(location, value).then((
+                                savedLocation,
+                              ) {
+                                dialogLocations = upsertLocation(
+                                  dialogLocations,
+                                  savedLocation,
+                                );
+                                setDialogState(() {});
+                              }),
+                            );
+                          }
+                        : null,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (isSelectedLocation)
-                          TextFormField(
-                            key: ValueKey(
-                              'itinerary_location_name_${location.id}',
-                            ),
-                            initialValue: location.name ?? '',
-                            decoration: const InputDecoration(
-                              labelText: '場所名',
-                              border: OutlineInputBorder(),
-                              isDense: true,
-                            ),
-                            onChanged: (value) {
-                              unawaited(
-                                updateLocationName(location, value).then((
-                                  savedLocation,
-                                ) {
-                                  dialogLocations = upsertLocation(
-                                    dialogLocations,
-                                    savedLocation,
-                                  );
-                                  setDialogState(() {});
-                                }),
-                              );
-                            },
-                          )
-                        else ...[
-                          Text(
-                            locationName(location),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                        if (!isSelectedLocation)
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton.icon(
@@ -372,7 +358,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                               label: const Text('この場所を指定する'),
                             ),
                           ),
-                        ],
                       ],
                     ),
                   );
