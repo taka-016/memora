@@ -171,26 +171,70 @@ class TripEditFormView extends HookWidget {
       final mapViewType = isTestEnvironment
           ? MapViewType.placeholder
           : MapViewType.google;
+      Widget createMap() {
+        return MapViewFactory.create(mapViewType).createMapView(
+          locations: locations,
+          onMapLongTapped: createLocationFromCoordinate,
+          onSearchedLocationSelected: createLocationFromCandidate,
+          onLocationTapped: (_) {},
+          tripStartDate: value.startDate,
+        );
+      }
+
+      Future<void> showExpandedMap() async {
+        await showDialog<void>(
+          context: context,
+          builder: (context) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(16),
+              child: SizedBox(
+                key: const Key('trip_locations_expanded_map'),
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: '閉じる',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                    Expanded(child: createMap()),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '訪問場所',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  '訪問場所',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                key: const Key('trip_locations_expand_button'),
+                tooltip: 'マップを拡大',
+                onPressed: showExpandedMap,
+                icon: const Icon(Icons.fullscreen),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           SizedBox(
             key: const Key('trip_locations_map'),
             height: 240,
             width: double.infinity,
-            child: MapViewFactory.create(mapViewType).createMapView(
-              locations: locations,
-              onMapLongTapped: createLocationFromCoordinate,
-              onSearchedLocationSelected: createLocationFromCandidate,
-              onLocationTapped: (_) {},
-              tripStartDate: value.startDate,
-            ),
+            child: createMap(),
           ),
         ],
       );
