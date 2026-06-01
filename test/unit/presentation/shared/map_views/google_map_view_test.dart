@@ -85,6 +85,42 @@ void main() {
       expect(initialPosition.target.longitude, 135.5023);
     });
 
+    testWidgets('選択中locationがある場合は選択中locationを初期位置に使用する', (tester) async {
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 26.217,
+          longitude: 127.719,
+          name: '首里城',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: locations,
+            selectedLocation: locations.last,
+          ),
+        ),
+      );
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      expect(initialPosition.target.latitude, 26.217);
+      expect(initialPosition.target.longitude, 127.719);
+    });
+
     testWidgets('location.idをMarkerIdに使用する', (tester) async {
       const locations = [
         LocationDto(
