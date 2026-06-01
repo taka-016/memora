@@ -28,7 +28,10 @@ void main() {
           .first;
       final body = find.byKey(const Key('location_detail_body'));
 
-      expect(tester.getTopLeft(closeButton).dy, lessThan(tester.getTopLeft(body).dy));
+      expect(
+        tester.getTopLeft(closeButton).dy,
+        lessThan(tester.getTopLeft(body).dy),
+      );
       expect(
         tester.getTopLeft(closeButton).dx,
         greaterThan(tester.getTopLeft(body).dx),
