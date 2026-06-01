@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
@@ -64,6 +65,39 @@ void main() {
       final last = tester.getTopLeft(find.text('未定')).dy;
       expect(first, lessThan(second));
       expect(second, lessThan(last));
+    });
+
+    testWidgets('旅程項目に紐づく場所名を表示すること', (tester) async {
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+        locationId: 'location-1',
+        location: location,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [location],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('首里城観光'), findsOneWidget);
+      expect(find.text('首里城'), findsOneWidget);
     });
 
     testWidgets('旅程項目を追加して親へ通知すること', (tester) async {
@@ -214,6 +248,57 @@ void main() {
       expect(lastChanged.first.name, '朝食変更');
       expect(lastChanged.first.startDateTime, DateTime(2024, 1, 2, 8));
       expect(lastChanged.first.memo, '予約時間に合わせる');
+    });
+
+    testWidgets('旅程項目の場所指定を解除して保存できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      final deletedLocations = <LocationDto>[];
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+        locationId: 'location-1',
+        location: location,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [location],
+            onChanged: (updated) => lastChanged = updated,
+            onLocationDeleted: (location) async {
+              deletedLocations.add(location);
+            },
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ElevatedButton, '場所を変更'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, '指定を解除'), findsOneWidget);
+      expect(find.text('首里城'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, '指定を解除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
+      await tester.pumpAndSettle();
+
+      expect(lastChanged.single.locationId, isNull);
+      expect(lastChanged.single.location, isNull);
+      expect(deletedLocations, [location]);
     });
 
     testWidgets('旅程項目はリスト上の削除ボタンで削除できること', (tester) async {
