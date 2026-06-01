@@ -231,44 +231,72 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           : MapViewType.google;
 
       Future<void> showLocationMap() async {
+        var dialogLocations = List<LocationDto>.from(mapLocations.value);
         await showDialog<void>(
           context: context,
           builder: (context) {
-            return Dialog(
-              insetPadding: const EdgeInsets.all(16),
-              child: SizedBox(
-                key: const Key('itinerary_location_expanded_map'),
-                width: double.infinity,
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Column(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        tooltip: '閉じる',
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return Dialog(
+                  insetPadding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    key: const Key('itinerary_location_expanded_map'),
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: '閉じる',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ),
+                        Expanded(
+                          child: MapViewFactory.create(mapViewType)
+                              .createMapView(
+                                locations: dialogLocations,
+                                selectedLocation: selectedLocation.value,
+                                highlightSelectedLocation: true,
+                                onLocationTapped: (location) {
+                                  selectedLocation.value = location;
+                                  setDialogState(() {});
+                                },
+                                onMapLongTapped: onLocationCreated == null
+                                    ? null
+                                    : (coordinate) async {
+                                        await createLocationFromCoordinate(
+                                          coordinate,
+                                        );
+                                        setDialogState(() {
+                                          dialogLocations =
+                                              List<LocationDto>.from(
+                                                mapLocations.value,
+                                              );
+                                        });
+                                      },
+                                onSearchedLocationSelected:
+                                    onLocationCreated == null
+                                    ? null
+                                    : (candidate) async {
+                                        await createLocationFromCandidate(
+                                          candidate,
+                                        );
+                                        setDialogState(() {
+                                          dialogLocations =
+                                              List<LocationDto>.from(
+                                                mapLocations.value,
+                                              );
+                                        });
+                                      },
+                              ),
+                        ),
+                      ],
                     ),
-                    Expanded(
-                      child: MapViewFactory.create(mapViewType).createMapView(
-                        locations: mapLocations.value,
-                        selectedLocation: selectedLocation.value,
-                        highlightSelectedLocation: true,
-                        onLocationTapped: (location) {
-                          selectedLocation.value = location;
-                        },
-                        onMapLongTapped: onLocationCreated == null
-                            ? null
-                            : createLocationFromCoordinate,
-                        onSearchedLocationSelected: onLocationCreated == null
-                            ? null
-                            : createLocationFromCandidate,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );

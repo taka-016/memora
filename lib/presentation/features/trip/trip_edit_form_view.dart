@@ -269,22 +269,26 @@ class TripEditFormView extends HookWidget {
                 Widget createDialogMap() {
                   return MapViewFactory.create(mapViewType).createMapView(
                     locations: dialogLocations,
-                    onMapLongTapped: (coordinate) async {
-                      final location = await createLocationFromCoordinate(
-                        coordinate,
-                      );
-                      setDialogState(() {
-                        dialogLocations = [...dialogLocations, location];
-                      });
-                    },
-                    onSearchedLocationSelected: (candidate) async {
-                      final location = await createLocationFromCandidate(
-                        candidate,
-                      );
-                      setDialogState(() {
-                        dialogLocations = [...dialogLocations, location];
-                      });
-                    },
+                    onMapLongTapped: onLocationCreated == null
+                        ? null
+                        : (coordinate) async {
+                            final location = await createLocationFromCoordinate(
+                              coordinate,
+                            );
+                            setDialogState(() {
+                              dialogLocations = [...dialogLocations, location];
+                            });
+                          },
+                    onSearchedLocationSelected: onLocationCreated == null
+                        ? null
+                        : (candidate) async {
+                            final location = await createLocationFromCandidate(
+                              candidate,
+                            );
+                            setDialogState(() {
+                              dialogLocations = [...dialogLocations, location];
+                            });
+                          },
                     onLocationTapped: (location) {
                       selectedTripLocation.value = location;
                       setDialogState(() {});
