@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
@@ -194,7 +196,6 @@ class TripEditFormView extends HookWidget {
         Future<void> Function(LocationDto location) onLocationDeletedFromMap,
       ) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
-        var editedLocationName = location.name ?? '';
         return Align(
           alignment: Alignment.bottomCenter,
           child: Material(
@@ -214,38 +215,29 @@ class TripEditFormView extends HookWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           TextFormField(
-                            initialValue: editedLocationName,
+                            initialValue: location.name ?? '',
                             decoration: const InputDecoration(
                               labelText: '場所名',
                               border: OutlineInputBorder(),
                               isDense: true,
                             ),
-                            onChanged: (value) => editedLocationName = value,
+                            onChanged: (value) {
+                              unawaited(
+                                onLocationNameUpdated(
+                                  location.copyWith(
+                                    name: value.trim().isEmpty
+                                        ? null
+                                        : value.trim(),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
                           const SizedBox(height: 8),
                           Text(
                             linkedItineraryNames.isEmpty
                                 ? '紐づく旅程なし'
                                 : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
-                          ),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: OutlinedButton.icon(
-                              onPressed: () async {
-                                final normalizedName = editedLocationName
-                                    .trim();
-                                await onLocationNameUpdated(
-                                  location.copyWith(
-                                    name: normalizedName.isEmpty
-                                        ? null
-                                        : normalizedName,
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.edit),
-                              label: const Text('場所名を更新'),
-                            ),
                           ),
                           if (linkedItineraryNames.isEmpty &&
                               onLocationDeleted != null) ...[

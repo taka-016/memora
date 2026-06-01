@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
@@ -187,6 +189,23 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
     }
 
+    Future<LocationDto> updateLocationName(
+      LocationDto location,
+      String value,
+    ) async {
+      final normalizedName = value.trim();
+      final updatedLocation = location.copyWith(
+        name: normalizedName.isEmpty ? null : normalizedName,
+      );
+      final savedLocation =
+          await onLocationCreated?.call(updatedLocation) ?? updatedLocation;
+      mapLocations.value = upsertLocation(mapLocations.value, savedLocation);
+      if (selectedLocation.value?.id == savedLocation.id) {
+        selectedLocation.value = savedLocation;
+      }
+      return savedLocation;
+    }
+
     Future<void> selectCreatedLocation(LocationDto location) async {
       final savedLocation = await onLocationCreated?.call(location) ?? location;
       selectLocation(savedLocation);
@@ -283,6 +302,92 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           builder: (context) {
             return StatefulBuilder(
               builder: (context, setDialogState) {
+                Widget buildLocationDetail(
+                  LocationDto location,
+                  VoidCallback onClose,
+                ) {
+                  final isSelectedLocation =
+                      selectedLocation.value?.id == location.id;
+                  return Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Material(
+                      elevation: 8,
+                      child: SafeArea(
+                        top: false,
+                        child: Container(
+                          key: const Key('itinerary_location_detail_panel'),
+                          width: double.infinity,
+                          padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TextFormField(
+                                      initialValue: location.name ?? '',
+                                      decoration: const InputDecoration(
+                                        labelText: '場所名',
+                                        border: OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      onChanged: (value) {
+                                        unawaited(
+                                          updateLocationName(
+                                            location,
+                                            value,
+                                          ).then((savedLocation) {
+                                            dialogLocations = upsertLocation(
+                                              dialogLocations,
+                                              savedLocation,
+                                            );
+                                            setDialogState(() {});
+                                          }),
+                                        );
+                                      },
+                                    ),
+                                    if (!isSelectedLocation) ...[
+                                      const SizedBox(height: 8),
+                                      Align(
+                                        alignment: Alignment.centerRight,
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            final latestLocation =
+                                                findLocationById(
+                                                  mapLocations.value,
+                                                  location.id,
+                                                ) ??
+                                                location;
+                                            selectLocation(latestLocation);
+                                            dialogLocations =
+                                                List<LocationDto>.from(
+                                                  mapLocations.value,
+                                                );
+                                            setDialogState(() {});
+                                          },
+                                          icon: const Icon(Icons.place),
+                                          label: const Text('ここに変更する'),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: '閉じる',
+                                onPressed: onClose,
+                                icon: const Icon(Icons.close),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 return Dialog(
                   insetPadding: const EdgeInsets.all(16),
                   child: SizedBox(
@@ -305,13 +410,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                                 locations: dialogLocations,
                                 selectedLocation: selectedLocation.value,
                                 highlightSelectedLocation: true,
-                                onLocationTapped: (location) {
-                                  selectLocation(location);
-                                  dialogLocations = List<LocationDto>.from(
-                                    mapLocations.value,
-                                  );
-                                  setDialogState(() {});
-                                },
+                                locationDetailBuilder: buildLocationDetail,
                                 onMapLongTapped: onLocationCreated == null
                                     ? null
                                     : (coordinate) async {
@@ -380,24 +479,9 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ],
             ),
             const SizedBox(height: 8),
-            TextFormField(
-              key: const Key('itinerary_location_name_field'),
-              initialValue: locationName(location),
-              decoration: const InputDecoration(
-                labelText: '場所名',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                final normalizedName = value.trim();
-                final updatedLocation = location.copyWith(
-                  name: normalizedName.isEmpty ? null : normalizedName,
-                );
-                selectedLocation.value = updatedLocation;
-                mapLocations.value = upsertLocation(
-                  mapLocations.value,
-                  updatedLocation,
-                );
-              },
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(locationName(location)),
             ),
           ],
         ],
