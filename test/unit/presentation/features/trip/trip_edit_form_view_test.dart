@@ -315,9 +315,7 @@ void main() {
       expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
     });
 
-    testWidgets('旅行編集マップのピン詳細で関連する旅程を縦並び表示してスクロールできること', (
-      tester,
-    ) async {
+    testWidgets('旅行編集マップのピン詳細で関連する旅程を縦並び表示してスクロールできること', (tester) async {
       const location = LocationDto(
         id: 'location-1',
         tripId: 'trip-id',
