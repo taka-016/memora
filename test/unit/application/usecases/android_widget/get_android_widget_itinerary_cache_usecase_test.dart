@@ -188,7 +188,6 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
   @override
   Future<TripEntryDto?> getTripEntryById(
     String tripId, {
-    List<OrderBy>? pinsOrderBy,
     List<OrderBy>? tasksOrderBy,
     List<OrderBy>? itineraryItemsOrderBy,
   }) async {

@@ -3,34 +3,29 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
-import 'package:memora/presentation/shared/sheets/pin_detail_bottom_sheet.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 
 class GoogleMapView extends HookConsumerWidget {
-  final List<PinDto> pins;
+  final List<LocationDto> locations;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
-  final ValueChanged<PinDto>? onPinTapped;
-  final ValueChanged<PinDto>? onPinUpdated;
-  final ValueChanged<String>? onPinDeleted;
-  final PinDto? selectedPin;
+  final ValueChanged<LocationDto>? onLocationTapped;
+  final LocationDto? selectedLocation;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
   const GoogleMapView({
     super.key,
-    required this.pins,
+    required this.locations,
     this.onMapLongTapped,
     this.onSearchedLocationSelected,
-    this.onPinTapped,
-    this.onPinUpdated,
-    this.onPinDeleted,
-    this.selectedPin,
+    this.onLocationTapped,
+    this.selectedLocation,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -41,9 +36,8 @@ class GoogleMapView extends HookConsumerWidget {
 
     final mapController = useState<GoogleMapController?>(null);
     final isBottomSheetVisible = useState(false);
-    final selectedPinState = useState<PinDto?>(null);
-    final previousSelectedPin = useRef<PinDto?>(null);
-    final clock = ref.watch(appClockProvider);
+    final selectedLocationState = useState<LocationDto?>(null);
+    final previousSelectedLocation = useRef<LocationDto?>(null);
 
     void showErrorSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -60,9 +54,9 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     LatLng getCurrentOrFallbackPosition() {
-      if (pins.isNotEmpty) {
-        final firstPin = pins.first;
-        return LatLng(firstPin.latitude, firstPin.longitude);
+      if (locations.isNotEmpty) {
+        final firstLocation = locations.first;
+        return LatLng(firstLocation.latitude, firstLocation.longitude);
       }
       final coordinate = ref.read(coordinateProvider).coordinate;
       return coordinate != null
@@ -109,44 +103,35 @@ class GoogleMapView extends HookConsumerWidget {
       );
     }
 
-    void hidePinDetailBottomSheet() {
+    void hideLocationDetailBottomSheet() {
       isBottomSheetVisible.value = false;
-      selectedPinState.value = null;
+      selectedLocationState.value = null;
     }
 
-    void handlePinUpdated(PinDto pin) {
-      onPinUpdated?.call(pin);
-      hidePinDetailBottomSheet();
-    }
-
-    void handlePinDeleted(String pinId) {
-      onPinDeleted?.call(pinId);
-      hidePinDetailBottomSheet();
-    }
-
-    void handlePinTapped(PinDto pin) {
-      onPinTapped?.call(pin);
-      selectedPinState.value = pin;
+    void handleLocationTapped(LocationDto location) {
+      onLocationTapped?.call(location);
+      selectedLocationState.value = location;
       isBottomSheetVisible.value = true;
     }
 
     useEffect(() {
-      if (selectedPin != null && selectedPin != previousSelectedPin.value) {
+      if (selectedLocation != null &&
+          selectedLocation != previousSelectedLocation.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          handlePinTapped(selectedPin!);
+          handleLocationTapped(selectedLocation!);
         });
       }
-      previousSelectedPin.value = selectedPin;
+      previousSelectedLocation.value = selectedLocation;
       return null;
-    }, [selectedPin]);
+    }, [selectedLocation]);
 
-    Set<Marker> buildPins() {
-      return pins
+    Set<Marker> buildLocations() {
+      return locations
           .map(
-            (pin) => Marker(
-              markerId: MarkerId(pin.pinId),
-              position: LatLng(pin.latitude, pin.longitude),
-              onTap: () => handlePinTapped(pin),
+            (location) => Marker(
+              markerId: MarkerId(location.id),
+              position: LatLng(location.latitude, location.longitude),
+              onTap: () => handleLocationTapped(location),
             ),
           )
           .toSet();
@@ -159,7 +144,7 @@ class GoogleMapView extends HookConsumerWidget {
           target: getCurrentOrFallbackPosition(),
           zoom: 15,
         ),
-        markers: buildPins(),
+        markers: buildLocations(),
         onLongPress: handleMapLongPress,
         myLocationEnabled: true,
         myLocationButtonEnabled: false,
@@ -193,17 +178,13 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildBottomSheet() {
-      if (!isBottomSheetVisible.value || selectedPinState.value == null) {
+      if (!isBottomSheetVisible.value || selectedLocationState.value == null) {
         return const SizedBox.shrink();
       }
 
-      return PinDetailBottomSheet(
-        pin: selectedPinState.value!,
-        onUpdate: isReadOnly ? null : handlePinUpdated,
-        onDelete: isReadOnly ? null : handlePinDeleted,
-        onClose: hidePinDetailBottomSheet,
-        tripStartDate: tripStartDate,
-        clock: clock,
+      return LocationDetailBottomSheet(
+        location: selectedLocationState.value!,
+        onClose: hideLocationDetailBottomSheet,
       );
     }
 

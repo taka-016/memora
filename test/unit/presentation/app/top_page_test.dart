@@ -14,8 +14,8 @@ import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/member/member_event_query_service.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
+import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/application/queries/trip/pin_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
@@ -124,7 +124,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   MemberQueryService,
   AuthService,
   AuthNotifier,
-  PinQueryService,
   DvcPointContractQueryService,
   DvcLimitedPointQueryService,
   DvcPointUsageQueryService,
@@ -139,6 +138,7 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   MemberEventRepository,
   MemberInvitationRepository,
   MemberInvitationQueryService,
+  LocationQueryService,
 ])
 void main() {
   late MockGroupQueryService mockGroupQueryService;
@@ -146,7 +146,6 @@ void main() {
   late MockMemberEventQueryService mockMemberEventQueryService;
   late MockMemberQueryService mockMemberQueryService;
   late MockAuthService mockAuthService;
-  late MockPinQueryService mockPinQueryService;
   late List<GroupDto> groupsWithMembers;
   late MemberDto testMember;
   late MockDvcPointContractQueryService mockDvcPointContractQueryService;
@@ -163,6 +162,7 @@ void main() {
   late MockMemberEventRepository mockMemberEventRepository;
   late MockMemberInvitationRepository mockMemberInvitationRepository;
   late MockMemberInvitationQueryService mockMemberInvitationQueryService;
+  late MockLocationQueryService mockLocationQueryService;
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
@@ -171,7 +171,6 @@ void main() {
     mockMemberEventQueryService = MockMemberEventQueryService();
     mockMemberQueryService = MockMemberQueryService();
     mockAuthService = MockAuthService();
-    mockPinQueryService = MockPinQueryService();
     mockDvcPointContractQueryService = MockDvcPointContractQueryService();
     mockDvcLimitedPointQueryService = MockDvcLimitedPointQueryService();
     mockDvcPointUsageQueryService = MockDvcPointUsageQueryService();
@@ -186,6 +185,7 @@ void main() {
     mockMemberEventRepository = MockMemberEventRepository();
     mockMemberInvitationRepository = MockMemberInvitationRepository();
     mockMemberInvitationQueryService = MockMemberInvitationQueryService();
+    mockLocationQueryService = MockLocationQueryService();
 
     when(
       mockGroupEventQueryService.getGroupEventsByGroupId(
@@ -198,9 +198,6 @@ void main() {
         any,
         orderBy: anyNamed('orderBy'),
       ),
-    ).thenAnswer((_) async => []);
-    when(
-      mockPinQueryService.getPinsByMemberId(any),
     ).thenAnswer((_) async => []);
     when(
       mockDvcPointContractQueryService.getDvcPointContractsByGroupId(
@@ -223,7 +220,6 @@ void main() {
     when(
       mockTripEntryQueryService.getTripEntryById(
         any,
-        pinsOrderBy: anyNamed('pinsOrderBy'),
         tasksOrderBy: anyNamed('tasksOrderBy'),
       ),
     ).thenAnswer((_) async => null);
@@ -237,6 +233,9 @@ void main() {
     when(
       mockMemberInvitationQueryService.getByInvitationCode(any),
     ).thenAnswer((_) async => null);
+    when(
+      mockLocationQueryService.getLocationsByGroupId(any),
+    ).thenAnswer((_) async => []);
     when(
       mockMemberInvitationQueryService.getByInviteeId(any),
     ).thenAnswer((_) async => null);
@@ -454,7 +453,6 @@ void main() {
       memberEventQueryServiceProvider.overrideWithValue(
         mockMemberEventQueryService,
       ),
-      pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
       dvcPointContractQueryServiceProvider.overrideWithValue(
         mockDvcPointContractQueryService,
       ),
@@ -476,6 +474,7 @@ void main() {
       tripEntryQueryServiceProvider.overrideWithValue(
         mockTripEntryQueryService,
       ),
+      locationQueryServiceProvider.overrideWithValue(mockLocationQueryService),
       groupRepositoryProvider.overrideWithValue(mockGroupRepository),
       groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
       tripEntryRepositoryProvider.overrideWithValue(mockTripEntryRepository),

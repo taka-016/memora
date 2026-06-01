@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
-import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapper.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
@@ -26,16 +24,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
     );
     final tasksCollection = _firestore.collection('tasks');
     final itineraryItemsCollection = _firestore.collection('itinerary_items');
-
-    for (final Pin pin in tripEntry.pins) {
-      final pinDocRef = _firestore.collection('pins').doc();
-      batch.set(
-        pinDocRef,
-        FirestorePinMapper.toCreateFirestore(
-          pin.copyWith(tripId: tripDocRef.id),
-        ),
-      );
-    }
 
     for (final Task task in tripEntry.tasks) {
       final taskDocRef = tasksCollection.doc(task.id);
@@ -72,14 +60,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
       FirestoreTripEntryMapper.toUpdateFirestore(tripEntry),
     );
 
-    final pinsSnapshot = await _firestore
-        .collection('pins')
-        .where('tripId', isEqualTo: tripEntry.id)
-        .get();
-    for (final pinDoc in pinsSnapshot.docs) {
-      batch.delete(pinDoc.reference);
-    }
-
     final tasksSnapshot = await tasksCollection
         .where('tripId', isEqualTo: tripEntry.id)
         .get();
@@ -92,16 +72,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         .get();
     for (final itemDoc in itineraryItemsSnapshot.docs) {
       batch.delete(itemDoc.reference);
-    }
-
-    for (final Pin pin in tripEntry.pins) {
-      final pinDocRef = _firestore.collection('pins').doc();
-      batch.set(
-        pinDocRef,
-        FirestorePinMapper.toCreateFirestore(
-          pin.copyWith(tripId: tripEntry.id, groupId: tripEntry.groupId),
-        ),
-      );
     }
 
     for (final Task task in tripEntry.tasks) {
@@ -130,14 +100,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
   @override
   Future<void> deleteTripEntry(String tripId) async {
     final batch = _firestore.batch();
-
-    final pinsSnapshot = await _firestore
-        .collection('pins')
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final doc in pinsSnapshot.docs) {
-      batch.delete(doc.reference);
-    }
 
     final tasksSnapshot = await _firestore
         .collection('tasks')
@@ -168,13 +130,6 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
         .where('groupId', isEqualTo: groupId)
         .get();
     for (final tripEntryDoc in tripEntriesSnapshot.docs) {
-      final pinsSnapshot = await _firestore
-          .collection('pins')
-          .where('tripId', isEqualTo: tripEntryDoc.id)
-          .get();
-      for (final pinDoc in pinsSnapshot.docs) {
-        batch.delete(pinDoc.reference);
-      }
       final tasksSnapshot = await _firestore
           .collection('tasks')
           .where('tripId', isEqualTo: tripEntryDoc.id)

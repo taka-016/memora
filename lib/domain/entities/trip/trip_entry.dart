@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
-import 'package:memora/domain/entities/trip/pin.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
@@ -13,17 +12,12 @@ class TripEntry extends Equatable {
     this.startDate,
     this.endDate,
     this.memo,
-    List<Pin>? pins,
     List<Task>? tasks,
     List<ItineraryItem>? itineraryItems,
-  }) : pins = List.unmodifiable(pins ?? const []),
-       tasks = List.unmodifiable(tasks ?? const []),
+  }) : tasks = List.unmodifiable(tasks ?? const []),
        itineraryItems = List.unmodifiable(itineraryItems ?? const []) {
     if (startDate != null && endDate != null && endDate!.isBefore(startDate!)) {
       throw ValidationException('旅行の終了日は開始日以降でなければなりません');
-    }
-    for (final pin in this.pins) {
-      _validatePinPeriod(pin);
     }
     for (final item in this.itineraryItems) {
       _validateItineraryItemPeriod(item);
@@ -50,7 +44,6 @@ class TripEntry extends Equatable {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? memo;
-  final List<Pin> pins;
   final List<Task> tasks;
   final List<ItineraryItem> itineraryItems;
 
@@ -62,7 +55,6 @@ class TripEntry extends Equatable {
     DateTime? startDate,
     DateTime? endDate,
     String? memo,
-    List<Pin>? pins,
     List<Task>? tasks,
     List<ItineraryItem>? itineraryItems,
   }) {
@@ -74,35 +66,9 @@ class TripEntry extends Equatable {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       memo: memo ?? this.memo,
-      pins: pins ?? this.pins,
       tasks: tasks ?? this.tasks,
       itineraryItems: itineraryItems ?? this.itineraryItems,
     );
-  }
-
-  void _validatePinPeriod(Pin pin) {
-    if (startDate != null && endDate != null) {
-      if (pin.visitStartDateTime != null) {
-        if (pin.visitStartDateTime!.isBefore(startDate!) ||
-            pin.visitStartDateTime!.isAfter(endDate!)) {
-          throw ValidationException('訪問開始日時は旅行期間内でなければなりません');
-        }
-      }
-      if (pin.visitEndDateTime != null) {
-        if (pin.visitEndDateTime!.isBefore(startDate!) ||
-            pin.visitEndDateTime!.isAfter(endDate!)) {
-          throw ValidationException('訪問終了日時は旅行期間内でなければなりません');
-        }
-      }
-    } else {
-      if (pin.visitStartDateTime != null &&
-          pin.visitStartDateTime!.year != year) {
-        throw ValidationException('訪問開始日時はyearと同じ年にしてください');
-      }
-      if (pin.visitEndDateTime != null && pin.visitEndDateTime!.year != year) {
-        throw ValidationException('訪問終了日時はyearと同じ年にしてください');
-      }
-    }
   }
 
   void _validateItineraryItemPeriod(ItineraryItem item) {
@@ -153,7 +119,6 @@ class TripEntry extends Equatable {
     startDate,
     endDate,
     memo,
-    pins,
     tasks,
     itineraryItems,
   ];

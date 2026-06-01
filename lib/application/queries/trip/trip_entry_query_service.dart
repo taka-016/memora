@@ -4,7 +4,6 @@ import 'package:memora/application/queries/order_by.dart';
 abstract class TripEntryQueryService {
   Future<TripEntryDto?> getTripEntryById(
     String tripId, {
-    List<OrderBy>? pinsOrderBy,
     List<OrderBy>? tasksOrderBy,
     List<OrderBy>? itineraryItemsOrderBy,
   });

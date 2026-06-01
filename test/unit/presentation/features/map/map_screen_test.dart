@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/dtos/trip/pin_dto.dart';
-import 'package:memora/application/queries/trip/pin_query_service.dart';
-import 'package:memora/infrastructure/factories/query_service_factory.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
@@ -14,75 +15,83 @@ import 'package:mockito/mockito.dart';
 import '../../../../helpers/fake_current_member_notifier.dart';
 import 'map_screen_test.mocks.dart';
 
-@GenerateMocks([PinQueryService])
+@GenerateMocks([GetGroupsWithMembersUsecase, GetLocationsByGroupIdUsecase])
 void main() {
   const testMember = MemberDto(id: 'test-member-id', displayName: 'テストメンバー');
 
   group('MapScreen', () {
-    testWidgets('MapViewが表示される', (tester) async {
-      final mockPinQueryService = MockPinQueryService();
-      when(
-        mockPinQueryService.getPinsByMemberId(any),
-      ).thenAnswer((_) async => []);
+    late MockGetGroupsWithMembersUsecase mockGetGroupsWithMembersUsecase;
+    late MockGetLocationsByGroupIdUsecase mockGetLocationsByGroupIdUsecase;
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-            currentMemberNotifierProvider.overrideWith(
-              () => FakeCurrentMemberNotifier.loaded(testMember),
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
+    setUp(() {
+      mockGetGroupsWithMembersUsecase = MockGetGroupsWithMembersUsecase();
+      mockGetLocationsByGroupIdUsecase = MockGetLocationsByGroupIdUsecase();
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => const []);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute(any),
+      ).thenAnswer((_) async => const []);
+    });
+
+    Widget buildTestWidget() {
+      return ProviderScope(
+        overrides: [
+          getGroupsWithMembersUsecaseProvider.overrideWithValue(
+            mockGetGroupsWithMembersUsecase,
           ),
+          getLocationsByGroupIdUsecaseProvider.overrideWithValue(
+            mockGetLocationsByGroupIdUsecase,
+          ),
+          currentMemberNotifierProvider.overrideWith(
+            () => FakeCurrentMemberNotifier.loaded(testMember),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(body: MapScreen(isTestEnvironment: true)),
         ),
       );
+    }
 
+    testWidgets('MapViewが表示される', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
+
       expect(find.byType(PlaceholderMapView), findsOneWidget);
     });
 
-    testWidgets('ログインユーザーのmemberIdでPinQueryServiceからpinsを取得する', (tester) async {
-      final mockPinQueryService = MockPinQueryService();
-      final testPins = [
-        const PinDto(
-          pinId: 'pin1',
+    testWidgets('所属グループごとのlocationsを取得する', (tester) async {
+      const groups = [
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+        GroupDto(id: 'group2', ownerId: 'owner', name: '友人', members: []),
+      ];
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
           groupId: 'group1',
           latitude: 35.6812,
           longitude: 139.7671,
-          locationName: '東京駅',
-        ),
-        const PinDto(
-          pinId: 'pin2',
-          groupId: 'group1',
-          latitude: 34.6937,
-          longitude: 135.5023,
-          locationName: '大阪駅',
+          name: '東京駅',
         ),
       ];
 
       when(
-        mockPinQueryService.getPinsByMemberId('test-member-id'),
-      ).thenAnswer((_) async => testPins);
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => locations);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group2'),
+      ).thenAnswer((_) async => const []);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            pinQueryServiceProvider.overrideWithValue(mockPinQueryService),
-            currentMemberNotifierProvider.overrideWith(
-              () => FakeCurrentMemberNotifier.loaded(testMember),
-            ),
-          ],
-          child: MaterialApp(
-            home: Scaffold(body: MapScreen(isTestEnvironment: true)),
-          ),
-        ),
-      );
-
+      await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      verify(mockPinQueryService.getPinsByMemberId('test-member-id')).called(1);
+      verify(mockGetGroupsWithMembersUsecase.execute(testMember)).called(1);
+      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
+      verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
     });
   });
 }

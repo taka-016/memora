@@ -5,7 +5,6 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapper.dart';
-import 'package:memora/infrastructure/mappers/trip/firestore_pin_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 
@@ -22,7 +21,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
   @override
   Future<TripEntryDto?> getTripEntryById(
     String tripId, {
-    List<OrderBy>? pinsOrderBy,
     List<OrderBy>? tasksOrderBy,
     List<OrderBy>? itineraryItemsOrderBy,
   }) async {
@@ -31,24 +29,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       if (!doc.exists) {
         return null;
       }
-
-      Query<Map<String, dynamic>> pinsQuery = _firestore
-          .collection('pins')
-          .where('tripId', isEqualTo: tripId);
-
-      if (pinsOrderBy != null && pinsOrderBy.isNotEmpty) {
-        for (final order in pinsOrderBy) {
-          pinsQuery = pinsQuery.orderBy(
-            order.field,
-            descending: order.descending,
-          );
-        }
-      }
-
-      final pinsSnapshot = await pinsQuery.get();
-      final pins = pinsSnapshot.docs
-          .map((pinDoc) => FirestorePinMapper.fromFirestore(pinDoc))
-          .toList();
 
       Query<Map<String, dynamic>> tasksQuery = _firestore
           .collection('tasks')
@@ -96,7 +76,6 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
         fallbackTripYear: _clock.now().year,
-        pins: pins,
         tasks: tasks,
         itineraryItems: itineraryItems,
       );
