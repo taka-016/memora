@@ -159,6 +159,7 @@ void main() {
           const GoogleMapView(
             locations: [selectedLocation, otherLocation],
             selectedLocation: selectedLocation,
+            highlightSelectedLocation: true,
           ),
         ),
       );

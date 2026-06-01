@@ -266,6 +266,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               child: MapViewFactory.create(mapViewType).createMapView(
                 locations: locations,
                 selectedLocation: selectedLocation.value,
+                highlightSelectedLocation: true,
                 onLocationTapped: (location) {
                   selectedLocation.value = location;
                   isLocationMapVisible.value = false;

@@ -16,6 +16,7 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
   final ValueChanged<LocationDto>? onLocationTapped;
   final LocationDto? selectedLocation;
+  final bool highlightSelectedLocation;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
@@ -26,6 +27,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onSearchedLocationSelected,
     this.onLocationTapped,
     this.selectedLocation,
+    this.highlightSelectedLocation = false,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -135,7 +137,9 @@ class GoogleMapView extends HookConsumerWidget {
             (location) => Marker(
               markerId: MarkerId(location.id),
               position: LatLng(location.latitude, location.longitude),
-              icon: selectedLocation?.id == location.id
+              icon:
+                  !highlightSelectedLocation ||
+                      selectedLocation?.id == location.id
                   ? BitmapDescriptor.defaultMarker
                   : BitmapDescriptor.defaultMarkerWithHue(
                       BitmapDescriptor.hueAzure,
