@@ -383,7 +383,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                                       setDialogState(() {});
                                     },
                                     icon: const Icon(Icons.place),
-                                    label: const Text('ここに変更する'),
+                                    label: const Text('この場所を指定する'),
                                   ),
                                 ),
                               ],
