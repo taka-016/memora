@@ -461,6 +461,13 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            '訪問場所',
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
           if (location == null)
             Align(
               alignment: Alignment.centerLeft,
@@ -487,26 +494,14 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '訪問場所',
-                  style: textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Text(
+                locationName(location),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: Text(
-                    locationName(location),
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ],
