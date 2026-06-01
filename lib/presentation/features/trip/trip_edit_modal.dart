@@ -293,8 +293,13 @@ class TripEditModal extends HookConsumerWidget {
         case TripEditExpandedSection.itinerary:
           return ItineraryView(
             tripId: tripEntry?.id,
+            groupId: groupId,
             tripStartDate: draftTripEntry.value.startDate,
             items: currentItineraryItems(),
+            locations: tripLocations.value,
+            onLocationCreated: saveTripLocation,
+            onLocationDeleted: deleteTripLocation,
+            isTestEnvironment: isTestEnvironment,
             onChanged: updateDraftItineraryItems,
             onClose: () => expandedSection.value = null,
           );

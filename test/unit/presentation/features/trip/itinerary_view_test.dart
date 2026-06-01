@@ -293,7 +293,9 @@ void main() {
 
       await tester.tap(find.widgetWithText(OutlinedButton, '指定を解除'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
+      final saveButton = find.widgetWithText(ElevatedButton, '保存');
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
       expect(lastChanged.single.locationId, isNull);

@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
+import 'package:uuid/uuid.dart';
+
+typedef ItineraryLocationCreated =
+    Future<LocationDto> Function(LocationDto location);
 
 class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({
     super.key,
     required this.item,
+    required this.groupId,
     this.tripStartDate,
+    this.locations = const [],
+    this.onLocationCreated,
+    this.onLocationUnassigned,
+    this.isTestEnvironment = false,
     required this.onSaved,
     this.clock,
   });
 
   final ItineraryItemDto item;
+  final String groupId;
   final DateTime? tripStartDate;
+  final List<LocationDto> locations;
+  final ItineraryLocationCreated? onLocationCreated;
+  final Future<void> Function(LocationDto location)? onLocationUnassigned;
+  final bool isTestEnvironment;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock? clock;
 
@@ -32,6 +50,10 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final endTime = useState<TimeOfDay?>(timePartOfDateTime(item.endDateTime));
     final memoController = useTextEditingController(text: item.memo ?? '');
     final errorMessage = useState<String?>(null);
+    final selectedLocation = useState<LocationDto?>(
+      item.location ?? findLocationById(locations, item.locationId),
+    );
+    final isLocationMapVisible = useState(false);
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
@@ -104,6 +126,44 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       errorMessage.value = null;
     }
 
+    LocationDto buildLocation({required Coordinate coordinate, String? name}) {
+      return LocationDto(
+        id: const Uuid().v7(),
+        tripId: item.tripId,
+        groupId: groupId,
+        name: name,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      );
+    }
+
+    Future<void> selectCreatedLocation(LocationDto location) async {
+      final savedLocation = await onLocationCreated?.call(location);
+      selectedLocation.value = savedLocation ?? location;
+      isLocationMapVisible.value = false;
+    }
+
+    Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
+      await selectCreatedLocation(buildLocation(coordinate: coordinate));
+    }
+
+    Future<void> createLocationFromCandidate(
+      LocationCandidateDto candidate,
+    ) async {
+      await selectCreatedLocation(
+        buildLocation(coordinate: candidate.coordinate, name: candidate.name),
+      );
+    }
+
+    Future<void> clearLocation() async {
+      final location = selectedLocation.value;
+      selectedLocation.value = null;
+      isLocationMapVisible.value = false;
+      if (location != null) {
+        await onLocationUnassigned?.call(location);
+      }
+    }
+
     void save() {
       final result = buildItineraryItemFromInput(
         id: item.id,
@@ -114,6 +174,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         endDate: endDate.value,
         endTime: endTime.value,
         memoInput: memoController.text,
+        selectedLocation: selectedLocation.value,
       );
       if (result.errorMessage != null) {
         errorMessage.value = result.errorMessage;
@@ -143,6 +204,82 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           errorMessage.value!,
           style: TextStyle(color: Colors.red.shade700, fontSize: 14),
         ),
+      );
+    }
+
+    String locationName(LocationDto location) {
+      return location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
+    }
+
+    Widget buildLocationSection() {
+      final location = selectedLocation.value;
+      final hasMapCallbacks = locations.isNotEmpty || onLocationCreated != null;
+      if (location == null && !hasMapCallbacks) {
+        return const SizedBox.shrink();
+      }
+      final mapViewType = isTestEnvironment
+          ? MapViewType.placeholder
+          : MapViewType.google;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (location == null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: hasMapCallbacks
+                    ? () => isLocationMapVisible.value = true
+                    : null,
+                icon: const Icon(Icons.place),
+                label: const Text('場所を指定'),
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => isLocationMapVisible.value = true,
+                  icon: const Icon(Icons.place),
+                  label: const Text('場所を変更'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: clearLocation,
+                  icon: const Icon(Icons.clear),
+                  label: const Text('指定を解除'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(locationName(location)),
+            ),
+          ],
+          if (isLocationMapVisible.value) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              key: const Key('itinerary_location_map'),
+              height: 240,
+              width: double.infinity,
+              child: MapViewFactory.create(mapViewType).createMapView(
+                locations: locations,
+                selectedLocation: selectedLocation.value,
+                onLocationTapped: (location) {
+                  selectedLocation.value = location;
+                  isLocationMapVisible.value = false;
+                },
+                onMapLongTapped: onLocationCreated == null
+                    ? null
+                    : createLocationFromCoordinate,
+                onSearchedLocationSelected: onLocationCreated == null
+                    ? null
+                    : createLocationFromCandidate,
+              ),
+            ),
+          ],
+        ],
       );
     }
 
@@ -216,6 +353,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ),
               maxLines: 2,
             ),
+            const SizedBox(height: 12),
+            buildLocationSection(),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -251,6 +390,7 @@ ItineraryItemInputResult buildItineraryItemFromInput({
   required DateTime? endDate,
   required TimeOfDay? endTime,
   required String memoInput,
+  LocationDto? selectedLocation,
 }) {
   final name = nameInput.trim();
   if (name.isEmpty) {
@@ -274,8 +414,22 @@ ItineraryItemInputResult buildItineraryItemFromInput({
       startDateTime: startDateTime,
       endDateTime: endDateTime,
       memo: memo.isEmpty ? null : memo,
+      locationId: selectedLocation?.id,
+      location: selectedLocation,
     ),
   );
+}
+
+LocationDto? findLocationById(List<LocationDto> locations, String? locationId) {
+  if (locationId == null) {
+    return null;
+  }
+  for (final location in locations) {
+    if (location.id == locationId) {
+      return location;
+    }
+  }
+  return null;
 }
 
 Widget buildDateTimeSection({

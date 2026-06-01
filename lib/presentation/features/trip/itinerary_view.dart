@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/features/trip/itinerary_item_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/itinerary_list.dart';
 import 'package:uuid/uuid.dart';
@@ -9,15 +10,25 @@ class ItineraryView extends HookWidget {
   const ItineraryView({
     super.key,
     required this.tripId,
+    this.groupId = '',
     this.tripStartDate,
     required this.items,
+    this.locations = const [],
+    this.onLocationCreated,
+    this.onLocationDeleted,
+    this.isTestEnvironment = false,
     required this.onChanged,
     this.onClose,
   });
 
   final String? tripId;
+  final String groupId;
   final DateTime? tripStartDate;
   final List<ItineraryItemDto> items;
+  final List<LocationDto> locations;
+  final ItineraryLocationCreated? onLocationCreated;
+  final Future<void> Function(LocationDto location)? onLocationDeleted;
+  final bool isTestEnvironment;
   final ValueChanged<List<ItineraryItemDto>> onChanged;
   final VoidCallback? onClose;
 
@@ -89,7 +100,20 @@ class ItineraryView extends HookWidget {
           return ItineraryItemEditBottomSheet(
             key: const Key('itinerary_edit_bottom_sheet'),
             item: item,
+            groupId: groupId,
             tripStartDate: tripStartDate,
+            locations: locations,
+            onLocationCreated: onLocationCreated,
+            onLocationUnassigned: (location) async {
+              final isUsedByOtherItem = itemsState.value.any(
+                (current) =>
+                    current.id != item.id && current.locationId == location.id,
+              );
+              if (!isUsedByOtherItem) {
+                await onLocationDeleted?.call(location);
+              }
+            },
+            isTestEnvironment: isTestEnvironment,
             onSaved: (updatedItem) {
               final updated = List<ItineraryItemDto>.from(itemsState.value);
               final index = updated.indexWhere(
@@ -152,7 +176,13 @@ class ItineraryView extends HookWidget {
     }
 
     List<String> subtitleParts(ItineraryItemDto item) {
-      return <String>[if (item.memo?.isNotEmpty == true) item.memo!];
+      final location =
+          item.location ?? findLocationById(locations, item.locationId);
+      final locationName = location?.name;
+      return <String>[
+        if (locationName?.isNotEmpty == true) locationName!,
+        if (item.memo?.isNotEmpty == true) item.memo!,
+      ];
     }
 
     return Column(
