@@ -104,6 +104,11 @@ class ItineraryView extends HookWidget {
             tripStartDate: tripStartDate,
             locations: locations,
             onLocationCreated: onLocationCreated,
+            otherLocationIds: itemsState.value
+                .where((current) => current.id != item.id)
+                .map((current) => current.locationId)
+                .whereType<String>()
+                .toSet(),
             isTestEnvironment: isTestEnvironment,
             onSaved: (updatedItem) {
               final previousLocation =

@@ -462,7 +462,7 @@ void main() {
           ?.call(const LatLng(35.681236, 139.767125));
       await tester.pumpAndSettle();
 
-      expect(find.text('取得済み場所'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '取得済み場所'), findsOneWidget);
     });
 
     testWidgets('旅程の場所名を手動変更して保存できること', (tester) async {
@@ -504,6 +504,7 @@ void main() {
       await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
       await tester.pumpAndSettle();
       await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '守礼門');
+      await tester.ensureVisible(find.widgetWithText(ElevatedButton, '保存'));
       await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
       await tester.pumpAndSettle();
 

@@ -180,10 +180,6 @@ class TripEditFormView extends HookWidget {
       final mapViewType = isTestEnvironment
           ? MapViewType.placeholder
           : MapViewType.google;
-      String locationName(LocationDto location) {
-        return location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
-      }
-
       List<String> itineraryNamesForLocation(LocationDto location) {
         return (value.itineraryItems ?? const [])
             .where((item) => item.locationId == location.id)
@@ -194,8 +190,11 @@ class TripEditFormView extends HookWidget {
       Widget buildSelectedLocationDetail(
         LocationDto location,
         VoidCallback onClose,
+        Future<void> Function(LocationDto location) onLocationNameUpdated,
+        Future<void> Function(LocationDto location) onLocationDeletedFromMap,
       ) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
+        var editedLocationName = location.name ?? '';
         return Align(
           alignment: Alignment.bottomCenter,
           child: Material(
@@ -214,18 +213,39 @@ class TripEditFormView extends HookWidget {
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            locationName(location),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          TextFormField(
+                            initialValue: editedLocationName,
+                            decoration: const InputDecoration(
+                              labelText: '場所名',
+                              border: OutlineInputBorder(),
+                              isDense: true,
                             ),
+                            onChanged: (value) => editedLocationName = value,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             linkedItineraryNames.isEmpty
                                 ? '紐づく旅程なし'
                                 : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
+                          ),
+                          const SizedBox(height: 8),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: OutlinedButton.icon(
+                              onPressed: () async {
+                                final normalizedName = editedLocationName
+                                    .trim();
+                                await onLocationNameUpdated(
+                                  location.copyWith(
+                                    name: normalizedName.isEmpty
+                                        ? null
+                                        : normalizedName,
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.edit),
+                              label: const Text('場所名を更新'),
+                            ),
                           ),
                           if (linkedItineraryNames.isEmpty &&
                               onLocationDeleted != null) ...[
@@ -234,8 +254,7 @@ class TripEditFormView extends HookWidget {
                               alignment: Alignment.centerRight,
                               child: OutlinedButton.icon(
                                 onPressed: () async {
-                                  await onLocationDeleted?.call(location);
-                                  selectedTripLocation.value = null;
+                                  await onLocationDeletedFromMap(location);
                                   onClose();
                                 },
                                 icon: const Icon(Icons.delete),
@@ -294,7 +313,37 @@ class TripEditFormView extends HookWidget {
                       setDialogState(() {});
                     },
                     selectedLocation: selectedTripLocation.value,
-                    locationDetailBuilder: buildSelectedLocationDetail,
+                    locationDetailBuilder: (location, onClose) {
+                      return buildSelectedLocationDetail(
+                        location,
+                        onClose,
+                        (updatedLocation) async {
+                          final savedLocation =
+                              await onLocationCreated?.call(updatedLocation) ??
+                              updatedLocation;
+                          selectedTripLocation.value = savedLocation;
+                          setDialogState(() {
+                            dialogLocations = [
+                              for (final current in dialogLocations)
+                                current.id == savedLocation.id
+                                    ? savedLocation
+                                    : current,
+                            ];
+                          });
+                        },
+                        (deletedLocation) async {
+                          await onLocationDeleted?.call(deletedLocation);
+                          selectedTripLocation.value = null;
+                          setDialogState(() {
+                            dialogLocations = dialogLocations
+                                .where(
+                                  (current) => current.id != deletedLocation.id,
+                                )
+                                .toList();
+                          });
+                        },
+                      );
+                    },
                     tripStartDate: value.startDate,
                   );
                 }

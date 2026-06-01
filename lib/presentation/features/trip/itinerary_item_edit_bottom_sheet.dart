@@ -22,6 +22,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     this.locations = const [],
     this.onLocationCreated,
     this.onLocationUnassigned,
+    this.otherLocationIds = const {},
     this.isTestEnvironment = false,
     required this.onSaved,
     this.clock,
@@ -33,6 +34,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final List<LocationDto> locations;
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationUnassigned;
+  final Set<String> otherLocationIds;
   final bool isTestEnvironment;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock? clock;
@@ -144,9 +146,50 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
     }
 
-    Future<void> selectCreatedLocation(LocationDto location) async {
+    List<LocationDto> upsertLocation(
+      List<LocationDto> currentLocations,
+      LocationDto location,
+    ) {
+      final exists = currentLocations.any(
+        (current) => current.id == location.id,
+      );
+      if (!exists) {
+        return [...currentLocations, location];
+      }
+      return [
+        for (final current in currentLocations)
+          current.id == location.id ? location : current,
+      ];
+    }
+
+    List<LocationDto> removeUnusedPreviousLocation(
+      List<LocationDto> currentLocations,
+      LocationDto? previousLocation,
+      LocationDto nextLocation,
+    ) {
+      if (previousLocation == null ||
+          previousLocation.id == nextLocation.id ||
+          otherLocationIds.contains(previousLocation.id)) {
+        return currentLocations;
+      }
+      return currentLocations
+          .where((location) => location.id != previousLocation.id)
+          .toList();
+    }
+
+    void selectLocation(LocationDto location) {
+      final previousLocation = selectedLocation.value;
       selectedLocation.value = location;
-      mapLocations.value = [...mapLocations.value, location];
+      mapLocations.value = removeUnusedPreviousLocation(
+        upsertLocation(mapLocations.value, location),
+        previousLocation,
+        location,
+      );
+    }
+
+    Future<void> selectCreatedLocation(LocationDto location) async {
+      final savedLocation = await onLocationCreated?.call(location) ?? location;
+      selectLocation(savedLocation);
     }
 
     Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
@@ -167,8 +210,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
     Future<void> save() async {
       var locationToSave = selectedLocation.value;
-      if (locationToSave != null &&
-          findLocationById(locations, locationToSave.id) == null) {
+      final originalLocation = findLocationById(locations, locationToSave?.id);
+      if (locationToSave != null && originalLocation != locationToSave) {
         locationToSave =
             await onLocationCreated?.call(locationToSave) ?? locationToSave;
         selectedLocation.value = locationToSave;
@@ -263,7 +306,10 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                                 selectedLocation: selectedLocation.value,
                                 highlightSelectedLocation: true,
                                 onLocationTapped: (location) {
-                                  selectedLocation.value = location;
+                                  selectLocation(location);
+                                  dialogLocations = List<LocationDto>.from(
+                                    mapLocations.value,
+                                  );
                                   setDialogState(() {});
                                 },
                                 onMapLongTapped: onLocationCreated == null
@@ -334,9 +380,24 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(locationName(location)),
+            TextFormField(
+              key: const Key('itinerary_location_name_field'),
+              initialValue: locationName(location),
+              decoration: const InputDecoration(
+                labelText: '場所名',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                final normalizedName = value.trim();
+                final updatedLocation = location.copyWith(
+                  name: normalizedName.isEmpty ? null : normalizedName,
+                );
+                selectedLocation.value = updatedLocation;
+                mapLocations.value = upsertLocation(
+                  mapLocations.value,
+                  updatedLocation,
+                );
+              },
             ),
           ],
         ],

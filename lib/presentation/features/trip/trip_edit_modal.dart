@@ -79,6 +79,10 @@ class TripEditModal extends HookConsumerWidget {
       () => locations.map((location) => location.id).toSet(),
       [locations],
     );
+    final initialLocationsById = useMemoized(
+      () => {for (final location in locations) location.id: location},
+      [locations],
+    );
 
     List<TaskDto> currentTasks() =>
         List<TaskDto>.from(draftTripEntry.value.tasks ?? const []);
@@ -119,6 +123,10 @@ class TripEditModal extends HookConsumerWidget {
         ...tripLocations.value.where((current) => current.id != location.id),
         locationToSave,
       ];
+      deletedLocationIds.value = {
+        for (final id in deletedLocationIds.value)
+          if (id != location.id) id,
+      };
       return locationToSave;
     }
 
@@ -209,7 +217,11 @@ class TripEditModal extends HookConsumerWidget {
           currentItineraryItems(),
         );
         final locationsToSave = tripLocations.value
-            .where((location) => !initialLocationIds.contains(location.id))
+            .where(
+              (location) =>
+                  !initialLocationIds.contains(location.id) ||
+                  initialLocationsById[location.id] != location,
+            )
             .toList();
         await onSave(
           tripToSave.copyWith(
