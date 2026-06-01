@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
@@ -17,12 +19,19 @@ import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([TripEntryRepository, TripEntryQueryService, GroupQueryService])
+@GenerateMocks([
+  TripEntryRepository,
+  TripEntryQueryService,
+  GroupQueryService,
+  LocationQueryService,
+])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockTripEntryQueryService mockTripEntryQueryService;
   late MockGroupQueryService mockGroupQueryService;
+  late MockLocationQueryService mockLocationQueryService;
   late List<TripEntryDto> testTripEntries;
+  late List<LocationDto> testLocations;
   late TripEntryDto detailedTripEntry;
   late List<GroupMemberDto> testGroupMembers;
   late GroupDto testGroup;
@@ -33,6 +42,7 @@ void main() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
     mockGroupQueryService = MockGroupQueryService();
+    mockLocationQueryService = MockLocationQueryService();
 
     testGroupMembers = [
       GroupMemberDto(
@@ -63,6 +73,9 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => testGroup);
+    when(
+      mockLocationQueryService.getLocationsByTripId(any),
+    ).thenAnswer((_) async => const []);
 
     testTripEntries = [
       TripEntryDto(
@@ -86,6 +99,16 @@ void main() {
     ];
 
     detailedTripEntry = testTripEntries.first;
+    testLocations = const [
+      LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: testGroupId,
+        name: '札幌駅',
+        latitude: 43.068661,
+        longitude: 141.350755,
+      ),
+    ];
   });
 
   Widget createApp({
@@ -93,6 +116,7 @@ void main() {
     TripEntryRepository? tripEntryRepository,
     TripEntryQueryService? tripEntryQueryService,
     GroupQueryService? groupQueryService,
+    LocationQueryService? locationQueryService,
   }) {
     return ProviderScope(
       overrides: [
@@ -104,6 +128,9 @@ void main() {
         ),
         groupQueryServiceProvider.overrideWithValue(
           groupQueryService ?? mockGroupQueryService,
+        ),
+        locationQueryServiceProvider.overrideWithValue(
+          locationQueryService ?? mockLocationQueryService,
         ),
       ],
       child: MaterialApp(home: home),
@@ -319,6 +346,9 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
+      when(
+        mockLocationQueryService.getLocationsByTripId('trip-1'),
+      ).thenAnswer((_) async => testLocations);
       // Act
       await tester.pumpWidget(
         createApp(
@@ -343,6 +373,7 @@ void main() {
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
+      expect(find.byKey(const Key('trip_locations_map')), findsOneWidget);
 
       verify(
         mockTripEntryQueryService.getTripEntryById(
@@ -351,6 +382,7 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
+      verify(mockLocationQueryService.getLocationsByTripId('trip-1')).called(1);
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {

@@ -105,6 +105,43 @@ void main() {
       expect(googleMap.markers.single.markerId, const MarkerId('location1'));
     });
 
+    testWidgets('選択中locationは赤色、それ以外は灰色のマーカーで表示する', (tester) async {
+      const selectedLocation = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+      );
+      const otherLocation = LocationDto(
+        id: 'location2',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.682,
+        longitude: 139.768,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          const GoogleMapView(
+            locations: [selectedLocation, otherLocation],
+            selectedLocation: selectedLocation,
+          ),
+        ),
+      );
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final markersById = {
+        for (final marker in googleMap.markers) marker.markerId.value: marker,
+      };
+
+      expect(markersById['location1']!.icon, BitmapDescriptor.defaultMarker);
+      expect(
+        markersById['location2']!.icon,
+        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+      );
+    });
+
     testWidgets('選択中locationの軽量ボトムシートを表示する', (tester) async {
       const location = LocationDto(
         id: 'location1',

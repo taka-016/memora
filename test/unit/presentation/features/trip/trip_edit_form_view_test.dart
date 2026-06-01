@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 
@@ -76,8 +77,52 @@ void main() {
 
       expect(itineraryRequested, 1);
       expect(taskRequested, 1);
-      expect(find.text('訪問場所'), findsNothing);
-      expect(find.widgetWithText(ElevatedButton, '編集'), findsNothing);
+    });
+
+    testWidgets('旅程・タスクボタンの下に旅行のlocationsマップを表示すること', (
+      WidgetTester tester,
+    ) async {
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+      const locations = [
+        LocationDto(
+          id: 'location-1',
+          tripId: 'trip-id',
+          groupId: 'group-id',
+          name: '東京駅',
+          latitude: 35.681236,
+          longitude: 139.767125,
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              locations: locations,
+              isTestEnvironment: true,
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (_) async => locations.first,
+            ),
+          ),
+        ),
+      );
+
+      final taskButton = find.widgetWithText(ElevatedButton, 'タスク');
+      await tester.ensureVisible(taskButton);
+
+      expect(find.text('訪問場所'), findsOneWidget);
+      expect(find.byKey(const Key('trip_locations_map')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
