@@ -54,6 +54,10 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     LatLng getCurrentOrFallbackPosition() {
+      final selected = selectedLocation;
+      if (selected != null) {
+        return LatLng(selected.latitude, selected.longitude);
+      }
       if (locations.isNotEmpty) {
         final firstLocation = locations.first;
         return LatLng(firstLocation.latitude, firstLocation.longitude);
