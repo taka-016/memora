@@ -64,6 +64,39 @@ void main() {
       verifyNever(mockLocationsCollection.doc(any));
     });
 
+    test('saveLocationはidが指定されている場合に指定idのドキュメントへ保存する', () async {
+      final location = Location(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+      final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+
+      when(mockLocationsCollection.doc('location-1')).thenReturn(mockDocRef);
+      when(mockDocRef.set(any)).thenAnswer((_) async {});
+
+      await repository.saveLocation(location);
+
+      verify(mockLocationsCollection.doc('location-1')).called(1);
+      verify(
+        mockDocRef.set(
+          argThat(
+            allOf([
+              containsPair('tripId', 'trip-1'),
+              containsPair('groupId', 'group-1'),
+              containsPair('name', '東京駅'),
+              contains('createdAt'),
+              contains('updatedAt'),
+            ]),
+          ),
+        ),
+      ).called(1);
+      verifyNever(mockLocationsCollection.add(any));
+    });
+
     test('updateLocationは既存ドキュメントをupdateしcreatedAtを更新しない', () async {
       final location = Location(
         id: 'location-1',
