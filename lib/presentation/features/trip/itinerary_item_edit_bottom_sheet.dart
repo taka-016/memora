@@ -395,6 +395,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
                 return Dialog(
                   insetPadding: const EdgeInsets.all(16),
+                  shape: const RoundedRectangleBorder(),
                   child: SizedBox(
                     key: const Key('itinerary_location_expanded_map'),
                     width: double.infinity,
@@ -554,6 +555,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   : null,
             ),
             const SizedBox(height: 12),
+            buildLocationSection(),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('itinerary_edit_memo_field'),
               controller: memoController,
@@ -563,8 +566,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               ),
               maxLines: 2,
             ),
-            const SizedBox(height: 12),
-            buildLocationSection(),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,

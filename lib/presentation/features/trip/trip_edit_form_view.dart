@@ -345,6 +345,7 @@ class TripEditFormView extends HookWidget {
 
                 return Dialog(
                   insetPadding: const EdgeInsets.all(16),
+                  shape: const RoundedRectangleBorder(),
                   child: SizedBox(
                     key: const Key('trip_locations_expanded_map'),
                     width: double.infinity,
