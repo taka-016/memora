@@ -1,11 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/services/location_search_service.dart';
+import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
+import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 
 Widget _createApp({required Widget child}) {
   return MaterialApp(home: Scaffold(body: child));
+}
+
+Widget _createMapApp({required Widget child}) {
+  return ProviderScope(
+    overrides: [
+      getCurrentLocationUsecaseProvider.overrideWithValue(
+        GetCurrentLocationUsecase(_FakeCurrentLocationService()),
+      ),
+      searchLocationsUsecaseProvider.overrideWithValue(
+        SearchLocationsUsecase(_FakeLocationSearchService()),
+      ),
+    ],
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
 }
 
 void main() {
@@ -188,5 +210,120 @@ void main() {
       expect(find.text('外部更新後の旅行'), findsOneWidget);
       expect(find.text('外部更新後のメモ'), findsOneWidget);
     });
+
+    testWidgets('旅行編集マップでピン削除後に表示中マップからピンが消えること', (tester) async {
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+
+      await tester.pumpWidget(
+        _createMapApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              locations: const [location],
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (location) async => location,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '訪問場所'));
+      await tester.pumpAndSettle();
+      var googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(googleMap.markers, hasLength(1));
+
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, '削除'));
+      await tester.pumpAndSettle();
+
+      googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(googleMap.markers, isEmpty);
+    });
+
+    testWidgets('旅行編集マップで場所名を手動変更できること', (tester) async {
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+      LocationDto? updatedLocation;
+
+      await tester.pumpWidget(
+        _createMapApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              locations: const [location],
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (location) async {
+                updatedLocation = location;
+                return location;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '訪問場所'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .markers
+          .single
+          .onTap
+          ?.call();
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '上野駅');
+      await tester.tap(find.widgetWithText(OutlinedButton, '場所名を更新'));
+      await tester.pumpAndSettle();
+
+      expect(updatedLocation?.id, 'location-1');
+      expect(updatedLocation?.name, '上野駅');
+      expect(find.text('上野駅'), findsOneWidget);
+    });
   });
+}
+
+class _FakeCurrentLocationService implements CurrentLocationService {
+  @override
+  Future<Coordinate?> getCurrentLocation() async => null;
+}
+
+class _FakeLocationSearchService implements LocationSearchService {
+  @override
+  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+    return const [];
+  }
 }
