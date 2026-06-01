@@ -253,9 +253,18 @@ class TripEditFormView extends HookWidget {
                             if (linkedItineraryNames.isEmpty)
                               const Text('関連する旅程なし')
                             else ...[
-                              const Text('関連する旅程'),
+                              const Text('関連する旅程:'),
                               const SizedBox(height: 4),
-                              ...linkedItineraryNames.map(Text.new),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: linkedItineraryNames
+                                      .map(Text.new)
+                                      .toList(),
+                                ),
+                              ),
                             ],
                             if (linkedItineraryNames.isEmpty &&
                                 onLocationDeleted != null) ...[
