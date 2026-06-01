@@ -16,6 +16,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     ValueChanged<LocationDto>? onLocationTapped,
     LocationDto? selectedLocation,
     bool highlightSelectedLocation = false,
+    LocationDetailBuilder? locationDetailBuilder,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
@@ -26,6 +27,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
       onLocationTapped: onLocationTapped,
       selectedLocation: selectedLocation,
       highlightSelectedLocation: highlightSelectedLocation,
+      locationDetailBuilder: locationDetailBuilder,
       tripStartDate: tripStartDate,
       isReadOnly: isReadOnly,
     );

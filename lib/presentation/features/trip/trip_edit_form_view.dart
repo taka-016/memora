@@ -149,19 +149,27 @@ class TripEditFormView extends HookWidget {
       );
     }
 
-    Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
+    Future<LocationDto> createLocationFromCoordinate(
+      Coordinate coordinate,
+    ) async {
       final location = buildLocation(coordinate: coordinate);
-      await onLocationCreated?.call(location);
+      final createdLocation = await onLocationCreated?.call(location);
+      final result = createdLocation ?? location;
+      selectedTripLocation.value = result;
+      return result;
     }
 
-    Future<void> createLocationFromCandidate(
+    Future<LocationDto> createLocationFromCandidate(
       LocationCandidateDto candidate,
     ) async {
       final location = buildLocation(
         coordinate: candidate.coordinate,
         name: candidate.name,
       );
-      await onLocationCreated?.call(location);
+      final createdLocation = await onLocationCreated?.call(location);
+      final result = createdLocation ?? location;
+      selectedTripLocation.value = result;
+      return result;
     }
 
     Widget buildTripLocationsMap() {
@@ -172,18 +180,6 @@ class TripEditFormView extends HookWidget {
       final mapViewType = isTestEnvironment
           ? MapViewType.placeholder
           : MapViewType.google;
-      Widget createMap() {
-        return MapViewFactory.create(mapViewType).createMapView(
-          locations: locations,
-          onMapLongTapped: createLocationFromCoordinate,
-          onSearchedLocationSelected: createLocationFromCandidate,
-          onLocationTapped: (location) {
-            selectedTripLocation.value = location;
-          },
-          tripStartDate: value.startDate,
-        );
-      }
-
       String locationName(LocationDto location) {
         return location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
       }
@@ -195,111 +191,148 @@ class TripEditFormView extends HookWidget {
             .toList();
       }
 
-      Widget buildSelectedLocationPanel() {
-        final location = selectedTripLocation.value;
-        if (location == null) {
-          return const SizedBox.shrink();
-        }
-
+      Widget buildSelectedLocationDetail(
+        LocationDto location,
+        VoidCallback onClose,
+      ) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black12),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                locationName(location),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                linkedItineraryNames.isEmpty
-                    ? '紐づく旅程なし'
-                    : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
-              ),
-              if (linkedItineraryNames.isEmpty &&
-                  onLocationDeleted != null) ...[
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      await onLocationDeleted?.call(location);
-                      selectedTripLocation.value = null;
-                    },
-                    icon: const Icon(Icons.delete),
-                    label: const Text('削除'),
-                  ),
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Material(
+            elevation: 8,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                key: const Key('trip_location_detail_panel'),
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            locationName(location),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            linkedItineraryNames.isEmpty
+                                ? '紐づく旅程なし'
+                                : '紐づく旅程: ${linkedItineraryNames.join(', ')}',
+                          ),
+                          if (linkedItineraryNames.isEmpty &&
+                              onLocationDeleted != null) ...[
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  await onLocationDeleted?.call(location);
+                                  selectedTripLocation.value = null;
+                                  onClose();
+                                },
+                                icon: const Icon(Icons.delete),
+                                label: const Text('削除'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: '閉じる',
+                      onPressed: onClose,
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
                 ),
-              ],
-            ],
+              ),
+            ),
           ),
         );
       }
 
       Future<void> showExpandedMap() async {
+        var dialogLocations = List<LocationDto>.from(locations);
         await showDialog<void>(
           context: context,
           builder: (context) {
-            return Dialog(
-              insetPadding: const EdgeInsets.all(16),
-              child: SizedBox(
-                key: const Key('trip_locations_expanded_map'),
-                width: double.infinity,
-                height: MediaQuery.of(context).size.height * 0.8,
-                child: Column(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: IconButton(
-                        tooltip: '閉じる',
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(Icons.close),
-                      ),
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                Widget createDialogMap() {
+                  return MapViewFactory.create(mapViewType).createMapView(
+                    locations: dialogLocations,
+                    onMapLongTapped: (coordinate) async {
+                      final location = await createLocationFromCoordinate(
+                        coordinate,
+                      );
+                      setDialogState(() {
+                        dialogLocations = [...dialogLocations, location];
+                      });
+                    },
+                    onSearchedLocationSelected: (candidate) async {
+                      final location = await createLocationFromCandidate(
+                        candidate,
+                      );
+                      setDialogState(() {
+                        dialogLocations = [...dialogLocations, location];
+                      });
+                    },
+                    onLocationTapped: (location) {
+                      selectedTripLocation.value = location;
+                      setDialogState(() {});
+                    },
+                    selectedLocation: selectedTripLocation.value,
+                    locationDetailBuilder: buildSelectedLocationDetail,
+                    tripStartDate: value.startDate,
+                  );
+                }
+
+                return Dialog(
+                  insetPadding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    key: const Key('trip_locations_expanded_map'),
+                    width: double.infinity,
+                    height: MediaQuery.of(context).size.height * 0.8,
+                    child: Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            tooltip: '閉じる',
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ),
+                        Expanded(child: createDialogMap()),
+                      ],
                     ),
-                    Expanded(child: createMap()),
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
           },
         );
       }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  '訪問場所',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
-              IconButton(
-                key: const Key('trip_locations_expand_button'),
-                tooltip: 'マップを拡大',
-                onPressed: showExpandedMap,
-                icon: const Icon(Icons.fullscreen),
-              ),
-            ],
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          key: const Key('trip_locations_button'),
+          onPressed: showExpandedMap,
+          icon: const Icon(Icons.place),
+          label: const Text('訪問場所'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            key: const Key('trip_locations_map'),
-            height: 240,
-            width: double.infinity,
-            child: createMap(),
-          ),
-          const SizedBox(height: 8),
-          buildSelectedLocationPanel(),
-        ],
+        ),
       );
     }
 

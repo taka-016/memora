@@ -373,7 +373,7 @@ void main() {
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
-      expect(find.byKey(const Key('trip_locations_map')), findsOneWidget);
+      expect(find.byKey(const Key('trip_locations_button')), findsOneWidget);
 
       verify(
         mockTripEntryQueryService.getTripEntryById(

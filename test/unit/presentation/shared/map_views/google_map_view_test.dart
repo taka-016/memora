@@ -163,6 +163,7 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       final markersById = {
@@ -174,10 +175,8 @@ void main() {
         BitmapDescriptor.defaultMarker.toJson(),
       );
       expect(
-        markersById['location2']!.icon.toJson(),
-        BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueAzure,
-        ).toJson(),
+        markersById['location2']!.icon.toJson().toString(),
+        contains('[bytes'),
       );
     });
 

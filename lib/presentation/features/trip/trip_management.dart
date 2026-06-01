@@ -3,13 +3,16 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/trip/delete_location_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/application/usecases/trip/save_location_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
@@ -125,11 +128,38 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> handleAddTripSave(TripEntryDto tripEntry) async {
+    Future<void> saveTripLocationChanges({
+      required String tripId,
+      required List<LocationDto> locationsToSave,
+      required List<String> deletedLocationIds,
+    }) async {
+      if (locationsToSave.isEmpty && deletedLocationIds.isEmpty) {
+        return;
+      }
+      final saveLocationUsecase = ref.read(saveLocationUsecaseProvider);
+      final deleteLocationUsecase = ref.read(deleteLocationUsecaseProvider);
+      for (final location in locationsToSave) {
+        await saveLocationUsecase.execute(location.copyWith(tripId: tripId));
+      }
+      for (final locationId in deletedLocationIds) {
+        await deleteLocationUsecase.execute(locationId);
+      }
+    }
+
+    Future<void> handleAddTripSave(
+      TripEntryDto tripEntry,
+      List<LocationDto> locationsToSave,
+      List<String> deletedLocationIds,
+    ) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await createTripEntryUsecase.execute(tripEntry);
+        final tripId = await createTripEntryUsecase.execute(tripEntry);
+        await saveTripLocationChanges(
+          tripId: tripId,
+          locationsToSave: locationsToSave,
+          deletedLocationIds: deletedLocationIds,
+        );
         if (!context.mounted) {
           return;
         }
@@ -162,18 +192,31 @@ class TripManagement extends HookConsumerWidget {
           groupMembers: groupMembers.value,
           year: year,
           isTestEnvironment: isTestEnvironment,
-          onSave: (tripEntry) async {
-            await handleAddTripSave(tripEntry);
+          onSave: (tripEntry, locationsToSave, deletedLocationIds) async {
+            await handleAddTripSave(
+              tripEntry,
+              locationsToSave,
+              deletedLocationIds,
+            );
           },
         ),
       );
     }
 
-    Future<void> handleEditTripSave(TripEntryDto tripEntry) async {
+    Future<void> handleEditTripSave(
+      TripEntryDto tripEntry,
+      List<LocationDto> locationsToSave,
+      List<String> deletedLocationIds,
+    ) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
         await updateTripEntryUsecase.execute(tripEntry);
+        await saveTripLocationChanges(
+          tripId: tripEntry.id,
+          locationsToSave: locationsToSave,
+          deletedLocationIds: deletedLocationIds,
+        );
         if (!context.mounted) {
           return;
         }
@@ -233,8 +276,12 @@ class TripManagement extends HookConsumerWidget {
             locations: locations,
             year: year,
             isTestEnvironment: isTestEnvironment,
-            onSave: (updatedTrip) async {
-              await handleEditTripSave(updatedTrip);
+            onSave: (updatedTrip, locationsToSave, deletedLocationIds) async {
+              await handleEditTripSave(
+                updatedTrip,
+                locationsToSave,
+                deletedLocationIds,
+              );
             },
           ),
         );

@@ -104,17 +104,10 @@ class ItineraryView extends HookWidget {
             tripStartDate: tripStartDate,
             locations: locations,
             onLocationCreated: onLocationCreated,
-            onLocationUnassigned: (location) async {
-              final isUsedByOtherItem = itemsState.value.any(
-                (current) =>
-                    current.id != item.id && current.locationId == location.id,
-              );
-              if (!isUsedByOtherItem) {
-                await onLocationDeleted?.call(location);
-              }
-            },
             isTestEnvironment: isTestEnvironment,
             onSaved: (updatedItem) {
+              final previousLocation =
+                  item.location ?? findLocationById(locations, item.locationId);
               final updated = List<ItineraryItemDto>.from(itemsState.value);
               final index = updated.indexWhere(
                 (current) => current.id == updatedItem.id,
@@ -123,6 +116,15 @@ class ItineraryView extends HookWidget {
                 return;
               }
               updated[index] = updatedItem;
+              if (previousLocation != null &&
+                  previousLocation.id != updatedItem.locationId) {
+                final isUsedByOtherItem = updated.any(
+                  (current) => current.locationId == previousLocation.id,
+                );
+                if (!isUsedByOtherItem) {
+                  onLocationDeleted?.call(previousLocation);
+                }
+              }
               notifyChange(updated);
             },
           );

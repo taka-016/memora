@@ -340,7 +340,10 @@ void main() {
       await tester.tap(find.widgetWithText(ElevatedButton, '場所を指定'));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('itinerary_location_expanded_map')), findsOneWidget);
+      expect(
+        find.byKey(const Key('itinerary_location_expanded_map')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('itinerary_location_map')), findsNothing);
       expect(find.byKey(const Key('map_view')), findsOneWidget);
     });

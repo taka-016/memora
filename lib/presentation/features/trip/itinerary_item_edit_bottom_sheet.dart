@@ -53,8 +53,15 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final selectedLocation = useState<LocationDto?>(
       item.location ?? findLocationById(locations, item.locationId),
     );
-    final isLocationMapVisible = useState(false);
+    final mapLocations = useState<List<LocationDto>>(
+      List<LocationDto>.from(locations),
+    );
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
+
+    useEffect(() {
+      mapLocations.value = List<LocationDto>.from(locations);
+      return null;
+    }, [locations]);
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
       return selectedDate ??
@@ -138,9 +145,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     }
 
     Future<void> selectCreatedLocation(LocationDto location) async {
-      final savedLocation = await onLocationCreated?.call(location);
-      selectedLocation.value = savedLocation ?? location;
-      isLocationMapVisible.value = false;
+      selectedLocation.value = location;
+      mapLocations.value = [...mapLocations.value, location];
     }
 
     Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
@@ -155,16 +161,19 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
     }
 
-    Future<void> clearLocation() async {
-      final location = selectedLocation.value;
+    void clearLocation() {
       selectedLocation.value = null;
-      isLocationMapVisible.value = false;
-      if (location != null) {
-        await onLocationUnassigned?.call(location);
-      }
     }
 
-    void save() {
+    Future<void> save() async {
+      var locationToSave = selectedLocation.value;
+      if (locationToSave != null &&
+          findLocationById(locations, locationToSave.id) == null) {
+        locationToSave =
+            await onLocationCreated?.call(locationToSave) ?? locationToSave;
+        selectedLocation.value = locationToSave;
+      }
+
       final result = buildItineraryItemFromInput(
         id: item.id,
         tripId: item.tripId,
@@ -174,7 +183,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         endDate: endDate.value,
         endTime: endTime.value,
         memoInput: memoController.text,
-        selectedLocation: selectedLocation.value,
+        selectedLocation: locationToSave,
       );
       if (result.errorMessage != null) {
         errorMessage.value = result.errorMessage;
@@ -221,6 +230,50 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           ? MapViewType.placeholder
           : MapViewType.google;
 
+      Future<void> showLocationMap() async {
+        await showDialog<void>(
+          context: context,
+          builder: (context) {
+            return Dialog(
+              insetPadding: const EdgeInsets.all(16),
+              child: SizedBox(
+                key: const Key('itinerary_location_expanded_map'),
+                width: double.infinity,
+                height: MediaQuery.of(context).size.height * 0.8,
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        tooltip: '閉じる',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                    Expanded(
+                      child: MapViewFactory.create(mapViewType).createMapView(
+                        locations: mapLocations.value,
+                        selectedLocation: selectedLocation.value,
+                        highlightSelectedLocation: true,
+                        onLocationTapped: (location) {
+                          selectedLocation.value = location;
+                        },
+                        onMapLongTapped: onLocationCreated == null
+                            ? null
+                            : createLocationFromCoordinate,
+                        onSearchedLocationSelected: onLocationCreated == null
+                            ? null
+                            : createLocationFromCandidate,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -228,9 +281,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: ElevatedButton.icon(
-                onPressed: hasMapCallbacks
-                    ? () => isLocationMapVisible.value = true
-                    : null,
+                onPressed: hasMapCallbacks ? showLocationMap : null,
                 icon: const Icon(Icons.place),
                 label: const Text('場所を指定'),
               ),
@@ -239,7 +290,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
             Row(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () => isLocationMapVisible.value = true,
+                  onPressed: showLocationMap,
                   icon: const Icon(Icons.place),
                   label: const Text('場所を変更'),
                 ),
@@ -255,29 +306,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(locationName(location)),
-            ),
-          ],
-          if (isLocationMapVisible.value) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              key: const Key('itinerary_location_map'),
-              height: 240,
-              width: double.infinity,
-              child: MapViewFactory.create(mapViewType).createMapView(
-                locations: locations,
-                selectedLocation: selectedLocation.value,
-                highlightSelectedLocation: true,
-                onLocationTapped: (location) {
-                  selectedLocation.value = location;
-                  isLocationMapVisible.value = false;
-                },
-                onMapLongTapped: onLocationCreated == null
-                    ? null
-                    : createLocationFromCoordinate,
-                onSearchedLocationSelected: onLocationCreated == null
-                    ? null
-                    : createLocationFromCandidate,
-              ),
             ),
           ],
         ],

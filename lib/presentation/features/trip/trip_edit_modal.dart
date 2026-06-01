@@ -8,8 +8,6 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
-import 'package:memora/application/usecases/trip/delete_location_usecase.dart';
-import 'package:memora/application/usecases/trip/save_location_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
@@ -19,6 +17,13 @@ import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 enum TripEditExpandedSection { itinerary, tasks }
+
+typedef TripEditSave =
+    Future<void> Function(
+      TripEntryDto tripEntry,
+      List<LocationDto> locationsToSave,
+      List<String> deletedLocationIds,
+    );
 
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
@@ -36,7 +41,7 @@ class TripEditModal extends HookConsumerWidget {
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
   final List<LocationDto> locations;
-  final Future<void> Function(TripEntryDto) onSave;
+  final TripEditSave onSave;
   final bool isTestEnvironment;
   final int? year;
 
@@ -68,6 +73,11 @@ class TripEditModal extends HookConsumerWidget {
     final draftTripEntry = useState(initialTripForComparison);
     final tripLocations = useState<List<LocationDto>>(
       List<LocationDto>.from(locations),
+    );
+    final deletedLocationIds = useState<Set<String>>({});
+    final initialLocationIds = useMemoized(
+      () => locations.map((location) => location.id).toSet(),
+      [locations],
     );
 
     List<TaskDto> currentTasks() =>
@@ -105,18 +115,20 @@ class TripEditModal extends HookConsumerWidget {
           location.name ??
           await getNearbyLocationNameUsecase.execute(location.coordinate);
       final locationToSave = location.copyWith(name: locationName);
-      final saveLocationUsecase = ref.read(saveLocationUsecaseProvider);
-      await saveLocationUsecase.execute(locationToSave);
-      tripLocations.value = [...tripLocations.value, locationToSave];
+      tripLocations.value = [
+        ...tripLocations.value.where((current) => current.id != location.id),
+        locationToSave,
+      ];
       return locationToSave;
     }
 
     Future<void> deleteTripLocation(LocationDto location) async {
-      final deleteLocationUsecase = ref.read(deleteLocationUsecaseProvider);
-      await deleteLocationUsecase.execute(location.id);
       tripLocations.value = tripLocations.value
           .where((current) => current.id != location.id)
           .toList();
+      if (initialLocationIds.contains(location.id)) {
+        deletedLocationIds.value = {...deletedLocationIds.value, location.id};
+      }
       updateDraftItineraryItems(
         currentItineraryItems()
             .map(
@@ -128,17 +140,40 @@ class TripEditModal extends HookConsumerWidget {
       );
     }
 
+    bool areLocationsEqual(List<LocationDto> left, List<LocationDto> right) {
+      if (left.length != right.length) {
+        return false;
+      }
+      for (var index = 0; index < left.length; index += 1) {
+        if (left[index] != right[index]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     void updateDirtyState() {
-      final isDirty = draftTripEntry.value != initialTripForComparison;
+      final isDirty =
+          draftTripEntry.value != initialTripForComparison ||
+          !areLocationsEqual(tripLocations.value, locations) ||
+          deletedLocationIds.value.isNotEmpty;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         editStateNotifier.setDirty(isDirty);
       });
     }
 
-    useEffect(() {
-      updateDirtyState();
-      return null;
-    }, [draftTripEntry.value, initialTripForComparison]);
+    useEffect(
+      () {
+        updateDirtyState();
+        return null;
+      },
+      [
+        draftTripEntry.value,
+        tripLocations.value,
+        deletedLocationIds.value,
+        initialTripForComparison,
+      ],
+    );
 
     void showTaskView() {
       expandedSection.value = TripEditExpandedSection.tasks;
@@ -173,6 +208,9 @@ class TripEditModal extends HookConsumerWidget {
         final sortedItineraryItems = sortItineraryItems(
           currentItineraryItems(),
         );
+        final locationsToSave = tripLocations.value
+            .where((location) => !initialLocationIds.contains(location.id))
+            .toList();
         await onSave(
           tripToSave.copyWith(
             startDate: selectedStart,
@@ -180,6 +218,8 @@ class TripEditModal extends HookConsumerWidget {
             tasks: sortedTasks,
             itineraryItems: sortedItineraryItems,
           ),
+          locationsToSave,
+          deletedLocationIds.value.toList(),
         );
         editStateNotifier.reset();
         if (context.mounted) {

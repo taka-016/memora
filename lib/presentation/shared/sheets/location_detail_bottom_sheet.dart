@@ -39,11 +39,6 @@ class LocationDetailBottomSheet extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${location.latitude}, ${location.longitude}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
                     ],
                   ),
                 ),
