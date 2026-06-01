@@ -125,6 +125,42 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsOneWidget);
     });
 
+    testWidgets('旅行のlocationsマップを拡大表示できること', (WidgetTester tester) async {
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              isTestEnvironment: true,
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (location) async => location,
+            ),
+          ),
+        ),
+      );
+
+      await tester.ensureVisible(find.byKey(const Key('trip_locations_map')));
+      await tester.tap(find.byKey(const Key('trip_locations_expand_button')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('trip_locations_expanded_map')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('map_view')), findsWidgets);
+    });
+
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
       WidgetTester tester,
     ) async {
