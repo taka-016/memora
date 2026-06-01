@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/services/location_search_service.dart';
@@ -312,6 +313,91 @@ void main() {
       expect(updatedLocation?.name, '上野駅');
       expect(find.widgetWithText(OutlinedButton, '場所名を更新'), findsNothing);
       expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
+    });
+
+    testWidgets('旅行編集マップのピン詳細で関連する旅程を縦並び表示してスクロールできること', (
+      tester,
+    ) async {
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+      const initialValue = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+        itineraryItems: [
+          ItineraryItemDto(
+            id: 'itinerary-1',
+            tripId: 'trip-id',
+            name: '朝食',
+            locationId: 'location-1',
+          ),
+          ItineraryItemDto(
+            id: 'itinerary-2',
+            tripId: 'trip-id',
+            name: '観光',
+            locationId: 'location-1',
+          ),
+          ItineraryItemDto(
+            id: 'itinerary-3',
+            tripId: 'trip-id',
+            name: '夕食',
+            locationId: 'location-1',
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _createMapApp(
+          child: SizedBox(
+            width: 480,
+            height: 720,
+            child: TripEditFormView(
+              value: initialValue,
+              locations: const [location],
+              onChanged: (_) {},
+              onItineraryManagementRequested: () {},
+              onTaskManagementRequested: () {},
+              onLocationDeleted: (_) async {},
+              onLocationCreated: (location) async => location,
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '訪問場所'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .markers
+          .single
+          .onTap
+          ?.call();
+      await tester.pumpAndSettle();
+
+      final panel = find.byKey(const Key('trip_location_detail_panel'));
+      final scrollView = find.descendant(
+        of: panel,
+        matching: find.byKey(const Key('trip_location_detail_scroll_view')),
+      );
+      expect(scrollView, findsOneWidget);
+      expect(find.text('関連する旅程'), findsOneWidget);
+      expect(find.text('朝食'), findsOneWidget);
+      expect(find.text('観光'), findsOneWidget);
+      expect(find.text('夕食'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('観光')).dy,
+        greaterThan(tester.getTopLeft(find.text('朝食')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('夕食')).dy,
+        greaterThan(tester.getTopLeft(find.text('観光')).dy),
+      );
     });
 
     testWidgets('旅行編集マップで別ピン選択時に場所名入力欄と閉じるボタン位置を更新すること', (tester) async {
