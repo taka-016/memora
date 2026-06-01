@@ -433,9 +433,9 @@ void main() {
         googleMap.markers.map((marker) => marker.markerId.value),
         contains('location-new'),
       );
-      expect(find.widgetWithText(ElevatedButton, 'ここに変更する'), findsOneWidget);
+      expect(find.widgetWithText(ElevatedButton, 'この場所を指定する'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ElevatedButton, 'ここに変更する'));
+      await tester.tap(find.widgetWithText(ElevatedButton, 'この場所を指定する'));
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(TextFormField, '新場所'), findsOneWidget);
