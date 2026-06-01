@@ -7,6 +7,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
+import 'package:memora/application/usecases/trip/get_locations_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
@@ -35,6 +36,9 @@ class TripManagement extends HookConsumerWidget {
     final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
     final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
+    final getLocationsByTripIdUsecase = ref.read(
+      getLocationsByTripIdUsecaseProvider,
+    );
     final getGroupWithMembersByIdUsecase = ref.read(
       getGroupWithMembersByIdUsecaseProvider,
     );
@@ -212,6 +216,13 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
+        final locations = await getLocationsByTripIdUsecase.execute(
+          detailedTripEntry.id,
+        );
+        if (!context.mounted) {
+          return;
+        }
+
         await showDialog(
           barrierDismissible: false,
           context: context,
@@ -219,6 +230,7 @@ class TripManagement extends HookConsumerWidget {
             groupId: groupId,
             groupMembers: groupMembers.value,
             tripEntry: detailedTripEntry,
+            locations: locations,
             year: year,
             isTestEnvironment: isTestEnvironment,
             onSave: (updatedTrip) async {

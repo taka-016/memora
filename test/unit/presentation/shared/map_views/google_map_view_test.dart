@@ -135,10 +135,15 @@ void main() {
         for (final marker in googleMap.markers) marker.markerId.value: marker,
       };
 
-      expect(markersById['location1']!.icon, BitmapDescriptor.defaultMarker);
       expect(
-        markersById['location2']!.icon,
-        BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+        markersById['location1']!.icon.toJson(),
+        BitmapDescriptor.defaultMarker.toJson(),
+      );
+      expect(
+        markersById['location2']!.icon.toJson(),
+        BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueAzure,
+        ).toJson(),
       );
     });
 

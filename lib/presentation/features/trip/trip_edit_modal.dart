@@ -3,9 +3,13 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
+import 'package:memora/application/usecases/trip/delete_location_usecase.dart';
+import 'package:memora/application/usecases/trip/save_location_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
@@ -22,6 +26,7 @@ class TripEditModal extends HookConsumerWidget {
     required this.groupId,
     required this.groupMembers,
     this.tripEntry,
+    this.locations = const [],
     required this.onSave,
     this.isTestEnvironment = false,
     this.year,
@@ -30,6 +35,7 @@ class TripEditModal extends HookConsumerWidget {
   final String groupId;
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
+  final List<LocationDto> locations;
   final Future<void> Function(TripEntryDto) onSave;
   final bool isTestEnvironment;
   final int? year;
@@ -60,6 +66,9 @@ class TripEditModal extends HookConsumerWidget {
     }, [groupId, tripEntry, year, clock]);
 
     final draftTripEntry = useState(initialTripForComparison);
+    final tripLocations = useState<List<LocationDto>>(
+      List<LocationDto>.from(locations),
+    );
 
     List<TaskDto> currentTasks() =>
         List<TaskDto>.from(draftTripEntry.value.tasks ?? const []);
@@ -85,6 +94,37 @@ class TripEditModal extends HookConsumerWidget {
     void updateDraftTasks(List<TaskDto> tasks) {
       updateDraftTripEntry(
         draftTripEntry.value.copyWith(tasks: List<TaskDto>.from(tasks)),
+      );
+    }
+
+    Future<LocationDto> saveTripLocation(LocationDto location) async {
+      final getNearbyLocationNameUsecase = ref.read(
+        getNearbyLocationNameUsecaseProvider,
+      );
+      final locationName =
+          location.name ??
+          await getNearbyLocationNameUsecase.execute(location.coordinate);
+      final locationToSave = location.copyWith(name: locationName);
+      final saveLocationUsecase = ref.read(saveLocationUsecaseProvider);
+      await saveLocationUsecase.execute(locationToSave);
+      tripLocations.value = [...tripLocations.value, locationToSave];
+      return locationToSave;
+    }
+
+    Future<void> deleteTripLocation(LocationDto location) async {
+      final deleteLocationUsecase = ref.read(deleteLocationUsecaseProvider);
+      await deleteLocationUsecase.execute(location.id);
+      tripLocations.value = tripLocations.value
+          .where((current) => current.id != location.id)
+          .toList();
+      updateDraftItineraryItems(
+        currentItineraryItems()
+            .map(
+              (item) => item.locationId == location.id
+                  ? item.copyWith(locationId: null, location: null)
+                  : item,
+            )
+            .toList(),
       );
     }
 
@@ -191,11 +231,15 @@ class TripEditModal extends HookConsumerWidget {
           Expanded(
             child: TripEditFormView(
               value: draftTripEntry.value,
+              locations: tripLocations.value,
+              isTestEnvironment: isTestEnvironment,
               configuredYear: tripEntry?.year ?? year,
               clock: clock,
               onChanged: updateDraftTripEntry,
               onItineraryManagementRequested: showItineraryView,
               onTaskManagementRequested: showTaskView,
+              onLocationCreated: saveTripLocation,
+              onLocationDeleted: deleteTripLocation,
             ),
           ),
           const SizedBox(height: 24),

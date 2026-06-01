@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:uuid/uuid.dart';
+
+typedef TripLocationCreated =
+    Future<LocationDto> Function(LocationDto location);
 
 class TripEditFormView extends HookWidget {
   const TripEditFormView({
@@ -11,6 +19,10 @@ class TripEditFormView extends HookWidget {
     required this.onChanged,
     required this.onItineraryManagementRequested,
     required this.onTaskManagementRequested,
+    this.locations = const [],
+    this.onLocationCreated,
+    this.onLocationDeleted,
+    this.isTestEnvironment = false,
     this.configuredYear,
     this.clock,
   });
@@ -19,6 +31,10 @@ class TripEditFormView extends HookWidget {
   final ValueChanged<TripEntryDto> onChanged;
   final VoidCallback onItineraryManagementRequested;
   final VoidCallback onTaskManagementRequested;
+  final List<LocationDto> locations;
+  final TripLocationCreated? onLocationCreated;
+  final Future<void> Function(LocationDto location)? onLocationDeleted;
+  final bool isTestEnvironment;
   final int? configuredYear;
   final AppClock? clock;
 
@@ -119,6 +135,65 @@ class TripEditFormView extends HookWidget {
       }
 
       return effectiveClock.now();
+    }
+
+    LocationDto buildLocation({required Coordinate coordinate, String? name}) {
+      return LocationDto(
+        id: const Uuid().v7(),
+        tripId: value.id,
+        groupId: value.groupId,
+        name: name,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      );
+    }
+
+    Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
+      final location = buildLocation(coordinate: coordinate);
+      await onLocationCreated?.call(location);
+    }
+
+    Future<void> createLocationFromCandidate(
+      LocationCandidateDto candidate,
+    ) async {
+      final location = buildLocation(
+        coordinate: candidate.coordinate,
+        name: candidate.name,
+      );
+      await onLocationCreated?.call(location);
+    }
+
+    Widget buildTripLocationsMap() {
+      if (onLocationCreated == null && onLocationDeleted == null) {
+        return const SizedBox.shrink();
+      }
+
+      final mapViewType = isTestEnvironment
+          ? MapViewType.placeholder
+          : MapViewType.google;
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '訪問場所',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            key: const Key('trip_locations_map'),
+            height: 240,
+            width: double.infinity,
+            child: MapViewFactory.create(mapViewType).createMapView(
+              locations: locations,
+              onMapLongTapped: createLocationFromCoordinate,
+              onSearchedLocationSelected: createLocationFromCandidate,
+              onLocationTapped: (_) {},
+              tripStartDate: value.startDate,
+            ),
+          ),
+        ],
+      );
     }
 
     Widget buildDatePickerField({
@@ -272,6 +347,8 @@ class TripEditFormView extends HookWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          buildTripLocationsMap(),
           const SizedBox(height: 16),
         ],
       ),

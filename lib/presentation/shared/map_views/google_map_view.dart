@@ -131,6 +131,11 @@ class GoogleMapView extends HookConsumerWidget {
             (location) => Marker(
               markerId: MarkerId(location.id),
               position: LatLng(location.latitude, location.longitude),
+              icon: selectedLocation?.id == location.id
+                  ? BitmapDescriptor.defaultMarker
+                  : BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueAzure,
+                    ),
               onTap: () => handleLocationTapped(location),
             ),
           )
