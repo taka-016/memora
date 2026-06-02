@@ -76,7 +76,7 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
 
       when(mockLocationsCollection.doc('location-1')).thenReturn(mockDocRef);
-      when(mockDocRef.set(any)).thenAnswer((_) async {});
+      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
 
       await repository.saveLocation(location);
 
@@ -92,6 +92,7 @@ void main() {
               contains('updatedAt'),
             ]),
           ),
+          any,
         ),
       ).called(1);
       verifyNever(mockLocationsCollection.add(any));

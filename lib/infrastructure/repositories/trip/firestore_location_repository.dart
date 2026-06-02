@@ -17,7 +17,13 @@ class FirestoreLocationRepository implements LocationRepository {
       return;
     }
 
-    await _firestore.collection('locations').doc(location.id).set(data);
+    await _firestore
+        .collection('locations')
+        .doc(location.id)
+        .set(
+          FirestoreLocationMapper.toUpdateFirestore(location),
+          SetOptions(merge: true),
+        );
   }
 
   @override

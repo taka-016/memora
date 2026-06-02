@@ -35,34 +35,22 @@ void main() {
       mockTasks = MockCollectionReference<Map<String, dynamic>>();
       mockLocations = MockCollectionReference<Map<String, dynamic>>();
 
-      when(mockFirestore.collection('trip_entries')).thenReturn(mockTripEntries);
+      when(
+        mockFirestore.collection('trip_entries'),
+      ).thenReturn(mockTripEntries);
       when(
         mockFirestore.collection('itinerary_items'),
       ).thenReturn(mockItineraryItems);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasks);
       when(mockFirestore.collection('locations')).thenReturn(mockLocations);
       when(
-        mockFirestore.runTransaction<String>(
-          any,
-          timeout: anyNamed('timeout'),
-          maxAttempts: anyNamed('maxAttempts'),
-        ),
-      ).thenAnswer((invocation) async {
-        final handler =
-            invocation.positionalArguments.first
-                as Future<String> Function(Transaction);
-        return handler(mockTransaction);
-      });
-      when(mockFirestore.runTransaction<void>(
-        any,
-        timeout: anyNamed('timeout'),
-        maxAttempts: anyNamed('maxAttempts'),
-      )).thenAnswer((invocation) async {
-        final handler =
-            invocation.positionalArguments.first
-                as Future<void> Function(Transaction);
-        await handler(mockTransaction);
-      });
+        mockTransaction.set<Map<String, dynamic>>(any, any),
+      ).thenReturn(mockTransaction);
+      when(
+        mockTransaction.set<Map<String, dynamic>>(any, any, any),
+      ).thenReturn(mockTransaction);
+      when(mockTransaction.update(any, any)).thenReturn(mockTransaction);
+      when(mockTransaction.delete(any)).thenReturn(mockTransaction);
 
       writeTransaction = FirestoreTripLocationWriteTransaction(
         firestore: mockFirestore,
@@ -96,14 +84,28 @@ void main() {
           MockDocumentReference<Map<String, dynamic>>();
       final mockLocationDocRef = MockDocumentReference<Map<String, dynamic>>();
 
+      when(
+        mockFirestore.runTransaction<String>(
+          any,
+          timeout: anyNamed('timeout'),
+          maxAttempts: anyNamed('maxAttempts'),
+        ),
+      ).thenAnswer((invocation) async {
+        final handler =
+            invocation.positionalArguments.first
+                as Future<String> Function(Transaction);
+        return handler(mockTransaction);
+      });
       when(mockTripDocRef.id).thenReturn('generated-trip-id');
       when(mockTripEntries.doc()).thenReturn(mockTripDocRef);
-      when(mockItineraryItems.doc('item-1')).thenReturn(mockItineraryItemDocRef);
+      when(
+        mockItineraryItems.doc('item-1'),
+      ).thenReturn(mockItineraryItemDocRef);
       when(mockLocations.doc('location-1')).thenReturn(mockLocationDocRef);
 
       final result = await writeTransaction.run((operations) async {
         final tripId = await operations.saveTripEntry(tripEntry);
-        await operations.saveLocation(location.copyWith(tripId: tripId));
+        await operations.createLocation(location.copyWith(tripId: tripId));
         return tripId;
       });
 
@@ -122,6 +124,7 @@ void main() {
               contains('updatedAt'),
             ]),
           ),
+          any,
         ),
       ).called(1);
     });
@@ -160,17 +163,34 @@ void main() {
       final mockDeletedLocationDocRef =
           MockDocumentReference<Map<String, dynamic>>();
 
+      when(
+        mockFirestore.runTransaction<void>(
+          any,
+          timeout: anyNamed('timeout'),
+          maxAttempts: anyNamed('maxAttempts'),
+        ),
+      ).thenAnswer((invocation) async {
+        final handler =
+            invocation.positionalArguments.first
+                as Future<void> Function(Transaction);
+        await handler(mockTransaction);
+      });
       when(mockTripEntries.doc('trip-1')).thenReturn(mockTripDocRef);
-      when(mockTasks.where('tripId', isEqualTo: 'trip-1'))
-          .thenReturn(mockTasksQuery);
+      when(
+        mockTasks.where('tripId', isEqualTo: 'trip-1'),
+      ).thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
       when(mockTasksSnapshot.docs).thenReturn([]);
-      when(mockItineraryItems.where('tripId', isEqualTo: 'trip-1'))
-          .thenReturn(mockItineraryItemsQuery);
-      when(mockItineraryItemsQuery.get())
-          .thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(
+        mockItineraryItems.where('tripId', isEqualTo: 'trip-1'),
+      ).thenReturn(mockItineraryItemsQuery);
+      when(
+        mockItineraryItemsQuery.get(),
+      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([]);
-      when(mockItineraryItems.doc('item-1')).thenReturn(mockItineraryItemDocRef);
+      when(
+        mockItineraryItems.doc('item-1'),
+      ).thenReturn(mockItineraryItemDocRef);
       when(mockLocations.doc('location-1')).thenReturn(mockLocationDocRef);
       when(
         mockLocations.doc('location-old'),
@@ -178,7 +198,7 @@ void main() {
 
       await writeTransaction.run<void>((operations) async {
         await operations.updateTripEntry(tripEntry);
-        await operations.saveLocation(location);
+        await operations.updateLocation(location);
         await operations.deleteLocation('location-old');
       });
 
@@ -196,6 +216,7 @@ void main() {
               contains('updatedAt'),
             ]),
           ),
+          any,
         ),
       ).called(1);
       verify(mockTransaction.delete(mockDeletedLocationDocRef)).called(1);

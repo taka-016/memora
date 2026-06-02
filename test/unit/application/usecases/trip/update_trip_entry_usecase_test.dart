@@ -83,10 +83,19 @@ void main() {
         latitude: 35.681236,
         longitude: 139.767125,
       );
+      const updatedLocation = LocationDto(
+        id: 'location-2',
+        tripId: 'trip-id',
+        groupId: 'group-id',
+        name: '上野駅',
+        latitude: 35.713768,
+        longitude: 139.777254,
+      );
 
       await usecase.execute(
         tripEntry,
-        locationsToSave: const [location],
+        locationsToCreate: const [location],
+        locationsToUpdate: const [updatedLocation],
         deletedLocationIds: const ['unused-location'],
       );
 
@@ -95,12 +104,19 @@ void main() {
         fakeTransaction.operations.updatedTripEntries.single,
         isA<TripEntry>(),
       );
-      expect(fakeTransaction.operations.savedLocations.single.name, '東京駅');
+      expect(fakeTransaction.operations.createdLocations.single.name, '東京駅');
       expect(
-        fakeTransaction.operations.savedLocations.single.tripId,
+        fakeTransaction.operations.createdLocations.single.tripId,
         tripEntry.id,
       );
-      expect(fakeTransaction.operations.deletedLocationIds, ['unused-location']);
+      expect(fakeTransaction.operations.updatedLocations.single.name, '上野駅');
+      expect(
+        fakeTransaction.operations.updatedLocations.single.tripId,
+        tripEntry.id,
+      );
+      expect(fakeTransaction.operations.deletedLocationIds, [
+        'unused-location',
+      ]);
       verifyNever(mockRepository.updateTripEntry(any));
     });
 
@@ -147,7 +163,8 @@ class _FakeTripLocationWriteTransaction
 class _FakeTripLocationWriteTransactionOperations
     implements TripLocationWriteTransactionOperations {
   final updatedTripEntries = <TripEntry>[];
-  final savedLocations = <Location>[];
+  final createdLocations = <Location>[];
+  final updatedLocations = <Location>[];
   final deletedLocationIds = <String>[];
 
   @override
@@ -161,8 +178,13 @@ class _FakeTripLocationWriteTransactionOperations
   }
 
   @override
-  Future<void> saveLocation(Location location) async {
-    savedLocations.add(location);
+  Future<void> createLocation(Location location) async {
+    createdLocations.add(location);
+  }
+
+  @override
+  Future<void> updateLocation(Location location) async {
+    updatedLocations.add(location);
   }
 
   @override

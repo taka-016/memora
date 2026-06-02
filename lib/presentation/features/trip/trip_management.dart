@@ -7,12 +7,10 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/delete_location_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/save_location_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
@@ -128,24 +126,6 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> saveTripLocationChanges({
-      required String tripId,
-      required List<LocationDto> locationsToSave,
-      required List<String> deletedLocationIds,
-    }) async {
-      if (locationsToSave.isEmpty && deletedLocationIds.isEmpty) {
-        return;
-      }
-      final saveLocationUsecase = ref.read(saveLocationUsecaseProvider);
-      final deleteLocationUsecase = ref.read(deleteLocationUsecaseProvider);
-      for (final location in locationsToSave) {
-        await saveLocationUsecase.execute(location.copyWith(tripId: tripId));
-      }
-      for (final locationId in deletedLocationIds) {
-        await deleteLocationUsecase.execute(locationId);
-      }
-    }
-
     Future<void> handleAddTripSave(
       TripEntryDto tripEntry,
       List<LocationDto> locationsToSave,
@@ -154,10 +134,9 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        final tripId = await createTripEntryUsecase.execute(tripEntry);
-        await saveTripLocationChanges(
-          tripId: tripId,
-          locationsToSave: locationsToSave,
+        await createTripEntryUsecase.execute(
+          tripEntry,
+          locationsToCreate: locationsToSave,
           deletedLocationIds: deletedLocationIds,
         );
         if (!context.mounted) {
@@ -205,16 +184,26 @@ class TripManagement extends HookConsumerWidget {
 
     Future<void> handleEditTripSave(
       TripEntryDto tripEntry,
+      List<LocationDto> initialLocations,
       List<LocationDto> locationsToSave,
       List<String> deletedLocationIds,
     ) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final initialLocationIds = initialLocations
+          .map((location) => location.id)
+          .toSet();
+      final locationsToCreate = locationsToSave
+          .where((location) => !initialLocationIds.contains(location.id))
+          .toList();
+      final locationsToUpdate = locationsToSave
+          .where((location) => initialLocationIds.contains(location.id))
+          .toList();
 
       try {
-        await updateTripEntryUsecase.execute(tripEntry);
-        await saveTripLocationChanges(
-          tripId: tripEntry.id,
-          locationsToSave: locationsToSave,
+        await updateTripEntryUsecase.execute(
+          tripEntry,
+          locationsToCreate: locationsToCreate,
+          locationsToUpdate: locationsToUpdate,
           deletedLocationIds: deletedLocationIds,
         );
         if (!context.mounted) {
@@ -279,6 +268,7 @@ class TripManagement extends HookConsumerWidget {
             onSave: (updatedTrip, locationsToSave, deletedLocationIds) async {
               await handleEditTripSave(
                 updatedTrip,
+                locations,
                 locationsToSave,
                 deletedLocationIds,
               );

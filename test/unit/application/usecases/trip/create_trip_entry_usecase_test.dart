@@ -113,19 +113,24 @@ void main() {
 
       final result = await usecase.execute(
         tripEntry,
-        locationsToSave: const [location],
+        locationsToCreate: const [location],
         deletedLocationIds: const ['unused-location'],
       );
 
       expect(result, generatedId);
       expect(fakeTransaction.runCount, 1);
-      expect(fakeTransaction.operations.savedTripEntries.single, isA<TripEntry>());
-      expect(fakeTransaction.operations.savedLocations.single.name, '東京駅');
       expect(
-        fakeTransaction.operations.savedLocations.single.tripId,
+        fakeTransaction.operations.savedTripEntries.single,
+        isA<TripEntry>(),
+      );
+      expect(fakeTransaction.operations.createdLocations.single.name, '東京駅');
+      expect(
+        fakeTransaction.operations.createdLocations.single.tripId,
         generatedId,
       );
-      expect(fakeTransaction.operations.deletedLocationIds, ['unused-location']);
+      expect(fakeTransaction.operations.deletedLocationIds, [
+        'unused-location',
+      ]);
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
 
@@ -172,7 +177,7 @@ class _FakeTripLocationWriteTransactionOperations
     implements TripLocationWriteTransactionOperations {
   String generatedTripId = 'generated-trip-id';
   final savedTripEntries = <TripEntry>[];
-  final savedLocations = <Location>[];
+  final createdLocations = <Location>[];
   final deletedLocationIds = <String>[];
 
   @override
@@ -185,8 +190,13 @@ class _FakeTripLocationWriteTransactionOperations
   Future<void> updateTripEntry(TripEntry tripEntry) async {}
 
   @override
-  Future<void> saveLocation(Location location) async {
-    savedLocations.add(location);
+  Future<void> createLocation(Location location) async {
+    createdLocations.add(location);
+  }
+
+  @override
+  Future<void> updateLocation(Location location) async {
+    throw UnimplementedError();
   }
 
   @override
