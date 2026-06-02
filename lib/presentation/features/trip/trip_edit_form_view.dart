@@ -8,7 +8,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/map_views/expanded_location_map_dialog.dart';
+import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:uuid/uuid.dart';
@@ -257,15 +257,15 @@ class TripEditFormView extends HookWidget {
         );
       }
 
-      Future<void> showExpandedMap() async {
+      Future<void> showLocationMapDialog() async {
         var dialogLocations = List<LocationDto>.from(locations);
         await showDialog<void>(
           context: context,
           builder: (context) {
             return StatefulBuilder(
               builder: (context, setDialogState) {
-                return ExpandedLocationMapDialog(
-                  dialogKey: const Key('trip_locations_expanded_map'),
+                return LocationMapDialog(
+                  dialogKey: const Key('trip_locations_map_dialog'),
                   mapViewType: mapViewType,
                   locations: dialogLocations,
                   onMapLongTapped: onLocationCreated == null
@@ -336,7 +336,7 @@ class TripEditFormView extends HookWidget {
         width: double.infinity,
         child: ElevatedButton.icon(
           key: const Key('trip_locations_button'),
-          onPressed: showExpandedMap,
+          onPressed: showLocationMapDialog,
           icon: const Icon(Icons.place),
           label: const Text('訪問場所'),
           style: ElevatedButton.styleFrom(

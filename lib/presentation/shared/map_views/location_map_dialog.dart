@@ -5,8 +5,8 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-class ExpandedLocationMapDialog extends StatelessWidget {
-  const ExpandedLocationMapDialog({
+class LocationMapDialog extends StatelessWidget {
+  const LocationMapDialog({
     super.key,
     required this.dialogKey,
     required this.mapViewType,

@@ -365,7 +365,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const Key('itinerary_location_expanded_map')),
+        find.byKey(const Key('itinerary_location_map_dialog')),
         findsOneWidget,
       );
       expect(find.byKey(const Key('itinerary_location_map')), findsNothing);
@@ -548,7 +548,7 @@ void main() {
       await tester.tap(
         find
             .descendant(
-              of: find.byKey(const Key('itinerary_location_expanded_map')),
+              of: find.byKey(const Key('itinerary_location_map_dialog')),
               matching: find.byTooltip('閉じる'),
             )
             .first,

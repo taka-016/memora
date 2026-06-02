@@ -151,7 +151,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const Key('trip_locations_expanded_map')),
+        find.byKey(const Key('trip_locations_map_dialog')),
         findsOneWidget,
       );
       expect(find.byKey(const Key('map_view')), findsOneWidget);

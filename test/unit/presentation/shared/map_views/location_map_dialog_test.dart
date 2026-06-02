@@ -35,19 +35,13 @@ void main() {
       await tester.tap(find.text('開く'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('location_map_dialog')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('location_map_dialog')), findsOneWidget);
       expect(find.byKey(const Key('map_view')), findsOneWidget);
 
       await tester.tap(find.byTooltip('閉じる'));
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('location_map_dialog')),
-        findsNothing,
-      );
+      expect(find.byKey(const Key('location_map_dialog')), findsNothing);
     });
   });
 }

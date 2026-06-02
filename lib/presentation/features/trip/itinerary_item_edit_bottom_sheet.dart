@@ -8,7 +8,7 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/shared/map_views/expanded_location_map_dialog.dart';
+import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
@@ -364,8 +364,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   );
                 }
 
-                return ExpandedLocationMapDialog(
-                  dialogKey: const Key('itinerary_location_expanded_map'),
+                return LocationMapDialog(
+                  dialogKey: const Key('itinerary_location_map_dialog'),
                   mapViewType: mapViewType,
                   locations: dialogLocations,
                   selectedLocation: selectedLocation.value,
