@@ -8,6 +8,7 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/expanded_location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
@@ -363,62 +364,33 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   );
                 }
 
-                return Dialog(
-                  insetPadding: const EdgeInsets.all(16),
-                  shape: const RoundedRectangleBorder(),
-                  child: SizedBox(
-                    key: const Key('itinerary_location_expanded_map'),
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    child: Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            tooltip: '閉じる',
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                        Expanded(
-                          child: MapViewFactory.create(mapViewType)
-                              .createMapView(
-                                locations: dialogLocations,
-                                selectedLocation: selectedLocation.value,
-                                highlightSelectedLocation: true,
-                                locationDetailBuilder: buildLocationDetail,
-                                onMapLongTapped: onLocationCreated == null
-                                    ? null
-                                    : (coordinate) async {
-                                        await createLocationFromCoordinate(
-                                          coordinate,
-                                        );
-                                        setDialogState(() {
-                                          dialogLocations =
-                                              List<LocationDto>.from(
-                                                mapLocations.value,
-                                              );
-                                        });
-                                      },
-                                onSearchedLocationSelected:
-                                    onLocationCreated == null
-                                    ? null
-                                    : (candidate) async {
-                                        await createLocationFromCandidate(
-                                          candidate,
-                                        );
-                                        setDialogState(() {
-                                          dialogLocations =
-                                              List<LocationDto>.from(
-                                                mapLocations.value,
-                                              );
-                                        });
-                                      },
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
+                return ExpandedLocationMapDialog(
+                  dialogKey: const Key('itinerary_location_expanded_map'),
+                  mapViewType: mapViewType,
+                  locations: dialogLocations,
+                  selectedLocation: selectedLocation.value,
+                  highlightSelectedLocation: true,
+                  locationDetailBuilder: buildLocationDetail,
+                  onMapLongTapped: onLocationCreated == null
+                      ? null
+                      : (coordinate) async {
+                          await createLocationFromCoordinate(coordinate);
+                          setDialogState(() {
+                            dialogLocations = List<LocationDto>.from(
+                              mapLocations.value,
+                            );
+                          });
+                        },
+                  onSearchedLocationSelected: onLocationCreated == null
+                      ? null
+                      : (candidate) async {
+                          await createLocationFromCandidate(candidate);
+                          setDialogState(() {
+                            dialogLocations = List<LocationDto>.from(
+                              mapLocations.value,
+                            );
+                          });
+                        },
                 );
               },
             );

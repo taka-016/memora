@@ -8,6 +8,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/expanded_location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:uuid/uuid.dart';
@@ -263,90 +264,67 @@ class TripEditFormView extends HookWidget {
           builder: (context) {
             return StatefulBuilder(
               builder: (context, setDialogState) {
-                Widget createDialogMap() {
-                  return MapViewFactory.create(mapViewType).createMapView(
-                    locations: dialogLocations,
-                    onMapLongTapped: onLocationCreated == null
-                        ? null
-                        : (coordinate) async {
-                            final location = await createLocationFromCoordinate(
-                              coordinate,
-                            );
-                            setDialogState(() {
-                              dialogLocations = [...dialogLocations, location];
-                            });
-                          },
-                    onSearchedLocationSelected: onLocationCreated == null
-                        ? null
-                        : (candidate) async {
-                            final location = await createLocationFromCandidate(
-                              candidate,
-                            );
-                            setDialogState(() {
-                              dialogLocations = [...dialogLocations, location];
-                            });
-                          },
-                    onLocationTapped: (location) {
-                      selectedTripLocation.value = location;
-                      setDialogState(() {});
-                    },
-                    selectedLocation: selectedTripLocation.value,
-                    locationDetailBuilder: (location, onClose) {
-                      return buildSelectedLocationDetail(
-                        location,
-                        onClose,
-                        (updatedLocation) async {
-                          final savedLocation =
-                              await onLocationCreated?.call(updatedLocation) ??
-                              updatedLocation;
-                          selectedTripLocation.value = savedLocation;
+                return ExpandedLocationMapDialog(
+                  dialogKey: const Key('trip_locations_expanded_map'),
+                  mapViewType: mapViewType,
+                  locations: dialogLocations,
+                  onMapLongTapped: onLocationCreated == null
+                      ? null
+                      : (coordinate) async {
+                          final location = await createLocationFromCoordinate(
+                            coordinate,
+                          );
                           setDialogState(() {
-                            dialogLocations = [
-                              for (final current in dialogLocations)
-                                current.id == savedLocation.id
-                                    ? savedLocation
-                                    : current,
-                            ];
+                            dialogLocations = [...dialogLocations, location];
                           });
                         },
-                        (deletedLocation) async {
-                          await onLocationDeleted?.call(deletedLocation);
-                          selectedTripLocation.value = null;
+                  onSearchedLocationSelected: onLocationCreated == null
+                      ? null
+                      : (candidate) async {
+                          final location = await createLocationFromCandidate(
+                            candidate,
+                          );
                           setDialogState(() {
-                            dialogLocations = dialogLocations
-                                .where(
-                                  (current) => current.id != deletedLocation.id,
-                                )
-                                .toList();
+                            dialogLocations = [...dialogLocations, location];
                           });
                         },
-                      );
-                    },
-                    tripStartDate: value.startDate,
-                  );
-                }
-
-                return Dialog(
-                  insetPadding: const EdgeInsets.all(16),
-                  shape: const RoundedRectangleBorder(),
-                  child: SizedBox(
-                    key: const Key('trip_locations_expanded_map'),
-                    width: double.infinity,
-                    height: MediaQuery.of(context).size.height * 0.8,
-                    child: Column(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: IconButton(
-                            tooltip: '閉じる',
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close),
-                          ),
-                        ),
-                        Expanded(child: createDialogMap()),
-                      ],
-                    ),
-                  ),
+                  onLocationTapped: (location) {
+                    selectedTripLocation.value = location;
+                    setDialogState(() {});
+                  },
+                  selectedLocation: selectedTripLocation.value,
+                  locationDetailBuilder: (location, onClose) {
+                    return buildSelectedLocationDetail(
+                      location,
+                      onClose,
+                      (updatedLocation) async {
+                        final savedLocation =
+                            await onLocationCreated?.call(updatedLocation) ??
+                            updatedLocation;
+                        selectedTripLocation.value = savedLocation;
+                        setDialogState(() {
+                          dialogLocations = [
+                            for (final current in dialogLocations)
+                              current.id == savedLocation.id
+                                  ? savedLocation
+                                  : current,
+                          ];
+                        });
+                      },
+                      (deletedLocation) async {
+                        await onLocationDeleted?.call(deletedLocation);
+                        selectedTripLocation.value = null;
+                        setDialogState(() {
+                          dialogLocations = dialogLocations
+                              .where(
+                                (current) => current.id != deletedLocation.id,
+                              )
+                              .toList();
+                        });
+                      },
+                    );
+                  },
+                  tripStartDate: value.startDate,
                 );
               },
             );
