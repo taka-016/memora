@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/application/transactions/trip_location_write_transaction.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -16,10 +17,15 @@ import 'create_trip_entry_usecase_test.mocks.dart';
 void main() {
   late CreateTripEntryUsecase usecase;
   late MockTripEntryRepository mockTripEntryRepository;
+  late _FakeTripLocationWriteTransaction fakeTransaction;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
-    usecase = CreateTripEntryUsecase(mockTripEntryRepository);
+    fakeTransaction = _FakeTripLocationWriteTransaction();
+    usecase = CreateTripEntryUsecase(
+      mockTripEntryRepository,
+      tripLocationWriteTransaction: fakeTransaction,
+    );
   });
 
   group('CreateTripEntryUsecase', () {
@@ -103,13 +109,7 @@ void main() {
       );
       const generatedId = 'generated-trip-id';
 
-      when(
-        mockTripEntryRepository.saveTripEntryWithLocations(
-          any,
-          locationsToSave: anyNamed('locationsToSave'),
-          deletedLocationIds: anyNamed('deletedLocationIds'),
-        ),
-      ).thenAnswer((_) async => generatedId);
+      fakeTransaction.operations.generatedTripId = generatedId;
 
       final result = await usecase.execute(
         tripEntry,
@@ -118,18 +118,14 @@ void main() {
       );
 
       expect(result, generatedId);
-      final verification = verify(
-        mockTripEntryRepository.saveTripEntryWithLocations(
-          captureAny,
-          locationsToSave: captureAnyNamed('locationsToSave'),
-          deletedLocationIds: captureAnyNamed('deletedLocationIds'),
-        ),
+      expect(fakeTransaction.runCount, 1);
+      expect(fakeTransaction.operations.savedTripEntries.single, isA<TripEntry>());
+      expect(fakeTransaction.operations.savedLocations.single.name, '東京駅');
+      expect(
+        fakeTransaction.operations.savedLocations.single.tripId,
+        generatedId,
       );
-      final captured = verification.captured;
-      expect(captured[0], isA<TripEntry>());
-      expect(captured[1], isA<List<Location>>());
-      expect((captured[1] as List<Location>).single.name, '東京駅');
-      expect(captured[2], ['unused-location']);
+      expect(fakeTransaction.operations.deletedLocationIds, ['unused-location']);
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
 
@@ -155,4 +151,46 @@ void main() {
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
   });
+}
+
+class _FakeTripLocationWriteTransaction
+    implements TripLocationWriteTransaction {
+  final operations = _FakeTripLocationWriteTransactionOperations();
+  int runCount = 0;
+
+  @override
+  Future<T> run<T>(
+    Future<T> Function(TripLocationWriteTransactionOperations operations)
+    action,
+  ) async {
+    runCount += 1;
+    return action(operations);
+  }
+}
+
+class _FakeTripLocationWriteTransactionOperations
+    implements TripLocationWriteTransactionOperations {
+  String generatedTripId = 'generated-trip-id';
+  final savedTripEntries = <TripEntry>[];
+  final savedLocations = <Location>[];
+  final deletedLocationIds = <String>[];
+
+  @override
+  Future<String> saveTripEntry(TripEntry tripEntry) async {
+    savedTripEntries.add(tripEntry);
+    return generatedTripId;
+  }
+
+  @override
+  Future<void> updateTripEntry(TripEntry tripEntry) async {}
+
+  @override
+  Future<void> saveLocation(Location location) async {
+    savedLocations.add(location);
+  }
+
+  @override
+  Future<void> deleteLocation(String locationId) async {
+    deletedLocationIds.add(locationId);
+  }
 }

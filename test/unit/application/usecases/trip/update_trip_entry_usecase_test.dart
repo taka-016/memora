@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
+import 'package:memora/application/transactions/trip_location_write_transaction.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -17,10 +18,15 @@ void main() {
   group('UpdateTripEntryUsecase', () {
     late UpdateTripEntryUsecase usecase;
     late MockTripEntryRepository mockRepository;
+    late _FakeTripLocationWriteTransaction fakeTransaction;
 
     setUp(() {
       mockRepository = MockTripEntryRepository();
-      usecase = UpdateTripEntryUsecase(mockRepository);
+      fakeTransaction = _FakeTripLocationWriteTransaction();
+      usecase = UpdateTripEntryUsecase(
+        mockRepository,
+        tripLocationWriteTransaction: fakeTransaction,
+      );
     });
 
     test('旅行エントリが正常に更新されること', () async {
@@ -78,32 +84,23 @@ void main() {
         longitude: 139.767125,
       );
 
-      when(
-        mockRepository.updateTripEntryWithLocations(
-          any,
-          locationsToSave: anyNamed('locationsToSave'),
-          deletedLocationIds: anyNamed('deletedLocationIds'),
-        ),
-      ).thenAnswer((_) async {});
-
       await usecase.execute(
         tripEntry,
         locationsToSave: const [location],
         deletedLocationIds: const ['unused-location'],
       );
 
-      final verification = verify(
-        mockRepository.updateTripEntryWithLocations(
-          captureAny,
-          locationsToSave: captureAnyNamed('locationsToSave'),
-          deletedLocationIds: captureAnyNamed('deletedLocationIds'),
-        ),
+      expect(fakeTransaction.runCount, 1);
+      expect(
+        fakeTransaction.operations.updatedTripEntries.single,
+        isA<TripEntry>(),
       );
-      final captured = verification.captured;
-      expect(captured[0], isA<TripEntry>());
-      expect(captured[1], isA<List<Location>>());
-      expect((captured[1] as List<Location>).single.name, '東京駅');
-      expect(captured[2], ['unused-location']);
+      expect(fakeTransaction.operations.savedLocations.single.name, '東京駅');
+      expect(
+        fakeTransaction.operations.savedLocations.single.tripId,
+        tripEntry.id,
+      );
+      expect(fakeTransaction.operations.deletedLocationIds, ['unused-location']);
       verifyNever(mockRepository.updateTripEntry(any));
     });
 
@@ -130,4 +127,46 @@ void main() {
       verifyNever(mockRepository.updateTripEntry(any));
     });
   });
+}
+
+class _FakeTripLocationWriteTransaction
+    implements TripLocationWriteTransaction {
+  final operations = _FakeTripLocationWriteTransactionOperations();
+  int runCount = 0;
+
+  @override
+  Future<T> run<T>(
+    Future<T> Function(TripLocationWriteTransactionOperations operations)
+    action,
+  ) async {
+    runCount += 1;
+    return action(operations);
+  }
+}
+
+class _FakeTripLocationWriteTransactionOperations
+    implements TripLocationWriteTransactionOperations {
+  final updatedTripEntries = <TripEntry>[];
+  final savedLocations = <Location>[];
+  final deletedLocationIds = <String>[];
+
+  @override
+  Future<String> saveTripEntry(TripEntry tripEntry) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateTripEntry(TripEntry tripEntry) async {
+    updatedTripEntries.add(tripEntry);
+  }
+
+  @override
+  Future<void> saveLocation(Location location) async {
+    savedLocations.add(location);
+  }
+
+  @override
+  Future<void> deleteLocation(String locationId) async {
+    deletedLocationIds.add(locationId);
+  }
 }
