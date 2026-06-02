@@ -2,13 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/transactions/trip_location_write_transaction.dart';
+import 'package:memora/application/transactions/trip_write_unit_of_work.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
+import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
 import 'update_trip_entry_usecase_test.mocks.dart';
@@ -18,14 +19,14 @@ void main() {
   group('UpdateTripEntryUsecase', () {
     late UpdateTripEntryUsecase usecase;
     late MockTripEntryRepository mockRepository;
-    late _FakeTripLocationWriteTransaction fakeTransaction;
+    late _FakeTripWriteUnitOfWork fakeUnitOfWork;
 
     setUp(() {
       mockRepository = MockTripEntryRepository();
-      fakeTransaction = _FakeTripLocationWriteTransaction();
+      fakeUnitOfWork = _FakeTripWriteUnitOfWork();
       usecase = UpdateTripEntryUsecase(
         mockRepository,
-        tripLocationWriteTransaction: fakeTransaction,
+        tripWriteUnitOfWork: fakeUnitOfWork,
       );
     });
 
@@ -99,22 +100,36 @@ void main() {
         deletedLocationIds: const ['unused-location'],
       );
 
-      expect(fakeTransaction.runCount, 1);
+      expect(fakeUnitOfWork.runCount, 1);
       expect(
-        fakeTransaction.operations.updatedTripEntries.single,
+        fakeUnitOfWork
+            .repositories
+            .tripEntryRepository
+            .updatedTripEntries
+            .single,
         isA<TripEntry>(),
       );
-      expect(fakeTransaction.operations.createdLocations.single.name, '東京駅');
       expect(
-        fakeTransaction.operations.createdLocations.single.tripId,
+        fakeUnitOfWork.repositories.locationRepository.savedLocations.single
+            .name,
+        '東京駅',
+      );
+      expect(
+        fakeUnitOfWork.repositories.locationRepository.savedLocations.single
+            .tripId,
         tripEntry.id,
       );
-      expect(fakeTransaction.operations.updatedLocations.single.name, '上野駅');
       expect(
-        fakeTransaction.operations.updatedLocations.single.tripId,
+        fakeUnitOfWork.repositories.locationRepository.updatedLocations.single
+            .name,
+        '上野駅',
+      );
+      expect(
+        fakeUnitOfWork.repositories.locationRepository.updatedLocations.single
+            .tripId,
         tripEntry.id,
       );
-      expect(fakeTransaction.operations.deletedLocationIds, [
+      expect(fakeUnitOfWork.repositories.locationRepository.deletedLocationIds, [
         'unused-location',
       ]);
       verifyNever(mockRepository.updateTripEntry(any));
@@ -145,27 +160,27 @@ void main() {
   });
 }
 
-class _FakeTripLocationWriteTransaction
-    implements TripLocationWriteTransaction {
-  final operations = _FakeTripLocationWriteTransactionOperations();
+class _FakeTripWriteUnitOfWork implements TripWriteUnitOfWork {
+  final repositories = _FakeTripWriteRepositories();
   int runCount = 0;
 
   @override
   Future<T> run<T>(
-    Future<T> Function(TripLocationWriteTransactionOperations operations)
-    action,
+    Future<T> Function(TripWriteRepositories repositories) action,
   ) async {
     runCount += 1;
-    return action(operations);
+    return action(repositories);
   }
 }
 
-class _FakeTripLocationWriteTransactionOperations
-    implements TripLocationWriteTransactionOperations {
+class _FakeTripWriteRepositories implements TripWriteRepositories {
+  final _FakeTripEntryRepository tripEntryRepository =
+      _FakeTripEntryRepository();
+  final _FakeLocationRepository locationRepository = _FakeLocationRepository();
+}
+
+class _FakeTripEntryRepository implements TripEntryRepository {
   final updatedTripEntries = <TripEntry>[];
-  final createdLocations = <Location>[];
-  final updatedLocations = <Location>[];
-  final deletedLocationIds = <String>[];
 
   @override
   Future<String> saveTripEntry(TripEntry tripEntry) async {
@@ -178,8 +193,20 @@ class _FakeTripLocationWriteTransactionOperations
   }
 
   @override
-  Future<void> createLocation(Location location) async {
-    createdLocations.add(location);
+  Future<void> deleteTripEntry(String tripId) async {}
+
+  @override
+  Future<void> deleteTripEntriesByGroupId(String groupId) async {}
+}
+
+class _FakeLocationRepository implements LocationRepository {
+  final savedLocations = <Location>[];
+  final updatedLocations = <Location>[];
+  final deletedLocationIds = <String>[];
+
+  @override
+  Future<void> saveLocation(Location location) async {
+    savedLocations.add(location);
   }
 
   @override
