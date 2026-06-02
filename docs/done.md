@@ -937,6 +937,7 @@
 
 ## リファクタリング
 
+- 旅行編集と旅程編集の拡大マップダイアログを共通化する
 - 単純な手書きFake/MockをMockito生成モックへ置き換える
   - `test/unit/application/usecases/account/get_current_user_usecase_test.dart`の手書き`MockAuthService`を`@GenerateMocks([AuthService])`へ置き換える
   - DVCユースケースの単純な手書きRepository/QueryService Fakeを生成モックへ置き換える
