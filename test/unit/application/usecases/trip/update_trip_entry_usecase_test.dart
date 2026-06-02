@@ -191,8 +191,11 @@ class _FakeTripWriteUnitOfWork implements TripWriteUnitOfWork {
 }
 
 class _FakeTripWriteRepositories implements TripWriteRepositories {
+  @override
   final _FakeTripEntryRepository tripEntryRepository =
       _FakeTripEntryRepository();
+
+  @override
   final _FakeLocationRepository locationRepository = _FakeLocationRepository();
 }
 
