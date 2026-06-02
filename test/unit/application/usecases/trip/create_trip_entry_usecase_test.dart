@@ -85,7 +85,7 @@ void main() {
       expect(() => usecase.execute(tripEntry), returnsNormally);
     });
 
-    test('場所差分を旅行作成と同じリポジトリ呼び出しへ渡すこと', () async {
+    test('場所差分を旅行作成と同じトランザクションで保存すること', () async {
       final tripEntry = TripEntryDto(
         id: '',
         groupId: 'group123',

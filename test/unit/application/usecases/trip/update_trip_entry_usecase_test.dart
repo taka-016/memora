@@ -61,7 +61,7 @@ void main() {
       expect(updatedEntry.itineraryItems.first.name, '朝食');
     });
 
-    test('場所差分を旅行更新と同じリポジトリ呼び出しへ渡すこと', () async {
+    test('場所差分を旅行更新と同じトランザクションで保存すること', () async {
       final tripEntry = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
