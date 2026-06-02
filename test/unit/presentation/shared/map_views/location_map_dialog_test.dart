@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/presentation/shared/map_views/expanded_location_map_dialog.dart';
+import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 void main() {
-  group('ExpandedLocationMapDialog', () {
-    testWidgets('共通の拡大マップダイアログを表示して閉じられること', (tester) async {
+  group('LocationMapDialog', () {
+    testWidgets('共通のマップダイアログを表示して閉じられること', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -16,8 +16,8 @@ void main() {
                     showDialog<void>(
                       context: context,
                       builder: (_) {
-                        return const ExpandedLocationMapDialog(
-                          dialogKey: Key('expanded_location_map_dialog'),
+                        return const LocationMapDialog(
+                          dialogKey: Key('location_map_dialog'),
                           mapViewType: MapViewType.placeholder,
                           locations: [],
                         );
@@ -36,7 +36,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const Key('expanded_location_map_dialog')),
+        find.byKey(const Key('location_map_dialog')),
         findsOneWidget,
       );
       expect(find.byKey(const Key('map_view')), findsOneWidget);
@@ -45,7 +45,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.byKey(const Key('expanded_location_map_dialog')),
+        find.byKey(const Key('location_map_dialog')),
         findsNothing,
       );
     });
