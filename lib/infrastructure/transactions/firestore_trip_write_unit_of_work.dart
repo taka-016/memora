@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/transactions/trip_write_unit_of_work.dart';
 import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
+import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_location_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 
@@ -16,11 +17,19 @@ class FirestoreTripWriteUnitOfWork implements TripWriteUnitOfWork {
     Future<T> Function(TripWriteRepositories repositories) action,
   ) {
     return _firestore.runTransaction<T>((transaction) async {
+      final writeContext = FirestoreTransactionWriteContext(
+        firestore: _firestore,
+        transaction: transaction,
+      );
       final repositories = _FirestoreTripWriteRepositories(
         tripEntryRepository: FirestoreTripEntryRepository(
           firestore: _firestore,
+          writeContext: writeContext,
         ),
-        locationRepository: FirestoreLocationRepository(firestore: _firestore),
+        locationRepository: FirestoreLocationRepository(
+          firestore: _firestore,
+          writeContext: writeContext,
+        ),
       );
       return action(repositories);
     });

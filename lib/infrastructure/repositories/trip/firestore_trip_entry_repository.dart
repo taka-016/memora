@@ -6,146 +6,172 @@ import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapp
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
+import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
 
 class FirestoreTripEntryRepository implements TripEntryRepository {
   final FirebaseFirestore _firestore;
+  final FirestoreWriteContext? _writeContext;
 
-  FirestoreTripEntryRepository({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreTripEntryRepository({
+    FirebaseFirestore? firestore,
+    FirestoreWriteContext? writeContext,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _writeContext = writeContext;
 
   @override
   Future<String> saveTripEntry(TripEntry tripEntry) async {
-    final batch = _firestore.batch();
-
-    final tripDocRef = _firestore.collection('trip_entries').doc();
-    batch.set(
-      tripDocRef,
-      FirestoreTripEntryMapper.toCreateFirestore(tripEntry),
-    );
-    final tasksCollection = _firestore.collection('tasks');
-    final itineraryItemsCollection = _firestore.collection('itinerary_items');
-
-    for (final Task task in tripEntry.tasks) {
-      final taskDocRef = tasksCollection.doc(task.id);
-      batch.set(
-        taskDocRef,
-        FirestoreTaskMapper.toCreateFirestore(
-          task.copyWith(tripId: tripDocRef.id),
-        ),
+    return _runWrite((context) async {
+      final tripDocRef = context.collection('trip_entries').doc();
+      context.set(
+        tripDocRef,
+        FirestoreTripEntryMapper.toCreateFirestore(tripEntry),
       );
-    }
-
-    for (final ItineraryItem item in tripEntry.itineraryItems) {
-      final itemDocRef = itineraryItemsCollection.doc(item.id);
-      batch.set(
-        itemDocRef,
-        FirestoreItineraryItemMapper.toCreateFirestore(
-          item.copyWith(tripId: tripDocRef.id),
-        ),
+      _createTasks(context, tripEntry.tasks, tripId: tripDocRef.id);
+      _createItineraryItems(
+        context,
+        tripEntry.itineraryItems,
+        tripId: tripDocRef.id,
       );
-    }
-
-    await batch.commit();
-    return tripDocRef.id;
+      return tripDocRef.id;
+    });
   }
 
   @override
   Future<void> updateTripEntry(TripEntry tripEntry) async {
-    final batch = _firestore.batch();
-    final tasksCollection = _firestore.collection('tasks');
-    final itineraryItemsCollection = _firestore.collection('itinerary_items');
+    await _runWrite((context) async {
+      final tasksCollection = context.collection('tasks');
+      final itineraryItemsCollection = context.collection('itinerary_items');
 
-    batch.update(
-      _firestore.collection('trip_entries').doc(tripEntry.id),
-      FirestoreTripEntryMapper.toUpdateFirestore(tripEntry),
-    );
-
-    final tasksSnapshot = await tasksCollection
-        .where('tripId', isEqualTo: tripEntry.id)
-        .get();
-    for (final taskDoc in tasksSnapshot.docs) {
-      batch.delete(taskDoc.reference);
-    }
-
-    final itineraryItemsSnapshot = await itineraryItemsCollection
-        .where('tripId', isEqualTo: tripEntry.id)
-        .get();
-    for (final itemDoc in itineraryItemsSnapshot.docs) {
-      batch.delete(itemDoc.reference);
-    }
-
-    for (final Task task in tripEntry.tasks) {
-      final taskDocRef = tasksCollection.doc(task.id);
-      batch.set(
-        taskDocRef,
-        FirestoreTaskMapper.toCreateFirestore(
-          task.copyWith(tripId: tripEntry.id),
-        ),
+      final tasksSnapshot = await context.get(
+        tasksCollection.where('tripId', isEqualTo: tripEntry.id),
       );
-    }
-
-    for (final ItineraryItem item in tripEntry.itineraryItems) {
-      final itemDocRef = itineraryItemsCollection.doc(item.id);
-      batch.set(
-        itemDocRef,
-        FirestoreItineraryItemMapper.toCreateFirestore(
-          item.copyWith(tripId: tripEntry.id),
-        ),
+      final itineraryItemsSnapshot = await context.get(
+        itineraryItemsCollection.where('tripId', isEqualTo: tripEntry.id),
       );
-    }
 
-    await batch.commit();
+      context.update(
+        context.collection('trip_entries').doc(tripEntry.id),
+        FirestoreTripEntryMapper.toUpdateFirestore(tripEntry),
+      );
+
+      for (final taskDoc in tasksSnapshot.docs) {
+        context.delete(taskDoc.reference);
+      }
+      for (final itemDoc in itineraryItemsSnapshot.docs) {
+        context.delete(itemDoc.reference);
+      }
+
+      _createTasks(context, tripEntry.tasks, tripId: tripEntry.id);
+      _createItineraryItems(
+        context,
+        tripEntry.itineraryItems,
+        tripId: tripEntry.id,
+      );
+    });
   }
 
   @override
   Future<void> deleteTripEntry(String tripId) async {
-    final batch = _firestore.batch();
+    await _runWrite((context) async {
+      final tasksSnapshot = await context.get(
+        context.collection('tasks').where('tripId', isEqualTo: tripId),
+      );
+      for (final taskDoc in tasksSnapshot.docs) {
+        context.delete(taskDoc.reference);
+      }
 
-    final tasksSnapshot = await _firestore
-        .collection('tasks')
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final taskDoc in tasksSnapshot.docs) {
-      batch.delete(taskDoc.reference);
-    }
+      final itineraryItemsSnapshot = await context.get(
+        context
+            .collection('itinerary_items')
+            .where('tripId', isEqualTo: tripId),
+      );
+      for (final itemDoc in itineraryItemsSnapshot.docs) {
+        context.delete(itemDoc.reference);
+      }
 
-    final itineraryItemsSnapshot = await _firestore
-        .collection('itinerary_items')
-        .where('tripId', isEqualTo: tripId)
-        .get();
-    for (final itemDoc in itineraryItemsSnapshot.docs) {
-      batch.delete(itemDoc.reference);
-    }
-
-    batch.delete(_firestore.collection('trip_entries').doc(tripId));
-    await batch.commit();
+      context.delete(context.collection('trip_entries').doc(tripId));
+    });
   }
 
   @override
   Future<void> deleteTripEntriesByGroupId(String groupId) async {
-    final batch = _firestore.batch();
+    await _runWrite((context) async {
+      final tripEntriesSnapshot = await context.get(
+        context.collection('trip_entries').where('groupId', isEqualTo: groupId),
+      );
+      for (final tripEntryDoc in tripEntriesSnapshot.docs) {
+        final tasksSnapshot = await context.get(
+          context
+              .collection('tasks')
+              .where('tripId', isEqualTo: tripEntryDoc.id),
+        );
+        for (final taskDoc in tasksSnapshot.docs) {
+          context.delete(taskDoc.reference);
+        }
+        final itineraryItemsSnapshot = await context.get(
+          context
+              .collection('itinerary_items')
+              .where('tripId', isEqualTo: tripEntryDoc.id),
+        );
+        for (final itemDoc in itineraryItemsSnapshot.docs) {
+          context.delete(itemDoc.reference);
+        }
+        context.delete(tripEntryDoc.reference);
+      }
+    });
+  }
 
-    final tripEntriesSnapshot = await _firestore
-        .collection('trip_entries')
-        .where('groupId', isEqualTo: groupId)
-        .get();
-    for (final tripEntryDoc in tripEntriesSnapshot.docs) {
-      final tasksSnapshot = await _firestore
-          .collection('tasks')
-          .where('tripId', isEqualTo: tripEntryDoc.id)
-          .get();
-      for (final taskDoc in tasksSnapshot.docs) {
-        batch.delete(taskDoc.reference);
-      }
-      final itineraryItemsSnapshot = await _firestore
-          .collection('itinerary_items')
-          .where('tripId', isEqualTo: tripEntryDoc.id)
-          .get();
-      for (final itemDoc in itineraryItemsSnapshot.docs) {
-        batch.delete(itemDoc.reference);
-      }
-      batch.delete(tripEntryDoc.reference);
+  Future<T> _runWrite<T>(
+    Future<T> Function(FirestoreWriteContext context) action,
+  ) async {
+    final sharedContext = _writeContext;
+    if (sharedContext != null) {
+      return action(sharedContext);
     }
-    await batch.commit();
+
+    final context = FirestoreBatchWriteContext(firestore: _firestore);
+    final result = await action(context);
+    await context.commit();
+    return result;
+  }
+
+  void _createTasks(
+    FirestoreWriteContext context,
+    List<Task> tasks, {
+    required String tripId,
+  }) {
+    if (tasks.isEmpty) {
+      return;
+    }
+
+    final tasksCollection = context.collection('tasks');
+    for (final task in tasks) {
+      final taskDocRef = tasksCollection.doc(task.id);
+      context.set(
+        taskDocRef,
+        FirestoreTaskMapper.toCreateFirestore(task.copyWith(tripId: tripId)),
+      );
+    }
+  }
+
+  void _createItineraryItems(
+    FirestoreWriteContext context,
+    List<ItineraryItem> itineraryItems, {
+    required String tripId,
+  }) {
+    if (itineraryItems.isEmpty) {
+      return;
+    }
+
+    final itineraryItemsCollection = context.collection('itinerary_items');
+    for (final item in itineraryItems) {
+      final itemDocRef = itineraryItemsCollection.doc(item.id);
+      context.set(
+        itemDocRef,
+        FirestoreItineraryItemMapper.toCreateFirestore(
+          item.copyWith(tripId: tripId),
+        ),
+      );
+    }
   }
 }
