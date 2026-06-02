@@ -41,15 +41,18 @@ void main() {
         longitude: 139.767125,
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
 
-      when(
-        mockLocationsCollection.add(any),
-      ).thenAnswer((_) async => mockDocRef);
+      when(mockLocationsCollection.doc()).thenReturn(mockDocRef);
+      when(mockDocRef.id).thenReturn('generated-location-id');
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.saveLocation(location);
 
       verify(
-        mockLocationsCollection.add(
+        mockBatch.set(
+          mockDocRef,
           argThat(
             allOf([
               containsPair('tripId', 'trip-1'),
@@ -61,10 +64,10 @@ void main() {
           ),
         ),
       ).called(1);
-      verifyNever(mockLocationsCollection.doc(any));
+      verify(mockBatch.commit()).called(1);
     });
 
-    test('saveLocationはidが指定されている場合にcreatedAtを更新せず指定idのドキュメントへ保存する', () async {
+    test('saveLocationはidが指定されている場合に指定idのドキュメントへ新規保存する', () async {
       final location = Location(
         id: 'location-1',
         tripId: 'trip-1',
@@ -74,28 +77,30 @@ void main() {
         longitude: 139.767125,
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
 
       when(mockLocationsCollection.doc('location-1')).thenReturn(mockDocRef);
-      when(mockDocRef.set(any, any)).thenAnswer((_) async {});
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.saveLocation(location);
 
       verify(mockLocationsCollection.doc('location-1')).called(1);
       verify(
-        mockDocRef.set(
+        mockBatch.set(
+          mockDocRef,
           argThat(
             allOf([
               containsPair('tripId', 'trip-1'),
               containsPair('groupId', 'group-1'),
               containsPair('name', '東京駅'),
-              isNot(contains('createdAt')),
+              contains('createdAt'),
               contains('updatedAt'),
             ]),
           ),
-          any,
         ),
       ).called(1);
-      verifyNever(mockLocationsCollection.add(any));
+      verify(mockBatch.commit()).called(1);
     });
 
     test('updateLocationは既存ドキュメントをupdateしcreatedAtを更新しない', () async {
@@ -108,14 +113,17 @@ void main() {
         longitude: 139.767125,
       );
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
+      final mockBatch = MockWriteBatch();
 
       when(mockLocationsCollection.doc('location-1')).thenReturn(mockDocRef);
-      when(mockDocRef.update(any)).thenAnswer((_) async {});
+      when(mockFirestore.batch()).thenReturn(mockBatch);
+      when(mockBatch.commit()).thenAnswer((_) async {});
 
       await repository.updateLocation(location);
 
       verify(
-        mockDocRef.update(
+        mockBatch.update(
+          mockDocRef,
           argThat(
             allOf([
               containsPair('tripId', 'trip-1'),
@@ -127,7 +135,7 @@ void main() {
           ),
         ),
       ).called(1);
-      verifyNever(mockDocRef.set(any));
+      verify(mockBatch.commit()).called(1);
     });
   });
 }

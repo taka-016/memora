@@ -8,9 +8,16 @@ import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_location_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 import 'package:memora/infrastructure/transactions/firestore_trip_write_unit_of_work.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import 'firestore_trip_location_write_transaction_test.mocks.dart';
+@GenerateMocks([
+  FirebaseFirestore,
+  Transaction,
+  CollectionReference,
+  DocumentReference,
+])
+import 'firestore_trip_write_unit_of_work_test.mocks.dart';
 
 void main() {
   group('FirestoreTripWriteUnitOfWork', () {

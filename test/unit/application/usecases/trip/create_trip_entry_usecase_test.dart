@@ -126,18 +126,27 @@ void main() {
         isA<TripEntry>(),
       );
       expect(
-        fakeUnitOfWork.repositories.locationRepository.savedLocations.single
+        fakeUnitOfWork
+            .repositories
+            .locationRepository
+            .savedLocations
+            .single
             .name,
         '東京駅',
       );
       expect(
-        fakeUnitOfWork.repositories.locationRepository.savedLocations.single
+        fakeUnitOfWork
+            .repositories
+            .locationRepository
+            .savedLocations
+            .single
             .tripId,
         generatedId,
       );
-      expect(fakeUnitOfWork.repositories.locationRepository.deletedLocationIds, [
-        'unused-location',
-      ]);
+      expect(
+        fakeUnitOfWork.repositories.locationRepository.deletedLocationIds,
+        ['unused-location'],
+      );
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
 
