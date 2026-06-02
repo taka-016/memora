@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
@@ -75,6 +77,60 @@ void main() {
 
       // act & assert
       expect(() => usecase.execute(tripEntry), returnsNormally);
+    });
+
+    test('場所差分を旅行作成と同じリポジトリ呼び出しへ渡すこと', () async {
+      final tripEntry = TripEntryDto(
+        id: '',
+        groupId: 'group123',
+        year: 2024,
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item001',
+            tripId: '',
+            name: '朝食',
+            locationId: 'location-1',
+          ),
+        ],
+      );
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: '',
+        groupId: 'group123',
+        name: '東京駅',
+        latitude: 35.681236,
+        longitude: 139.767125,
+      );
+      const generatedId = 'generated-trip-id';
+
+      when(
+        mockTripEntryRepository.saveTripEntryWithLocations(
+          any,
+          locationsToSave: anyNamed('locationsToSave'),
+          deletedLocationIds: anyNamed('deletedLocationIds'),
+        ),
+      ).thenAnswer((_) async => generatedId);
+
+      final result = await usecase.execute(
+        tripEntry,
+        locationsToSave: const [location],
+        deletedLocationIds: const ['unused-location'],
+      );
+
+      expect(result, generatedId);
+      final verification = verify(
+        mockTripEntryRepository.saveTripEntryWithLocations(
+          captureAny,
+          locationsToSave: captureAnyNamed('locationsToSave'),
+          deletedLocationIds: captureAnyNamed('deletedLocationIds'),
+        ),
+      );
+      final captured = verification.captured;
+      expect(captured[0], isA<TripEntry>());
+      expect(captured[1], isA<List<Location>>());
+      expect((captured[1] as List<Location>).single.name, '東京駅');
+      expect(captured[2], ['unused-location']);
+      verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
 
     test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {

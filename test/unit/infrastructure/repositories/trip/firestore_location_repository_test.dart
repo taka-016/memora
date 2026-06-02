@@ -64,7 +64,7 @@ void main() {
       verifyNever(mockLocationsCollection.doc(any));
     });
 
-    test('saveLocationはidが指定されている場合に指定idのドキュメントへ保存する', () async {
+    test('saveLocationはidが指定されている場合にcreatedAtを更新せず指定idのドキュメントへ保存する', () async {
       final location = Location(
         id: 'location-1',
         tripId: 'trip-1',
@@ -88,7 +88,7 @@ void main() {
               containsPair('tripId', 'trip-1'),
               containsPair('groupId', 'group-1'),
               containsPair('name', '東京駅'),
-              contains('createdAt'),
+              isNot(contains('createdAt')),
               contains('updatedAt'),
             ]),
           ),
