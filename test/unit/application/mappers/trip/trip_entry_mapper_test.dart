@@ -1,9 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 
@@ -18,6 +20,16 @@ void main() {
         startDate: DateTime(2024, 7, 1),
         endDate: DateTime(2024, 7, 5),
         memo: '海水浴に行く',
+        locations: const [
+          LocationDto(
+            id: 'location-010',
+            tripId: 'trip-003',
+            groupId: 'group-003',
+            name: '海水浴場',
+            latitude: 35,
+            longitude: 139,
+          ),
+        ],
         tasks: [
           TaskDto(
             id: 'task-010',
@@ -51,6 +63,16 @@ void main() {
           startDate: DateTime(2024, 7, 1),
           endDate: DateTime(2024, 7, 5),
           memo: '海水浴に行く',
+          locations: [
+            Location(
+              id: 'location-010',
+              tripId: 'trip-003',
+              groupId: 'group-003',
+              name: '海水浴場',
+              latitude: 35,
+              longitude: 139,
+            ),
+          ],
           tasks: [
             Task(
               id: 'task-010',

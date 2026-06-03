@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 
@@ -19,6 +20,7 @@ void main() {
       expect(dto.startDate, isNull);
       expect(dto.endDate, isNull);
       expect(dto.memo, isNull);
+      expect(dto.locations, isNull);
       expect(dto.tasks, isNull);
       expect(dto.itineraryItems, isNull);
     });
@@ -36,6 +38,16 @@ void main() {
       const itineraryItems = [
         ItineraryItemDto(id: 'item-1', tripId: 'trip-entry-123', name: '朝食'),
       ];
+      const locations = [
+        LocationDto(
+          id: 'location-1',
+          tripId: 'trip-entry-123',
+          groupId: 'group-456',
+          name: '東京駅',
+          latitude: 35.681236,
+          longitude: 139.767125,
+        ),
+      ];
 
       final dto = TripEntryDto(
         id: 'trip-entry-123',
@@ -45,12 +57,14 @@ void main() {
         startDate: DateTime(2024, 5, 1),
         endDate: DateTime(2024, 5, 3),
         memo: '家族旅行のメモ',
+        locations: locations,
         tasks: tasks,
         itineraryItems: itineraryItems,
       );
 
       expect(dto.name, '春の旅行');
       expect(dto.memo, '家族旅行のメモ');
+      expect(dto.locations, locations);
       expect(dto.tasks, tasks);
       expect(dto.itineraryItems, itineraryItems);
     });
@@ -62,6 +76,7 @@ void main() {
         year: 2024,
         name: '元の旅行名',
         memo: '元のメモ',
+        locations: const [],
         tasks: [
           TaskDto(
             id: 'task-1',
@@ -78,6 +93,15 @@ void main() {
         startDate: DateTime(2024, 6, 1),
         endDate: DateTime(2024, 6, 3),
         memo: '新しいメモ',
+        locations: const [
+          LocationDto(
+            id: 'location-1',
+            tripId: 'trip-entry-123',
+            groupId: 'group-456',
+            latitude: 35,
+            longitude: 139,
+          ),
+        ],
         tasks: [
           TaskDto(
             id: 'task-2',
@@ -93,6 +117,7 @@ void main() {
       expect(copiedDto.startDate, DateTime(2024, 6, 1));
       expect(copiedDto.endDate, DateTime(2024, 6, 3));
       expect(copiedDto.memo, '新しいメモ');
+      expect(copiedDto.locations?.single.id, 'location-1');
       expect(copiedDto.tasks?.single.id, 'task-2');
     });
 

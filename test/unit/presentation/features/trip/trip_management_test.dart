@@ -7,7 +7,6 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
-import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:mockito/annotations.dart';
@@ -19,17 +18,11 @@ import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
 
-@GenerateMocks([
-  TripEntryRepository,
-  TripEntryQueryService,
-  GroupQueryService,
-  LocationQueryService,
-])
+@GenerateMocks([TripEntryRepository, TripEntryQueryService, GroupQueryService])
 void main() {
   late MockTripEntryRepository mockTripEntryRepository;
   late MockTripEntryQueryService mockTripEntryQueryService;
   late MockGroupQueryService mockGroupQueryService;
-  late MockLocationQueryService mockLocationQueryService;
   late List<TripEntryDto> testTripEntries;
   late List<LocationDto> testLocations;
   late TripEntryDto detailedTripEntry;
@@ -42,7 +35,6 @@ void main() {
     mockTripEntryRepository = MockTripEntryRepository();
     mockTripEntryQueryService = MockTripEntryQueryService();
     mockGroupQueryService = MockGroupQueryService();
-    mockLocationQueryService = MockLocationQueryService();
 
     testGroupMembers = [
       GroupMemberDto(
@@ -73,10 +65,6 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => testGroup);
-    when(
-      mockLocationQueryService.getLocationsByTripId(any),
-    ).thenAnswer((_) async => const []);
-
     testTripEntries = [
       TripEntryDto(
         id: 'trip-1',
@@ -98,7 +86,6 @@ void main() {
       ),
     ];
 
-    detailedTripEntry = testTripEntries.first;
     testLocations = const [
       LocationDto(
         id: 'location-1',
@@ -109,6 +96,9 @@ void main() {
         longitude: 141.350755,
       ),
     ];
+    detailedTripEntry = testTripEntries.first.copyWith(
+      locations: testLocations,
+    );
   });
 
   Widget createApp({
@@ -116,7 +106,6 @@ void main() {
     TripEntryRepository? tripEntryRepository,
     TripEntryQueryService? tripEntryQueryService,
     GroupQueryService? groupQueryService,
-    LocationQueryService? locationQueryService,
   }) {
     return ProviderScope(
       overrides: [
@@ -128,9 +117,6 @@ void main() {
         ),
         groupQueryServiceProvider.overrideWithValue(
           groupQueryService ?? mockGroupQueryService,
-        ),
-        locationQueryServiceProvider.overrideWithValue(
-          locationQueryService ?? mockLocationQueryService,
         ),
       ],
       child: MaterialApp(home: home),
@@ -346,9 +332,6 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
-      when(
-        mockLocationQueryService.getLocationsByTripId('trip-1'),
-      ).thenAnswer((_) async => testLocations);
       // Act
       await tester.pumpWidget(
         createApp(
@@ -382,7 +365,6 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
-      verify(mockLocationQueryService.getLocationsByTripId('trip-1')).called(1);
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {

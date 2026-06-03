@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
@@ -15,6 +16,16 @@ void main() {
         startDate: DateTime(2024, 7),
         endDate: DateTime(2024, 7, 10),
         memo: '家族旅行',
+        locations: [
+          Location(
+            id: 'location1',
+            tripId: 'trip1',
+            groupId: 'group1',
+            name: 'パリ',
+            latitude: 48.8566,
+            longitude: 2.3522,
+          ),
+        ],
         tasks: [
           Task(
             id: 'task1',
@@ -36,6 +47,7 @@ void main() {
 
       expect(entry.id, 'trip1');
       expect(entry.groupId, 'group1');
+      expect(entry.locations, hasLength(1));
       expect(entry.tasks, hasLength(1));
       expect(entry.itineraryItems, hasLength(1));
     });

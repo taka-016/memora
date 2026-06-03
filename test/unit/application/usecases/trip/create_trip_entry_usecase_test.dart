@@ -2,14 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/transactions/write_transaction.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
-import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 
 import 'create_trip_entry_usecase_test.mocks.dart';
@@ -18,15 +15,10 @@ import 'create_trip_entry_usecase_test.mocks.dart';
 void main() {
   late CreateTripEntryUsecase usecase;
   late MockTripEntryRepository mockTripEntryRepository;
-  late _FakeWriteTransaction fakeWriteTransaction;
 
   setUp(() {
     mockTripEntryRepository = MockTripEntryRepository();
-    fakeWriteTransaction = _FakeWriteTransaction();
-    usecase = CreateTripEntryUsecase(
-      mockTripEntryRepository,
-      writeTransaction: fakeWriteTransaction,
-    );
+    usecase = CreateTripEntryUsecase(mockTripEntryRepository);
   });
 
   group('CreateTripEntryUsecase', () {
@@ -86,11 +78,21 @@ void main() {
       expect(() => usecase.execute(tripEntry), returnsNormally);
     });
 
-    test('場所差分を旅行作成と同じトランザクションで保存すること', () async {
+    test('訪問場所を旅行の子要素として保存すること', () async {
       final tripEntry = TripEntryDto(
         id: '',
         groupId: 'group123',
         year: 2024,
+        locations: const [
+          LocationDto(
+            id: 'location-1',
+            tripId: '',
+            groupId: 'group123',
+            name: '東京駅',
+            latitude: 35.681236,
+            longitude: 139.767125,
+          ),
+        ],
         itineraryItems: const [
           ItineraryItemDto(
             id: 'item001',
@@ -100,53 +102,21 @@ void main() {
           ),
         ],
       );
-      const location = LocationDto(
-        id: 'location-1',
-        tripId: '',
-        groupId: 'group123',
-        name: '東京駅',
-        latitude: 35.681236,
-        longitude: 139.767125,
-      );
       const generatedId = 'generated-trip-id';
 
-      fakeWriteTransaction.scope.tripEntryRepository.generatedTripId =
-          generatedId;
+      when(
+        mockTripEntryRepository.saveTripEntry(any),
+      ).thenAnswer((_) async => generatedId);
 
-      final result = await usecase.execute(
-        tripEntry,
-        locationsToCreate: const [location],
-        deletedLocationIds: const ['unused-location'],
-      );
+      final result = await usecase.execute(tripEntry);
 
       expect(result, generatedId);
-      expect(fakeWriteTransaction.runCount, 1);
-      expect(
-        fakeWriteTransaction.scope.tripEntryRepository.savedTripEntries.single,
-        isA<TripEntry>(),
-      );
-      expect(
-        fakeWriteTransaction
-            .scope
-            .locationRepository
-            .savedLocations
-            .single
-            .name,
-        '東京駅',
-      );
-      expect(
-        fakeWriteTransaction
-            .scope
-            .locationRepository
-            .savedLocations
-            .single
-            .tripId,
-        generatedId,
-      );
-      expect(fakeWriteTransaction.scope.locationRepository.deletedLocationIds, [
-        'unused-location',
-      ]);
-      verifyNever(mockTripEntryRepository.saveTripEntry(any));
+      final savedEntry =
+          verify(
+                mockTripEntryRepository.saveTripEntry(captureAny),
+              ).captured.single
+              as TripEntry;
+      expect(savedEntry.locations.single.name, '東京駅');
     });
 
     test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {
@@ -171,75 +141,4 @@ void main() {
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
   });
-}
-
-class _FakeWriteTransaction implements WriteTransaction {
-  final scope = _FakeWriteTransactionScope();
-  int runCount = 0;
-
-  @override
-  Future<T> run<T>(
-    Future<T> Function(WriteTransactionScope scope) action,
-  ) async {
-    runCount += 1;
-    return action(scope);
-  }
-}
-
-class _FakeWriteTransactionScope implements WriteTransactionScope {
-  final _FakeTripEntryRepository tripEntryRepository =
-      _FakeTripEntryRepository();
-
-  final _FakeLocationRepository locationRepository = _FakeLocationRepository();
-
-  @override
-  R repository<R extends Object>() {
-    if (R == TripEntryRepository) {
-      return tripEntryRepository as R;
-    }
-    if (R == LocationRepository) {
-      return locationRepository as R;
-    }
-    throw ArgumentError('Unsupported repository type: $R');
-  }
-}
-
-class _FakeTripEntryRepository implements TripEntryRepository {
-  String generatedTripId = 'generated-trip-id';
-  final savedTripEntries = <TripEntry>[];
-
-  @override
-  Future<String> saveTripEntry(TripEntry tripEntry) async {
-    savedTripEntries.add(tripEntry);
-    return generatedTripId;
-  }
-
-  @override
-  Future<void> updateTripEntry(TripEntry tripEntry) async {}
-
-  @override
-  Future<void> deleteTripEntry(String tripId) async {}
-
-  @override
-  Future<void> deleteTripEntriesByGroupId(String groupId) async {}
-}
-
-class _FakeLocationRepository implements LocationRepository {
-  final savedLocations = <Location>[];
-  final deletedLocationIds = <String>[];
-
-  @override
-  Future<void> saveLocation(Location location) async {
-    savedLocations.add(location);
-  }
-
-  @override
-  Future<void> updateLocation(Location location) async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<void> deleteLocation(String locationId) async {
-    deletedLocationIds.add(locationId);
-  }
 }

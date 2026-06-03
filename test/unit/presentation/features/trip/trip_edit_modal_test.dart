@@ -19,7 +19,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (tripEntry, locationsToSave, deletedLocationIds) async {},
+            onSave: (tripEntry) async {},
             isTestEnvironment: true,
           ),
         ),
@@ -45,7 +45,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (tripEntry, locationsToSave, deletedLocationIds) async {},
+            onSave: (tripEntry) async {},
             isTestEnvironment: true,
           ),
         ),
@@ -62,7 +62,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (tripEntry, locationsToSave, deletedLocationIds) async {},
+            onSave: (tripEntry) async {},
             isTestEnvironment: true,
           ),
         ),
@@ -94,7 +94,7 @@ void main() {
                 ),
               ],
             ),
-            onSave: (tripEntry, locationsToSave, deletedLocationIds) async {},
+            onSave: (tripEntry) async {},
             isTestEnvironment: true,
           ),
         ),
@@ -125,7 +125,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             year: 2024,
-            onSave: (tripEntry, locationsToSave, deletedLocationIds) async {
+            onSave: (tripEntry) async {
               savedTripEntry = tripEntry;
             },
             isTestEnvironment: true,
