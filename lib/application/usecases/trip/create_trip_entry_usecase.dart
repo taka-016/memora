@@ -41,11 +41,12 @@ class CreateTripEntryUsecase {
       if (locationEntities.isEmpty && deletedLocationIds.isEmpty) {
         return await _tripEntryRepository.saveTripEntry(entity);
       }
-      final unitOfWork = _writeTransaction ?? _writeTransactionFactory?.call();
-      if (unitOfWork == null) {
+      final writeTransaction =
+          _writeTransaction ?? _writeTransactionFactory?.call();
+      if (writeTransaction == null) {
         throw StateError('WriteTransactionが設定されていません');
       }
-      return await unitOfWork.run((scope) async {
+      return await writeTransaction.run((scope) async {
         final tripEntryRepository = scope.repository<TripEntryRepository>();
         final locationRepository = scope.repository<LocationRepository>();
         final tripId = await tripEntryRepository.saveTripEntry(entity);

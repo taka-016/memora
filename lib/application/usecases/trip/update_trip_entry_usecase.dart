@@ -46,11 +46,12 @@ class UpdateTripEntryUsecase {
         await _tripEntryRepository.updateTripEntry(entity);
         return;
       }
-      final unitOfWork = _writeTransaction ?? _writeTransactionFactory?.call();
-      if (unitOfWork == null) {
+      final writeTransaction =
+          _writeTransaction ?? _writeTransactionFactory?.call();
+      if (writeTransaction == null) {
         throw StateError('WriteTransactionが設定されていません');
       }
-      await unitOfWork.run<void>((scope) async {
+      await writeTransaction.run<void>((scope) async {
         final tripEntryRepository = scope.repository<TripEntryRepository>();
         final locationRepository = scope.repository<LocationRepository>();
         await tripEntryRepository.updateTripEntry(entity);
