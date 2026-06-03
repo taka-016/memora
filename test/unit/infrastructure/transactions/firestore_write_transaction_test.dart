@@ -17,7 +17,7 @@ import 'package:mockito/mockito.dart';
   CollectionReference,
   DocumentReference,
 ])
-import 'firestore_trip_write_unit_of_work_test.mocks.dart';
+import 'firestore_write_transaction_test.mocks.dart';
 
 void main() {
   group('FirestoreWriteTransaction', () {
@@ -45,14 +45,8 @@ void main() {
         final locationRepository = scope.repository<LocationRepository>();
         expect(tripEntryRepository, isA<TripEntryRepository>());
         expect(locationRepository, isA<LocationRepository>());
-        expect(
-          tripEntryRepository,
-          isA<FirestoreTripEntryRepository>(),
-        );
-        expect(
-          locationRepository,
-          isA<FirestoreLocationRepository>(),
-        );
+        expect(tripEntryRepository, isA<FirestoreTripEntryRepository>());
+        expect(locationRepository, isA<FirestoreLocationRepository>());
       });
 
       verify(firestore.runTransaction<void>(any)).called(1);

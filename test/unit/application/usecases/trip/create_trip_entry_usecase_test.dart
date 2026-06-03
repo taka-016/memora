@@ -126,7 +126,12 @@ void main() {
         isA<TripEntry>(),
       );
       expect(
-        fakeWriteTransaction.scope.locationRepository.savedLocations.single.name,
+        fakeWriteTransaction
+            .scope
+            .locationRepository
+            .savedLocations
+            .single
+            .name,
         '東京駅',
       );
       expect(
@@ -138,10 +143,9 @@ void main() {
             .tripId,
         generatedId,
       );
-      expect(
-        fakeWriteTransaction.scope.locationRepository.deletedLocationIds,
-        ['unused-location'],
-      );
+      expect(fakeWriteTransaction.scope.locationRepository.deletedLocationIds, [
+        'unused-location',
+      ]);
       verifyNever(mockTripEntryRepository.saveTripEntry(any));
     });
 
@@ -174,7 +178,9 @@ class _FakeWriteTransaction implements WriteTransaction {
   int runCount = 0;
 
   @override
-  Future<T> run<T>(Future<T> Function(WriteTransactionScope scope) action) async {
+  Future<T> run<T>(
+    Future<T> Function(WriteTransactionScope scope) action,
+  ) async {
     runCount += 1;
     return action(scope);
   }

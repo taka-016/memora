@@ -41,8 +41,7 @@ class CreateTripEntryUsecase {
       if (locationEntities.isEmpty && deletedLocationIds.isEmpty) {
         return await _tripEntryRepository.saveTripEntry(entity);
       }
-      final unitOfWork =
-          _writeTransaction ?? _writeTransactionFactory?.call();
+      final unitOfWork = _writeTransaction ?? _writeTransactionFactory?.call();
       if (unitOfWork == null) {
         throw StateError('WriteTransactionが設定されていません');
       }

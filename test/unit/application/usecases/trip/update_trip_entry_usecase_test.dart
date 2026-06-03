@@ -102,11 +102,20 @@ void main() {
 
       expect(fakeWriteTransaction.runCount, 1);
       expect(
-        fakeWriteTransaction.scope.tripEntryRepository.updatedTripEntries.single,
+        fakeWriteTransaction
+            .scope
+            .tripEntryRepository
+            .updatedTripEntries
+            .single,
         isA<TripEntry>(),
       );
       expect(
-        fakeWriteTransaction.scope.locationRepository.savedLocations.single.name,
+        fakeWriteTransaction
+            .scope
+            .locationRepository
+            .savedLocations
+            .single
+            .name,
         '東京駅',
       );
       expect(
@@ -136,10 +145,9 @@ void main() {
             .tripId,
         tripEntry.id,
       );
-      expect(
-        fakeWriteTransaction.scope.locationRepository.deletedLocationIds,
-        ['unused-location'],
-      );
+      expect(fakeWriteTransaction.scope.locationRepository.deletedLocationIds, [
+        'unused-location',
+      ]);
       verifyNever(mockRepository.updateTripEntry(any));
     });
 
@@ -173,7 +181,9 @@ class _FakeWriteTransaction implements WriteTransaction {
   int runCount = 0;
 
   @override
-  Future<T> run<T>(Future<T> Function(WriteTransactionScope scope) action) async {
+  Future<T> run<T>(
+    Future<T> Function(WriteTransactionScope scope) action,
+  ) async {
     runCount += 1;
     return action(scope);
   }

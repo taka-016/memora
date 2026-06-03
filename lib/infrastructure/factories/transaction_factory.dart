@@ -32,8 +32,9 @@ class TransactionFactory {
   static T _createFirestoreTransaction<T>({required Ref ref}) {
     if (T == WriteTransaction) {
       return FirestoreWriteTransaction(
-        firestore: ref.watch(firebaseFirestoreProvider),
-      ) as T;
+            firestore: ref.watch(firebaseFirestoreProvider),
+          )
+          as T;
     }
     throw ArgumentError('Unknown transaction type: $T');
   }

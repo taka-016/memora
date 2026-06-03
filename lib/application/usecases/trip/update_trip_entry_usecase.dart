@@ -46,8 +46,7 @@ class UpdateTripEntryUsecase {
         await _tripEntryRepository.updateTripEntry(entity);
         return;
       }
-      final unitOfWork =
-          _writeTransaction ?? _writeTransactionFactory?.call();
+      final unitOfWork = _writeTransaction ?? _writeTransactionFactory?.call();
       if (unitOfWork == null) {
         throw StateError('WriteTransactionが設定されていません');
       }
