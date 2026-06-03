@@ -8,7 +8,6 @@ import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
-import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_limited_point_repository.dart';
@@ -20,7 +19,6 @@ import 'package:memora/infrastructure/repositories/member/firestore_member_event
 import 'package:memora/infrastructure/repositories/member/firestore_member_invitation_repository.dart';
 import 'package:memora/infrastructure/repositories/member/firestore_member_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
-import 'package:memora/infrastructure/repositories/trip/firestore_location_repository.dart';
 
 final groupRepositoryProvider = Provider<GroupRepository>((ref) {
   return RepositoryFactory.create<GroupRepository>(ref: ref);
@@ -46,10 +44,6 @@ final memberInvitationRepositoryProvider = Provider<MemberInvitationRepository>(
 
 final tripEntryRepositoryProvider = Provider<TripEntryRepository>((ref) {
   return RepositoryFactory.create<TripEntryRepository>(ref: ref);
-});
-
-final locationRepositoryProvider = Provider<LocationRepository>((ref) {
-  return RepositoryFactory.create<LocationRepository>(ref: ref);
 });
 
 final dvcPointContractRepositoryProvider = Provider<DvcPointContractRepository>(
@@ -105,9 +99,6 @@ class RepositoryFactory {
     }
     if (T == TripEntryRepository) {
       return FirestoreTripEntryRepository() as T;
-    }
-    if (T == LocationRepository) {
-      return FirestoreLocationRepository() as T;
     }
     if (T == DvcPointContractRepository) {
       return FirestoreDvcPointContractRepository() as T;

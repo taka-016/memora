@@ -5,6 +5,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapper.dart';
+import 'package:memora/infrastructure/mappers/trip/firestore_location_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_task_mapper.dart';
 import 'package:memora/infrastructure/mappers/trip/firestore_trip_entry_mapper.dart';
 
@@ -29,6 +30,14 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       if (!doc.exists) {
         return null;
       }
+
+      final locationsSnapshot = await _firestore
+          .collection('locations')
+          .where('tripId', isEqualTo: tripId)
+          .get();
+      final locations = locationsSnapshot.docs
+          .map(FirestoreLocationMapper.fromFirestore)
+          .toList();
 
       Query<Map<String, dynamic>> tasksQuery = _firestore
           .collection('tasks')
@@ -76,6 +85,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
       return FirestoreTripEntryMapper.fromFirestore(
         doc,
         fallbackTripYear: _clock.now().year,
+        locations: locations,
         tasks: tasks,
         itineraryItems: itineraryItems,
       );

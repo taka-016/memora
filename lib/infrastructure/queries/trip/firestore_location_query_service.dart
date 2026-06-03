@@ -11,11 +11,6 @@ class FirestoreLocationQueryService implements LocationQueryService {
   final FirebaseFirestore _firestore;
 
   @override
-  Future<List<LocationDto>> getLocationsByTripId(String tripId) async {
-    return _getLocationsByField('tripId', tripId);
-  }
-
-  @override
   Future<List<LocationDto>> getLocationsByGroupId(String groupId) async {
     return _getLocationsByField('groupId', groupId);
   }

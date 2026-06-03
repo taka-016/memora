@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/transactions/write_transaction.dart';
-import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/repositories/firestore_write_context.dart';
-import 'package:memora/infrastructure/repositories/trip/firestore_location_repository.dart';
 import 'package:memora/infrastructure/repositories/trip/firestore_trip_entry_repository.dart';
 
 class FirestoreWriteTransaction implements WriteTransaction {
@@ -42,13 +40,6 @@ class FirestoreWriteTransactionScope implements WriteTransactionScope {
   R repository<R extends Object>() {
     if (R == TripEntryRepository) {
       return FirestoreTripEntryRepository(
-            firestore: _firestore,
-            writeContext: _writeContext,
-          )
-          as R;
-    }
-    if (R == LocationRepository) {
-      return FirestoreLocationRepository(
             firestore: _firestore,
             writeContext: _writeContext,
           )

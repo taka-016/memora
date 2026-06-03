@@ -3,12 +3,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/get_locations_by_trip_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
@@ -37,9 +35,6 @@ class TripManagement extends HookConsumerWidget {
     final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
     final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
-    final getLocationsByTripIdUsecase = ref.read(
-      getLocationsByTripIdUsecaseProvider,
-    );
     final getGroupWithMembersByIdUsecase = ref.read(
       getGroupWithMembersByIdUsecaseProvider,
     );
@@ -126,19 +121,11 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> handleAddTripSave(
-      TripEntryDto tripEntry,
-      List<LocationDto> locationsToSave,
-      List<String> deletedLocationIds,
-    ) async {
+    Future<void> handleAddTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await createTripEntryUsecase.execute(
-          tripEntry,
-          locationsToCreate: locationsToSave,
-          deletedLocationIds: deletedLocationIds,
-        );
+        await createTripEntryUsecase.execute(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -171,41 +158,18 @@ class TripManagement extends HookConsumerWidget {
           groupMembers: groupMembers.value,
           year: year,
           isTestEnvironment: isTestEnvironment,
-          onSave: (tripEntry, locationsToSave, deletedLocationIds) async {
-            await handleAddTripSave(
-              tripEntry,
-              locationsToSave,
-              deletedLocationIds,
-            );
+          onSave: (tripEntry) async {
+            await handleAddTripSave(tripEntry);
           },
         ),
       );
     }
 
-    Future<void> handleEditTripSave(
-      TripEntryDto tripEntry,
-      List<LocationDto> initialLocations,
-      List<LocationDto> locationsToSave,
-      List<String> deletedLocationIds,
-    ) async {
+    Future<void> handleEditTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-      final initialLocationIds = initialLocations
-          .map((location) => location.id)
-          .toSet();
-      final locationsToCreate = locationsToSave
-          .where((location) => !initialLocationIds.contains(location.id))
-          .toList();
-      final locationsToUpdate = locationsToSave
-          .where((location) => initialLocationIds.contains(location.id))
-          .toList();
 
       try {
-        await updateTripEntryUsecase.execute(
-          tripEntry,
-          locationsToCreate: locationsToCreate,
-          locationsToUpdate: locationsToUpdate,
-          deletedLocationIds: deletedLocationIds,
-        );
+        await updateTripEntryUsecase.execute(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -248,13 +212,6 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
-        final locations = await getLocationsByTripIdUsecase.execute(
-          detailedTripEntry.id,
-        );
-        if (!context.mounted) {
-          return;
-        }
-
         await showDialog(
           barrierDismissible: false,
           context: context,
@@ -262,16 +219,10 @@ class TripManagement extends HookConsumerWidget {
             groupId: groupId,
             groupMembers: groupMembers.value,
             tripEntry: detailedTripEntry,
-            locations: locations,
             year: year,
             isTestEnvironment: isTestEnvironment,
-            onSave: (updatedTrip, locationsToSave, deletedLocationIds) async {
-              await handleEditTripSave(
-                updatedTrip,
-                locations,
-                locationsToSave,
-                deletedLocationIds,
-              );
+            onSave: (updatedTrip) async {
+              await handleEditTripSave(updatedTrip);
             },
           ),
         );
