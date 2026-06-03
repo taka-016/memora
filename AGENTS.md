@@ -6,7 +6,6 @@
 - ユースケース図: docs/usecase_diagram.md
 - ER図: docs/er_diagram.md
 - todo: docs/todo.md
-- done: docs/done.md
 
 ## 主要コマンド
 
