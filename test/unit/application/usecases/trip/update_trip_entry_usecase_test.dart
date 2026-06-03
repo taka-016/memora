@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/transactions/trip_write_unit_of_work.dart';
+import 'package:memora/application/transactions/write_transaction.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -19,14 +19,14 @@ void main() {
   group('UpdateTripEntryUsecase', () {
     late UpdateTripEntryUsecase usecase;
     late MockTripEntryRepository mockRepository;
-    late _FakeTripWriteUnitOfWork fakeUnitOfWork;
+    late _FakeWriteTransaction fakeWriteTransaction;
 
     setUp(() {
       mockRepository = MockTripEntryRepository();
-      fakeUnitOfWork = _FakeTripWriteUnitOfWork();
+      fakeWriteTransaction = _FakeWriteTransaction();
       usecase = UpdateTripEntryUsecase(
         mockRepository,
-        tripWriteUnitOfWork: fakeUnitOfWork,
+        writeTransaction: fakeWriteTransaction,
       );
     });
 
@@ -100,27 +100,18 @@ void main() {
         deletedLocationIds: const ['unused-location'],
       );
 
-      expect(fakeUnitOfWork.runCount, 1);
+      expect(fakeWriteTransaction.runCount, 1);
       expect(
-        fakeUnitOfWork
-            .repositories
-            .tripEntryRepository
-            .updatedTripEntries
-            .single,
+        fakeWriteTransaction.scope.tripEntryRepository.updatedTripEntries.single,
         isA<TripEntry>(),
       );
       expect(
-        fakeUnitOfWork
-            .repositories
-            .locationRepository
-            .savedLocations
-            .single
-            .name,
+        fakeWriteTransaction.scope.locationRepository.savedLocations.single.name,
         '東京駅',
       );
       expect(
-        fakeUnitOfWork
-            .repositories
+        fakeWriteTransaction
+            .scope
             .locationRepository
             .savedLocations
             .single
@@ -128,8 +119,8 @@ void main() {
         tripEntry.id,
       );
       expect(
-        fakeUnitOfWork
-            .repositories
+        fakeWriteTransaction
+            .scope
             .locationRepository
             .updatedLocations
             .single
@@ -137,8 +128,8 @@ void main() {
         '上野駅',
       );
       expect(
-        fakeUnitOfWork
-            .repositories
+        fakeWriteTransaction
+            .scope
             .locationRepository
             .updatedLocations
             .single
@@ -146,7 +137,7 @@ void main() {
         tripEntry.id,
       );
       expect(
-        fakeUnitOfWork.repositories.locationRepository.deletedLocationIds,
+        fakeWriteTransaction.scope.locationRepository.deletedLocationIds,
         ['unused-location'],
       );
       verifyNever(mockRepository.updateTripEntry(any));
@@ -177,26 +168,33 @@ void main() {
   });
 }
 
-class _FakeTripWriteUnitOfWork implements TripWriteUnitOfWork {
-  final repositories = _FakeTripWriteRepositories();
+class _FakeWriteTransaction implements WriteTransaction {
+  final scope = _FakeWriteTransactionScope();
   int runCount = 0;
 
   @override
-  Future<T> run<T>(
-    Future<T> Function(TripWriteRepositories repositories) action,
-  ) async {
+  Future<T> run<T>(Future<T> Function(WriteTransactionScope scope) action) async {
     runCount += 1;
-    return action(repositories);
+    return action(scope);
   }
 }
 
-class _FakeTripWriteRepositories implements TripWriteRepositories {
-  @override
+class _FakeWriteTransactionScope implements WriteTransactionScope {
   final _FakeTripEntryRepository tripEntryRepository =
       _FakeTripEntryRepository();
 
-  @override
   final _FakeLocationRepository locationRepository = _FakeLocationRepository();
+
+  @override
+  R repository<R extends Object>() {
+    if (R == TripEntryRepository) {
+      return tripEntryRepository as R;
+    }
+    if (R == LocationRepository) {
+      return locationRepository as R;
+    }
+    throw ArgumentError('Unsupported repository type: $R');
+  }
 }
 
 class _FakeTripEntryRepository implements TripEntryRepository {
