@@ -4,8 +4,9 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/mappers/trip/location_mapper.dart';
 import 'package:memora/application/mappers/trip/trip_entry_mapper.dart';
-import 'package:memora/application/transactions/trip_write_unit_of_work.dart';
+import 'package:memora/application/transactions/write_transaction.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
+import 'package:memora/domain/repositories/trip/location_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/infrastructure/factories/transaction_factory.dart';
@@ -13,21 +14,21 @@ import 'package:memora/infrastructure/factories/transaction_factory.dart';
 final updateTripEntryUsecaseProvider = Provider<UpdateTripEntryUsecase>((ref) {
   return UpdateTripEntryUsecase(
     ref.watch(tripEntryRepositoryProvider),
-    tripWriteUnitOfWorkFactory: () => ref.read(tripWriteUnitOfWorkProvider),
+    writeTransactionFactory: () => ref.read(writeTransactionProvider),
   );
 });
 
 class UpdateTripEntryUsecase {
   UpdateTripEntryUsecase(
     this._tripEntryRepository, {
-    TripWriteUnitOfWork? tripWriteUnitOfWork,
-    TripWriteUnitOfWork Function()? tripWriteUnitOfWorkFactory,
-  }) : _tripWriteUnitOfWork = tripWriteUnitOfWork,
-       _tripWriteUnitOfWorkFactory = tripWriteUnitOfWorkFactory;
+    WriteTransaction? writeTransaction,
+    WriteTransaction Function()? writeTransactionFactory,
+  }) : _writeTransaction = writeTransaction,
+       _writeTransactionFactory = writeTransactionFactory;
 
   final TripEntryRepository _tripEntryRepository;
-  final TripWriteUnitOfWork? _tripWriteUnitOfWork;
-  final TripWriteUnitOfWork Function()? _tripWriteUnitOfWorkFactory;
+  final WriteTransaction? _writeTransaction;
+  final WriteTransaction Function()? _writeTransactionFactory;
 
   Future<void> execute(
     TripEntryDto tripEntry, {
@@ -46,24 +47,26 @@ class UpdateTripEntryUsecase {
         return;
       }
       final unitOfWork =
-          _tripWriteUnitOfWork ?? _tripWriteUnitOfWorkFactory?.call();
+          _writeTransaction ?? _writeTransactionFactory?.call();
       if (unitOfWork == null) {
-        throw StateError('TripWriteUnitOfWorkが設定されていません');
+        throw StateError('WriteTransactionが設定されていません');
       }
-      await unitOfWork.run<void>((repositories) async {
-        await repositories.tripEntryRepository.updateTripEntry(entity);
+      await unitOfWork.run<void>((scope) async {
+        final tripEntryRepository = scope.repository<TripEntryRepository>();
+        final locationRepository = scope.repository<LocationRepository>();
+        await tripEntryRepository.updateTripEntry(entity);
         for (final location in createEntities) {
-          await repositories.locationRepository.saveLocation(
+          await locationRepository.saveLocation(
             location.copyWith(tripId: entity.id),
           );
         }
         for (final location in updateEntities) {
-          await repositories.locationRepository.updateLocation(
+          await locationRepository.updateLocation(
             location.copyWith(tripId: entity.id),
           );
         }
         for (final locationId in deletedLocationIds) {
-          await repositories.locationRepository.deleteLocation(locationId);
+          await locationRepository.deleteLocation(locationId);
         }
       });
     } on ValidationException catch (e, stack) {

@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/transactions/trip_write_unit_of_work.dart';
+import 'package:memora/application/transactions/write_transaction.dart';
 import 'package:memora/infrastructure/config/database_type.dart';
 import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
-import 'package:memora/infrastructure/transactions/firestore_trip_write_unit_of_work.dart';
+import 'package:memora/infrastructure/transactions/firestore_write_transaction.dart';
 
-final tripWriteUnitOfWorkProvider = Provider<TripWriteUnitOfWork>((ref) {
-  return TransactionFactory.create<TripWriteUnitOfWork>(ref: ref);
+final writeTransactionProvider = Provider<WriteTransaction>((ref) {
+  return TransactionFactory.create<WriteTransaction>(ref: ref);
 });
 
 class TransactionFactory {
@@ -30,11 +30,10 @@ class TransactionFactory {
   }
 
   static T _createFirestoreTransaction<T>({required Ref ref}) {
-    if (T == TripWriteUnitOfWork) {
-      return FirestoreTripWriteUnitOfWork(
-            firestore: ref.watch(firebaseFirestoreProvider),
-          )
-          as T;
+    if (T == WriteTransaction) {
+      return FirestoreWriteTransaction(
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ) as T;
     }
     throw ArgumentError('Unknown transaction type: $T');
   }
