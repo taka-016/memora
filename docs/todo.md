@@ -2,12 +2,6 @@
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
-- locationsをTripEntryの子エンティティとして扱う
-  - `TripEntry`、`TripEntryDto`、各マッパー、クエリサービスでlocationsを扱う
-  - `TripEntryRepository`でlocationsを旅行単位のdelete&insertにより同期する
-  - locationsのリポジトリと書き込みユースケースを廃止する
-  - 旅行編集と旅程でTripEntryからlocationsを取得する
-
 ## マップの表示
 
 ## トップ画面
