@@ -85,6 +85,39 @@ void main() {
       expect(initialPosition.target.longitude, 135.5023);
     });
 
+    testWidgets('選択中locationがある場合は選択中locationを初期位置に使用する', (tester) async {
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 26.217,
+          longitude: 127.719,
+          name: '首里城',
+        ),
+      ];
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(locations: locations, selectedLocation: locations.last),
+        ),
+      );
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      expect(initialPosition.target.latitude, 26.217);
+      expect(initialPosition.target.longitude, 127.719);
+    });
+
     testWidgets('location.idをMarkerIdに使用する', (tester) async {
       const locations = [
         LocationDto(
@@ -103,6 +136,48 @@ void main() {
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
 
       expect(googleMap.markers.single.markerId, const MarkerId('location1'));
+    });
+
+    testWidgets('選択中locationは赤色、それ以外は灰色のマーカーで表示する', (tester) async {
+      const selectedLocation = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+      );
+      const otherLocation = LocationDto(
+        id: 'location2',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.682,
+        longitude: 139.768,
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          const GoogleMapView(
+            locations: [selectedLocation, otherLocation],
+            selectedLocation: selectedLocation,
+            highlightSelectedLocation: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final markersById = {
+        for (final marker in googleMap.markers) marker.markerId.value: marker,
+      };
+
+      expect(
+        markersById['location1']!.icon.toJson(),
+        BitmapDescriptor.defaultMarker.toJson(),
+      );
+      expect(
+        markersById['location2']!.icon.toJson().toString(),
+        contains('[bytes'),
+      );
     });
 
     testWidgets('選択中locationの軽量ボトムシートを表示する', (tester) async {
@@ -128,6 +203,34 @@ void main() {
 
       expect(find.byType(LocationDetailBottomSheet), findsOneWidget);
       expect(find.text('東京駅'), findsOneWidget);
+      expect(find.text('35.6812, 139.7671'), findsNothing);
+    });
+
+    testWidgets('ピン選択時の詳細表示を差し替えられる', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+        name: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: const [location],
+            selectedLocation: location,
+            locationDetailBuilder: (location, onClose) {
+              return Text('詳細: ${location.name}');
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('詳細: 東京駅'), findsOneWidget);
+      expect(find.byType(LocationDetailBottomSheet), findsNothing);
     });
   });
 }

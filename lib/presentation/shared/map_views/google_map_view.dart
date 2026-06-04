@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -8,6 +12,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 
 class GoogleMapView extends HookConsumerWidget {
@@ -16,6 +21,8 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
   final ValueChanged<LocationDto>? onLocationTapped;
   final LocationDto? selectedLocation;
+  final bool highlightSelectedLocation;
+  final LocationDetailBuilder? locationDetailBuilder;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
@@ -26,6 +33,8 @@ class GoogleMapView extends HookConsumerWidget {
     this.onSearchedLocationSelected,
     this.onLocationTapped,
     this.selectedLocation,
+    this.highlightSelectedLocation = false,
+    this.locationDetailBuilder,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -38,6 +47,9 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedLocationState = useState<LocationDto?>(null);
     final previousSelectedLocation = useRef<LocationDto?>(null);
+    final grayMarkerIcon = useFuture(
+      useMemoized(() => createGrayMarkerIcon(), const []),
+    );
 
     void showErrorSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -54,6 +66,10 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     LatLng getCurrentOrFallbackPosition() {
+      final selected = selectedLocation;
+      if (selected != null) {
+        return LatLng(selected.latitude, selected.longitude);
+      }
       if (locations.isNotEmpty) {
         final firstLocation = locations.first;
         return LatLng(firstLocation.latitude, firstLocation.longitude);
@@ -131,6 +147,10 @@ class GoogleMapView extends HookConsumerWidget {
             (location) => Marker(
               markerId: MarkerId(location.id),
               position: LatLng(location.latitude, location.longitude),
+              icon: markerIconFor(
+                location: location,
+                grayMarkerIcon: grayMarkerIcon.data,
+              ),
               onTap: () => handleLocationTapped(location),
             ),
           )
@@ -182,6 +202,14 @@ class GoogleMapView extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
+      final detailBuilder = locationDetailBuilder;
+      if (detailBuilder != null) {
+        return detailBuilder(
+          selectedLocationState.value!,
+          hideLocationDetailBottomSheet,
+        );
+      }
+
       return LocationDetailBottomSheet(
         location: selectedLocationState.value!,
         onClose: hideLocationDetailBottomSheet,
@@ -200,4 +228,51 @@ class GoogleMapView extends HookConsumerWidget {
       ),
     );
   }
+
+  BitmapDescriptor markerIconFor({
+    required LocationDto location,
+    required BitmapDescriptor? grayMarkerIcon,
+  }) {
+    if (!highlightSelectedLocation || selectedLocation?.id == location.id) {
+      return BitmapDescriptor.defaultMarker;
+    }
+    return grayMarkerIcon ?? grayLocationMarkerIcon;
+  }
+}
+
+final grayLocationMarkerIcon = BitmapDescriptor.bytes(
+  base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAALElEQVR4nO3OoQEAAAwCIJ/2/u0MC4FO2t5SBAQEBAQEBAQEBAQEBAQE1oEHzUh4iPhXaT4AAAAASUVORK5CYII=',
+  ),
+  width: 32,
+  height: 32,
+);
+
+Future<BitmapDescriptor> createGrayMarkerIcon() async {
+  final recorder = ui.PictureRecorder();
+  final canvas = Canvas(recorder);
+  final fillPaint = Paint()..color = Colors.grey.shade600;
+  final borderPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 3;
+
+  final path = Path()
+    ..moveTo(24, 46)
+    ..cubicTo(19, 37, 10, 30, 10, 20)
+    ..cubicTo(10, 10, 16, 4, 24, 4)
+    ..cubicTo(32, 4, 38, 10, 38, 20)
+    ..cubicTo(38, 30, 29, 37, 24, 46)
+    ..close();
+  canvas.drawPath(path, fillPaint);
+  canvas.drawPath(path, borderPaint);
+  canvas.drawCircle(const Offset(24, 20), 6, Paint()..color = Colors.white);
+
+  final image = await recorder.endRecording().toImage(48, 48);
+  final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  return BitmapDescriptor.bytes(
+    Uint8List.view(byteData!.buffer),
+    width: 32,
+    height: 32,
+  );
 }

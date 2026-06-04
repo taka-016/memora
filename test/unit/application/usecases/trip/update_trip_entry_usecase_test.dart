@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -51,6 +52,51 @@ void main() {
       expect(updatedEntry.memo, tripEntry.memo);
       expect(updatedEntry.itineraryItems, hasLength(1));
       expect(updatedEntry.itineraryItems.first.name, '朝食');
+    });
+
+    test('訪問場所を旅行の子要素として更新すること', () async {
+      final tripEntry = TripEntryDto(
+        id: 'trip-id',
+        groupId: 'group-id',
+        year: 2024,
+        locations: const [
+          LocationDto(
+            id: 'location-1',
+            tripId: 'trip-id',
+            groupId: 'group-id',
+            name: '東京駅',
+            latitude: 35.681236,
+            longitude: 139.767125,
+          ),
+          LocationDto(
+            id: 'location-2',
+            tripId: 'trip-id',
+            groupId: 'group-id',
+            name: '上野駅',
+            latitude: 35.713768,
+            longitude: 139.777254,
+          ),
+        ],
+        itineraryItems: const [
+          ItineraryItemDto(
+            id: 'item001',
+            tripId: 'trip-id',
+            name: '朝食',
+            locationId: 'location-1',
+          ),
+        ],
+      );
+      when(mockRepository.updateTripEntry(any)).thenAnswer((_) async {});
+
+      await usecase.execute(tripEntry);
+
+      final updatedEntry =
+          verify(mockRepository.updateTripEntry(captureAny)).captured.single
+              as TripEntry;
+      expect(updatedEntry.locations.map((location) => location.name), [
+        '東京駅',
+        '上野駅',
+      ]);
     });
 
     test('旅行の検証エラーはアプリケーション層の例外に変換し元のスタックトレースを保持すること', () async {

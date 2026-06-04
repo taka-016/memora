@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 
 class LocationDetailBottomSheet extends StatelessWidget {
   const LocationDetailBottomSheet({
@@ -14,49 +15,11 @@ class LocationDetailBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Material(
-        elevation: 8,
-        child: SafeArea(
-          top: false,
-          child: Container(
-            key: const Key('location_detail_bottom_sheet'),
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${location.latitude}, ${location.longitude}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  tooltip: '閉じる',
-                  onPressed: onClose,
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return LocationDetailPanelFrame(
+      panelKey: const Key('location_detail_bottom_sheet'),
+      onClose: onClose,
+      locationName: name,
+      child: const SizedBox.shrink(),
     );
   }
 }

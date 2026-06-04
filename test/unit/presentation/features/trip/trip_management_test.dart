@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -23,6 +24,7 @@ void main() {
   late MockTripEntryQueryService mockTripEntryQueryService;
   late MockGroupQueryService mockGroupQueryService;
   late List<TripEntryDto> testTripEntries;
+  late List<LocationDto> testLocations;
   late TripEntryDto detailedTripEntry;
   late List<GroupMemberDto> testGroupMembers;
   late GroupDto testGroup;
@@ -63,7 +65,6 @@ void main() {
         membersOrderBy: anyNamed('membersOrderBy'),
       ),
     ).thenAnswer((_) async => testGroup);
-
     testTripEntries = [
       TripEntryDto(
         id: 'trip-1',
@@ -85,7 +86,19 @@ void main() {
       ),
     ];
 
-    detailedTripEntry = testTripEntries.first;
+    testLocations = const [
+      LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: testGroupId,
+        name: '札幌駅',
+        latitude: 43.068661,
+        longitude: 141.350755,
+      ),
+    ];
+    detailedTripEntry = testTripEntries.first.copyWith(
+      locations: testLocations,
+    );
   });
 
   Widget createApp({
@@ -343,6 +356,7 @@ void main() {
       // 編集モーダルが開いていることを確認
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.text('北海道旅行'), findsAtLeastNWidgets(1)); // モーダル内にも表示される
+      expect(find.byKey(const Key('trip_locations_button')), findsOneWidget);
 
       verify(
         mockTripEntryQueryService.getTripEntryById(

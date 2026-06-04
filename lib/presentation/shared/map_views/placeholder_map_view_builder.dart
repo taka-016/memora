@@ -15,6 +15,8 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
     ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
     ValueChanged<LocationDto>? onLocationTapped,
     LocationDto? selectedLocation,
+    bool highlightSelectedLocation = false,
+    LocationDetailBuilder? locationDetailBuilder,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {

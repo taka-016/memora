@@ -1,21 +1,45 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
+import 'package:uuid/uuid.dart';
+
+typedef ItineraryLocationCreated =
+    Future<LocationDto> Function(LocationDto location);
 
 class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({
     super.key,
     required this.item,
+    required this.groupId,
     this.tripStartDate,
+    this.locations = const [],
+    this.onLocationCreated,
+    this.onLocationUnassigned,
+    this.otherLocationIds = const {},
+    this.isTestEnvironment = false,
     required this.onSaved,
     this.clock,
   });
 
   final ItineraryItemDto item;
+  final String groupId;
   final DateTime? tripStartDate;
+  final List<LocationDto> locations;
+  final ItineraryLocationCreated? onLocationCreated;
+  final Future<void> Function(LocationDto location)? onLocationUnassigned;
+  final Set<String> otherLocationIds;
+  final bool isTestEnvironment;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock? clock;
 
@@ -32,7 +56,18 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final endTime = useState<TimeOfDay?>(timePartOfDateTime(item.endDateTime));
     final memoController = useTextEditingController(text: item.memo ?? '');
     final errorMessage = useState<String?>(null);
+    final selectedLocation = useState<LocationDto?>(
+      item.location ?? findLocationById(locations, item.locationId),
+    );
+    final mapLocations = useState<List<LocationDto>>(
+      List<LocationDto>.from(locations),
+    );
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
+
+    useEffect(() {
+      mapLocations.value = List<LocationDto>.from(locations);
+      return null;
+    }, [locations]);
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
       return selectedDate ??
@@ -104,7 +139,105 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       errorMessage.value = null;
     }
 
-    void save() {
+    LocationDto buildLocation({required Coordinate coordinate, String? name}) {
+      return LocationDto(
+        id: const Uuid().v7(),
+        tripId: item.tripId,
+        groupId: groupId,
+        name: name,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      );
+    }
+
+    List<LocationDto> upsertLocation(
+      List<LocationDto> currentLocations,
+      LocationDto location,
+    ) {
+      final exists = currentLocations.any(
+        (current) => current.id == location.id,
+      );
+      if (!exists) {
+        return [...currentLocations, location];
+      }
+      return [
+        for (final current in currentLocations)
+          current.id == location.id ? location : current,
+      ];
+    }
+
+    List<LocationDto> removeUnusedPreviousLocation(
+      List<LocationDto> currentLocations,
+      LocationDto? previousLocation,
+      LocationDto nextLocation,
+    ) {
+      if (previousLocation == null ||
+          previousLocation.id == nextLocation.id ||
+          otherLocationIds.contains(previousLocation.id)) {
+        return currentLocations;
+      }
+      return currentLocations
+          .where((location) => location.id != previousLocation.id)
+          .toList();
+    }
+
+    void selectLocation(LocationDto location) {
+      final previousLocation = selectedLocation.value;
+      selectedLocation.value = location;
+      mapLocations.value = removeUnusedPreviousLocation(
+        upsertLocation(mapLocations.value, location),
+        previousLocation,
+        location,
+      );
+    }
+
+    Future<LocationDto> updateLocationName(
+      LocationDto location,
+      String value,
+    ) async {
+      final normalizedName = value.trim();
+      final updatedLocation = location.copyWith(
+        name: normalizedName.isEmpty ? null : normalizedName,
+      );
+      final savedLocation =
+          await onLocationCreated?.call(updatedLocation) ?? updatedLocation;
+      mapLocations.value = upsertLocation(mapLocations.value, savedLocation);
+      if (selectedLocation.value?.id == savedLocation.id) {
+        selectedLocation.value = savedLocation;
+      }
+      return savedLocation;
+    }
+
+    Future<void> selectCreatedLocation(LocationDto location) async {
+      final savedLocation = await onLocationCreated?.call(location) ?? location;
+      selectLocation(savedLocation);
+    }
+
+    Future<void> createLocationFromCoordinate(Coordinate coordinate) async {
+      await selectCreatedLocation(buildLocation(coordinate: coordinate));
+    }
+
+    Future<void> createLocationFromCandidate(
+      LocationCandidateDto candidate,
+    ) async {
+      await selectCreatedLocation(
+        buildLocation(coordinate: candidate.coordinate, name: candidate.name),
+      );
+    }
+
+    void clearLocation() {
+      selectedLocation.value = null;
+    }
+
+    Future<void> save() async {
+      var locationToSave = selectedLocation.value;
+      final originalLocation = findLocationById(locations, locationToSave?.id);
+      if (locationToSave != null && originalLocation != locationToSave) {
+        locationToSave =
+            await onLocationCreated?.call(locationToSave) ?? locationToSave;
+        selectedLocation.value = locationToSave;
+      }
+
       final result = buildItineraryItemFromInput(
         id: item.id,
         tripId: item.tripId,
@@ -114,6 +247,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         endDate: endDate.value,
         endTime: endTime.value,
         memoInput: memoController.text,
+        selectedLocation: locationToSave,
       );
       if (result.errorMessage != null) {
         errorMessage.value = result.errorMessage;
@@ -124,6 +258,9 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       }
 
       onSaved(result.item!);
+      if (!context.mounted) {
+        return;
+      }
       Navigator.of(context).pop();
     }
 
@@ -143,6 +280,171 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           errorMessage.value!,
           style: TextStyle(color: Colors.red.shade700, fontSize: 14),
         ),
+      );
+    }
+
+    String locationName(LocationDto location) {
+      return location.name?.isNotEmpty == true ? location.name! : '場所名未設定';
+    }
+
+    Widget buildLocationSection() {
+      final location = selectedLocation.value;
+      final hasMapCallbacks = locations.isNotEmpty || onLocationCreated != null;
+      final textTheme = Theme.of(context).textTheme;
+      final colorScheme = Theme.of(context).colorScheme;
+      if (location == null && !hasMapCallbacks) {
+        return const SizedBox.shrink();
+      }
+      final mapViewType = isTestEnvironment
+          ? MapViewType.placeholder
+          : MapViewType.google;
+
+      Future<void> showLocationMap() async {
+        var dialogLocations = List<LocationDto>.from(mapLocations.value);
+        await showDialog<void>(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                Widget buildLocationDetail(
+                  LocationDto location,
+                  VoidCallback onClose,
+                ) {
+                  final isSelectedLocation =
+                      selectedLocation.value?.id == location.id;
+                  return LocationDetailPanelFrame(
+                    panelKey: const Key('itinerary_location_detail_panel'),
+                    onClose: onClose,
+                    locationName: location.name ?? '',
+                    locationNameFieldKey: ValueKey(
+                      'itinerary_location_name_${location.id}',
+                    ),
+                    onLocationNameChanged: isSelectedLocation
+                        ? (value) {
+                            unawaited(
+                              updateLocationName(location, value).then((
+                                savedLocation,
+                              ) {
+                                dialogLocations = upsertLocation(
+                                  dialogLocations,
+                                  savedLocation,
+                                );
+                                setDialogState(() {});
+                              }),
+                            );
+                          }
+                        : null,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (!isSelectedLocation)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                final latestLocation =
+                                    findLocationById(
+                                      mapLocations.value,
+                                      location.id,
+                                    ) ??
+                                    location;
+                                selectLocation(latestLocation);
+                                dialogLocations = List<LocationDto>.from(
+                                  mapLocations.value,
+                                );
+                                setDialogState(() {});
+                              },
+                              icon: const Icon(Icons.place),
+                              label: const Text('この場所を指定する'),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }
+
+                return LocationMapDialog(
+                  dialogKey: const Key('itinerary_location_map_dialog'),
+                  mapViewType: mapViewType,
+                  locations: dialogLocations,
+                  selectedLocation: selectedLocation.value,
+                  highlightSelectedLocation: true,
+                  locationDetailBuilder: buildLocationDetail,
+                  onMapLongTapped: onLocationCreated == null
+                      ? null
+                      : (coordinate) async {
+                          await createLocationFromCoordinate(coordinate);
+                          setDialogState(() {
+                            dialogLocations = List<LocationDto>.from(
+                              mapLocations.value,
+                            );
+                          });
+                        },
+                  onSearchedLocationSelected: onLocationCreated == null
+                      ? null
+                      : (candidate) async {
+                          await createLocationFromCandidate(candidate);
+                          setDialogState(() {
+                            dialogLocations = List<LocationDto>.from(
+                              mapLocations.value,
+                            );
+                          });
+                        },
+                );
+              },
+            );
+          },
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '訪問場所',
+            style: textTheme.labelMedium?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (location == null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton.icon(
+                onPressed: hasMapCallbacks ? showLocationMap : null,
+                icon: const Icon(Icons.place),
+                label: const Text('場所を指定'),
+              ),
+            )
+          else ...[
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: showLocationMap,
+                  icon: const Icon(Icons.place),
+                  label: const Text('場所を変更'),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: clearLocation,
+                  icon: const Icon(Icons.clear),
+                  label: const Text('指定を解除'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Text(
+                locationName(location),
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ],
       );
     }
 
@@ -207,6 +509,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   : null,
             ),
             const SizedBox(height: 12),
+            buildLocationSection(),
+            const SizedBox(height: 12),
             TextField(
               key: const Key('itinerary_edit_memo_field'),
               controller: memoController,
@@ -251,6 +555,7 @@ ItineraryItemInputResult buildItineraryItemFromInput({
   required DateTime? endDate,
   required TimeOfDay? endTime,
   required String memoInput,
+  LocationDto? selectedLocation,
 }) {
   final name = nameInput.trim();
   if (name.isEmpty) {
@@ -274,8 +579,22 @@ ItineraryItemInputResult buildItineraryItemFromInput({
       startDateTime: startDateTime,
       endDateTime: endDateTime,
       memo: memo.isEmpty ? null : memo,
+      locationId: selectedLocation?.id,
+      location: selectedLocation,
     ),
   );
+}
+
+LocationDto? findLocationById(List<LocationDto> locations, String? locationId) {
+  if (locationId == null) {
+    return null;
+  }
+  for (final location in locations) {
+    if (location.id == locationId) {
+      return location;
+    }
+  }
+  return null;
 }
 
 Widget buildDateTimeSection({

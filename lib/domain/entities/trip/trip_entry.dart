@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
+import 'package:memora/domain/entities/trip/location.dart';
 import 'package:memora/domain/entities/trip/task.dart';
 import 'package:memora/domain/exceptions/validation_exception.dart';
 
@@ -12,9 +13,11 @@ class TripEntry extends Equatable {
     this.startDate,
     this.endDate,
     this.memo,
+    List<Location>? locations,
     List<Task>? tasks,
     List<ItineraryItem>? itineraryItems,
-  }) : tasks = List.unmodifiable(tasks ?? const []),
+  }) : locations = List.unmodifiable(locations ?? const []),
+       tasks = List.unmodifiable(tasks ?? const []),
        itineraryItems = List.unmodifiable(itineraryItems ?? const []) {
     if (startDate != null && endDate != null && endDate!.isBefore(startDate!)) {
       throw ValidationException('旅行の終了日は開始日以降でなければなりません');
@@ -44,6 +47,7 @@ class TripEntry extends Equatable {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? memo;
+  final List<Location> locations;
   final List<Task> tasks;
   final List<ItineraryItem> itineraryItems;
 
@@ -55,6 +59,7 @@ class TripEntry extends Equatable {
     DateTime? startDate,
     DateTime? endDate,
     String? memo,
+    List<Location>? locations,
     List<Task>? tasks,
     List<ItineraryItem>? itineraryItems,
   }) {
@@ -66,6 +71,7 @@ class TripEntry extends Equatable {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       memo: memo ?? this.memo,
+      locations: locations ?? this.locations,
       tasks: tasks ?? this.tasks,
       itineraryItems: itineraryItems ?? this.itineraryItems,
     );
@@ -119,6 +125,7 @@ class TripEntry extends Equatable {
     startDate,
     endDate,
     memo,
+    locations,
     tasks,
     itineraryItems,
   ];

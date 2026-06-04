@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
@@ -24,6 +25,7 @@ void main() {
     late MockFirebaseFirestore mockFirestore;
     late MockCollectionReference<Map<String, dynamic>>
     mockTripEntriesCollection;
+    late MockCollectionReference<Map<String, dynamic>> mockLocationsCollection;
     late MockCollectionReference<Map<String, dynamic>> mockTasksCollection;
     late MockCollectionReference<Map<String, dynamic>>
     mockItineraryItemsCollection;
@@ -33,6 +35,7 @@ void main() {
       mockFirestore = MockFirebaseFirestore();
       mockTripEntriesCollection =
           MockCollectionReference<Map<String, dynamic>>();
+      mockLocationsCollection = MockCollectionReference<Map<String, dynamic>>();
       mockTasksCollection = MockCollectionReference<Map<String, dynamic>>();
       mockItineraryItemsCollection =
           MockCollectionReference<Map<String, dynamic>>();
@@ -40,6 +43,9 @@ void main() {
       when(
         mockFirestore.collection('trip_entries'),
       ).thenReturn(mockTripEntriesCollection);
+      when(
+        mockFirestore.collection('locations'),
+      ).thenReturn(mockLocationsCollection);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
       when(
         mockFirestore.collection('itinerary_items'),
@@ -48,10 +54,13 @@ void main() {
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
     });
 
-    test('旅行IDで旅行情報を取得し、tasksとitinerary_itemsも取得する', () async {
+    test('旅行IDで旅行情報を取得し、locations、tasks、itinerary_itemsも取得する', () async {
       const tripId = 'trip123';
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
+      final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+      final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockLocationDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockTaskDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
@@ -72,6 +81,22 @@ void main() {
         'endDate': Timestamp.fromDate(DateTime(2024, 8, 5)),
         'memo': '楽しかった思い出',
       });
+
+      when(
+        mockLocationsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockLocationsQuery);
+      when(
+        mockLocationsQuery.get(),
+      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocationsSnapshot.docs).thenReturn([mockLocationDoc]);
+      when(mockLocationDoc.data()).thenReturn({
+        'tripId': tripId,
+        'groupId': 'group001',
+        'name': '東京駅',
+        'latitude': 35.681236,
+        'longitude': 139.767125,
+      });
+      when(mockLocationDoc.id).thenReturn('location001');
 
       when(
         mockTasksCollection.where('tripId', isEqualTo: tripId),
@@ -123,6 +148,9 @@ void main() {
       expect(result, isNotNull);
       expect(result!.id, equals(tripId));
       expect(result.name, equals('夏旅行'));
+      expect(result.locations, hasLength(1));
+      final LocationDto location = result.locations!.first;
+      expect(location.name, '東京駅');
       expect(result.tasks, hasLength(1));
       expect(result.tasks!.first.name, '準備');
       expect(result.itineraryItems, hasLength(1));
@@ -161,6 +189,8 @@ void main() {
       final mockDocSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
       final mockTasksQuery = MockQuery<Map<String, dynamic>>();
       final mockTasksSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
+      final mockLocationsQuery = MockQuery<Map<String, dynamic>>();
+      final mockLocationsSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockItineraryItemsQuery = MockQuery<Map<String, dynamic>>();
       final mockItineraryItemsSnapshot =
           MockQuerySnapshot<Map<String, dynamic>>();
@@ -172,6 +202,13 @@ void main() {
       when(
         mockDocSnapshot.data(),
       ).thenReturn({'groupId': 'group001', 'name': '期間未設定旅行'});
+      when(
+        mockLocationsCollection.where('tripId', isEqualTo: tripId),
+      ).thenReturn(mockLocationsQuery);
+      when(
+        mockLocationsQuery.get(),
+      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocationsSnapshot.docs).thenReturn([]);
       when(
         mockTasksCollection.where('tripId', isEqualTo: tripId),
       ).thenReturn(mockTasksQuery);

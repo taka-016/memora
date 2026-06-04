@@ -11,28 +11,16 @@ class FirestoreLocationQueryService implements LocationQueryService {
   final FirebaseFirestore _firestore;
 
   @override
-  Future<List<LocationDto>> getLocationsByTripId(String tripId) async {
-    return _getLocationsByField('tripId', tripId);
-  }
-
-  @override
   Future<List<LocationDto>> getLocationsByGroupId(String groupId) async {
-    return _getLocationsByField('groupId', groupId);
-  }
-
-  Future<List<LocationDto>> _getLocationsByField(
-    String field,
-    String value,
-  ) async {
     try {
       final snapshot = await _firestore
           .collection('locations')
-          .where(field, isEqualTo: value)
+          .where('groupId', isEqualTo: groupId)
           .get();
       return snapshot.docs.map(FirestoreLocationMapper.fromFirestore).toList();
     } catch (e, stack) {
       logger.e(
-        'FirestoreLocationQueryService._getLocationsByField: ${e.toString()}',
+        'FirestoreLocationQueryService.getLocationsByGroupId: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );

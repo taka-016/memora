@@ -11,9 +11,9 @@ final createTripEntryUsecaseProvider = Provider<CreateTripEntryUsecase>((ref) {
 });
 
 class CreateTripEntryUsecase {
-  final TripEntryRepository _tripEntryRepository;
-
   CreateTripEntryUsecase(this._tripEntryRepository);
+
+  final TripEntryRepository _tripEntryRepository;
 
   Future<String> execute(TripEntryDto tripEntry) async {
     try {

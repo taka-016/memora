@@ -56,7 +56,7 @@ void main() {
       expect(find.text('テストメモ'), findsOneWidget);
     });
 
-    testWidgets('旅行編集画面に訪問場所UIを表示しないこと', (tester) async {
+    testWidgets('旅行編集画面に訪問場所ボタンを表示すること', (tester) async {
       await tester.pumpWidget(
         _createApp(
           child: TripEditModal(
@@ -68,9 +68,7 @@ void main() {
         ),
       );
 
-      expect(find.text('訪問場所'), findsNothing);
-      expect(find.widgetWithText(ElevatedButton, '編集'), findsNothing);
-      expect(find.byKey(const Key('map_view')), findsNothing);
+      expect(find.widgetWithText(ElevatedButton, '訪問場所'), findsOneWidget);
     });
 
     testWidgets('旅程ボタンをタップで旅程画面が表示され閉じると旅行編集へ戻ること', (tester) async {

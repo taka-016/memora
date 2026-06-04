@@ -1,8 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
+import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
+import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
+import 'package:uuid/uuid.dart';
+
+typedef TripLocationCreated =
+    Future<LocationDto> Function(LocationDto location);
 
 class TripEditFormView extends HookWidget {
   const TripEditFormView({
@@ -11,6 +23,10 @@ class TripEditFormView extends HookWidget {
     required this.onChanged,
     required this.onItineraryManagementRequested,
     required this.onTaskManagementRequested,
+    this.locations = const [],
+    this.onLocationCreated,
+    this.onLocationDeleted,
+    this.isTestEnvironment = false,
     this.configuredYear,
     this.clock,
   });
@@ -19,6 +35,10 @@ class TripEditFormView extends HookWidget {
   final ValueChanged<TripEntryDto> onChanged;
   final VoidCallback onItineraryManagementRequested;
   final VoidCallback onTaskManagementRequested;
+  final List<LocationDto> locations;
+  final TripLocationCreated? onLocationCreated;
+  final Future<void> Function(LocationDto location)? onLocationDeleted;
+  final bool isTestEnvironment;
   final int? configuredYear;
   final AppClock? clock;
 
@@ -32,6 +52,7 @@ class TripEditFormView extends HookWidget {
     final endDate = useState<DateTime?>(value.endDate);
     final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
+    final selectedTripLocation = useState<LocationDto?>(null);
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     TripEntryDto buildCurrentValue() {
@@ -119,6 +140,210 @@ class TripEditFormView extends HookWidget {
       }
 
       return effectiveClock.now();
+    }
+
+    LocationDto buildLocation({required Coordinate coordinate, String? name}) {
+      return LocationDto(
+        id: const Uuid().v7(),
+        tripId: value.id,
+        groupId: value.groupId,
+        name: name,
+        latitude: coordinate.latitude,
+        longitude: coordinate.longitude,
+      );
+    }
+
+    Future<LocationDto> createLocationFromCoordinate(
+      Coordinate coordinate,
+    ) async {
+      final location = buildLocation(coordinate: coordinate);
+      final createdLocation = await onLocationCreated?.call(location);
+      final result = createdLocation ?? location;
+      selectedTripLocation.value = result;
+      return result;
+    }
+
+    Future<LocationDto> createLocationFromCandidate(
+      LocationCandidateDto candidate,
+    ) async {
+      final location = buildLocation(
+        coordinate: candidate.coordinate,
+        name: candidate.name,
+      );
+      final createdLocation = await onLocationCreated?.call(location);
+      final result = createdLocation ?? location;
+      selectedTripLocation.value = result;
+      return result;
+    }
+
+    Widget buildTripLocationsMap() {
+      if (onLocationCreated == null && onLocationDeleted == null) {
+        return const SizedBox.shrink();
+      }
+
+      final mapViewType = isTestEnvironment
+          ? MapViewType.placeholder
+          : MapViewType.google;
+      List<String> itineraryNamesForLocation(LocationDto location) {
+        return (value.itineraryItems ?? const [])
+            .where((item) => item.locationId == location.id)
+            .map((item) => item.name)
+            .toList();
+      }
+
+      Widget buildSelectedLocationDetail(
+        LocationDto location,
+        VoidCallback onClose,
+        Future<void> Function(LocationDto location) onLocationNameUpdated,
+        Future<void> Function(LocationDto location) onLocationDeletedFromMap,
+      ) {
+        final linkedItineraryNames = itineraryNamesForLocation(location);
+        final maxDetailHeight = MediaQuery.sizeOf(context).height * 0.45;
+        return LocationDetailPanelFrame(
+          panelKey: const Key('trip_location_detail_panel'),
+          onClose: onClose,
+          maxHeight: maxDetailHeight,
+          locationName: location.name ?? '',
+          locationNameFieldKey: ValueKey('trip_location_name_${location.id}'),
+          onLocationNameChanged: (value) {
+            unawaited(
+              onLocationNameUpdated(
+                location.copyWith(
+                  name: value.trim().isEmpty ? null : value.trim(),
+                ),
+              ),
+            );
+          },
+          child: Flexible(
+            child: SingleChildScrollView(
+              key: const Key('trip_location_detail_scroll_view'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (linkedItineraryNames.isEmpty)
+                    const Text('関連する旅程なし')
+                  else ...[
+                    const Text('関連する旅程'),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: linkedItineraryNames.map(Text.new).toList(),
+                      ),
+                    ),
+                  ],
+                  if (linkedItineraryNames.isEmpty &&
+                      onLocationDeleted != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          await onLocationDeletedFromMap(location);
+                          onClose();
+                        },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('削除'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+
+      Future<void> showLocationMapDialog() async {
+        var dialogLocations = List<LocationDto>.from(locations);
+        await showDialog<void>(
+          context: context,
+          builder: (context) {
+            return StatefulBuilder(
+              builder: (context, setDialogState) {
+                return LocationMapDialog(
+                  dialogKey: const Key('trip_locations_map_dialog'),
+                  mapViewType: mapViewType,
+                  locations: dialogLocations,
+                  onMapLongTapped: onLocationCreated == null
+                      ? null
+                      : (coordinate) async {
+                          final location = await createLocationFromCoordinate(
+                            coordinate,
+                          );
+                          setDialogState(() {
+                            dialogLocations = [...dialogLocations, location];
+                          });
+                        },
+                  onSearchedLocationSelected: onLocationCreated == null
+                      ? null
+                      : (candidate) async {
+                          final location = await createLocationFromCandidate(
+                            candidate,
+                          );
+                          setDialogState(() {
+                            dialogLocations = [...dialogLocations, location];
+                          });
+                        },
+                  onLocationTapped: (location) {
+                    selectedTripLocation.value = location;
+                    setDialogState(() {});
+                  },
+                  selectedLocation: selectedTripLocation.value,
+                  locationDetailBuilder: (location, onClose) {
+                    return buildSelectedLocationDetail(
+                      location,
+                      onClose,
+                      (updatedLocation) async {
+                        final savedLocation =
+                            await onLocationCreated?.call(updatedLocation) ??
+                            updatedLocation;
+                        selectedTripLocation.value = savedLocation;
+                        setDialogState(() {
+                          dialogLocations = [
+                            for (final current in dialogLocations)
+                              current.id == savedLocation.id
+                                  ? savedLocation
+                                  : current,
+                          ];
+                        });
+                      },
+                      (deletedLocation) async {
+                        await onLocationDeleted?.call(deletedLocation);
+                        selectedTripLocation.value = null;
+                        setDialogState(() {
+                          dialogLocations = dialogLocations
+                              .where(
+                                (current) => current.id != deletedLocation.id,
+                              )
+                              .toList();
+                        });
+                      },
+                    );
+                  },
+                  tripStartDate: value.startDate,
+                );
+              },
+            );
+          },
+        );
+      }
+
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          key: const Key('trip_locations_button'),
+          onPressed: showLocationMapDialog,
+          icon: const Icon(Icons.place),
+          label: const Text('訪問場所'),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 48),
+          ),
+        ),
+      );
     }
 
     Widget buildDatePickerField({
@@ -272,6 +497,8 @@ class TripEditFormView extends HookWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+          buildTripLocationsMap(),
           const SizedBox(height: 16),
         ],
       ),

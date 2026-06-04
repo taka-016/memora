@@ -11,9 +11,9 @@ final updateTripEntryUsecaseProvider = Provider<UpdateTripEntryUsecase>((ref) {
 });
 
 class UpdateTripEntryUsecase {
-  final TripEntryRepository _tripEntryRepository;
-
   UpdateTripEntryUsecase(this._tripEntryRepository);
+
+  final TripEntryRepository _tripEntryRepository;
 
   Future<void> execute(TripEntryDto tripEntry) async {
     try {

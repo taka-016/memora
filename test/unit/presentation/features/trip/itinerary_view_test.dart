@@ -1,12 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
+import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/services/location_search_service.dart';
+import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/application/usecases/location/search_locations_usecase.dart';
+import 'package:memora/core/models/coordinate.dart';
+import 'package:memora/domain/services/current_location_service.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
 Widget _wrapWithApp(Widget child) {
   return MaterialApp(
     home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+  );
+}
+
+Widget _wrapWithMapApp(Widget child) {
+  return ProviderScope(
+    overrides: [
+      getCurrentLocationUsecaseProvider.overrideWithValue(
+        GetCurrentLocationUsecase(_FakeCurrentLocationService()),
+      ),
+      searchLocationsUsecaseProvider.overrideWithValue(
+        SearchLocationsUsecase(_FakeLocationSearchService()),
+      ),
+    ],
+    child: MaterialApp(
+      home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+    ),
   );
 }
 
@@ -64,6 +89,39 @@ void main() {
       final last = tester.getTopLeft(find.text('未定')).dy;
       expect(first, lessThan(second));
       expect(second, lessThan(last));
+    });
+
+    testWidgets('旅程項目に紐づく場所名を表示すること', (tester) async {
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+        locationId: 'location-1',
+        location: location,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [location],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      expect(find.text('首里城観光'), findsOneWidget);
+      expect(find.text('首里城'), findsOneWidget);
     });
 
     testWidgets('旅程項目を追加して親へ通知すること', (tester) async {
@@ -214,6 +272,295 @@ void main() {
       expect(lastChanged.first.name, '朝食変更');
       expect(lastChanged.first.startDateTime, DateTime(2024, 1, 2, 8));
       expect(lastChanged.first.memo, '予約時間に合わせる');
+    });
+
+    testWidgets('旅程項目の場所指定を解除して保存できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      final deletedLocations = <LocationDto>[];
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+        locationId: 'location-1',
+        location: location,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            items: const [item],
+            locations: const [location],
+            onChanged: (updated) => lastChanged = updated,
+            onLocationDeleted: (location) async {
+              deletedLocations.add(location);
+            },
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(ElevatedButton, '場所を変更'), findsOneWidget);
+      expect(find.widgetWithText(OutlinedButton, '指定を解除'), findsOneWidget);
+      expect(find.text('首里城'), findsWidgets);
+
+      await tester.tap(find.widgetWithText(OutlinedButton, '指定を解除'));
+      await tester.pumpAndSettle();
+
+      expect(deletedLocations, isEmpty);
+
+      final saveButton = find.widgetWithText(ElevatedButton, '保存');
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect(lastChanged.single.locationId, isNull);
+      expect(lastChanged.single.location, isNull);
+      expect(deletedLocations, [location]);
+    });
+
+    testWidgets('旅程の場所指定マップは単独表示し、場所選択後も閉じないこと', (tester) async {
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+      );
+
+      await tester.pumpWidget(
+        _wrapWithApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [location],
+            isTestEnvironment: true,
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を指定'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('itinerary_location_map_dialog')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('itinerary_location_map')), findsNothing);
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
+    });
+
+    testWidgets('旅程マップの灰色ピンは確認ボタンで場所変更すること', (tester) async {
+      const oldLocation = LocationDto(
+        id: 'location-old',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '旧場所',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const newLocation = LocationDto(
+        id: 'location-new',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '新場所',
+        latitude: 26.218,
+        longitude: 127.72,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '観光',
+        locationId: 'location-old',
+        location: oldLocation,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithMapApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [oldLocation, newLocation],
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+
+      var googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final markersById = {
+        for (final marker in googleMap.markers) marker.markerId.value: marker,
+      };
+      markersById['location-new']!.onTap?.call();
+      await tester.pumpAndSettle();
+
+      googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(find.text('新場所'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '新場所'), findsNothing);
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        contains('location-old'),
+      );
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        contains('location-new'),
+      );
+      expect(find.widgetWithText(ElevatedButton, 'この場所を指定する'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, 'この場所を指定する'));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextFormField, '新場所'), findsOneWidget);
+      googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        isNot(contains('location-old')),
+      );
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        contains('location-new'),
+      );
+    });
+
+    testWidgets('旅程マップで場所指定後に取得した場所名を閉じる前に反映すること', (tester) async {
+      const item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '観光');
+
+      await tester.pumpWidget(
+        _wrapWithMapApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [],
+            onLocationCreated: (location) async {
+              return location.copyWith(name: '取得済み場所');
+            },
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を指定'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .onLongPress
+          ?.call(const LatLng(35.681236, 139.767125));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextFormField, '取得済み場所'), findsOneWidget);
+    });
+
+    testWidgets('旅程編集内の場所名は表示のみでマップの詳細表示内から手動変更できること', (tester) async {
+      List<ItineraryItemDto> lastChanged = [];
+      LocationDto? upsertedLocation;
+      const location = LocationDto(
+        id: 'location-1',
+        tripId: 'trip-1',
+        groupId: 'group-1',
+        name: '首里城',
+        latitude: 26.217,
+        longitude: 127.719,
+      );
+      const item = ItineraryItemDto(
+        id: 'item-1',
+        tripId: 'trip-1',
+        name: '首里城観光',
+        locationId: 'location-1',
+        location: location,
+      );
+
+      await tester.pumpWidget(
+        _wrapWithMapApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [location],
+            onLocationCreated: (location) async {
+              upsertedLocation = location;
+              return location;
+            },
+            onChanged: (updated) => lastChanged = updated,
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      expect(find.text('首里城'), findsWidgets);
+      expect(find.widgetWithText(TextFormField, '場所名'), findsNothing);
+
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を変更'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .markers
+          .single
+          .onTap
+          ?.call();
+      await tester.pumpAndSettle();
+      final panel = find.byKey(const Key('itinerary_location_detail_panel'));
+      final nameField = find.descendant(
+        of: panel,
+        matching: find.byType(TextFormField),
+      );
+      final closeButton = find
+          .descendant(of: panel, matching: find.byTooltip('閉じる'))
+          .first;
+      expect(
+        tester.getTopLeft(closeButton).dy,
+        lessThan(tester.getTopLeft(nameField).dy),
+      );
+      await tester.enterText(find.widgetWithText(TextFormField, '場所名'), '守礼門');
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byKey(const Key('itinerary_location_map_dialog')),
+              matching: find.byTooltip('閉じる'),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.widgetWithText(ElevatedButton, '保存'));
+      await tester.tap(find.widgetWithText(ElevatedButton, '保存'));
+      await tester.pumpAndSettle();
+
+      expect(upsertedLocation?.id, 'location-1');
+      expect(upsertedLocation?.name, '守礼門');
+      expect(lastChanged.single.location?.name, '守礼門');
     });
 
     testWidgets('旅程項目はリスト上の削除ボタンで削除できること', (tester) async {
@@ -731,4 +1078,16 @@ void main() {
       expect(dialog.initialDate.month, 8);
     });
   });
+}
+
+class _FakeCurrentLocationService implements CurrentLocationService {
+  @override
+  Future<Coordinate?> getCurrentLocation() async => null;
+}
+
+class _FakeLocationSearchService implements LocationSearchService {
+  @override
+  Future<List<LocationCandidateDto>> searchByKeyword(String keyword) async {
+    return const [];
+  }
 }

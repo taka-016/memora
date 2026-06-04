@@ -176,44 +176,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "pin_details",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "pinId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "startDate",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "pins",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "tripId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "visitStartDateTime",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "tasks",
       "queryScope": "COLLECTION",
       "fields": [
