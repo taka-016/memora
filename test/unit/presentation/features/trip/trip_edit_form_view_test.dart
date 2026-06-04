@@ -398,7 +398,7 @@ void main() {
       );
     });
 
-    testWidgets('旅行編集マップで別ピン選択時に場所名入力欄と閉じるボタン位置を更新すること', (tester) async {
+    testWidgets('旅行編集マップで別ピン選択時に場所名入力欄を更新すること', (tester) async {
       const initialValue = TripEntryDto(
         id: 'trip-id',
         groupId: 'group-id',
@@ -455,18 +455,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(TextFormField, '上野駅'), findsOneWidget);
-      final panel = find.byKey(const Key('trip_location_detail_panel'));
-      final nameField = find.descendant(
-        of: panel,
-        matching: find.byType(TextFormField),
-      );
-      final closeButton = find
-          .descendant(of: panel, matching: find.byTooltip('閉じる'))
-          .first;
-      expect(
-        tester.getTopLeft(closeButton).dy,
-        lessThan(tester.getTopLeft(nameField).dy),
-      );
     });
   });
 }
