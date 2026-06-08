@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
@@ -71,7 +69,14 @@ class AndroidWidgetActionHandler {
       if (succeeded) {
         return;
       }
-    } catch (_) {}
+    } catch (_) {
+      await _showMoveFailedToast();
+      return;
+    }
+    await _showMoveFailedToast();
+  }
+
+  Future<void> _showMoveFailedToast() async {
     await _showToast(const AndroidWidgetToastNotification.error('切り替えに失敗しました'));
   }
 }

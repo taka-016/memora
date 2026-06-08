@@ -72,8 +72,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       );
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
-    } catch (_) {
-      rethrow;
     } finally {
       await _cacheStorage.updateWidget();
     }

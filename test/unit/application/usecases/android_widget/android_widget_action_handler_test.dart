@@ -3,7 +3,6 @@ import 'package:memora/application/dtos/android_widget/android_widget_itinerary_
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
-import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 
 import '../../../../helpers/test_exception.dart';
 
