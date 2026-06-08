@@ -8,7 +8,8 @@ const _toastHandlerPath =
     'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastMethodChannelHandler.kt';
 const _toastPluginPath =
     'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastPlugin.kt';
-const _toastPluginPubspecPath = 'packages/memora_android_widget_toast/pubspec.yaml';
+const _toastPluginPubspecPath =
+    'packages/memora_android_widget_toast/pubspec.yaml';
 
 void main() {
   group('AndroidWidgetNotification', () {

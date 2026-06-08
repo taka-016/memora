@@ -13,7 +13,6 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   static const selectedItineraryDateIdKey =
       'memora_widget_selected_itinerary_date_id';
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
-  static const errorMessageKey = 'memora_widget_error_message';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
@@ -86,17 +85,11 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<void> saveErrorMessage(String? message) async {
-    await HomeWidget.saveWidgetData<String>(errorMessageKey, message ?? '');
-  }
-
-  @override
   Future<void> clear() async {
     await Future.wait([
       clearTargetGroupId(),
       saveSelectedItineraryDateId(null),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
-      HomeWidget.saveWidgetData<String>(errorMessageKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, ''),
     ]);
   }

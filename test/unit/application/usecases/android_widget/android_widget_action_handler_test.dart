@@ -19,15 +19,13 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache: ({
-          required String groupId,
-          String? selectedItineraryDateId,
-        }) async {
-          refreshCalls.add((
-            groupId: groupId,
-            selectedId: selectedItineraryDateId,
-          ));
-        },
+        refreshCache:
+            ({required String groupId, String? selectedItineraryDateId}) async {
+              refreshCalls.add((
+                groupId: groupId,
+                selectedId: selectedItineraryDateId,
+              ));
+            },
         moveDate: (_) async => true,
       );
 
@@ -47,12 +45,10 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache: ({
-          required String groupId,
-          String? selectedItineraryDateId,
-        }) async {
-          throw TestException('取得失敗');
-        },
+        refreshCache:
+            ({required String groupId, String? selectedItineraryDateId}) async {
+              throw TestException('取得失敗');
+            },
         moveDate: (_) async => true,
       );
 
@@ -72,10 +68,11 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache: ({
-          required String groupId,
-          String? selectedItineraryDateId,
-        }) async {},
+        refreshCache:
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+            }) async {},
         moveDate: (_) async => false,
       );
 
@@ -138,9 +135,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   Future<AndroidWidgetItineraryCacheDto?> loadItineraryCache() async {
     return null;
   }
-
-  @override
-  Future<void> saveErrorMessage(String? message) async {}
 }
 
 class _FakeAndroidWidgetToastNotifier {
