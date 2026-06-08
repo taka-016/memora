@@ -104,6 +104,7 @@ class ItineraryView extends HookWidget {
             tripStartDate: tripStartDate,
             locations: locations,
             onLocationCreated: onLocationCreated,
+            onLocationUnassigned: onLocationDeleted,
             otherLocationIds: itemsState.value
                 .where((current) => current.id != item.id)
                 .map((current) => current.locationId)

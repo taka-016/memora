@@ -62,12 +62,51 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final mapLocations = useState<List<LocationDto>>(
       List<LocationDto>.from(locations),
     );
+    final createdLocationIds = useRef(<String>{});
+    final createdLocationsById = useRef(<String, LocationDto>{});
+    final retainedCreatedLocationId = useRef<String?>(null);
     final effectiveClock = clock ?? NtpSynchronizedAppClock();
 
     useEffect(() {
       mapLocations.value = List<LocationDto>.from(locations);
       return null;
     }, [locations]);
+
+    void rememberCreatedLocation(LocationDto location) {
+      createdLocationIds.value.add(location.id);
+      createdLocationsById.value[location.id] = location;
+    }
+
+    Future<void> cleanupCreatedLocations({String? retainedLocationId}) async {
+      final locationUnassigned = onLocationUnassigned;
+      if (locationUnassigned == null || createdLocationIds.value.isEmpty) {
+        return;
+      }
+
+      final locationIds = createdLocationIds.value
+          .where((id) => id != retainedLocationId)
+          .toList();
+      for (final locationId in locationIds) {
+        final location =
+            createdLocationsById.value[locationId] ??
+            findLocationById(mapLocations.value, locationId);
+        if (location != null) {
+          await locationUnassigned(location);
+        }
+        createdLocationIds.value.remove(locationId);
+        createdLocationsById.value.remove(locationId);
+      }
+    }
+
+    useEffect(() {
+      return () {
+        unawaited(
+          cleanupCreatedLocations(
+            retainedLocationId: retainedCreatedLocationId.value,
+          ),
+        );
+      };
+    }, const []);
 
     DateTime initialDateFor(DateTime? selectedDate, {DateTime? fallbackDate}) {
       return selectedDate ??
@@ -201,6 +240,9 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       );
       final savedLocation =
           await onLocationCreated?.call(updatedLocation) ?? updatedLocation;
+      if (createdLocationIds.value.contains(savedLocation.id)) {
+        rememberCreatedLocation(savedLocation);
+      }
       mapLocations.value = upsertLocation(mapLocations.value, savedLocation);
       if (selectedLocation.value?.id == savedLocation.id) {
         selectedLocation.value = savedLocation;
@@ -210,6 +252,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
     Future<void> selectCreatedLocation(LocationDto location) async {
       final savedLocation = await onLocationCreated?.call(location) ?? location;
+      rememberCreatedLocation(savedLocation);
       selectLocation(savedLocation);
     }
 
@@ -227,6 +270,14 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
     void clearLocation() {
       selectedLocation.value = null;
+    }
+
+    Future<void> closeWithoutSaving() async {
+      await cleanupCreatedLocations();
+      if (!context.mounted) {
+        return;
+      }
+      Navigator.of(context).pop();
     }
 
     Future<void> save() async {
@@ -257,6 +308,10 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         return;
       }
 
+      retainedCreatedLocationId.value = locationToSave?.id;
+      await cleanupCreatedLocations(
+        retainedLocationId: retainedCreatedLocationId.value,
+      );
       onSaved(result.item!);
       if (!context.mounted) {
         return;
@@ -525,7 +580,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: closeWithoutSaving,
                   child: const Text('キャンセル'),
                 ),
                 const SizedBox(width: 8),
