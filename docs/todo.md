@@ -22,12 +22,19 @@
 
 ## Androidウィジェット
 
+- Androidウィジェットの通知表示をToastに移行する
+  - 更新ボタン押下直後ではなく、`androidWidgetInteractivityCallback`の`refresh`分岐で`RefreshAndroidWidgetItineraryCacheUsecase.execute`が成功した後だけ「更新しました。」を表示する
+  - 更新失敗時はウィジェット内の`FooterRow`ではなく、Toastで「更新に失敗しました」を表示する
+  - 旅程日の前後切り替え失敗時はウィジェット内の`FooterRow`ではなく、Toastで「切り替えに失敗しました」を表示する
+  - Dartの背景コールバックからAndroid側へ通知種別とメッセージを渡せるよう、背景FlutterEngineでも利用できるToast表示用の連携口を追加する
+  - Kotlin側ではAndroid標準の`Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()`相当でToastを表示する
+  - `ERROR_MESSAGE_KEY`、`FooterRow`、`saveErrorMessage`による通知表示は廃止または通知用途から外し、ウィジェット表示にエラーメッセージを残さない
 - Androidウィジェットを1日単位などで定期的に自動更新する
   - `workmanager`を導入し、Androidの定期バックグラウンドタスクから既存のウィジェットキャッシュ更新ユースケースを呼び出す
   - アプリ起動時とウィジェット表示対象グループ設定時に、重複しない一意名で定期タスクを登録する
   - 表示対象グループが未設定の場合は定期タスク内でウィジェット表示のみ更新し、Firestore取得は行わない
   - 更新時は現在日時を基準に`selectedItineraryDateId`を再選択し、表示位置を当日以降の直近旅程へ移動する
-  - ネットワーク未接続や取得失敗時は既存キャッシュを残し、エラーメッセージだけを保存してウィジェットを更新する
+  - ネットワーク未接続や取得失敗時は既存キャッシュを残し、ウィジェット内にエラーメッセージを保存せずToastで通知する
   - 定期更新の最小間隔はAndroidの制約に合わせ、要件上は1日単位、実装上は`Duration(hours: 24)`を基本にする
 - ウィジェットタップでアプリを開くようにする
   - Kotlin側の`WidgetItineraryDate`でキャッシュJSONの`tripId`を読み込む
