@@ -482,6 +482,62 @@ void main() {
       expect(find.widgetWithText(TextFormField, '取得済み場所'), findsOneWidget);
     });
 
+    testWidgets('旅程項目編集をキャンセルした場合は新規作成した場所を破棄すること', (tester) async {
+      final createdLocations = <LocationDto>[];
+      final deletedLocations = <LocationDto>[];
+      const item = ItineraryItemDto(id: 'item-1', tripId: 'trip-1', name: '観光');
+
+      await tester.pumpWidget(
+        _wrapWithMapApp(
+          ItineraryView(
+            tripId: 'trip-1',
+            groupId: 'group-1',
+            items: const [item],
+            locations: const [],
+            onLocationCreated: (location) async {
+              final createdLocation = location.copyWith(name: '取得済み場所');
+              createdLocations.add(createdLocation);
+              return createdLocation;
+            },
+            onLocationDeleted: (location) async {
+              deletedLocations.add(location);
+            },
+            onChanged: (_) {},
+            onClose: () {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byKey(const Key('itineraryListItem_item-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '場所を指定'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<GoogleMap>(find.byType(GoogleMap))
+          .onLongPress
+          ?.call(const LatLng(35.681236, 139.767125));
+      await tester.pumpAndSettle();
+
+      expect(createdLocations, hasLength(1));
+      expect(find.widgetWithText(TextFormField, '取得済み場所'), findsOneWidget);
+
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byKey(const Key('itinerary_location_map_dialog')),
+              matching: find.byTooltip('閉じる'),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      final cancelButton = find.widgetWithText(TextButton, 'キャンセル');
+      await tester.ensureVisible(cancelButton);
+      await tester.tap(cancelButton);
+      await tester.pumpAndSettle();
+
+      expect(deletedLocations, createdLocations);
+    });
+
     testWidgets('旅程編集内の場所名は表示のみでマップの詳細表示内から手動変更できること', (tester) async {
       List<ItineraryItemDto> lastChanged = [];
       LocationDto? upsertedLocation;
