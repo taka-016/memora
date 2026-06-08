@@ -4,10 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _itineraryWidgetPath =
     'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
-const _mainActivityPath =
-    'android/app/src/main/kotlin/com/example/memora/MainActivity.kt';
 const _toastHandlerPath =
-    'android/app/src/main/kotlin/com/example/memora/AndroidWidgetToastMethodChannelHandler.kt';
+    'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastMethodChannelHandler.kt';
+const _toastPluginPath =
+    'packages/memora_android_widget_toast/android/src/main/kotlin/com/example/memora/AndroidWidgetToastPlugin.kt';
+const _toastPluginPubspecPath = 'packages/memora_android_widget_toast/pubspec.yaml';
 
 void main() {
   group('AndroidWidgetNotification', () {
@@ -19,14 +20,13 @@ void main() {
       expect(source, isNot(contains('memora_widget_error_message')));
     });
 
-    test('背景FlutterEngineでも使うToast用MethodChannelを登録している', () {
-      final mainActivitySource = File(_mainActivityPath).readAsStringSync();
+    test('背景FlutterEngineでも使うToast用Flutterプラグインを登録している', () {
       final handlerSource = File(_toastHandlerPath).readAsStringSync();
+      final pluginSource = File(_toastPluginPath).readAsStringSync();
+      final pubspec = File(_toastPluginPubspecPath).readAsStringSync();
 
-      expect(
-        mainActivitySource,
-        contains('AndroidWidgetToastMethodChannelHandler.CHANNEL'),
-      );
+      expect(pubspec, contains('pluginClass: AndroidWidgetToastPlugin'));
+      expect(pluginSource, contains('AndroidWidgetToastMethodChannelHandler'));
       expect(handlerSource, contains('Toast.makeText'));
       expect(handlerSource, contains('context.applicationContext'));
     });
