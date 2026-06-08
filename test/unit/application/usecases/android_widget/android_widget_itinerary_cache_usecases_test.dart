@@ -14,7 +14,7 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
-    test('リモート探索で失敗した場合はエラーを保存してウィジェットを更新する', () async {
+    test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         cache: AndroidWidgetItineraryCacheDto(
           version: 1,
@@ -48,12 +48,12 @@ void main() {
         ),
       );
 
-      await expectLater(
-        usecase.execute(AndroidWidgetItineraryDateMoveDirection.next),
-        completes,
+      final succeeded = await usecase.execute(
+        AndroidWidgetItineraryDateMoveDirection.next,
       );
 
-      expect(storage.errorMessage, '切り替えに失敗しました');
+      expect(succeeded, isFalse);
+      expect(storage.errorMessage, isNull);
       expect(storage.updateWidgetCount, 1);
     });
   });
