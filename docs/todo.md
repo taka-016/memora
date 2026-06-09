@@ -23,11 +23,15 @@
 ## Androidウィジェット
 
 - Androidウィジェットの通知表示をToastに移行する
-  - 更新ボタン押下直後ではなく、`androidWidgetInteractivityCallback`の`refresh`分岐で`RefreshAndroidWidgetItineraryCacheUsecase.execute`が成功した後だけ「更新しました。」を表示する
-  - 更新失敗時はウィジェット内の`FooterRow`ではなく、Toastで「更新に失敗しました」を表示する
-  - 旅程日の前後切り替え失敗時はウィジェット内の`FooterRow`ではなく、Toastで「切り替えに失敗しました」を表示する
-  - Dartの背景コールバックからAndroid側へ通知種別とメッセージを渡せるよう、背景FlutterEngineでも利用できるToast表示用の連携口を追加する
-  - Kotlin側ではAndroid標準の`Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()`相当でToastを表示する
+  - ウィジェットの更新・前後切り替えアクションには一意な`actionId`を付与し、Android側の背景WorkerからDart背景コールバックへ渡す
+  - Dart側は`androidWidgetInteractivityCallback`で処理を実行し、処理完了後に`actionId`へ紐づく結果データ（通知種別・メッセージ・成功/失敗）をHomeWidget共有データへ保存する
+  - Android側の背景WorkerはDart背景コールバックの完了を待ち、`actionId`に対応する結果データを読み取ってからToastを表示する
+  - 更新ボタン押下直後ではなく、`RefreshAndroidWidgetItineraryCacheUsecase.execute`が成功した結果データを保存した後だけ「更新しました。」を表示する
+  - 更新失敗時はDart側で失敗結果データを保存し、Android側でToastとして「更新に失敗しました」を表示する
+  - 旅程日の前後切り替え失敗時はDart側で失敗結果データを保存し、Android側でToastとして「切り替えに失敗しました」を表示する
+  - Android側でDart処理自体を開始できない、または結果データを読み取れない場合は、対象アクションに応じた失敗Toastを表示し、成功Toastは表示しない
+  - Toast表示後は`actionId`に対応する結果データを削除し、古い結果による誤表示を防ぐ
+  - Kotlin側ではAndroid標準の`Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()`相当をメインスレッドで実行し、Androidホーム画面上にToastを表示する
   - `ERROR_MESSAGE_KEY`、`FooterRow`、`saveErrorMessage`による通知表示は廃止または通知用途から外し、ウィジェット表示にエラーメッセージを残さない
 - Androidウィジェットを1日単位などで定期的に自動更新する
   - `workmanager`を導入し、Androidの定期バックグラウンドタスクから既存のウィジェットキャッシュ更新ユースケースを呼び出す
