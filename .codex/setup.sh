@@ -2,7 +2,7 @@
 
 # 環境変数
 export DEBIAN_FRONTEND=noninteractive
-export FLUTTER_VERSION=3.35.4
+export FLUTTER_VERSION=3.41.6
 export TZ=Asia/Tokyo
 
 # パッケージインストール
