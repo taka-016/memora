@@ -206,6 +206,77 @@ void main() {
       expect(find.text('35.6812, 139.7671'), findsNothing);
     });
 
+    testWidgets('ボトムシートの前後ボタンで取得順のピンへ循環移動する', (tester) async {
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 35.6812,
+          longitude: 139.7671,
+          name: '東京駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 35.682,
+          longitude: 139.768,
+          name: '上野駅',
+        ),
+        LocationDto(
+          id: 'location3',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 35.683,
+          longitude: 139.769,
+          name: '品川駅',
+        ),
+      ];
+      final tappedLocationIds = <String>[];
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: locations,
+            selectedLocation: locations.first,
+            onLocationTapped: (location) => tappedLocationIds.add(location.id),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('東京駅'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('location_detail_next_button')));
+      await tester.pump();
+
+      expect(find.text('上野駅'), findsOneWidget);
+      expect(tappedLocationIds.last, 'location2');
+
+      await tester.tap(
+        find.byKey(const Key('location_detail_previous_button')),
+      );
+      await tester.pump();
+
+      expect(find.text('東京駅'), findsOneWidget);
+      expect(tappedLocationIds.last, 'location1');
+
+      await tester.tap(
+        find.byKey(const Key('location_detail_previous_button')),
+      );
+      await tester.pump();
+
+      expect(find.text('品川駅'), findsOneWidget);
+      expect(tappedLocationIds.last, 'location3');
+
+      await tester.tap(find.byKey(const Key('location_detail_next_button')));
+      await tester.pump();
+
+      expect(find.text('東京駅'), findsOneWidget);
+      expect(tappedLocationIds.last, 'location1');
+    });
+
     testWidgets('ピン選択時の詳細表示を差し替えられる', (tester) async {
       const location = LocationDto(
         id: 'location1',
@@ -221,9 +292,10 @@ void main() {
           GoogleMapView(
             locations: const [location],
             selectedLocation: location,
-            locationDetailBuilder: (location, onClose) {
-              return Text('詳細: ${location.name}');
-            },
+            locationDetailBuilder:
+                (location, onClose, {onPreviousLocation, onNextLocation}) {
+                  return Text('詳細: ${location.name}');
+                },
           ),
         ),
       );

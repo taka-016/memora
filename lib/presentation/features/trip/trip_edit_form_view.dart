@@ -193,10 +193,14 @@ class TripEditFormView extends HookWidget {
 
       Widget buildSelectedLocationDetail(
         LocationDto location,
-        VoidCallback onClose,
-        Future<void> Function(LocationDto location) onLocationNameUpdated,
-        Future<void> Function(LocationDto location) onLocationDeletedFromMap,
-      ) {
+        VoidCallback onClose, {
+        VoidCallback? onPreviousLocation,
+        VoidCallback? onNextLocation,
+        required Future<void> Function(LocationDto location)
+        onLocationNameUpdated,
+        required Future<void> Function(LocationDto location)
+        onLocationDeletedFromMap,
+      }) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
         final maxDetailHeight = MediaQuery.sizeOf(context).height * 0.45;
         return LocationDetailPanelFrame(
@@ -205,6 +209,8 @@ class TripEditFormView extends HookWidget {
           maxHeight: maxDetailHeight,
           locationName: location.name ?? '',
           locationNameFieldKey: ValueKey('trip_location_name_${location.id}'),
+          onPreviousLocation: onPreviousLocation,
+          onNextLocation: onNextLocation,
           onLocationNameChanged: (value) {
             unawaited(
               onLocationNameUpdated(
@@ -240,13 +246,19 @@ class TripEditFormView extends HookWidget {
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: OutlinedButton.icon(
+                      child: OutlinedButton(
                         onPressed: () async {
                           await onLocationDeletedFromMap(location);
                           onClose();
                         },
-                        icon: const Icon(Icons.delete),
-                        label: const Text('削除'),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete, size: 20),
+                            SizedBox(width: 4),
+                            Text('削除'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -293,37 +305,48 @@ class TripEditFormView extends HookWidget {
                     setDialogState(() {});
                   },
                   selectedLocation: selectedTripLocation.value,
-                  locationDetailBuilder: (location, onClose) {
-                    return buildSelectedLocationDetail(
-                      location,
-                      onClose,
-                      (updatedLocation) async {
-                        final savedLocation =
-                            await onLocationCreated?.call(updatedLocation) ??
-                            updatedLocation;
-                        selectedTripLocation.value = savedLocation;
-                        setDialogState(() {
-                          dialogLocations = [
-                            for (final current in dialogLocations)
-                              current.id == savedLocation.id
-                                  ? savedLocation
-                                  : current,
-                          ];
-                        });
+                  locationDetailBuilder:
+                      (
+                        location,
+                        onClose, {
+                        onPreviousLocation,
+                        onNextLocation,
+                      }) {
+                        return buildSelectedLocationDetail(
+                          location,
+                          onClose,
+                          onPreviousLocation: onPreviousLocation,
+                          onNextLocation: onNextLocation,
+                          onLocationNameUpdated: (updatedLocation) async {
+                            final savedLocation =
+                                await onLocationCreated?.call(
+                                  updatedLocation,
+                                ) ??
+                                updatedLocation;
+                            selectedTripLocation.value = savedLocation;
+                            setDialogState(() {
+                              dialogLocations = [
+                                for (final current in dialogLocations)
+                                  current.id == savedLocation.id
+                                      ? savedLocation
+                                      : current,
+                              ];
+                            });
+                          },
+                          onLocationDeletedFromMap: (deletedLocation) async {
+                            await onLocationDeleted?.call(deletedLocation);
+                            selectedTripLocation.value = null;
+                            setDialogState(() {
+                              dialogLocations = dialogLocations
+                                  .where(
+                                    (current) =>
+                                        current.id != deletedLocation.id,
+                                  )
+                                  .toList();
+                            });
+                          },
+                        );
                       },
-                      (deletedLocation) async {
-                        await onLocationDeleted?.call(deletedLocation);
-                        selectedTripLocation.value = null;
-                        setDialogState(() {
-                          dialogLocations = dialogLocations
-                              .where(
-                                (current) => current.id != deletedLocation.id,
-                              )
-                              .toList();
-                        });
-                      },
-                    );
-                  },
                   tripStartDate: value.startDate,
                 );
               },
@@ -334,13 +357,19 @@ class TripEditFormView extends HookWidget {
 
       return SizedBox(
         width: double.infinity,
-        child: ElevatedButton.icon(
+        child: ElevatedButton(
           key: const Key('trip_locations_button'),
           onPressed: showLocationMapDialog,
-          icon: const Icon(Icons.place),
-          label: const Text('訪問場所'),
           style: ElevatedButton.styleFrom(
             minimumSize: const Size(double.infinity, 48),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.place, size: 20),
+              SizedBox(width: 4),
+              Text('訪問場所'),
+            ],
           ),
         ),
       );

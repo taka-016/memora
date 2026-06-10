@@ -10,6 +10,8 @@ class LocationDetailPanelFrame extends StatelessWidget {
     this.locationName,
     this.locationNameFieldKey,
     this.onLocationNameChanged,
+    this.onPreviousLocation,
+    this.onNextLocation,
   });
 
   final Key panelKey;
@@ -19,6 +21,8 @@ class LocationDetailPanelFrame extends StatelessWidget {
   final String? locationName;
   final Key? locationNameFieldKey;
   final ValueChanged<String>? onLocationNameChanged;
+  final VoidCallback? onPreviousLocation;
+  final VoidCallback? onNextLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -36,23 +40,42 @@ class LocationDetailPanelFrame extends StatelessWidget {
                 ? const BoxConstraints()
                 : BoxConstraints(maxHeight: maxHeight!),
             padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    tooltip: '閉じる',
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
+                _LocationNavigationButton(
+                  key: const Key('location_detail_previous_button'),
+                  tooltip: '前のピンへ移動',
+                  icon: Icons.chevron_left,
+                  onPressed: onPreviousLocation,
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: IconButton(
+                          tooltip: '閉じる',
+                          onPressed: onClose,
+                          icon: const Icon(Icons.close),
+                        ),
+                      ),
+                      if (locationNameWidget != null) ...[
+                        locationNameWidget,
+                        const SizedBox(height: 8),
+                      ],
+                      child,
+                    ],
                   ),
                 ),
-                if (locationNameWidget != null) ...[
-                  locationNameWidget,
-                  const SizedBox(height: 8),
-                ],
-                child,
+                _LocationNavigationButton(
+                  key: const Key('location_detail_next_button'),
+                  tooltip: '次のピンへ移動',
+                  icon: Icons.chevron_right,
+                  onPressed: onNextLocation,
+                ),
               ],
             ),
           ),
@@ -89,5 +112,23 @@ class LocationDetailPanelFrame extends StatelessWidget {
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
+  }
+}
+
+class _LocationNavigationButton extends StatelessWidget {
+  const _LocationNavigationButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(tooltip: tooltip, onPressed: onPressed, icon: Icon(icon));
   }
 }

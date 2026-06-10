@@ -363,8 +363,10 @@ class ItineraryItemEditBottomSheet extends HookWidget {
               builder: (context, setDialogState) {
                 Widget buildLocationDetail(
                   LocationDto location,
-                  VoidCallback onClose,
-                ) {
+                  VoidCallback onClose, {
+                  VoidCallback? onPreviousLocation,
+                  VoidCallback? onNextLocation,
+                }) {
                   final isSelectedLocation =
                       selectedLocation.value?.id == location.id;
                   return LocationDetailPanelFrame(
@@ -374,6 +376,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                     locationNameFieldKey: ValueKey(
                       'itinerary_location_name_${location.id}',
                     ),
+                    onPreviousLocation: onPreviousLocation,
+                    onNextLocation: onNextLocation,
                     onLocationNameChanged: isSelectedLocation
                         ? (value) {
                             unawaited(
@@ -396,7 +400,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                         if (!isSelectedLocation)
                           Align(
                             alignment: Alignment.centerRight,
-                            child: ElevatedButton.icon(
+                            child: ElevatedButton(
                               onPressed: () {
                                 final latestLocation =
                                     findLocationById(
@@ -410,8 +414,14 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                                 );
                                 setDialogState(() {});
                               },
-                              icon: const Icon(Icons.place),
-                              label: const Text('この場所を指定する'),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.place, size: 20),
+                                  SizedBox(width: 4),
+                                  Text('この場所を指定する'),
+                                ],
+                              ),
                             ),
                           ),
                       ],
@@ -466,25 +476,43 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           if (location == null)
             Align(
               alignment: Alignment.centerLeft,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: hasMapCallbacks ? showLocationMap : null,
-                icon: const Icon(Icons.place),
-                label: const Text('場所を指定'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.place, size: 20),
+                    SizedBox(width: 4),
+                    Text('場所を指定'),
+                  ],
+                ),
               ),
             )
           else ...[
             Row(
               children: [
-                ElevatedButton.icon(
+                ElevatedButton(
                   onPressed: showLocationMap,
-                  icon: const Icon(Icons.place),
-                  label: const Text('場所を変更'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.place, size: 20),
+                      SizedBox(width: 4),
+                      Text('場所を変更'),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 8),
-                OutlinedButton.icon(
+                OutlinedButton(
                   onPressed: clearLocation,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('指定を解除'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.clear, size: 20),
+                      SizedBox(width: 4),
+                      Text('指定を解除'),
+                    ],
+                  ),
                 ),
               ],
             ),
