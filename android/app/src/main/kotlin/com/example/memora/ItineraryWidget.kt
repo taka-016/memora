@@ -1,7 +1,12 @@
 package com.example.memora
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -333,6 +338,7 @@ class RefreshWidgetAction : ActionCallback {
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
+        showRefreshButtonNotification(context)
         showToast(context, "更新ボタンを押しました")
         runWidgetAction(context, WIDGET_ACTION_REFRESH)
     }
@@ -468,6 +474,39 @@ private suspend fun showToast(context: Context, message: String) {
     }
 }
 
+private fun showRefreshButtonNotification(context: Context) {
+    val applicationContext = context.applicationContext
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+        applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+        PackageManager.PERMISSION_GRANTED
+    ) {
+        return
+    }
+    val notificationManager = applicationContext
+        .getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        notificationManager.createNotificationChannel(
+            NotificationChannel(
+                WIDGET_NOTIFICATION_CHANNEL_ID,
+                "Androidウィジェット",
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ),
+        )
+    }
+    val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        android.app.Notification.Builder(applicationContext, WIDGET_NOTIFICATION_CHANNEL_ID)
+    } else {
+        @Suppress("DEPRECATION")
+        android.app.Notification.Builder(applicationContext)
+    }
+        .setSmallIcon(R.drawable.ic_widget_refresh)
+        .setContentTitle("memora")
+        .setContentText("更新ボタンを押しました")
+        .setAutoCancel(true)
+        .build()
+    notificationManager.notify(REFRESH_BUTTON_NOTIFICATION_ID, notification)
+}
+
 private suspend fun clearActionResult(context: Context, actionId: String) {
     withContext(Dispatchers.IO) {
         context
@@ -586,6 +625,8 @@ private const val HOME_WIDGET_WORKER_URI_DATA_KEY = "uri_data"
 private const val WIDGET_URI_SCHEME = "memoraWidget"
 private const val ACTION_ID_QUERY_PARAMETER = "actionId"
 private const val NOTIFICATION_TYPE_TOAST = "toast"
+private const val WIDGET_NOTIFICATION_CHANNEL_ID = "memora_widget"
+private const val REFRESH_BUTTON_NOTIFICATION_ID = 1001
 private const val WIDGET_ACTION_REFRESH = "refresh"
 private const val WIDGET_ACTION_PREVIOUS = "previous"
 private const val WIDGET_ACTION_NEXT = "next"
