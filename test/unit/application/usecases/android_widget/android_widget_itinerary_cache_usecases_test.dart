@@ -13,6 +13,58 @@ import 'package:memora/core/time/app_clock.dart';
 import '../../../../helpers/test_exception.dart';
 
 void main() {
+  group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('更新に成功した場合はactionIdに成功Toast結果を保存する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
+      final tripEntryQueryService = _FakeTripEntryQueryService();
+      final itineraryItemQueryService = _FakeItineraryItemQueryService();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        itineraryItemQueryService,
+      );
+
+      await usecase.execute(groupId: 'group-1', actionId: 'action-1');
+
+      expect(
+        storage.actionResults['action-1'],
+        const AndroidWidgetActionResult(
+          notificationType: AndroidWidgetNotificationType.toast,
+          message: '更新しました。',
+          isSuccess: true,
+        ),
+      );
+      expect(storage.errorMessage, isNull);
+    });
+
+    test('更新に失敗した場合はactionIdに失敗Toast結果を保存する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..exception = TestException('取得失敗');
+      final itineraryItemQueryService = _FakeItineraryItemQueryService();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        itineraryItemQueryService,
+      );
+
+      await expectLater(
+        usecase.execute(groupId: 'group-1', actionId: 'action-1'),
+        throwsA(isA<TestException>()),
+      );
+
+      expect(
+        storage.actionResults['action-1'],
+        const AndroidWidgetActionResult(
+          notificationType: AndroidWidgetNotificationType.toast,
+          message: '更新に失敗しました',
+          isSuccess: false,
+        ),
+      );
+      expect(storage.errorMessage, isNull);
+    });
+  });
+
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
     test('リモート探索で失敗した場合はエラーを保存してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
@@ -49,11 +101,22 @@ void main() {
       );
 
       await expectLater(
-        usecase.execute(AndroidWidgetItineraryDateMoveDirection.next),
+        usecase.execute(
+          AndroidWidgetItineraryDateMoveDirection.next,
+          actionId: 'action-1',
+        ),
         completes,
       );
 
-      expect(storage.errorMessage, '切り替えに失敗しました');
+      expect(
+        storage.actionResults['action-1'],
+        const AndroidWidgetActionResult(
+          notificationType: AndroidWidgetNotificationType.toast,
+          message: '切り替えに失敗しました',
+          isSuccess: false,
+        ),
+      );
+      expect(storage.errorMessage, isNull);
       expect(storage.updateWidgetCount, 1);
     });
   });
@@ -75,12 +138,13 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
 }
 
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
-  _FakeAndroidWidgetCacheStorage({this.cache});
+  _FakeAndroidWidgetCacheStorage({this.cache, this.targetGroupId});
 
   AndroidWidgetItineraryCacheDto? cache;
   String? targetGroupId;
   String? selectedItineraryDateId;
   String? errorMessage;
+  final actionResults = <String, AndroidWidgetActionResult>{};
   int updateWidgetCount = 0;
 
   @override
@@ -114,6 +178,14 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   @override
   Future<void> saveErrorMessage(String? message) async {
     errorMessage = message;
+  }
+
+  @override
+  Future<void> saveActionResult(
+    String actionId,
+    AndroidWidgetActionResult result,
+  ) async {
+    actionResults[actionId] = result;
   }
 
   @override
