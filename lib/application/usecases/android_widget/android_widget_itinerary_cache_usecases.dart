@@ -73,31 +73,23 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       );
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
-      await _saveActionResult(actionId, message: '更新しました。', isSuccess: true);
+      await _saveAndroidWidgetActionResult(
+        _cacheStorage,
+        actionId,
+        message: '更新しました。',
+        isSuccess: true,
+      );
     } catch (e) {
-      await _saveActionResult(actionId, message: '更新に失敗しました', isSuccess: false);
+      await _saveAndroidWidgetActionResult(
+        _cacheStorage,
+        actionId,
+        message: '更新に失敗しました',
+        isSuccess: false,
+      );
       rethrow;
     } finally {
       await _cacheStorage.updateWidget();
     }
-  }
-
-  Future<void> _saveActionResult(
-    String? actionId, {
-    required String message,
-    required bool isSuccess,
-  }) async {
-    if (actionId == null) {
-      return;
-    }
-    await _cacheStorage.saveActionResult(
-      actionId,
-      AndroidWidgetActionResult(
-        notificationType: AndroidWidgetNotificationType.toast,
-        message: message,
-        isSuccess: isSuccess,
-      ),
-    );
   }
 }
 
@@ -154,33 +146,21 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   }) async {
     try {
       await _execute(direction);
-      await _saveActionResult(actionId, message: null, isSuccess: true);
+      await _saveAndroidWidgetActionResult(
+        _cacheStorage,
+        actionId,
+        message: null,
+        isSuccess: true,
+      );
     } catch (_) {
-      await _saveActionResult(
+      await _saveAndroidWidgetActionResult(
+        _cacheStorage,
         actionId,
         message: _moveFailedMessage,
         isSuccess: false,
       );
       await _cacheStorage.updateWidget();
     }
-  }
-
-  Future<void> _saveActionResult(
-    String? actionId, {
-    required String? message,
-    required bool isSuccess,
-  }) async {
-    if (actionId == null) {
-      return;
-    }
-    await _cacheStorage.saveActionResult(
-      actionId,
-      AndroidWidgetActionResult(
-        notificationType: AndroidWidgetNotificationType.toast,
-        message: message,
-        isSuccess: isSuccess,
-      ),
-    );
   }
 
   Future<void> _execute(
@@ -348,4 +328,23 @@ class _ItineraryDateIndex {
   final String id;
   final String tripId;
   final DateTime date;
+}
+
+Future<void> _saveAndroidWidgetActionResult(
+  AndroidWidgetCacheStorage cacheStorage,
+  String? actionId, {
+  required String? message,
+  required bool isSuccess,
+}) async {
+  if (actionId == null) {
+    return;
+  }
+  await cacheStorage.saveActionResult(
+    actionId,
+    AndroidWidgetActionResult(
+      notificationType: AndroidWidgetNotificationType.toast,
+      message: message,
+      isSuccess: isSuccess,
+    ),
+  );
 }
