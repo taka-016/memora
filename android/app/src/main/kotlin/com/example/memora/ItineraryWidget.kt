@@ -333,6 +333,7 @@ class RefreshWidgetAction : ActionCallback {
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
+        showToast(context, "更新ボタンを押しました")
         runWidgetAction(context, WIDGET_ACTION_REFRESH)
     }
 }
