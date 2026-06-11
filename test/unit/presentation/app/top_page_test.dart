@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_action_result_dto.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
@@ -100,7 +101,10 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<void> saveErrorMessage(String? message) async {}
+  Future<void> saveActionResult(
+    String actionId,
+    AndroidWidgetActionResultDto result,
+  ) async {}
 
   @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}

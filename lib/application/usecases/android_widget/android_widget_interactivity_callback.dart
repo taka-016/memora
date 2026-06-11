@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_action_result_dto.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/core/time/app_clock.dart';
@@ -51,18 +52,30 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
     refreshCacheUsecase: refreshUsecase,
   );
 
+  final actionId = uri?.queryParameters['actionId'];
+
   switch (uri?.host) {
     case 'previous':
       await moveUsecase.execute(
         AndroidWidgetItineraryDateMoveDirection.previous,
+        actionId: actionId,
       );
       break;
     case 'next':
-      await moveUsecase.execute(AndroidWidgetItineraryDateMoveDirection.next);
+      await moveUsecase.execute(
+        AndroidWidgetItineraryDateMoveDirection.next,
+        actionId: actionId,
+      );
       break;
     case 'refresh':
       final groupId = await storage.getTargetGroupId();
       if (groupId == null) {
+        await _saveActionResult(
+          storage,
+          actionId,
+          AndroidWidgetActionResultStatus.failure,
+          '更新に失敗しました',
+        );
         await storage.updateWidget();
         return;
       }
@@ -71,9 +84,25 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
       await refreshUsecase.execute(
         groupId: groupId,
         selectedItineraryDateId: selectedItineraryDateId,
+        actionId: actionId,
       );
       break;
   }
+}
+
+Future<void> _saveActionResult(
+  HomeWidgetAndroidWidgetCacheStorage storage,
+  String? actionId,
+  AndroidWidgetActionResultStatus status,
+  String message,
+) async {
+  if (actionId == null || actionId.isEmpty) {
+    return;
+  }
+  await storage.saveActionResult(
+    actionId,
+    AndroidWidgetActionResultDto(status: status, message: message),
+  );
 }
 
 void registerAndroidWidgetInteractivityCallback() {

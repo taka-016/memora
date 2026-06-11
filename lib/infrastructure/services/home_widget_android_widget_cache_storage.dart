@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_action_result_dto.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 
@@ -13,7 +14,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   static const selectedItineraryDateIdKey =
       'memora_widget_selected_itinerary_date_id';
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
-  static const errorMessageKey = 'memora_widget_error_message';
+  static const actionResultKeyPrefix = 'memora_widget_action_result_';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
@@ -86,8 +87,14 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<void> saveErrorMessage(String? message) async {
-    await HomeWidget.saveWidgetData<String>(errorMessageKey, message ?? '');
+  Future<void> saveActionResult(
+    String actionId,
+    AndroidWidgetActionResultDto result,
+  ) async {
+    await HomeWidget.saveWidgetData<String>(
+      '$actionResultKeyPrefix$actionId',
+      jsonEncode(result.toJson()),
+    );
   }
 
   @override
@@ -96,7 +103,6 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       clearTargetGroupId(),
       saveSelectedItineraryDateId(null),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
-      HomeWidget.saveWidgetData<String>(errorMessageKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, ''),
     ]);
   }

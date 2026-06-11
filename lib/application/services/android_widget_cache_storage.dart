@@ -1,3 +1,4 @@
+import 'package:memora/application/dtos/android_widget/android_widget_action_result_dto.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 
 abstract interface class AndroidWidgetCacheStorage {
@@ -15,7 +16,10 @@ abstract interface class AndroidWidgetCacheStorage {
 
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache);
 
-  Future<void> saveErrorMessage(String? message);
+  Future<void> saveActionResult(
+    String actionId,
+    AndroidWidgetActionResultDto result,
+  );
 
   Future<void> clear();
 

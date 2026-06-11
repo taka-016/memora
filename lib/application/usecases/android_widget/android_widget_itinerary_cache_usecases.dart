@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/dtos/android_widget/android_widget_action_result_dto.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -64,6 +65,8 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,
+    String? actionId,
+    String successMessage = '更新しました。',
   }) async {
     try {
       final cache = await _getCacheUsecase.execute(
@@ -72,13 +75,35 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       );
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
-      await _cacheStorage.saveErrorMessage(null);
+      await _saveActionResult(
+        actionId,
+        AndroidWidgetActionResultStatus.success,
+        successMessage,
+      );
     } catch (e) {
-      await _cacheStorage.saveErrorMessage('更新に失敗しました');
+      await _saveActionResult(
+        actionId,
+        AndroidWidgetActionResultStatus.failure,
+        '更新に失敗しました',
+      );
       rethrow;
     } finally {
       await _cacheStorage.updateWidget();
     }
+  }
+
+  Future<void> _saveActionResult(
+    String? actionId,
+    AndroidWidgetActionResultStatus status,
+    String message,
+  ) async {
+    if (actionId == null || actionId.isEmpty) {
+      return;
+    }
+    await _cacheStorage.saveActionResult(
+      actionId,
+      AndroidWidgetActionResultDto(status: status, message: message),
+    );
   }
 }
 
@@ -130,19 +155,25 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   static const _moveFailedMessage = '切り替えに失敗しました';
 
   Future<void> execute(
-    AndroidWidgetItineraryDateMoveDirection direction,
-  ) async {
+    AndroidWidgetItineraryDateMoveDirection direction, {
+    String? actionId,
+  }) async {
     try {
-      await _execute(direction);
+      await _execute(direction, actionId: actionId);
     } catch (_) {
-      await _cacheStorage.saveErrorMessage(_moveFailedMessage);
+      await _saveActionResult(
+        actionId,
+        AndroidWidgetActionResultStatus.failure,
+        _moveFailedMessage,
+      );
       await _cacheStorage.updateWidget();
     }
   }
 
   Future<void> _execute(
-    AndroidWidgetItineraryDateMoveDirection direction,
-  ) async {
+    AndroidWidgetItineraryDateMoveDirection direction, {
+    String? actionId,
+  }) async {
     final cache = await _cacheStorage.loadItineraryCache();
     if (cache == null || cache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();
@@ -160,7 +191,11 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           itineraryDates: cache.itineraryDates,
         ),
       );
-      await _cacheStorage.saveErrorMessage(null);
+      await _saveActionResult(
+        actionId,
+        AndroidWidgetActionResultStatus.success,
+        '',
+      );
       await _cacheStorage.updateWidget();
       return;
     }
@@ -177,6 +212,22 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     await _refreshCacheUsecase.execute(
       groupId: cache.groupId,
       selectedItineraryDateId: targetItineraryDateId,
+      actionId: actionId,
+      successMessage: '',
+    );
+  }
+
+  Future<void> _saveActionResult(
+    String? actionId,
+    AndroidWidgetActionResultStatus status,
+    String message,
+  ) async {
+    if (actionId == null || actionId.isEmpty) {
+      return;
+    }
+    await _cacheStorage.saveActionResult(
+      actionId,
+      AndroidWidgetActionResultDto(status: status, message: message),
     );
   }
 
