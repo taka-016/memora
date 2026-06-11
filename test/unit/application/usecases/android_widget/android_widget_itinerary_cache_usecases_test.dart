@@ -176,11 +176,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<void> saveErrorMessage(String? message) async {
-    errorMessage = message;
-  }
-
-  @override
   Future<void> saveActionResult(
     String actionId,
     AndroidWidgetActionResult result,

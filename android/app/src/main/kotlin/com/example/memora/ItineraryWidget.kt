@@ -2,6 +2,7 @@ package com.example.memora
 
 import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -35,10 +36,18 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
-import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import es.antonborri.home_widget.HomeWidgetBackgroundWorker
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import java.io.File
+import java.util.UUID
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -63,7 +72,6 @@ private fun ItineraryWidgetContent(
 ) {
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
-    val errorMessage = prefs.getString(ERROR_MESSAGE_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
     val selectedItineraryDateId = prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)
         ?: cache?.selectedItineraryDateId
@@ -86,7 +94,6 @@ private fun ItineraryWidgetContent(
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
                 else -> ItineraryDateContent(selectedItineraryDate)
             }
-            FooterRow(errorMessage)
         }
         HeaderRow(cache?.lastUpdatedAt)
     }
@@ -320,21 +327,13 @@ private fun EmptyMessage(message: String) {
     }
 }
 
-@Composable
-private fun FooterRow(errorMessage: String) {
-    if (errorMessage.isBlank()) {
-        return
-    }
-    Text(text = errorMessage, maxLines = 1, style = TextStyle(fontSize = 10.sp))
-}
-
 class RefreshWidgetAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
-        sendAction(context, "refresh")
+        runWidgetAction(context, WIDGET_ACTION_REFRESH)
     }
 }
 
@@ -344,7 +343,7 @@ class PreviousItineraryDateAction : ActionCallback {
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
-        sendAction(context, "previous")
+        runWidgetAction(context, WIDGET_ACTION_PREVIOUS)
     }
 }
 
@@ -354,14 +353,132 @@ class NextItineraryDateAction : ActionCallback {
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
-        sendAction(context, "next")
+        runWidgetAction(context, WIDGET_ACTION_NEXT)
     }
 }
 
-private fun sendAction(context: Context, action: String) {
-    HomeWidgetBackgroundIntent
-        .getBroadcast(context, Uri.parse("memoraWidget://$action"))
-        .send()
+private suspend fun runWidgetAction(context: Context, action: String) {
+    val actionId = buildActionId(action)
+    val uri = Uri.Builder()
+        .scheme(WIDGET_URI_SCHEME)
+        .authority(action)
+        .appendQueryParameter(ACTION_ID_QUERY_PARAMETER, actionId)
+        .build()
+    val result = runCatching {
+        if (!enqueueBackgroundWorkAndWait(context, uri)) {
+            null
+        } else {
+            waitForActionResult(context, actionId)
+        }
+    }.getOrNull()
+    resolveToastMessage(action, result)?.let { message ->
+        showToast(context, message)
+    }
+    clearActionResult(context, actionId)
+}
+
+private fun buildActionId(action: String): String {
+    return "$action-${System.currentTimeMillis()}-${UUID.randomUUID()}"
+}
+
+private suspend fun enqueueBackgroundWorkAndWait(context: Context, uri: Uri): Boolean {
+    val workManager = WorkManager.getInstance(context.applicationContext)
+    val request = OneTimeWorkRequestBuilder<HomeWidgetBackgroundWorker>()
+        .setInputData(
+            Data.Builder()
+                .putString(HOME_WIDGET_WORKER_URI_DATA_KEY, uri.toString())
+                .build(),
+        )
+        .build()
+    withContext(Dispatchers.IO) {
+        workManager.enqueue(request).result.get()
+    }
+    repeat(BACKGROUND_WORK_WAIT_ATTEMPTS) {
+        val workInfo = withContext(Dispatchers.IO) {
+            workManager.getWorkInfoById(request.id).get()
+        }
+        if (workInfo?.state?.isFinished == true) {
+            return workInfo.state == WorkInfo.State.SUCCEEDED
+        }
+        delay(BACKGROUND_WAIT_INTERVAL_MILLIS)
+    }
+    return false
+}
+
+private suspend fun waitForActionResult(
+    context: Context,
+    actionId: String,
+): WidgetActionResult? {
+    repeat(ACTION_RESULT_WAIT_ATTEMPTS) {
+        val result = readActionResult(context, actionId)
+        if (result != null) {
+            return result
+        }
+        delay(BACKGROUND_WAIT_INTERVAL_MILLIS)
+    }
+    return null
+}
+
+private suspend fun readActionResult(
+    context: Context,
+    actionId: String,
+): WidgetActionResult? = withContext(Dispatchers.IO) {
+    val raw = context
+        .getSharedPreferences(HOME_WIDGET_PREFERENCES, Context.MODE_PRIVATE)
+        .getString(buildActionResultKey(actionId), null)
+        ?: return@withContext null
+    runCatching {
+        val root = JSONObject(raw)
+        WidgetActionResult(
+            notificationType = root.optString("notificationType"),
+            message = root.optString("message").ifBlank { null },
+            isSuccess = root.optBoolean("isSuccess", false),
+        )
+    }.getOrNull()
+}
+
+private fun resolveToastMessage(
+    action: String,
+    result: WidgetActionResult?,
+): String? {
+    if (result == null) {
+        return failureMessageFor(action)
+    }
+    if (result.notificationType != NOTIFICATION_TYPE_TOAST) {
+        return null
+    }
+    if (!result.message.isNullOrBlank()) {
+        return result.message
+    }
+    return if (result.isSuccess) null else failureMessageFor(action)
+}
+
+private fun failureMessageFor(action: String): String {
+    return if (action == WIDGET_ACTION_REFRESH) {
+        "更新に失敗しました"
+    } else {
+        "切り替えに失敗しました"
+    }
+}
+
+private suspend fun showToast(context: Context, message: String) {
+    withContext(Dispatchers.Main) {
+        Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()
+    }
+}
+
+private suspend fun clearActionResult(context: Context, actionId: String) {
+    withContext(Dispatchers.IO) {
+        context
+            .getSharedPreferences(HOME_WIDGET_PREFERENCES, Context.MODE_PRIVATE)
+            .edit()
+            .remove(buildActionResultKey(actionId))
+            .commit()
+    }
+}
+
+private fun buildActionResultKey(actionId: String): String {
+    return "$ACTION_RESULT_KEY_PREFIX$actionId"
 }
 
 private fun readCache(path: String?): WidgetCache? {
@@ -447,6 +564,12 @@ private data class WidgetItineraryItem(
     val timeLabel: String,
 )
 
+private data class WidgetActionResult(
+    val notificationType: String,
+    val message: String?,
+    val isSuccess: Boolean,
+)
+
 private sealed interface WidgetItineraryListEntry {
     data class Item(val item: WidgetItineraryItem) : WidgetItineraryListEntry
     object Divider : WidgetItineraryListEntry
@@ -455,8 +578,19 @@ private sealed interface WidgetItineraryListEntry {
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
 private const val SELECTED_ITINERARY_DATE_ID_KEY =
     "memora_widget_selected_itinerary_date_id"
-private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
+private const val ACTION_RESULT_KEY_PREFIX = "memora_widget_action_result_"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
+private const val HOME_WIDGET_PREFERENCES = "HomeWidgetPreferences"
+private const val HOME_WIDGET_WORKER_URI_DATA_KEY = "uri_data"
+private const val WIDGET_URI_SCHEME = "memoraWidget"
+private const val ACTION_ID_QUERY_PARAMETER = "actionId"
+private const val NOTIFICATION_TYPE_TOAST = "toast"
+private const val WIDGET_ACTION_REFRESH = "refresh"
+private const val WIDGET_ACTION_PREVIOUS = "previous"
+private const val WIDGET_ACTION_NEXT = "next"
+private const val BACKGROUND_WORK_WAIT_ATTEMPTS = 50
+private const val ACTION_RESULT_WAIT_ATTEMPTS = 50
+private const val BACKGROUND_WAIT_INTERVAL_MILLIS = 100L
 private const val WIDGET_PADDING_DP = 8
 private const val CONTENT_TOP_SPACE_DP = 10
 private const val TIME_TEXT_HEIGHT_DP = 12

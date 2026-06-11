@@ -10,8 +10,14 @@ void main() {
     test('アクションごとのactionIdをDart背景コールバックへ渡す', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
-      expect(source, contains('appendQueryParameter(ACTION_ID_QUERY_PARAMETER'));
-      expect(source, contains('OneTimeWorkRequestBuilder<HomeWidgetBackgroundWorker>()'));
+      expect(
+        source,
+        contains('appendQueryParameter(ACTION_ID_QUERY_PARAMETER'),
+      );
+      expect(
+        source,
+        contains('OneTimeWorkRequestBuilder<HomeWidgetBackgroundWorker>()'),
+      );
     });
 
     test('Dart背景コールバックの結果をToast表示して結果データを削除する', () {

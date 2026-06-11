@@ -88,6 +88,7 @@ configurations.all {
 
 dependencies {
     implementation("com.google.android.libraries.places:places:5.1.1")
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("androidx.glance:glance-material3:1.1.1")
 }
