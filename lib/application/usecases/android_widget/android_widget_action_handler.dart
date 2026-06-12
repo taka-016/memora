@@ -57,10 +57,15 @@ class AndroidWidgetActionHandler {
         groupId: groupId,
         selectedItineraryDateId: selectedItineraryDateId,
       );
-      await _showToast(const AndroidWidgetToastNotification.success('更新しました。'));
     } catch (_) {
-      await _showToast(const AndroidWidgetToastNotification.error('更新に失敗しました'));
+      await _showToastSafely(
+        const AndroidWidgetToastNotification.error('更新に失敗しました'),
+      );
+      return;
     }
+    await _showToastSafely(
+      const AndroidWidgetToastNotification.success('更新しました。'),
+    );
   }
 
   Future<void> _move(AndroidWidgetItineraryDateMoveDirection direction) async {
@@ -77,6 +82,16 @@ class AndroidWidgetActionHandler {
   }
 
   Future<void> _showMoveFailedToast() async {
-    await _showToast(const AndroidWidgetToastNotification.error('切り替えに失敗しました'));
+    await _showToastSafely(
+      const AndroidWidgetToastNotification.error('切り替えに失敗しました'),
+    );
+  }
+
+  Future<void> _showToastSafely(
+    AndroidWidgetToastNotification notification,
+  ) async {
+    try {
+      await _showToast(notification);
+    } catch (_) {}
   }
 }
