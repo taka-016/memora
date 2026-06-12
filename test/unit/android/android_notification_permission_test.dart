@@ -11,7 +11,10 @@ void main() {
       final source = File(_mainActivityPath).readAsStringSync();
 
       expect(source, contains('override fun onCreate'));
-      expect(source, contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU'));
+      expect(
+        source,
+        contains('Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU'),
+      );
       expect(source, contains('Manifest.permission.POST_NOTIFICATIONS'));
       expect(source, contains('checkSelfPermission'));
       expect(source, contains('requestPermissions'));

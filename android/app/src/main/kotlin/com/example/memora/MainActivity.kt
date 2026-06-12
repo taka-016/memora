@@ -32,7 +32,6 @@ class MainActivity : FlutterActivity() {
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                 REQUEST_POST_NOTIFICATIONS,
             )
-            return
         }
     }
 
