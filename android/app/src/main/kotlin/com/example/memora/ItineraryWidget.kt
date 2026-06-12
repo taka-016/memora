@@ -1,13 +1,13 @@
 package com.example.memora
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -338,8 +338,6 @@ class RefreshWidgetAction : ActionCallback {
         glanceId: GlanceId,
         parameters: androidx.glance.action.ActionParameters,
     ) {
-        showRefreshButtonNotification(context)
-        showToast(context, "更新ボタンを押しました")
         runWidgetAction(context, WIDGET_ACTION_REFRESH)
     }
 }
@@ -378,8 +376,8 @@ private suspend fun runWidgetAction(context: Context, action: String) {
             waitForActionResult(context, actionId)
         }
     }.getOrNull()
-    resolveToastMessage(action, result)?.let { message ->
-        showToast(context, message)
+    resolveNotificationMessage(action, result)?.let { message ->
+        showNotification(context, message)
     }
     clearActionResult(context, actionId)
 }
@@ -444,14 +442,14 @@ private suspend fun readActionResult(
     }.getOrNull()
 }
 
-private fun resolveToastMessage(
+private fun resolveNotificationMessage(
     action: String,
     result: WidgetActionResult?,
 ): String? {
     if (result == null) {
         return failureMessageFor(action)
     }
-    if (result.notificationType != NOTIFICATION_TYPE_TOAST) {
+    if (result.notificationType != NOTIFICATION_TYPE) {
         return null
     }
     if (!result.message.isNullOrBlank()) {
@@ -468,13 +466,7 @@ private fun failureMessageFor(action: String): String {
     }
 }
 
-private suspend fun showToast(context: Context, message: String) {
-    withContext(Dispatchers.Main) {
-        Toast.makeText(context.applicationContext, message, Toast.LENGTH_SHORT).show()
-    }
-}
-
-private fun showRefreshButtonNotification(context: Context) {
+private fun showNotification(context: Context, message: String) {
     val applicationContext = context.applicationContext
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         applicationContext.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -489,22 +481,26 @@ private fun showRefreshButtonNotification(context: Context) {
             NotificationChannel(
                 WIDGET_NOTIFICATION_CHANNEL_ID,
                 "Androidウィジェット",
-                NotificationManager.IMPORTANCE_DEFAULT,
+                NotificationManager.IMPORTANCE_HIGH,
             ),
         )
     }
-    val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        android.app.Notification.Builder(applicationContext, WIDGET_NOTIFICATION_CHANNEL_ID)
+    val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        Notification.Builder(applicationContext, WIDGET_NOTIFICATION_CHANNEL_ID)
     } else {
         @Suppress("DEPRECATION")
-        android.app.Notification.Builder(applicationContext)
+        Notification.Builder(applicationContext)
     }
+    builder
         .setSmallIcon(R.drawable.ic_widget_refresh)
         .setContentTitle("memora")
-        .setContentText("更新ボタンを押しました")
+        .setContentText(message)
+        .setPriority(Notification.PRIORITY_HIGH)
         .setAutoCancel(true)
-        .build()
-    notificationManager.notify(REFRESH_BUTTON_NOTIFICATION_ID, notification)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        builder.setTimeoutAfter(NOTIFICATION_TIMEOUT_MILLIS)
+    }
+    notificationManager.notify(WIDGET_NOTIFICATION_ID, builder.build())
 }
 
 private suspend fun clearActionResult(context: Context, actionId: String) {
@@ -624,9 +620,10 @@ private const val HOME_WIDGET_PREFERENCES = "HomeWidgetPreferences"
 private const val HOME_WIDGET_WORKER_URI_DATA_KEY = "uri_data"
 private const val WIDGET_URI_SCHEME = "memoraWidget"
 private const val ACTION_ID_QUERY_PARAMETER = "actionId"
-private const val NOTIFICATION_TYPE_TOAST = "toast"
-private const val WIDGET_NOTIFICATION_CHANNEL_ID = "memora_widget"
-private const val REFRESH_BUTTON_NOTIFICATION_ID = 1001
+private const val NOTIFICATION_TYPE = "notification"
+private const val WIDGET_NOTIFICATION_CHANNEL_ID = "memora_widget_heads_up"
+private const val WIDGET_NOTIFICATION_ID = 1001
+private const val NOTIFICATION_TIMEOUT_MILLIS = 3000L
 private const val WIDGET_ACTION_REFRESH = "refresh"
 private const val WIDGET_ACTION_PREVIOUS = "previous"
 private const val WIDGET_ACTION_NEXT = "next"

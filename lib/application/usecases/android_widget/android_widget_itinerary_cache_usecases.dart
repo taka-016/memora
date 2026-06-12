@@ -342,7 +342,7 @@ Future<void> _saveAndroidWidgetActionResult(
   await cacheStorage.saveActionResult(
     actionId,
     AndroidWidgetActionResult(
-      notificationType: AndroidWidgetNotificationType.toast,
+      notificationType: AndroidWidgetNotificationType.notification,
       message: message,
       isSuccess: isSuccess,
     ),
