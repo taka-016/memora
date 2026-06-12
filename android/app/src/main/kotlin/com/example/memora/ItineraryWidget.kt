@@ -481,7 +481,7 @@ private fun showNotification(context: Context, message: String) {
             NotificationChannel(
                 WIDGET_NOTIFICATION_CHANNEL_ID,
                 "Androidウィジェット",
-                NotificationManager.IMPORTANCE_HIGH,
+                NotificationManager.IMPORTANCE_DEFAULT,
             ),
         )
     }
@@ -495,7 +495,6 @@ private fun showNotification(context: Context, message: String) {
         .setSmallIcon(R.drawable.ic_widget_refresh)
         .setContentTitle("memora")
         .setContentText(message)
-        .setPriority(Notification.PRIORITY_HIGH)
         .setAutoCancel(true)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         builder.setTimeoutAfter(NOTIFICATION_TIMEOUT_MILLIS)
@@ -621,7 +620,7 @@ private const val HOME_WIDGET_WORKER_URI_DATA_KEY = "uri_data"
 private const val WIDGET_URI_SCHEME = "memoraWidget"
 private const val ACTION_ID_QUERY_PARAMETER = "actionId"
 private const val NOTIFICATION_TYPE = "notification"
-private const val WIDGET_NOTIFICATION_CHANNEL_ID = "memora_widget_heads_up"
+private const val WIDGET_NOTIFICATION_CHANNEL_ID = "memora_widget"
 private const val WIDGET_NOTIFICATION_ID = 1001
 private const val NOTIFICATION_TIMEOUT_MILLIS = 3000L
 private const val WIDGET_ACTION_REFRESH = "refresh"
