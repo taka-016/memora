@@ -20,23 +20,19 @@ void main() {
       );
     });
 
-    test('Dart背景コールバックの結果を通常重要度の通知で表示して結果データを削除する', () {
+    test('Dart背景コールバックの結果をToastで表示して結果データを削除する', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
-      expect(source, contains('Notification.Builder'));
-      expect(source, contains('NotificationManager.IMPORTANCE_DEFAULT'));
-      expect(source, isNot(contains('NotificationManager.IMPORTANCE_HIGH')));
-      expect(source, isNot(contains('Notification.PRIORITY_HIGH')));
-      expect(source, contains('setTimeoutAfter('));
+      expect(source, contains('Toast.makeText'));
+      expect(source, contains('withContext(Dispatchers.Main)'));
       expect(source, contains('remove(buildActionResultKey(actionId))'));
     });
 
-    test('検証用の押下直後通知とToastを残さない', () {
+    test('検証用の押下直後通知を残さない', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
       expect(source, isNot(contains('showRefreshButtonNotification')));
       expect(source, isNot(contains('更新ボタンを押しました')));
-      expect(source, isNot(contains('Toast.makeText')));
     });
 
     test('通知用のエラーメッセージをウィジェット内に表示しない', () {

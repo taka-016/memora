@@ -14,7 +14,7 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
-    test('更新に成功した場合はactionIdに成功Notification結果を保存する', () async {
+    test('更新に成功した場合はactionIdに成功Toast結果を保存する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
       final tripEntryQueryService = _FakeTripEntryQueryService();
       final itineraryItemQueryService = _FakeItineraryItemQueryService();
@@ -29,7 +29,7 @@ void main() {
       expect(
         storage.actionResults['action-1'],
         const AndroidWidgetActionResult(
-          notificationType: AndroidWidgetNotificationType.notification,
+          notificationType: AndroidWidgetNotificationType.toast,
           message: '更新しました。',
           isSuccess: true,
         ),
@@ -37,7 +37,7 @@ void main() {
       expect(storage.errorMessage, isNull);
     });
 
-    test('更新に失敗した場合はactionIdに失敗Notification結果を保存する', () async {
+    test('更新に失敗した場合はactionIdに失敗Toast結果を保存する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
       final tripEntryQueryService = _FakeTripEntryQueryService()
         ..exception = TestException('取得失敗');
@@ -56,7 +56,7 @@ void main() {
       expect(
         storage.actionResults['action-1'],
         const AndroidWidgetActionResult(
-          notificationType: AndroidWidgetNotificationType.notification,
+          notificationType: AndroidWidgetNotificationType.toast,
           message: '更新に失敗しました',
           isSuccess: false,
         ),
@@ -111,7 +111,7 @@ void main() {
       expect(
         storage.actionResults['action-1'],
         const AndroidWidgetActionResult(
-          notificationType: AndroidWidgetNotificationType.notification,
+          notificationType: AndroidWidgetNotificationType.toast,
           message: '切り替えに失敗しました',
           isSuccess: false,
         ),
