@@ -1,7 +1,7 @@
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 
 enum AndroidWidgetNotificationType {
-  notification('notification');
+  toast('toast');
 
   const AndroidWidgetNotificationType(this.value);
 

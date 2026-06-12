@@ -73,7 +73,7 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
           await storage.saveActionResult(
             actionId,
             const AndroidWidgetActionResult(
-              notificationType: AndroidWidgetNotificationType.notification,
+              notificationType: AndroidWidgetNotificationType.toast,
               message: '更新に失敗しました',
               isSuccess: false,
             ),
