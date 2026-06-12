@@ -70,7 +70,10 @@ void main() {
         cacheStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
-            ({required String groupId, String? selectedItineraryDateId}) async {},
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+            }) async {},
         moveDate: (_) async => true,
       );
 
