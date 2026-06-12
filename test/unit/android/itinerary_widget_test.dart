@@ -20,12 +20,21 @@ void main() {
       );
     });
 
-    test('Dart背景コールバックの結果をToast表示して結果データを削除する', () {
+    test('Dart背景コールバックの結果を画面上通知で表示して結果データを削除する', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
-      expect(source, contains('Toast.makeText(context.applicationContext'));
-      expect(source, contains('Toast.LENGTH_SHORT'));
+      expect(source, contains('Notification.Builder'));
+      expect(source, contains('NotificationManager.IMPORTANCE_HIGH'));
+      expect(source, contains('setTimeoutAfter('));
       expect(source, contains('remove(buildActionResultKey(actionId))'));
+    });
+
+    test('検証用の押下直後通知とToastを残さない', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, isNot(contains('showRefreshButtonNotification')));
+      expect(source, isNot(contains('更新ボタンを押しました')));
+      expect(source, isNot(contains('Toast.makeText')));
     });
 
     test('通知用のエラーメッセージをウィジェット内に表示しない', () {
