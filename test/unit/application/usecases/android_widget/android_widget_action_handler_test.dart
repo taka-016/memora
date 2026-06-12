@@ -61,6 +61,29 @@ void main() {
       ]);
     });
 
+    test('更新成功後のToast失敗を更新失敗として扱わない', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-1');
+      final toastNotifier = _FakeAndroidWidgetToastNotifier(
+        throwOnSuccessToast: true,
+      );
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: storage,
+        showToast: toastNotifier.show,
+        refreshCache:
+            ({required String groupId, String? selectedItineraryDateId}) async {},
+        moveDate: (_) async => true,
+      );
+
+      await expectLater(
+        handler.handle(Uri.parse('memoraWidget://refresh')),
+        completes,
+      );
+
+      expect(toastNotifier.notifications, [
+        const AndroidWidgetToastNotification.success('更新しました。'),
+      ]);
+    });
+
     test('旅程日の切り替え失敗時は切り替え失敗Toastを表示する', () async {
       final storage = _FakeAndroidWidgetCacheStorage();
       final toastNotifier = _FakeAndroidWidgetToastNotifier();
@@ -137,9 +160,16 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 }
 
 class _FakeAndroidWidgetToastNotifier {
+  _FakeAndroidWidgetToastNotifier({this.throwOnSuccessToast = false});
+
+  final bool throwOnSuccessToast;
   final notifications = <AndroidWidgetToastNotification>[];
 
   Future<void> show(AndroidWidgetToastNotification notification) async {
     notifications.add(notification);
+    if (throwOnSuccessToast &&
+        notification.type == AndroidWidgetToastNotificationType.success) {
+      throw TestException('Toast失敗');
+    }
   }
 }
