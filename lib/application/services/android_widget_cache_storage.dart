@@ -15,8 +15,6 @@ abstract interface class AndroidWidgetCacheStorage {
 
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache);
 
-  Future<void> saveErrorMessage(String? message);
-
   Future<void> clear();
 
   Future<void> updateWidget();

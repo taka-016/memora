@@ -677,6 +677,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
+  memora_android_widget_toast:
+    dependency: "direct main"
+    description:
+      path: "packages/memora_android_widget_toast"
+      relative: true
+    source: path
+    version: "0.1.0"
   meta:
     dependency: transitive
     description:

@@ -52,6 +52,8 @@ dependencies:
   shared_preferences: ^2.5.4
   ntp: ^2.0.0
   home_widget: ^0.9.1
+  memora_android_widget_toast:
+    path: packages/memora_android_widget_toast
 
 dev_dependencies:
   flutter_test:

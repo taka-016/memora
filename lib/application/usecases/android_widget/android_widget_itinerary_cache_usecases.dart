@@ -72,10 +72,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       );
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
-      await _cacheStorage.saveErrorMessage(null);
-    } catch (e) {
-      await _cacheStorage.saveErrorMessage('更新に失敗しました');
-      rethrow;
     } finally {
       await _cacheStorage.updateWidget();
     }
@@ -127,16 +123,16 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   final TripEntryQueryService _tripEntryQueryService;
   final ItineraryItemQueryService _itineraryItemQueryService;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
-  static const _moveFailedMessage = '切り替えに失敗しました';
 
-  Future<void> execute(
+  Future<bool> execute(
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
     try {
       await _execute(direction);
+      return true;
     } catch (_) {
-      await _cacheStorage.saveErrorMessage(_moveFailedMessage);
       await _cacheStorage.updateWidget();
+      return false;
     }
   }
 
@@ -160,7 +156,6 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
           itineraryDates: cache.itineraryDates,
         ),
       );
-      await _cacheStorage.saveErrorMessage(null);
       await _cacheStorage.updateWidget();
       return;
     }

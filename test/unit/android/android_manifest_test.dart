@@ -7,6 +7,8 @@ const _homeWidgetBackgroundReceiver =
     'android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"';
 const _homeWidgetBackgroundAction =
     'android:name="es.antonborri.home_widget.action.BACKGROUND"';
+const _postNotificationsPermission =
+    'android:name="android.permission.POST_NOTIFICATIONS"';
 
 void main() {
   group('AndroidManifest', () {
@@ -15,6 +17,12 @@ void main() {
 
       expect(manifest, contains(_homeWidgetBackgroundReceiver));
       expect(manifest, contains(_homeWidgetBackgroundAction));
+    });
+
+    test('Android 13以降の通知権限が宣言されている', () {
+      final manifest = File(_androidManifestPath).readAsStringSync();
+
+      expect(manifest, contains(_postNotificationsPermission));
     });
   });
 }

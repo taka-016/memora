@@ -63,7 +63,6 @@ private fun ItineraryWidgetContent(
 ) {
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
-    val errorMessage = prefs.getString(ERROR_MESSAGE_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
     val selectedItineraryDateId = prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)
         ?: cache?.selectedItineraryDateId
@@ -86,7 +85,6 @@ private fun ItineraryWidgetContent(
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
                 else -> ItineraryDateContent(selectedItineraryDate)
             }
-            FooterRow(errorMessage)
         }
         HeaderRow(cache?.lastUpdatedAt)
     }
@@ -320,14 +318,6 @@ private fun EmptyMessage(message: String) {
     }
 }
 
-@Composable
-private fun FooterRow(errorMessage: String) {
-    if (errorMessage.isBlank()) {
-        return
-    }
-    Text(text = errorMessage, maxLines = 1, style = TextStyle(fontSize = 10.sp))
-}
-
 class RefreshWidgetAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
@@ -455,7 +445,6 @@ private sealed interface WidgetItineraryListEntry {
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
 private const val SELECTED_ITINERARY_DATE_ID_KEY =
     "memora_widget_selected_itinerary_date_id"
-private const val ERROR_MESSAGE_KEY = "memora_widget_error_message"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val WIDGET_PADDING_DP = 8
 private const val CONTENT_TOP_SPACE_DP = 10
