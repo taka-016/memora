@@ -1,0 +1,19 @@
+name: memora_android_widget_toast
+description: Android widget Toast bridge for memora.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.0
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.example.memora
+        pluginClass: AndroidWidgetToastPlugin

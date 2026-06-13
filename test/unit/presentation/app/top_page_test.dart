@@ -100,9 +100,6 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
-  Future<void> saveErrorMessage(String? message) async {}
-
-  @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}
 
   @override
