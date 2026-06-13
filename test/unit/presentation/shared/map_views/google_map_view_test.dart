@@ -206,6 +206,35 @@ void main() {
       expect(find.text('35.6812, 139.7671'), findsNothing);
     });
 
+    testWidgets('外部指定した高さで選択中locationの軽量ボトムシートを表示する', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+        name: '東京駅',
+      );
+
+      await tester.pumpWidget(
+        _createApp(
+          const GoogleMapView(
+            locations: [location],
+            selectedLocation: location,
+            locationDetailBottomSheetHeight: 220,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        tester
+            .getSize(find.byKey(const Key('location_detail_bottom_sheet')))
+            .height,
+        220,
+      );
+    });
+
     testWidgets('ボトムシートの前後ボタンで取得順のピンへ循環移動する', (tester) async {
       const locations = [
         LocationDto(

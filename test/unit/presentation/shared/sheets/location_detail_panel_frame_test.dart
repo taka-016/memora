@@ -105,6 +105,26 @@ void main() {
       expect(changedValue, '上野駅');
     });
 
+    testWidgets('外部から指定した高さで表示できる', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: LocationDetailPanelFrame(
+              panelKey: Key('location_detail_panel'),
+              onClose: _noop,
+              height: 180,
+              child: SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(find.byKey(const Key('location_detail_panel'))).height,
+        180,
+      );
+    });
+
     testWidgets('左右スワイプで前後のピンへ移動できる', (tester) async {
       var previousCount = 0;
       var nextCount = 0;
