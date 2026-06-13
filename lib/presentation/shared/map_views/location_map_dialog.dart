@@ -17,6 +17,7 @@ class LocationMapDialog extends StatelessWidget {
     this.selectedLocation,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
+    this.locationDetailBottomSheetHeight,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -30,6 +31,7 @@ class LocationMapDialog extends StatelessWidget {
   final LocationDto? selectedLocation;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
+  final double? locationDetailBottomSheetHeight;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
@@ -61,6 +63,8 @@ class LocationMapDialog extends StatelessWidget {
                 selectedLocation: selectedLocation,
                 highlightSelectedLocation: highlightSelectedLocation,
                 locationDetailBuilder: locationDetailBuilder,
+                locationDetailBottomSheetHeight:
+                    locationDetailBottomSheetHeight,
                 tripStartDate: tripStartDate,
                 isReadOnly: isReadOnly,
               ),

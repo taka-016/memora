@@ -17,6 +17,7 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
     LocationDto? selectedLocation,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
+    double? locationDetailBottomSheetHeight,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {

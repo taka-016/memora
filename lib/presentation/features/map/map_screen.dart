@@ -55,8 +55,10 @@ class MapScreen extends HookConsumerWidget {
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    return MapViewFactory.create(
-      mapViewType,
-    ).createMapView(locations: locations.value, isReadOnly: true);
+    return MapViewFactory.create(mapViewType).createMapView(
+      locations: locations.value,
+      locationDetailBottomSheetHeight: 160,
+      isReadOnly: true,
+    );
   }
 }

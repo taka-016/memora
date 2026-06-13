@@ -104,6 +104,65 @@ void main() {
 
       expect(changedValue, '上野駅');
     });
+
+    testWidgets('外部から指定した高さで表示できる', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: LocationDetailPanelFrame(
+              panelKey: Key('location_detail_panel'),
+              onClose: _noop,
+              height: 180,
+              child: SizedBox.shrink(),
+            ),
+          ),
+        ),
+      );
+
+      expect(
+        tester.getSize(find.byKey(const Key('location_detail_panel'))).height,
+        180,
+      );
+    });
+
+    testWidgets('左右スワイプで前後のピンへ移動できる', (tester) async {
+      var previousCount = 0;
+      var nextCount = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LocationDetailPanelFrame(
+              panelKey: const Key('location_detail_panel'),
+              onClose: _noop,
+              onPreviousLocation: () => previousCount++,
+              onNextLocation: () => nextCount++,
+              child: const SizedBox(
+                width: 240,
+                height: 120,
+                child: Text('東京駅'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.drag(
+        find.byKey(const Key('location_detail_panel')),
+        const Offset(-160, 0),
+      );
+
+      expect(nextCount, 1);
+      expect(previousCount, 0);
+
+      await tester.drag(
+        find.byKey(const Key('location_detail_panel')),
+        const Offset(160, 0),
+      );
+
+      expect(previousCount, 1);
+      expect(nextCount, 1);
+    });
   });
 }
 

@@ -23,6 +23,7 @@ class GoogleMapView extends HookConsumerWidget {
   final LocationDto? selectedLocation;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
+  final double? locationDetailBottomSheetHeight;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
@@ -35,6 +36,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.selectedLocation,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
+    this.locationDetailBottomSheetHeight,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -130,6 +132,30 @@ class GoogleMapView extends HookConsumerWidget {
       isBottomSheetVisible.value = true;
     }
 
+    void moveSelectedLocationBy(int offset) {
+      final current = selectedLocationState.value;
+      if (current == null || locations.length < 2) {
+        return;
+      }
+
+      final currentIndex = locations.indexWhere(
+        (location) => location.id == current.id,
+      );
+      if (currentIndex == -1) {
+        return;
+      }
+
+      final nextIndex = (currentIndex + offset) % locations.length;
+      final nextLocation =
+          locations[nextIndex < 0 ? nextIndex + locations.length : nextIndex];
+      handleLocationTapped(nextLocation);
+      animateToPosition(LatLng(nextLocation.latitude, nextLocation.longitude));
+    }
+
+    void moveToPreviousLocation() => moveSelectedLocationBy(-1);
+
+    void moveToNextLocation() => moveSelectedLocationBy(1);
+
     useEffect(() {
       if (selectedLocation != null &&
           selectedLocation != previousSelectedLocation.value) {
@@ -207,12 +233,21 @@ class GoogleMapView extends HookConsumerWidget {
         return detailBuilder(
           selectedLocationState.value!,
           hideLocationDetailBottomSheet,
+          onPreviousLocation: locations.length < 2
+              ? null
+              : moveToPreviousLocation,
+          onNextLocation: locations.length < 2 ? null : moveToNextLocation,
         );
       }
 
       return LocationDetailBottomSheet(
         location: selectedLocationState.value!,
         onClose: hideLocationDetailBottomSheet,
+        height: locationDetailBottomSheetHeight,
+        onPreviousLocation: locations.length < 2
+            ? null
+            : moveToPreviousLocation,
+        onNextLocation: locations.length < 2 ? null : moveToNextLocation,
       );
     }
 
