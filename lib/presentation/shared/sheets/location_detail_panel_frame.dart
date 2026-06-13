@@ -39,42 +39,60 @@ class LocationDetailPanelFrame extends StatelessWidget {
             constraints: maxHeight == null
                 ? const BoxConstraints()
                 : BoxConstraints(maxHeight: maxHeight!),
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            padding: const EdgeInsets.fromLTRB(2, 12, 2, 16),
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-                _LocationNavigationButton(
-                  key: const Key('location_detail_previous_button'),
-                  tooltip: '前のピンへ移動',
-                  icon: Icons.chevron_left,
-                  onPressed: onPreviousLocation,
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: IconButton(
-                          tooltip: '閉じる',
-                          onPressed: onClose,
-                          icon: const Icon(Icons.close),
+                      _LocationNavigationButton(
+                        key: const Key('location_detail_previous_button'),
+                        tooltip: '前のピンへ移動',
+                        direction: _LocationNavigationDirection.previous,
+                        onPressed: onPreviousLocation,
+                      ),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (locationNameWidget != null) ...[
+                              locationNameWidget,
+                              const SizedBox(height: 8),
+                            ],
+                            child,
+                          ],
                         ),
                       ),
-                      if (locationNameWidget != null) ...[
-                        locationNameWidget,
-                        const SizedBox(height: 8),
-                      ],
-                      child,
+                      _LocationNavigationButton(
+                        key: const Key('location_detail_next_button'),
+                        tooltip: '次のピンへ移動',
+                        direction: _LocationNavigationDirection.next,
+                        onPressed: onNextLocation,
+                      ),
                     ],
                   ),
                 ),
-                _LocationNavigationButton(
-                  key: const Key('location_detail_next_button'),
-                  tooltip: '次のピンへ移動',
-                  icon: Icons.chevron_right,
-                  onPressed: onNextLocation,
+                Positioned(
+                  top: -4,
+                  right: 0,
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: IconButton(
+                      tooltip: '閉じる',
+                      onPressed: onClose,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -119,16 +137,74 @@ class _LocationNavigationButton extends StatelessWidget {
   const _LocationNavigationButton({
     super.key,
     required this.tooltip,
-    required this.icon,
+    required this.direction,
     required this.onPressed,
   });
 
   final String tooltip;
-  final IconData icon;
+  final _LocationNavigationDirection direction;
   final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return IconButton(tooltip: tooltip, onPressed: onPressed, icon: Icon(icon));
+    final theme = Theme.of(context);
+    final iconColor = onPressed == null
+        ? theme.disabledColor
+        : IconTheme.of(context).color ?? theme.iconTheme.color;
+
+    return SizedBox(
+      width: 40,
+      height: 64,
+      child: IconButton(
+        tooltip: tooltip,
+        onPressed: onPressed,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 64),
+        icon: CustomPaint(
+          size: const Size(22, 38),
+          painter: _LocationNavigationChevronPainter(
+            direction: direction,
+            color: iconColor ?? theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _LocationNavigationDirection { previous, next }
+
+class _LocationNavigationChevronPainter extends CustomPainter {
+  const _LocationNavigationChevronPainter({
+    required this.direction,
+    required this.color,
+  });
+
+  final _LocationNavigationDirection direction;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final isPrevious = direction == _LocationNavigationDirection.previous;
+    final edgeX = isPrevious ? size.width * 0.86 : size.width * 0.14;
+    final centerX = isPrevious ? size.width * 0.14 : size.width * 0.86;
+
+    final path = Path()
+      ..moveTo(edgeX, 0)
+      ..lineTo(centerX, size.height / 2)
+      ..lineTo(edgeX, size.height);
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_LocationNavigationChevronPainter oldDelegate) {
+    return oldDelegate.direction != direction || oldDelegate.color != color;
   }
 }
