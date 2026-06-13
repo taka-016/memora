@@ -24,82 +24,109 @@ class LocationDetailPanelFrame extends StatelessWidget {
   final VoidCallback? onPreviousLocation;
   final VoidCallback? onNextLocation;
 
+  static const double _swipeDistanceThreshold = 80;
+
   @override
   Widget build(BuildContext context) {
     final locationNameWidget = buildLocationName();
+    var horizontalDragOffset = 0.0;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Material(
         elevation: 8,
         child: SafeArea(
           top: false,
-          child: Container(
-            key: panelKey,
-            width: double.infinity,
-            constraints: maxHeight == null
-                ? const BoxConstraints()
-                : BoxConstraints(maxHeight: maxHeight!),
-            padding: const EdgeInsets.fromLTRB(2, 12, 2, 16),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 40),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      _LocationNavigationButton(
-                        key: const Key('location_detail_previous_button'),
-                        tooltip: '前のピンへ移動',
-                        direction: _LocationNavigationDirection.previous,
-                        onPressed: onPreviousLocation,
-                      ),
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (locationNameWidget != null) ...[
-                              locationNameWidget,
-                              const SizedBox(height: 8),
-                            ],
-                            child,
-                          ],
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragStart: (_) => horizontalDragOffset = 0,
+            onHorizontalDragUpdate: (details) {
+              horizontalDragOffset += details.primaryDelta ?? 0;
+            },
+            onHorizontalDragEnd: (_) {
+              handleHorizontalSwipe(horizontalDragOffset);
+            },
+            child: Container(
+              key: panelKey,
+              width: double.infinity,
+              constraints: maxHeight == null
+                  ? const BoxConstraints()
+                  : BoxConstraints(maxHeight: maxHeight!),
+              padding: const EdgeInsets.fromLTRB(2, 12, 2, 16),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 40),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _LocationNavigationButton(
+                          key: const Key('location_detail_previous_button'),
+                          tooltip: '前のピンへ移動',
+                          direction: _LocationNavigationDirection.previous,
+                          onPressed: onPreviousLocation,
                         ),
-                      ),
-                      _LocationNavigationButton(
-                        key: const Key('location_detail_next_button'),
-                        tooltip: '次のピンへ移動',
-                        direction: _LocationNavigationDirection.next,
-                        onPressed: onNextLocation,
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: -4,
-                  right: 0,
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: IconButton(
-                      tooltip: '閉じる',
-                      onPressed: onClose,
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 40,
-                        minHeight: 40,
-                      ),
-                      icon: const Icon(Icons.close),
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (locationNameWidget != null) ...[
+                                locationNameWidget,
+                                const SizedBox(height: 8),
+                              ],
+                              child,
+                            ],
+                          ),
+                        ),
+                        _LocationNavigationButton(
+                          key: const Key('location_detail_next_button'),
+                          tooltip: '次のピンへ移動',
+                          direction: _LocationNavigationDirection.next,
+                          onPressed: onNextLocation,
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    top: -4,
+                    right: 0,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        tooltip: '閉じる',
+                        onPressed: onClose,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
+                        ),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  void handleHorizontalSwipe(double offset) {
+    if (offset.abs() < _swipeDistanceThreshold) {
+      return;
+    }
+
+    if (offset < 0) {
+      onNextLocation?.call();
+      return;
+    }
+
+    onPreviousLocation?.call();
   }
 
   Widget? buildLocationName() {
