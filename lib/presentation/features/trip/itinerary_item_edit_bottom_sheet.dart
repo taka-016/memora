@@ -372,6 +372,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   return LocationDetailPanelFrame(
                     panelKey: const Key('itinerary_location_detail_panel'),
                     onClose: onClose,
+                    height: 200,
                     locationName: location.name ?? '',
                     locationNameFieldKey: ValueKey(
                       'itinerary_location_name_${location.id}',

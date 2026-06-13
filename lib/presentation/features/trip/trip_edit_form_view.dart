@@ -202,11 +202,10 @@ class TripEditFormView extends HookWidget {
         onLocationDeletedFromMap,
       }) {
         final linkedItineraryNames = itineraryNamesForLocation(location);
-        final maxDetailHeight = MediaQuery.sizeOf(context).height * 0.45;
         return LocationDetailPanelFrame(
           panelKey: const Key('trip_location_detail_panel'),
           onClose: onClose,
-          maxHeight: maxDetailHeight,
+          height: 280,
           locationName: location.name ?? '',
           locationNameFieldKey: ValueKey('trip_location_name_${location.id}'),
           onPreviousLocation: onPreviousLocation,

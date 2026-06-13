@@ -17,6 +17,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     LocationDto? selectedLocation,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
+    double? locationDetailBottomSheetHeight,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
@@ -28,6 +29,7 @@ class GoogleMapViewBuilder implements MapViewBuilder {
       selectedLocation: selectedLocation,
       highlightSelectedLocation: highlightSelectedLocation,
       locationDetailBuilder: locationDetailBuilder,
+      locationDetailBottomSheetHeight: locationDetailBottomSheetHeight,
       tripStartDate: tripStartDate,
       isReadOnly: isReadOnly,
     );

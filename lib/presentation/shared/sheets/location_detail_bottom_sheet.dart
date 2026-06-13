@@ -7,12 +7,14 @@ class LocationDetailBottomSheet extends StatelessWidget {
     super.key,
     required this.location,
     required this.onClose,
+    this.height,
     this.onPreviousLocation,
     this.onNextLocation,
   });
 
   final LocationDto location;
   final VoidCallback onClose;
+  final double? height;
   final VoidCallback? onPreviousLocation;
   final VoidCallback? onNextLocation;
 
@@ -22,6 +24,7 @@ class LocationDetailBottomSheet extends StatelessWidget {
     return LocationDetailPanelFrame(
       panelKey: const Key('location_detail_bottom_sheet'),
       onClose: onClose,
+      height: height,
       locationName: name,
       onPreviousLocation: onPreviousLocation,
       onNextLocation: onNextLocation,

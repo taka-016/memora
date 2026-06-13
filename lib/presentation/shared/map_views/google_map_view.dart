@@ -23,6 +23,7 @@ class GoogleMapView extends HookConsumerWidget {
   final LocationDto? selectedLocation;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
+  final double? locationDetailBottomSheetHeight;
   final DateTime? tripStartDate;
   final bool isReadOnly;
 
@@ -35,6 +36,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.selectedLocation,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
+    this.locationDetailBottomSheetHeight,
     this.tripStartDate,
     this.isReadOnly = false,
   });
@@ -241,6 +243,7 @@ class GoogleMapView extends HookConsumerWidget {
       return LocationDetailBottomSheet(
         location: selectedLocationState.value!,
         onClose: hideLocationDetailBottomSheet,
+        height: locationDetailBottomSheetHeight,
         onPreviousLocation: locations.length < 2
             ? null
             : moveToPreviousLocation,
