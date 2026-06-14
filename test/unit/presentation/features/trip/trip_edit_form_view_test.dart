@@ -385,6 +385,10 @@ void main() {
       );
       expect(scrollView, findsOneWidget);
       expect(find.text('関連する旅程'), findsOneWidget);
+      expect(
+        find.descendant(of: scrollView, matching: find.text('関連する旅程')),
+        findsNothing,
+      );
       expect(find.text('朝食'), findsOneWidget);
       expect(find.text('観光'), findsOneWidget);
       expect(find.text('夕食'), findsOneWidget);

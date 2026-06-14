@@ -4,7 +4,12 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 
 typedef LocationDetailBuilder =
-    Widget Function(LocationDto location, VoidCallback onClose);
+    Widget Function(
+      LocationDto location,
+      VoidCallback onClose, {
+      VoidCallback? onPreviousLocation,
+      VoidCallback? onNextLocation,
+    });
 
 abstract class MapViewBuilder {
   Widget createMapView({
@@ -15,6 +20,7 @@ abstract class MapViewBuilder {
     LocationDto? selectedLocation,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
+    double? locationDetailBottomSheetHeight,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   });
