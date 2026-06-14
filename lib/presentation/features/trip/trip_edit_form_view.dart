@@ -220,49 +220,51 @@ class TripEditFormView extends HookWidget {
             );
           },
           child: Flexible(
-            child: SingleChildScrollView(
-              key: const Key('trip_location_detail_scroll_view'),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (linkedItineraryNames.isEmpty)
-                    const Text('関連する旅程なし')
-                  else ...[
-                    const Text('関連する旅程'),
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: linkedItineraryNames.map(Text.new).toList(),
-                      ),
-                    ),
-                  ],
-                  if (linkedItineraryNames.isEmpty &&
-                      onLocationDeleted != null) ...[
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          await onLocationDeletedFromMap(location);
-                          onClose();
-                        },
-                        child: const Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (linkedItineraryNames.isEmpty)
+                  const Text('関連する旅程なし')
+                else ...[
+                  const Text('関連する旅程'),
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      key: const Key('trip_location_detail_scroll_view'),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.delete, size: 20),
-                            SizedBox(width: 4),
-                            Text('削除'),
-                          ],
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: linkedItineraryNames.map(Text.new).toList(),
                         ),
                       ),
                     ),
-                  ],
+                  ),
                 ],
-              ),
+                if (linkedItineraryNames.isEmpty &&
+                    onLocationDeleted != null) ...[
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await onLocationDeletedFromMap(location);
+                        onClose();
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.delete, size: 20),
+                          SizedBox(width: 4),
+                          Text('削除'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         );
