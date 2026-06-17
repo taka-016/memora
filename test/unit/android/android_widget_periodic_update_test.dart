@@ -29,6 +29,20 @@ void main() {
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
+    test('バックグラウンド更新失敗時はWorkManagerへ失敗を返す', () {
+      final source = File(_backgroundUpdatePath).readAsStringSync();
+
+      expect(
+        source,
+        contains('Future<bool> _refreshAndroidWidgetFromBackground()'),
+      );
+      expect(
+        source,
+        contains('return await _refreshAndroidWidgetFromBackground();'),
+      );
+      expect(source, contains('return false;'));
+    });
+
     test('アプリ起動時に定期更新を初期化する', () {
       final source = File(_mainPath).readAsStringSync();
 
