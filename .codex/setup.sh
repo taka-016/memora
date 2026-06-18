@@ -21,13 +21,6 @@ sudo apt-get install -y --no-install-recommends \
   tzdata && \
   rm -rf /var/lib/apt/lists/*
 
-# Node.jsとnpm
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash - && \
-  apt-get update -y && \
-  apt-get install -y nodejs && \
-  npm install -g npm@11 && \
-  rm -rf /var/lib/apt/lists/*
-
 # タイムゾーン設定
 sudo ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
   echo $TZ | sudo tee /etc/timezone
