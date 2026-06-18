@@ -45,12 +45,11 @@ void androidWidgetBackgroundUpdateDispatcher() {
       return true;
     }
     WidgetsFlutterBinding.ensureInitialized();
-    await _refreshAndroidWidgetFromBackground();
-    return true;
+    return await _refreshAndroidWidgetFromBackground();
   });
 }
 
-Future<void> _refreshAndroidWidgetFromBackground() async {
+Future<bool> _refreshAndroidWidgetFromBackground() async {
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -64,7 +63,7 @@ Future<void> _refreshAndroidWidgetFromBackground() async {
   final groupId = await storage.getTargetGroupId();
   if (groupId == null) {
     await storage.updateWidget();
-    return;
+    return true;
   }
 
   final clock = NtpSynchronizedAppClock();
@@ -90,7 +89,9 @@ Future<void> _refreshAndroidWidgetFromBackground() async {
   } catch (_) {
     await storage.updateWidget();
     await _showUpdateFailedToast();
+    return false;
   }
+  return true;
 }
 
 Future<void> _showUpdateFailedToast() async {
