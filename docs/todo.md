@@ -27,8 +27,6 @@
   - アプリ起動時とウィジェット表示対象グループ設定時に、重複しない一意名で定期タスクを登録する
   - 表示対象グループが未設定の場合は定期タスク内でウィジェット表示のみ更新し、Firestore取得は行わない
   - 更新時は現在日時を基準に`selectedItineraryDateId`を再選択し、表示位置を当日以降の直近旅程へ移動する
-  - ネットワーク未接続や取得失敗時は既存キャッシュを残し、ウィジェット内にエラーメッセージを保存せずToastで通知する
-  - 定期更新の最小間隔はAndroidの制約に合わせ、要件上は1日単位、実装上は`Duration(hours: 24)`を基本にする
 - ウィジェットタップでアプリを開くようにする
   - Kotlin側の`WidgetItineraryDate`でキャッシュJSONの`tripId`を読み込む
   - Glanceの旅程ヘッダーまたは旅程表示領域に`actionStartActivity<MainActivity>`を設定し、`memoraWidget://openTrip?tripId=...`形式のURIを渡す
