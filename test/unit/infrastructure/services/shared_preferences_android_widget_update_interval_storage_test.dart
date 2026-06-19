@@ -25,12 +25,5 @@ void main() {
       expect(await storage.load(), AndroidWidgetUpdateInterval.every3Hours);
     });
 
-    test('保存した検証用の5分間隔を読み戻す', () async {
-      const storage = SharedPreferencesAndroidWidgetUpdateIntervalStorage();
-
-      await storage.save(AndroidWidgetUpdateInterval.every5Minutes);
-
-      expect(await storage.load(), AndroidWidgetUpdateInterval.every5Minutes);
-    });
   });
 }

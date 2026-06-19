@@ -36,13 +36,15 @@ void main() {
       expect(source, contains('networkType: NetworkType.connected'));
     });
 
-    test('15分未満は検証用のOne-offタスクを連続登録する', () {
+    test('検証用の短間隔One-offタスクを登録しない', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
-      expect(source, contains('registerOneOffTask'));
-      expect(source, contains('initialDelay: frequency'));
-      expect(source, contains('androidWidgetShortUpdateTaskName'));
-      expect(source, contains('_registerNextAndroidWidgetShortUpdateTask'));
+      expect(source, isNot(contains('registerOneOffTask')));
+      expect(source, isNot(contains('androidWidgetShortUpdateTaskName')));
+      expect(
+        source,
+        isNot(contains('_registerNextAndroidWidgetShortUpdateTask')),
+      );
     });
 
     test('バックグラウンド更新失敗時はWorkManagerへ失敗を返す', () {
