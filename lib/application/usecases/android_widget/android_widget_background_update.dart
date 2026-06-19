@@ -26,15 +26,15 @@ Future<void> initializeAndroidWidgetBackgroundUpdate() async {
   await Workmanager().initialize(androidWidgetBackgroundUpdateDispatcher);
 }
 
-Future<void> registerAndroidWidgetPeriodicUpdateTask() async {
+Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
   if (!Platform.isAndroid) {
     return;
   }
   await Workmanager().registerPeriodicTask(
     androidWidgetPeriodicUpdateUniqueName,
     androidWidgetPeriodicUpdateTaskName,
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
-    frequency: const Duration(hours: 24),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+    frequency: frequency,
   );
 }
 

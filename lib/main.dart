@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_interactivity_callback.dart';
+import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
@@ -23,7 +24,12 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       registerAndroidWidgetInteractivityCallback();
       await initializeAndroidWidgetBackgroundUpdate();
-      await registerAndroidWidgetPeriodicUpdateTask();
+      final androidWidgetUpdateInterval =
+          await const SharedPreferencesAndroidWidgetUpdateIntervalStorage()
+              .load();
+      await registerAndroidWidgetPeriodicUpdateTask(
+        androidWidgetUpdateInterval.duration,
+      );
       await initLogger();
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
