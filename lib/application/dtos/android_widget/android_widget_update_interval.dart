@@ -1,14 +1,19 @@
 enum AndroidWidgetUpdateInterval {
-  every1Hour(hours: 1, label: '1時間'),
-  every3Hours(hours: 3, label: '3時間'),
-  every6Hours(hours: 6, label: '6時間'),
-  every12Hours(hours: 12, label: '12時間'),
-  every24Hours(hours: 24, label: '24時間');
+  every1Minute(minutes: 1, label: '1分（検証用）'),
+  every5Minutes(minutes: 5, label: '5分（検証用）'),
+  every1Hour(minutes: 60, label: '1時間'),
+  every3Hours(minutes: 180, label: '3時間'),
+  every6Hours(minutes: 360, label: '6時間'),
+  every12Hours(minutes: 720, label: '12時間'),
+  every24Hours(minutes: 1440, label: '24時間');
 
-  const AndroidWidgetUpdateInterval({required this.hours, required this.label});
+  const AndroidWidgetUpdateInterval({
+    required this.minutes,
+    required this.label,
+  });
 
-  final int hours;
+  final int minutes;
   final String label;
 
-  Duration get duration => Duration(hours: hours);
+  Duration get duration => Duration(minutes: minutes);
 }

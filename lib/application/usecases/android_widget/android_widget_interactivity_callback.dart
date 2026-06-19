@@ -31,9 +31,11 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
     tripEntryQueryService: FirestoreTripEntryQueryService(
       firestore: FirebaseFirestore.instance,
       clock: NtpSynchronizedAppClock(),
+      rethrowOnError: true,
     ),
     itineraryItemQueryService: FirestoreItineraryItemQueryService(
       firestore: FirebaseFirestore.instance,
+      rethrowOnError: true,
     ),
     clock: NtpSynchronizedAppClock(),
   );
@@ -46,9 +48,11 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
     tripEntryQueryService: FirestoreTripEntryQueryService(
       firestore: FirebaseFirestore.instance,
       clock: NtpSynchronizedAppClock(),
+      rethrowOnError: true,
     ),
     itineraryItemQueryService: FirestoreItineraryItemQueryService(
       firestore: FirebaseFirestore.instance,
+      rethrowOnError: true,
     ),
     refreshCacheUsecase: refreshUsecase,
   );

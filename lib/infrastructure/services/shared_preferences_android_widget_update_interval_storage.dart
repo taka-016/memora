@@ -6,14 +6,27 @@ class SharedPreferencesAndroidWidgetUpdateIntervalStorage
     implements AndroidWidgetUpdateIntervalStorage {
   const SharedPreferencesAndroidWidgetUpdateIntervalStorage();
 
+  static const updateIntervalMinutesKey =
+      'android_widget_update_interval_minutes';
   static const updateIntervalHoursKey = 'android_widget_update_interval_hours';
 
   @override
   Future<AndroidWidgetUpdateInterval> load() async {
     final preferences = await SharedPreferences.getInstance();
+    final savedMinutes = preferences.getInt(updateIntervalMinutesKey);
+    if (savedMinutes != null) {
+      return _findByMinutes(savedMinutes);
+    }
     final savedHours = preferences.getInt(updateIntervalHoursKey);
+    if (savedHours != null) {
+      return _findByMinutes(Duration(hours: savedHours).inMinutes);
+    }
+    return AndroidWidgetUpdateInterval.every24Hours;
+  }
+
+  AndroidWidgetUpdateInterval _findByMinutes(int minutes) {
     return AndroidWidgetUpdateInterval.values.firstWhere(
-      (interval) => interval.hours == savedHours,
+      (interval) => interval.minutes == minutes,
       orElse: () => AndroidWidgetUpdateInterval.every24Hours,
     );
   }
@@ -21,6 +34,6 @@ class SharedPreferencesAndroidWidgetUpdateIntervalStorage
   @override
   Future<void> save(AndroidWidgetUpdateInterval interval) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setInt(updateIntervalHoursKey, interval.hours);
+    await preferences.setInt(updateIntervalMinutesKey, interval.minutes);
   }
 }
