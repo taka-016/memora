@@ -47,7 +47,7 @@ void main() {
       );
     });
 
-    test('バックグラウンド更新失敗時はWorkManagerへ失敗を返す', () {
+    test('バックグラウンド更新失敗時も次の通常周期を維持する', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(
@@ -58,7 +58,20 @@ void main() {
         source,
         contains('return await _refreshAndroidWidgetFromBackground();'),
       );
-      expect(source, contains('return false;'));
+      expect(source, isNot(contains('return false;')));
+      expect(source, contains('preserveExistingCacheOnEmpty: true'));
+    });
+
+    test('Firebase初期化を含むバックグラウンド更新全体を例外処理する', () {
+      final source = File(_backgroundUpdatePath).readAsStringSync();
+
+      expect(
+        source,
+        contains(
+          'Future<bool> _refreshAndroidWidgetFromBackground() async {\n'
+          '  try {',
+        ),
+      );
     });
 
     test('アプリ起動時に定期更新を初期化する', () {
