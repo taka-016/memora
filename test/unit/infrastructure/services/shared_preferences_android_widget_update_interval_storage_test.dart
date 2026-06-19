@@ -24,6 +24,5 @@ void main() {
 
       expect(await storage.load(), AndroidWidgetUpdateInterval.every3Hours);
     });
-
   });
 }

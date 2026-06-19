@@ -26,7 +26,7 @@ class SharedPreferencesAndroidWidgetUpdateIntervalStorage
 
   AndroidWidgetUpdateInterval _findByMinutes(int minutes) {
     return AndroidWidgetUpdateInterval.values.firstWhere(
-      (interval) => interval.minutes == minutes,
+      (interval) => interval.duration.inMinutes == minutes,
       orElse: () => AndroidWidgetUpdateInterval.every24Hours,
     );
   }
@@ -34,6 +34,9 @@ class SharedPreferencesAndroidWidgetUpdateIntervalStorage
   @override
   Future<void> save(AndroidWidgetUpdateInterval interval) async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setInt(updateIntervalMinutesKey, interval.minutes);
+    await preferences.setInt(
+      updateIntervalMinutesKey,
+      interval.duration.inMinutes,
+    );
   }
 }
