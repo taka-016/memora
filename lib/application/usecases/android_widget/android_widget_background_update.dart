@@ -12,21 +12,16 @@ import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_quer
 import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/infrastructure/services/method_channel_android_widget_toast_notifier.dart';
-import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:workmanager/workmanager.dart';
 
 const androidWidgetPeriodicUpdateUniqueName =
     'memora_android_widget_periodic_update';
 const androidWidgetPeriodicUpdateTaskName =
     'memora_android_widget_periodic_update_task';
-const androidWidgetShortUpdateTaskName =
-    'memora_android_widget_short_update_task';
-const _androidWidgetShortUpdateFirstUniqueName =
+const _legacyShortUpdateFirstUniqueName =
     'memora_android_widget_short_update_first';
-const _androidWidgetShortUpdateSecondUniqueName =
+const _legacyShortUpdateSecondUniqueName =
     'memora_android_widget_short_update_second';
-const _shortUpdateNextUniqueNameKey = 'nextUniqueName';
-const _minimumPeriodicUpdateInterval = Duration(minutes: 15);
 final _connectedNetworkConstraints = Constraints(
   networkType: NetworkType.connected,
 );
@@ -43,22 +38,9 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
     return;
   }
   final workmanager = Workmanager();
-  if (frequency < _minimumPeriodicUpdateInterval) {
-    await Future.wait([
-      workmanager.cancelByUniqueName(androidWidgetPeriodicUpdateUniqueName),
-      workmanager.cancelByUniqueName(_androidWidgetShortUpdateFirstUniqueName),
-      workmanager.cancelByUniqueName(_androidWidgetShortUpdateSecondUniqueName),
-    ]);
-    await _registerAndroidWidgetShortUpdateTask(
-      uniqueName: _androidWidgetShortUpdateFirstUniqueName,
-      nextUniqueName: _androidWidgetShortUpdateSecondUniqueName,
-      frequency: frequency,
-    );
-    return;
-  }
   await Future.wait([
-    workmanager.cancelByUniqueName(_androidWidgetShortUpdateFirstUniqueName),
-    workmanager.cancelByUniqueName(_androidWidgetShortUpdateSecondUniqueName),
+    workmanager.cancelByUniqueName(_legacyShortUpdateFirstUniqueName),
+    workmanager.cancelByUniqueName(_legacyShortUpdateSecondUniqueName),
   ]);
   await workmanager.registerPeriodicTask(
     androidWidgetPeriodicUpdateUniqueName,
@@ -69,62 +51,15 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
   );
 }
 
-Future<void> _registerAndroidWidgetShortUpdateTask({
-  required String uniqueName,
-  required String nextUniqueName,
-  required Duration frequency,
-}) async {
-  await Workmanager().registerOneOffTask(
-    uniqueName,
-    androidWidgetShortUpdateTaskName,
-    inputData: {_shortUpdateNextUniqueNameKey: nextUniqueName},
-    initialDelay: frequency,
-    constraints: _connectedNetworkConstraints,
-    existingWorkPolicy: ExistingWorkPolicy.replace,
-  );
-}
-
 @pragma('vm:entry-point')
 void androidWidgetBackgroundUpdateDispatcher() {
   Workmanager().executeTask((task, inputData) async {
-    if (task != androidWidgetPeriodicUpdateTaskName &&
-        task != androidWidgetShortUpdateTaskName) {
+    if (task != androidWidgetPeriodicUpdateTaskName) {
       return true;
     }
     WidgetsFlutterBinding.ensureInitialized();
-    if (task == androidWidgetPeriodicUpdateTaskName) {
-      return await _refreshAndroidWidgetFromBackground();
-    }
-    final succeeded = await _refreshAndroidWidgetFromBackground();
-    if (succeeded) {
-      await _registerNextAndroidWidgetShortUpdateTask(inputData);
-    }
-    return succeeded;
+    return await _refreshAndroidWidgetFromBackground();
   });
-}
-
-Future<void> _registerNextAndroidWidgetShortUpdateTask(
-  Map<String, dynamic>? inputData,
-) async {
-  final nextUniqueName = inputData?[_shortUpdateNextUniqueNameKey];
-  if (nextUniqueName is! String) {
-    return;
-  }
-  final interval =
-      await const SharedPreferencesAndroidWidgetUpdateIntervalStorage().load();
-  final frequency = interval.duration;
-  if (frequency >= _minimumPeriodicUpdateInterval) {
-    return;
-  }
-  final followingUniqueName =
-      nextUniqueName == _androidWidgetShortUpdateFirstUniqueName
-      ? _androidWidgetShortUpdateSecondUniqueName
-      : _androidWidgetShortUpdateFirstUniqueName;
-  await _registerAndroidWidgetShortUpdateTask(
-    uniqueName: nextUniqueName,
-    nextUniqueName: followingUniqueName,
-    frequency: frequency,
-  );
 }
 
 Future<bool> _refreshAndroidWidgetFromBackground() async {
