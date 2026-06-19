@@ -136,5 +136,23 @@ void main() {
 
       expect(result, isEmpty);
     });
+
+    test('例外伝播を指定した場合は取得例外を再送出する', () async {
+      service = FirestoreItineraryItemQueryService(
+        firestore: mockFirestore,
+        rethrowOnError: true,
+      );
+      when(
+        mockItineraryItemsCollection.where(
+          'tripId',
+          isEqualTo: anyNamed('isEqualTo'),
+        ),
+      ).thenThrow(TestException('取得失敗'));
+
+      expect(
+        () => service.getItineraryItemsByTripId('trip001'),
+        throwsA(isA<TestException>()),
+      );
+    });
   });
 }

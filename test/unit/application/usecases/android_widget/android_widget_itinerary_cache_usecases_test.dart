@@ -13,6 +13,34 @@ import 'package:memora/core/time/app_clock.dart';
 import '../../../../helpers/test_exception.dart';
 
 void main() {
+  group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    test('取得失敗時は既存キャッシュを上書きせずウィジェット表示だけ更新する', () async {
+      final existingCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-24',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: const [],
+      );
+      final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache);
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..exception = TestException('取得失敗');
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        _FakeItineraryItemQueryService(),
+      );
+
+      await expectLater(
+        usecase.execute(groupId: 'group-1'),
+        throwsA(isA<TestException>()),
+      );
+
+      expect(storage.cache, same(existingCache));
+      expect(storage.updateWidgetCount, 1);
+    });
+  });
+
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
     test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(

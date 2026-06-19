@@ -106,6 +106,25 @@ void main() {
       expect(find.text('24時間'), findsOneWidget);
     });
 
+    testWidgets('Androidウィジェットの更新間隔に検証用の1分と5分を表示する', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: _FakeAndroidWidgetUpdateIntervalStorage(),
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('1分（検証用）'), findsOneWidget);
+      expect(find.text('5分（検証用）'), findsOneWidget);
+    });
+
     testWidgets('Androidウィジェットの更新間隔を変更すると保存して定期更新へ反映する', (tester) async {
       final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage();
       Duration? registeredFrequency;

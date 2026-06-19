@@ -29,6 +29,22 @@ void main() {
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
+    test('ネットワーク接続時のみバックグラウンド更新を実行する', () {
+      final source = File(_backgroundUpdatePath).readAsStringSync();
+
+      expect(source, contains('Constraints('));
+      expect(source, contains('networkType: NetworkType.connected'));
+    });
+
+    test('15分未満は検証用のOne-offタスクを連続登録する', () {
+      final source = File(_backgroundUpdatePath).readAsStringSync();
+
+      expect(source, contains('registerOneOffTask'));
+      expect(source, contains('initialDelay: frequency'));
+      expect(source, contains('androidWidgetShortUpdateTaskName'));
+      expect(source, contains('_registerNextAndroidWidgetShortUpdateTask'));
+    });
+
     test('バックグラウンド更新失敗時はWorkManagerへ失敗を返す', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
