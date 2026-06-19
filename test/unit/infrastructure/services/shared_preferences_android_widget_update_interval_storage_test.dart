@@ -22,10 +22,7 @@ void main() {
 
       await storage.save(AndroidWidgetUpdateInterval.every3Hours);
 
-      expect(
-        await storage.load(),
-        AndroidWidgetUpdateInterval.every3Hours,
-      );
+      expect(await storage.load(), AndroidWidgetUpdateInterval.every3Hours);
     });
   });
 }

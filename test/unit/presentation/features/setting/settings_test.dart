@@ -123,9 +123,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.tap(
-        find.byType(
-          DropdownButtonFormField<AndroidWidgetUpdateInterval>,
-        ),
+        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('6時間').last);
@@ -309,11 +307,8 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
 class _FakeAndroidWidgetUpdateIntervalStorage
     implements AndroidWidgetUpdateIntervalStorage {
-  _FakeAndroidWidgetUpdateIntervalStorage({
-    this.savedInterval = AndroidWidgetUpdateInterval.every24Hours,
-  });
-
-  AndroidWidgetUpdateInterval savedInterval;
+  AndroidWidgetUpdateInterval savedInterval =
+      AndroidWidgetUpdateInterval.every24Hours;
 
   @override
   Future<AndroidWidgetUpdateInterval> load() async {
