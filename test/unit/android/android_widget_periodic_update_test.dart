@@ -17,15 +17,15 @@ void main() {
       expect(pubspec, contains('workmanager:'));
     });
 
-    test('24時間間隔の一意な定期タスクを登録する', () {
+    test('指定した間隔で一意な定期タスクを更新する', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('registerPeriodicTask'));
       expect(
         source,
-        contains('existingWorkPolicy: ExistingPeriodicWorkPolicy.keep'),
+        contains('existingWorkPolicy: ExistingPeriodicWorkPolicy.update'),
       );
-      expect(source, contains('frequency: const Duration(hours: 24)'));
+      expect(source, contains('frequency: frequency'));
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
