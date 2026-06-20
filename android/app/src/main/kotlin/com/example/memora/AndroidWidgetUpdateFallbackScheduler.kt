@@ -65,6 +65,7 @@ object AndroidWidgetUpdateFallbackScheduler {
         )
             .setConstraints(constraints)
             .setInputData(inputData)
+            .setInitialDelay(updateIntervalMinutes, TimeUnit.MINUTES)
             .build()
         val immediateRequest = OneTimeWorkRequestBuilder<BackgroundWorker>()
             .setConstraints(constraints)
