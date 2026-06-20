@@ -120,19 +120,19 @@ Future<bool> _refreshAndroidWidgetFromBackground() async {
 }
 
 Future<void> _updateWidgetSafely() async {
-  try {
-    await const HomeWidgetAndroidWidgetCacheStorage().updateWidget().timeout(
-      _widgetUpdateTimeout,
-    );
-  } catch (_) {}
+  await _runWithTimeoutIgnoringFailure(
+    const HomeWidgetAndroidWidgetCacheStorage().updateWidget,
+    _widgetUpdateTimeout,
+  );
 }
 
 Future<void> _showUpdateFailedToast() async {
-  try {
-    await const MethodChannelAndroidWidgetToastNotifier()
-        .show(const AndroidWidgetToastNotification.error('更新に失敗しました'))
-        .timeout(_notificationTimeout);
-  } catch (_) {}
+  await _runWithTimeoutIgnoringFailure(
+    () => const MethodChannelAndroidWidgetToastNotifier().show(
+      const AndroidWidgetToastNotification.error('更新に失敗しました'),
+    ),
+    _notificationTimeout,
+  );
 }
 
 Future<void> _refreshAndroidWidgetCache() async {
@@ -179,8 +179,15 @@ Future<void> _refreshAndroidWidgetCache() async {
 Future<void> _runStatusStorageOperation(
   Future<void> Function() operation,
 ) async {
+  await _runWithTimeoutIgnoringFailure(operation, _statusStorageTimeout);
+}
+
+Future<void> _runWithTimeoutIgnoringFailure(
+  Future<void> Function() operation,
+  Duration timeout,
+) async {
   try {
-    await operation().timeout(_statusStorageTimeout);
+    await operation().timeout(timeout);
   } catch (_) {}
 }
 
@@ -194,14 +201,16 @@ void _recordBackgroundUpdateStage(
   if (Firebase.apps.isEmpty) {
     return;
   }
-  FirebaseCrashlytics.instance.log(message);
-  if (error != null) {
-    FirebaseCrashlytics.instance.recordError(
-      error,
-      stackTrace,
-      reason: message,
-    );
-  }
+  try {
+    unawaited(FirebaseCrashlytics.instance.log(message).catchError((_) {}));
+    if (error != null) {
+      unawaited(
+        FirebaseCrashlytics.instance
+            .recordError(error, stackTrace, reason: message)
+            .catchError((_) {}),
+      );
+    }
+  } catch (_) {}
 }
 
 enum AndroidWidgetBackgroundUpdateStage {
@@ -261,21 +270,15 @@ class AndroidWidgetBackgroundUpdateRunner {
         error,
         stackTrace,
       );
-      await _ignoreFailure(_updateWidget, _widgetUpdateTimeout);
-      await _ignoreFailure(_showUpdateFailedNotification, _notificationTimeout);
+      await _runWithTimeoutIgnoringFailure(_updateWidget, _widgetUpdateTimeout);
+      await _runWithTimeoutIgnoringFailure(
+        _showUpdateFailedNotification,
+        _notificationTimeout,
+      );
     } finally {
       _recordStage(AndroidWidgetBackgroundUpdateStage.completed, null, null);
     }
     return true;
-  }
-
-  Future<void> _ignoreFailure(
-    Future<void> Function() operation,
-    Duration timeout,
-  ) async {
-    try {
-      await operation().timeout(timeout);
-    } catch (_) {}
   }
 }
 
