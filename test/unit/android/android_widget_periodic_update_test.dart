@@ -131,6 +131,11 @@ void main() {
         contains('ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE'),
       );
       expect(schedulerSource, contains('BackgroundWorker.DART_TASK_KEY'));
+      expect(
+        schedulerSource,
+        contains('memora_widget_fallback_recovery_enqueued_at'),
+      );
+      expect(schedulerSource, contains('FALLBACK_RECOVERY_COOLDOWN_MINUTES'));
     });
   });
 }
