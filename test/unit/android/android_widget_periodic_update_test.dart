@@ -136,6 +136,12 @@ void main() {
         contains('memora_widget_fallback_recovery_enqueued_at'),
       );
       expect(schedulerSource, contains('FALLBACK_RECOVERY_COOLDOWN_MINUTES'));
+      expect(
+        schedulerSource,
+        contains(
+          '.setInitialDelay(updateIntervalMinutes, TimeUnit.MINUTES)',
+        ),
+      );
     });
   });
 }
