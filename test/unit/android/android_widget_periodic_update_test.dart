@@ -8,6 +8,8 @@ const _backgroundUpdatePath =
 const _mainPath = 'lib/main.dart';
 const _cacheUsecasesPath =
     'lib/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
+const _itineraryWidgetPath =
+    'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
@@ -86,6 +88,19 @@ void main() {
 
       expect(source, contains('RegisterAndroidWidgetPeriodicUpdateTask'));
       expect(source, contains('registerPeriodicUpdateTask'));
+    });
+
+    test('Glanceウィジェットの状態を同期できるReceiverを使用する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('HomeWidgetGlanceWidgetReceiver'));
+      expect(
+        source,
+        contains(
+          'class ItineraryWidgetReceiver : '
+          'HomeWidgetGlanceWidgetReceiver<ItineraryWidget>()',
+        ),
+      );
     });
   });
 }
