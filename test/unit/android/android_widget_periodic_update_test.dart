@@ -138,9 +138,7 @@ void main() {
       expect(schedulerSource, contains('FALLBACK_RECOVERY_COOLDOWN_MINUTES'));
       expect(
         schedulerSource,
-        contains(
-          '.setInitialDelay(updateIntervalMinutes, TimeUnit.MINUTES)',
-        ),
+        contains('.setInitialDelay(updateIntervalMinutes, TimeUnit.MINUTES)'),
       );
     });
   });
