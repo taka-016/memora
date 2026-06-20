@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit
 
 object AndroidWidgetUpdateFallbackScheduler {
     fun recoverIfOverdue(context: Context) {
-        val targetGroupId = homeWidgetPreferences(context)
+        val preferences = homeWidgetPreferences(context)
+        val targetGroupId = preferences
             .getString(TARGET_GROUP_ID_KEY, null)
             .orEmpty()
         if (targetGroupId.isEmpty()) {
@@ -36,6 +37,21 @@ object AndroidWidgetUpdateFallbackScheduler {
         ) {
             return
         }
+
+        val now = System.currentTimeMillis()
+        val lastRecoveryEnqueuedAt = preferences.getLong(
+            FALLBACK_RECOVERY_ENQUEUED_AT_KEY,
+            0L,
+        )
+        val recoveryCooldownMillis = TimeUnit.MINUTES.toMillis(
+            FALLBACK_RECOVERY_COOLDOWN_MINUTES,
+        )
+        if (now - lastRecoveryEnqueuedAt < recoveryCooldownMillis) {
+            return
+        }
+        preferences.edit()
+            .putLong(FALLBACK_RECOVERY_ENQUEUED_AT_KEY, now)
+            .apply()
 
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -90,6 +106,8 @@ object AndroidWidgetUpdateFallbackScheduler {
     private const val FLUTTER_PREFERENCES = "FlutterSharedPreferences"
     private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
     private const val LAST_UPDATED_AT_KEY = "memora_widget_last_updated_at"
+    private const val FALLBACK_RECOVERY_ENQUEUED_AT_KEY =
+        "memora_widget_fallback_recovery_enqueued_at"
     private const val UPDATE_INTERVAL_MINUTES_KEY =
         "flutter.android_widget_update_interval_minutes"
     private const val PERIODIC_UPDATE_UNIQUE_NAME =
@@ -102,4 +120,5 @@ object AndroidWidgetUpdateFallbackScheduler {
     private const val DEFAULT_UPDATE_INTERVAL_MINUTES = 24L * 60L
     private const val MINIMUM_WORK_INTERVAL_MINUTES = 15L
     private const val FALLBACK_GRACE_MINUTES = 30L
+    private const val FALLBACK_RECOVERY_COOLDOWN_MINUTES = 30L
 }
