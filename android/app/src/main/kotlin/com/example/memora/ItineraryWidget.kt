@@ -1,7 +1,9 @@
 package com.example.memora
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.appwidget.AppWidgetManager
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -38,12 +40,22 @@ import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetGlanceWidgetReceiver
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
+import es.antonborri.home_widget.HomeWidgetPlugin
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
 class ItineraryWidgetReceiver : HomeWidgetGlanceWidgetReceiver<ItineraryWidget>() {
     override val glanceAppWidget = ItineraryWidget()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val shouldRecover = intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
+            !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)
+        super.onReceive(context, intent)
+        if (shouldRecover) {
+            AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue(context)
+        }
+    }
 }
 
 class ItineraryWidget : GlanceAppWidget() {
