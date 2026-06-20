@@ -37,18 +37,15 @@ void main() {
 
       expect(
         source,
-        contains('val selectedItineraryDateId = cache?.selectedItineraryDateId'),
+        contains(
+          'val selectedItineraryDateId = cache?.selectedItineraryDateId',
+        ),
       );
-      expect(
-        source,
-        contains('?: cache?.itineraryDates?.firstOrNull()'),
-      );
+      expect(source, contains('?: cache?.itineraryDates?.firstOrNull()'));
       expect(
         source,
         isNot(
-          contains(
-            'prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)',
-          ),
+          contains('prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)'),
         ),
       );
     });
