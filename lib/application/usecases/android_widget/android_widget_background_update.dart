@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/firebase_options.dart';
 import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
@@ -63,48 +64,51 @@ void androidWidgetBackgroundUpdateDispatcher() {
 }
 
 Future<bool> _refreshAndroidWidgetFromBackground() async {
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  }
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled: false,
-  );
-
-  const storage = HomeWidgetAndroidWidgetCacheStorage();
-  final groupId = await storage.getTargetGroupId();
-  if (groupId == null) {
-    await storage.updateWidget();
-    return true;
-  }
-
-  final clock = NtpSynchronizedAppClock();
-  final refreshUsecase = RefreshAndroidWidgetItineraryCacheUsecase(
-    cacheStorage: storage,
-    getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-      tripEntryQueryService: FirestoreTripEntryQueryService(
-        firestore: FirebaseFirestore.instance,
-        clock: clock,
-        rethrowOnError: true,
-      ),
-      itineraryItemQueryService: FirestoreItineraryItemQueryService(
-        firestore: FirebaseFirestore.instance,
-        rethrowOnError: true,
-      ),
-      clock: clock,
-    ),
-  );
-
   try {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      FirebaseFirestore.instance.settings = const Settings(
+        persistenceEnabled: false,
+      );
+    }
+    await initLogger();
+
+    final groupId = await storage.getTargetGroupId();
+    if (groupId == null) {
+      await storage.updateWidget();
+      return true;
+    }
+
+    final clock = NtpSynchronizedAppClock();
+    final refreshUsecase = RefreshAndroidWidgetItineraryCacheUsecase(
+      cacheStorage: storage,
+      getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
+        tripEntryQueryService: FirestoreTripEntryQueryService(
+          firestore: FirebaseFirestore.instance,
+          clock: clock,
+          rethrowOnError: true,
+        ),
+        itineraryItemQueryService: FirestoreItineraryItemQueryService(
+          firestore: FirebaseFirestore.instance,
+          rethrowOnError: true,
+        ),
+        clock: clock,
+      ),
+    );
     await refreshUsecase.execute(
       groupId: groupId,
       selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
+      preserveExistingCacheOnEmpty: true,
     );
   } catch (_) {
-    await storage.updateWidget();
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    try {
+      await storage.updateWidget();
+    } catch (_) {}
     await _showUpdateFailedToast();
-    return false;
   }
   return true;
 }

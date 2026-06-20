@@ -64,10 +64,10 @@ private fun ItineraryWidgetContent(
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
-    val selectedItineraryDateId = prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)
-        ?: cache?.selectedItineraryDateId
+    val selectedItineraryDateId = cache?.selectedItineraryDateId
     val selectedItineraryDate = cache?.itineraryDates
         ?.firstOrNull { it.id == selectedItineraryDateId }
+        ?: cache?.itineraryDates?.firstOrNull()
 
     Box(
         modifier = GlanceModifier
@@ -443,8 +443,6 @@ private sealed interface WidgetItineraryListEntry {
 }
 
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
-private const val SELECTED_ITINERARY_DATE_ID_KEY =
-    "memora_widget_selected_itinerary_date_id"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val WIDGET_PADDING_DP = 8
 private const val CONTENT_TOP_SPACE_DP = 10
