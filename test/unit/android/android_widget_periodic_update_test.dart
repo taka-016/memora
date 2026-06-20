@@ -10,6 +10,10 @@ const _cacheUsecasesPath =
     'lib/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 const _itineraryWidgetPath =
     'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
+const _fallbackSchedulerPath =
+    'android/app/src/main/kotlin/com/example/memora/AndroidWidgetUpdateFallbackScheduler.kt';
+const _widgetInfoPath =
+    'android/app/src/main/res/xml/itinerary_widget_info.xml';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
@@ -101,6 +105,29 @@ void main() {
           'HomeWidgetGlanceWidgetReceiver<ItineraryWidget>()',
         ),
       );
+    });
+
+    test('Android標準のウィジェット更新通知を30分間隔の監視に使用する', () {
+      final source = File(_widgetInfoPath).readAsStringSync();
+
+      expect(source, contains('android:updatePeriodMillis="1800000"'));
+    });
+
+    test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {
+      final widgetSource = File(_itineraryWidgetPath).readAsStringSync();
+      final schedulerSource = File(_fallbackSchedulerPath).readAsStringSync();
+
+      expect(widgetSource, contains('override fun onReceive'));
+      expect(widgetSource, contains('HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET'));
+      expect(widgetSource, contains('AndroidWidgetUpdateFallbackScheduler'));
+      expect(schedulerSource, contains('FlutterSharedPreferences'));
+      expect(schedulerSource, contains('memora_widget_last_updated_at'));
+      expect(schedulerSource, contains('ExistingWorkPolicy.REPLACE'));
+      expect(
+        schedulerSource,
+        contains('ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE'),
+      );
+      expect(schedulerSource, contains('BackgroundWorker.DART_TASK_KEY'));
     });
   });
 }
