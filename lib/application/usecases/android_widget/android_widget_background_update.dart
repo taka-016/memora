@@ -104,13 +104,16 @@ Future<bool> _refreshAndroidWidgetFromBackground() async {
       preserveExistingCacheOnEmpty: true,
     );
   } catch (_) {
-    const storage = HomeWidgetAndroidWidgetCacheStorage();
-    try {
-      await storage.updateWidget();
-    } catch (_) {}
+    await _updateWidgetSafely();
     await _showUpdateFailedToast();
   }
   return true;
+}
+
+Future<void> _updateWidgetSafely() async {
+  try {
+    await const HomeWidgetAndroidWidgetCacheStorage().updateWidget();
+  } catch (_) {}
 }
 
 Future<void> _showUpdateFailedToast() async {
