@@ -118,7 +118,10 @@ void main() {
       final schedulerSource = File(_fallbackSchedulerPath).readAsStringSync();
 
       expect(widgetSource, contains('override fun onReceive'));
-      expect(widgetSource, contains('HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET'));
+      expect(
+        widgetSource,
+        contains('HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET'),
+      );
       expect(widgetSource, contains('AndroidWidgetUpdateFallbackScheduler'));
       expect(schedulerSource, contains('FlutterSharedPreferences'));
       expect(schedulerSource, contains('memora_widget_last_updated_at'));
