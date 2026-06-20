@@ -12,7 +12,6 @@ import androidx.glance.ImageProvider
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
@@ -36,14 +35,15 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import es.antonborri.home_widget.HomeWidgetGlanceWidgetReceiver
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ItineraryWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = ItineraryWidget()
+class ItineraryWidgetReceiver : HomeWidgetGlanceWidgetReceiver<ItineraryWidget>() {
+    override val glanceAppWidget = ItineraryWidget()
 }
 
 class ItineraryWidget : GlanceAppWidget() {

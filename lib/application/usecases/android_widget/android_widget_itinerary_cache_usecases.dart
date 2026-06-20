@@ -74,6 +74,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     required String groupId,
     String? selectedItineraryDateId,
     bool preserveExistingCacheOnEmpty = false,
+    bool updateWidgetAfterRefresh = true,
   }) async {
     try {
       final cache = await _getCacheUsecase.execute(
@@ -90,7 +91,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
     } finally {
-      await _cacheStorage.updateWidget();
+      if (updateWidgetAfterRefresh) {
+        await _cacheStorage.updateWidget();
+      }
     }
   }
 }
