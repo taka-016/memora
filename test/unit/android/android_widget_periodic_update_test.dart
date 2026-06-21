@@ -12,8 +12,11 @@ const _itineraryWidgetPath =
     'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
 const _fallbackSchedulerPath =
     'android/app/src/main/kotlin/com/example/memora/AndroidWidgetUpdateFallbackScheduler.kt';
+const _fallbackReceiverPath =
+    'android/app/src/main/kotlin/com/example/memora/AndroidWidgetUpdateFallbackReceiver.kt';
 const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
+const _androidManifestPath = 'android/app/src/main/AndroidManifest.xml';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
@@ -107,10 +110,35 @@ void main() {
       );
     });
 
-    test('Android標準のウィジェット更新通知を30分間隔の監視に使用する', () {
+    test('Android標準のウィジェット定期更新に依存しない', () {
       final source = File(_widgetInfoPath).readAsStringSync();
 
-      expect(source, contains('android:updatePeriodMillis="1800000"'));
+      expect(source, contains('android:updatePeriodMillis="0"'));
+    });
+
+    test('AlarmManagerで30分間隔の復旧監視を継続する', () {
+      final schedulerSource = File(_fallbackSchedulerPath).readAsStringSync();
+      final receiverSource = File(_fallbackReceiverPath).readAsStringSync();
+      final manifestSource = File(_androidManifestPath).readAsStringSync();
+
+      expect(schedulerSource, contains('AlarmManager'));
+      expect(schedulerSource, contains('setInexactRepeating'));
+      expect(schedulerSource, contains('FALLBACK_CHECK_INTERVAL_MINUTES'));
+      expect(receiverSource, contains('BroadcastReceiver'));
+      expect(receiverSource, contains('Intent.ACTION_BOOT_COMPLETED'));
+      expect(receiverSource, contains('Intent.ACTION_MY_PACKAGE_REPLACED'));
+      expect(
+        receiverSource,
+        contains('AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue'),
+      );
+      expect(
+        manifestSource,
+        contains('android.permission.RECEIVE_BOOT_COMPLETED'),
+      );
+      expect(
+        manifestSource,
+        contains('.AndroidWidgetUpdateFallbackReceiver'),
+      );
     });
 
     test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {
