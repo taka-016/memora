@@ -51,6 +51,9 @@ class ItineraryWidgetReceiver : HomeWidgetGlanceWidgetReceiver<ItineraryWidget>(
     override fun onReceive(context: Context, intent: Intent) {
         val shouldRecover = intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
             !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)
+        if (shouldRecover) {
+            AndroidWidgetUpdateFallbackScheduler.schedule(context)
+        }
         super.onReceive(context, intent)
         if (shouldRecover) {
             AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue(context)

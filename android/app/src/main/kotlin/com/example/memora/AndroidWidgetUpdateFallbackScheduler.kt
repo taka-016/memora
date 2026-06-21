@@ -1,6 +1,10 @@
 package com.example.memora
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.os.SystemClock
 import androidx.work.Constraints
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -16,6 +20,29 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 object AndroidWidgetUpdateFallbackScheduler {
+    fun schedule(context: Context) {
+        val intervalMillis = TimeUnit.MINUTES.toMillis(
+            FALLBACK_CHECK_INTERVAL_MINUTES,
+        )
+        val alarmManager = context.getSystemService(AlarmManager::class.java)
+        val intent = Intent(
+            context,
+            AndroidWidgetUpdateFallbackReceiver::class.java,
+        ).setAction(AndroidWidgetUpdateFallbackReceiver.ACTION_CHECK)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            FALLBACK_CHECK_REQUEST_CODE,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        alarmManager.setInexactRepeating(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            SystemClock.elapsedRealtime() + intervalMillis,
+            intervalMillis,
+            pendingIntent,
+        )
+    }
+
     fun recoverIfOverdue(context: Context) {
         val preferences = homeWidgetPreferences(context)
         val targetGroupId = preferences
@@ -122,4 +149,6 @@ object AndroidWidgetUpdateFallbackScheduler {
     private const val MINIMUM_WORK_INTERVAL_MINUTES = 15L
     private const val FALLBACK_GRACE_MINUTES = 30L
     private const val FALLBACK_RECOVERY_COOLDOWN_MINUTES = 30L
+    private const val FALLBACK_CHECK_INTERVAL_MINUTES = 30L
+    private const val FALLBACK_CHECK_REQUEST_CODE = 2106
 }
