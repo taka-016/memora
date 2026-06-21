@@ -135,10 +135,7 @@ void main() {
         manifestSource,
         contains('android.permission.RECEIVE_BOOT_COMPLETED'),
       );
-      expect(
-        manifestSource,
-        contains('.AndroidWidgetUpdateFallbackReceiver'),
-      );
+      expect(manifestSource, contains('.AndroidWidgetUpdateFallbackReceiver'));
     });
 
     test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {
