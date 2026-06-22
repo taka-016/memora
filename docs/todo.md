@@ -22,11 +22,6 @@
 
 ## Androidウィジェット
 
-- Androidウィジェットを1日単位などで定期的に自動更新する
-  - `workmanager`を導入し、Androidの定期バックグラウンドタスクから既存のウィジェットキャッシュ更新ユースケースを呼び出す
-  - アプリ起動時とウィジェット表示対象グループ設定時に、重複しない一意名で定期タスクを登録する
-  - 表示対象グループが未設定の場合は定期タスク内でウィジェット表示のみ更新し、Firestore取得は行わない
-  - 更新時は現在日時を基準に`selectedItineraryDateId`を再選択し、表示位置を当日以降の直近旅程へ移動する
 - ウィジェットタップでアプリを開くようにする
   - Kotlin側の`WidgetItineraryDate`でキャッシュJSONの`tripId`を読み込む
   - Glanceの旅程ヘッダーまたは旅程表示領域に`actionStartActivity<MainActivity>`を設定し、`memoraWidget://openTrip?tripId=...`形式のURIを渡す
