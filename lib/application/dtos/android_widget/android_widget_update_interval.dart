@@ -1,5 +1,4 @@
 enum AndroidWidgetUpdateInterval {
-  every15Minutes(minutes: 15, label: '15分（検証用）'),
   every1Hour(minutes: 60, label: '1時間'),
   every3Hours(minutes: 180, label: '3時間'),
   every6Hours(minutes: 360, label: '6時間'),
