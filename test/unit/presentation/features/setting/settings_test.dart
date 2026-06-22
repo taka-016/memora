@@ -11,7 +11,10 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
+import 'package:memora/infrastructure/factories/android_widget_update_interval_storage_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
@@ -86,12 +89,80 @@ void main() {
       expect(_selectedDropdownValue(tester), isNull);
       expect(storage.targetGroupId, isNull);
     });
+
+    testWidgets('Androidウィジェットの更新間隔は未保存の場合24時間を表示する', (tester) async {
+      final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage();
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: intervalStorage,
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('更新間隔'), findsOneWidget);
+      expect(find.text('24時間'), findsOneWidget);
+    });
+
+    testWidgets('Androidウィジェットの更新間隔に検証用の短時間隔を表示しない', (tester) async {
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: _FakeAndroidWidgetUpdateIntervalStorage(),
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+      );
+      await tester.pumpAndSettle();
+
+      for (final label in ['1分（検証用）', '5分（検証用）', '15分（検証用）']) {
+        expect(find.text(label), findsNothing);
+      }
+    });
+
+    testWidgets('Androidウィジェットの更新間隔を変更すると保存して定期更新へ反映する', (tester) async {
+      final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage();
+      Duration? registeredFrequency;
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: intervalStorage,
+          registerPeriodicUpdateTask: (frequency) async {
+            registeredFrequency = frequency;
+          },
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('6時間').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        intervalStorage.savedInterval,
+        AndroidWidgetUpdateInterval.every6Hours,
+      );
+      expect(registeredFrequency, const Duration(hours: 6));
+    });
   });
 }
 
 Widget _buildTestApp({
   required _FakeAndroidWidgetCacheStorage storage,
   required List<GroupDto> groups,
+  _FakeAndroidWidgetUpdateIntervalStorage? intervalStorage,
+  RegisterAndroidWidgetPeriodicUpdateTask? registerPeriodicUpdateTask,
 }) {
   const member = MemberDto(id: 'member-1', displayName: '太郎');
 
@@ -101,6 +172,13 @@ Widget _buildTestApp({
         () => FakeCurrentMemberNotifier.loaded(member),
       ),
       androidWidgetCacheStorageProvider.overrideWithValue(storage),
+      androidWidgetUpdateIntervalStorageProvider.overrideWithValue(
+        intervalStorage ?? _FakeAndroidWidgetUpdateIntervalStorage(),
+      ),
+      if (registerPeriodicUpdateTask != null)
+        androidWidgetPeriodicUpdateRegistrarProvider.overrideWithValue(
+          registerPeriodicUpdateTask,
+        ),
       groupQueryServiceProvider.overrideWithValue(
         _FakeGroupQueryService(groups),
       ),
@@ -245,4 +323,20 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<void> updateWidget() async {}
+}
+
+class _FakeAndroidWidgetUpdateIntervalStorage
+    implements AndroidWidgetUpdateIntervalStorage {
+  AndroidWidgetUpdateInterval savedInterval =
+      AndroidWidgetUpdateInterval.every24Hours;
+
+  @override
+  Future<AndroidWidgetUpdateInterval> load() async {
+    return savedInterval;
+  }
+
+  @override
+  Future<void> save(AndroidWidgetUpdateInterval interval) async {
+    savedInterval = interval;
+  }
 }

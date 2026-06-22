@@ -8,10 +8,14 @@ import 'package:memora/infrastructure/mappers/trip/firestore_itinerary_item_mapp
 import 'package:memora/infrastructure/mappers/trip/firestore_location_mapper.dart';
 
 class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
-  FirestoreItineraryItemQueryService({FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreItineraryItemQueryService({
+    FirebaseFirestore? firestore,
+    bool rethrowOnError = false,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _rethrowOnError = rethrowOnError;
 
   final FirebaseFirestore _firestore;
+  final bool _rethrowOnError;
 
   @override
   Future<List<ItineraryItemDto>> getItineraryItemsByTripId(
@@ -44,6 +48,9 @@ class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
         error: e,
         stackTrace: stack,
       );
+      if (_rethrowOnError) {
+        rethrow;
+      }
       return [];
     }
   }

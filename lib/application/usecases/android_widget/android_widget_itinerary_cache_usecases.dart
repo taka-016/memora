@@ -6,8 +6,11 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
+import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
+import 'package:memora/infrastructure/factories/android_widget_update_interval_storage_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
@@ -26,6 +29,12 @@ final selectAndroidWidgetTargetGroupUsecaseProvider =
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
         refreshCacheUsecase: ref.watch(
           refreshAndroidWidgetItineraryCacheUsecaseProvider,
+        ),
+        updateIntervalStorage: ref.watch(
+          androidWidgetUpdateIntervalStorageProvider,
+        ),
+        registerPeriodicUpdateTask: ref.watch(
+          androidWidgetPeriodicUpdateRegistrarProvider,
         ),
       );
     });
@@ -64,16 +73,27 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,
+    bool preserveExistingCacheOnEmpty = false,
+    bool updateWidgetAfterRefresh = true,
   }) async {
     try {
       final cache = await _getCacheUsecase.execute(
         groupId: groupId,
         selectedItineraryDateId: selectedItineraryDateId,
       );
+      if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
+        final existingCache = await _cacheStorage.loadItineraryCache();
+        if (existingCache?.groupId == groupId &&
+            existingCache!.itineraryDates.isNotEmpty) {
+          return;
+        }
+      }
       await _cacheStorage.saveTargetGroupId(groupId);
       await _cacheStorage.saveItineraryCache(cache);
     } finally {
-      await _cacheStorage.updateWidget();
+      if (updateWidgetAfterRefresh) {
+        await _cacheStorage.updateWidget();
+      }
     }
   }
 }
@@ -82,15 +102,23 @@ class SelectAndroidWidgetTargetGroupUsecase {
   const SelectAndroidWidgetTargetGroupUsecase({
     required AndroidWidgetCacheStorage cacheStorage,
     required RefreshAndroidWidgetItineraryCacheUsecase refreshCacheUsecase,
+    required AndroidWidgetUpdateIntervalStorage updateIntervalStorage,
+    required RegisterAndroidWidgetPeriodicUpdateTask registerPeriodicUpdateTask,
   }) : _cacheStorage = cacheStorage,
-       _refreshCacheUsecase = refreshCacheUsecase;
+       _refreshCacheUsecase = refreshCacheUsecase,
+       _updateIntervalStorage = updateIntervalStorage,
+       _registerPeriodicUpdateTask = registerPeriodicUpdateTask;
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
+  final AndroidWidgetUpdateIntervalStorage _updateIntervalStorage;
+  final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;
 
   Future<void> execute(String groupId) async {
     await _cacheStorage.clear();
     await _cacheStorage.saveTargetGroupId(groupId);
+    final updateInterval = await _updateIntervalStorage.load();
+    await _registerPeriodicUpdateTask(updateInterval.duration);
     await _refreshCacheUsecase.execute(groupId: groupId);
   }
 }

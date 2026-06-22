@@ -27,15 +27,20 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
   );
 
   final storage = const HomeWidgetAndroidWidgetCacheStorage();
+  final clock = NtpSynchronizedAppClock();
+  final tripEntryQueryService = FirestoreTripEntryQueryService(
+    firestore: FirebaseFirestore.instance,
+    clock: clock,
+    rethrowOnError: true,
+  );
+  final itineraryItemQueryService = FirestoreItineraryItemQueryService(
+    firestore: FirebaseFirestore.instance,
+    rethrowOnError: true,
+  );
   final getCacheUsecase = GetAndroidWidgetItineraryCacheUsecase(
-    tripEntryQueryService: FirestoreTripEntryQueryService(
-      firestore: FirebaseFirestore.instance,
-      clock: NtpSynchronizedAppClock(),
-    ),
-    itineraryItemQueryService: FirestoreItineraryItemQueryService(
-      firestore: FirebaseFirestore.instance,
-    ),
-    clock: NtpSynchronizedAppClock(),
+    tripEntryQueryService: tripEntryQueryService,
+    itineraryItemQueryService: itineraryItemQueryService,
+    clock: clock,
   );
   final refreshUsecase = RefreshAndroidWidgetItineraryCacheUsecase(
     cacheStorage: storage,
@@ -43,13 +48,8 @@ FutureOr<void> androidWidgetInteractivityCallback(Uri? uri) async {
   );
   final moveUsecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
     cacheStorage: storage,
-    tripEntryQueryService: FirestoreTripEntryQueryService(
-      firestore: FirebaseFirestore.instance,
-      clock: NtpSynchronizedAppClock(),
-    ),
-    itineraryItemQueryService: FirestoreItineraryItemQueryService(
-      firestore: FirebaseFirestore.instance,
-    ),
+    tripEntryQueryService: tripEntryQueryService,
+    itineraryItemQueryService: itineraryItemQueryService,
     refreshCacheUsecase: refreshUsecase,
   );
   const toastNotifier = MethodChannelAndroidWidgetToastNotifier();

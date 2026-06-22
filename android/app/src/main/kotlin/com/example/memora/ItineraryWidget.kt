@@ -1,7 +1,9 @@
 package com.example.memora
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.appwidget.AppWidgetManager
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -12,7 +14,6 @@ import androidx.glance.ImageProvider
 import androidx.glance.GlanceModifier
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
-import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.provideContent
@@ -36,14 +37,28 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
+import es.antonborri.home_widget.HomeWidgetGlanceWidgetReceiver
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
+import es.antonborri.home_widget.HomeWidgetPlugin
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
 
-class ItineraryWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = ItineraryWidget()
+class ItineraryWidgetReceiver : HomeWidgetGlanceWidgetReceiver<ItineraryWidget>() {
+    override val glanceAppWidget = ItineraryWidget()
+
+    override fun onReceive(context: Context, intent: Intent) {
+        val shouldRecover = intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE &&
+            !intent.getBooleanExtra(HomeWidgetPlugin.TRIGGERED_FROM_HOME_WIDGET, false)
+        if (shouldRecover) {
+            AndroidWidgetUpdateFallbackScheduler.schedule(context)
+        }
+        super.onReceive(context, intent)
+        if (shouldRecover) {
+            AndroidWidgetUpdateFallbackScheduler.recoverIfOverdue(context)
+        }
+    }
 }
 
 class ItineraryWidget : GlanceAppWidget() {
@@ -64,10 +79,10 @@ private fun ItineraryWidgetContent(
     val prefs = state.preferences
     val targetGroupId = prefs.getString(TARGET_GROUP_ID_KEY, null).orEmpty()
     val cache = readCache(prefs.getString(CACHE_FILE_KEY, null))
-    val selectedItineraryDateId = prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)
-        ?: cache?.selectedItineraryDateId
+    val selectedItineraryDateId = cache?.selectedItineraryDateId
     val selectedItineraryDate = cache?.itineraryDates
         ?.firstOrNull { it.id == selectedItineraryDateId }
+        ?: cache?.itineraryDates?.firstOrNull()
 
     Box(
         modifier = GlanceModifier
@@ -443,8 +458,6 @@ private sealed interface WidgetItineraryListEntry {
 }
 
 private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
-private const val SELECTED_ITINERARY_DATE_ID_KEY =
-    "memora_widget_selected_itinerary_date_id"
 private const val CACHE_FILE_KEY = "memora_widget_itinerary_cache"
 private const val WIDGET_PADDING_DP = 8
 private const val CONTENT_TOP_SPACE_DP = 10

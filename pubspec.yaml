@@ -54,6 +54,7 @@ dependencies:
   home_widget: ^0.9.1
   memora_android_widget_toast:
     path: packages/memora_android_widget_toast
+  workmanager: ^0.9.0+3
 
 dev_dependencies:
   flutter_test:

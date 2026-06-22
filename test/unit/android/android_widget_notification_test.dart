@@ -31,5 +31,23 @@ void main() {
       expect(handlerSource, contains('Toast.makeText'));
       expect(handlerSource, contains('context.applicationContext'));
     });
+
+    test('キャッシュ内の選択IDを優先し見つからない場合は先頭旅程を表示する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(
+        source,
+        contains(
+          'val selectedItineraryDateId = cache?.selectedItineraryDateId',
+        ),
+      );
+      expect(source, contains('?: cache?.itineraryDates?.firstOrNull()'));
+      expect(
+        source,
+        isNot(
+          contains('prefs.getString(SELECTED_ITINERARY_DATE_ID_KEY, null)'),
+        ),
+      );
+    });
   });
 }

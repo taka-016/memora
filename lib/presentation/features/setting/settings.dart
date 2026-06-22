@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
+import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
+import 'package:memora/infrastructure/factories/android_widget_update_interval_storage_factory.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 class Settings extends ConsumerStatefulWidget {
@@ -20,6 +22,16 @@ class _SettingsState extends ConsumerState<Settings> {
   Future<String?>? _targetGroupIdFuture;
   String? _selectedAndroidWidgetGroupId;
   bool _isTargetGroupIdLoaded = false;
+  late final Future<AndroidWidgetUpdateInterval> _updateIntervalFuture;
+  AndroidWidgetUpdateInterval? _selectedUpdateInterval;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateIntervalFuture = ref
+        .read(androidWidgetUpdateIntervalStorageProvider)
+        .load();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +46,55 @@ class _SettingsState extends ConsumerState<Settings> {
           Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildAndroidWidgetGroupSetting(context, currentMemberState),
+          const SizedBox(height: 16),
+          _buildAndroidWidgetUpdateIntervalSetting(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildAndroidWidgetUpdateIntervalSetting(BuildContext context) {
+    return FutureBuilder<AndroidWidgetUpdateInterval>(
+      future: _updateIntervalFuture,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final selectedInterval = _selectedUpdateInterval ?? snapshot.data!;
+        return DropdownButtonFormField<AndroidWidgetUpdateInterval>(
+          key: ValueKey(selectedInterval),
+          initialValue: selectedInterval,
+          decoration: const InputDecoration(
+            labelText: '更新間隔',
+            border: OutlineInputBorder(),
+          ),
+          items: AndroidWidgetUpdateInterval.values
+              .map(
+                (interval) => DropdownMenuItem<AndroidWidgetUpdateInterval>(
+                  value: interval,
+                  child: Text(interval.label),
+                ),
+              )
+              .toList(),
+          onChanged: (interval) async {
+            if (interval == null || interval == selectedInterval) {
+              return;
+            }
+            await ref
+                .read(updateAndroidWidgetIntervalUsecaseProvider)
+                .execute(interval);
+            if (!context.mounted) {
+              return;
+            }
+            setState(() {
+              _selectedUpdateInterval = interval;
+            });
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('ウィジェット更新間隔を保存しました')));
+          },
+        );
+      },
     );
   }
 
