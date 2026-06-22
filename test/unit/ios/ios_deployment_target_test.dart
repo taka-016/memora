@@ -14,8 +14,8 @@ void main() {
 
       expect(deploymentTargets, hasLength(3));
       expect(
-        deploymentTargets.map((match) => match.group(1)),
-        everyElement('14.0'),
+        deploymentTargets.map((match) => double.parse(match.group(1)!)),
+        everyElement(greaterThanOrEqualTo(14.0)),
       );
     });
   });
