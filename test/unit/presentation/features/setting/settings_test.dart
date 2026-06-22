@@ -121,9 +121,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('1分（検証用）'), findsNothing);
-      expect(find.text('5分（検証用）'), findsNothing);
-      expect(find.text('15分（検証用）'), findsNothing);
+      for (final label in ['1分（検証用）', '5分（検証用）', '15分（検証用）']) {
+        expect(find.text(label), findsNothing);
+      }
     });
 
     testWidgets('Androidウィジェットの更新間隔を変更すると保存して定期更新へ反映する', (tester) async {
