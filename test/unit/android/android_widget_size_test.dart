@@ -6,10 +6,15 @@ const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
 
 void main() {
-  test('Androidウィジェットの初期サイズを4×3にする', () {
+  test('Androidウィジェットの初期幅を4セルにする', () {
     final source = File(_widgetInfoPath).readAsStringSync();
 
     expect(source, contains('android:targetCellWidth="4"'));
+  });
+
+  test('Androidウィジェットの初期高さを3セルにする', () {
+    final source = File(_widgetInfoPath).readAsStringSync();
+
     expect(source, contains('android:targetCellHeight="3"'));
   });
 }
