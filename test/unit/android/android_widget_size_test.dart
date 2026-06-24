@@ -16,5 +16,6 @@ void main() {
     final source = File(_widgetInfoPath).readAsStringSync();
 
     expect(source, contains('android:targetCellHeight="3"'));
+    expect(source, contains('android:minHeight="180dp"'));
   });
 }
