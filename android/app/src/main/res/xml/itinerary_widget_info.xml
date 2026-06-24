@@ -3,10 +3,10 @@
     android:description="@string/itinerary_widget_description"
     android:initialLayout="@layout/itinerary_widget_loading"
     android:minWidth="250dp"
-    android:minHeight="140dp"
+    android:minHeight="180dp"
     android:previewLayout="@layout/itinerary_widget_loading"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="4"
-    android:targetCellHeight="2"
+    android:targetCellHeight="3"
     android:updatePeriodMillis="0"
     android:widgetCategory="home_screen" />
