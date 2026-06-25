@@ -17,6 +17,7 @@ import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 class TripManagement extends HookConsumerWidget {
   final String groupId;
   final int year;
+  final String? initialTripId;
   final VoidCallback? onBackPressed;
   final bool isTestEnvironment;
 
@@ -24,6 +25,7 @@ class TripManagement extends HookConsumerWidget {
     super.key,
     required this.groupId,
     required this.year,
+    this.initialTripId,
     this.onBackPressed,
     this.isTestEnvironment = false,
   });
@@ -42,6 +44,7 @@ class TripManagement extends HookConsumerWidget {
     final tripEntries = useState<List<TripEntryDto>>([]);
     final groupMembers = useState<List<GroupMemberDto>>([]);
     final isLoading = useState(true);
+    final initialTripHandled = useRef(false);
 
     Future<void> loadTripEntries() async {
       try {
@@ -193,13 +196,11 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
-    Future<void> showEditTripDialog(TripEntryDto tripEntry) async {
+    Future<void> showEditTripDialog(String tripId) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        final detailedTripEntry = await getTripEntryByIdUsecase.execute(
-          tripEntry.id,
-        );
+        final detailedTripEntry = await getTripEntryByIdUsecase.execute(tripId);
 
         if (!context.mounted) {
           return;
@@ -239,6 +240,25 @@ class TripManagement extends HookConsumerWidget {
         }
       }
     }
+
+    useEffect(() {
+      initialTripHandled.value = false;
+      return null;
+    }, [groupId, year, initialTripId]);
+
+    useEffect(() {
+      final tripId = initialTripId;
+      if (tripId == null || isLoading.value || initialTripHandled.value) {
+        return null;
+      }
+      initialTripHandled.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          showEditTripDialog(tripId);
+        }
+      });
+      return null;
+    }, [initialTripId, isLoading.value, groupId, year]);
 
     Future<void> deleteTripEntry(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -371,7 +391,7 @@ class TripManagement extends HookConsumerWidget {
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () => showDeleteConfirmDialog(tripEntry),
               ),
-              onTap: () => showEditTripDialog(tripEntry),
+              onTap: () => showEditTripDialog(tripEntry.id),
             ),
           );
         },

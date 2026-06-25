@@ -161,9 +161,13 @@ class GroupTimelineNavigationNotifier
     state = state.copyWith(destination: normalizeDestination(destination));
   }
 
-  void showTripManagement(String groupId, int year) {
+  void showTripManagement(String groupId, int year, {String? initialTripId}) {
     showDestination(
-      GroupTimelineTripManagementDestination(groupId: groupId, year: year),
+      GroupTimelineTripManagementDestination(
+        groupId: groupId,
+        year: year,
+        initialTripId: initialTripId,
+      ),
     );
   }
 

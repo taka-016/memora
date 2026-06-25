@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -14,6 +17,7 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
 class TopPage extends HookConsumerWidget {
@@ -42,6 +46,11 @@ class TopPage extends HookConsumerWidget {
 
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
     final currentMember = currentMemberState.member;
+    final pendingAndroidWidgetTripId = ref.watch(
+      androidWidgetLaunchNotifierProvider.select(
+        (state) => state.pendingTripId,
+      ),
+    );
 
     useEffect(() {
       if (currentMemberState.status != CurrentMemberStatus.error) {
@@ -59,6 +68,19 @@ class TopPage extends HookConsumerWidget {
       });
       return null;
     }, [currentMemberState.status, currentMemberState.message]);
+
+    useEffect(() {
+      if (pendingAndroidWidgetTripId == null || currentMember == null) {
+        return null;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        unawaited(_handleAndroidWidgetLaunch(context, ref, currentMember));
+      });
+      return null;
+    }, [pendingAndroidWidgetTripId, currentMember?.id]);
 
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
     final timelineEntryState = ref.watch(
@@ -122,6 +144,86 @@ class TopPage extends HookConsumerWidget {
         body: _buildBody(context, ref, currentMember, selectedItem),
       ),
     );
+  }
+
+  Future<void> _handleAndroidWidgetLaunch(
+    BuildContext context,
+    WidgetRef ref,
+    MemberDto currentMember,
+  ) async {
+    final tripId = ref
+        .read(androidWidgetLaunchNotifierProvider.notifier)
+        .takePendingTripId();
+    if (tripId == null) {
+      return;
+    }
+
+    try {
+      final trip = await ref
+          .read(getTripEntryByIdUsecaseProvider)
+          .execute(tripId);
+      if (!context.mounted) {
+        return;
+      }
+      if (trip == null) {
+        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
+        return;
+      }
+
+      final groups = await ref
+          .read(getGroupsWithMembersUsecaseProvider)
+          .execute(currentMember);
+      if (!context.mounted) {
+        return;
+      }
+      final group = groups
+          .where((group) => group.id == trip.groupId)
+          .firstOrNull;
+      if (group == null) {
+        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
+        return;
+      }
+
+      ref
+          .read(navigationNotifierProvider.notifier)
+          .selectItem(NavigationItem.groupTimeline);
+      final timelineNotifier = ref.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      timelineNotifier.showGroupTimeline(group);
+      timelineNotifier.showTripManagement(
+        trip.groupId,
+        trip.year,
+        initialTripId: trip.id,
+      );
+    } catch (e, stack) {
+      logger.e(
+        'TopPage._handleAndroidWidgetLaunch: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+      if (context.mounted) {
+        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
+      }
+    }
+  }
+
+  Future<void> _showAndroidWidgetLaunchFailure(
+    BuildContext context,
+    WidgetRef ref,
+    MemberDto currentMember,
+  ) async {
+    ref
+        .read(navigationNotifierProvider.notifier)
+        .selectItem(NavigationItem.groupTimeline);
+    await ref
+        .read(groupTimelineNavigationNotifierProvider.notifier)
+        .prepareGroupTimelineEntry(currentMember);
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
+    }
   }
 
   bool _shouldHandleAndroidBack(WidgetRef ref) {
