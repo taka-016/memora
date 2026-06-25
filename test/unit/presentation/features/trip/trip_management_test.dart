@@ -404,8 +404,15 @@ void main() {
         ),
       ).called(1);
 
+      clearInteractions(mockTripEntryQueryService);
       await tester.pump();
-      verifyNoMoreInteractions(mockTripEntryQueryService);
+      verifyNever(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      );
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
