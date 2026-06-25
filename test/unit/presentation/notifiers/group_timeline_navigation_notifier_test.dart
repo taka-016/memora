@@ -331,6 +331,7 @@ void main() {
         const GroupTimelineTripManagementDestination(
           groupId: testGroupId,
           year: testYear,
+          initialTripId: 'trip-1',
         ),
       );
 
@@ -341,6 +342,29 @@ void main() {
         const GroupTimelineTripManagementDestination(
           groupId: testGroupId,
           year: testYear,
+          initialTripId: 'trip-1',
+        ),
+      );
+    });
+
+    test('ウィジェットから旅行管理画面へ初期編集対象を指定して遷移できる', () {
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+
+      notifier.showTripManagement(
+        testGroupWithMembers.id,
+        2024,
+        initialTripId: 'trip-1',
+      );
+
+      expect(
+        container.read(groupTimelineNavigationNotifierProvider).destination,
+        GroupTimelineTripManagementDestination(
+          groupId: testGroupWithMembers.id,
+          year: 2024,
+          initialTripId: 'trip-1',
         ),
       );
     });
