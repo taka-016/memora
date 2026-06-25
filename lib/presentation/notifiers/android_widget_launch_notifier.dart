@@ -20,6 +20,10 @@ final androidWidgetLaunchNotifierProvider =
     );
 
 class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
+  static const _launchScheme = 'memorawidget';
+  static const _openTripHost = 'opentrip';
+  static const _tripIdQueryParameter = 'tripId';
+
   StreamSubscription<Uri?>? _subscription;
 
   @override
@@ -76,11 +80,11 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
   String? _extractTripId(Uri? uri) {
     if (uri == null ||
-        uri.scheme.toLowerCase() != 'memorawidget' ||
-        uri.host.toLowerCase() != 'opentrip') {
+        uri.scheme.toLowerCase() != _launchScheme ||
+        uri.host.toLowerCase() != _openTripHost) {
       return null;
     }
-    final tripId = uri.queryParameters['tripId']?.trim();
+    final tripId = uri.queryParameters[_tripIdQueryParameter]?.trim();
     return tripId == null || tripId.isEmpty ? null : tripId;
   }
 }
