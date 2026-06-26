@@ -211,7 +211,7 @@ class TopPage extends HookConsumerWidget {
       );
       timelineNotifier.showGroupTimeline(
         group,
-        clearGroupSelectionLoadFuture: true,
+        groupSelectionLoadFuture: Future<List<GroupDto>>.value(groups),
       );
       timelineNotifier.showTripManagement(
         trip.groupId,
