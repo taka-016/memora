@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -417,9 +417,7 @@ void main() {
       );
     });
 
-    testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (WidgetTester tester) async {
       final detailCompleter = Completer<TripEntryDto?>();
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(

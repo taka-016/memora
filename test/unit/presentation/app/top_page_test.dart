@@ -84,6 +84,13 @@ class _PendingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   }
 }
 
+class _IdleAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState();
+  }
+}
+
 class _InitialUriLoadingAndroidWidgetLaunchNotifier
     extends AndroidWidgetLaunchNotifier {
   @override
@@ -460,10 +467,9 @@ void main() {
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
       ),
-      if (androidWidgetLaunchNotifier != null)
-        androidWidgetLaunchNotifierProvider.overrideWith(
-          () => androidWidgetLaunchNotifier,
-        ),
+      androidWidgetLaunchNotifierProvider.overrideWith(
+        () => androidWidgetLaunchNotifier ?? _IdleAndroidWidgetLaunchNotifier(),
+      ),
       androidWidgetCacheStorageProvider.overrideWithValue(
         _FakeAndroidWidgetCacheStorage(),
       ),

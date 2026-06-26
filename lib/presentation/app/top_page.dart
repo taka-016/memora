@@ -29,6 +29,7 @@ class TopPage extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
+    final isHandlingAndroidWidgetLaunch = useState(false);
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,11 +47,25 @@ class TopPage extends HookConsumerWidget {
 
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
     final currentMember = currentMemberState.member;
-    final pendingAndroidWidgetTripId = ref.watch(
-      androidWidgetLaunchNotifierProvider.select(
-        (state) => state.pendingTripId,
-      ),
+    final androidWidgetLaunchState = ref.watch(
+      androidWidgetLaunchNotifierProvider,
     );
+    final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
+    final shouldHideForAndroidWidgetLaunch =
+        androidWidgetLaunchState.isInitialUriLoading ||
+        pendingAndroidWidgetTripId != null ||
+        isHandlingAndroidWidgetLaunch.value;
+
+    Future<void> handleAndroidWidgetLaunch(MemberDto member) async {
+      isHandlingAndroidWidgetLaunch.value = true;
+      try {
+        await _handleAndroidWidgetLaunch(context, ref, member);
+      } finally {
+        if (context.mounted) {
+          isHandlingAndroidWidgetLaunch.value = false;
+        }
+      }
+    }
 
     useEffect(() {
       if (currentMemberState.status != CurrentMemberStatus.error) {
@@ -77,7 +92,7 @@ class TopPage extends HookConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        unawaited(_handleAndroidWidgetLaunch(context, ref, currentMember));
+        unawaited(handleAndroidWidgetLaunch(currentMember));
       });
       return null;
     }, [pendingAndroidWidgetTripId, currentMember?.id]);
@@ -95,7 +110,8 @@ class TopPage extends HookConsumerWidget {
     useEffect(
       () {
         if (selectedItem != NavigationItem.groupTimeline ||
-            currentMember == null) {
+            currentMember == null ||
+            shouldHideForAndroidWidgetLaunch) {
           return null;
         }
         if (timelineEntryState.groupSelectionLoadFuture != null ||
@@ -118,6 +134,7 @@ class TopPage extends HookConsumerWidget {
       [
         selectedItem,
         currentMember?.id,
+        shouldHideForAndroidWidgetLaunch,
         timelineEntryState.groupSelectionLoadFuture,
         timelineEntryState.groupTimelineInstance,
       ],
@@ -141,7 +158,9 @@ class TopPage extends HookConsumerWidget {
         },
         appBar: _buildAppBar(context),
         drawer: _buildDrawer(context, ref),
-        body: _buildBody(context, ref, currentMember, selectedItem),
+        body: shouldHideForAndroidWidgetLaunch
+            ? const Center(child: CircularProgressIndicator())
+            : _buildBody(context, ref, currentMember, selectedItem),
       ),
     );
   }

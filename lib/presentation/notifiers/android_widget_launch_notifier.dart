@@ -6,12 +6,29 @@ import 'package:memora/application/usecases/android_widget/watch_android_widget_
 import 'package:memora/core/app_logger.dart';
 
 class AndroidWidgetLaunchState extends Equatable {
-  const AndroidWidgetLaunchState({this.pendingTripId});
+  const AndroidWidgetLaunchState({
+    this.pendingTripId,
+    this.isInitialUriLoading = false,
+  });
 
   final String? pendingTripId;
+  final bool isInitialUriLoading;
 
   @override
-  List<Object?> get props => [pendingTripId];
+  List<Object?> get props => [pendingTripId, isInitialUriLoading];
+
+  AndroidWidgetLaunchState copyWith({
+    String? pendingTripId,
+    bool? isInitialUriLoading,
+    bool clearPendingTripId = false,
+  }) {
+    return AndroidWidgetLaunchState(
+      pendingTripId: clearPendingTripId
+          ? null
+          : (pendingTripId ?? this.pendingTripId),
+      isInitialUriLoading: isInitialUriLoading ?? this.isInitialUriLoading,
+    );
+  }
 }
 
 final androidWidgetLaunchNotifierProvider =
@@ -44,20 +61,22 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
       _subscription = null;
     });
     unawaited(_loadInitialUri(usecase));
-    return const AndroidWidgetLaunchState();
+    return const AndroidWidgetLaunchState(isInitialUriLoading: true);
   }
 
   Future<void> _loadInitialUri(
     WatchAndroidWidgetLaunchUriUsecase usecase,
   ) async {
     try {
-      _receiveUri(await usecase.getInitialUri());
+      final tripId = _extractTripId(await usecase.getInitialUri());
+      state = state.copyWith(pendingTripId: tripId, isInitialUriLoading: false);
     } catch (e, stack) {
       logger.e(
         'AndroidWidgetLaunchNotifier.initialUri: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
+      state = state.copyWith(isInitialUriLoading: false);
     }
   }
 
@@ -66,7 +85,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     if (tripId == null) {
       return;
     }
-    state = AndroidWidgetLaunchState(pendingTripId: tripId);
+    state = state.copyWith(pendingTripId: tripId);
   }
 
   String? takePendingTripId() {
@@ -74,7 +93,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     if (tripId == null) {
       return null;
     }
-    state = const AndroidWidgetLaunchState();
+    state = state.copyWith(clearPendingTripId: true);
     return tripId;
   }
 

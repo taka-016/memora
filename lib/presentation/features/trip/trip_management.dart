@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -44,6 +46,7 @@ class TripManagement extends HookConsumerWidget {
     final tripEntries = useState<List<TripEntryDto>>([]);
     final groupMembers = useState<List<GroupMemberDto>>([]);
     final isLoading = useState(true);
+    final isOpeningInitialTrip = useState(false);
     final initialTripHandled = useRef(false);
 
     Future<void> loadTripEntries() async {
@@ -196,7 +199,10 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
-    Future<void> showEditTripDialog(String tripId) async {
+    Future<void> showEditTripDialog(
+      String tripId, {
+      VoidCallback? onBeforeShowDialog,
+    }) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
@@ -213,6 +219,7 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
+        onBeforeShowDialog?.call();
         await showDialog(
           barrierDismissible: false,
           context: context,
@@ -251,10 +258,26 @@ class TripManagement extends HookConsumerWidget {
       if (tripId == null || isLoading.value || initialTripHandled.value) {
         return null;
       }
+      Future<void> showInitialTripDialog() async {
+        isOpeningInitialTrip.value = true;
+        try {
+          await showEditTripDialog(
+            tripId,
+            onBeforeShowDialog: () {
+              isOpeningInitialTrip.value = false;
+            },
+          );
+        } finally {
+          if (context.mounted && isOpeningInitialTrip.value) {
+            isOpeningInitialTrip.value = false;
+          }
+        }
+      }
+
       initialTripHandled.value = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
-          showEditTripDialog(tripId);
+          unawaited(showInitialTripDialog());
         }
       });
       return null;
@@ -413,7 +436,10 @@ class TripManagement extends HookConsumerWidget {
     }
 
     Widget buildContent() {
-      if (isLoading.value) {
+      final shouldHideForInitialTrip =
+          initialTripId != null &&
+          (!initialTripHandled.value || isOpeningInitialTrip.value);
+      if (isLoading.value || shouldHideForInitialTrip) {
         return buildLoadingState();
       }
 
