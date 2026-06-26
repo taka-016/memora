@@ -48,6 +48,7 @@ class TripManagement extends HookConsumerWidget {
     final isLoading = useState(true);
     final isOpeningInitialTrip = useState(false);
     final initialTripHandled = useRef(false);
+    final initialTripDialogReady = useRef(initialTripId == null);
 
     Future<void> loadTripEntries() async {
       try {
@@ -250,6 +251,7 @@ class TripManagement extends HookConsumerWidget {
 
     useEffect(() {
       initialTripHandled.value = false;
+      initialTripDialogReady.value = initialTripId == null;
       return null;
     }, [groupId, year, initialTripId]);
 
@@ -264,11 +266,13 @@ class TripManagement extends HookConsumerWidget {
           await showEditTripDialog(
             tripId,
             onBeforeShowDialog: () {
+              initialTripDialogReady.value = true;
               isOpeningInitialTrip.value = false;
             },
           );
         } finally {
           if (context.mounted && isOpeningInitialTrip.value) {
+            initialTripDialogReady.value = true;
             isOpeningInitialTrip.value = false;
           }
         }
@@ -438,7 +442,7 @@ class TripManagement extends HookConsumerWidget {
     Widget buildContent() {
       final shouldHideForInitialTrip =
           initialTripId != null &&
-          (!initialTripHandled.value || isOpeningInitialTrip.value);
+          (!initialTripDialogReady.value || isOpeningInitialTrip.value);
       if (isLoading.value || shouldHideForInitialTrip) {
         return buildLoadingState();
       }
