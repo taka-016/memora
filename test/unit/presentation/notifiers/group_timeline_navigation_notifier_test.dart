@@ -243,7 +243,7 @@ void main() {
       expect(state.timelineRowDefinitions[3].fixedColumnLabel, '花子');
     });
 
-    test('入口で所属グループが1件ならグループ年表を直接表示する', () async {
+    test('入口で所属グループが1件ならグループ年表を直接表示してロード状態をクリアする', () async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -263,7 +263,7 @@ void main() {
       final state = container.read(groupTimelineNavigationNotifierProvider);
       expect(state.destination, const GroupTimelineOverviewDestination());
       expect(state.groupTimelineInstance, isNotNull);
-      expect(await state.groupSelectionLoadFuture, [testGroupWithMembers]);
+      expect(state.groupSelectionLoadFuture, isNull);
       verify(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           testCurrentMember.id,

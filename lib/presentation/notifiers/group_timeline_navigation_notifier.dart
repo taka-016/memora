@@ -154,6 +154,7 @@ class GroupTimelineNavigationNotifier
       groupTimelineInstance: groupTimeline,
       timelineRowDefinitions: rowDefinitions,
       clearRefresh: true,
+      clearGroupSelectionLoadFuture: true,
     );
   }
 
