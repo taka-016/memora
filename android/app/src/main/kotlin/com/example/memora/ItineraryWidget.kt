@@ -196,13 +196,18 @@ private fun ItineraryDateContent(
         return
     }
 
-    ItineraryList(itineraryDate.items)
+    ItineraryList(context, itineraryDate)
 }
 
 @Composable
-private fun ItineraryList(items: List<WidgetItineraryItem>) {
+private fun ItineraryList(
+    context: Context,
+    itineraryDate: WidgetItineraryDate,
+) {
+    val tripId = itineraryDate.tripId
+    val items = itineraryDate.items
     val listEntries = buildItineraryListEntries(items)
-    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
+    LazyColumn(modifier = openTripModifier(context, tripId)) {
         items(listEntries) { entry ->
             when (entry) {
                 is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
@@ -220,14 +225,7 @@ private fun TripHeader(
     Column(
         modifier = GlanceModifier
             .width(180.dp)
-            .clickable(
-                actionStartActivity<MainActivity>(
-                    context,
-                    Uri.parse(
-                        "memoraWidget://openTrip?tripId=${Uri.encode(itineraryDate.tripId)}",
-                    ),
-                ),
-            ),
+            .clickable(openTripAction(context, itineraryDate.tripId)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -242,6 +240,21 @@ private fun TripHeader(
         )
     }
 }
+
+private fun openTripModifier(
+    context: Context,
+    tripId: String,
+) = GlanceModifier
+    .fillMaxWidth()
+    .clickable(openTripAction(context, tripId))
+
+private fun openTripAction(
+    context: Context,
+    tripId: String,
+) = actionStartActivity<MainActivity>(
+    context,
+    Uri.parse("memoraWidget://openTrip?tripId=${Uri.encode(tripId)}"),
+)
 
 @Composable
 private fun ItineraryItemRow(item: WidgetItineraryItem) {
