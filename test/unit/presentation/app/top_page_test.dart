@@ -607,6 +607,61 @@ void main() {
       );
     });
 
+    testWidgets('ウィジェット起動後に年表から戻っても年表を再表示しない', (WidgetTester tester) async {
+      final singleGroup = [groupsWithMembers.first];
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: singleGroup.first.id,
+        year: 2025,
+        name: '北海道旅行',
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          trip.groupId,
+          trip.year,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [trip]);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => singleGroup);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          availableGroupsWithMembers: singleGroup,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            trip.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループ1'), findsOneWidget);
+    });
+
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
       when(
         mockTripEntryQueryService.getTripEntryById(
