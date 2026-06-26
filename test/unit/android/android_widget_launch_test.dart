@@ -16,6 +16,16 @@ void main() {
       expect(source, contains('memoraWidget://openTrip?tripId='));
     });
 
+    test('旅程一覧部分のタップでもMainActivityを起動する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('ItineraryList(context, itineraryDate)'));
+      expect(
+        source,
+        contains('LazyColumn(modifier = openTripModifier(context, tripId))'),
+      );
+    });
+
     test('Flutter起動時にウィジェット起動Notifierを初期化する', () {
       final source = File(_mainPath).readAsStringSync();
 
