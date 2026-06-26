@@ -516,6 +516,39 @@ void main() {
       expect(find.text('旅行編集'), findsOneWidget);
     });
 
+    testWidgets('初期編集ダイアログ表示中は下地に旅行管理画面の内容を表示しない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsNothing);
+      expect(find.text('旅行追加'), findsNothing);
+    });
+
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {
       // Arrange
       when(
