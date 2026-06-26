@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
@@ -358,6 +360,41 @@ void main() {
         2024,
         initialTripId: 'trip-1',
       );
+
+      expect(
+        container.read(groupTimelineNavigationNotifierProvider).destination,
+        GroupTimelineTripManagementDestination(
+          groupId: testGroupWithMembers.id,
+          year: 2024,
+          initialTripId: 'trip-1',
+        ),
+      );
+    });
+
+    test('通常入口ロード中のウィジェット遷移はロード完了後も旅行管理画面を維持する', () async {
+      final completer = Completer<List<GroupDto>>();
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testCurrentMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) => completer.future);
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+
+      final prepareFuture = notifier.prepareGroupTimelineEntry(
+        testCurrentMember,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      notifier.showTripManagement(
+        testGroupWithMembers.id,
+        2024,
+        initialTripId: 'trip-1',
+      );
+      completer.complete([testGroupWithMembers]);
+      await prepareFuture;
 
       expect(
         container.read(groupTimelineNavigationNotifierProvider).destination,
