@@ -207,11 +207,13 @@ private fun ItineraryList(
     val tripId = itineraryDate.tripId
     val items = itineraryDate.items
     val listEntries = buildItineraryListEntries(items)
-    LazyColumn(modifier = openTripModifier(context, tripId)) {
+    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         items(listEntries) { entry ->
-            when (entry) {
-                is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
-                WidgetItineraryListEntry.Divider -> ItineraryDivider()
+            Box(modifier = openTripModifier(context, tripId)) {
+                when (entry) {
+                    is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
+                    WidgetItineraryListEntry.Divider -> ItineraryDivider()
+                }
             }
         }
     }
