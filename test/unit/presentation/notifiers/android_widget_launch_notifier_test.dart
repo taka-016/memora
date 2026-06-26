@@ -8,16 +8,19 @@ import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dar
 
 class _FakeAndroidWidgetLaunchUriSource
     implements AndroidWidgetLaunchUriSource {
-  _FakeAndroidWidgetLaunchUriSource({this.initialUri});
+  _FakeAndroidWidgetLaunchUriSource({this.initialUri, this.initialUriFuture});
 
   final Uri? initialUri;
+  final Future<Uri?>? initialUriFuture;
   final controller = StreamController<Uri>.broadcast();
 
   @override
   Stream<Uri> get clickedUris => controller.stream;
 
   @override
-  Future<Uri?> getInitialUri() async => initialUri;
+  Future<Uri?> getInitialUri() {
+    return initialUriFuture ?? Future.value(initialUri);
+  }
 }
 
 void main() {
@@ -48,8 +51,43 @@ void main() {
         container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
         'trip-1',
       );
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).isInitialUriLoading,
+        isFalse,
+      );
       expect(notifier.takePendingTripId(), 'trip-1');
       expect(notifier.takePendingTripId(), isNull);
+    });
+
+    test('初回起動URIの確認中だけ読み込み中になる', () async {
+      final initialUriCompleter = Completer<Uri?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUriFuture: initialUriCompleter.future,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          watchAndroidWidgetLaunchUriUsecaseProvider.overrideWithValue(
+            WatchAndroidWidgetLaunchUriUsecase(source),
+          ),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).isInitialUriLoading,
+        isTrue,
+      );
+
+      initialUriCompleter.complete(null);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).isInitialUriLoading,
+        isFalse,
+      );
     });
 
     test('起動済みアプリへのクリックURIを保留し不正なURIは無視する', () async {

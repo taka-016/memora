@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
@@ -413,6 +415,56 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       );
+    });
+
+    testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (
+      WidgetTester tester,
+    ) async {
+      final detailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => detailCompleter.future);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsNothing);
+      expect(find.text('旅行追加'), findsNothing);
+
+      detailCompleter.complete(detailedTripEntry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {

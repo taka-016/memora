@@ -84,6 +84,14 @@ class _PendingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   }
 }
 
+class _InitialUriLoadingAndroidWidgetLaunchNotifier
+    extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState(isInitialUriLoading: true);
+  }
+}
+
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   String? targetGroupId;
 
@@ -534,6 +542,21 @@ void main() {
   }
 
   group('TopPage', () {
+    testWidgets('ウィジェット起動URIの確認中はグループ選択を表示しない', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier:
+              _InitialUriLoadingAndroidWidgetLaunchNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+      expect(find.text('グループを選択'), findsNothing);
+    });
+
     testWidgets('ウィジェットで指定された旅行の管理画面と編集モーダルを開く', (WidgetTester tester) async {
       final trip = TripEntryDto(
         id: 'trip-1',
