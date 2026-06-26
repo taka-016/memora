@@ -47,6 +47,7 @@ class TripManagement extends HookConsumerWidget {
     final groupMembers = useState<List<GroupMemberDto>>([]);
     final isLoading = useState(true);
     final isOpeningInitialTrip = useState(false);
+    final isShowingInitialTripDialog = useState(false);
     final initialTripHandled = useRef(false);
     final initialTripDialogReady = useRef(initialTripId == null);
 
@@ -266,14 +267,19 @@ class TripManagement extends HookConsumerWidget {
           await showEditTripDialog(
             tripId,
             onBeforeShowDialog: () {
-              initialTripDialogReady.value = true;
+              isShowingInitialTripDialog.value = true;
               isOpeningInitialTrip.value = false;
             },
           );
         } finally {
-          if (context.mounted && isOpeningInitialTrip.value) {
+          if (context.mounted) {
             initialTripDialogReady.value = true;
-            isOpeningInitialTrip.value = false;
+            if (isShowingInitialTripDialog.value) {
+              isShowingInitialTripDialog.value = false;
+            }
+            if (isOpeningInitialTrip.value) {
+              isOpeningInitialTrip.value = false;
+            }
           }
         }
       }
@@ -439,10 +445,17 @@ class TripManagement extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    Widget buildInitialTripBackdrop() {
+      return const SizedBox.expand();
+    }
+
     Widget buildContent() {
       final shouldHideForInitialTrip =
           initialTripId != null &&
           (!initialTripDialogReady.value || isOpeningInitialTrip.value);
+      if (shouldHideForInitialTrip && isShowingInitialTripDialog.value) {
+        return buildInitialTripBackdrop();
+      }
       if (isLoading.value || shouldHideForInitialTrip) {
         return buildLoadingState();
       }
