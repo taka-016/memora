@@ -127,6 +127,7 @@ class GroupTimelineNavigationNotifier
   void showGroupTimeline(
     GroupDto groupWithMembers, {
     List<TimelineRowType>? rowOrder,
+    bool clearGroupSelectionLoadFuture = false,
   }) {
     final rowDefinitions = buildTimelineRows(
       groupWithMembers: groupWithMembers,
@@ -154,7 +155,7 @@ class GroupTimelineNavigationNotifier
       groupTimelineInstance: groupTimeline,
       timelineRowDefinitions: rowDefinitions,
       clearRefresh: true,
-      clearGroupSelectionLoadFuture: true,
+      clearGroupSelectionLoadFuture: clearGroupSelectionLoadFuture,
     );
   }
 

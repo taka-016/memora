@@ -190,7 +190,10 @@ class TopPage extends HookConsumerWidget {
       final timelineNotifier = ref.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
-      timelineNotifier.showGroupTimeline(group);
+      timelineNotifier.showGroupTimeline(
+        group,
+        clearGroupSelectionLoadFuture: true,
+      );
       timelineNotifier.showTripManagement(
         trip.groupId,
         trip.year,
