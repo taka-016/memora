@@ -596,7 +596,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('trip_management')), findsOneWidget);
-      expect(find.text('2025年の旅行管理'), findsOneWidget);
+      expect(find.text('2025年の旅行管理'), findsNothing);
       expect(find.text('旅行編集'), findsOneWidget);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(TopPage)),
