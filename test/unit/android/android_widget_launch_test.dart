@@ -22,7 +22,11 @@ void main() {
       expect(source, contains('ItineraryList(context, itineraryDate)'));
       expect(
         source,
-        contains('LazyColumn(modifier = openTripModifier(context, tripId))'),
+        contains('LazyColumn(modifier = GlanceModifier.fillMaxWidth())'),
+      );
+      expect(
+        source,
+        contains('Box(modifier = openTripModifier(context, tripId))'),
       );
     });
 
