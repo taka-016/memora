@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/android_widget/android_widget_itinerary_
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
@@ -28,6 +29,7 @@ import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
@@ -68,6 +70,32 @@ class _TestGroupTimelineNavigationNotifier
         year: 2024,
       ),
     );
+  }
+}
+
+class _PendingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  _PendingAndroidWidgetLaunchNotifier(this.tripId);
+
+  final String tripId;
+
+  @override
+  AndroidWidgetLaunchState build() {
+    return AndroidWidgetLaunchState(pendingTripId: tripId);
+  }
+}
+
+class _IdleAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState();
+  }
+}
+
+class _InitialUriLoadingAndroidWidgetLaunchNotifier
+    extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState(isInitialUriLoading: true);
   }
 }
 
@@ -381,6 +409,7 @@ void main() {
     NavigationNotifier? navigationNotifier,
     GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
     FakeCurrentMemberNotifier? currentMemberNotifier,
+    AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -437,6 +466,9 @@ void main() {
         ),
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
+      ),
+      androidWidgetLaunchNotifierProvider.overrideWith(
+        () => androidWidgetLaunchNotifier ?? _IdleAndroidWidgetLaunchNotifier(),
       ),
       androidWidgetCacheStorageProvider.overrideWithValue(
         _FakeAndroidWidgetCacheStorage(),
@@ -497,6 +529,7 @@ void main() {
     NavigationNotifier? navigationNotifier,
     GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
     FakeCurrentMemberNotifier? currentMemberNotifier,
+    AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
   }) {
     return ProviderScope(
       overrides: createTopPageTestOverrides(
@@ -508,12 +541,150 @@ void main() {
         navigationNotifier: navigationNotifier,
         groupTimelineNavigationNotifier: groupTimelineNavigationNotifier,
         currentMemberNotifier: currentMemberNotifier,
+        androidWidgetLaunchNotifier: androidWidgetLaunchNotifier,
       ),
       child: MaterialApp(home: TopPage(isTestEnvironment: true)),
     );
   }
 
   group('TopPage', () {
+    testWidgets('ウィジェット起動URIの確認中はグループ選択を表示しない', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier:
+              _InitialUriLoadingAndroidWidgetLaunchNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+      expect(find.text('グループを選択'), findsNothing);
+    });
+
+    testWidgets('ウィジェットで指定された旅行の管理画面と編集モーダルを開く', (WidgetTester tester) async {
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: groupsWithMembers.first.id,
+        year: 2025,
+        name: '北海道旅行',
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          trip.groupId,
+          trip.year,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [trip]);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            trip.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+      expect(find.text('2025年の旅行管理'), findsNothing);
+      expect(find.text('旅行編集'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
+        isNull,
+      );
+    });
+
+    testWidgets('ウィジェット起動後に年表から戻っても年表を再表示しない', (WidgetTester tester) async {
+      final singleGroup = [groupsWithMembers.first];
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: singleGroup.first.id,
+        year: 2025,
+        name: '北海道旅行',
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          trip.groupId,
+          trip.year,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [trip]);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => singleGroup);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          availableGroupsWithMembers: singleGroup,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            trip.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('グループ1'), findsOneWidget);
+    });
+
+    testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'missing-trip',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            'missing-trip',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
     testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {
       // Arrange
       when(

@@ -41,6 +41,7 @@ import es.antonborri.home_widget.HomeWidgetGlanceWidgetReceiver
 import es.antonborri.home_widget.HomeWidgetGlanceState
 import es.antonborri.home_widget.HomeWidgetGlanceStateDefinition
 import es.antonborri.home_widget.HomeWidgetPlugin
+import es.antonborri.home_widget.actionStartActivity
 import java.io.File
 import org.json.JSONArray
 import org.json.JSONObject
@@ -98,7 +99,7 @@ private fun ItineraryWidgetContent(
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
-                else -> ItineraryDateContent(selectedItineraryDate)
+                else -> ItineraryDateContent(context, selectedItineraryDate)
             }
         }
         HeaderRow(cache?.lastUpdatedAt)
@@ -156,7 +157,10 @@ private fun RefreshIcon() {
 }
 
 @Composable
-private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
+private fun ItineraryDateContent(
+    context: Context,
+    itineraryDate: WidgetItineraryDate,
+) {
     Box(
         modifier = GlanceModifier
             .fillMaxWidth()
@@ -172,7 +176,7 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
             modifier = GlanceModifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            TripHeader(itineraryDate)
+            TripHeader(context, itineraryDate)
         }
         Box(
             modifier = GlanceModifier.fillMaxSize(),
@@ -192,26 +196,38 @@ private fun ItineraryDateContent(itineraryDate: WidgetItineraryDate) {
         return
     }
 
-    ItineraryList(itineraryDate.items)
+    ItineraryList(context, itineraryDate)
 }
 
 @Composable
-private fun ItineraryList(items: List<WidgetItineraryItem>) {
+private fun ItineraryList(
+    context: Context,
+    itineraryDate: WidgetItineraryDate,
+) {
+    val tripId = itineraryDate.tripId
+    val items = itineraryDate.items
     val listEntries = buildItineraryListEntries(items)
     LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
         items(listEntries) { entry ->
-            when (entry) {
-                is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
-                WidgetItineraryListEntry.Divider -> ItineraryDivider()
+            Box(modifier = openTripModifier(context, tripId)) {
+                when (entry) {
+                    is WidgetItineraryListEntry.Item -> ItineraryItemRow(entry.item)
+                    WidgetItineraryListEntry.Divider -> ItineraryDivider()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun TripHeader(itineraryDate: WidgetItineraryDate) {
+private fun TripHeader(
+    context: Context,
+    itineraryDate: WidgetItineraryDate,
+) {
     Column(
-        modifier = GlanceModifier.width(180.dp),
+        modifier = GlanceModifier
+            .width(180.dp)
+            .clickable(openTripAction(context, itineraryDate.tripId)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
@@ -226,6 +242,21 @@ private fun TripHeader(itineraryDate: WidgetItineraryDate) {
         )
     }
 }
+
+private fun openTripModifier(
+    context: Context,
+    tripId: String,
+) = GlanceModifier
+    .fillMaxWidth()
+    .clickable(openTripAction(context, tripId))
+
+private fun openTripAction(
+    context: Context,
+    tripId: String,
+) = actionStartActivity<MainActivity>(
+    context,
+    Uri.parse("memoraWidget://openTrip?tripId=${Uri.encode(tripId)}"),
+)
 
 @Composable
 private fun ItineraryItemRow(item: WidgetItineraryItem) {
@@ -399,6 +430,7 @@ private fun JSONArray?.toItineraryDates(): List<WidgetItineraryDate> {
             add(
                 WidgetItineraryDate(
                     id = itineraryDate.optString("id"),
+                    tripId = itineraryDate.optString("tripId"),
                     tripName = itineraryDate.optString("tripName"),
                     tripPeriodLabel = itineraryDate.optString("tripPeriodLabel"),
                     dateLabel = itineraryDate.optString("dateLabel"),
@@ -441,6 +473,7 @@ private data class WidgetCache(
 
 private data class WidgetItineraryDate(
     val id: String,
+    val tripId: String,
     val tripName: String,
     val tripPeriodLabel: String,
     val dateLabel: String,

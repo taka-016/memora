@@ -127,6 +127,8 @@ class GroupTimelineNavigationNotifier
   void showGroupTimeline(
     GroupDto groupWithMembers, {
     List<TimelineRowType>? rowOrder,
+    Future<List<GroupDto>>? groupSelectionLoadFuture,
+    bool clearGroupSelectionLoadFuture = false,
   }) {
     final rowDefinitions = buildTimelineRows(
       groupWithMembers: groupWithMembers,
@@ -153,7 +155,10 @@ class GroupTimelineNavigationNotifier
       destination: const GroupTimelineOverviewDestination(),
       groupTimelineInstance: groupTimeline,
       timelineRowDefinitions: rowDefinitions,
+      groupSelectionLoadFuture: groupSelectionLoadFuture,
       clearRefresh: true,
+      clearGroupSelectionLoadFuture:
+          clearGroupSelectionLoadFuture && groupSelectionLoadFuture == null,
     );
   }
 
@@ -161,9 +166,13 @@ class GroupTimelineNavigationNotifier
     state = state.copyWith(destination: normalizeDestination(destination));
   }
 
-  void showTripManagement(String groupId, int year) {
+  void showTripManagement(String groupId, int year, {String? initialTripId}) {
     showDestination(
-      GroupTimelineTripManagementDestination(groupId: groupId, year: year),
+      GroupTimelineTripManagementDestination(
+        groupId: groupId,
+        year: year,
+        initialTripId: initialTripId,
+      ),
     );
   }
 

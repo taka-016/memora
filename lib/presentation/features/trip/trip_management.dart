@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -17,6 +19,7 @@ import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 class TripManagement extends HookConsumerWidget {
   final String groupId;
   final int year;
+  final String? initialTripId;
   final VoidCallback? onBackPressed;
   final bool isTestEnvironment;
 
@@ -24,6 +27,7 @@ class TripManagement extends HookConsumerWidget {
     super.key,
     required this.groupId,
     required this.year,
+    this.initialTripId,
     this.onBackPressed,
     this.isTestEnvironment = false,
   });
@@ -42,6 +46,10 @@ class TripManagement extends HookConsumerWidget {
     final tripEntries = useState<List<TripEntryDto>>([]);
     final groupMembers = useState<List<GroupMemberDto>>([]);
     final isLoading = useState(true);
+    final isOpeningInitialTrip = useState(false);
+    final isShowingInitialTripDialog = useState(false);
+    final initialTripHandled = useRef(false);
+    final initialTripDialogReady = useRef(initialTripId == null);
 
     Future<void> loadTripEntries() async {
       try {
@@ -193,13 +201,14 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
-    Future<void> showEditTripDialog(TripEntryDto tripEntry) async {
+    Future<void> showEditTripDialog(
+      String tripId, {
+      VoidCallback? onBeforeShowDialog,
+    }) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        final detailedTripEntry = await getTripEntryByIdUsecase.execute(
-          tripEntry.id,
-        );
+        final detailedTripEntry = await getTripEntryByIdUsecase.execute(tripId);
 
         if (!context.mounted) {
           return;
@@ -212,6 +221,7 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
+        onBeforeShowDialog?.call();
         await showDialog(
           barrierDismissible: false,
           context: context,
@@ -239,6 +249,49 @@ class TripManagement extends HookConsumerWidget {
         }
       }
     }
+
+    useEffect(() {
+      initialTripHandled.value = false;
+      initialTripDialogReady.value = initialTripId == null;
+      return null;
+    }, [groupId, year, initialTripId]);
+
+    useEffect(() {
+      final tripId = initialTripId;
+      if (tripId == null || isLoading.value || initialTripHandled.value) {
+        return null;
+      }
+      Future<void> showInitialTripDialog() async {
+        isOpeningInitialTrip.value = true;
+        try {
+          await showEditTripDialog(
+            tripId,
+            onBeforeShowDialog: () {
+              isShowingInitialTripDialog.value = true;
+              isOpeningInitialTrip.value = false;
+            },
+          );
+        } finally {
+          if (context.mounted) {
+            initialTripDialogReady.value = true;
+            if (isShowingInitialTripDialog.value) {
+              isShowingInitialTripDialog.value = false;
+            }
+            if (isOpeningInitialTrip.value) {
+              isOpeningInitialTrip.value = false;
+            }
+          }
+        }
+      }
+
+      initialTripHandled.value = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          unawaited(showInitialTripDialog());
+        }
+      });
+      return null;
+    }, [initialTripId, isLoading.value, groupId, year]);
 
     Future<void> deleteTripEntry(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -371,7 +424,7 @@ class TripManagement extends HookConsumerWidget {
                 icon: const Icon(Icons.delete, color: Colors.red),
                 onPressed: () => showDeleteConfirmDialog(tripEntry),
               ),
-              onTap: () => showEditTripDialog(tripEntry),
+              onTap: () => showEditTripDialog(tripEntry.id),
             ),
           );
         },
@@ -392,8 +445,18 @@ class TripManagement extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
+    Widget buildInitialTripBackdrop() {
+      return const SizedBox.expand();
+    }
+
     Widget buildContent() {
-      if (isLoading.value) {
+      final shouldHideForInitialTrip =
+          initialTripId != null &&
+          (!initialTripDialogReady.value || isOpeningInitialTrip.value);
+      if (shouldHideForInitialTrip && isShowingInitialTripDialog.value) {
+        return buildInitialTripBackdrop();
+      }
+      if (isLoading.value || shouldHideForInitialTrip) {
         return buildLoadingState();
       }
 

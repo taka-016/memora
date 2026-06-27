@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -365,6 +367,186 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
+    });
+
+    testWidgets('初期編集対象が指定された場合は初期化後に編集画面を一度だけ開く', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+
+      clearInteractions(mockTripEntryQueryService);
+      await tester.pump();
+      verifyNever(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      );
+    });
+
+    testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (WidgetTester tester) async {
+      final detailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => detailCompleter.future);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsNothing);
+      expect(find.text('旅行追加'), findsNothing);
+
+      detailCompleter.complete(detailedTripEntry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+    });
+
+    testWidgets('初期編集対象の表示予約中は旅行管理画面の内容を表示しない', (WidgetTester tester) async {
+      final tripEntriesCompleter = Completer<List<TripEntryDto>>();
+      final groupCompleter = Completer<GroupDto?>();
+      final detailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => tripEntriesCompleter.future);
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) => groupCompleter.future);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => detailCompleter.future);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+
+      tripEntriesCompleter.complete(testTripEntries);
+      groupCompleter.complete(testGroup);
+      await tester.pump();
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsNothing);
+      expect(find.text('旅行追加'), findsNothing);
+      expect(find.text('北海道旅行'), findsNothing);
+
+      detailCompleter.complete(detailedTripEntry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+    });
+
+    testWidgets('初期編集ダイアログ表示中は下地に旅行管理画面の内容を表示しない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry);
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.text('$testYear年の旅行管理'), findsNothing);
+      expect(find.text('旅行追加'), findsNothing);
     });
 
     testWidgets('旅行詳細取得に失敗した場合にスナックバーが表示されること', (WidgetTester tester) async {

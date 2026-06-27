@@ -11,6 +11,7 @@ import 'package:memora/infrastructure/services/shared_preferences_android_widget
 import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'firebase_options.dart';
 import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
@@ -106,11 +107,12 @@ class _AppClockLifecycleSyncState extends ConsumerState<AppClockLifecycleSync>
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(androidWidgetLaunchNotifierProvider);
     return MaterialApp(
       title: 'memora',
       theme: ThemeData(

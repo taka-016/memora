@@ -48,6 +48,7 @@ class GroupTimelineTripManagementDestination extends GroupTimelineDestination {
   const GroupTimelineTripManagementDestination({
     required this.groupId,
     required this.year,
+    this.initialTripId,
   });
 
   @override
@@ -55,6 +56,7 @@ class GroupTimelineTripManagementDestination extends GroupTimelineDestination {
 
   @override
   final int year;
+  final String? initialTripId;
 
   @override
   GroupTimelineScreenState get screenState =>
@@ -65,11 +67,12 @@ class GroupTimelineTripManagementDestination extends GroupTimelineDestination {
     return identical(this, other) ||
         other is GroupTimelineTripManagementDestination &&
             other.groupId == groupId &&
-            other.year == year;
+            other.year == year &&
+            other.initialTripId == initialTripId;
   }
 
   @override
-  int get hashCode => Object.hash(screenState, groupId, year);
+  int get hashCode => Object.hash(screenState, groupId, year, initialTripId);
 }
 
 class GroupTimelineDvcPointCalculationDestination

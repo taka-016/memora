@@ -9,6 +9,7 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/main.dart' as app;
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -18,6 +19,13 @@ import 'package:mockito/mockito.dart';
 
 import '../helpers/fake_auth_notifier.dart';
 import 'main_test.mocks.dart';
+
+class _IdleAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState();
+  }
+}
 
 @GenerateMocks([GroupQueryService, MemberQueryService, AuthService])
 void main() {
@@ -63,6 +71,9 @@ void main() {
         memberQueryServiceProvider.overrideWithValue(mockMemberQueryService),
         authServiceProvider.overrideWithValue(mockAuthService),
         groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+        androidWidgetLaunchNotifierProvider.overrideWith(
+          () => _IdleAndroidWidgetLaunchNotifier(),
+        ),
       ],
       child: MaterialApp(
         title: 'memora',

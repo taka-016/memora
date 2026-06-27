@@ -84,6 +84,7 @@ class _TripManagementDestinationPageDefinition
     return TripManagement(
       groupId: tripDestination.groupId,
       year: tripDestination.year,
+      initialTripId: tripDestination.initialTripId,
       onBackPressed: onBackPressed,
     );
   }
