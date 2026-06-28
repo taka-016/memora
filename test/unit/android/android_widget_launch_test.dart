@@ -33,13 +33,24 @@ void main() {
     test('左矢印の上に直近の旅程へ戻るボタンを表示する', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
-      expect(source, contains('RecentItineraryDateButton()'));
+      expect(source, contains('RecentItineraryDateActionRow()'));
+      expect(source, contains('RECENT_BUTTON_BOTTOM_SPACE_DP.dp'));
       expect(source, contains('text = "直近の旅程"'));
       expect(
         source,
         contains('actionRunCallback<RecentItineraryDateAction>()'),
       );
       expect(source, contains('sendAction(context, "recent")'));
+      expect(
+        source,
+        isNot(
+          contains(
+            'contentAlignment = Alignment.TopStart,\n'
+            '        ) {\n'
+            '            RecentItineraryDateButton()',
+          ),
+        ),
+      );
     });
 
     test('Flutter起動時にウィジェット起動Notifierを初期化する', () {
