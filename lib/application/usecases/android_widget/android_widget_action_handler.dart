@@ -41,6 +41,9 @@ class AndroidWidgetActionHandler {
       case 'refresh':
         await _refresh();
         break;
+      case 'recent':
+        await _returnToRecent();
+        break;
     }
   }
 
@@ -66,6 +69,19 @@ class AndroidWidgetActionHandler {
     await _showToastSafely(
       const AndroidWidgetToastNotification.success('更新しました。'),
     );
+  }
+
+  Future<void> _returnToRecent() async {
+    final groupId = await _cacheStorage.getTargetGroupId();
+    if (groupId == null) {
+      await _cacheStorage.updateWidget();
+      return;
+    }
+    try {
+      await _refreshCache(groupId: groupId);
+    } catch (_) {
+      await _showMoveFailedToast();
+    }
   }
 
   Future<void> _move(AndroidWidgetItineraryDateMoveDirection direction) async {

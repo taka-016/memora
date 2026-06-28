@@ -168,6 +168,12 @@ private fun ItineraryDateContent(
     ) {
         Box(
             modifier = GlanceModifier.fillMaxSize(),
+            contentAlignment = Alignment.TopStart,
+        ) {
+            RecentItineraryDateButton()
+        }
+        Box(
+            modifier = GlanceModifier.fillMaxSize(),
             contentAlignment = Alignment.CenterStart,
         ) {
             ArrowButton("<", actionRunCallback<PreviousItineraryDateAction>())
@@ -355,6 +361,26 @@ private fun ArrowButton(
 }
 
 @Composable
+private fun RecentItineraryDateButton() {
+    Box(
+        modifier = GlanceModifier
+            .width(RECENT_BUTTON_WIDTH_DP.dp)
+            .height(RECENT_BUTTON_HEIGHT_DP.dp)
+            .clickable(actionRunCallback<RecentItineraryDateAction>()),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "直近の旅程",
+            maxLines = 1,
+            style = TextStyle(
+                fontSize = RECENT_BUTTON_FONT_SP.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+        )
+    }
+}
+
+@Composable
 private fun EmptyMessage(message: String) {
     Box(
         modifier = GlanceModifier.fillMaxWidth(),
@@ -371,6 +397,16 @@ class RefreshWidgetAction : ActionCallback {
         parameters: androidx.glance.action.ActionParameters,
     ) {
         sendAction(context, "refresh")
+    }
+}
+
+class RecentItineraryDateAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: androidx.glance.action.ActionParameters,
+    ) {
+        sendAction(context, "recent")
     }
 }
 
@@ -507,3 +543,6 @@ private const val REFRESH_ICON_TOP_SPACE_DP = 5
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36
+private const val RECENT_BUTTON_WIDTH_DP = 76
+private const val RECENT_BUTTON_HEIGHT_DP = 22
+private const val RECENT_BUTTON_FONT_SP = 10
