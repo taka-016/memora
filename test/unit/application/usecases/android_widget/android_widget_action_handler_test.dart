@@ -107,6 +107,32 @@ void main() {
         const AndroidWidgetToastNotification.error('切り替えに失敗しました'),
       ]);
     });
+
+    test('直近の旅程へ戻る場合は選択中IDを渡さず再取得する', () async {
+      final storage = _FakeAndroidWidgetCacheStorage(
+        targetGroupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-23',
+      );
+      final toastNotifier = _FakeAndroidWidgetToastNotifier();
+      final refreshCalls = <({String groupId, String? selectedId})>[];
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: storage,
+        showToast: toastNotifier.show,
+        refreshCache:
+            ({required String groupId, String? selectedItineraryDateId}) async {
+              refreshCalls.add((
+                groupId: groupId,
+                selectedId: selectedItineraryDateId,
+              ));
+            },
+        moveDate: (_) async => true,
+      );
+
+      await handler.handle(Uri.parse('memoraWidget://recent'));
+
+      expect(refreshCalls, [(groupId: 'group-1', selectedId: null)]);
+      expect(toastNotifier.notifications, isEmpty);
+    });
   });
 }
 
