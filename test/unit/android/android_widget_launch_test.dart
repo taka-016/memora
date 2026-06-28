@@ -35,7 +35,10 @@ void main() {
 
       expect(source, contains('RecentItineraryDateButton()'));
       expect(source, contains('text = "直近の旅程"'));
-      expect(source, contains('actionRunCallback<RecentItineraryDateAction>()'));
+      expect(
+        source,
+        contains('actionRunCallback<RecentItineraryDateAction>()'),
+      );
       expect(source, contains('sendAction(context, "recent")'));
     });
 
