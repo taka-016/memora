@@ -99,7 +99,14 @@ private fun ItineraryWidgetContent(
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
-                else -> ItineraryDateContent(context, selectedItineraryDate)
+                else -> {
+                    RecentItineraryDateActionRow()
+                    Spacer(
+                        modifier = GlanceModifier
+                            .height(RECENT_BUTTON_BOTTOM_SPACE_DP.dp),
+                    )
+                    ItineraryDateContent(context, selectedItineraryDate)
+                }
             }
         }
         HeaderRow(cache?.lastUpdatedAt)
@@ -166,12 +173,6 @@ private fun ItineraryDateContent(
             .fillMaxWidth()
             .height(60.dp),
     ) {
-        Box(
-            modifier = GlanceModifier.fillMaxSize(),
-            contentAlignment = Alignment.TopStart,
-        ) {
-            RecentItineraryDateButton()
-        }
         Box(
             modifier = GlanceModifier.fillMaxSize(),
             contentAlignment = Alignment.CenterStart,
@@ -361,6 +362,18 @@ private fun ArrowButton(
 }
 
 @Composable
+private fun RecentItineraryDateActionRow() {
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(RECENT_BUTTON_HEIGHT_DP.dp),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        RecentItineraryDateButton()
+    }
+}
+
+@Composable
 private fun RecentItineraryDateButton() {
     Box(
         modifier = GlanceModifier
@@ -545,4 +558,5 @@ private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36
 private const val RECENT_BUTTON_WIDTH_DP = 76
 private const val RECENT_BUTTON_HEIGHT_DP = 22
+private const val RECENT_BUTTON_BOTTOM_SPACE_DP = 12
 private const val RECENT_BUTTON_FONT_SP = 10
