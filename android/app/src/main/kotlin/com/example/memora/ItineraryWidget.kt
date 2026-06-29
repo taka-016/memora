@@ -22,6 +22,7 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -99,14 +100,7 @@ private fun ItineraryWidgetContent(
             when {
                 targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
-                else -> {
-                    RecentItineraryDateActionRow()
-                    Spacer(
-                        modifier = GlanceModifier
-                            .height(RECENT_BUTTON_BOTTOM_SPACE_DP.dp),
-                    )
-                    ItineraryDateContent(context, selectedItineraryDate)
-                }
+                else -> ItineraryDateContent(context, selectedItineraryDate)
             }
         }
         HeaderRow(cache?.lastUpdatedAt)
@@ -164,7 +158,7 @@ private fun RefreshIcon() {
 }
 
 @Composable
-private fun ItineraryDateContent(
+private fun ColumnScope.ItineraryDateContent(
     context: Context,
     itineraryDate: WidgetItineraryDate,
 ) {
@@ -200,21 +194,29 @@ private fun ItineraryDateContent(
     Spacer(modifier = GlanceModifier.height(6.dp))
     if (itineraryDate.items.isEmpty()) {
         Text(text = "旅程項目がありません", style = TextStyle(fontSize = 14.sp))
+        Spacer(modifier = GlanceModifier.height(RECENT_BUTTON_TOP_SPACE_DP.dp))
+        RecentItineraryDateActionRow()
         return
     }
 
     ItineraryList(context, itineraryDate)
+    Spacer(modifier = GlanceModifier.height(RECENT_BUTTON_TOP_SPACE_DP.dp))
+    RecentItineraryDateActionRow()
 }
 
 @Composable
-private fun ItineraryList(
+private fun ColumnScope.ItineraryList(
     context: Context,
     itineraryDate: WidgetItineraryDate,
 ) {
     val tripId = itineraryDate.tripId
     val items = itineraryDate.items
     val listEntries = buildItineraryListEntries(items)
-    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .defaultWeight(),
+    ) {
         items(listEntries) { entry ->
             Box(modifier = openTripModifier(context, tripId)) {
                 when (entry) {
@@ -558,5 +560,5 @@ private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36
 private const val RECENT_BUTTON_WIDTH_DP = 76
 private const val RECENT_BUTTON_HEIGHT_DP = 22
-private const val RECENT_BUTTON_BOTTOM_SPACE_DP = 12
+private const val RECENT_BUTTON_TOP_SPACE_DP = 4
 private const val RECENT_BUTTON_FONT_SP = 10
