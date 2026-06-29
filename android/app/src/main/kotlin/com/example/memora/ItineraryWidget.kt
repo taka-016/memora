@@ -22,6 +22,7 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -157,7 +158,7 @@ private fun RefreshIcon() {
 }
 
 @Composable
-private fun ItineraryDateContent(
+private fun ColumnScope.ItineraryDateContent(
     context: Context,
     itineraryDate: WidgetItineraryDate,
 ) {
@@ -193,21 +194,29 @@ private fun ItineraryDateContent(
     Spacer(modifier = GlanceModifier.height(6.dp))
     if (itineraryDate.items.isEmpty()) {
         Text(text = "旅程項目がありません", style = TextStyle(fontSize = 14.sp))
+        Spacer(modifier = GlanceModifier.height(RECENT_BUTTON_TOP_SPACE_DP.dp))
+        RecentItineraryDateActionRow()
         return
     }
 
     ItineraryList(context, itineraryDate)
+    Spacer(modifier = GlanceModifier.height(RECENT_BUTTON_TOP_SPACE_DP.dp))
+    RecentItineraryDateActionRow()
 }
 
 @Composable
-private fun ItineraryList(
+private fun ColumnScope.ItineraryList(
     context: Context,
     itineraryDate: WidgetItineraryDate,
 ) {
     val tripId = itineraryDate.tripId
     val items = itineraryDate.items
     val listEntries = buildItineraryListEntries(items)
-    LazyColumn(modifier = GlanceModifier.fillMaxWidth()) {
+    LazyColumn(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .defaultWeight(),
+    ) {
         items(listEntries) { entry ->
             Box(modifier = openTripModifier(context, tripId)) {
                 when (entry) {
@@ -355,6 +364,38 @@ private fun ArrowButton(
 }
 
 @Composable
+private fun RecentItineraryDateActionRow() {
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .height(RECENT_BUTTON_HEIGHT_DP.dp),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        RecentItineraryDateButton()
+    }
+}
+
+@Composable
+private fun RecentItineraryDateButton() {
+    Box(
+        modifier = GlanceModifier
+            .width(RECENT_BUTTON_WIDTH_DP.dp)
+            .height(RECENT_BUTTON_HEIGHT_DP.dp)
+            .clickable(actionRunCallback<RecentItineraryDateAction>()),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = "直近の旅程",
+            maxLines = 1,
+            style = TextStyle(
+                fontSize = RECENT_BUTTON_FONT_SP.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+        )
+    }
+}
+
+@Composable
 private fun EmptyMessage(message: String) {
     Box(
         modifier = GlanceModifier.fillMaxWidth(),
@@ -371,6 +412,16 @@ class RefreshWidgetAction : ActionCallback {
         parameters: androidx.glance.action.ActionParameters,
     ) {
         sendAction(context, "refresh")
+    }
+}
+
+class RecentItineraryDateAction : ActionCallback {
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: androidx.glance.action.ActionParameters,
+    ) {
+        sendAction(context, "recent")
     }
 }
 
@@ -507,3 +558,7 @@ private const val REFRESH_ICON_TOP_SPACE_DP = 5
 private const val ARROW_BUTTON_WIDTH_DP = 56
 private const val ARROW_BUTTON_HEIGHT_DP = 64
 private const val ARROW_BUTTON_FONT_SP = 36
+private const val RECENT_BUTTON_WIDTH_DP = 76
+private const val RECENT_BUTTON_HEIGHT_DP = 22
+private const val RECENT_BUTTON_TOP_SPACE_DP = 4
+private const val RECENT_BUTTON_FONT_SP = 10

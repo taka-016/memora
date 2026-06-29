@@ -22,12 +22,23 @@ void main() {
       expect(source, contains('ItineraryList(context, itineraryDate)'));
       expect(
         source,
-        contains('LazyColumn(modifier = GlanceModifier.fillMaxWidth())'),
+        contains('LazyColumn('),
       );
       expect(
         source,
         contains('Box(modifier = openTripModifier(context, tripId))'),
       );
+    });
+
+    test('直近の旅程へ戻るボタンのアクションを送信する', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('text = "直近の旅程"'));
+      expect(
+        source,
+        contains('actionRunCallback<RecentItineraryDateAction>()'),
+      );
+      expect(source, contains('sendAction(context, "recent")'));
     });
 
     test('Flutter起動時にウィジェット起動Notifierを初期化する', () {
