@@ -338,7 +338,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                 ),
               ),
             ),
-            if (footer != null) footer,
+            ?footer,
           ],
         ),
       );

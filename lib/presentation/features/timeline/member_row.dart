@@ -90,7 +90,7 @@ class _MemberYearCell extends HookConsumerWidget {
     );
     final eventsByYear = ref.watch(_memberEventsByYearProvider(query));
     final localEvent = useState<MemberEventDto?>(null);
-    final loadedEvent = eventsByYear.valueOrNull?[targetYear];
+    final loadedEvent = eventsByYear.value?[targetYear];
 
     useEffect(() {
       localEvent.value = loadedEvent;
