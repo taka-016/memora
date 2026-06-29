@@ -11,7 +11,7 @@ void main() {
 
       expect(dockerfile, contains('FROM ubuntu:24.04'));
       expect(dockerfile, isNot(contains('instrumentisto/flutter')));
-      expect(dockerfile, contains('ARG FLUTTER_VERSION=3.44.0'));
+      expect(dockerfile, contains('ARG FLUTTER_VERSION=3.44.4'));
       expect(dockerfile, contains('ARG ANDROID_SDK_TOOLS_VERSION=14742923'));
       expect(dockerfile, contains('ARG ANDROID_PLATFORM_VERSION=36'));
       expect(dockerfile, contains('ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0'));
