@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _dockerfilePath = '.devcontainer/Dockerfile';
+const _devcontainerJsonPath = '.devcontainer/devcontainer.json';
 
 void main() {
   group('DevContainer Dockerfile', () {
@@ -27,6 +28,13 @@ void main() {
           r'  "platforms;android-$ANDROID_PLATFORM_VERSION"',
         ),
       );
+    });
+
+    test('Dockerfile内で導入したAndroid SDKをvolumeで隠さない', () {
+      final devcontainerJson = File(_devcontainerJsonPath).readAsStringSync();
+
+      expect(devcontainerJson, isNot(contains('android-sdk-memora')));
+      expect(devcontainerJson, isNot(contains('/opt/android-sdk-linux,type=volume')));
     });
   });
 }
