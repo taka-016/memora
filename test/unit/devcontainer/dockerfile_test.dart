@@ -24,7 +24,8 @@ void main() {
       expect(
         dockerfile,
         contains(
-          r'sdkmanager \' '\n'
+          r'sdkmanager \'
+          '\n'
           r'  "platforms;android-$ANDROID_PLATFORM_VERSION"',
         ),
       );
@@ -34,7 +35,10 @@ void main() {
       final devcontainerJson = File(_devcontainerJsonPath).readAsStringSync();
 
       expect(devcontainerJson, isNot(contains('android-sdk-memora')));
-      expect(devcontainerJson, isNot(contains('/opt/android-sdk-linux,type=volume')));
+      expect(
+        devcontainerJson,
+        isNot(contains('/opt/android-sdk-linux,type=volume')),
+      );
     });
   });
 }
