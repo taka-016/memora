@@ -110,13 +110,16 @@ class CustomSearchBar extends HookConsumerWidget {
 
     Widget buildCandidateItem(BuildContext context, int index) {
       final candidate = candidates.value[index];
-      return ListTile(
-        title: Text(candidate.name),
-        subtitle: Text(candidate.address),
-        onTap: () {
-          onCandidateSelected?.call(candidate);
-          candidates.value = [];
-        },
+      return Material(
+        type: MaterialType.transparency,
+        child: ListTile(
+          title: Text(candidate.name),
+          subtitle: Text(candidate.address),
+          onTap: () {
+            onCandidateSelected?.call(candidate);
+            candidates.value = [];
+          },
+        ),
       );
     }
 

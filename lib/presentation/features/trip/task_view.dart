@@ -292,13 +292,9 @@ class TaskView extends HookConsumerWidget {
       int oldIndex,
       int newIndex,
     ) {
-      var targetIndex = newIndex;
-      if (targetIndex > oldIndex) {
-        targetIndex -= 1;
-      }
       final updatedChildren = List<TaskDto>.from(children);
       final moved = updatedChildren.removeAt(oldIndex);
-      updatedChildren.insert(targetIndex, moved);
+      updatedChildren.insert(newIndex, moved);
       return updatedChildren
           .asMap()
           .entries
@@ -341,9 +337,6 @@ class TaskView extends HookConsumerWidget {
             onTapTask: (task) => showEditBottomSheet(task),
             onDeleteTask: deleteTask,
             onReorderParents: (oldIndex, newIndex) {
-              if (newIndex > oldIndex) {
-                newIndex -= 1;
-              }
               final parents = parentTasks(tasksState.value);
               final updatedParents = List<TaskDto>.from(parents);
               final moved = updatedParents.removeAt(oldIndex);

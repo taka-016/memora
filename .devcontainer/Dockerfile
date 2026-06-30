@@ -1,12 +1,24 @@
 # Flutter + Android開発環境
-FROM instrumentisto/flutter:3.41.6-androidsdk36-r0
+FROM ubuntu:24.04
 
 USER root
 
 ENV DEVCONTAINER=true
 
+ARG DEBIAN_FRONTEND=noninteractive
 ARG TZ
 ENV TZ="$TZ"
+
+ARG FLUTTER_VERSION=3.44.4
+ARG ANDROID_SDK_TOOLS_VERSION=14742923
+ARG ANDROID_PLATFORM_VERSION=36
+ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0
+ARG ANDROID_NDK_VERSION=28.2.13676358
+
+ENV FLUTTER_HOME=/opt/flutter
+ENV ANDROID_HOME=/opt/android-sdk-linux
+ENV ANDROID_SDK_ROOT=/opt/android-sdk-linux
+ENV PATH="${FLUTTER_HOME}/bin:${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:/root/.pub-cache/bin:${PATH}"
 
 # 基本パッケージのインストール
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,8 +35,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   openssh-server \
   procps \
   gnupg \
-  ca-certificates && \
+  ca-certificates \
+  unzip \
+  xz-utils \
+  openjdk-17-jdk && \
   apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Flutter SDKのインストール
+RUN curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" \
+  -o /tmp/flutter.tar.xz && \
+  tar -xf /tmp/flutter.tar.xz -C /opt && \
+  rm -f /tmp/flutter.tar.xz && \
+  git config --system --add safe.directory "$FLUTTER_HOME" && \
+  flutter config --no-analytics
+
+# Android SDKのインストール
+RUN mkdir -p "$ANDROID_HOME/cmdline-tools" && \
+  curl -fsSL "https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION}_latest.zip" \
+  -o /tmp/android-commandline-tools.zip && \
+  unzip -q /tmp/android-commandline-tools.zip -d /tmp/android-commandline-tools && \
+  mv /tmp/android-commandline-tools/cmdline-tools "$ANDROID_HOME/cmdline-tools/latest" && \
+  rm -rf /tmp/android-commandline-tools /tmp/android-commandline-tools.zip
+
+RUN yes | sdkmanager --licenses >/dev/null && \
+  sdkmanager \
+  "platforms;android-$ANDROID_PLATFORM_VERSION" \
+  "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
+  "platform-tools" \
+  "cmake;3.22.1" \
+  "ndk;$ANDROID_NDK_VERSION"
 
 # sshdの鍵認証設定
 RUN mkdir -p /etc/ssh/sshd_config.d && \
@@ -87,6 +126,3 @@ RUN npm install -g firebase-tools
 
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
-
-# /root/.gitconfig を削除
-RUN rm -f /root/.gitconfig
