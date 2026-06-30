@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _dockerfilePath = '.devcontainer/Dockerfile';
 const _devcontainerJsonPath = '.devcontainer/devcontainer.json';
+const _androidAppBuildGradlePath = 'android/app/build.gradle.kts';
 
 void main() {
   group('DevContainer Dockerfile', () {
@@ -16,6 +17,7 @@ void main() {
       expect(dockerfile, contains('ARG ANDROID_SDK_TOOLS_VERSION=14742923'));
       expect(dockerfile, contains('ARG ANDROID_PLATFORM_VERSION=36'));
       expect(dockerfile, contains('ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0'));
+      expect(dockerfile, contains('ARG ANDROID_NDK_VERSION=28.2.13676358'));
       expect(dockerfile, contains('ENV ANDROID_HOME=/opt/android-sdk-linux'));
       expect(
         dockerfile,
@@ -39,6 +41,15 @@ void main() {
         devcontainerJson,
         isNot(contains('/opt/android-sdk-linux,type=volume')),
       );
+    });
+
+    test('Dockerfileで導入するNDKとAndroidアプリが要求するNDKを揃える', () {
+      final dockerfile = File(_dockerfilePath).readAsStringSync();
+      final androidAppBuildGradle =
+          File(_androidAppBuildGradlePath).readAsStringSync();
+
+      expect(dockerfile, contains('ARG ANDROID_NDK_VERSION=28.2.13676358'));
+      expect(androidAppBuildGradle, contains('ndkVersion = "28.2.13676358"'));
     });
   });
 }
