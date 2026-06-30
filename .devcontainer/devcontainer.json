@@ -10,6 +10,10 @@
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+    "containerEnv": {
+        "GH_TOKEN": "${localEnv:GH_TOKEN}",
+        "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}"
+    },
     "mounts": [
         "source=${localEnv:HOME}/.gitconfig,target=/root/.gitconfig,type=bind,consistency=cached",
         "source=claude-global-memora,target=/root/.claude,type=volume",
@@ -21,8 +25,6 @@
         "source=tmux-config-memora,target=/root/.config/tmux,type=volume"
     ],
     "runArgs": [
-        "--env-file",
-        ".devcontainer/.env",
         "-p",
         "2222:22"
     ],

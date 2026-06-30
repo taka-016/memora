@@ -1,4 +1,6 @@
 #!/bin/bash
 
-# .devcontainer/.envが存在しない場合は作成
-[ ! -f .devcontainer/.env ] && touch .devcontainer/.env || true
+set -euo pipefail
+
+# Dev Containerの初期化処理は現在不要です。
+:

@@ -50,6 +50,7 @@ firebase_options.dart
 firebase.json
 google-services.json
 .env
+.devcontainer/.env
 env.g.dart
 repomix-output.xml
 **/*.mocks.dart
