@@ -34,7 +34,7 @@ class TaskList extends StatelessWidget {
       key: const Key('parent_list'),
       buildDefaultDragHandles: false,
       itemCount: parents.length,
-      onReorder: onReorderParents,
+      onReorderItem: onReorderParents,
       itemBuilder: (context, index) {
         final task = parents[index];
         final children = childrenOfParent(tasks, task.id);
@@ -284,7 +284,7 @@ class _ChildTaskList extends StatelessWidget {
           buildDefaultDragHandles: false,
           dragBoundaryProvider: DragBoundary.forRectOf,
           itemCount: children.length,
-          onReorder: onReorderChildren,
+          onReorderItem: onReorderChildren,
           itemBuilder: (context, index) {
             final child = children[index];
             return KeyedSubtree(

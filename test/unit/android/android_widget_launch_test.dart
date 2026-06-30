@@ -20,10 +20,7 @@ void main() {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 
       expect(source, contains('ItineraryList(context, itineraryDate)'));
-      expect(
-        source,
-        contains('LazyColumn('),
-      );
+      expect(source, contains('LazyColumn('));
       expect(
         source,
         contains('Box(modifier = openTripModifier(context, tripId))'),

@@ -62,6 +62,7 @@ RUN yes | sdkmanager --licenses >/dev/null && \
   "platforms;android-$ANDROID_PLATFORM_VERSION" \
   "build-tools;$ANDROID_BUILD_TOOLS_VERSION" \
   "platform-tools" \
+  "cmake;3.22.1" \
   "ndk;$ANDROID_NDK_VERSION"
 
 # sshdの鍵認証設定

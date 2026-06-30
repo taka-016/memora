@@ -450,10 +450,7 @@ class GroupEditModal extends HookConsumerWidget {
               ],
             );
           },
-          onReorder: (oldIndex, newIndex) {
-            if (newIndex > oldIndex) {
-              newIndex -= 1;
-            }
+          onReorderItem: (oldIndex, newIndex) {
             final updatedMembers = List<GroupMemberDto>.from(
               groupState.value.members,
             );
@@ -720,20 +717,26 @@ class GroupEditModal extends HookConsumerWidget {
             borderRadius: BorderRadius.circular(12),
             color: Colors.transparent,
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 4,
+          child: Material(
+            type: MaterialType.transparency,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: Text(
+                member.displayName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              onTap: () => Navigator.of(context).pop(member.memberId),
+              hoverColor: Colors.grey[50],
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            title: Text(
-              member.displayName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-            onTap: () => Navigator.of(context).pop(member.memberId),
-            hoverColor: Colors.grey[50],
           ),
         );
       },
