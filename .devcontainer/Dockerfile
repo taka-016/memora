@@ -46,7 +46,7 @@ RUN curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/st
   -o /tmp/flutter.tar.xz && \
   tar -xf /tmp/flutter.tar.xz -C /opt && \
   rm -f /tmp/flutter.tar.xz && \
-  git config --global --add safe.directory "$FLUTTER_HOME" && \
+  git config --system --add safe.directory "$FLUTTER_HOME" && \
   flutter config --no-analytics
 
 # Android SDKのインストール
@@ -125,6 +125,3 @@ RUN npm install -g firebase-tools
 
 # FlutterFire CLIのインストール
 RUN dart pub global activate flutterfire_cli
-
-# /root/.gitconfig を削除
-RUN rm -f /root/.gitconfig
