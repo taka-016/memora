@@ -6,9 +6,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Dev Containerの機密情報管理', () {
     test('envファイルを読み込まずホスト環境変数からGitHubトークンを渡す', () {
-      final devcontainerJson = jsonDecode(
-        File('.devcontainer/devcontainer.json').readAsStringSync(),
-      ) as Map<String, Object?>;
+      final devcontainerJson =
+          jsonDecode(File('.devcontainer/devcontainer.json').readAsStringSync())
+              as Map<String, Object?>;
 
       final runArgs = (devcontainerJson['runArgs'] as List<Object?>?) ?? [];
       expect(runArgs, isNot(contains('--env-file')));
