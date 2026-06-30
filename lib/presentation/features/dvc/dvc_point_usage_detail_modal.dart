@@ -21,7 +21,7 @@ Future<void> showDvcPointUsageDetailModal({
               : ListView.separated(
                   shrinkWrap: true,
                   itemCount: usages.length,
-                  separatorBuilder: (_, __) => const Divider(height: 16),
+                  separatorBuilder: (_, _) => const Divider(height: 16),
                   itemBuilder: (_, index) {
                     final usage = usages[index];
                     final memo = usage.memo?.trim() ?? '';

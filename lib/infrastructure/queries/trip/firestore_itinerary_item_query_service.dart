@@ -10,9 +10,8 @@ import 'package:memora/infrastructure/mappers/trip/firestore_location_mapper.dar
 class FirestoreItineraryItemQueryService implements ItineraryItemQueryService {
   FirestoreItineraryItemQueryService({
     FirebaseFirestore? firestore,
-    bool rethrowOnError = false,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _rethrowOnError = rethrowOnError;
+    this._rethrowOnError = false,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   final FirebaseFirestore _firestore;
   final bool _rethrowOnError;

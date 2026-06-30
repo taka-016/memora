@@ -41,7 +41,7 @@ run_step() {
 }
 
 run_step "Format" dart format .
-run_step "Build runner" dart run build_runner build --delete-conflicting-outputs
+run_step "Build runner" dart run build_runner build
 run_step "Analyze" flutter analyze
 run_step "Test" dart pub global run very_good_cli:very_good test
 

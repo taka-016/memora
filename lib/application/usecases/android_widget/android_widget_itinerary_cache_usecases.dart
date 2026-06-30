@@ -62,10 +62,9 @@ enum AndroidWidgetItineraryDateMoveDirection { previous, next }
 
 class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
-    required AndroidWidgetCacheStorage cacheStorage,
-    required GetAndroidWidgetItineraryCacheUsecase getCacheUsecase,
-  }) : _cacheStorage = cacheStorage,
-       _getCacheUsecase = getCacheUsecase;
+    required this._cacheStorage,
+    required this._getCacheUsecase,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
@@ -100,14 +99,11 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
 
 class SelectAndroidWidgetTargetGroupUsecase {
   const SelectAndroidWidgetTargetGroupUsecase({
-    required AndroidWidgetCacheStorage cacheStorage,
-    required RefreshAndroidWidgetItineraryCacheUsecase refreshCacheUsecase,
-    required AndroidWidgetUpdateIntervalStorage updateIntervalStorage,
-    required RegisterAndroidWidgetPeriodicUpdateTask registerPeriodicUpdateTask,
-  }) : _cacheStorage = cacheStorage,
-       _refreshCacheUsecase = refreshCacheUsecase,
-       _updateIntervalStorage = updateIntervalStorage,
-       _registerPeriodicUpdateTask = registerPeriodicUpdateTask;
+    required this._cacheStorage,
+    required this._refreshCacheUsecase,
+    required this._updateIntervalStorage,
+    required this._registerPeriodicUpdateTask,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
@@ -124,9 +120,7 @@ class SelectAndroidWidgetTargetGroupUsecase {
 }
 
 class ClearAndroidWidgetTargetGroupUsecase {
-  const ClearAndroidWidgetTargetGroupUsecase({
-    required AndroidWidgetCacheStorage cacheStorage,
-  }) : _cacheStorage = cacheStorage;
+  const ClearAndroidWidgetTargetGroupUsecase({required this._cacheStorage});
 
   final AndroidWidgetCacheStorage _cacheStorage;
 
@@ -138,14 +132,11 @@ class ClearAndroidWidgetTargetGroupUsecase {
 
 class MoveAndroidWidgetSelectedItineraryDateUsecase {
   const MoveAndroidWidgetSelectedItineraryDateUsecase({
-    required AndroidWidgetCacheStorage cacheStorage,
-    required TripEntryQueryService tripEntryQueryService,
-    required ItineraryItemQueryService itineraryItemQueryService,
-    required RefreshAndroidWidgetItineraryCacheUsecase refreshCacheUsecase,
-  }) : _cacheStorage = cacheStorage,
-       _tripEntryQueryService = tripEntryQueryService,
-       _itineraryItemQueryService = itineraryItemQueryService,
-       _refreshCacheUsecase = refreshCacheUsecase;
+    required this._cacheStorage,
+    required this._tripEntryQueryService,
+    required this._itineraryItemQueryService,
+    required this._refreshCacheUsecase,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final TripEntryQueryService _tripEntryQueryService;

@@ -77,10 +77,9 @@ class FirestoreBatchWriteContext implements FirestoreWriteContext {
 
 class FirestoreTransactionWriteContext implements FirestoreWriteContext {
   FirestoreTransactionWriteContext({
-    required FirebaseFirestore firestore,
-    required Transaction transaction,
-  }) : _firestore = firestore,
-       _transaction = transaction;
+    required this._firestore,
+    required this._transaction,
+  });
 
   final FirebaseFirestore _firestore;
   final Transaction _transaction;
