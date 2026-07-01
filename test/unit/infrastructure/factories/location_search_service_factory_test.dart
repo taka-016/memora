@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/config/location_search_api_type.dart';
 import 'package:memora/infrastructure/config/location_search_api_type_provider.dart';
@@ -24,7 +25,13 @@ void main() {
 
       expect(
         () => container.read(locationSearchServiceProvider),
-        throwsA(isA<UnimplementedError>()),
+        throwsA(
+          isA<ProviderException>().having(
+            (exception) => exception.exception,
+            'exception',
+            isA<UnimplementedError>(),
+          ),
+        ),
       );
     });
   });
