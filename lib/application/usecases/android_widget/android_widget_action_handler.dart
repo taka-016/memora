@@ -16,14 +16,11 @@ typedef ShowAndroidWidgetToast =
 
 class AndroidWidgetActionHandler {
   const AndroidWidgetActionHandler({
-    required AndroidWidgetCacheStorage cacheStorage,
-    required RefreshAndroidWidgetCache refreshCache,
-    required MoveAndroidWidgetItineraryDate moveDate,
-    required ShowAndroidWidgetToast showToast,
-  }) : _cacheStorage = cacheStorage,
-       _refreshCache = refreshCache,
-       _moveDate = moveDate,
-       _showToast = showToast;
+    required this._cacheStorage,
+    required this._refreshCache,
+    required this._moveDate,
+    required this._showToast,
+  });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final RefreshAndroidWidgetCache _refreshCache;

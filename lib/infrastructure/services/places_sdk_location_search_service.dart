@@ -5,8 +5,8 @@ import 'package:memora/core/models/coordinate.dart';
 
 class PlacesSdkLocationSearchService implements LocationSearchService {
   PlacesSdkLocationSearchService({
-    MethodChannel channel = const MethodChannel('memora/places'),
-  }) : _channel = channel;
+    this._channel = const MethodChannel('memora/places'),
+  });
 
   final MethodChannel _channel;
 

@@ -28,10 +28,9 @@ class FirestoreWriteTransaction implements WriteTransaction {
 
 class FirestoreWriteTransactionScope implements WriteTransactionScope {
   FirestoreWriteTransactionScope({
-    required FirebaseFirestore firestore,
-    required FirestoreWriteContext writeContext,
-  }) : _firestore = firestore,
-       _writeContext = writeContext;
+    required this._firestore,
+    required this._writeContext,
+  });
 
   final FirebaseFirestore _firestore;
   final FirestoreWriteContext _writeContext;
