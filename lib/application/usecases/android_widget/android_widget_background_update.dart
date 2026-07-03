@@ -230,20 +230,14 @@ typedef AndroidWidgetBackgroundUpdateStageRecorder =
 
 class AndroidWidgetBackgroundUpdateRunner {
   const AndroidWidgetBackgroundUpdateRunner({
-    required Future<void> Function() refreshCache,
-    required Future<void> Function() updateWidget,
-    required Future<void> Function() showUpdateFailedNotification,
-    required AndroidWidgetBackgroundUpdateStageRecorder recordStage,
-    required Duration refreshTimeout,
-    required Duration widgetUpdateTimeout,
-    required Duration notificationTimeout,
-  }) : _refreshCache = refreshCache,
-       _updateWidget = updateWidget,
-       _showUpdateFailedNotification = showUpdateFailedNotification,
-       _recordStage = recordStage,
-       _refreshTimeout = refreshTimeout,
-       _widgetUpdateTimeout = widgetUpdateTimeout,
-       _notificationTimeout = notificationTimeout;
+    required this._refreshCache,
+    required this._updateWidget,
+    required this._showUpdateFailedNotification,
+    required this._recordStage,
+    required this._refreshTimeout,
+    required this._widgetUpdateTimeout,
+    required this._notificationTimeout,
+  });
 
   final Future<void> Function() _refreshCache;
   final Future<void> Function() _updateWidget;
@@ -284,18 +278,13 @@ class AndroidWidgetBackgroundUpdateRunner {
 
 class AndroidWidgetPeriodicUpdateRegistrar {
   const AndroidWidgetPeriodicUpdateRegistrar({
-    required Future<DateTime?> Function() loadStartedAt,
-    required Future<DateTime?> Function() loadCompletedAt,
-    required Future<void> Function() cancelPeriodicTask,
-    required Future<void> Function(Duration frequency) registerPeriodicTask,
-    required DateTime Function() now,
-    required Duration staleAfter,
-  }) : _loadStartedAt = loadStartedAt,
-       _loadCompletedAt = loadCompletedAt,
-       _cancelPeriodicTask = cancelPeriodicTask,
-       _registerPeriodicTask = registerPeriodicTask,
-       _now = now,
-       _staleAfter = staleAfter;
+    required this._loadStartedAt,
+    required this._loadCompletedAt,
+    required this._cancelPeriodicTask,
+    required this._registerPeriodicTask,
+    required this._now,
+    required this._staleAfter,
+  });
 
   final Future<DateTime?> Function() _loadStartedAt;
   final Future<DateTime?> Function() _loadCompletedAt;

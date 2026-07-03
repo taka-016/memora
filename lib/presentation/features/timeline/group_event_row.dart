@@ -78,7 +78,7 @@ class _GroupEventYearCell extends HookConsumerWidget {
     final query = _GroupEventsQuery(groupId: groupId, refreshKey: refreshKey);
     final eventsByYear = ref.watch(_groupEventsByYearProvider(query));
     final localEvent = useState<GroupEventDto?>(null);
-    final loadedEvent = eventsByYear.valueOrNull?[year];
+    final loadedEvent = eventsByYear.value?[year];
 
     useEffect(() {
       localEvent.value = loadedEvent;

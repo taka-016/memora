@@ -5,8 +5,8 @@ import 'package:memora/core/models/coordinate.dart';
 
 class PlacesSdkNearbyLocationService implements NearbyLocationService {
   PlacesSdkNearbyLocationService({
-    MethodChannel channel = const MethodChannel('memora/places'),
-  }) : _channel = channel;
+    this._channel = const MethodChannel('memora/places'),
+  });
 
   static const double _radiusMeters = 50.0;
   static const int _maxResultCount = 1;

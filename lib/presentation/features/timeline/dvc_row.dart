@@ -166,7 +166,7 @@ class _DvcYearCell extends ConsumerWidget {
                 _DvcPointUsagesQuery(groupId: groupId, refreshKey: refreshKey),
               ),
             )
-            .valueOrNull?[year] ??
+            .value?[year] ??
         const [];
 
     return GestureDetector(

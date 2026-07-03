@@ -8,6 +8,24 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('AndroidWidgetActionHandler', () {
+    test('公開引数名で依存を注入できる', () {
+      final storage = _FakeAndroidWidgetCacheStorage();
+      final toastNotifier = _FakeAndroidWidgetToastNotifier();
+
+      final handler = AndroidWidgetActionHandler(
+        cacheStorage: storage,
+        showToast: toastNotifier.show,
+        refreshCache:
+            ({
+              required String groupId,
+              String? selectedItineraryDateId,
+            }) async {},
+        moveDate: (_) async => true,
+      );
+
+      expect(handler, isA<AndroidWidgetActionHandler>());
+    });
+
     test('更新成功後だけ更新完了Toastを表示する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         targetGroupId: 'group-1',

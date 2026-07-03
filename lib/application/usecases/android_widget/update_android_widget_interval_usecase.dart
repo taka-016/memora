@@ -26,10 +26,9 @@ final updateAndroidWidgetIntervalUsecaseProvider =
 
 class UpdateAndroidWidgetIntervalUsecase {
   const UpdateAndroidWidgetIntervalUsecase({
-    required AndroidWidgetUpdateIntervalStorage storage,
-    required RegisterAndroidWidgetPeriodicUpdateTask registerPeriodicUpdateTask,
-  }) : _storage = storage,
-       _registerPeriodicUpdateTask = registerPeriodicUpdateTask;
+    required this._storage,
+    required this._registerPeriodicUpdateTask,
+  });
 
   final AndroidWidgetUpdateIntervalStorage _storage;
   final RegisterAndroidWidgetPeriodicUpdateTask _registerPeriodicUpdateTask;

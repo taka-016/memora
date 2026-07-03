@@ -107,9 +107,12 @@ class MemberManagement extends HookConsumerWidget {
               TextButton(
                 onPressed: () async {
                   try {
-                    await Share.share(
-                      'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
-                      subject: 'Memoraへの招待',
+                    await SharePlus.instance.share(
+                      ShareParams(
+                        text:
+                            'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
+                        subject: 'Memoraへの招待',
+                      ),
                     );
                   } catch (e, stack) {
                     logger.e(

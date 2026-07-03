@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/infrastructure/config/auth_type.dart';
 import 'package:memora/infrastructure/config/auth_type_provider.dart';
@@ -27,7 +28,13 @@ void main() {
 
       expect(
         () => container.read(authServiceProvider),
-        throwsA(isA<UnimplementedError>()),
+        throwsA(
+          isA<ProviderException>().having(
+            (exception) => exception.exception,
+            'exception',
+            isA<UnimplementedError>(),
+          ),
+        ),
       );
     });
   });

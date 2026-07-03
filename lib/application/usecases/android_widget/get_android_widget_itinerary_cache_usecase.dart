@@ -19,12 +19,10 @@ final getAndroidWidgetItineraryCacheUsecaseProvider =
 
 class GetAndroidWidgetItineraryCacheUsecase {
   const GetAndroidWidgetItineraryCacheUsecase({
-    required TripEntryQueryService tripEntryQueryService,
-    required ItineraryItemQueryService itineraryItemQueryService,
-    required AppClock clock,
-  }) : _tripEntryQueryService = tripEntryQueryService,
-       _itineraryItemQueryService = itineraryItemQueryService,
-       _clock = clock;
+    required this._tripEntryQueryService,
+    required this._itineraryItemQueryService,
+    required this._clock,
+  });
 
   final TripEntryQueryService _tripEntryQueryService;
   final ItineraryItemQueryService _itineraryItemQueryService;

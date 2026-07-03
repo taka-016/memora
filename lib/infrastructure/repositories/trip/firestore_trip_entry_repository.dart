@@ -16,9 +16,8 @@ class FirestoreTripEntryRepository implements TripEntryRepository {
 
   FirestoreTripEntryRepository({
     FirebaseFirestore? firestore,
-    FirestoreWriteContext? writeContext,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _writeContext = writeContext;
+    this._writeContext,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<String> saveTripEntry(TripEntry tripEntry) async {

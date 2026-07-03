@@ -132,7 +132,7 @@ class _TripYearCell extends ConsumerWidget {
             ),
           ),
         )
-        .valueOrNull;
+        .value;
 
     return TripCell(
       trips: trips ?? const [],
