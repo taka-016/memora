@@ -57,10 +57,7 @@ void main() {
         settingsGradle,
         isNot(contains('id("org.jetbrains.kotlin.android")')),
       );
-      expect(
-        settingsGradle,
-        contains('id("com.android.built-in-kotlin")'),
-      );
+      expect(settingsGradle, contains('id("com.android.built-in-kotlin")'));
       _expectBuiltInKotlinAppModule(appBuildGradle);
       _expectBuiltInKotlinCompatiblePluginModule(localToastPluginBuildGradle);
     });
