@@ -12,7 +12,7 @@ const _todoPath = 'docs/todo.md';
 
 void main() {
   group('AndroidGradleConfig', () {
-    test('share_plus 13系のAndroidビルド要件を満たしている', () {
+    test('Flutter 3.44.4以降のAndroidビルド要件を満たしている', () {
       final settingsGradle = File(_settingsGradlePath).readAsStringSync();
       final gradleWrapperProperties = File(
         _gradleWrapperPropertiesPath,
@@ -22,20 +22,15 @@ void main() {
       _expectVersionAtLeast(
         settingsGradle,
         RegExp(r'id\("com\.android\.application"\) version "([^"]+)"'),
-        const _Version(8, 12, 1),
-      );
-      _expectVersionAtLeast(
-        settingsGradle,
-        RegExp(r'id\("org\.jetbrains\.kotlin\.android"\) version "([^"]+)"'),
-        const _Version(2, 2, 0),
+        const _Version(9, 0, 1),
       );
       _expectVersionAtLeast(
         gradleWrapperProperties,
         RegExp(r'gradle-([0-9.]+)-all\.zip'),
-        const _Version(8, 13, 0),
+        const _Version(9, 1, 0),
       );
       expect(appBuildGradle, contains('JavaVersion.VERSION_17'));
-      expect(appBuildGradle, contains('jvmTarget = JavaVersion.VERSION_17'));
+      expect(settingsGradle, contains('id("com.android.built-in-kotlin")'));
     });
 
     test('アプリ本体とローカルプラグインはbuilt-in Kotlinへ移行している', () {
