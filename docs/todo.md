@@ -41,8 +41,7 @@
 
 ## 開発環境
 
-- アプリ本体をAGP 9以降のbuilt-in Kotlinへ移行し、Kotlin Gradle Pluginの明示適用警告を解消する
-- KGPを適用しているプラグイン（home_widget、memora_android_widget_toast、workmanager_android）をbuilt-in Kotlin対応版または対応実装へ更新する
+- KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
 

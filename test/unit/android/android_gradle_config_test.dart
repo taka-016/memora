@@ -61,8 +61,8 @@ void main() {
         settingsGradle,
         contains('id("com.android.built-in-kotlin")'),
       );
-      _expectBuiltInKotlinModule(appBuildGradle);
-      _expectBuiltInKotlinModule(localToastPluginBuildGradle);
+      _expectBuiltInKotlinAppModule(appBuildGradle);
+      _expectBuiltInKotlinCompatiblePluginModule(localToastPluginBuildGradle);
     });
 
     test('外部プラグインのbuilt-in Kotlin対応は将来更新todoとして残している', () {
@@ -80,11 +80,22 @@ void main() {
   });
 }
 
-void _expectBuiltInKotlinModule(String source) {
+void _expectBuiltInKotlinAppModule(String source) {
   expect(source, contains('id("com.android.built-in-kotlin")'));
   expect(source, isNot(contains('id("kotlin-android")')));
   expect(source, isNot(contains('id("org.jetbrains.kotlin.android")')));
   expect(source, isNot(contains('kotlinOptions')));
+  expect(
+    source,
+    contains('jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17'),
+  );
+}
+
+void _expectBuiltInKotlinCompatiblePluginModule(String source) {
+  expect(source, isNot(contains('id("org.jetbrains.kotlin.android")')));
+  expect(source, isNot(contains('kotlinOptions')));
+  expect(source, contains('if (agpMajor < 9)'));
+  expect(source, contains('apply(plugin = "org.jetbrains.kotlin.android")'));
   expect(
     source,
     contains('jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17'),
