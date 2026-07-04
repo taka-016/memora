@@ -6,6 +6,9 @@ const _settingsGradlePath = 'android/settings.gradle.kts';
 const _gradleWrapperPropertiesPath =
     'android/gradle/wrapper/gradle-wrapper.properties';
 const _appBuildGradlePath = 'android/app/build.gradle.kts';
+const _localToastPluginBuildGradlePath =
+    'packages/memora_android_widget_toast/android/build.gradle.kts';
+const _todoPath = 'docs/todo.md';
 
 void main() {
   group('AndroidGradleConfig', () {
@@ -34,7 +37,63 @@ void main() {
       expect(appBuildGradle, contains('JavaVersion.VERSION_17'));
       expect(appBuildGradle, contains('jvmTarget = JavaVersion.VERSION_17'));
     });
+
+    test('アプリ本体とローカルプラグインはbuilt-in Kotlinへ移行している', () {
+      final settingsGradle = File(_settingsGradlePath).readAsStringSync();
+      final gradleWrapperProperties = File(
+        _gradleWrapperPropertiesPath,
+      ).readAsStringSync();
+      final appBuildGradle = File(_appBuildGradlePath).readAsStringSync();
+      final localToastPluginBuildGradle = File(
+        _localToastPluginBuildGradlePath,
+      ).readAsStringSync();
+
+      _expectVersionAtLeast(
+        settingsGradle,
+        RegExp(r'id\("com\.android\.application"\) version "([^"]+)"'),
+        const _Version(9, 0, 1),
+      );
+      _expectVersionAtLeast(
+        gradleWrapperProperties,
+        RegExp(r'gradle-([0-9.]+)-all\.zip'),
+        const _Version(9, 1, 0),
+      );
+      expect(
+        settingsGradle,
+        isNot(contains('id("org.jetbrains.kotlin.android")')),
+      );
+      expect(
+        settingsGradle,
+        contains('id("com.android.built-in-kotlin")'),
+      );
+      _expectBuiltInKotlinModule(appBuildGradle);
+      _expectBuiltInKotlinModule(localToastPluginBuildGradle);
+    });
+
+    test('外部プラグインのbuilt-in Kotlin対応は将来更新todoとして残している', () {
+      final todo = File(_todoPath).readAsStringSync();
+
+      expect(
+        todo,
+        contains(
+          'KGP未対応の外部プラグイン（home_widget、workmanager_android）が'
+          'built-in Kotlin対応版に更新されたら対応する',
+        ),
+      );
+      expect(todo, isNot(contains('memora_android_widget_toast、')));
+    });
   });
+}
+
+void _expectBuiltInKotlinModule(String source) {
+  expect(source, contains('id("com.android.built-in-kotlin")'));
+  expect(source, isNot(contains('id("kotlin-android")')));
+  expect(source, isNot(contains('id("org.jetbrains.kotlin.android")')));
+  expect(source, isNot(contains('kotlinOptions')));
+  expect(
+    source,
+    contains('jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17'),
+  );
 }
 
 void _expectVersionAtLeast(
