@@ -41,7 +41,7 @@
 
 ## 開発環境
 
-- Flutter 3.44.4環境で警告が出ているGradle 8.12、Android Gradle Plugin 8.7.3、Kotlin 2.1.0を、Flutterの将来サポート要件に合わせて更新する
+- KGP未対応の外部プラグイン（home_widget、workmanager_android）がbuilt-in Kotlin対応版に更新されたら対応する
 
 ## 全体
 
