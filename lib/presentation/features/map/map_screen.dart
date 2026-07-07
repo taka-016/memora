@@ -26,8 +26,8 @@ class MapScreen extends HookConsumerWidget {
       () => ref.read(getLocationsByGroupIdUsecaseProvider),
     );
     final locations = useState<List<LocationDto>>([]);
-    final selectedLocation = useState<LocationDto?>(null);
-    final hasSelectedInitialLocation = useRef(false);
+    final focusedLocation = useState<LocationDto?>(null);
+    final hasFocusedInitialLocation = useRef(false);
 
     useEffect(
       () {
@@ -43,11 +43,11 @@ class MapScreen extends HookConsumerWidget {
           final fetchedLocations = [
             for (final groupLocations in locationLists) ...groupLocations,
           ];
-          locations.value = fetchedLocations;
-          if (!hasSelectedInitialLocation.value &&
-              fetchedLocations.isNotEmpty) {
-            selectedLocation.value = fetchedLocations.first;
-            hasSelectedInitialLocation.value = true;
+          final mergedLocations = mergeLocationsByCoordinate(fetchedLocations);
+          locations.value = mergedLocations;
+          if (!hasFocusedInitialLocation.value && mergedLocations.isNotEmpty) {
+            focusedLocation.value = mergedLocations.first;
+            hasFocusedInitialLocation.value = true;
           }
         });
         return null;
@@ -65,9 +65,23 @@ class MapScreen extends HookConsumerWidget {
 
     return MapViewFactory.create(mapViewType).createMapView(
       locations: locations.value,
-      selectedLocation: selectedLocation.value,
+      focusedLocation: focusedLocation.value,
       locationDetailBottomSheetHeight: 160,
       isReadOnly: true,
     );
   }
+}
+
+List<LocationDto> mergeLocationsByCoordinate(List<LocationDto> locations) {
+  final mergedLocations = <LocationDto>[];
+  final coordinateKeys = <String>{};
+
+  for (final location in locations) {
+    final key = '${location.latitude},${location.longitude}';
+    if (coordinateKeys.add(key)) {
+      mergedLocations.add(location);
+    }
+  }
+
+  return mergedLocations;
 }

@@ -21,6 +21,7 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
   final ValueChanged<LocationDto>? onLocationTapped;
   final LocationDto? selectedLocation;
+  final LocationDto? focusedLocation;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
   final double? locationDetailBottomSheetHeight;
@@ -34,6 +35,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onSearchedLocationSelected,
     this.onLocationTapped,
     this.selectedLocation,
+    this.focusedLocation,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
     this.locationDetailBottomSheetHeight,
@@ -49,6 +51,7 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedLocationState = useState<LocationDto?>(null);
     final previousSelectedLocation = useRef<LocationDto?>(null);
+    final previousFocusedLocation = useRef<LocationDto?>(null);
     final grayMarkerIcon = useFuture(
       useMemoized(() => createGrayMarkerIcon(), const []),
     );
@@ -71,6 +74,10 @@ class GoogleMapView extends HookConsumerWidget {
       final selected = selectedLocation;
       if (selected != null) {
         return LatLng(selected.latitude, selected.longitude);
+      }
+      final focused = focusedLocation;
+      if (focused != null) {
+        return LatLng(focused.latitude, focused.longitude);
       }
       if (locations.isNotEmpty) {
         final firstLocation = locations.first;
@@ -114,7 +121,7 @@ class GoogleMapView extends HookConsumerWidget {
     void handleMapCreated(GoogleMapController controller) {
       mapController.value = controller;
       final initialSelectedLocation =
-          selectedLocationState.value ?? selectedLocation;
+          selectedLocationState.value ?? selectedLocation ?? focusedLocation;
       if (initialSelectedLocation != null) {
         animateToPosition(
           LatLng(
@@ -165,6 +172,18 @@ class GoogleMapView extends HookConsumerWidget {
     void moveToPreviousLocation() => moveSelectedLocationBy(-1);
 
     void moveToNextLocation() => moveSelectedLocationBy(1);
+
+    useEffect(() {
+      if (focusedLocation != null &&
+          focusedLocation != previousFocusedLocation.value) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final location = focusedLocation!;
+          animateToPosition(LatLng(location.latitude, location.longitude));
+        });
+      }
+      previousFocusedLocation.value = focusedLocation;
+      return null;
+    }, [focusedLocation]);
 
     useEffect(() {
       if (selectedLocation != null &&

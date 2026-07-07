@@ -18,6 +18,7 @@ abstract class MapViewBuilder {
     ValueChanged<LocationCandidateDto>? onSearchedLocationSelected,
     ValueChanged<LocationDto>? onLocationTapped,
     LocationDto? selectedLocation,
+    LocationDto? focusedLocation,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
     double? locationDetailBottomSheetHeight,
