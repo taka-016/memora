@@ -43,7 +43,7 @@ class MapScreen extends HookConsumerWidget {
           final fetchedLocations = [
             for (final groupLocations in locationLists) ...groupLocations,
           ];
-          final mergedLocations = mergeLocationsByCoordinate(fetchedLocations);
+          final mergedLocations = _mergeLocationsByCoordinate(fetchedLocations);
           locations.value = mergedLocations;
           if (!hasFocusedInitialLocation.value && mergedLocations.isNotEmpty) {
             focusedLocation.value = mergedLocations.first;
@@ -72,7 +72,7 @@ class MapScreen extends HookConsumerWidget {
   }
 }
 
-List<LocationDto> mergeLocationsByCoordinate(List<LocationDto> locations) {
+List<LocationDto> _mergeLocationsByCoordinate(List<LocationDto> locations) {
   final mergedLocations = <LocationDto>[];
   final coordinateKeys = <String>{};
 
