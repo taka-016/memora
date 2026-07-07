@@ -113,6 +113,16 @@ class GoogleMapView extends HookConsumerWidget {
 
     void handleMapCreated(GoogleMapController controller) {
       mapController.value = controller;
+      final initialSelectedLocation =
+          selectedLocationState.value ?? selectedLocation;
+      if (initialSelectedLocation != null) {
+        animateToPosition(
+          LatLng(
+            initialSelectedLocation.latitude,
+            initialSelectedLocation.longitude,
+          ),
+        );
+      }
     }
 
     void handleMapLongPress(LatLng position) {
@@ -160,7 +170,9 @@ class GoogleMapView extends HookConsumerWidget {
       if (selectedLocation != null &&
           selectedLocation != previousSelectedLocation.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          handleLocationTapped(selectedLocation!);
+          final location = selectedLocation!;
+          handleLocationTapped(location);
+          animateToPosition(LatLng(location.latitude, location.longitude));
         });
       }
       previousSelectedLocation.value = selectedLocation;
