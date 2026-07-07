@@ -35,7 +35,7 @@ void main() {
       ).thenAnswer((_) async => const []);
     });
 
-    Widget buildTestWidget() {
+    Widget buildTestWidget({bool isTestEnvironment = true}) {
       return ProviderScope(
         overrides: [
           getGroupsWithMembersUsecaseProvider.overrideWithValue(
@@ -49,7 +49,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          home: Scaffold(body: MapScreen(isTestEnvironment: true)),
+          home: Scaffold(body: MapScreen(isTestEnvironment: isTestEnvironment)),
         ),
       );
     }
@@ -127,22 +127,7 @@ void main() {
         mockGetLocationsByGroupIdUsecase.execute('group1'),
       ).thenAnswer((_) async => locations);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            getGroupsWithMembersUsecaseProvider.overrideWithValue(
-              mockGetGroupsWithMembersUsecase,
-            ),
-            getLocationsByGroupIdUsecaseProvider.overrideWithValue(
-              mockGetLocationsByGroupIdUsecase,
-            ),
-            currentMemberNotifierProvider.overrideWith(
-              () => FakeCurrentMemberNotifier.loaded(testMember),
-            ),
-          ],
-          child: const MaterialApp(home: Scaffold(body: MapScreen())),
-        ),
-      );
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
 
       expect(find.byType(LocationDetailBottomSheet), findsOneWidget);
