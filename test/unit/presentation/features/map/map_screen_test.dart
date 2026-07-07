@@ -9,6 +9,7 @@ import 'package:memora/application/usecases/trip/get_locations_by_group_id_useca
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -92,6 +93,61 @@ void main() {
       verify(mockGetGroupsWithMembersUsecase.execute(testMember)).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
+    });
+
+    testWidgets('locations取得後の初回のみ1件目のlocationを選択してボトムシートを表示する', (
+      tester,
+    ) async {
+      const groups = [
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+      ];
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 26.217,
+          longitude: 127.719,
+          name: '首里城',
+        ),
+      ];
+
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => locations);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            getGroupsWithMembersUsecaseProvider.overrideWithValue(
+              mockGetGroupsWithMembersUsecase,
+            ),
+            getLocationsByGroupIdUsecaseProvider.overrideWithValue(
+              mockGetLocationsByGroupIdUsecase,
+            ),
+            currentMemberNotifierProvider.overrideWith(
+              () => FakeCurrentMemberNotifier.loaded(testMember),
+            ),
+          ],
+          child: const MaterialApp(home: Scaffold(body: MapScreen())),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LocationDetailBottomSheet), findsOneWidget);
+      expect(find.text('大阪駅'), findsOneWidget);
+      expect(find.text('首里城'), findsNothing);
     });
   });
 }
