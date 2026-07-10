@@ -141,7 +141,7 @@ void main() {
       expect(find.text('首里城'), findsNothing);
     });
 
-    testWidgets('同一座標のlocationsは1件にまとめて地図へ渡す', (tester) async {
+    testWidgets('同一座標のlocationsはピンだけまとめて詳細表示では全件移動できる', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
       ];
@@ -193,6 +193,19 @@ void main() {
         googleMap.markers.map((marker) => marker.markerId.value),
         isNot(contains('location2')),
       );
+
+      final firstMarker = googleMap.markers.singleWhere(
+        (marker) => marker.markerId.value == 'location1',
+      );
+      firstMarker.onTap?.call();
+      await tester.pumpAndSettle();
+
+      expect(find.text('大阪駅'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('location_detail_next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('大阪駅2回目'), findsOneWidget);
     });
   });
 }
