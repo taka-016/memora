@@ -199,7 +199,7 @@ class GoogleMapView extends HookConsumerWidget {
     }, [selectedLocation]);
 
     Set<Marker> buildLocations() {
-      return locations
+      return _uniqueLocationsByCoordinate(locations)
           .map(
             (location) => Marker(
               markerId: MarkerId(location.id),
@@ -304,6 +304,20 @@ class GoogleMapView extends HookConsumerWidget {
     }
     return grayMarkerIcon ?? grayLocationMarkerIcon;
   }
+}
+
+List<LocationDto> _uniqueLocationsByCoordinate(List<LocationDto> locations) {
+  final uniqueLocations = <LocationDto>[];
+  final coordinateKeys = <String>{};
+
+  for (final location in locations) {
+    final key = '${location.latitude},${location.longitude}';
+    if (coordinateKeys.add(key)) {
+      uniqueLocations.add(location);
+    }
+  }
+
+  return uniqueLocations;
 }
 
 final grayLocationMarkerIcon = BitmapDescriptor.bytes(
