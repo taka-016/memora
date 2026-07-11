@@ -141,7 +141,7 @@ void main() {
       expect(find.text('首里城'), findsNothing);
     });
 
-    testWidgets('同一座標のlocationsはピンだけまとめて詳細表示では全件移動できる', (tester) async {
+    testWidgets('同一座標のlocationsはピンと左右移動の対象を1件にまとめる', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
       ];
@@ -205,7 +205,8 @@ void main() {
       await tester.tap(find.byKey(const Key('location_detail_next_button')));
       await tester.pumpAndSettle();
 
-      expect(find.text('大阪駅2回目'), findsOneWidget);
+      expect(find.text('大阪駅2回目'), findsNothing);
+      expect(find.text('首里城'), findsOneWidget);
     });
   });
 }
