@@ -202,10 +202,7 @@ class GoogleMapView extends HookConsumerWidget {
     }, [selectedLocation]);
 
     Set<Marker> buildLocations() {
-      return _uniqueLocationsByCoordinate(
-            locations,
-            preferredLocation: selectedLocationState.value ?? selectedLocation,
-          )
+      return _uniqueLocationsByCoordinate(locations)
           .map(
             (location) => Marker(
               markerId: MarkerId(location.id),
@@ -318,32 +315,14 @@ class GoogleMapView extends HookConsumerWidget {
   }
 }
 
-List<LocationDto> _uniqueLocationsByCoordinate(
-  List<LocationDto> locations, {
-  LocationDto? preferredLocation,
-}) {
+List<LocationDto> _uniqueLocationsByCoordinate(List<LocationDto> locations) {
   final uniqueLocations = <LocationDto>[];
   final coordinateKeys = <String>{};
-  LocationDto? preferredLocationInList;
-
-  if (preferredLocation != null) {
-    for (final location in locations) {
-      if (location.id == preferredLocation.id) {
-        preferredLocationInList = location;
-        break;
-      }
-    }
-  }
 
   for (final location in locations) {
-    final representative =
-        preferredLocationInList != null &&
-            _hasSameCoordinate(location, preferredLocationInList)
-        ? preferredLocationInList
-        : location;
-    final key = '${representative.latitude},${representative.longitude}';
+    final key = '${location.latitude},${location.longitude}';
     if (coordinateKeys.add(key)) {
-      uniqueLocations.add(representative);
+      uniqueLocations.add(location);
     }
   }
 
