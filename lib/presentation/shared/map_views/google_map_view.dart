@@ -151,20 +151,23 @@ class GoogleMapView extends HookConsumerWidget {
 
     void moveSelectedLocationBy(int offset) {
       final current = selectedLocationState.value;
-      if (current == null || locations.length < 2) {
+      final navigationLocations = _uniqueLocationsByCoordinate(locations);
+      if (current == null || navigationLocations.length < 2) {
         return;
       }
 
-      final currentIndex = locations.indexWhere(
-        (location) => location.id == current.id,
+      final currentIndex = navigationLocations.indexWhere(
+        (location) => _hasSameCoordinate(location, current),
       );
       if (currentIndex == -1) {
         return;
       }
 
-      final nextIndex = (currentIndex + offset) % locations.length;
+      final nextIndex = (currentIndex + offset) % navigationLocations.length;
       final nextLocation =
-          locations[nextIndex < 0 ? nextIndex + locations.length : nextIndex];
+          navigationLocations[nextIndex < 0
+              ? nextIndex + navigationLocations.length
+              : nextIndex];
       handleLocationTapped(nextLocation);
       animateToPosition(LatLng(nextLocation.latitude, nextLocation.longitude));
     }
@@ -259,15 +262,19 @@ class GoogleMapView extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
+      final navigationLocations = _uniqueLocationsByCoordinate(locations);
+      final hasMultipleNavigationTargets = navigationLocations.length >= 2;
       final detailBuilder = locationDetailBuilder;
       if (detailBuilder != null) {
         return detailBuilder(
           selectedLocationState.value!,
           hideLocationDetailBottomSheet,
-          onPreviousLocation: locations.length < 2
-              ? null
-              : moveToPreviousLocation,
-          onNextLocation: locations.length < 2 ? null : moveToNextLocation,
+          onPreviousLocation: hasMultipleNavigationTargets
+              ? moveToPreviousLocation
+              : null,
+          onNextLocation: hasMultipleNavigationTargets
+              ? moveToNextLocation
+              : null,
         );
       }
 
@@ -275,10 +282,12 @@ class GoogleMapView extends HookConsumerWidget {
         location: selectedLocationState.value!,
         onClose: hideLocationDetailBottomSheet,
         height: locationDetailBottomSheetHeight,
-        onPreviousLocation: locations.length < 2
-            ? null
-            : moveToPreviousLocation,
-        onNextLocation: locations.length < 2 ? null : moveToNextLocation,
+        onPreviousLocation: hasMultipleNavigationTargets
+            ? moveToPreviousLocation
+            : null,
+        onNextLocation: hasMultipleNavigationTargets
+            ? moveToNextLocation
+            : null,
       );
     }
 
@@ -318,6 +327,10 @@ List<LocationDto> _uniqueLocationsByCoordinate(List<LocationDto> locations) {
   }
 
   return uniqueLocations;
+}
+
+bool _hasSameCoordinate(LocationDto left, LocationDto right) {
+  return left.latitude == right.latitude && left.longitude == right.longitude;
 }
 
 final grayLocationMarkerIcon = BitmapDescriptor.bytes(
