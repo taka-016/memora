@@ -21,6 +21,7 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
   final ValueChanged<LocationDto>? onLocationTapped;
   final LocationDto? selectedLocation;
+  final LocationDto? focusedLocation;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
   final double? locationDetailBottomSheetHeight;
@@ -34,6 +35,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onSearchedLocationSelected,
     this.onLocationTapped,
     this.selectedLocation,
+    this.focusedLocation,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
     this.locationDetailBottomSheetHeight,
@@ -49,6 +51,7 @@ class GoogleMapView extends HookConsumerWidget {
     final isBottomSheetVisible = useState(false);
     final selectedLocationState = useState<LocationDto?>(null);
     final previousSelectedLocation = useRef<LocationDto?>(null);
+    final previousFocusedLocation = useRef<LocationDto?>(null);
     final grayMarkerIcon = useFuture(
       useMemoized(() => createGrayMarkerIcon(), const []),
     );
@@ -71,6 +74,10 @@ class GoogleMapView extends HookConsumerWidget {
       final selected = selectedLocation;
       if (selected != null) {
         return LatLng(selected.latitude, selected.longitude);
+      }
+      final focused = focusedLocation;
+      if (focused != null) {
+        return LatLng(focused.latitude, focused.longitude);
       }
       if (locations.isNotEmpty) {
         final firstLocation = locations.first;
@@ -113,6 +120,16 @@ class GoogleMapView extends HookConsumerWidget {
 
     void handleMapCreated(GoogleMapController controller) {
       mapController.value = controller;
+      final initialSelectedLocation =
+          selectedLocationState.value ?? selectedLocation ?? focusedLocation;
+      if (initialSelectedLocation != null) {
+        animateToPosition(
+          LatLng(
+            initialSelectedLocation.latitude,
+            initialSelectedLocation.longitude,
+          ),
+        );
+      }
     }
 
     void handleMapLongPress(LatLng position) {
@@ -134,20 +151,23 @@ class GoogleMapView extends HookConsumerWidget {
 
     void moveSelectedLocationBy(int offset) {
       final current = selectedLocationState.value;
-      if (current == null || locations.length < 2) {
+      final navigationLocations = _uniqueLocationsByCoordinate(locations);
+      if (current == null || navigationLocations.length < 2) {
         return;
       }
 
-      final currentIndex = locations.indexWhere(
-        (location) => location.id == current.id,
+      final currentIndex = navigationLocations.indexWhere(
+        (location) => _hasSameCoordinate(location, current),
       );
       if (currentIndex == -1) {
         return;
       }
 
-      final nextIndex = (currentIndex + offset) % locations.length;
+      final nextIndex = (currentIndex + offset) % navigationLocations.length;
       final nextLocation =
-          locations[nextIndex < 0 ? nextIndex + locations.length : nextIndex];
+          navigationLocations[nextIndex < 0
+              ? nextIndex + navigationLocations.length
+              : nextIndex];
       handleLocationTapped(nextLocation);
       animateToPosition(LatLng(nextLocation.latitude, nextLocation.longitude));
     }
@@ -157,10 +177,24 @@ class GoogleMapView extends HookConsumerWidget {
     void moveToNextLocation() => moveSelectedLocationBy(1);
 
     useEffect(() {
+      if (focusedLocation != null &&
+          focusedLocation != previousFocusedLocation.value) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final location = focusedLocation!;
+          animateToPosition(LatLng(location.latitude, location.longitude));
+        });
+      }
+      previousFocusedLocation.value = focusedLocation;
+      return null;
+    }, [focusedLocation]);
+
+    useEffect(() {
       if (selectedLocation != null &&
           selectedLocation != previousSelectedLocation.value) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          handleLocationTapped(selectedLocation!);
+          final location = selectedLocation!;
+          handleLocationTapped(location);
+          animateToPosition(LatLng(location.latitude, location.longitude));
         });
       }
       previousSelectedLocation.value = selectedLocation;
@@ -168,7 +202,7 @@ class GoogleMapView extends HookConsumerWidget {
     }, [selectedLocation]);
 
     Set<Marker> buildLocations() {
-      return locations
+      return _uniqueLocationsByCoordinate(locations)
           .map(
             (location) => Marker(
               markerId: MarkerId(location.id),
@@ -228,15 +262,19 @@ class GoogleMapView extends HookConsumerWidget {
         return const SizedBox.shrink();
       }
 
+      final navigationLocations = _uniqueLocationsByCoordinate(locations);
+      final hasMultipleNavigationTargets = navigationLocations.length >= 2;
       final detailBuilder = locationDetailBuilder;
       if (detailBuilder != null) {
         return detailBuilder(
           selectedLocationState.value!,
           hideLocationDetailBottomSheet,
-          onPreviousLocation: locations.length < 2
-              ? null
-              : moveToPreviousLocation,
-          onNextLocation: locations.length < 2 ? null : moveToNextLocation,
+          onPreviousLocation: hasMultipleNavigationTargets
+              ? moveToPreviousLocation
+              : null,
+          onNextLocation: hasMultipleNavigationTargets
+              ? moveToNextLocation
+              : null,
         );
       }
 
@@ -244,10 +282,12 @@ class GoogleMapView extends HookConsumerWidget {
         location: selectedLocationState.value!,
         onClose: hideLocationDetailBottomSheet,
         height: locationDetailBottomSheetHeight,
-        onPreviousLocation: locations.length < 2
-            ? null
-            : moveToPreviousLocation,
-        onNextLocation: locations.length < 2 ? null : moveToNextLocation,
+        onPreviousLocation: hasMultipleNavigationTargets
+            ? moveToPreviousLocation
+            : null,
+        onNextLocation: hasMultipleNavigationTargets
+            ? moveToNextLocation
+            : null,
       );
     }
 
@@ -273,6 +313,24 @@ class GoogleMapView extends HookConsumerWidget {
     }
     return grayMarkerIcon ?? grayLocationMarkerIcon;
   }
+}
+
+List<LocationDto> _uniqueLocationsByCoordinate(List<LocationDto> locations) {
+  final uniqueLocations = <LocationDto>[];
+  final coordinateKeys = <String>{};
+
+  for (final location in locations) {
+    final key = '${location.latitude},${location.longitude}';
+    if (coordinateKeys.add(key)) {
+      uniqueLocations.add(location);
+    }
+  }
+
+  return uniqueLocations;
+}
+
+bool _hasSameCoordinate(LocationDto left, LocationDto right) {
+  return left.latitude == right.latitude && left.longitude == right.longitude;
 }
 
 final grayLocationMarkerIcon = BitmapDescriptor.bytes(

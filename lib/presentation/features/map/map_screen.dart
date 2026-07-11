@@ -26,6 +26,8 @@ class MapScreen extends HookConsumerWidget {
       () => ref.read(getLocationsByGroupIdUsecaseProvider),
     );
     final locations = useState<List<LocationDto>>([]);
+    final focusedLocation = useState<LocationDto?>(null);
+    final hasFocusedInitialLocation = useRef(false);
 
     useEffect(
       () {
@@ -38,9 +40,14 @@ class MapScreen extends HookConsumerWidget {
               (group) => getLocationsByGroupIdUsecase.execute(group.id),
             ),
           );
-          locations.value = [
+          final fetchedLocations = [
             for (final groupLocations in locationLists) ...groupLocations,
           ];
+          locations.value = fetchedLocations;
+          if (!hasFocusedInitialLocation.value && fetchedLocations.isNotEmpty) {
+            focusedLocation.value = fetchedLocations.first;
+            hasFocusedInitialLocation.value = true;
+          }
         });
         return null;
       },
@@ -57,6 +64,7 @@ class MapScreen extends HookConsumerWidget {
 
     return MapViewFactory.create(mapViewType).createMapView(
       locations: locations.value,
+      focusedLocation: focusedLocation.value,
       locationDetailBottomSheetHeight: 160,
       isReadOnly: true,
     );

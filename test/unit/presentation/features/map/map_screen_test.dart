@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
@@ -9,6 +10,7 @@ import 'package:memora/application/usecases/trip/get_locations_by_group_id_useca
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
+import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -34,7 +36,7 @@ void main() {
       ).thenAnswer((_) async => const []);
     });
 
-    Widget buildTestWidget() {
+    Widget buildTestWidget({bool isTestEnvironment = true}) {
       return ProviderScope(
         overrides: [
           getGroupsWithMembersUsecaseProvider.overrideWithValue(
@@ -48,7 +50,7 @@ void main() {
           ),
         ],
         child: MaterialApp(
-          home: Scaffold(body: MapScreen(isTestEnvironment: true)),
+          home: Scaffold(body: MapScreen(isTestEnvironment: isTestEnvironment)),
         ),
       );
     }
@@ -92,6 +94,119 @@ void main() {
       verify(mockGetGroupsWithMembersUsecase.execute(testMember)).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
+    });
+
+    testWidgets('locations取得後の初回のみ1件目のlocationへカメラ移動しボトムシートは表示しない', (
+      tester,
+    ) async {
+      const groups = [
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+      ];
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 26.217,
+          longitude: 127.719,
+          name: '首里城',
+        ),
+      ];
+
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => locations);
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final initialPosition = googleMap.initialCameraPosition;
+
+      expect(initialPosition.target.latitude, 34.6937);
+      expect(initialPosition.target.longitude, 135.5023);
+      expect(find.byType(LocationDetailBottomSheet), findsNothing);
+      expect(find.text('大阪駅'), findsNothing);
+      expect(find.text('首里城'), findsNothing);
+    });
+
+    testWidgets('同一座標のlocationsはピンと左右移動の対象を1件にまとめる', (tester) async {
+      const groups = [
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+      ];
+      const locations = [
+        LocationDto(
+          id: 'location1',
+          tripId: 'trip1',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅',
+        ),
+        LocationDto(
+          id: 'location2',
+          tripId: 'trip2',
+          groupId: 'group1',
+          latitude: 34.6937,
+          longitude: 135.5023,
+          name: '大阪駅2回目',
+        ),
+        LocationDto(
+          id: 'location3',
+          tripId: 'trip3',
+          groupId: 'group1',
+          latitude: 26.217,
+          longitude: 127.719,
+          name: '首里城',
+        ),
+      ];
+
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => locations);
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+
+      expect(googleMap.markers, hasLength(2));
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        containsAll(['location1', 'location3']),
+      );
+      expect(
+        googleMap.markers.map((marker) => marker.markerId.value),
+        isNot(contains('location2')),
+      );
+
+      final firstMarker = googleMap.markers.singleWhere(
+        (marker) => marker.markerId.value == 'location1',
+      );
+      firstMarker.onTap?.call();
+      await tester.pumpAndSettle();
+
+      expect(find.text('大阪駅'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('location_detail_next_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('大阪駅2回目'), findsNothing);
+      expect(find.text('首里城'), findsOneWidget);
     });
   });
 }
