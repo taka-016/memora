@@ -180,6 +180,46 @@ void main() {
       );
     });
 
+    testWidgets('同一座標の2件目が選択中の場合は選択中locationを代表マーカーにする', (tester) async {
+      const firstLocation = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+      );
+      const selectedLocation = LocationDto(
+        id: 'location2',
+        tripId: 'trip2',
+        groupId: 'group1',
+        latitude: 35.6812,
+        longitude: 139.7671,
+      );
+      final tappedLocationIds = <String>[];
+
+      await tester.pumpWidget(
+        _createApp(
+          GoogleMapView(
+            locations: const [firstLocation, selectedLocation],
+            selectedLocation: selectedLocation,
+            highlightSelectedLocation: true,
+            onLocationTapped: (location) => tappedLocationIds.add(location.id),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      final marker = googleMap.markers.single;
+
+      expect(marker.markerId, const MarkerId('location2'));
+      expect(marker.icon.toJson(), BitmapDescriptor.defaultMarker.toJson());
+
+      marker.onTap?.call();
+
+      expect(tappedLocationIds.last, 'location2');
+    });
+
     testWidgets('選択中locationの軽量ボトムシートを表示する', (tester) async {
       const location = LocationDto(
         id: 'location1',
