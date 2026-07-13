@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   tmux \
   build-essential \
   ripgrep \
+  jq \
   fd-find \
   xclip \
   openssh-server \
