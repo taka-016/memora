@@ -258,6 +258,12 @@ void main() {
       ),
     ).thenAnswer((_) async => []);
     when(
+      mockTripEntryQueryService.getTripEntriesByGroupId(
+        any,
+        orderBy: anyNamed('orderBy'),
+      ),
+    ).thenAnswer((_) async => []);
+    when(
       mockMemberInvitationQueryService.getByInvitationCode(any),
     ).thenAnswer((_) async => null);
     when(
