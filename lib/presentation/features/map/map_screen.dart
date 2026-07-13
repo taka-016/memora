@@ -49,6 +49,19 @@ class MapScreen extends HookConsumerWidget {
     final focusedLocation = useState<LocationDto?>(null);
     final hasFocusedInitialLocation = useRef(false);
 
+    void replaceUpdatedTrip(TripEntryDto updatedTrip) {
+      trips.value = [
+        for (final item in trips.value)
+          if (item.id == updatedTrip.id) updatedTrip else item,
+      ];
+      locations.value = [
+        ...locations.value.where(
+          (location) => location.tripId != updatedTrip.id,
+        ),
+        ...?updatedTrip.locations,
+      ];
+    }
+
     useEffect(
       () {
         Future.microtask(() async {
@@ -127,16 +140,7 @@ class MapScreen extends HookConsumerWidget {
             isTestEnvironment: isTestEnvironment,
             onSave: (updatedTrip) async {
               await updateTripEntryUsecase.execute(updatedTrip);
-              trips.value = [
-                for (final item in trips.value)
-                  if (item.id == updatedTrip.id) updatedTrip else item,
-              ];
-              locations.value = [
-                ...locations.value.where(
-                  (location) => location.tripId != updatedTrip.id,
-                ),
-                ...?updatedTrip.locations,
-              ];
+              replaceUpdatedTrip(updatedTrip);
               if (context.mounted) {
                 ScaffoldMessenger.of(
                   context,
