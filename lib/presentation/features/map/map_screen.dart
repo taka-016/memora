@@ -168,7 +168,7 @@ class MapScreen extends HookConsumerWidget {
               onNextLocation: onNextLocation,
             );
           },
-      locationDetailBottomSheetHeight: 280,
+      locationDetailBottomSheetHeight: MapPinBottomSheet.height,
       isReadOnly: true,
     );
   }

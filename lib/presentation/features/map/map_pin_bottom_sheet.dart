@@ -23,6 +23,8 @@ class MapPinBottomSheet extends StatelessWidget {
   final VoidCallback? onPreviousLocation;
   final VoidCallback? onNextLocation;
 
+  static const double height = 280;
+
   @override
   Widget build(BuildContext context) {
     final locationName = location.name?.isNotEmpty == true
@@ -31,7 +33,7 @@ class MapPinBottomSheet extends StatelessWidget {
     return LocationDetailPanelFrame(
       panelKey: const Key('location_detail_bottom_sheet'),
       onClose: onClose,
-      height: 280,
+      height: height,
       locationName: locationName,
       onPreviousLocation: onPreviousLocation,
       onNextLocation: onNextLocation,
