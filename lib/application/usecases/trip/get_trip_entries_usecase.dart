@@ -20,4 +20,11 @@ class GetTripEntriesUsecase {
       orderBy: [const OrderBy('startDate', descending: false)],
     );
   }
+
+  Future<List<TripEntryDto>> executeByGroupId(String groupId) async {
+    return await _tripEntryQueryService.getTripEntriesByGroupId(
+      groupId,
+      orderBy: [const OrderBy('startDate', descending: false)],
+    );
+  }
 }

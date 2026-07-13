@@ -117,7 +117,10 @@ class QueryServiceFactory {
       return FirestoreGroupEventQueryService() as T;
     }
     if (T == TripEntryQueryService) {
-      return FirestoreTripEntryQueryService(clock: ref.watch(appClockProvider))
+      return FirestoreTripEntryQueryService(
+            clock: ref.watch(appClockProvider),
+            rethrowOnError: true,
+          )
           as T;
     }
     if (T == TaskQueryService) {
