@@ -18,6 +18,7 @@ import 'package:memora/application/queries/member/member_invitation_query_servic
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
+import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
@@ -549,6 +550,15 @@ void main() {
   }
 
   group('TopPage', () {
+    test('地図表示用の旅行一覧モックは空一覧を返す', () async {
+      final trips = await mockTripEntryQueryService.getTripEntriesByGroupId(
+        '1',
+        orderBy: const [OrderBy('startDate')],
+      );
+
+      expect(trips, isEmpty);
+    });
+
     testWidgets('ウィジェット起動URIの確認中はグループ選択を表示しない', (WidgetTester tester) async {
       await tester.pumpWidget(
         createTestWidget(
