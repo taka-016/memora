@@ -10,7 +10,9 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
+import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
@@ -28,6 +30,7 @@ import 'map_screen_test.mocks.dart';
   GetLocationsByGroupIdUsecase,
   GetTripEntriesUsecase,
   GetTripEntryByIdUsecase,
+  UpdateTripEntryUsecase,
 ])
 void main() {
   const testMember = MemberDto(id: 'test-member-id', displayName: 'テストメンバー');
@@ -37,12 +40,14 @@ void main() {
     late MockGetLocationsByGroupIdUsecase mockGetLocationsByGroupIdUsecase;
     late MockGetTripEntriesUsecase mockGetTripEntriesUsecase;
     late MockGetTripEntryByIdUsecase mockGetTripEntryByIdUsecase;
+    late MockUpdateTripEntryUsecase mockUpdateTripEntryUsecase;
 
     setUp(() {
       mockGetGroupsWithMembersUsecase = MockGetGroupsWithMembersUsecase();
       mockGetLocationsByGroupIdUsecase = MockGetLocationsByGroupIdUsecase();
       mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
       mockGetTripEntryByIdUsecase = MockGetTripEntryByIdUsecase();
+      mockUpdateTripEntryUsecase = MockUpdateTripEntryUsecase();
       when(
         mockGetGroupsWithMembersUsecase.execute(testMember),
       ).thenAnswer((_) async => const []);
@@ -71,6 +76,9 @@ void main() {
           ),
           getTripEntryByIdUsecaseProvider.overrideWithValue(
             mockGetTripEntryByIdUsecase,
+          ),
+          updateTripEntryUsecaseProvider.overrideWithValue(
+            mockUpdateTripEntryUsecase,
           ),
           currentMemberNotifierProvider.overrideWith(
             () => FakeCurrentMemberNotifier.loaded(testMember),
@@ -353,7 +361,7 @@ void main() {
       expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
     });
 
-    testWidgets('旅行名タップで年表タブの該当旅行編集へ遷移する', (tester) async {
+    testWidgets('旅行名タップで地図上に旅行編集を開き閉じると選択中の地図へ戻る', (tester) async {
       const group = GroupDto(
         id: 'group1',
         ownerId: 'owner',
@@ -389,27 +397,30 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MapScreen)),
+      );
+      container
+          .read(navigationNotifierProvider.notifier)
+          .selectItem(NavigationItem.mapDisplay);
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       googleMap.markers.single.onTap?.call();
       await tester.pumpAndSettle();
       await tester.tap(find.text('沖縄旅行2024'));
       await tester.pumpAndSettle();
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(MapScreen)),
-      );
+      expect(find.byType(TripEditModal), findsOneWidget);
       expect(
         container.read(navigationNotifierProvider).selectedItem,
-        NavigationItem.groupTimeline,
+        NavigationItem.mapDisplay,
       );
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).destination,
-        const GroupTimelineTripManagementDestination(
-          groupId: 'group1',
-          year: 2024,
-          initialTripId: 'trip1',
-        ),
-      );
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TripEditModal), findsNothing);
+      expect(find.text('首里城'), findsOneWidget);
+      expect(find.text('沖縄旅行2024'), findsOneWidget);
     });
 
     testWidgets('旅行名タップ時に旅行が存在しない場合はエラーを表示する', (tester) async {
