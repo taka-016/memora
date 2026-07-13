@@ -8,11 +8,11 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
+import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class MapScreen extends HookConsumerWidget {
@@ -38,6 +38,9 @@ class MapScreen extends HookConsumerWidget {
     );
     final getTripEntryByIdUsecase = useMemoized(
       () => ref.read(getTripEntryByIdUsecaseProvider),
+    );
+    final updateTripEntryUsecase = useMemoized(
+      () => ref.read(updateTripEntryUsecaseProvider),
     );
     final groups = useState<List<GroupDto>>([]);
     final locations = useState<List<LocationDto>>([]);
@@ -113,21 +116,35 @@ class MapScreen extends HookConsumerWidget {
           return;
         }
 
-        final timelineNotifier = ref.read(
-          groupTimelineNavigationNotifierProvider.notifier,
+        await showDialog<void>(
+          barrierDismissible: false,
+          context: context,
+          builder: (dialogContext) => TripEditModal(
+            groupId: currentTrip.groupId,
+            groupMembers: group.members,
+            tripEntry: currentTrip,
+            year: currentTrip.year,
+            isTestEnvironment: isTestEnvironment,
+            onSave: (updatedTrip) async {
+              await updateTripEntryUsecase.execute(updatedTrip);
+              trips.value = [
+                for (final item in trips.value)
+                  if (item.id == updatedTrip.id) updatedTrip else item,
+              ];
+              locations.value = [
+                ...locations.value.where(
+                  (location) => location.tripId != updatedTrip.id,
+                ),
+                ...?updatedTrip.locations,
+              ];
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
+              }
+            },
+          ),
         );
-        timelineNotifier.showGroupTimeline(
-          group,
-          groupSelectionLoadFuture: Future.value(groups.value),
-        );
-        timelineNotifier.showTripManagement(
-          currentTrip.groupId,
-          currentTrip.year,
-          initialTripId: currentTrip.id,
-        );
-        ref
-            .read(navigationNotifierProvider.notifier)
-            .selectItem(NavigationItem.groupTimeline);
       } catch (e, stack) {
         logger.e(
           'MapScreen.openTrip: ${e.toString()}',
