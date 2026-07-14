@@ -363,18 +363,8 @@ void main() {
 
     testWidgets('別グループの旅行取得失敗時も取得済みグループの旅行を表示する', (tester) async {
       const groups = [
-        GroupDto(
-          id: 'group1',
-          ownerId: 'owner',
-          name: '家族',
-          members: [],
-        ),
-        GroupDto(
-          id: 'group2',
-          ownerId: 'owner',
-          name: '友人',
-          members: [],
-        ),
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+        GroupDto(id: 'group2', ownerId: 'owner', name: '友人', members: []),
       ];
       const group1Location = LocationDto(
         id: 'location1',

@@ -38,10 +38,7 @@ void main() {
 
       final service = container.read(tripEntryQueryServiceProvider);
 
-      expect(
-        await service.getTripEntriesByGroupId('group1'),
-        isEmpty,
-      );
+      expect(await service.getTripEntriesByGroupId('group1'), isEmpty);
     });
 
     test('地図用のTripEntryQueryServiceは取得失敗時に例外を再送出する', () async {

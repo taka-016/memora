@@ -511,6 +511,9 @@ void main() {
       tripEntryQueryServiceProvider.overrideWithValue(
         mockTripEntryQueryService,
       ),
+      mapTripEntryQueryServiceProvider.overrideWithValue(
+        mockTripEntryQueryService,
+      ),
       locationQueryServiceProvider.overrideWithValue(mockLocationQueryService),
       groupRepositoryProvider.overrideWithValue(mockGroupRepository),
       groupEventRepositoryProvider.overrideWithValue(mockGroupEventRepository),
