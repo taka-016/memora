@@ -71,7 +71,7 @@ void main() {
           getLocationsByGroupIdUsecaseProvider.overrideWithValue(
             mockGetLocationsByGroupIdUsecase,
           ),
-          getTripEntriesUsecaseProvider.overrideWithValue(
+          getMapTripEntriesUsecaseProvider.overrideWithValue(
             mockGetTripEntriesUsecase,
           ),
           getTripEntryByIdUsecaseProvider.overrideWithValue(
@@ -359,6 +359,72 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
+    });
+
+    testWidgets('別グループの旅行取得失敗時も取得済みグループの旅行を表示する', (tester) async {
+      const groups = [
+        GroupDto(
+          id: 'group1',
+          ownerId: 'owner',
+          name: '家族',
+          members: [],
+        ),
+        GroupDto(
+          id: 'group2',
+          ownerId: 'owner',
+          name: '友人',
+          members: [],
+        ),
+      ];
+      const group1Location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const group2Location = LocationDto(
+        id: 'location2',
+        tripId: 'trip2',
+        groupId: 'group2',
+        latitude: 35.6812,
+        longitude: 139.7671,
+        name: '東京駅',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [group1Location]);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group2'),
+      ).thenAnswer((_) async => const [group2Location]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const [trip]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group2'),
+      ).thenThrow(TestException('取得失敗'));
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers
+          .singleWhere((marker) => marker.markerId.value == 'location1')
+          .onTap
+          ?.call();
+      await tester.pumpAndSettle();
+
+      expect(find.text('沖縄旅行2024'), findsOneWidget);
+      expect(find.text('旅行情報の取得に失敗しました'), findsNothing);
     });
 
     testWidgets('旅行名タップで地図上に旅行編集を開き閉じると選択中の地図へ戻る', (tester) async {
