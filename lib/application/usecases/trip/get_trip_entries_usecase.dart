@@ -8,6 +8,10 @@ final getTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
   return GetTripEntriesUsecase(ref.watch(tripEntryQueryServiceProvider));
 });
 
+final getMapTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
+  return GetTripEntriesUsecase(ref.watch(mapTripEntryQueryServiceProvider));
+});
+
 class GetTripEntriesUsecase {
   final TripEntryQueryService _tripEntryQueryService;
 

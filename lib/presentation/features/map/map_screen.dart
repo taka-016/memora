@@ -34,7 +34,7 @@ class MapScreen extends HookConsumerWidget {
       () => ref.read(getLocationsByGroupIdUsecaseProvider),
     );
     final getTripEntriesUsecase = useMemoized(
-      () => ref.read(getTripEntriesUsecaseProvider),
+      () => ref.read(getMapTripEntriesUsecaseProvider),
     );
     final getTripEntryByIdUsecase = useMemoized(
       () => ref.read(getTripEntryByIdUsecaseProvider),
@@ -45,7 +45,7 @@ class MapScreen extends HookConsumerWidget {
     final groups = useState<List<GroupDto>>([]);
     final locations = useState<List<LocationDto>>([]);
     final trips = useState<List<TripEntryDto>>([]);
-    final hasTripLoadError = useState(false);
+    final failedTripGroupIds = useState<Set<String>>(<String>{});
     final focusedLocation = useState<LocationDto?>(null);
     final hasFocusedInitialLocation = useRef(false);
 
@@ -79,13 +79,13 @@ class MapScreen extends HookConsumerWidget {
           ];
           locations.value = fetchedLocations;
 
-          var tripLoadFailed = false;
+          final failedGroupIds = <String>{};
           final tripLists = await Future.wait(
             fetchedGroups.map((group) async {
               try {
                 return await getTripEntriesUsecase.executeByGroupId(group.id);
               } catch (e, stack) {
-                tripLoadFailed = true;
+                failedGroupIds.add(group.id);
                 logger.e(
                   'MapScreen.loadTrips: ${e.toString()}',
                   error: e,
@@ -96,7 +96,7 @@ class MapScreen extends HookConsumerWidget {
             }),
           );
           trips.value = [for (final groupTrips in tripLists) ...groupTrips];
-          hasTripLoadError.value = tripLoadFailed;
+          failedTripGroupIds.value = failedGroupIds;
 
           if (!hasFocusedInitialLocation.value && fetchedLocations.isNotEmpty) {
             focusedLocation.value = fetchedLocations.first;
@@ -172,8 +172,10 @@ class MapScreen extends HookConsumerWidget {
       focusedLocation: focusedLocation.value,
       locationDetailBuilder:
           (location, onClose, {onPreviousLocation, onNextLocation}) {
-            final tripIds = locations.value
+            final matchingLocations = locations.value
                 .where((item) => _hasSameCoordinate(item, location))
+                .toList(growable: false);
+            final tripIds = matchingLocations
                 .map((item) => item.tripId)
                 .toSet();
             final matchingTrips = trips.value
@@ -182,7 +184,9 @@ class MapScreen extends HookConsumerWidget {
             return MapPinBottomSheet(
               location: location,
               trips: matchingTrips,
-              hasTripLoadError: hasTripLoadError.value,
+              hasTripLoadError: matchingLocations.any(
+                (item) => failedTripGroupIds.value.contains(item.groupId),
+              ),
               onTripTapped: handleTripTapped,
               onClose: onClose,
               onPreviousLocation: onPreviousLocation,
