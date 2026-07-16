@@ -44,6 +44,13 @@ final tripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
   return QueryServiceFactory.create<TripEntryQueryService>(ref: ref);
 });
 
+final mapTripEntryQueryServiceProvider = Provider<TripEntryQueryService>((ref) {
+  return QueryServiceFactory.createTripEntryQueryService(
+    ref: ref,
+    rethrowOnError: true,
+  );
+});
+
 final taskQueryServiceProvider = Provider<TaskQueryService>((ref) {
   return QueryServiceFactory.create<TaskQueryService>(ref: ref);
 });
@@ -109,6 +116,25 @@ class QueryServiceFactory {
     }
   }
 
+  static TripEntryQueryService createTripEntryQueryService({
+    required Ref ref,
+    bool rethrowOnError = false,
+  }) {
+    final dbType = ref.watch(databaseTypeProvider);
+    switch (dbType) {
+      case DatabaseType.firestore:
+        return FirestoreTripEntryQueryService(
+          firestore: ref.watch(firebaseFirestoreProvider),
+          clock: ref.watch(appClockProvider),
+          rethrowOnError: rethrowOnError,
+        );
+      case DatabaseType.sqlite:
+        throw UnimplementedError(
+          'Supabase implementation is not yet available',
+        );
+    }
+  }
+
   static T _createFirestoreQueryService<T>({required Ref ref}) {
     if (T == GroupQueryService) {
       return FirestoreGroupQueryService() as T;
@@ -117,8 +143,7 @@ class QueryServiceFactory {
       return FirestoreGroupEventQueryService() as T;
     }
     if (T == TripEntryQueryService) {
-      return FirestoreTripEntryQueryService(clock: ref.watch(appClockProvider))
-          as T;
+      return createTripEntryQueryService(ref: ref) as T;
     }
     if (T == TaskQueryService) {
       return FirestoreTaskQueryService() as T;

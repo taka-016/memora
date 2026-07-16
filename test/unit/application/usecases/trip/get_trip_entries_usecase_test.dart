@@ -66,5 +66,42 @@ void main() {
       final orderBy = verification.captured.single as List<OrderBy>;
       expect(orderBy.single.field, 'startDate');
     });
+
+    test('グループIDで全ての旅行エントリが正常に取得されること', () async {
+      const groupId = 'group-id';
+      final expectedTripEntries = [
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupId,
+          year: 2023,
+          startDate: DateTime(2023),
+        ),
+        TripEntryDto(
+          id: 'trip-2',
+          groupId: groupId,
+          year: 2024,
+          startDate: DateTime(2024),
+        ),
+      ];
+      when(
+        mockQueryService.getTripEntriesByGroupId(
+          groupId,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => expectedTripEntries);
+
+      final result = await usecase.executeByGroupId(groupId);
+
+      expect(result, expectedTripEntries);
+      final verification = verify(
+        mockQueryService.getTripEntriesByGroupId(
+          groupId,
+          orderBy: captureAnyNamed('orderBy'),
+        ),
+      );
+      verification.called(1);
+      final orderBy = verification.captured.single as List<OrderBy>;
+      expect(orderBy, [const OrderBy('startDate', descending: false)]);
+    });
   });
 }

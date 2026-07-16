@@ -8,6 +8,10 @@ final getTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
   return GetTripEntriesUsecase(ref.watch(tripEntryQueryServiceProvider));
 });
 
+final getMapTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
+  return GetTripEntriesUsecase(ref.watch(mapTripEntryQueryServiceProvider));
+});
+
 class GetTripEntriesUsecase {
   final TripEntryQueryService _tripEntryQueryService;
 
@@ -17,6 +21,13 @@ class GetTripEntriesUsecase {
     return await _tripEntryQueryService.getTripEntriesByGroupIdAndYear(
       groupId,
       year,
+      orderBy: [const OrderBy('startDate', descending: false)],
+    );
+  }
+
+  Future<List<TripEntryDto>> executeByGroupId(String groupId) async {
+    return await _tripEntryQueryService.getTripEntriesByGroupId(
+      groupId,
       orderBy: [const OrderBy('startDate', descending: false)],
     );
   }
