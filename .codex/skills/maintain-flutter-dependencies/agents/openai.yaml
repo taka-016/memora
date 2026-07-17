@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter依存関係メンテナンス"
+  short_description: "Flutter・パッケージ・Androidビルド環境をまとめて更新"
+  default_prompt: "$maintain-flutter-dependencies を使ってFlutter、Dartパッケージ、Docker、Androidビルドツールを更新し、互換性修正、検証、PR作成まで進めてください。"

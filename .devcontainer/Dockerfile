@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   xclip \
   openssh-server \
   procps \
+  python3-yaml \
   gnupg \
   ca-certificates \
   unzip \
