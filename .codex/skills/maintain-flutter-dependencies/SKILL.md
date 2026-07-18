@@ -74,11 +74,13 @@ Flutter/DartパッケージのAPIや移行方法を調べる場合は、AGENTS.m
 影響源に近い順で更新する。
 
 1. `.devcontainer/Dockerfile` のFlutter SDKを更新する。
-2. Dart/Flutter SDK制約を、新しいFlutter同梱SDKと整合させる。
-3. `flutter pub upgrade --major-versions` を使い、直接依存と開発依存の制約およびlockfileを更新する。
-4. `flutter pub outdated` を再実行し、残件を確認する。
-5. 必要なAndroidビルド環境を互換性マトリクスに沿って更新する。
-6. devcontainerとAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
+2. devcontainerを再ビルドするか更新後のFlutter SDKを一時導入し、現在のシェルが参照するSDKを更新後の版へ切り替える。
+3. `flutter --version` と `dart --version` を実行し、`.devcontainer/Dockerfile` で指定したFlutter版と同梱Dart版に一致することを確認する。一致しない場合は、以降のpub操作へ進まない。
+4. Dart/Flutter SDK制約を、新しいFlutter同梱SDKと整合させる。
+5. `flutter pub upgrade --major-versions` を使い、直接依存と開発依存の制約およびlockfileを更新する。
+6. `flutter pub outdated` を再実行し、残件を確認する。
+7. 必要なAndroidビルド環境を互換性マトリクスに沿って更新する。
+8. devcontainerとAndroidプロジェクトで重複指定するNDK、JDKなどを一致させる。
 
 一度に原因を見失わないよう、Flutter/SDK、Dartパッケージ、Androidツールの境界ごとに差分とコマンド結果を確認する。`pubspec.lock` はアプリケーションの再現可能なビルドに必要なため更新対象に含める。
 
