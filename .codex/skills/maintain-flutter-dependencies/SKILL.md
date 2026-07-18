@@ -116,7 +116,8 @@ flutter build apk --debug
 
 - `./check.sh` にエラー、予期しないExceptionログ、エラーログがない。
 - Androidビルドが更新後のGradle Wrapper、AGP、Kotlin、JDK、SDK、NDKを実際に使用して成功する。
-- Dockerが利用可能なら `.devcontainer/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
+- Dockerが利用可能なら検証専用の明示的なタグを付けて `.devcontainer/Dockerfile` をビルドし、少なくともFlutterとAndroid SDKの導入が成功する。
+- 検証用Dockerイメージ内の確認がすべて成功したら、結果を記録した直後に `docker image rm <検証専用タグ>` でそのイメージだけを削除する。`docker image prune` や `docker system prune` など、対象を広げる削除コマンドは使わない。
 - Dockerをビルドできない環境では、Dockerfileの指定値とAndroid側の整合を静的に確認し、未実施の検証を明記する。
 - 署名情報が利用できる場合は `./tools/ci/release_android_apk.sh` も実行する。利用できない場合はdebug APK成功をAndroid検証とする。
 
