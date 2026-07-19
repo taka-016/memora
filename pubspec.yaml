@@ -45,7 +45,7 @@ dependencies:
   flutter_riverpod: ^3.3.2
   flutter_hooks: ^0.21.3+1
   hooks_riverpod: ^3.3.2
-  geocoding: ^4.0.0
+  geocoding: ^5.0.0
   share_plus: ^13.2.0
   logger: ^2.5.0
   firebase_crashlytics: ^5.2.4
