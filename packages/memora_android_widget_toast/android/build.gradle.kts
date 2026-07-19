@@ -12,7 +12,7 @@ if (agpMajor < 9) {
 
 android {
     namespace = "com.example.memora.android_widget_toast"
-    compileSdk = 35
+    compileSdk = 36
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
