@@ -89,8 +89,8 @@ configurations.all {
 }
 
 dependencies {
-    implementation("com.google.android.libraries.places:places:5.1.1")
+    implementation("com.google.android.libraries.places:places:5.3.0")
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("androidx.glance:glance-material3:1.1.1")
-    implementation("androidx.work:work-runtime:2.10.2")
+    implementation("androidx.work:work-runtime:2.11.2")
 }
