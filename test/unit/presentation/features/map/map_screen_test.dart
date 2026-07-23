@@ -102,9 +102,11 @@ void main() {
     ) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 600);
+      tester.view.padding = const FakeViewPadding(top: 24, bottom: 48);
       tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 48);
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetPadding);
       addTearDown(tester.view.resetViewPadding);
 
       await tester.pumpWidget(buildTestWidget());
