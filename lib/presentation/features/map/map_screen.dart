@@ -167,34 +167,39 @@ class MapScreen extends HookConsumerWidget {
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    return MapViewFactory.create(mapViewType).createMapView(
-      locations: locations.value,
-      focusedLocation: focusedLocation.value,
-      locationDetailBuilder:
-          (location, onClose, {onPreviousLocation, onNextLocation}) {
-            final matchingLocations = locations.value
-                .where((item) => _hasSameCoordinate(item, location))
-                .toList(growable: false);
-            final tripIds = matchingLocations
-                .map((item) => item.tripId)
-                .toSet();
-            final matchingTrips = trips.value
-                .where((trip) => tripIds.contains(trip.id))
-                .toList(growable: false);
-            return MapPinBottomSheet(
-              location: location,
-              trips: matchingTrips,
-              hasTripLoadError: matchingLocations.any(
-                (item) => failedTripGroupIds.value.contains(item.groupId),
-              ),
-              onTripTapped: handleTripTapped,
-              onClose: onClose,
-              onPreviousLocation: onPreviousLocation,
-              onNextLocation: onNextLocation,
-            );
-          },
-      locationDetailBottomSheetHeight: MapPinBottomSheet.height,
-      isReadOnly: true,
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      child: MapViewFactory.create(mapViewType).createMapView(
+        locations: locations.value,
+        focusedLocation: focusedLocation.value,
+        locationDetailBuilder:
+            (location, onClose, {onPreviousLocation, onNextLocation}) {
+              final matchingLocations = locations.value
+                  .where((item) => _hasSameCoordinate(item, location))
+                  .toList(growable: false);
+              final tripIds = matchingLocations
+                  .map((item) => item.tripId)
+                  .toSet();
+              final matchingTrips = trips.value
+                  .where((trip) => tripIds.contains(trip.id))
+                  .toList(growable: false);
+              return MapPinBottomSheet(
+                location: location,
+                trips: matchingTrips,
+                hasTripLoadError: matchingLocations.any(
+                  (item) => failedTripGroupIds.value.contains(item.groupId),
+                ),
+                onTripTapped: handleTripTapped,
+                onClose: onClose,
+                onPreviousLocation: onPreviousLocation,
+                onNextLocation: onNextLocation,
+              );
+            },
+        locationDetailBottomSheetHeight: MapPinBottomSheet.height,
+        isReadOnly: true,
+      ),
     );
   }
 }
