@@ -97,6 +97,25 @@ void main() {
       expect(find.byType(PlaceholderMapView), findsOneWidget);
     });
 
+    testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.viewPadding = const FakeViewPadding(top: 24, bottom: 48);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetViewPadding);
+
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      final mapRect = tester.getRect(find.byKey(const Key('map_view')));
+
+      expect(mapRect.top, 0);
+      expect(mapRect.bottom, 552);
+    });
+
     testWidgets('所属グループごとのlocationsを取得する', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
