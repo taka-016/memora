@@ -97,9 +97,7 @@ void main() {
       expect(find.byType(PlaceholderMapView), findsOneWidget);
     });
 
-    testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (
-      tester,
-    ) async {
+    testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 600);
       tester.view.padding = const FakeViewPadding(top: 24, bottom: 48);
