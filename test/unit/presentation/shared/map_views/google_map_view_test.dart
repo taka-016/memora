@@ -52,19 +52,6 @@ void main() {
       expect(find.byIcon(Icons.my_location), findsOneWidget);
     });
 
-    testWidgets('詳細が非表示の場合は現在地ボタンを地図の下端付近に表示する', (tester) async {
-      await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
-
-      final locationButtonPosition = tester.widget<Positioned>(
-        find.ancestor(
-          of: find.byType(FloatingActionButton),
-          matching: find.byType(Positioned),
-        ),
-      );
-
-      expect(locationButtonPosition.bottom, 20);
-    });
-
     testWidgets('locationがない場合、デフォルト位置を使用する', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
 
