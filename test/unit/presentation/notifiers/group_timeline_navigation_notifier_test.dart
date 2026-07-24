@@ -409,6 +409,34 @@ void main() {
       );
     });
 
+    test('ウィジェットから旅行管理画面へ直接遷移して戻ると年表の再読込が実行される', () async {
+      var refreshCount = 0;
+      final notifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      notifier.showGroupTimeline(testGroupWithMembers);
+      final timeline = container
+          .read(groupTimelineNavigationNotifierProvider)
+          .groupTimelineInstance!;
+      notifier.showTripManagement(
+        testGroupWithMembers.id,
+        2024,
+        initialTripId: 'trip-1',
+      );
+      timeline.onSetRefreshCallback?.call(() async {
+        refreshCount++;
+      });
+      await Future<void>(() {});
+
+      notifier.handleBackNavigation();
+
+      expect(
+        container.read(groupTimelineNavigationNotifierProvider).destination,
+        const GroupTimelineOverviewDestination(),
+      );
+      expect(refreshCount, 1);
+    });
+
     test('DVCポイント計算画面に遷移できる', () {
       // Arrange
       final notifier = container.read(
