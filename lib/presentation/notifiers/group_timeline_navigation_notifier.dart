@@ -142,8 +142,7 @@ class GroupTimelineNavigationNotifier
       onBackPressed: showGroupList,
       onSetRefreshCallback: (callback) {
         Future(() {
-          if (state.destination is! GroupTimelineOverviewDestination ||
-              state.groupTimelineInstance != groupTimeline) {
+          if (state.groupTimelineInstance != groupTimeline) {
             return;
           }
           state = state.copyWith(refreshGroupTimeline: callback);
