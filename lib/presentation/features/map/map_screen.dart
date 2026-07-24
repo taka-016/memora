@@ -167,7 +167,7 @@ class MapScreen extends HookConsumerWidget {
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    return MapViewFactory.create(mapViewType).createMapView(
+    final mapView = MapViewFactory.create(mapViewType).createMapView(
       locations: locations.value,
       focusedLocation: focusedLocation.value,
       locationDetailBuilder:
@@ -196,6 +196,8 @@ class MapScreen extends HookConsumerWidget {
       locationDetailBottomSheetHeight: MapPinBottomSheet.height,
       isReadOnly: true,
     );
+
+    return SafeArea(top: false, left: false, right: false, child: mapView);
   }
 }
 

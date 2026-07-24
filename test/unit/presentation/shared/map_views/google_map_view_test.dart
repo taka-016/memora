@@ -233,13 +233,6 @@ void main() {
             .height,
         220,
       );
-      final locationButtonPosition = tester.widget<Positioned>(
-        find.ancestor(
-          of: find.byType(FloatingActionButton),
-          matching: find.byType(Positioned),
-        ),
-      );
-      expect(locationButtonPosition.bottom, 240);
     });
 
     testWidgets('ボトムシートの前後ボタンで取得順のピンへ循環移動する', (tester) async {
