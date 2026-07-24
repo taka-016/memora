@@ -246,10 +246,12 @@ class GoogleMapView extends HookConsumerWidget {
     }
 
     Widget buildLocationButton() {
+      final bottomOffset = isBottomSheetVisible.value
+          ? (locationDetailBottomSheetHeight ?? 160) + 20
+          : 20.0;
+
       return Positioned(
-        bottom: isBottomSheetVisible.value
-            ? (locationDetailBottomSheetHeight ?? 160) + 20
-            : 20,
+        bottom: bottomOffset,
         right: 4,
         child: FloatingActionButton(
           heroTag: 'my_location_fab',
