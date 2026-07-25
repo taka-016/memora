@@ -24,7 +24,6 @@
 - 3. 既存データ構造を維持したAndroid内部SQLite DBを構築する
   - `group_members`の既存データに保存されている`orderIndex`をER図へ追記する
   - `orderIndex`の反映漏れ以外はER図のテーブル、項目、主キー、外部キー、関連を変更しない
-  - `group_members`へ`groupId + memberId`の一意制約は追加しない
   - Firestoreの既存Collection・フィールド構造を変更せず、ER図と現在のFirestore Mapperを基準にSQLiteスキーマを定義する
   - Context7で最新の公式ドキュメントを確認してからDriftと必要な関連パッケージを追加する
   - Android内部ストレージにSQLiteファイルを作成し、DBの初期化、終了、バージョン管理を行う
