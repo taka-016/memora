@@ -201,43 +201,12 @@ class MapScreen extends HookConsumerWidget {
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    final groupSelector = ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 240),
-      child: PopupMenuButton<String>(
-        key: const Key('map_group_selector'),
-        tooltip: '表示するグループを選択',
-        initialValue: selectedGroup.id,
-        onSelected: (groupId) {
-          selectedGroupState.value = groups.firstWhere(
-            (group) => group.id == groupId,
-          );
-        },
-        itemBuilder: (context) {
-          return [
-            for (final group in groups)
-              PopupMenuItem<String>(
-                value: group.id,
-                child: Text(group.name, overflow: TextOverflow.ellipsis),
-              ),
-          ];
-        },
-        child: Chip(
-          visualDensity: VisualDensity.compact,
-          label: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  selectedGroup.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(Icons.arrow_drop_down, size: 20),
-            ],
-          ),
-        ),
-      ),
+    final groupSelector = _MapGroupSelector(
+      groups: groups,
+      selectedGroup: selectedGroup,
+      onSelected: (group) {
+        selectedGroupState.value = group;
+      },
     );
 
     final mapView = KeyedSubtree(
@@ -282,20 +251,81 @@ class MapScreen extends HookConsumerWidget {
           if (isGroupDataLoading.value)
             const Center(child: CircularProgressIndicator())
           else if (locations.value.isEmpty)
-            const Positioned(
-              left: 16,
-              right: 16,
-              bottom: 24,
-              child: Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text('このグループには場所がありません'),
-                  ),
+            const _EmptyGroupLocationsMessage(),
+        ],
+      ),
+    );
+  }
+}
+
+class _MapGroupSelector extends StatelessWidget {
+  const _MapGroupSelector({
+    required this.groups,
+    required this.selectedGroup,
+    required this.onSelected,
+  });
+
+  final List<GroupDto> groups;
+  final GroupDto selectedGroup;
+  final ValueChanged<GroupDto> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 240),
+      child: PopupMenuButton<String>(
+        key: const Key('map_group_selector'),
+        tooltip: '表示するグループを選択',
+        initialValue: selectedGroup.id,
+        onSelected: (groupId) {
+          onSelected(groups.firstWhere((group) => group.id == groupId));
+        },
+        itemBuilder: (context) {
+          return [
+            for (final group in groups)
+              PopupMenuItem<String>(
+                value: group.id,
+                child: Text(group.name, overflow: TextOverflow.ellipsis),
+              ),
+          ];
+        },
+        child: Chip(
+          visualDensity: VisualDensity.compact,
+          label: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  selectedGroup.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-        ],
+              const Icon(Icons.arrow_drop_down, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyGroupLocationsMessage extends StatelessWidget {
+  const _EmptyGroupLocationsMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Positioned(
+      left: 16,
+      right: 16,
+      bottom: 24,
+      child: Center(
+        child: Card(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text('このグループには場所がありません'),
+          ),
+        ),
       ),
     );
   }
