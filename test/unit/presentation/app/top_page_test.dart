@@ -1417,6 +1417,12 @@ void main() {
         await tester.tap(find.text(target.label));
         await tester.pumpAndSettle();
 
+        if (target.label == '地図表示') {
+          expect(find.byKey(const Key('map_group_list')), findsOneWidget);
+          await tester.tap(find.text('グループ1'));
+          await tester.pumpAndSettle();
+        }
+
         expect(target.finder, findsOneWidget);
 
         await tester.binding.handlePopRoute();
