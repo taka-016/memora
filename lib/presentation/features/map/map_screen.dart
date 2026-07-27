@@ -323,7 +323,7 @@ class _EmptyGroupLocationsMessage extends StatelessWidget {
         child: Card(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text('このグループには場所がありません'),
+            child: Text('このグループには訪問場所がありません'),
           ),
         ),
       ),
