@@ -19,6 +19,7 @@ abstract class MapViewBuilder {
     ValueChanged<LocationDto>? onLocationTapped,
     LocationDto? selectedLocation,
     LocationDto? focusedLocation,
+    Widget? topLeadingOverlay,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
     double? locationDetailBottomSheetHeight,

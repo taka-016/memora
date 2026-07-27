@@ -16,12 +16,13 @@ class PlaceholderMapViewBuilder implements MapViewBuilder {
     ValueChanged<LocationDto>? onLocationTapped,
     LocationDto? selectedLocation,
     LocationDto? focusedLocation,
+    Widget? topLeadingOverlay,
     bool highlightSelectedLocation = false,
     LocationDetailBuilder? locationDetailBuilder,
     double? locationDetailBottomSheetHeight,
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
-    return const PlaceholderMapView();
+    return PlaceholderMapView(topLeadingOverlay: topLeadingOverlay);
   }
 }

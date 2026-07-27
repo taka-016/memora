@@ -22,6 +22,7 @@ class GoogleMapView extends HookConsumerWidget {
   final ValueChanged<LocationDto>? onLocationTapped;
   final LocationDto? selectedLocation;
   final LocationDto? focusedLocation;
+  final Widget? topLeadingOverlay;
   final bool highlightSelectedLocation;
   final LocationDetailBuilder? locationDetailBuilder;
   final double? locationDetailBottomSheetHeight;
@@ -36,6 +37,7 @@ class GoogleMapView extends HookConsumerWidget {
     this.onLocationTapped,
     this.selectedLocation,
     this.focusedLocation,
+    this.topLeadingOverlay,
     this.highlightSelectedLocation = false,
     this.locationDetailBuilder,
     this.locationDetailBottomSheetHeight,
@@ -245,6 +247,14 @@ class GoogleMapView extends HookConsumerWidget {
       );
     }
 
+    Widget buildTopLeadingOverlay() {
+      final overlay = topLeadingOverlay;
+      if (overlay == null) {
+        return const SizedBox.shrink();
+      }
+      return Positioned(top: 68, left: 16, child: overlay);
+    }
+
     Widget buildLocationButton() {
       return Positioned(
         bottom: 112,
@@ -296,6 +306,7 @@ class GoogleMapView extends HookConsumerWidget {
       child: Stack(
         children: [
           buildGoogleMap(),
+          buildTopLeadingOverlay(),
           buildSearchBar(),
           buildLocationButton(),
           buildBottomSheet(),
