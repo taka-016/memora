@@ -458,7 +458,7 @@ void main() {
       );
       expect(switchedGoogleMap.markers, isEmpty);
       expect(find.text('沖縄旅行2024'), findsNothing);
-      expect(find.text('このグループには場所がありません'), findsOneWidget);
+      expect(find.text('このグループには訪問場所がありません'), findsOneWidget);
       verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
       verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(1);
