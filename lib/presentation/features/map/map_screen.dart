@@ -251,7 +251,7 @@ class MapScreen extends HookConsumerWidget {
           if (isGroupDataLoading.value)
             const Center(child: CircularProgressIndicator())
           else if (locations.value.isEmpty)
-            const _EmptyGroupLocationsMessage(),
+            const _NoVisitLocationsMessage(),
         ],
       ),
     );
@@ -310,8 +310,8 @@ class _MapGroupSelector extends StatelessWidget {
   }
 }
 
-class _EmptyGroupLocationsMessage extends StatelessWidget {
-  const _EmptyGroupLocationsMessage();
+class _NoVisitLocationsMessage extends StatelessWidget {
+  const _NoVisitLocationsMessage();
 
   @override
   Widget build(BuildContext context) {
