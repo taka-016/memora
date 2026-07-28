@@ -394,6 +394,29 @@ void main() {
       expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
     });
 
+    testWidgets('訪問場所取得失敗時はエラーを表示し再読み込みできる', (tester) async {
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenThrow(TestException('取得失敗'));
+
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問場所の取得に失敗しました'), findsOneWidget);
+      expect(find.text('このグループには訪問場所がありません'), findsNothing);
+      expect(find.text('再読み込み'), findsOneWidget);
+
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const []);
+      await tester.tap(find.text('再読み込み'));
+      await tester.pumpAndSettle();
+
+      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(2);
+      expect(find.text('訪問場所の取得に失敗しました'), findsNothing);
+      expect(find.text('このグループには訪問場所がありません'), findsOneWidget);
+    });
+
     testWidgets('地図上で別グループへ切り替えると詳細を閉じて対象ピンだけを表示する', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
