@@ -75,6 +75,10 @@ class MapScreen extends HookConsumerWidget {
       ];
     }
 
+    void retryGroupDataLoad() {
+      groupDataLoadGeneration.value++;
+    }
+
     useEffect(
       () {
         final group = selectedGroup;
@@ -269,11 +273,7 @@ class MapScreen extends HookConsumerWidget {
           if (isGroupDataLoading.value)
             const Center(child: CircularProgressIndicator())
           else if (hasLocationLoadError.value)
-            _VisitLocationsLoadErrorMessage(
-              onRetry: () {
-                groupDataLoadGeneration.value++;
-              },
-            )
+            _VisitLocationsLoadErrorMessage(onRetry: retryGroupDataLoad)
           else if (locations.value.isEmpty)
             const _NoVisitLocationsMessage(),
         ],
