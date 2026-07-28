@@ -53,7 +53,9 @@ class MapScreen extends HookConsumerWidget {
     final locations = useState<List<LocationDto>>([]);
     final trips = useState<List<TripEntryDto>>([]);
     final hasTripLoadError = useState(false);
+    final hasLocationLoadError = useState(false);
     final isGroupDataLoading = useState(false);
+    final groupDataLoadGeneration = useState(0);
     final focusedLocation = useState<LocationDto?>(null);
     final latestGroupLoad = useRef<Object?>(null);
     final groups = groupsSnapshot.data ?? const <GroupDto>[];
@@ -87,6 +89,7 @@ class MapScreen extends HookConsumerWidget {
           locations.value = const [];
           trips.value = const [];
           hasTripLoadError.value = false;
+          hasLocationLoadError.value = false;
           focusedLocation.value = null;
 
           try {
@@ -118,6 +121,16 @@ class MapScreen extends HookConsumerWidget {
                 stackTrace: stack,
               );
             }
+          } catch (e, stack) {
+            if (latestGroupLoad.value != loadToken) {
+              return;
+            }
+            hasLocationLoadError.value = true;
+            logger.e(
+              'MapScreen.loadLocations: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
           } finally {
             if (latestGroupLoad.value == loadToken) {
               isGroupDataLoading.value = false;
@@ -130,7 +143,12 @@ class MapScreen extends HookConsumerWidget {
           }
         };
       },
-      [getLocationsByGroupIdUsecase, getTripEntriesUsecase, selectedGroup?.id],
+      [
+        getLocationsByGroupIdUsecase,
+        getTripEntriesUsecase,
+        selectedGroup?.id,
+        groupDataLoadGeneration.value,
+      ],
     );
 
     if (selectedGroup == null) {
@@ -250,6 +268,12 @@ class MapScreen extends HookConsumerWidget {
           mapView,
           if (isGroupDataLoading.value)
             const Center(child: CircularProgressIndicator())
+          else if (hasLocationLoadError.value)
+            _VisitLocationsLoadErrorMessage(
+              onRetry: () {
+                groupDataLoadGeneration.value++;
+              },
+            )
           else if (locations.value.isEmpty)
             const _NoVisitLocationsMessage(),
         ],
@@ -324,6 +348,33 @@ class _NoVisitLocationsMessage extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text('このグループには訪問場所がありません'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _VisitLocationsLoadErrorMessage extends StatelessWidget {
+  const _VisitLocationsLoadErrorMessage({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned.fill(
+      child: Center(
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('訪問場所の取得に失敗しました'),
+                const SizedBox(height: 16),
+                ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+              ],
+            ),
           ),
         ),
       ),
