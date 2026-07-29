@@ -920,7 +920,9 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsNothing);
     });
 
-    testWidgets('メニューから「地図表示」を選択すると、マップ画面が表示される', (WidgetTester tester) async {
+    testWidgets('メニューから地図表示を選択すると、グループ選択後に対象地図を表示する', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
@@ -942,9 +944,14 @@ void main() {
       await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
-      // Assert
+      expect(find.byKey(const Key('map_group_list')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
       expect(find.byKey(const Key('map_view')), findsOneWidget);
-      expect(find.byKey(const Key('group_list')), findsNothing);
+      expect(find.byKey(const Key('map_group_list')), findsNothing);
     });
 
     testWidgets('グループ年表の「DVCポイント利用」の編集をタップすると計算画面に遷移する', (
@@ -1409,6 +1416,12 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.text(target.label));
         await tester.pumpAndSettle();
+
+        if (target.label == '地図表示') {
+          expect(find.byKey(const Key('map_group_list')), findsOneWidget);
+          await tester.tap(find.text('グループ1'));
+          await tester.pumpAndSettle();
+        }
 
         expect(target.finder, findsOneWidget);
 

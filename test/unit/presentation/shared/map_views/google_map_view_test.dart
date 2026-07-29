@@ -52,6 +52,34 @@ void main() {
       expect(find.byIcon(Icons.my_location), findsOneWidget);
     });
 
+    testWidgets('文字サイズを拡大してもグループ選択は検索欄の下に表示される', (tester) async {
+      await tester.pumpWidget(
+        _createApp(
+          const MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(2)),
+            child: GoogleMapView(
+              locations: [],
+              topLeadingOverlay: SizedBox(
+                key: Key('test_group_selector'),
+                width: 120,
+                height: 32,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final searchFieldRect = tester.getRect(find.byType(TextField));
+      final groupSelectorRect = tester.getRect(
+        find.byKey(const Key('test_group_selector')),
+      );
+
+      expect(
+        groupSelectorRect.top,
+        greaterThanOrEqualTo(searchFieldRect.bottom + 8),
+      );
+    });
+
     testWidgets('locationがない場合、デフォルト位置を使用する', (tester) async {
       await tester.pumpWidget(_createApp(const GoogleMapView(locations: [])));
 

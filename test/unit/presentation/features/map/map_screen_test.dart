@@ -34,6 +34,12 @@ import 'map_screen_test.mocks.dart';
 ])
 void main() {
   const testMember = MemberDto(id: 'test-member-id', displayName: 'テストメンバー');
+  const testGroup = GroupDto(
+    id: 'group1',
+    ownerId: 'owner',
+    name: '家族',
+    members: [],
+  );
 
   group('MapScreen', () {
     late MockGetGroupsWithMembersUsecase mockGetGroupsWithMembersUsecase;
@@ -50,7 +56,7 @@ void main() {
       mockUpdateTripEntryUsecase = MockUpdateTripEntryUsecase();
       when(
         mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const []);
+      ).thenAnswer((_) async => const [testGroup]);
       when(
         mockGetLocationsByGroupIdUsecase.execute(any),
       ).thenAnswer((_) async => const []);
@@ -90,11 +96,13 @@ void main() {
       );
     }
 
-    testWidgets('MapViewが表示される', (tester) async {
+    testWidgets('所属グループが1件の場合は選択を省略して地図とグループ名を表示する', (tester) async {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
       expect(find.byType(PlaceholderMapView), findsOneWidget);
+      expect(find.byKey(const Key('map_group_selector')), findsOneWidget);
+      expect(find.text('家族'), findsOneWidget);
     });
 
     testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (tester) async {
@@ -116,7 +124,7 @@ void main() {
       expect(mapRect.bottom, 552);
     });
 
-    testWidgets('所属グループごとのlocationsを取得する', (tester) async {
+    testWidgets('所属グループが2件以上の場合は選択後に対象グループの地図を表示する', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
         GroupDto(id: 'group2', ownerId: 'owner', name: '友人', members: []),
@@ -125,7 +133,7 @@ void main() {
         LocationDto(
           id: 'location1',
           tripId: 'trip1',
-          groupId: 'group1',
+          groupId: 'group2',
           latitude: 35.6812,
           longitude: 139.7671,
           name: '東京駅',
@@ -136,20 +144,26 @@ void main() {
         mockGetGroupsWithMembersUsecase.execute(testMember),
       ).thenAnswer((_) async => groups);
       when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => locations);
-      when(
         mockGetLocationsByGroupIdUsecase.execute('group2'),
-      ).thenAnswer((_) async => const []);
+      ).thenAnswer((_) async => locations);
 
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('map_group_list')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+
+      await tester.tap(find.text('友人'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('map_view')), findsOneWidget);
+      expect(find.byKey(const Key('map_group_list')), findsNothing);
+      expect(find.text('友人'), findsOneWidget);
       verify(mockGetGroupsWithMembersUsecase.execute(testMember)).called(1);
-      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
       verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
-      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(1);
       verify(mockGetTripEntriesUsecase.executeByGroupId('group2')).called(1);
+      verifyNever(mockGetLocationsByGroupIdUsecase.execute('group1'));
+      verifyNever(mockGetTripEntriesUsecase.executeByGroupId('group1'));
     });
 
     testWidgets('locations取得後の初回のみ1件目のlocationへカメラ移動しボトムシートは表示しない', (
@@ -380,7 +394,30 @@ void main() {
       expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
     });
 
-    testWidgets('別グループの旅行取得失敗時も取得済みグループの旅行を表示する', (tester) async {
+    testWidgets('訪問場所取得失敗時はエラーを表示し再読み込みできる', (tester) async {
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenThrow(TestException('取得失敗'));
+
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.text('訪問場所の取得に失敗しました'), findsOneWidget);
+      expect(find.text('このグループには訪問場所がありません'), findsNothing);
+      expect(find.text('再読み込み'), findsOneWidget);
+
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const []);
+      await tester.tap(find.text('再読み込み'));
+      await tester.pumpAndSettle();
+
+      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(2);
+      expect(find.text('訪問場所の取得に失敗しました'), findsNothing);
+      expect(find.text('このグループには訪問場所がありません'), findsOneWidget);
+    });
+
+    testWidgets('地図上で別グループへ切り替えると詳細を閉じて対象ピンだけを表示する', (tester) async {
       const groups = [
         GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
         GroupDto(id: 'group2', ownerId: 'owner', name: '友人', members: []),
@@ -392,14 +429,6 @@ void main() {
         latitude: 26.217,
         longitude: 127.719,
         name: '首里城',
-      );
-      const group2Location = LocationDto(
-        id: 'location2',
-        tripId: 'trip2',
-        groupId: 'group2',
-        latitude: 35.6812,
-        longitude: 139.7671,
-        name: '東京駅',
       );
       const trip = TripEntryDto(
         id: 'trip1',
@@ -415,17 +444,25 @@ void main() {
       ).thenAnswer((_) async => const [group1Location]);
       when(
         mockGetLocationsByGroupIdUsecase.execute('group2'),
-      ).thenAnswer((_) async => const [group2Location]);
+      ).thenAnswer((_) async => const []);
       when(
         mockGetTripEntriesUsecase.executeByGroupId('group1'),
       ).thenAnswer((_) async => const [trip]);
       when(
         mockGetTripEntriesUsecase.executeByGroupId('group2'),
-      ).thenThrow(TestException('取得失敗'));
+      ).thenAnswer((_) async => const []);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
+      expect(find.byKey(const Key('map_group_list')), findsOneWidget);
+
+      await tester.tap(find.text('家族'));
+      await tester.pumpAndSettle();
+
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      expect(googleMap.markers.map((marker) => marker.markerId.value), [
+        'location1',
+      ]);
       googleMap.markers
           .singleWhere((marker) => marker.markerId.value == 'location1')
           .onTap
@@ -433,7 +470,22 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('沖縄旅行2024'), findsOneWidget);
-      expect(find.text('旅行情報の取得に失敗しました'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('map_group_selector')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('友人').last);
+      await tester.pumpAndSettle();
+
+      final switchedGoogleMap = tester.widget<GoogleMap>(
+        find.byType(GoogleMap),
+      );
+      expect(switchedGoogleMap.markers, isEmpty);
+      expect(find.text('沖縄旅行2024'), findsNothing);
+      expect(find.text('このグループには訪問場所がありません'), findsOneWidget);
+      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
+      verify(mockGetLocationsByGroupIdUsecase.execute('group2')).called(1);
+      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(1);
+      verify(mockGetTripEntriesUsecase.executeByGroupId('group2')).called(1);
     });
 
     testWidgets('旅行名タップで地図上に旅行編集を開き閉じると選択中の地図へ戻る', (tester) async {
