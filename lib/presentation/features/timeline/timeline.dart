@@ -377,10 +377,15 @@ class Timeline extends HookConsumerWidget {
     }
 
     Widget buildGroupTitle() {
-      return Center(
-        child: Text(
-          groupWithMembers.name,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 48),
+        child: Center(
+          child: Text(
+            groupWithMembers.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
         ),
       );
     }
