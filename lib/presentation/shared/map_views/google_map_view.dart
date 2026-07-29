@@ -233,26 +233,28 @@ class GoogleMapView extends HookConsumerWidget {
       );
     }
 
-    Widget buildSearchBar() {
+    Widget buildTopContent() {
+      final overlay = topLeadingOverlay;
       return Positioned(
         top: 16,
         left: 16,
         right: 16,
-        child: CustomSearchBar(
-          hintText: '場所を検索',
-          onCandidateSelected: (candidate) async {
-            await handleSearchedLocationSelected(candidate);
-          },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: CustomSearchBar(
+                hintText: '場所を検索',
+                onCandidateSelected: (candidate) async {
+                  await handleSearchedLocationSelected(candidate);
+                },
+              ),
+            ),
+            if (overlay != null) ...[const SizedBox(height: 8), overlay],
+          ],
         ),
       );
-    }
-
-    Widget buildTopLeadingOverlay() {
-      final overlay = topLeadingOverlay;
-      if (overlay == null) {
-        return const SizedBox.shrink();
-      }
-      return Positioned(top: 68, left: 16, child: overlay);
     }
 
     Widget buildLocationButton() {
@@ -306,8 +308,7 @@ class GoogleMapView extends HookConsumerWidget {
       child: Stack(
         children: [
           buildGoogleMap(),
-          buildTopLeadingOverlay(),
-          buildSearchBar(),
+          buildTopContent(),
           buildLocationButton(),
           buildBottomSheet(),
         ],
