@@ -378,7 +378,9 @@ class Timeline extends HookConsumerWidget {
 
     Widget buildGroupTitle() {
       return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 48),
+        padding: const EdgeInsets.symmetric(
+          horizontal: kMinInteractiveDimension,
+        ),
         child: Center(
           child: Text(
             groupWithMembers.name,
