@@ -87,12 +87,12 @@ void main() {
         of: find.byType(DropdownButtonFormField<String>),
         matching: find.byType(DropdownButton<String>),
       );
+      final groupDropdown = tester.widget<DropdownButton<String>>(
+        groupDropdownFinder,
+      );
       final groupNameText = tester.widget<Text>(find.text(longGroupName));
 
-      expect(
-        tester.widget<DropdownButton<String>>(groupDropdownFinder).isExpanded,
-        isTrue,
-      );
+      expect(groupDropdown.isExpanded, isTrue);
       expect(groupNameText.maxLines, 1);
       expect(groupNameText.overflow, TextOverflow.ellipsis);
       expect(tester.takeException(), isNull);
