@@ -59,6 +59,45 @@ void main() {
       expect(storage.targetGroupId, 'group-b');
     });
 
+    testWidgets('Androidウィジェットの長い表示対象グループ名は1行で省略表示される', (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      const longGroupName = 'とても長いグループ名とても長いグループ名とても長いグループ名';
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          groups: const [
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: longGroupName,
+              members: [],
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final groupDropdownFinder = find.descendant(
+        of: find.byType(DropdownButtonFormField<String>),
+        matching: find.byType(DropdownButton<String>),
+      );
+      final groupNameText = tester.widget<Text>(find.text(longGroupName));
+
+      expect(
+        tester.widget<DropdownButton<String>>(groupDropdownFinder).isExpanded,
+        isTrue,
+      );
+      expect(groupNameText.maxLines, 1);
+      expect(groupNameText.overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('Androidウィジェットの表示対象グループを未選択にすると画面に即時反映される', (tester) async {
       final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
