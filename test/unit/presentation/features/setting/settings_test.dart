@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsRole;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -91,10 +93,31 @@ void main() {
         groupDropdownFinder,
       );
       final groupNameText = tester.widget<Text>(find.text(longGroupName));
+      final groupDropdownRect = tester.getRect(
+        find.byType(DropdownButtonFormField<String>),
+      );
 
       expect(groupDropdown.isExpanded, isTrue);
       expect(groupNameText.maxLines, 1);
       expect(groupNameText.overflow, TextOverflow.ellipsis);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+
+      final dropdownMenuFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.role == SemanticsRole.menu,
+      );
+      final dropdownMenuRect = tester.getRect(dropdownMenuFinder);
+
+      expect(
+        dropdownMenuRect.left,
+        greaterThanOrEqualTo(groupDropdownRect.left),
+      );
+      expect(
+        dropdownMenuRect.right,
+        lessThanOrEqualTo(groupDropdownRect.right),
+      );
       expect(tester.takeException(), isNull);
     });
 
