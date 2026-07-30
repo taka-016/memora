@@ -121,6 +121,7 @@ class MyApp extends ConsumerWidget {
           backgroundColor: Colors.lightBlue,
           foregroundColor: Colors.white,
         ),
+        buttonTheme: const ButtonThemeData(alignedDropdown: true),
       ),
       locale: const Locale('ja'),
       supportedLocales: const [Locale('ja'), Locale('en')],
