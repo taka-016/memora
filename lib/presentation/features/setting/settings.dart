@@ -130,61 +130,55 @@ class _SettingsState extends ConsumerState<Settings> {
               return const Center(child: CircularProgressIndicator());
             }
             final selectedGroupId = _selectedAndroidWidgetGroupId;
-            return ButtonTheme(
-              alignedDropdown: true,
-              child: DropdownButtonFormField<String>(
-                initialValue: selectedGroupId,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: '表示対象グループ',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  const DropdownMenuItem<String>(
-                    value: null,
-                    child: Text('未選択'),
-                  ),
-                  ...groups.map(
-                    (group) => DropdownMenuItem<String>(
-                      value: group.id,
-                      child: Text(
-                        group.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+            return DropdownButtonFormField<String>(
+              initialValue: selectedGroupId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: '表示対象グループ',
+                border: OutlineInputBorder(),
+              ),
+              items: [
+                const DropdownMenuItem<String>(value: null, child: Text('未選択')),
+                ...groups.map(
+                  (group) => DropdownMenuItem<String>(
+                    value: group.id,
+                    child: Text(
+                      group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ],
-                onChanged: (groupId) async {
-                  if (groupId == selectedGroupId) {
-                    return;
-                  }
-                  if (groupId == null) {
-                    await ref
-                        .read(clearAndroidWidgetTargetGroupUsecaseProvider)
-                        .execute();
-                    _updateSelectedAndroidWidgetGroupId(null);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('ウィジェット表示対象を解除しました')),
-                    );
-                    return;
-                  }
-
+                ),
+              ],
+              onChanged: (groupId) async {
+                if (groupId == selectedGroupId) {
+                  return;
+                }
+                if (groupId == null) {
                   await ref
-                      .read(selectAndroidWidgetTargetGroupUsecaseProvider)
-                      .execute(groupId);
-                  _updateSelectedAndroidWidgetGroupId(groupId);
+                      .read(clearAndroidWidgetTargetGroupUsecaseProvider)
+                      .execute();
+                  _updateSelectedAndroidWidgetGroupId(null);
                   if (!context.mounted) {
                     return;
                   }
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ウィジェット表示対象を保存しました')),
+                    const SnackBar(content: Text('ウィジェット表示対象を解除しました')),
                   );
-                },
-              ),
+                  return;
+                }
+
+                await ref
+                    .read(selectAndroidWidgetTargetGroupUsecaseProvider)
+                    .execute(groupId);
+                _updateSelectedAndroidWidgetGroupId(groupId);
+                if (!context.mounted) {
+                  return;
+                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('ウィジェット表示対象を保存しました')),
+                );
+              },
             );
           },
         );

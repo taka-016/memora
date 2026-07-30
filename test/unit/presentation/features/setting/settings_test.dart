@@ -251,7 +251,12 @@ Widget _buildTestApp({
         _FakeItineraryItemQueryService(),
       ),
     ],
-    child: const MaterialApp(home: Settings()),
+    child: MaterialApp(
+      theme: ThemeData(
+        buttonTheme: const ButtonThemeData(alignedDropdown: true),
+      ),
+      home: const Settings(),
+    ),
   );
 }
 
