@@ -61,7 +61,7 @@ void main() {
       expect(storage.targetGroupId, 'group-b');
     });
 
-    testWidgets('Androidウィジェットの長い表示対象グループ名は1行で省略表示される', (tester) async {
+    testWidgets('Androidウィジェットの長い表示対象グループ名は省略しメニューを入力欄の幅で表示する', (tester) async {
       tester.view.physicalSize = const Size(320, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(() {
