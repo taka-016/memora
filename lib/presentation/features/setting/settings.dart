@@ -132,6 +132,7 @@ class _SettingsState extends ConsumerState<Settings> {
             final selectedGroupId = _selectedAndroidWidgetGroupId;
             return DropdownButtonFormField<String>(
               initialValue: selectedGroupId,
+              isExpanded: true,
               decoration: const InputDecoration(
                 labelText: '表示対象グループ',
                 border: OutlineInputBorder(),
@@ -141,7 +142,11 @@ class _SettingsState extends ConsumerState<Settings> {
                 ...groups.map(
                   (group) => DropdownMenuItem<String>(
                     value: group.id,
-                    child: Text(group.name),
+                    child: Text(
+                      group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ],
