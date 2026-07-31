@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsRole;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,6 +59,66 @@ void main() {
 
       expect(_selectedDropdownValue(tester), 'group-b');
       expect(storage.targetGroupId, 'group-b');
+    });
+
+    testWidgets('Androidウィジェットの長い表示対象グループ名は省略しメニューを入力欄の幅で表示する', (tester) async {
+      tester.view.physicalSize = const Size(320, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      const longGroupName = 'とても長いグループ名とても長いグループ名とても長いグループ名';
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          groups: const [
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: longGroupName,
+              members: [],
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final groupDropdownFinder = find.descendant(
+        of: find.byType(DropdownButtonFormField<String>),
+        matching: find.byType(DropdownButton<String>),
+      );
+      final groupDropdown = tester.widget<DropdownButton<String>>(
+        groupDropdownFinder,
+      );
+      final groupNameText = tester.widget<Text>(find.text(longGroupName));
+      final groupDropdownRect = tester.getRect(
+        find.byType(DropdownButtonFormField<String>),
+      );
+
+      expect(groupDropdown.isExpanded, isTrue);
+      expect(groupNameText.maxLines, 1);
+      expect(groupNameText.overflow, TextOverflow.ellipsis);
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+
+      final dropdownMenuFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics && widget.properties.role == SemanticsRole.menu,
+      );
+      final dropdownMenuRect = tester.getRect(dropdownMenuFinder);
+
+      expect(
+        dropdownMenuRect.left,
+        greaterThanOrEqualTo(groupDropdownRect.left),
+      );
+      expect(
+        dropdownMenuRect.right,
+        lessThanOrEqualTo(groupDropdownRect.right),
+      );
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('Androidウィジェットの表示対象グループを未選択にすると画面に即時反映される', (tester) async {
@@ -189,7 +251,12 @@ Widget _buildTestApp({
         _FakeItineraryItemQueryService(),
       ),
     ],
-    child: const MaterialApp(home: Settings()),
+    child: MaterialApp(
+      theme: ThemeData(
+        buttonTheme: const ButtonThemeData(alignedDropdown: true),
+      ),
+      home: const Settings(),
+    ),
   );
 }
 

@@ -111,6 +111,29 @@ void main() {
       final MaterialApp app = tester.widget(find.byType(MaterialApp));
       expect(app.locale, const Locale('ja'));
     });
+
+    testWidgets('全ドロップダウンのメニュー幅を入力域に揃える', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authNotifierProvider.overrideWith(FakeAuthNotifier.authenticated),
+            memberQueryServiceProvider.overrideWithValue(
+              mockMemberQueryService,
+            ),
+            authServiceProvider.overrideWithValue(mockAuthService),
+            groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
+            androidWidgetLaunchNotifierProvider.overrideWith(
+              () => _IdleAndroidWidgetLaunchNotifier(),
+            ),
+          ],
+          child: const app.MyApp(),
+        ),
+      );
+
+      final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
+
+      expect(materialApp.theme!.buttonTheme.alignedDropdown, isTrue);
+    });
   });
 
   group('AppClockLifecycleSync', () {
