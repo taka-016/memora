@@ -2,61 +2,86 @@
 
 ## オフライン版・オンライン版のビルド切り分け対応
 
-### 1. 各ビルドの仕様をユーザーストーリーへ反映する
+### 1. 各ビルドの仕様と対象範囲を設計資料へ反映する
 
 - オンライン版は現在のFirebase Auth、Firestore、地図、共有、招待機能を維持する
-- オフライン版はユーザー登録やログインを不要とし、Android内部SQLite DBだけで業務データを管理する
-- オフライン版では地図、共有、招待などのオンライン機能を利用できない
-- オンライン版とオフライン版はビルド時に切り分ける
+- オフライン版はユーザー登録やログインを不要とし、開発者が用意するアカウント、APIキー、サーバー、外部サービスへの通信なしで利用できるようにする
+- オフライン版はAndroid内部SQLite DBだけで業務データを管理し、機内モードでもAndroidウィジェットを含む対象機能を利用できるようにする
+- オフライン版ではアカウント管理、地図、地図を前提とする訪問場所管理、場所検索、現在地、共有、招待を利用できないことを画面上で明確にする
+- オンライン版とオフライン版は別アプリとして配布でき、同じ端末へ同時にインストールしてもデータと設定が混在しないようにする
 - アプリ内でオンライン版とオフライン版を切り替える機能は作成しない
-- SQLiteとFirestoreの間でデータを同期・移行する機能は今回作成しない
-- 有料化、Google Play Billing、オンライン利用権、無償オンライン利用の手動付与は今回の対応範囲から外す
-- 実装着手前にユーザーストーリーの内容をレビューし、今回の対応範囲を確定する
+- SQLiteとFirestoreの間の同期・移行、課金、オンライン利用権の管理は今回作成しない
+- 初回利用、利用可能機能、保存先、アプリ削除・データ消去・端末故障時のデータ消失をユーザーストーリーへ反映する
 
-### 2. ビルド時にオンライン版とオフライン版を切り替える
+### 2. Androidのリリースビルドを分離する
 
-- オンライン版またはオフライン版を指定するビルドフラグを定義する
-- ビルドフラグはコンパイル時に確定し、アプリの実行中には変更できないようにする
-- オンライン版とオフライン版それぞれのビルドコマンドを整備する
+- Android Product Flavorと各Flavor専用のエントリーポイントを定義し、アプリ種別をコンパイル時に確定する
+- オンライン版とオフライン版に異なるapplication ID、判別できるアプリ名とアイコンを設定する
+- オンライン版だけにFirebase設定、Google Services Pluginが生成するリソース、`MAPS_API_KEY`、地図・位置情報用Manifest設定を組み込む
+- オフライン版はFirebase設定と`MAPS_API_KEY`がなくてもビルドでき、release版のマージ済みManifestにインターネット・位置情報権限を含めない
+- オンライン版とオフライン版それぞれの実行・テスト・release APK作成コマンドを整備し、成果物名で判別できるようにする
+- 既存のバージョン番号と署名の運用を両方のFlavorへ適用する
 
-### 3. 外部サービスへの依存をInfrastructure層へ集約する
+### 3. 外部サービスとビルド差分をComposition Rootへ閉じ込める
 
-- Firebase、Firestore、Crashlytics、NTP、Places SDK、ネットワーク状態取得の具象型を使用している箇所を洗い出す
+- Firebase、Firestore、Crashlytics、NTP、Places SDK、地図SDK、位置情報、ネットワーク状態取得の具象型を使用している箇所を洗い出す
 - Application層とCore層には外部サービスを抽象化したインターフェースだけを配置し、具象実装をInfrastructure層へ配置する
-- `main.dart`から個別SDKの初期化処理を除き、Composition Rootで選択したInfrastructure実装だけを初期化する
-- Androidウィジェットのバックグラウンド更新と操作コールバックからFirestore具象実装への直接依存を除く
-- ロガーからCrashlyticsへの直接依存を除き、オンライン版はCrashlytics、オフライン版は端末内またはno-opの実装を構成する
-- アプリ時刻からNTPへの直接依存を除き、オンライン版はNTP、オフライン版は端末時刻の実装を構成する
-- 地図関連サービスの利用可否と利用できない理由を表す状態をApplication層に定義する
-- オフライン版では地図関連サービスを常に利用不可とし、オンライン版では既存の利用可否判定を使用する
-- Application層とCore層から禁止対象の外部サービスパッケージをimportしていないことをアーキテクチャテストで確認する
+- `main.dart`、ロガー、Androidウィジェットのバックグラウンド更新・操作コールバックから外部SDKの具象型と初期化処理を除く
+- Application層のUseCaseファイルからInfrastructure層のFactoryへのimportと依存解決用Providerを除き、Providerの構成をComposition Rootへ移す
+- `AuthType`と`DatabaseType`の可変StateProvider、およびそれらを参照する実行時切替Factoryを廃止する
+- 各FlavorのComposition Rootは、そのビルドで使用するDB、認証・現在利用者、時刻、ログ、地図・位置情報、Androidウィジェットの実装だけを初期化して注入する
+- オンライン版はFirestore、Firebase Auth、Crashlytics、NTP、地図・位置情報の既存実装を使用する
+- オフライン版はSQLite、端末時刻、端末内またはno-opのログ実装を使用し、外部サービスSDKを初期化しない
+- アプリで利用可能な機能と利用できない理由をApplication層の共通モデルで表し、Presentation層はビルドフラグや具象データソースではなく、そのモデルを参照する
+- Presentation、Application、Domain、UseCase、Androidウィジェットにビルドフラグや具象データソースによる分岐を持ち込まない
+- Domain層とApplication層が外側の層へ依存せず、Presentation層がDomain層とInfrastructure層を直接参照していないことをアーキテクチャテストで確認する
 
-### 4. Android内部SQLite DBを構築する
+### 4. オフライン版の現在利用者と利用可能機能を実装する
+
+- 認証操作と現在利用者の解決を別の責務に分離し、オフライン版にサインイン、メール確認、再認証などのダミー実装を要求しない
+- オフライン版の初回起動時に端末内の利用者IDと本人メンバーを作成し、以降は同じ利用者として復元する
+- オフライン版はログイン画面とアカウント設定を経由せずに起動し、オンライン版は既存の認証導線を維持する
+- 地図、地図を前提とする訪問場所管理、場所検索、現在地、共有、招待の入口と操作へ共通の利用可否判定を適用し、オフライン版では非表示または理由を伴う無効表示にする
+- UI以外から利用対象外のオンライン機能が呼ばれた場合も、外部サービスへ接続せず共通の利用不可結果を返す
+- 設定画面で利用中のアプリ種別、保存先、利用可能機能、データ消失条件を確認できるようにする
+
+### 5. Android内部SQLite DBとデータアクセスを実装する
 
 - `group_members`の既存データに保存されている`orderIndex`をER図へ追記する
-- `orderIndex`の反映漏れ以外はER図のテーブル、項目、主キー、外部キー、関連を変更しない
-- Firestoreの既存Collection・フィールド構造を変更せず、ER図と現在のFirestore Mapperを基準にSQLiteスキーマを定義する
 - Context7で公式ドキュメントを確認してからDriftと必要な関連パッケージを追加する
-- Android内部ストレージにSQLiteファイルを作成し、DBの初期化、終了、バージョン管理を行う
-- Driftのスキーママイグレーション方針を整備する
+- ER図、Domain Entity、DTO、現在のFirestore Mapperを基準に、オフライン版で使用する業務データのSQLiteスキーマを定義する
+- オフライン版で使用しない`member_invitations`と`locations`はSQLiteのテーブル、Mapper、Repository、QueryServiceを作成しない
+- 主キー、外部キー、必須値、一意性、削除時の扱い、検索・並び替えに必要なindexを明示する
+- Androidのアプリ内部ストレージにSQLiteファイルを作成し、DBの初期化、終了、バージョン管理、マイグレーション方針を整備する
 - 日時、真偽値、nullable項目を既存Entity・DTOと相互変換できる保存形式へ統一する
-
-### 5. SQLite用のデータアクセスを実装する
-
-- メンバー、メンバーイベント、招待のMapper、Repository、QueryServiceを実装する
-- グループ、グループメンバー、グループイベントのMapper、Repository、QueryServiceを実装する
-- 旅行、訪問場所、タスク、旅程項目のMapper、Repository、QueryServiceを実装する
+- メンバー、メンバーイベント、グループ、グループメンバー、グループイベントのMapper、Repository、QueryServiceを実装する
+- 旅行、タスク、旅程項目のMapper、Repository、QueryServiceを実装する
 - DVCポイント契約、期間限定ポイント、利用履歴のMapper、Repository、QueryServiceを実装する
 - 複数更新を原子的に保存できるSQLite用`WriteTransaction`を実装する
-- 既存の並び替え条件、関連データの組み立て、保存・更新・削除の振る舞いをFirestore実装と一致させる
-- Repository、QueryService、TransactionのFactoryからSQLite実装を生成できるようにする
+- 既存の並び替え、関連データの組み立て、保存・更新・削除について、保存方式ではなくアプリから観測できる振る舞いをFirestore実装と一致させる
 
-### 6. ビルドフラグに応じてInfrastructure実装を切り替える
+### 6. Androidウィジェットを両方のビルドへ対応する
 
-- Composition Rootだけがビルドフラグを参照し、オンライン用またはオフライン用のInfrastructure実装を構成する
-- オンライン版では既存のFirestore、Firebase Auth、地図関連サービスの実装を使用する
-- オフライン版ではSQLiteと、Firebase Authや地図などの外部サービスを利用しないためのInfrastructure実装を使用する
-- Presentation、Application、Domain、UseCase、Androidウィジェットにはビルドフラグや具象データソースによる分岐を持ち込まない
+- バックグラウンド処理用Composition Rootから、オンライン版はFirestore、オフライン版はSQLiteのQueryServiceと時刻実装を共通UseCaseへ注入する
+- オフライン版ではバックグラウンドisolateからSQLiteを安全に初期化・終了し、FirebaseやNTPを使用しない
+- アプリ内の旅程更新後、定期更新、操作コールバック、端末再起動後に、各アプリのデータだけでウィジェットキャッシュを更新する
+
+### 7. オフラインデータの保護方針を確定する
+
+- パスポート番号などの機微情報を含むため、SQLite DBの暗号化要否と端末内の鍵管理方法を実装前に決定する
+- Android Auto Backupと端末間転送へSQLite DBと設定を含めるかを決定し、ローカル完結という説明と矛盾させない
+- アプリ削除、データ消去、端末故障時に復元できない条件を初回利用時と設定画面で案内する
+- 暗号化した手動バックアップのエクスポート・インポートは、必要性を別途判断する将来対応とし、今回のSQLite・Firestore間の同期対象には含めない
+
+### 8. 両方のビルドを検証して設計資料を更新する
+
+- SQLiteの保存、取得、更新、削除、並び替え、関連データ取得、制約、ロールバック、DB再オープン、スキーママイグレーションをテストする
+- オフライン版をFirebase設定と`MAPS_API_KEY`なしでreleaseビルドし、新規起動、再起動、機内モード、端末再起動後に対象機能とAndroidウィジェットを利用できることを確認する
+- オフライン版でFirebase、Firestore、Crashlytics、NTP、Places SDK、地図SDKが初期化されず、外部通信とオンライン機能の呼び出しが発生しないことを確認する
+- オンライン版で既存のFirestore保存、認証、共有、招待、地図、Androidウィジェットの振る舞いが維持されることを確認する
+- 両方のrelease APKを同じ端末へインストールし、アプリ、DB、設定、ウィジェットが干渉しないことを確認する
+- `./check.sh`と両方のrelease APK作成コマンドを継続的に実行できるようにする
+- 確定した仕様をユーザーストーリー、ユースケース図、ER図、README、Firebase・環境設定、ビルド・配布手順へ反映する
 
 ## DB設計・リポジトリ・ユースケース・DTO・マッパー関連
 
