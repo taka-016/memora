@@ -46,8 +46,6 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
-      'passportNumber': member.passportNumber,
-      'passportExpiration': member.passportExpiration,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -70,8 +68,6 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
-      'passportNumber': member.passportNumber,
-      'passportExpiration': member.passportExpiration,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }
