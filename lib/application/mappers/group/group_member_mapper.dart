@@ -27,8 +27,6 @@ class GroupMemberMapper {
       gender: member.gender,
       email: member.email,
       phoneNumber: member.phoneNumber,
-      passportNumber: member.passportNumber,
-      passportExpiration: member.passportExpiration,
     );
   }
 

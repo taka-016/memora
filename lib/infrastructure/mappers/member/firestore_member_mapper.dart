@@ -23,8 +23,6 @@ class FirestoreMemberMapper {
       gender: data['gender'] as String?,
       email: data['email'] as String?,
       phoneNumber: data['phoneNumber'] as String?,
-      passportNumber: data['passportNumber'] as String?,
-      passportExpiration: data['passportExpiration'] as String?,
     );
   }
 

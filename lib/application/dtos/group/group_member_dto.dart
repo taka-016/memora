@@ -19,8 +19,6 @@ class GroupMemberDto extends Equatable {
     this.gender,
     this.email,
     this.phoneNumber,
-    this.passportNumber,
-    this.passportExpiration,
     this.isAdministrator = false,
   });
 
@@ -41,8 +39,6 @@ class GroupMemberDto extends Equatable {
   final String? gender;
   final String? email;
   final String? phoneNumber;
-  final String? passportNumber;
-  final String? passportExpiration;
   final bool isAdministrator;
 
   GroupMemberDto copyWith({
@@ -64,8 +60,6 @@ class GroupMemberDto extends Equatable {
     String? gender,
     String? email,
     String? phoneNumber,
-    String? passportNumber,
-    String? passportExpiration,
   }) {
     return GroupMemberDto(
       memberId: memberId ?? this.memberId,
@@ -85,8 +79,6 @@ class GroupMemberDto extends Equatable {
       gender: gender ?? this.gender,
       email: email ?? this.email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      passportNumber: passportNumber ?? this.passportNumber,
-      passportExpiration: passportExpiration ?? this.passportExpiration,
       isAdministrator: isAdministrator ?? this.isAdministrator,
     );
   }
@@ -110,8 +102,6 @@ class GroupMemberDto extends Equatable {
     gender,
     email,
     phoneNumber,
-    passportNumber,
-    passportExpiration,
     isAdministrator,
   ];
 }

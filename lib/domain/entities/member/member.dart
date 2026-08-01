@@ -17,8 +17,6 @@ class Member extends Equatable {
     this.gender,
     this.email,
     this.phoneNumber,
-    this.passportNumber,
-    this.passportExpiration,
   });
 
   final String id;
@@ -36,8 +34,6 @@ class Member extends Equatable {
   final String? gender;
   final String? email;
   final String? phoneNumber;
-  final String? passportNumber;
-  final String? passportExpiration;
 
   Member copyWith({
     String? id,
@@ -55,8 +51,6 @@ class Member extends Equatable {
     String? gender,
     String? email,
     String? phoneNumber,
-    String? passportNumber,
-    String? passportExpiration,
   }) {
     return Member(
       id: id ?? this.id,
@@ -74,8 +68,6 @@ class Member extends Equatable {
       gender: gender ?? this.gender,
       email: email ?? this.email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      passportNumber: passportNumber ?? this.passportNumber,
-      passportExpiration: passportExpiration ?? this.passportExpiration,
     );
   }
 
@@ -96,7 +88,5 @@ class Member extends Equatable {
     gender,
     email,
     phoneNumber,
-    passportNumber,
-    passportExpiration,
   ];
 }
