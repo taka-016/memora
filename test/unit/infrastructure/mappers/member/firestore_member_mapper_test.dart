@@ -78,6 +78,8 @@ void main() {
       expect(data['birthday'], isA<Timestamp>());
       expect(data['gender'], 'male');
       expect(data['email'], 'taro@example.com');
+      expect(data.containsKey('passportNumber'), isFalse);
+      expect(data.containsKey('passportExpiration'), isFalse);
       expect(data['createdAt'], isA<FieldValue>());
       expect(data['updatedAt'], isA<FieldValue>());
     });
@@ -101,8 +103,8 @@ void main() {
       expect(data['gender'], null);
       expect(data['email'], null);
       expect(data['phoneNumber'], null);
-      expect(data['passportNumber'], null);
-      expect(data['passportExpiration'], null);
+      expect(data.containsKey('passportNumber'), isFalse);
+      expect(data.containsKey('passportExpiration'), isFalse);
       expect(data.containsKey('createdAt'), isFalse);
       expect(data['updatedAt'], isA<FieldValue>());
     });
