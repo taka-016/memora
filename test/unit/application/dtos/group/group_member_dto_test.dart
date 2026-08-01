@@ -33,8 +33,6 @@ void main() {
       expect(dto.gender, isNull);
       expect(dto.email, isNull);
       expect(dto.phoneNumber, isNull);
-      expect(dto.passportNumber, isNull);
-      expect(dto.passportExpiration, isNull);
       expect(dto.isAdministrator, false);
       expect(dto.orderIndex, 0);
     });
@@ -57,8 +55,6 @@ void main() {
       const gender = 'male';
       const email = 'yamada@example.com';
       const phoneNumber = '090-1234-5678';
-      const passportNumber = 'AB1234567';
-      const passportExpiration = '2030-12-31';
       const isAdministrator = true;
       const orderIndex = 2;
 
@@ -80,8 +76,6 @@ void main() {
         gender: gender,
         email: email,
         phoneNumber: phoneNumber,
-        passportNumber: passportNumber,
-        passportExpiration: passportExpiration,
         isAdministrator: isAdministrator,
         orderIndex: orderIndex,
       );
@@ -103,8 +97,6 @@ void main() {
       expect(dto.gender, gender);
       expect(dto.email, email);
       expect(dto.phoneNumber, phoneNumber);
-      expect(dto.passportNumber, passportNumber);
-      expect(dto.passportExpiration, passportExpiration);
       expect(dto.isAdministrator, isAdministrator);
       expect(dto.orderIndex, orderIndex);
     });

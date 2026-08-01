@@ -45,8 +45,6 @@ void main() {
         email: 'test@example.com',
         phoneNumber: '090-1234-5678',
         type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
       );
 
       // Act
@@ -82,8 +80,6 @@ void main() {
         email: 'test@example.com',
         phoneNumber: '090-1234-5678',
         type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
       );
 
       // Act
@@ -349,8 +345,6 @@ void main() {
         email: 'test@example.com',
         phoneNumber: '090-1234-5678',
         type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
       );
       MemberDto? invitedMember;
 
@@ -390,8 +384,6 @@ void main() {
         email: 'test@example.com',
         phoneNumber: '090-1234-5678',
         type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
       );
 
       await tester.pumpWidget(
@@ -427,8 +419,6 @@ void main() {
         email: 'test@example.com',
         phoneNumber: '090-1234-5678',
         type: 'member',
-        passportNumber: null,
-        passportExpiration: null,
       );
       final inviteCompleter = Completer<void>();
       var inviteCallCount = 0;

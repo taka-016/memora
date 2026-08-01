@@ -60,8 +60,6 @@ void main() {
       email: 'test@example.com',
       phoneNumber: '090-1234-5678',
       type: 'member',
-      passportNumber: null,
-      passportExpiration: null,
     );
     groupWithMembers1 = GroupDto(
       id: 'group-1',

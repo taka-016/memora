@@ -62,8 +62,6 @@ void main() {
       email: 'test@example.com',
       phoneNumber: '090-1234-5678',
       type: 'member',
-      passportNumber: null,
-      passportExpiration: null,
     );
 
     // 共通的なモック設定: getMemberByIdはデフォルトでtestMemberを返す
@@ -119,8 +117,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-9876-5432',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -268,8 +264,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-9876-5432',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -346,8 +340,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-9876-5432',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -427,8 +419,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-9876-5432',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -648,8 +638,6 @@ void main() {
           email: 'hanako@example.com',
           phoneNumber: '090-9876-5432',
           type: 'member',
-          passportNumber: null,
-          passportExpiration: null,
         ),
       ];
 
@@ -670,8 +658,6 @@ void main() {
         email: testMember.email,
         phoneNumber: testMember.phoneNumber,
         type: testMember.type,
-        passportNumber: testMember.passportNumber,
-        passportExpiration: testMember.passportExpiration,
       );
 
       when(
