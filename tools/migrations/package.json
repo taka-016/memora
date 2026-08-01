@@ -5,6 +5,7 @@
   "description": "Firestore data migration scripts for memora.",
   "scripts": {
     "test": "node --test",
+    "remove-member-passport-fields": "node remove_member_passport_fields.js",
     "rename-trip-entry-pin-fields": "node rename_trip_entry_pin_fields.js"
   },
   "dependencies": {
