@@ -2,6 +2,38 @@
 
 set -o pipefail
 
+app_mode='auto'
+prev=''
+for arg in "$@"; do
+    if [ "$prev" = '--dart-define' ]; then
+        case "$arg" in
+            MEMORA_APP_MODE=*)
+                app_mode="${arg#MEMORA_APP_MODE=}"
+                ;;
+        esac
+        prev=''
+        continue
+    fi
+
+    case "$arg" in
+        --dart-define=MEMORA_APP_MODE=*)
+            app_mode="${arg#--dart-define=MEMORA_APP_MODE=}"
+            ;;
+        --dart-define)
+            prev='--dart-define'
+            ;;
+    esac
+done
+
+case "$app_mode" in
+    auto|online|offline)
+        ;;
+    *)
+        echo 'MEMORA_APP_MODEにはauto、online、offlineのいずれかを指定してください。' >&2
+        exit 1
+        ;;
+esac
+
 LOG_DIR="${TMPDIR:-/tmp}"
 STDOUT_LOG="$LOG_DIR/memora-check.stdout.log"
 STDERR_LOG="$LOG_DIR/memora-check.stderr.log"
@@ -43,7 +75,9 @@ run_step() {
 run_step "Format" dart format .
 run_step "Build runner" dart run build_runner build
 run_step "Analyze" flutter analyze
-run_step "Test" dart pub global run very_good_cli:very_good test
+echo "MEMORA_APP_MODE=${app_mode}"
+
+run_step "Test" dart pub global run very_good_cli:very_good test "$@"
 
 echo "✅ All checks passed!"
 echo "Stdout log: $STDOUT_LOG"

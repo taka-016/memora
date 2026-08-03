@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_interactivity_callback.dart';
+import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
-import 'package:logger/logger.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
@@ -17,9 +18,12 @@ import 'presentation/app/top_page.dart';
 import 'presentation/features/auth/auth_guard.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-late final Logger logger;
-
 Future<void> main() async {
+  final appModeBuildConfiguration = AppModeBuildConfiguration.fromEnvironment();
+  final appMode = const AppModeResolver().resolve(
+    forcedMode: appModeBuildConfiguration.forcedMode,
+  );
+
   runZonedGuarded<Future<void>>(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +36,10 @@ Future<void> main() async {
         androidWidgetUpdateInterval.duration,
       );
       await initLogger();
+      logger.i(
+        'MEMORA_APP_MODE=${appModeBuildConfiguration.requestedValue}, '
+        'AppMode=${appMode.name}',
+      );
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
