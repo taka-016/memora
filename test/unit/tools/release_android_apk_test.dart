@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _releaseScriptPath = 'tools/ci/release_android_apk.sh';
+const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
 
 void main() {
   late Directory testProject;
@@ -28,6 +29,9 @@ void main() {
     File(
       _releaseScriptPath,
     ).copySync('${testProject.path}/tools/ci/release_android_apk.sh');
+    File(
+      _appModeArgumentsScriptPath,
+    ).copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
     File(
       '${testProject.path}/pubspec.yaml',
     ).writeAsStringSync('version: 1.2.3+4\n');

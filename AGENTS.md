@@ -13,14 +13,14 @@
 - `flutter pub get` - 依存関係をインストール
 - `flutter clean` - ビルドキャッシュをクリア
 - `dart run build_runner build` - モックやコード生成を実行
-- `./check.sh` - フォーマット・解析・テストを一括実行
+- `./check.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - フォーマット・解析・テストを一括実行
 - `flutter analyze` - 静的コード解析
 - `dart format .` - コードフォーマット
 - `dart pub global run very_good_cli:very_good test` - 全テストを高速に実行
 - `flutter test test/unit/` - ユニットテストのみ実行
 - `flutter test test/integration/` - インテグレーションテストを実行
 - `tree lib test` - アプリケーションとテストのディレクトリ構造を表示
-- `./tools/ci/release_android_apk.sh` - release APKをビルドし、`memora-<version>.apk`を作成
+- `./tools/ci/release_android_apk.sh [--dart-define=MEMORA_APP_MODE=auto|online|offline]` - release APKをビルドし、`memora-<version>-<mode>.apk`を作成
 
 ## 基本ルール
 

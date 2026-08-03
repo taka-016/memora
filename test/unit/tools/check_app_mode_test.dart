@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 const _checkScriptPath = 'check.sh';
+const _appModeArgumentsScriptPath = 'tools/ci/app_mode_arguments.sh';
 
 void main() {
   late Directory testProject;
@@ -26,7 +27,11 @@ void main() {
     testProject = Directory.systemTemp.createTempSync('memora_check_test_');
     Directory('${testProject.path}/bin').createSync(recursive: true);
     Directory('${testProject.path}/tmp').createSync(recursive: true);
+    Directory('${testProject.path}/tools/ci').createSync(recursive: true);
     File(_checkScriptPath).copySync('${testProject.path}/check.sh');
+    File(
+      _appModeArgumentsScriptPath,
+    ).copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
     commandLog = File('${testProject.path}/commands.log');
 
     for (final command in ['dart', 'flutter']) {
