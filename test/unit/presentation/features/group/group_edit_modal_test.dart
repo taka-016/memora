@@ -49,8 +49,6 @@ GroupMemberDto createGroupMemberDto({
   String? gender,
   String? email,
   String? phoneNumber,
-  String? passportNumber,
-  String? passportExpiration,
 }) {
   return GroupMemberDto(
     memberId: memberId,
@@ -71,8 +69,6 @@ GroupMemberDto createGroupMemberDto({
     gender: gender,
     email: email,
     phoneNumber: phoneNumber,
-    passportNumber: passportNumber,
-    passportExpiration: passportExpiration,
   );
 }
 

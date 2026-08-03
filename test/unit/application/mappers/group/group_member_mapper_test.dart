@@ -25,8 +25,6 @@ void main() {
           gender: 'male',
           email: 'taro@example.com',
           phoneNumber: '090-1234-5678',
-          passportNumber: 'AB1234567',
-          passportExpiration: '2030-12-31',
         );
         const groupId = 'group1';
 
@@ -52,8 +50,6 @@ void main() {
         expect(result.gender, 'male');
         expect(result.email, 'taro@example.com');
         expect(result.phoneNumber, '090-1234-5678');
-        expect(result.passportNumber, 'AB1234567');
-        expect(result.passportExpiration, '2030-12-31');
       });
 
       test('最小限のフィールドのみ持つMemberを変換できる', () {

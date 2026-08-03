@@ -23,8 +23,6 @@ void main() {
         gender: 'male',
         email: 'taro@example.com',
         phoneNumber: '09012345678',
-        passportNumber: 'AB1234567',
-        passportExpiration: '2030-01-01',
       );
 
       // Act
@@ -46,8 +44,6 @@ void main() {
       expect(dto.gender, 'male');
       expect(dto.email, 'taro@example.com');
       expect(dto.phoneNumber, '09012345678');
-      expect(dto.passportNumber, 'AB1234567');
-      expect(dto.passportExpiration, '2030-01-01');
     });
 
     test('オプショナルプロパティがnullのMemberエンティティをDtoに変換する', () {
@@ -73,8 +69,6 @@ void main() {
       expect(dto.gender, isNull);
       expect(dto.email, isNull);
       expect(dto.phoneNumber, isNull);
-      expect(dto.passportNumber, isNull);
-      expect(dto.passportExpiration, isNull);
     });
 
     test('MemberDtoをMemberエンティティに正しく変換する', () {
@@ -95,8 +89,6 @@ void main() {
         gender: 'male',
         email: 'jiro@example.com',
         phoneNumber: '08098765432',
-        passportNumber: 'CD7654321',
-        passportExpiration: '2031-02-02',
       );
 
       // Act
@@ -118,8 +110,6 @@ void main() {
       expect(entity.gender, 'male');
       expect(entity.email, 'jiro@example.com');
       expect(entity.phoneNumber, '08098765432');
-      expect(entity.passportNumber, 'CD7654321');
-      expect(entity.passportExpiration, '2031-02-02');
     });
 
     test('オプショナルプロパティがnullのDtoをエンティティに変換する', () {
@@ -145,8 +135,6 @@ void main() {
       expect(entity.gender, isNull);
       expect(entity.email, isNull);
       expect(entity.phoneNumber, isNull);
-      expect(entity.passportNumber, isNull);
-      expect(entity.passportExpiration, isNull);
     });
 
     test('Memberエンティティのリストを正しくDtoリストに変換する', () {

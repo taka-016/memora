@@ -19,8 +19,6 @@ class MemberMapper {
       gender: entity.gender,
       email: entity.email,
       phoneNumber: entity.phoneNumber,
-      passportNumber: entity.passportNumber,
-      passportExpiration: entity.passportExpiration,
     );
   }
 
@@ -41,8 +39,6 @@ class MemberMapper {
       gender: dto.gender,
       email: dto.email,
       phoneNumber: dto.phoneNumber,
-      passportNumber: dto.passportNumber,
-      passportExpiration: dto.passportExpiration,
     );
   }
 

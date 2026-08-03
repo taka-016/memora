@@ -32,8 +32,6 @@ class FirestoreGroupMemberMapper {
       gender: memberData['gender'] as String?,
       email: memberData['email'] as String?,
       phoneNumber: memberData['phoneNumber'] as String?,
-      passportNumber: memberData['passportNumber'] as String?,
-      passportExpiration: memberData['passportExpiration'] as String?,
     );
   }
 

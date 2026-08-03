@@ -73,8 +73,6 @@ erDiagram
         string gender
         string email
         string phoneNumber
-        string passportNumber
-        string passportExpiration
     }
     member_events {
         string id PK

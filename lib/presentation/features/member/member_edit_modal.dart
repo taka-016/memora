@@ -74,8 +74,6 @@ class MemberEditModal extends HookConsumerWidget {
         email: member?.email ?? '',
         phoneNumber: member?.phoneNumber ?? '',
         type: member?.type,
-        passportNumber: member?.passportNumber,
-        passportExpiration: member?.passportExpiration,
       );
     }, [member]);
 

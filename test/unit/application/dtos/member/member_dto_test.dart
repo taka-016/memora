@@ -27,8 +27,6 @@ void main() {
       expect(dto.gender, isNull);
       expect(dto.email, isNull);
       expect(dto.phoneNumber, isNull);
-      expect(dto.passportNumber, isNull);
-      expect(dto.passportExpiration, isNull);
     });
 
     test('全パラメータでコンストラクタが正しく動作する', () {
@@ -48,8 +46,6 @@ void main() {
       const gender = 'male';
       const email = 'yamada@example.com';
       const phoneNumber = '090-1234-5678';
-      const passportNumber = 'AB1234567';
-      const passportExpiration = '2030-12-31';
 
       // Act
       final dto = MemberDto(
@@ -68,8 +64,6 @@ void main() {
         gender: gender,
         email: email,
         phoneNumber: phoneNumber,
-        passportNumber: passportNumber,
-        passportExpiration: passportExpiration,
       );
 
       // Assert
@@ -88,8 +82,6 @@ void main() {
       expect(dto.gender, gender);
       expect(dto.email, email);
       expect(dto.phoneNumber, phoneNumber);
-      expect(dto.passportNumber, passportNumber);
-      expect(dto.passportExpiration, passportExpiration);
     });
 
     test('copyWithメソッドで必須パラメータが正しく更新される', () {
@@ -267,26 +259,6 @@ void main() {
       expect(dto.hiraganaLastName, isNull);
       expect(dto.kanjiFirstName, isNull);
       expect(dto.kanjiLastName, isNull);
-    });
-
-    test('パスポート情報を持つメンバーを作成できる', () {
-      // Arrange
-      const id = 'member-123';
-      const displayName = '山田太郎';
-      const passportNumber = 'AB1234567';
-      const passportExpiration = '2030-12-31';
-
-      // Act
-      final dto = MemberDto(
-        id: id,
-        displayName: displayName,
-        passportNumber: passportNumber,
-        passportExpiration: passportExpiration,
-      );
-
-      // Assert
-      expect(dto.passportNumber, passportNumber);
-      expect(dto.passportExpiration, passportExpiration);
     });
   });
 }

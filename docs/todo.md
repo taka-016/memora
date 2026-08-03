@@ -2,13 +2,6 @@
 
 ## オフライン・オンラインモード対応
 
-### 2. パスポート情報を廃止する
-
-- `passportNumber`と`passportExpiration`をDomain Entity、DTO、Mapper、画面、ER図から削除する
-- Firestoreへの新規作成・更新時に`passportNumber`と`passportExpiration`を保存しない
-- `tools/migrations`へdry-runと明示的なapplyを備えた移行スクリプトを追加し、既存の全`members`ドキュメントから両フィールドを削除する
-- パスポート情報を前提とするテストを削除し、関連するテストデータと期待値を更新する
-
 ### 3. ビルド情報でアプリモードを強制できるようにする
 
 - Product Flavor、専用エントリーポイント、別application ID、別アプリ名、別アイコンは作成せず、現在の単一Androidアプリ構成を維持する

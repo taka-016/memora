@@ -23,8 +23,6 @@ class FirestoreMemberMapper {
       gender: data['gender'] as String?,
       email: data['email'] as String?,
       phoneNumber: data['phoneNumber'] as String?,
-      passportNumber: data['passportNumber'] as String?,
-      passportExpiration: data['passportExpiration'] as String?,
     );
   }
 
@@ -46,8 +44,6 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
-      'passportNumber': member.passportNumber,
-      'passportExpiration': member.passportExpiration,
       ...FirestoreWriteMetadata.forCreate(),
     };
   }
@@ -70,8 +66,6 @@ class FirestoreMemberMapper {
       'gender': member.gender,
       'email': member.email,
       'phoneNumber': member.phoneNumber,
-      'passportNumber': member.passportNumber,
-      'passportExpiration': member.passportExpiration,
       ...FirestoreWriteMetadata.forUpdate(),
     };
   }
