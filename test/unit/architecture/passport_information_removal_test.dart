@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -21,5 +22,24 @@ void main() {
 
     expect(source, isNot(contains('passportNumber')));
     expect(source, isNot(contains('passportExpiration')));
+  });
+
+  test('パスポート情報専用の移行処理を持たない', () {
+    expect(
+      File('tools/migrations/remove_member_passport_fields.js').existsSync(),
+      isFalse,
+    );
+    expect(
+      File(
+        'tools/migrations/remove_member_passport_fields.test.js',
+      ).existsSync(),
+      isFalse,
+    );
+
+    final packageJson =
+        jsonDecode(File('tools/migrations/package.json').readAsStringSync())
+            as Map<String, dynamic>;
+    final scripts = packageJson['scripts'] as Map<String, dynamic>;
+    expect(scripts, isNot(contains('remove-member-passport-fields')));
   });
 }
