@@ -134,7 +134,15 @@
 
 - `settings.dart`からInfrastructure層のFactory Providerへの直接参照を除き、Application層の抽象またはComposition Rootから必要な依存を注入する
 - `GroupTimelineNavigationState`が`Timeline` Widgetと更新コールバックを保持しない構成へ変更し、遷移先を表す値とUIの生成責務を分離する
-- 画面内にあるUseCase呼び出し、非同期状態、エラー処理、Snackbar表示の制御を機能単位のControllerまたはNotifierへ段階的に分離する
+- Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
+- `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する
+- `GroupManagement`と`MemberManagement`の一覧取得、作成・更新・削除、再読み込み、招待処理の状態管理を、それぞれの機能単位のControllerまたはNotifierへ分離する
+- `TripManagement`の旅行・グループメンバーの並行取得、Androidウィジェットから指定された旅行の初期表示、旅行の作成・更新・削除をControllerまたはNotifierへ分離する
+- `DvcPointCalculationScreen`のグループ・契約・期間限定ポイント・利用ポイントの並行取得、再計算、保存・削除後の再読み込みをControllerまたはNotifierへ分離する
+- `TopPage`のAndroidウィジェット起動時における旅行・グループの解決と遷移制御、`AccountSettings`の再認証と更新再試行、`Settings`のAndroidウィジェット設定取得・更新を、それぞれ画面から分離する
+- 年表の旅行、グループイベント、DVC、メンバーイベント行にあるデータ取得Providerと保存・削除処理を機能単位に整理し、行Widgetは受け取った状態の表示と操作通知を中心にする
+- ControllerまたはNotifierは`loading`、`loaded`、`error`と操作結果を管理し、Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当する
+- 分離した状態遷移とUseCaseの実行順序を単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
 - 500行を超えるPresentation層の画面・編集UIを対象に責務を確認し、状態制御、フォーム、一覧、ダイアログなどの単位へ分割する
 
 ## 不具合修正
