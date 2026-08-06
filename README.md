@@ -74,6 +74,32 @@ Google Cloud Consoleで以下のAPIを有効化し、対応するAPIキーを設
    MAPS_API_KEY=your_maps_api_key_here
    ```
 
+### アプリモード指定
+
+単一のAndroidアプリ構成のまま、`MEMORA_APP_MODE`で起動時に決定するアプリモードを指定できます。
+
+- `online`: オンラインモードを強制
+- `offline`: オフラインモードを強制
+- `auto`: アプリの自動判定へ委譲。現在は既存動作を維持するためオンラインモードに決定
+- 未指定: `auto`と同じ
+
+実行、テスト、全体検証では次のように指定します。
+
+```bash
+flutter run --dart-define=MEMORA_APP_MODE=offline
+flutter test --dart-define=MEMORA_APP_MODE=offline
+./check.sh --dart-define=MEMORA_APP_MODE=offline
+```
+
+release APKは指定値をログへ表示し、`build/app/outputs/flutter-apk/memora-<version>-<mode>.apk`として出力します。
+
+```bash
+./tools/ci/release_android_apk.sh \
+  --dart-define=MEMORA_APP_MODE=offline
+```
+
+不明な値は設定誤りとして起動・テスト・ビルドを失敗させます。同じインストールのままモードを変更する運用には対応していないため、指定値を変更したAPKを利用するときは、先にアプリをアンインストールするかデータを消去してください。Firebase設定、`MAPS_API_KEY`、Android Manifestの権限は両モードで共通です。
+
 ### Firebase設定
 
 本アプリはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。

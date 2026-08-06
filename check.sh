@@ -2,6 +2,12 @@
 
 set -o pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
+if ! app_mode="$(resolve_memora_app_mode "$@")"; then
+    exit 1
+fi
+
 LOG_DIR="${TMPDIR:-/tmp}"
 STDOUT_LOG="$LOG_DIR/memora-check.stdout.log"
 STDERR_LOG="$LOG_DIR/memora-check.stderr.log"
@@ -43,7 +49,9 @@ run_step() {
 run_step "Format" dart format .
 run_step "Build runner" dart run build_runner build
 run_step "Analyze" flutter analyze
-run_step "Test" dart pub global run very_good_cli:very_good test
+echo "MEMORA_APP_MODE=${app_mode}"
+
+run_step "Test" dart pub global run very_good_cli:very_good test "$@"
 
 echo "✅ All checks passed!"
 echo "Stdout log: $STDOUT_LOG"
