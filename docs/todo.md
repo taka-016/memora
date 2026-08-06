@@ -135,7 +135,8 @@
 - Presentation層の依存方向を是正する
   - `settings.dart`からInfrastructure層のFactory Providerへの直接参照を除き、Application層の抽象またはComposition Rootから必要な依存を注入する
 - グループ年表のナビゲーション状態とUIを分離する
-  - `GroupTimelineNavigationState`が`Timeline` Widgetと更新コールバックを保持しない構成へ変更し、遷移先を表す値とUIの生成責務を分離する
+  - `GroupTimelineNavigationState`から`Timeline` Widget、`TimelineRowDefinition`、更新コールバック、`destinationPageDefinitions`を除き、遷移先を表す値とUIの生成責務を分離する
+  - 年表の行定義と遷移先ページ定義はUI側で生成し、ナビゲーション状態は画面遷移の判定に必要な値だけを保持する
 - Viewに集中しているUseCaseのオーケストレーションと状態管理を分離する
   - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
   - `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する
