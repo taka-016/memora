@@ -130,4 +130,11 @@
 
 ## リファクタリング
 
+### Presentation層の責務を整理する
+
+- `settings.dart`からInfrastructure層のFactory Providerへの直接参照を除き、Application層の抽象またはComposition Rootから必要な依存を注入する
+- `GroupTimelineNavigationState`が`Timeline` Widgetと更新コールバックを保持しない構成へ変更し、遷移先を表す値とUIの生成責務を分離する
+- 画面内にあるUseCase呼び出し、非同期状態、エラー処理、Snackbar表示の制御を機能単位のControllerまたはNotifierへ段階的に分離する
+- 500行を超えるPresentation層の画面・編集UIを対象に責務を確認し、状態制御、フォーム、一覧、ダイアログなどの単位へ分割する
+
 ## 不具合修正
