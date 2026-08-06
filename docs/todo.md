@@ -135,8 +135,9 @@
 - Presentation層の依存方向を是正する
   - `settings.dart`からInfrastructure層のFactory Providerへの直接参照を除き、Application層の抽象またはComposition Rootから必要な依存を注入する
 - グループ年表のナビゲーション状態とUIを分離する
-  - `GroupTimelineNavigationState`から`Timeline` Widget、`TimelineRowDefinition`、更新コールバック、`destinationPageDefinitions`を除き、遷移先を表す値とUIの生成責務を分離する
+  - `GroupTimelineNavigationState`から`Timeline` Widget、`TimelineRowDefinition`、更新コールバック、`destinationPageDefinitions`、`groupSelectionLoadFuture`を除き、遷移先を表す値とUI・非同期処理の責務を分離する
   - 年表の行定義と遷移先ページ定義はUI側で生成し、ナビゲーション状態は画面遷移の判定に必要な値だけを保持する
+  - グループ一覧の`loading`、`loaded`、`error`と古いリクエスト結果の破棄は専用の状態とControllerまたはNotifierで管理し、処理中の`Future`自体をナビゲーション状態へ保持しない
 - 画面遷移をRouterで一元管理する
   - グループ年表のナビゲーション状態とUIを分離した後に、`MaterialApp`を`MaterialApp.router`へ移行し、値として表現した遷移先を宣言的なRouter構成へ移行する
   - ログイン、グループ選択、年表、旅行管理、DVCポイント計算、地図、メンバー管理、グループ管理、設定、アカウント設定のルートを定義する
