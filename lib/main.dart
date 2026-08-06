@@ -36,12 +36,12 @@ Future<void> main() async {
         androidWidgetUpdateInterval.duration,
       );
       await initLogger();
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
       logger.i(
         'MEMORA_APP_MODE=${appModeBuildConfiguration.requestedValue}, '
         'AppMode=${appMode.name}',
-      );
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
       );
 
       FirebaseFirestore.instance.settings = const Settings(
