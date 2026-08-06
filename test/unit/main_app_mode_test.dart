@@ -24,4 +24,15 @@ void main() {
     expect(source, contains('MEMORA_APP_MODE='));
     expect(source, contains('appMode.name'));
   });
+
+  test('Firebase初期化後に起動ログを出力する', () {
+    final source = File(_mainPath).readAsStringSync();
+    final firebaseInitializationIndex = source.indexOf(
+      'await Firebase.initializeApp',
+    );
+    final appModeLogIndex = source.indexOf('logger.i(');
+
+    expect(firebaseInitializationIndex, isNonNegative);
+    expect(appModeLogIndex, greaterThan(firebaseInitializationIndex));
+  });
 }
