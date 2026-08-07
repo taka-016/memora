@@ -9,8 +9,9 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
@@ -18,7 +19,6 @@ import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
-import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 
 class TopPage extends HookConsumerWidget {
   final bool isTestEnvironment;
@@ -37,10 +37,10 @@ class TopPage extends HookConsumerWidget {
           return;
         }
         ref.read(navigationNotifierProvider.notifier).resetToDefault();
-        final notifier = ref.read(
-          groupTimelineNavigationNotifierProvider.notifier,
-        );
-        notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
+        ref
+            .read(groupTimelineNavigationNotifierProvider.notifier)
+            .resetToGroupList();
+        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       });
       return null;
     }, const []);
@@ -98,12 +98,9 @@ class TopPage extends HookConsumerWidget {
     }, [pendingAndroidWidgetTripId, currentMember?.id]);
 
     final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
-    final timelineEntryState = ref.watch(
-      groupTimelineNavigationNotifierProvider.select(
-        (state) => (
-          groupSelectionLoadFuture: state.groupSelectionLoadFuture,
-          groupTimelineInstance: state.groupTimelineInstance,
-        ),
+    final groupSelectionMemberId = ref.watch(
+      groupTimelineGroupSelectionNotifierProvider.select(
+        (state) => state.memberId,
       ),
     );
 
@@ -114,8 +111,7 @@ class TopPage extends HookConsumerWidget {
             shouldHideForAndroidWidgetLaunch) {
           return null;
         }
-        if (timelineEntryState.groupSelectionLoadFuture != null ||
-            timelineEntryState.groupTimelineInstance != null) {
+        if (groupSelectionMemberId == currentMember.id) {
           return null;
         }
 
@@ -125,8 +121,8 @@ class TopPage extends HookConsumerWidget {
           }
           unawaited(
             ref
-                .read(groupTimelineNavigationNotifierProvider.notifier)
-                .prepareGroupTimelineEntry(currentMember),
+                .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                .load(currentMember),
           );
         });
         return null;
@@ -135,8 +131,7 @@ class TopPage extends HookConsumerWidget {
         selectedItem,
         currentMember?.id,
         shouldHideForAndroidWidgetLaunch,
-        timelineEntryState.groupSelectionLoadFuture,
-        timelineEntryState.groupTimelineInstance,
+        groupSelectionMemberId,
       ],
     );
 
@@ -206,13 +201,13 @@ class TopPage extends HookConsumerWidget {
       ref
           .read(navigationNotifierProvider.notifier)
           .selectItem(NavigationItem.groupTimeline);
+      ref
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .setLoadedGroups(memberId: currentMember.id, groups: groups);
       final timelineNotifier = ref.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
-      timelineNotifier.showGroupTimeline(
-        group,
-        groupSelectionLoadFuture: Future<List<GroupDto>>.value(groups),
-      );
+      timelineNotifier.showGroupTimeline(group.id);
       timelineNotifier.showTripManagement(
         trip.groupId,
         trip.year,
@@ -239,8 +234,8 @@ class TopPage extends HookConsumerWidget {
         .read(navigationNotifierProvider.notifier)
         .selectItem(NavigationItem.groupTimeline);
     await ref
-        .read(groupTimelineNavigationNotifierProvider.notifier)
-        .prepareGroupTimelineEntry(currentMember);
+        .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+        .load(currentMember);
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
@@ -286,14 +281,18 @@ class TopPage extends HookConsumerWidget {
         return;
       }
 
-      final notifier = ref.read(
-        groupTimelineNavigationNotifierProvider.notifier,
-      );
       final currentMember = ref.read(currentMemberNotifierProvider).member;
+      ref
+          .read(groupTimelineNavigationNotifierProvider.notifier)
+          .resetToGroupList();
       if (currentMember != null) {
-        unawaited(notifier.prepareGroupTimelineEntry(currentMember));
+        unawaited(
+          ref
+              .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+              .load(currentMember),
+        );
       } else {
-        notifier.resetToGroupList(clearGroupSelectionLoadFuture: true);
+        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       }
 
       ref.read(navigationNotifierProvider.notifier).selectItem(item);
@@ -305,62 +304,6 @@ class TopPage extends HookConsumerWidget {
     Navigator.of(context).pop();
   }
 
-  void _onGroupSelected(WidgetRef ref, GroupDto groupWithMembers) {
-    ref
-        .read(groupTimelineNavigationNotifierProvider.notifier)
-        .showGroupTimeline(groupWithMembers);
-  }
-
-  Widget _buildGroupTimelineStack(
-    BuildContext context,
-    WidgetRef ref,
-    MemberDto? currentMember,
-  ) {
-    if (currentMember == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
-    final destination = timelineState.destination;
-    final notifier = ref.read(groupTimelineNavigationNotifierProvider.notifier);
-
-    final groupsFuture = timelineState.groupSelectionLoadFuture;
-
-    if (destination is GroupTimelineGroupListDestination &&
-        groupsFuture == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return IndexedStack(
-      index: notifier.getStackIndex(),
-      children: [
-        groupsFuture == null
-            ? const SizedBox.shrink()
-            : GroupSelectionList(
-                onGroupSelected: (group) => _onGroupSelected(ref, group),
-                title: 'グループを選択',
-                listKey: const Key('group_list'),
-                groupsFuture: groupsFuture,
-                onRetry: () {
-                  unawaited(notifier.prepareGroupTimelineEntry(currentMember));
-                },
-              ),
-        timelineState.groupTimelineInstance ?? const SizedBox.shrink(),
-        ...timelineState.destinationPageDefinitions.map((definition) {
-          if (!definition.matches(destination)) {
-            return const SizedBox.shrink();
-          }
-
-          return definition.buildPage(
-            context: context,
-            destination: destination,
-            onBackPressed: notifier.backToTimeline,
-          );
-        }),
-      ],
-    );
-  }
-
   Widget _buildBody(
     BuildContext context,
     WidgetRef ref,
@@ -369,7 +312,10 @@ class TopPage extends HookConsumerWidget {
   ) {
     switch (selectedItem) {
       case NavigationItem.groupTimeline:
-        return _buildGroupTimelineStack(context, ref, currentMember);
+        if (currentMember == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return GroupTimelineNavigationView(currentMember: currentMember);
       case NavigationItem.mapDisplay:
         if (currentMember == null) {
           return const Center(child: CircularProgressIndicator());

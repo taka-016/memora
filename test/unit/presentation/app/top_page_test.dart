@@ -36,6 +36,8 @@ import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
+import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
@@ -45,7 +47,6 @@ import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -481,6 +482,9 @@ void main() {
       androidWidgetCacheStorageProvider.overrideWithValue(
         _FakeAndroidWidgetCacheStorage(),
       ),
+      androidWidgetUpdateIntervalStorageProvider.overrideWithValue(
+        const SharedPreferencesAndroidWidgetUpdateIntervalStorage(),
+      ),
       memberQueryServiceProvider.overrideWithValue(testMemberQueryService),
       authServiceProvider.overrideWithValue(testAuthService),
       groupQueryServiceProvider.overrideWithValue(mockGroupQueryService),
@@ -806,9 +810,7 @@ void main() {
       expect(find.byKey(const Key('map_view')), findsNothing);
     });
 
-    testWidgets('groupSelectionLoadFutureがなくても詳細画面状態ならクラッシュしない', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('選択グループを取得中でも詳細画面状態ならクラッシュしない', (WidgetTester tester) async {
       // Act
       await tester.pumpWidget(
         createTestWidget(
@@ -1298,7 +1300,7 @@ void main() {
       final notifier = container.read(
         groupTimelineNavigationNotifierProvider.notifier,
       );
-      notifier.showGroupTimeline(groupsWithMembers.first);
+      notifier.showGroupTimeline(groupsWithMembers.first.id);
       await tester.pumpAndSettle();
       notifier.showTripManagement(groupsWithMembers.first.id, 2024);
       await tester.pumpAndSettle();
@@ -1460,19 +1462,13 @@ void main() {
       final indexedStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
-      expect(indexedStack.children.length, 2); // GroupList, GroupTimeline
+      expect(indexedStack.children.length, 4);
       expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
-      expect(indexedStack.children.first, isA<GroupSelectionList>());
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
 
-      // 2. 初期状態でGroupTimelineインスタンスがnullであることを検証
+      // 2. 初期状態でグループ一覧が選択されていることを検証
       final container = ProviderScope.containerOf(
         tester.element(topPageFinder),
-      );
-      expect(
-        container
-            .read(groupTimelineNavigationNotifierProvider)
-            .groupTimelineInstance,
-        isNull,
       );
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
@@ -1483,7 +1479,7 @@ void main() {
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
 
-      // 3. グループ選択後のIndexとインスタンス状態を検証
+      // 3. グループ選択後のIndexと画面状態を検証
       final timelineIndexedStack = tester.widget<IndexedStack>(
         find.byType(IndexedStack),
       );
@@ -1492,12 +1488,7 @@ void main() {
         4,
       ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
       expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
-      expect(
-        container
-            .read(groupTimelineNavigationNotifierProvider)
-            .groupTimelineInstance,
-        isNotNull,
-      );
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
@@ -1509,13 +1500,7 @@ void main() {
       await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
-      // 4. 他画面遷移時もGroupTimelineインスタンスが維持されることを検証
-      expect(
-        container
-            .read(groupTimelineNavigationNotifierProvider)
-            .groupTimelineInstance,
-        isNotNull,
-      );
+      // 4. 他画面遷移時も値としての遷移先が維持されることを検証
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.timeline,
@@ -1532,12 +1517,6 @@ void main() {
         find.byType(IndexedStack),
       );
       expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
-      expect(
-        container
-            .read(groupTimelineNavigationNotifierProvider)
-            .groupTimelineInstance,
-        isNull,
-      );
       expect(
         container.read(groupTimelineNavigationNotifierProvider).currentScreen,
         GroupTimelineScreenState.groupList,
