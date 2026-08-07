@@ -35,7 +35,6 @@ import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dar
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';

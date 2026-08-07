@@ -30,9 +30,7 @@ void main() {
     setUp(() {
       queryService = MockGroupQueryService();
       container = ProviderContainer(
-        overrides: [
-          groupQueryServiceProvider.overrideWithValue(queryService),
-        ],
+        overrides: [groupQueryServiceProvider.overrideWithValue(queryService)],
       );
     });
 
@@ -63,9 +61,7 @@ void main() {
       completer.complete([group]);
       await loadFuture;
 
-      final state = container.read(
-        groupTimelineGroupSelectionNotifierProvider,
-      );
+      final state = container.read(groupTimelineGroupSelectionNotifierProvider);
       expect(state.status, GroupTimelineGroupSelectionStatus.loaded);
       expect(state.memberId, member.id);
       expect(state.groups, [group]);
@@ -85,9 +81,7 @@ void main() {
 
       await notifier.load(member);
 
-      final state = container.read(
-        groupTimelineGroupSelectionNotifierProvider,
-      );
+      final state = container.read(groupTimelineGroupSelectionNotifierProvider);
       expect(state.status, GroupTimelineGroupSelectionStatus.error);
       expect(state.memberId, member.id);
       expect(state.message, 'エラーが発生しました');
@@ -128,9 +122,7 @@ void main() {
       firstCompleter.complete([group]);
       await firstLoad;
 
-      final state = container.read(
-        groupTimelineGroupSelectionNotifierProvider,
-      );
+      final state = container.read(groupTimelineGroupSelectionNotifierProvider);
       expect(state.memberId, secondMember.id);
       expect(state.groups, [secondGroup]);
     });
