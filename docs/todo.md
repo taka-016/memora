@@ -130,4 +130,36 @@
 
 ## リファクタリング
 
+### Presentation層の責務を整理する
+
+- Presentation層の依存方向を是正する
+  - `settings.dart`からInfrastructure層のFactory Providerへの直接参照を除き、Application層の抽象またはComposition Rootから必要な依存を注入する
+- グループ年表のナビゲーション状態とUIを分離する
+  - `GroupTimelineNavigationState`から`Timeline` Widget、`TimelineRowDefinition`、更新コールバック、`destinationPageDefinitions`、`groupSelectionLoadFuture`を除き、遷移先を表す値とUI・非同期処理の責務を分離する
+  - 年表の行定義と遷移先ページ定義はUI側で生成し、ナビゲーション状態は画面遷移の判定に必要な値だけを保持する
+  - グループ一覧の`loading`、`loaded`、`error`と古いリクエスト結果の破棄は専用の状態とControllerまたはNotifierで管理し、処理中の`Future`自体をナビゲーション状態へ保持しない
+- 画面遷移をRouterで一元管理する
+  - グループ年表のナビゲーション状態とUIを分離した後に、`MaterialApp`を`MaterialApp.router`へ移行し、値として表現した遷移先を宣言的なRouter構成へ移行する
+  - ログイン、新規登録、グループ選択、年表、旅行管理、DVCポイント計算、地図、メンバー管理、グループ管理、設定、アカウント設定のルートを定義する
+  - ログイン画面と新規登録画面の往復遷移をRouterで扱い、`MaterialPageRoute`による命令的な画面遷移を残さない
+  - 認証状態に応じたログイン画面への切り替えをRouterのリダイレクトとして扱い、認証ガードと画面遷移の責務を整理する
+  - 認証済みでメンバー未作成の状態を未認証とは独立したガード条件として扱い、ログイン画面へリダイレクトせずに新規メンバー作成または招待コード入力の選択導線を表示する
+  - Drawerの選択状態を現在のルートから導出し、`NavigationNotifier`とRouterに同じ遷移状態を重複して保持しない
+  - Androidウィジェットから受け取った旅行IDを旅行管理画面のルートへ変換し、直接起動とアプリ内遷移で同じ経路を使用する
+  - Androidの戻る操作について、詳細画面、年表、グループ選択、他のDrawer画面の遷移順をルート階層として定義する
+  - DialogとBottomSheetは画面ルートへ含めず、各Viewから一時的なUIとして表示する
+  - 認証リダイレクト、メンバー未作成時の選択導線、ログイン画面と新規登録画面の往復、Drawer遷移、年表内の階層遷移、戻る操作、Androidウィジェットからの直接起動をテストする
+- Viewに集中しているUseCaseのオーケストレーションと状態管理を分離する
+  - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
+  - `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する
+  - `GroupManagement`と`MemberManagement`の一覧取得、作成・更新・削除、再読み込み、招待処理の状態管理を、それぞれの機能単位のControllerまたはNotifierへ分離する
+  - `TripManagement`の旅行・グループメンバーの並行取得、Androidウィジェットから指定された旅行の初期表示、旅行の作成・更新・削除をControllerまたはNotifierへ分離する
+  - `DvcPointCalculationScreen`のグループ・契約・期間限定ポイント・利用ポイントの並行取得、再計算、保存・削除後の再読み込みをControllerまたはNotifierへ分離する
+  - `TopPage`のAndroidウィジェット起動時における旅行・グループの解決と遷移制御、`AccountSettings`の再認証と更新再試行、`Settings`のAndroidウィジェット設定取得・更新を、それぞれ画面から分離する
+  - 年表の旅行、グループイベント、DVC、メンバーイベント行にあるデータ取得Providerと保存・削除処理を機能単位に整理し、行Widgetは受け取った状態の表示と操作通知を中心にする
+  - ControllerまたはNotifierは`loading`、`loaded`、`error`と操作結果を管理し、Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当する
+  - 分離した状態遷移とUseCaseの実行順序を単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
+- 大規模なViewを責務単位に分割する
+  - 500行を超えるPresentation層の画面・編集UIを対象に責務を確認し、状態制御、フォーム、一覧、ダイアログなどの単位へ分割する
+
 ## 不具合修正
