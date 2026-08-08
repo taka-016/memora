@@ -132,14 +132,6 @@
 
 ### Presentation層の責務を整理する
 
-- GoRouterを唯一の画面遷移元としてNavigationNotifier群を削除する
-  - `go_router`を導入し、現在の`AppRouterDelegate`、`AppRouteInformationParser`、`resolveAppRoute`をルート定義と`redirect`へ置き換える
-  - `go_router_builder`の型付きルートを使用し、ログイン、新規登録、メンバー作成選択、グループ一覧、年表、旅行管理、DVCポイント計算、各Drawer画面のパスとパラメータをコンパイル時に検証できる構成にする
-  - 認証状態とメンバー未作成状態のガード、認証セッション終了時の保護ルート破棄、Androidウィジェットからの旅行管理ディープリンクをGoRouterへ集約する
-  - グループ一覧、年表、旅行管理、DVCポイント計算の親子関係とDrawer画面からの復帰先をネストしたルートで表現し、`ShellRoute`は独立したNavigatorの維持が必要な場合にだけ使用する
-  - `NavigationState`、`NavigationNotifier`、`GroupTimelineNavigationState`、`GroupTimelineNavigationNotifier`、`AppNavigationNotifier`と各Providerを削除し、画面の選択状態と遷移操作をGoRouterの現在ルートと型付きルートAPIへ統一する
-  - 年表の`IndexedStack`のindex計算はルート状態から求める純粋関数として画面側へ分離し、Dialog、BottomSheet、Drawerは画面ルートに含めずAndroidの戻る操作で先に閉じる
-  - 認証リダイレクト、ディープリンク、親子ルートの戻る順序、Drawerの復帰先、オーバーレイの戻る操作をGoRouter構成で検証し、不要になった各NavigationNotifierの単体テストを削除する
 - Viewに集中しているUseCaseのオーケストレーションと状態管理を分離する
   - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
   - `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する

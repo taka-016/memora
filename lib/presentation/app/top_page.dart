@@ -142,7 +142,7 @@ class TopPage extends HookConsumerWidget {
             drawerCloseCompleter.value = null;
           }
         },
-        appBar: _buildAppBar(context),
+        appBar: _buildAppBar(),
         drawer: _buildDrawer(context, ref, closeDrawer),
         body: shouldHideForAndroidWidgetLaunch
             ? const Center(child: CircularProgressIndicator())
@@ -271,7 +271,7 @@ class TopPage extends HookConsumerWidget {
     }
   }
 
-  AppBar _buildAppBar(BuildContext context) {
+  AppBar _buildAppBar() {
     return AppBar(title: const Text('memora'), leading: _buildMenuButton());
   }
 
