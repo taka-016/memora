@@ -15,7 +15,8 @@ final appRouterDelegateProvider = Provider<AppRouterDelegate>((ref) {
     delegate.refresh();
   });
   ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-    if (previous?.isAuthenticated ?? false && !next.isAuthenticated) {
+    final wasAuthenticated = previous?.isAuthenticated ?? false;
+    if (wasAuthenticated && !next.isAuthenticated) {
       ref.read(appNavigationNotifierProvider.notifier).showGroupList();
     }
     delegate.refresh();
