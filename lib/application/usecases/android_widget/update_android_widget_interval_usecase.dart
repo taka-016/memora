@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
-import 'package:memora/infrastructure/factories/android_widget_update_interval_storage_factory.dart';
 
 export 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 

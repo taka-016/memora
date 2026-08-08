@@ -31,17 +31,21 @@ class GroupTimelineGroupListDestination extends GroupTimelineDestination {
 }
 
 class GroupTimelineOverviewDestination extends GroupTimelineDestination {
-  const GroupTimelineOverviewDestination();
+  const GroupTimelineOverviewDestination({required this.groupId});
+
+  @override
+  final String groupId;
 
   @override
   GroupTimelineScreenState get screenState => GroupTimelineScreenState.timeline;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is GroupTimelineOverviewDestination;
+      identical(this, other) ||
+      other is GroupTimelineOverviewDestination && other.groupId == groupId;
 
   @override
-  int get hashCode => screenState.hashCode;
+  int get hashCode => Object.hash(screenState, groupId);
 }
 
 class GroupTimelineTripManagementDestination extends GroupTimelineDestination {

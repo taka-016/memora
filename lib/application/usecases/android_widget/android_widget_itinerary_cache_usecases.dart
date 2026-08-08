@@ -9,8 +9,6 @@ import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
-import 'package:memora/infrastructure/factories/android_widget_cache_storage_factory.dart';
-import 'package:memora/infrastructure/factories/android_widget_update_interval_storage_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =

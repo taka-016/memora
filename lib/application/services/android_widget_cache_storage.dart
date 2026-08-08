@@ -1,4 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
+
+final androidWidgetCacheStorageProvider = Provider<AndroidWidgetCacheStorage>((
+  ref,
+) {
+  throw UnimplementedError('AndroidWidgetCacheStorageが注入されていません');
+});
 
 abstract interface class AndroidWidgetCacheStorage {
   Future<String?> getTargetGroupId();

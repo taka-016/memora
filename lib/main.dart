@@ -6,10 +6,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/services/app_mode_resolver.dart';
+import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_interactivity_callback.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
+import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
@@ -59,7 +62,15 @@ Future<void> main() async {
 
       runApp(
         ProviderScope(
-          overrides: [appClockProvider.overrideWithValue(appClock)],
+          overrides: [
+            appClockProvider.overrideWithValue(appClock),
+            androidWidgetCacheStorageProvider.overrideWithValue(
+              const HomeWidgetAndroidWidgetCacheStorage(),
+            ),
+            androidWidgetUpdateIntervalStorageProvider.overrideWithValue(
+              const SharedPreferencesAndroidWidgetUpdateIntervalStorage(),
+            ),
+          ],
           child: const AppClockLifecycleSync(child: MyApp()),
         ),
       );

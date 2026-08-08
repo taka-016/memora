@@ -1,15 +1,4 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/timeline_rows.dart';
-import 'package:memora/presentation/features/timeline/timeline.dart';
-import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 export 'package:memora/presentation/notifiers/group_timeline_destination.dart';
@@ -21,59 +10,15 @@ final groupTimelineNavigationNotifierProvider =
     >(GroupTimelineNavigationNotifier.new);
 
 class GroupTimelineNavigationState {
-  final GroupTimelineDestination destination;
-  final Timeline? groupTimelineInstance;
-  final List<TimelineRowDefinition> timelineRowDefinitions;
-  final RefreshTimelineCallback? refreshGroupTimeline;
-  final Future<List<GroupDto>>? groupSelectionLoadFuture;
+  const GroupTimelineNavigationState({required this.destination});
 
-  const GroupTimelineNavigationState({
-    required this.destination,
-    this.groupTimelineInstance,
-    this.timelineRowDefinitions = const [],
-    this.refreshGroupTimeline,
-    this.groupSelectionLoadFuture,
-  });
+  final GroupTimelineDestination destination;
 
   GroupTimelineScreenState get currentScreen => destination.screenState;
 
   String? get selectedGroupId => destination.groupId;
 
   int? get selectedYear => destination.year;
-
-  List<TimelineDestinationPageDefinition> get destinationPageDefinitions {
-    return timelineRowDefinitions
-        .expand((rowDefinition) => rowDefinition.destinationPageDefinitions)
-        .toList(growable: false);
-  }
-
-  GroupTimelineNavigationState copyWith({
-    GroupTimelineDestination? destination,
-    Timeline? groupTimelineInstance,
-    List<TimelineRowDefinition>? timelineRowDefinitions,
-    RefreshTimelineCallback? refreshGroupTimeline,
-    Future<List<GroupDto>>? groupSelectionLoadFuture,
-    bool clearInstance = false,
-    bool clearRowDefinitions = false,
-    bool clearRefresh = false,
-    bool clearGroupSelectionLoadFuture = false,
-  }) {
-    return GroupTimelineNavigationState(
-      destination: destination ?? this.destination,
-      groupTimelineInstance: clearInstance
-          ? null
-          : (groupTimelineInstance ?? this.groupTimelineInstance),
-      timelineRowDefinitions: clearRowDefinitions
-          ? const []
-          : (timelineRowDefinitions ?? this.timelineRowDefinitions),
-      refreshGroupTimeline: clearRefresh
-          ? null
-          : (refreshGroupTimeline ?? this.refreshGroupTimeline),
-      groupSelectionLoadFuture: clearGroupSelectionLoadFuture
-          ? null
-          : (groupSelectionLoadFuture ?? this.groupSelectionLoadFuture),
-    );
-  }
 }
 
 class GroupTimelineNavigationNotifier
@@ -85,84 +30,20 @@ class GroupTimelineNavigationNotifier
     );
   }
 
-  Future<void> prepareGroupTimelineEntry(MemberDto currentMember) async {
-    final loadFuture = ref
-        .read(getGroupsWithMembersUsecaseProvider)
-        .execute(currentMember);
-
-    state = state.copyWith(
-      destination: const GroupTimelineGroupListDestination(),
-      groupSelectionLoadFuture: loadFuture,
-      clearInstance: true,
-      clearRowDefinitions: true,
-      clearRefresh: true,
-    );
-
-    try {
-      final groupsWithMembers = await loadFuture;
-      if (state.groupSelectionLoadFuture != loadFuture) {
-        return;
-      }
-
-      if (groupsWithMembers.length == 1) {
-        showGroupTimeline(groupsWithMembers.single);
-        return;
-      }
-    } catch (e, stack) {
-      if (state.groupSelectionLoadFuture != loadFuture) {
-        return;
-      }
-      logger.e(
-        'GroupTimelineNavigationNotifier.prepareGroupTimelineEntry: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-    }
-  }
-
   void showGroupList() {
-    resetToGroupList();
+    state = const GroupTimelineNavigationState(
+      destination: GroupTimelineGroupListDestination(),
+    );
   }
 
-  void showGroupTimeline(
-    GroupDto groupWithMembers, {
-    List<TimelineRowType>? rowOrder,
-    Future<List<GroupDto>>? groupSelectionLoadFuture,
-    bool clearGroupSelectionLoadFuture = false,
-  }) {
-    final rowDefinitions = buildTimelineRows(
-      groupWithMembers: groupWithMembers,
-      onDestinationSelected: showDestination,
-      rowOrder: rowOrder,
-    );
-    late final Timeline groupTimeline;
-    groupTimeline = Timeline(
-      groupWithMembers: groupWithMembers,
-      rowDefinitions: rowDefinitions,
-      onBackPressed: showGroupList,
-      onSetRefreshCallback: (callback) {
-        Future(() {
-          if (state.groupTimelineInstance != groupTimeline) {
-            return;
-          }
-          state = state.copyWith(refreshGroupTimeline: callback);
-        });
-      },
-    );
-
-    state = state.copyWith(
-      destination: const GroupTimelineOverviewDestination(),
-      groupTimelineInstance: groupTimeline,
-      timelineRowDefinitions: rowDefinitions,
-      groupSelectionLoadFuture: groupSelectionLoadFuture,
-      clearRefresh: true,
-      clearGroupSelectionLoadFuture:
-          clearGroupSelectionLoadFuture && groupSelectionLoadFuture == null,
+  void showGroupTimeline(String groupId) {
+    state = GroupTimelineNavigationState(
+      destination: GroupTimelineOverviewDestination(groupId: groupId),
     );
   }
 
   void showDestination(GroupTimelineDestination destination) {
-    state = state.copyWith(destination: normalizeDestination(destination));
+    state = GroupTimelineNavigationState(destination: destination);
   }
 
   void showTripManagement(String groupId, int year, {String? initialTripId}) {
@@ -190,24 +71,16 @@ class GroupTimelineNavigationNotifier
   }
 
   void backToTimeline() {
-    state = state.copyWith(
-      destination: const GroupTimelineOverviewDestination(),
-    );
-
-    final refreshGroupTimeline = state.refreshGroupTimeline;
-    if (refreshGroupTimeline != null) {
-      unawaited(refreshGroupTimeline());
+    final groupId = state.destination.groupId;
+    if (groupId == null) {
+      showGroupList();
+      return;
     }
+    showGroupTimeline(groupId);
   }
 
-  void resetToGroupList({bool clearGroupSelectionLoadFuture = false}) {
-    state = state.copyWith(
-      destination: const GroupTimelineGroupListDestination(),
-      clearInstance: true,
-      clearRowDefinitions: true,
-      clearRefresh: true,
-      clearGroupSelectionLoadFuture: clearGroupSelectionLoadFuture,
-    );
+  void resetToGroupList() {
+    showGroupList();
   }
 
   bool canHandleBackNavigation() {
@@ -216,17 +89,10 @@ class GroupTimelineNavigationNotifier
 
   bool handleBackNavigation() {
     final destination = state.destination;
-    final normalizedDestination = normalizeDestination(destination);
-    if (normalizedDestination != destination) {
-      state = state.copyWith(destination: normalizedDestination);
-      return true;
-    }
-
-    final currentDestination = normalizedDestination;
-    if (currentDestination is GroupTimelineGroupListDestination) {
+    if (destination is GroupTimelineGroupListDestination) {
       return false;
     }
-    if (currentDestination is GroupTimelineOverviewDestination) {
+    if (destination is GroupTimelineOverviewDestination) {
       showGroupList();
       return true;
     }
@@ -235,44 +101,11 @@ class GroupTimelineNavigationNotifier
   }
 
   int getStackIndex() {
-    final destination = normalizeDestination(state.destination);
-    if (destination is GroupTimelineGroupListDestination) {
-      return 0;
-    }
-    if (destination is GroupTimelineOverviewDestination) {
-      return 1;
-    }
-
-    final destinationPageIndex = state.destinationPageDefinitions.indexWhere(
-      (definition) => definition.matches(destination),
-    );
-    if (destinationPageIndex == -1) {
-      return fallbackDestination() is GroupTimelineOverviewDestination ? 1 : 0;
-    }
-
-    return destinationPageIndex + 2;
-  }
-
-  GroupTimelineDestination normalizeDestination(
-    GroupTimelineDestination destination,
-  ) {
-    if (destination is GroupTimelineGroupListDestination ||
-        destination is GroupTimelineOverviewDestination) {
-      return destination;
-    }
-    final hasDestinationPage = state.destinationPageDefinitions.any(
-      (definition) => definition.matches(destination),
-    );
-    if (hasDestinationPage) {
-      return destination;
-    }
-    return fallbackDestination();
-  }
-
-  GroupTimelineDestination fallbackDestination() {
-    if (state.groupTimelineInstance != null) {
-      return const GroupTimelineOverviewDestination();
-    }
-    return const GroupTimelineGroupListDestination();
+    return switch (state.destination) {
+      GroupTimelineGroupListDestination() => 0,
+      GroupTimelineOverviewDestination() => 1,
+      GroupTimelineTripManagementDestination() => 2,
+      GroupTimelineDvcPointCalculationDestination() => 3,
+    };
   }
 }
