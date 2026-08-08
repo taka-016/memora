@@ -158,7 +158,8 @@ TimelineController useTimelineController({
     }
 
     final primaryController = rowScrollControllers.first;
-    if (!primaryController.hasClients) {
+    if (!primaryController.hasClients ||
+        !primaryController.position.hasViewportDimension) {
       return;
     }
 

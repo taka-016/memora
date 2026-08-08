@@ -7,30 +7,34 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
-import 'package:memora/presentation/features/map/map_screen.dart';
-import 'package:memora/presentation/features/group/group_management.dart';
-import 'package:memora/presentation/features/member/member_management.dart';
-import 'package:memora/presentation/features/setting/settings.dart';
-import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 
 class TopPage extends HookConsumerWidget {
-  final bool isTestEnvironment;
+  const TopPage({super.key, required this.selectedItem, required this.child});
 
-  const TopPage({super.key, this.isTestEnvironment = false});
+  final AppNavigationItem selectedItem;
+  final Widget child;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
+    final drawerCloseCompleter = useRef<Completer<void>?>(null);
     final isHandlingAndroidWidgetLaunch = useState(false);
+
+    Future<void> closeDrawer() {
+      if (!isDrawerOpen.value) {
+        return Future<void>.value();
+      }
+      final completer = Completer<void>();
+      drawerCloseCompleter.value = completer;
+      scaffoldKey.currentState?.closeDrawer();
+      return completer.future;
+    }
 
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
     final currentMember = currentMemberState.member;
@@ -84,7 +88,6 @@ class TopPage extends HookConsumerWidget {
       return null;
     }, [pendingAndroidWidgetTripId, currentMember?.id]);
 
-    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
     final groupSelectionMemberId = ref.watch(
       groupTimelineGroupSelectionNotifierProvider.select(
         (state) => state.memberId,
@@ -93,7 +96,7 @@ class TopPage extends HookConsumerWidget {
 
     useEffect(
       () {
-        if (selectedItem != NavigationItem.groupTimeline ||
+        if (selectedItem != AppNavigationItem.groupTimeline ||
             currentMember == null ||
             shouldHideForAndroidWidgetLaunch) {
           return null;
@@ -122,27 +125,28 @@ class TopPage extends HookConsumerWidget {
       ],
     );
 
-    final shouldHandleAndroidBack = _shouldHandleAndroidBack(ref);
-    final canPop = isDrawerOpen.value || !shouldHandleAndroidBack;
-
-    return PopScope(
-      canPop: canPop,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop || !shouldHandleAndroidBack) {
-          return;
+    return BackButtonListener(
+      onBackButtonPressed: () async {
+        if (!isDrawerOpen.value) {
+          return false;
         }
-        _handleAndroidBack(ref);
+        unawaited(closeDrawer());
+        return true;
       },
       child: Scaffold(
         key: scaffoldKey,
         onDrawerChanged: (isOpened) {
           isDrawerOpen.value = isOpened;
+          if (!isOpened) {
+            drawerCloseCompleter.value?.complete();
+            drawerCloseCompleter.value = null;
+          }
         },
         appBar: _buildAppBar(context),
-        drawer: _buildDrawer(context, ref),
+        drawer: _buildDrawer(context, ref, closeDrawer),
         body: shouldHideForAndroidWidgetLaunch
             ? const Center(child: CircularProgressIndicator())
-            : _buildBody(context, ref, currentMember, selectedItem),
+            : child,
       ),
     );
   }
@@ -186,20 +190,13 @@ class TopPage extends HookConsumerWidget {
       }
 
       ref
-          .read(navigationNotifierProvider.notifier)
-          .selectItem(NavigationItem.groupTimeline);
-      ref
           .read(groupTimelineGroupSelectionNotifierProvider.notifier)
           .setLoadedGroups(memberId: currentMember.id, groups: groups);
-      final timelineNotifier = ref.read(
-        groupTimelineNavigationNotifierProvider.notifier,
-      );
-      timelineNotifier.showGroupTimeline(group.id);
-      timelineNotifier.showTripManagement(
-        trip.groupId,
-        trip.year,
-        initialTripId: trip.id,
-      );
+      TripManagementRoute(
+        groupId: trip.groupId,
+        year: trip.year,
+        tripId: trip.id,
+      ).go(context);
     } catch (e, stack) {
       logger.e(
         'TopPage._handleAndroidWidgetLaunch: ${e.toString()}',
@@ -217,12 +214,7 @@ class TopPage extends HookConsumerWidget {
     WidgetRef ref,
     MemberDto currentMember,
   ) async {
-    ref
-        .read(navigationNotifierProvider.notifier)
-        .selectItem(NavigationItem.groupTimeline);
-    ref
-        .read(groupTimelineNavigationNotifierProvider.notifier)
-        .resetToGroupList();
+    const GroupListRoute().go(context);
     await ref
         .read(groupTimelineGroupSelectionNotifierProvider.notifier)
         .load(currentMember);
@@ -233,46 +225,22 @@ class TopPage extends HookConsumerWidget {
     }
   }
 
-  bool _shouldHandleAndroidBack(WidgetRef ref) {
-    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
-    if (selectedItem != NavigationItem.groupTimeline) {
-      return true;
-    }
-
-    final timelineState = ref.watch(groupTimelineNavigationNotifierProvider);
-    return timelineState.destination is! GroupTimelineGroupListDestination;
-  }
-
-  void _handleAndroidBack(WidgetRef ref) {
-    final selectedItem = ref.read(navigationNotifierProvider).selectedItem;
-    if (selectedItem != NavigationItem.groupTimeline) {
-      ref.read(appNavigationNotifierProvider.notifier).goBack();
-      return;
-    }
-
-    ref
-        .read(groupTimelineNavigationNotifierProvider.notifier)
-        .handleBackNavigation();
-  }
-
-  void _onNavigationItemSelected(
+  Future<void> _onNavigationItemSelected(
     BuildContext context,
     WidgetRef ref,
-    NavigationItem item,
-  ) {
-    final currentSelectedItem = ref
-        .read(navigationNotifierProvider)
-        .selectedItem;
-    if (item == NavigationItem.groupTimeline) {
-      if (currentSelectedItem == NavigationItem.groupTimeline) {
-        Navigator.of(context).pop();
+    AppNavigationItem item,
+    Future<void> Function() closeDrawer,
+  ) async {
+    await closeDrawer();
+    if (!context.mounted) {
+      return;
+    }
+    if (item == AppNavigationItem.groupTimeline) {
+      if (selectedItem == AppNavigationItem.groupTimeline) {
         return;
       }
 
       final currentMember = ref.read(currentMemberNotifierProvider).member;
-      ref
-          .read(groupTimelineNavigationNotifierProvider.notifier)
-          .resetToGroupList();
       if (currentMember != null) {
         unawaited(
           ref
@@ -283,47 +251,23 @@ class TopPage extends HookConsumerWidget {
         ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
       }
 
-      ref.read(navigationNotifierProvider.notifier).selectItem(item);
-      Navigator.of(context).pop();
+      const GroupListRoute().go(context);
       return;
     }
 
-    ref.read(navigationNotifierProvider.notifier).selectItem(item);
-    Navigator.of(context).pop();
-  }
-
-  Widget _buildBody(
-    BuildContext context,
-    WidgetRef ref,
-    MemberDto? currentMember,
-    NavigationItem selectedItem,
-  ) {
-    switch (selectedItem) {
-      case NavigationItem.groupTimeline:
-        if (currentMember == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return GroupTimelineNavigationView(currentMember: currentMember);
-      case NavigationItem.mapDisplay:
-        if (currentMember == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        // Mapは外部依存（Google Map）を含むため、テスト時のみ切り替えを行う。
-        return MapScreen(isTestEnvironment: isTestEnvironment);
-      case NavigationItem.groupManagement:
-        if (currentMember == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return const GroupManagement();
-      case NavigationItem.memberManagement:
-        if (currentMember == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return const MemberManagement();
-      case NavigationItem.settings:
-        return const Settings();
-      case NavigationItem.accountSettings:
-        return const AccountSettings();
+    switch (item) {
+      case AppNavigationItem.groupTimeline:
+        return;
+      case AppNavigationItem.map:
+        const MapRoute().push(context);
+      case AppNavigationItem.memberManagement:
+        const MemberManagementRoute().push(context);
+      case AppNavigationItem.groupManagement:
+        const GroupManagementRoute().push(context);
+      case AppNavigationItem.settings:
+        const SettingsRoute().push(context);
+      case AppNavigationItem.accountSettings:
+        const AccountSettingsRoute().push(context);
     }
   }
 
@@ -341,13 +285,17 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context, WidgetRef ref) {
+  Drawer _buildDrawer(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() closeDrawer,
+  ) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
           _buildDrawerHeader(context, ref),
-          ..._buildDrawerItems(context, ref),
+          ..._buildDrawerItems(context, ref, closeDrawer),
           const Divider(),
           _buildLogoutItem(ref),
         ],
@@ -402,49 +350,59 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  List<Widget> _buildDrawerItems(BuildContext context, WidgetRef ref) {
+  List<Widget> _buildDrawerItems(
+    BuildContext context,
+    WidgetRef ref,
+    Future<void> Function() closeDrawer,
+  ) {
     return [
       _buildDrawerItem(
         context,
         ref,
         Icons.timeline,
         'グループ年表',
-        NavigationItem.groupTimeline,
+        AppNavigationItem.groupTimeline,
+        closeDrawer,
       ),
       _buildDrawerItem(
         context,
         ref,
         Icons.map,
         '地図表示',
-        NavigationItem.mapDisplay,
+        AppNavigationItem.map,
+        closeDrawer,
       ),
       _buildDrawerItem(
         context,
         ref,
         Icons.people,
         'メンバー管理',
-        NavigationItem.memberManagement,
+        AppNavigationItem.memberManagement,
+        closeDrawer,
       ),
       _buildDrawerItem(
         context,
         ref,
         Icons.group_work,
         'グループ管理',
-        NavigationItem.groupManagement,
+        AppNavigationItem.groupManagement,
+        closeDrawer,
       ),
       _buildDrawerItem(
         context,
         ref,
         Icons.settings,
         '設定',
-        NavigationItem.settings,
+        AppNavigationItem.settings,
+        closeDrawer,
       ),
       _buildDrawerItem(
         context,
         ref,
         Icons.account_circle,
         'アカウント設定',
-        NavigationItem.accountSettings,
+        AppNavigationItem.accountSettings,
+        closeDrawer,
       ),
     ];
   }
@@ -454,15 +412,18 @@ class TopPage extends HookConsumerWidget {
     WidgetRef ref,
     IconData icon,
     String title,
-    NavigationItem item,
+    AppNavigationItem item,
+    Future<void> Function() closeDrawer,
   ) {
-    final selectedItem = ref.watch(navigationNotifierProvider).selectedItem;
-
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      selected: selectedItem == item,
-      onTap: () => _onNavigationItemSelected(context, ref, item),
+    return Material(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        selected: selectedItem == item,
+        onTap: () {
+          unawaited(_onNavigationItemSelected(context, ref, item, closeDrawer));
+        },
+      ),
     );
   }
 

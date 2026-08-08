@@ -4,25 +4,22 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 class DvcRow extends TimelineRowDefinition {
   const DvcRow({
     required this.groupId,
     required this.initialHeight,
-    required this.onDestinationSelected,
+    required this.onDvcSelected,
   });
 
   final String groupId;
 
   @override
   final double initialHeight;
-  final ValueChanged<GroupTimelineDestination>? onDestinationSelected;
+  final ValueChanged<String>? onDvcSelected;
 
   @override
   String get fixedColumnLabel => 'DVC';
@@ -32,10 +29,6 @@ class DvcRow extends TimelineRowDefinition {
 
   @override
   Key yearCellKey(int year) => Key('dvc_point_usage_cell_$year');
-
-  @override
-  Iterable<TimelineDestinationPageDefinition> get destinationPageDefinitions =>
-      const [_DvcPointCalculationDestinationPageDefinition()];
 
   @override
   Widget buildFixedColumn(BuildContext context, TimelineRowContext rowContext) {
@@ -87,37 +80,12 @@ class DvcRow extends TimelineRowDefinition {
   }
 
   VoidCallback? _buildNavigateToDvcPointCalculationCallback() {
-    final callback = onDestinationSelected;
+    final callback = onDvcSelected;
     if (callback == null) {
       return null;
     }
 
-    return () =>
-        callback(GroupTimelineDvcPointCalculationDestination(groupId: groupId));
-  }
-}
-
-class _DvcPointCalculationDestinationPageDefinition
-    extends TimelineDestinationPageDefinition {
-  const _DvcPointCalculationDestinationPageDefinition();
-
-  @override
-  bool matches(GroupTimelineDestination destination) {
-    return destination is GroupTimelineDvcPointCalculationDestination;
-  }
-
-  @override
-  Widget buildPage({
-    required BuildContext context,
-    required GroupTimelineDestination destination,
-    required VoidCallback onBackPressed,
-  }) {
-    final dvcDestination =
-        destination as GroupTimelineDvcPointCalculationDestination;
-    return DvcPointCalculationScreen(
-      groupId: dvcDestination.groupId,
-      onBackPressed: onBackPressed,
-    );
+    return () => callback(groupId);
   }
 }
 

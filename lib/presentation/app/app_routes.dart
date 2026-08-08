@@ -1,21 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:memora/presentation/app/top_page.dart';
+import 'package:memora/presentation/features/account_setting/account_settings.dart';
 import 'package:memora/presentation/features/auth/auth_guard.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
+import 'package:memora/presentation/features/group/group_management.dart';
+import 'package:memora/presentation/features/map/map_screen.dart';
+import 'package:memora/presentation/features/member/member_management.dart';
+import 'package:memora/presentation/features/setting/settings.dart';
+import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
+import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 part 'app_routes.g.dart';
 
 List<RouteBase> get appRoutes => $appRoutes;
+
+final appTestEnvironmentProvider = Provider<bool>((ref) => false);
+
+enum AppNavigationItem {
+  groupTimeline,
+  map,
+  memberManagement,
+  groupManagement,
+  settings,
+  accountSettings,
+}
+
+AppNavigationItem appNavigationItemForLocation(String location) {
+  if (location == const MapRoute().location) {
+    return AppNavigationItem.map;
+  }
+  if (location == const MemberManagementRoute().location) {
+    return AppNavigationItem.memberManagement;
+  }
+  if (location == const GroupManagementRoute().location) {
+    return AppNavigationItem.groupManagement;
+  }
+  if (location == const SettingsRoute().location) {
+    return AppNavigationItem.settings;
+  }
+  if (location == const AccountSettingsRoute().location) {
+    return AppNavigationItem.accountSettings;
+  }
+  return AppNavigationItem.groupTimeline;
+}
 
 @TypedGoRoute<LoadingRoute>(path: '/loading')
 class LoadingRoute extends GoRouteData with $LoadingRoute {
   const LoadingRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage<void>(
+      child: Scaffold(body: Center(child: CircularProgressIndicator())),
+    );
   }
 }
 
@@ -24,8 +67,8 @@ class LoginRoute extends GoRouteData with $LoginRoute {
   const LoginRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const LoginPage();
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage<void>(child: LoginPage());
   }
 }
 
@@ -34,8 +77,8 @@ class SignupRoute extends GoRouteData with $SignupRoute {
   const SignupRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const SignupPage();
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage<void>(child: SignupPage());
   }
 }
 
@@ -44,8 +87,10 @@ class MemberSetupRoute extends GoRouteData with $MemberSetupRoute {
   const MemberSetupRoute();
 
   @override
-  Widget build(BuildContext context, GoRouterState state) {
-    return const AuthGuard(child: SizedBox.shrink());
+  Page<void> buildPage(BuildContext context, GoRouterState state) {
+    return const NoTransitionPage<void>(
+      child: AuthGuard(child: SizedBox.shrink()),
+    );
   }
 }
 
@@ -75,7 +120,10 @@ class AppShellRoute extends ShellRouteData {
 
   @override
   Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
-    return navigator;
+    return TopPage(
+      selectedItem: appNavigationItemForLocation(state.uri.path),
+      child: navigator,
+    );
   }
 }
 
@@ -84,7 +132,7 @@ class GroupListRoute extends GoRouteData with $GroupListRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return const _GroupTimelineRoutePage();
   }
 }
 
@@ -95,7 +143,7 @@ class GroupTimelineRoute extends GoRouteData with $GroupTimelineRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return _GroupTimelineRoutePage(groupId: groupId);
   }
 }
 
@@ -112,7 +160,14 @@ class TripManagementRoute extends GoRouteData with $TripManagementRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return Material(
+      child: TripManagement(
+        groupId: groupId,
+        year: year,
+        initialTripId: tripId,
+        onBackPressed: context.pop,
+      ),
+    );
   }
 }
 
@@ -124,7 +179,12 @@ class DvcPointCalculationRoute extends GoRouteData
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return Material(
+      child: DvcPointCalculationScreen(
+        groupId: groupId,
+        onBackPressed: context.pop,
+      ),
+    );
   }
 }
 
@@ -133,7 +193,15 @@ class MapRoute extends GoRouteData with $MapRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return Consumer(
+      builder: (context, ref, _) {
+        return Material(
+          child: MapScreen(
+            isTestEnvironment: ref.watch(appTestEnvironmentProvider),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -142,7 +210,7 @@ class MemberManagementRoute extends GoRouteData with $MemberManagementRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return const Material(child: MemberManagement());
   }
 }
 
@@ -151,7 +219,7 @@ class GroupManagementRoute extends GoRouteData with $GroupManagementRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return const Material(child: GroupManagement());
   }
 }
 
@@ -160,7 +228,7 @@ class SettingsRoute extends GoRouteData with $SettingsRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return const Material(child: Settings());
   }
 }
 
@@ -169,7 +237,27 @@ class AccountSettingsRoute extends GoRouteData with $AccountSettingsRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return const SizedBox.shrink();
+    return const Material(child: AccountSettings());
+  }
+}
+
+class _GroupTimelineRoutePage extends ConsumerWidget {
+  const _GroupTimelineRoutePage({this.groupId});
+
+  final String? groupId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = ref.watch(currentMemberNotifierProvider).member;
+    if (currentMember == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return Material(
+      child: GroupTimelineNavigationView(
+        currentMember: currentMember,
+        groupId: groupId,
+      ),
+    );
   }
 }
 
