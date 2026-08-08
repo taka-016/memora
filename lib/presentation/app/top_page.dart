@@ -233,6 +233,9 @@ class TopPage extends HookConsumerWidget {
     ref
         .read(navigationNotifierProvider.notifier)
         .selectItem(NavigationItem.groupTimeline);
+    ref
+        .read(groupTimelineNavigationNotifierProvider.notifier)
+        .resetToGroupList();
     await ref
         .read(groupTimelineGroupSelectionNotifierProvider.notifier)
         .load(currentMember);
