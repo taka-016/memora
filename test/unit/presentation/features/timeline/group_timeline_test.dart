@@ -30,7 +30,6 @@ import 'package:memora/presentation/features/timeline/refresh_timeline_callback.
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/test_exception.dart';
@@ -89,7 +88,8 @@ void main() {
     MemberEventRepository? memberEventRepo,
     VoidCallback? onBackPressed,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
-    ValueChanged<GroupTimelineDestination>? onDestinationSelected,
+    void Function(String groupId, int year)? onTripSelected,
+    ValueChanged<String>? onDvcSelected,
     List<TimelineRowDefinition>? rowDefinitions,
   }) {
     final effectiveGroupWithMembers = groupWithMembers ?? testGroupWithMembers;
@@ -97,7 +97,8 @@ void main() {
         rowDefinitions ??
         buildTimelineRows(
           groupWithMembers: effectiveGroupWithMembers,
-          onDestinationSelected: onDestinationSelected,
+          onTripSelected: onTripSelected,
+          onDvcSelected: onDvcSelected,
         );
 
     return ProviderScope(
@@ -275,12 +276,12 @@ void main() {
       WidgetTester tester,
     ) async {
       // Arrange
-      GroupTimelineDestination? selectedDestination;
+      String? selectedGroupId;
 
       await tester.pumpWidget(
         createTestWidget(
-          onDestinationSelected: (destination) {
-            selectedDestination = destination;
+          onDvcSelected: (groupId) {
+            selectedGroupId = groupId;
           },
         ),
       );
@@ -293,22 +294,17 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(
-        selectedDestination,
-        GroupTimelineDvcPointCalculationDestination(
-          groupId: testGroupWithMembers.id,
-        ),
-      );
+      expect(selectedGroupId, testGroupWithMembers.id);
     });
 
     testWidgets('DVC行の固定セル全体をタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
-      GroupTimelineDestination? selectedDestination;
+      String? selectedGroupId;
 
       await tester.pumpWidget(
         createTestWidget(
-          onDestinationSelected: (destination) {
-            selectedDestination = destination;
+          onDvcSelected: (groupId) {
+            selectedGroupId = groupId;
           },
         ),
       );
@@ -319,12 +315,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert
-      expect(
-        selectedDestination,
-        GroupTimelineDvcPointCalculationDestination(
-          groupId: testGroupWithMembers.id,
-        ),
-      );
+      expect(selectedGroupId, testGroupWithMembers.id);
     });
 
     testWidgets('DVCポイント利用行に利用年月・利用ポイント・メモが表示される', (WidgetTester tester) async {
@@ -1490,12 +1481,12 @@ void main() {
 
     testWidgets('旅行セルをタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
-      GroupTimelineDestination? selectedDestination;
+      (String, int)? selectedTrip;
 
       await tester.pumpWidget(
         createTestWidget(
-          onDestinationSelected: (destination) {
-            selectedDestination = destination;
+          onTripSelected: (groupId, year) {
+            selectedTrip = (groupId, year);
           },
         ),
       );
@@ -1511,16 +1502,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - 旅行管理画面への遷移要求が通知される
-      expect(
-        selectedDestination,
-        isA<GroupTimelineTripManagementDestination>()
-            .having(
-              (destination) => destination.groupId,
-              'groupId',
-              testGroupWithMembers.id,
-            )
-            .having((destination) => destination.year, 'year', isA<int>()),
-      );
+      expect(selectedTrip?.$1, testGroupWithMembers.id);
+      expect(selectedTrip?.$2, isA<int>());
     });
 
     testWidgets('旅行行に対象年の旅行一覧が表示される', (WidgetTester tester) async {

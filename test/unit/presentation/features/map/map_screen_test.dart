@@ -14,8 +14,6 @@ import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart'
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';
@@ -524,12 +522,6 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(MapScreen)),
-      );
-      container
-          .read(navigationNotifierProvider.notifier)
-          .selectItem(NavigationItem.mapDisplay);
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       googleMap.markers.single.onTap?.call();
       await tester.pumpAndSettle();
@@ -537,10 +529,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TripEditModal), findsOneWidget);
-      expect(
-        container.read(navigationNotifierProvider).selectedItem,
-        NavigationItem.mapDisplay,
-      );
 
       await tester.tap(find.text('キャンセル'));
       await tester.pumpAndSettle();
@@ -590,13 +578,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(MapScreen)),
-      );
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).destination,
-        const GroupTimelineGroupListDestination(),
-      );
     });
   });
 }
