@@ -1,10 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/presentation/app/app_route.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
+import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
+
+import '../../../helpers/fake_auth_notifier.dart';
 
 void main() {
   group('AppRouteInformationParser', () {
@@ -80,6 +84,67 @@ void main() {
           ),
           const AppLoginRoute(),
         ),
+        const GroupTimelineGroupListDestination(),
+      );
+    });
+  });
+
+  group('AppRouterDelegate', () {
+    testWidgets('戻る操作ではアプリのルートより先にダイアログを閉じる', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authNotifierProvider.overrideWith(
+              () => FakeAuthNotifier.unauthenticated(),
+            ),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              return MaterialApp.router(
+                routerConfig: ref.watch(appRouterConfigProvider),
+              );
+            },
+          ),
+        ),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      container.read(appNavigationNotifierProvider.notifier).showSignup();
+      await tester.pumpAndSettle();
+      final delegate = container.read(appRouterDelegateProvider);
+
+      showDialog<void>(
+        context: delegate.navigatorKey!.currentContext!,
+        builder: (_) => const AlertDialog(content: Text('確認ダイアログ')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(await delegate.popRoute(), isTrue);
+      await tester.pumpAndSettle();
+
+      expect(find.text('確認ダイアログ'), findsNothing);
+      expect(
+        container.read(appNavigationNotifierProvider),
+        const AppSignupRoute(),
+      );
+    });
+
+    test('ログアウトすると前の認証セッションの保護ルートを破棄する', () async {
+      final authNotifier = FakeAuthNotifier.authenticated(userId: 'user-1');
+      final container = ProviderContainer(
+        overrides: [authNotifierProvider.overrideWith(() => authNotifier)],
+      );
+      addTearDown(container.dispose);
+      container.read(appRouterDelegateProvider);
+      container
+          .read(appNavigationNotifierProvider.notifier)
+          .showGroupTimeline('previous-session-group');
+
+      await authNotifier.logout();
+
+      expect(
+        container.read(appNavigationNotifierProvider),
         const GroupTimelineGroupListDestination(),
       );
     });
