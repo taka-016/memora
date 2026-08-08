@@ -1,13 +1,28 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/app_route.dart';
+import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
 import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 
 import '../../../../helpers/fake_auth_notifier.dart';
+
+class _PendingSignupAuthNotifier extends FakeAuthNotifier {
+  _PendingSignupAuthNotifier() : super(const AuthState.unauthenticated(''));
+
+  final signupCompleter = Completer<bool>();
+
+  @override
+  Future<bool> signup({required String email, required String password}) {
+    state = const AuthState.loading();
+    return signupCompleter.future;
+  }
+}
 
 void main() {
   group('SignupPage', () {
@@ -115,6 +130,54 @@ void main() {
 
       // signupメソッドが呼ばれたことを確認
       expect(fakeAuthNotifier.signupCalled, isTrue);
+    });
+
+    testWidgets('登録中に画面が破棄されても登録完了後にログインルートへ遷移する', (WidgetTester tester) async {
+      final authNotifier = _PendingSignupAuthNotifier();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [authNotifierProvider.overrideWith(() => authNotifier)],
+          child: Consumer(
+            builder: (context, ref, _) {
+              return MaterialApp.router(
+                routerConfig: ref.watch(appRouterConfigProvider),
+              );
+            },
+          ),
+        ),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      container.read(appNavigationNotifierProvider.notifier).showSignup();
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('email_field')),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('password_field')),
+        'ValidPass123!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('confirm_password_field')),
+        'ValidPass123!',
+      );
+      await tester.tap(find.byKey(const Key('signup_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byType(SignupPage), findsNothing);
+
+      authNotifier.signupCompleter.complete(true);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        container.read(appNavigationNotifierProvider),
+        const AppLoginRoute(),
+      );
     });
 
     testWidgets('ログインリンクをタップするとRouterのログインルートへ遷移する', (
