@@ -133,6 +133,7 @@ void main() {
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
 
       expect(materialApp.theme!.buttonTheme.alignedDropdown, isTrue);
+      expect(materialApp.routerConfig, isNotNull);
     });
   });
 

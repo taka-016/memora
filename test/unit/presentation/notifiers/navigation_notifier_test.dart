@@ -56,7 +56,7 @@ void main() {
       }
     });
 
-    test('状態の変更が通知される', () {
+    test('状態の変更が通知される', () async {
       // Arrange
       final notifier = container.read(navigationNotifierProvider.notifier);
       var notificationCount = 0;
@@ -70,7 +70,9 @@ void main() {
 
       // Act
       notifier.selectItem(NavigationItem.mapDisplay);
+      await container.pump();
       notifier.selectItem(NavigationItem.settings);
+      await container.pump();
 
       // Assert
       expect(notificationCount, 2);
@@ -89,7 +91,7 @@ void main() {
       expect(state.selectedItem, NavigationItem.groupTimeline);
     });
 
-    test('resetToDefault 呼び出しで状態の変更が通知される', () {
+    test('resetToDefault 呼び出しで状態の変更が通知される', () async {
       // Arrange
       final notifier = container.read(navigationNotifierProvider.notifier);
       var notificationCount = 0;
@@ -103,7 +105,9 @@ void main() {
 
       // Act
       notifier.selectItem(NavigationItem.settings);
+      await container.pump();
       notifier.resetToDefault();
+      await container.pump();
 
       // Assert
       expect(notificationCount, 2);

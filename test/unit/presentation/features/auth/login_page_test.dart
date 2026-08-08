@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/app/app_route.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
+import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 
 import '../../../../helpers/fake_auth_notifier.dart';
 
@@ -33,6 +35,24 @@ void main() {
       expect(find.text('パスワード'), findsOneWidget);
       expect(find.text('アカウントをお持ちでない方'), findsOneWidget);
       expect(find.text('新規登録'), findsOneWidget);
+    });
+
+    testWidgets('新規登録リンクをタップするとRouterの新規登録ルートへ遷移する', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(LoginPage)),
+      );
+
+      await tester.tap(find.byKey(const Key('signup_link')));
+
+      expect(
+        container.read(appNavigationNotifierProvider),
+        const AppSignupRoute(),
+      );
     });
 
     testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {

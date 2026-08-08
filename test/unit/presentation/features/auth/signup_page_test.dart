@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/app/app_route.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
+import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 
 import '../../../../helpers/fake_auth_notifier.dart';
 
@@ -115,17 +117,23 @@ void main() {
       expect(fakeAuthNotifier.signupCalled, isTrue);
     });
 
-    testWidgets('ログインリンクをタップすると画面が戻る', (WidgetTester tester) async {
+    testWidgets('ログインリンクをタップするとRouterのログインルートへ遷移する', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         createTestWidget(authState: const AuthState.unauthenticated('')),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SignupPage)),
       );
 
       final loginLink = find.byKey(const Key('login_link'));
       await tester.tap(loginLink);
-      await tester.pumpAndSettle();
 
-      // 画面が戻ることを確認
-      expect(find.byType(SignupPage), findsNothing);
+      expect(
+        container.read(appNavigationNotifierProvider),
+        const AppLoginRoute(),
+      );
     });
 
     testWidgets('loading状態の時はローディングインジケーターが表示される', (WidgetTester tester) async {
