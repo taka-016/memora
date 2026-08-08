@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/presentation/app/app_route.dart';
+import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 export 'package:memora/presentation/notifiers/group_timeline_destination.dart';
@@ -25,25 +27,26 @@ class GroupTimelineNavigationNotifier
     extends Notifier<GroupTimelineNavigationState> {
   @override
   GroupTimelineNavigationState build() {
-    return const GroupTimelineNavigationState(
-      destination: GroupTimelineGroupListDestination(),
+    final route = ref.watch(appNavigationNotifierProvider);
+    return GroupTimelineNavigationState(
+      destination: switch (route) {
+        GroupTimelineDestination() => route,
+        AppDrawerRoute(:final returnRoute) => returnRoute,
+        _ => const GroupTimelineGroupListDestination(),
+      },
     );
   }
 
   void showGroupList() {
-    state = const GroupTimelineNavigationState(
-      destination: GroupTimelineGroupListDestination(),
-    );
+    ref.read(appNavigationNotifierProvider.notifier).showGroupList();
   }
 
   void showGroupTimeline(String groupId) {
-    state = GroupTimelineNavigationState(
-      destination: GroupTimelineOverviewDestination(groupId: groupId),
-    );
+    ref.read(appNavigationNotifierProvider.notifier).showGroupTimeline(groupId);
   }
 
   void showDestination(GroupTimelineDestination destination) {
-    state = GroupTimelineNavigationState(destination: destination);
+    ref.read(appNavigationNotifierProvider.notifier).go(destination);
   }
 
   void showTripManagement(String groupId, int year, {String? initialTripId}) {

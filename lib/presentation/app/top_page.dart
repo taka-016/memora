@@ -8,6 +8,7 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
@@ -30,20 +31,6 @@ class TopPage extends HookConsumerWidget {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
     final isHandlingAndroidWidgetLaunch = useState(false);
-
-    useEffect(() {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
-        }
-        ref.read(navigationNotifierProvider.notifier).resetToDefault();
-        ref
-            .read(groupTimelineNavigationNotifierProvider.notifier)
-            .resetToGroupList();
-        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
-      });
-      return null;
-    }, const []);
 
     final currentMemberState = ref.watch(currentMemberNotifierProvider);
     final currentMember = currentMemberState.member;
@@ -259,9 +246,7 @@ class TopPage extends HookConsumerWidget {
   void _handleAndroidBack(WidgetRef ref) {
     final selectedItem = ref.read(navigationNotifierProvider).selectedItem;
     if (selectedItem != NavigationItem.groupTimeline) {
-      ref
-          .read(navigationNotifierProvider.notifier)
-          .selectItem(NavigationItem.groupTimeline);
+      ref.read(appNavigationNotifierProvider.notifier).goBack();
       return;
     }
 

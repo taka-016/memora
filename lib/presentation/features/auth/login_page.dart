@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'signup_page.dart';
 
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -33,9 +33,7 @@ class LoginPage extends HookConsumerWidget {
     }
 
     void navigateToSignup() {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const SignupPage()));
+      ref.read(appNavigationNotifierProvider.notifier).showSignup();
     }
 
     Widget buildMessageContainer(AuthViewState authState) {
