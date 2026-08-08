@@ -54,7 +54,7 @@ import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';
 import 'top_page_test.mocks.dart';
 
-// テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
+// テスト用の初期状態を持つNotifier
 class _TestNavigationNotifier extends NavigationNotifier {
   @override
   NavigationState build() {
@@ -1609,7 +1609,7 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
+    testWidgets('初期フレーム後もRouterで指定したナビゲーション状態を維持する', (WidgetTester tester) async {
       // Arrange
       final defaultMember = MemberDto(
         id: 'default_member',
@@ -1656,16 +1656,19 @@ void main() {
       final topPageElement = tester.element(find.byType(TopPage));
       final container = ProviderScope.containerOf(topPageElement);
 
-      // Assert - TopPageのpost frame処理でリセットされていること
+      // Assert
       final navState = container.read(navigationNotifierProvider);
-      expect(navState.selectedItem, NavigationItem.groupTimeline);
+      expect(navState.selectedItem, NavigationItem.settings);
 
       final timelineState = container.read(
         groupTimelineNavigationNotifierProvider,
       );
-      expect(timelineState.currentScreen, GroupTimelineScreenState.groupList);
-      expect(timelineState.selectedGroupId, isNull);
-      expect(timelineState.selectedYear, isNull);
+      expect(
+        timelineState.currentScreen,
+        GroupTimelineScreenState.tripManagement,
+      );
+      expect(timelineState.selectedGroupId, 'g1');
+      expect(timelineState.selectedYear, 2024);
     });
 
     testWidgets('_currentMember取得でエラーになった場合、SnackBarでエラーを表示してログアウトする', (
