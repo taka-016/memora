@@ -20,15 +20,14 @@ class SignupPage extends HookConsumerWidget {
 
     Future<void> signup() async {
       if (formKey.currentState?.validate() ?? false) {
+        final authNotifier = ref.read(authNotifierProvider.notifier);
         final navigationNotifier = ref.read(
           appNavigationNotifierProvider.notifier,
         );
-        final isSuccess = await ref
-            .read(authNotifierProvider.notifier)
-            .signup(
-              email: emailController.text.trim(),
-              password: passwordController.text,
-            );
+        final isSuccess = await authNotifier.signup(
+          email: emailController.text.trim(),
+          password: passwordController.text,
+        );
         if (isSuccess) {
           TextInput.finishAutofillContext();
           navigationNotifier.showLogin();
