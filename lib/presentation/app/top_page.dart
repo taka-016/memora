@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
@@ -254,39 +255,24 @@ class TopPage extends HookConsumerWidget {
       return;
     }
 
-    switch (item) {
-      case AppNavigationItem.groupTimeline:
-        return;
-      case AppNavigationItem.map:
-        if (selectedItem == AppNavigationItem.groupTimeline) {
-          const MapRoute().push(context);
-        } else {
-          const MapRoute().pushReplacement(context);
-        }
-      case AppNavigationItem.memberManagement:
-        if (selectedItem == AppNavigationItem.groupTimeline) {
-          const MemberManagementRoute().push(context);
-        } else {
-          const MemberManagementRoute().pushReplacement(context);
-        }
-      case AppNavigationItem.groupManagement:
-        if (selectedItem == AppNavigationItem.groupTimeline) {
-          const GroupManagementRoute().push(context);
-        } else {
-          const GroupManagementRoute().pushReplacement(context);
-        }
-      case AppNavigationItem.settings:
-        if (selectedItem == AppNavigationItem.groupTimeline) {
-          const SettingsRoute().push(context);
-        } else {
-          const SettingsRoute().pushReplacement(context);
-        }
-      case AppNavigationItem.accountSettings:
-        if (selectedItem == AppNavigationItem.groupTimeline) {
-          const AccountSettingsRoute().push(context);
-        } else {
-          const AccountSettingsRoute().pushReplacement(context);
-        }
+    final location = switch (item) {
+      AppNavigationItem.groupTimeline => null,
+      AppNavigationItem.map => const MapRoute().location,
+      AppNavigationItem.memberManagement =>
+        const MemberManagementRoute().location,
+      AppNavigationItem.groupManagement =>
+        const GroupManagementRoute().location,
+      AppNavigationItem.settings => const SettingsRoute().location,
+      AppNavigationItem.accountSettings =>
+        const AccountSettingsRoute().location,
+    };
+    if (location == null) {
+      return;
+    }
+    if (selectedItem == AppNavigationItem.groupTimeline) {
+      unawaited(context.push<void>(location));
+    } else {
+      context.pushReplacement(location);
     }
   }
 
