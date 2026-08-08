@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/core/validators/password_validator.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 
 class SignupPage extends HookConsumerWidget {
@@ -19,23 +20,20 @@ class SignupPage extends HookConsumerWidget {
 
     Future<void> signup() async {
       if (formKey.currentState?.validate() ?? false) {
-        final isSuccess = await ref
-            .read(authNotifierProvider.notifier)
-            .signup(
-              email: emailController.text.trim(),
-              password: passwordController.text,
-            );
-        if (isSuccess) {
+        final authNotifier = ref.read(authNotifierProvider.notifier);
+        final isSuccess = await authNotifier.signup(
+          email: emailController.text.trim(),
+          password: passwordController.text,
+        );
+        if (isSuccess && context.mounted) {
           TextInput.finishAutofillContext();
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
+          const LoginRoute().go(context);
         }
       }
     }
 
     void navigateToLogin() {
-      Navigator.of(context).pop();
+      const LoginRoute().go(context);
     }
 
     Widget buildMessageContainer(AuthViewState authState) {

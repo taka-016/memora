@@ -15,10 +15,9 @@ import 'package:memora/infrastructure/services/shared_preferences_android_widget
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'firebase_options.dart';
-import 'presentation/app/top_page.dart';
-import 'presentation/features/auth/auth_guard.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
@@ -132,7 +131,8 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(androidWidgetLaunchNotifierProvider);
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: ref.watch(appRouterConfigProvider),
       title: 'memora',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
@@ -149,7 +149,6 @@ class MyApp extends ConsumerWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const AuthGuard(child: TopPage()),
     );
   }
 }

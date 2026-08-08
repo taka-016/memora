@@ -6,7 +6,6 @@ import 'package:memora/presentation/features/timeline/timeline_layout_config.dar
 import 'package:memora/presentation/features/timeline/member_row.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/trip_row.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 enum TimelineRowType { trip, groupEvent, dvc, member }
 
@@ -19,7 +18,8 @@ const defaultTimelineRowOrder = <TimelineRowType>[
 
 List<TimelineRowDefinition> buildTimelineRows({
   required GroupDto groupWithMembers,
-  required ValueChanged<GroupTimelineDestination>? onDestinationSelected,
+  required void Function(String groupId, int year)? onTripSelected,
+  required ValueChanged<String>? onDvcSelected,
   List<TimelineRowType>? rowOrder,
 }) {
   final defaultHeight = TimelineLayoutConfig.defaults.dataRowHeight;
@@ -31,7 +31,8 @@ List<TimelineRowDefinition> buildTimelineRows({
           rowType: rowType,
           groupWithMembers: groupWithMembers,
           defaultHeight: defaultHeight,
-          onDestinationSelected: onDestinationSelected,
+          onTripSelected: onTripSelected,
+          onDvcSelected: onDvcSelected,
         ),
       )
       .toList(growable: false);
@@ -41,7 +42,8 @@ Iterable<TimelineRowDefinition> _buildRowsByType({
   required TimelineRowType rowType,
   required GroupDto groupWithMembers,
   required double defaultHeight,
-  required ValueChanged<GroupTimelineDestination>? onDestinationSelected,
+  required void Function(String groupId, int year)? onTripSelected,
+  required ValueChanged<String>? onDvcSelected,
 }) {
   switch (rowType) {
     case TimelineRowType.trip:
@@ -49,7 +51,7 @@ Iterable<TimelineRowDefinition> _buildRowsByType({
         TripRow(
           groupId: groupWithMembers.id,
           initialHeight: defaultHeight,
-          onDestinationSelected: onDestinationSelected,
+          onTripSelected: onTripSelected,
         ),
       ];
     case TimelineRowType.groupEvent:
@@ -64,7 +66,7 @@ Iterable<TimelineRowDefinition> _buildRowsByType({
         DvcRow(
           groupId: groupWithMembers.id,
           initialHeight: defaultHeight,
-          onDestinationSelected: onDestinationSelected,
+          onDvcSelected: onDvcSelected,
         ),
       ];
     case TimelineRowType.member:

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:memora/presentation/app/app_router.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
@@ -9,6 +12,28 @@ import '../../../../helpers/fake_auth_notifier.dart';
 
 void main() {
   group('LoginPage', () {
+    Future<GoRouter> pumpRouter(WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authNotifierProvider.overrideWith(FakeAuthNotifier.unauthenticated),
+          ],
+          child: Consumer(
+            builder: (context, ref, _) {
+              return MaterialApp.router(
+                routerConfig: ref.watch(appRouterConfigProvider),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      return container.read(appRouterConfigProvider);
+    }
+
     Widget createTestWidget({AuthState? authState}) {
       return ProviderScope(
         overrides: [
@@ -33,6 +58,17 @@ void main() {
       expect(find.text('パスワード'), findsOneWidget);
       expect(find.text('アカウントをお持ちでない方'), findsOneWidget);
       expect(find.text('新規登録'), findsOneWidget);
+    });
+
+    testWidgets('新規登録リンクをタップするとRouterの新規登録ルートへ遷移する', (
+      WidgetTester tester,
+    ) async {
+      final router = await pumpRouter(tester);
+
+      await tester.tap(find.byKey(const Key('signup_link')));
+      await tester.pumpAndSettle();
+
+      expect(router.state.matchedLocation, const SignupRoute().location);
     });
 
     testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {

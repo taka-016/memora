@@ -2,93 +2,136 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
-import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
+
+int groupTimelineStackIndex({required String? groupId}) {
+  return groupId == null ? 0 : 1;
+}
 
 class GroupTimelineNavigationView extends HookConsumerWidget {
-  const GroupTimelineNavigationView({super.key, required this.currentMember});
+  const GroupTimelineNavigationView({
+    super.key,
+    required this.currentMember,
+    this.groupId,
+  });
 
   final MemberDto currentMember;
+  final String? groupId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final navigationState = ref.watch(groupTimelineNavigationNotifierProvider);
     final groupSelectionState = ref.watch(
       groupTimelineGroupSelectionNotifierProvider,
     );
-    final navigationNotifier = ref.read(
-      groupTimelineNavigationNotifierProvider.notifier,
-    );
     final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
-    final previousDestination = useRef<GroupTimelineDestination?>(null);
     final autoSelectedGroups = useRef<List<GroupDto>?>(null);
-    final destination = navigationState.destination;
-
-    useEffect(() {
-      final previous = previousDestination.value;
-      previousDestination.value = destination;
-      if (previous is! GroupTimelineOverviewDestination &&
-          previous is! GroupTimelineGroupListDestination &&
-          destination is GroupTimelineOverviewDestination) {
-        final callback = refreshTimeline.value;
-        if (callback != null) {
-          unawaited(callback());
-        }
-      }
-      return null;
-    }, [destination]);
 
     useEffect(() {
       if (groupSelectionState.status ==
               GroupTimelineGroupSelectionStatus.loaded &&
           groupSelectionState.groups.length == 1 &&
-          autoSelectedGroups.value != groupSelectionState.groups) {
+          autoSelectedGroups.value != groupSelectionState.groups &&
+          groupId == null &&
+          GoRouter.of(context).state.matchedLocation ==
+              const GroupListRoute().location) {
         autoSelectedGroups.value = groupSelectionState.groups;
-        if (destination is GroupTimelineGroupListDestination) {
-          Future.microtask(() {
-            navigationNotifier.showGroupTimeline(
-              groupSelectionState.groups.single.id,
-            );
-          });
-        }
+        Future.microtask(() {
+          if (context.mounted) {
+            GroupTimelineRoute(
+              groupId: groupSelectionState.groups.single.id,
+            ).go(context);
+          }
+        });
       }
       return null;
-    }, [destination, groupSelectionState.status, groupSelectionState.groups]);
+    }, [groupId, groupSelectionState.status, groupSelectionState.groups]);
 
     final selectedGroup = _findSelectedGroup(
       groupSelectionState.groups,
-      destination.groupId,
+      groupId,
     );
+
+    useEffect(() {
+      if (groupId == null ||
+          groupSelectionState.status !=
+              GroupTimelineGroupSelectionStatus.loaded ||
+          selectedGroup != null) {
+        return null;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        const GroupListRoute().go(context);
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('指定されたグループが見つかりませんでした')),
+        );
+      });
+      return null;
+    }, [groupId, groupSelectionState.status, selectedGroup]);
+
     final rowDefinitions = selectedGroup == null
         ? const <TimelineRowDefinition>[]
         : buildTimelineRows(
             groupWithMembers: selectedGroup,
-            onDestinationSelected: navigationNotifier.showDestination,
+            onTripSelected: (selectedGroupId, year) {
+              unawaited(
+                _openTripManagement(
+                  context: context,
+                  groupId: selectedGroupId,
+                  year: year,
+                  refreshTimeline: refreshTimeline,
+                ),
+              );
+            },
+            onDvcSelected: (selectedGroupId) {
+              unawaited(
+                _openDvcPointCalculation(
+                  context: context,
+                  groupId: selectedGroupId,
+                  refreshTimeline: refreshTimeline,
+                ),
+              );
+            },
           );
-    final pageDefinitions = rowDefinitions
-        .expand((definition) => definition.destinationPageDefinitions)
-        .toList(growable: false);
 
-    if (destination is! GroupTimelineGroupListDestination &&
-        selectedGroup == null) {
+    if (groupId != null && selectedGroup == null) {
+      if (groupSelectionState.status ==
+          GroupTimelineGroupSelectionStatus.error) {
+        return _buildGroupSelection(
+          state: groupSelectionState,
+          onGroupSelected: (group) {
+            GroupTimelineRoute(groupId: group.id).go(context);
+          },
+          onRetry: () {
+            unawaited(
+              ref
+                  .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                  .load(currentMember),
+            );
+          },
+        );
+      }
       return const Center(child: CircularProgressIndicator());
     }
 
     return IndexedStack(
-      index: navigationNotifier.getStackIndex(),
+      index: groupTimelineStackIndex(groupId: groupId),
       children: [
         _buildGroupSelection(
           state: groupSelectionState,
           onGroupSelected: (group) {
-            navigationNotifier.showGroupTimeline(group.id);
+            GroupTimelineRoute(groupId: group.id).go(context);
           },
           onRetry: () {
             unawaited(
@@ -104,27 +147,42 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
                 key: ValueKey(selectedGroup.id),
                 groupWithMembers: selectedGroup,
                 rowDefinitions: rowDefinitions,
-                onBackPressed: navigationNotifier.showGroupList,
+                onBackPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    const GroupListRoute().go(context);
+                  }
+                },
                 onSetRefreshCallback: (callback) {
                   refreshTimeline.value = callback;
                 },
               ),
-        _buildDestinationPage(
-          context: context,
-          destination: destination,
-          pageDefinitions: pageDefinitions,
-          expectedType: GroupTimelineTripManagementDestination,
-          onBackPressed: navigationNotifier.backToTimeline,
-        ),
-        _buildDestinationPage(
-          context: context,
-          destination: destination,
-          pageDefinitions: pageDefinitions,
-          expectedType: GroupTimelineDvcPointCalculationDestination,
-          onBackPressed: navigationNotifier.backToTimeline,
-        ),
       ],
     );
+  }
+
+  Future<void> _openTripManagement({
+    required BuildContext context,
+    required String groupId,
+    required int year,
+    required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
+  }) async {
+    await TripManagementRoute(groupId: groupId, year: year).push<void>(context);
+    if (context.mounted) {
+      await refreshTimeline.value?.call();
+    }
+  }
+
+  Future<void> _openDvcPointCalculation({
+    required BuildContext context,
+    required String groupId,
+    required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
+  }) async {
+    await DvcPointCalculationRoute(groupId: groupId).push<void>(context);
+    if (context.mounted) {
+      await refreshTimeline.value?.call();
+    }
   }
 
   GroupDto? _findSelectedGroup(List<GroupDto> groups, String? groupId) {
@@ -186,28 +244,5 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           ],
         );
     }
-  }
-
-  Widget _buildDestinationPage({
-    required BuildContext context,
-    required GroupTimelineDestination destination,
-    required List<TimelineDestinationPageDefinition> pageDefinitions,
-    required Type expectedType,
-    required VoidCallback onBackPressed,
-  }) {
-    if (destination.runtimeType != expectedType) {
-      return const SizedBox.shrink();
-    }
-    final definition = pageDefinitions
-        .where((definition) => definition.matches(destination))
-        .firstOrNull;
-    if (definition == null) {
-      return const SizedBox.shrink();
-    }
-    return definition.buildPage(
-      context: context,
-      destination: destination,
-      onBackPressed: onBackPressed,
-    );
   }
 }
