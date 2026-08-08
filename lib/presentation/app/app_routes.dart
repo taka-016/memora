@@ -7,6 +7,8 @@ import 'package:memora/presentation/notifiers/auth_state.dart';
 
 part 'app_routes.g.dart';
 
+List<RouteBase> get appRoutes => $appRoutes;
+
 @TypedGoRoute<LoadingRoute>(path: '/loading')
 class LoadingRoute extends GoRouteData with $LoadingRoute {
   const LoadingRoute();
