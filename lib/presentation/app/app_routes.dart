@@ -52,7 +52,11 @@ AppNavigationItem appNavigationItemForLocation(String location) {
 
 @TypedGoRoute<LoadingRoute>(path: '/loading')
 class LoadingRoute extends GoRouteData with $LoadingRoute {
-  const LoadingRoute();
+  const LoadingRoute({
+    @TypedQueryParameter(name: 'redirect') this.redirectLocation,
+  });
+
+  final String? redirectLocation;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -264,7 +268,9 @@ class _GroupTimelineRoutePage extends ConsumerWidget {
 String? resolveAppRedirect({
   required AuthState authState,
   required String matchedLocation,
+  String? location,
 }) {
+  final currentUri = Uri.parse(location ?? matchedLocation);
   final signupLocation = const SignupRoute().location;
   final loadingLocation = const LoadingRoute().location;
   final loginLocation = const LoginRoute().location;
@@ -275,6 +281,9 @@ String? resolveAppRedirect({
     if (matchedLocation == signupLocation ||
         matchedLocation == loadingLocation) {
       return null;
+    }
+    if (_isProtectedLocation(currentUri.path)) {
+      return LoadingRoute(redirectLocation: currentUri.toString()).location;
     }
     return loadingLocation;
   }
@@ -287,6 +296,13 @@ String? resolveAppRedirect({
     }
     return loginLocation;
   }
+  if (matchedLocation == loadingLocation) {
+    final redirectLocation = currentUri.queryParameters['redirect'];
+    if (redirectLocation != null &&
+        _isProtectedLocation(Uri.parse(redirectLocation).path)) {
+      return redirectLocation;
+    }
+  }
   if (matchedLocation == loadingLocation ||
       matchedLocation == loginLocation ||
       matchedLocation == signupLocation ||
@@ -294,4 +310,14 @@ String? resolveAppRedirect({
     return groupListLocation;
   }
   return null;
+}
+
+bool _isProtectedLocation(String path) {
+  return path == const GroupListRoute().location ||
+      path.startsWith('${const GroupListRoute().location}/') ||
+      path == const MapRoute().location ||
+      path == const MemberManagementRoute().location ||
+      path == const GroupManagementRoute().location ||
+      path == const SettingsRoute().location ||
+      path == const AccountSettingsRoute().location;
 }

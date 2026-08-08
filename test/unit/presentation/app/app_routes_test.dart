@@ -77,13 +77,13 @@ void main() {
       );
     });
 
-    test('初期認証中はローディング画面へ遷移する', () {
+    test('初期認証中は保護ルートを保持してローディング画面へ遷移する', () {
       expect(
         resolveAppRedirect(
           authState: const AuthState.loading(),
           matchedLocation: const GroupListRoute().location,
         ),
-        const LoadingRoute().location,
+        const LoadingRoute(redirectLocation: '/groups').location,
       );
     });
 

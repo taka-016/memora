@@ -59,6 +59,27 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       groupSelectionState.groups,
       groupId,
     );
+
+    useEffect(() {
+      if (groupId == null ||
+          groupSelectionState.status !=
+              GroupTimelineGroupSelectionStatus.loaded ||
+          selectedGroup != null) {
+        return null;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        final scaffoldMessenger = ScaffoldMessenger.of(context);
+        const GroupListRoute().go(context);
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('指定されたグループが見つかりませんでした')),
+        );
+      });
+      return null;
+    }, [groupId, groupSelectionState.status, selectedGroup]);
+
     final rowDefinitions = selectedGroup == null
         ? const <TimelineRowDefinition>[]
         : buildTimelineRows(
@@ -85,6 +106,22 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           );
 
     if (groupId != null && selectedGroup == null) {
+      if (groupSelectionState.status ==
+          GroupTimelineGroupSelectionStatus.error) {
+        return _buildGroupSelection(
+          state: groupSelectionState,
+          onGroupSelected: (group) {
+            GroupTimelineRoute(groupId: group.id).go(context);
+          },
+          onRetry: () {
+            unawaited(
+              ref
+                  .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                  .load(currentMember),
+            );
+          },
+        );
+      }
       return const Center(child: CircularProgressIndicator());
     }
 

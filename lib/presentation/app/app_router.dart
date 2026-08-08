@@ -30,6 +30,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
       return resolveAppRedirect(
         authState: ref.read(authNotifierProvider),
         matchedLocation: state.matchedLocation,
+        location: state.uri.toString(),
       );
     },
   );

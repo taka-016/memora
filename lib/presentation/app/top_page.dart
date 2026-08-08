@@ -235,11 +235,10 @@ class TopPage extends HookConsumerWidget {
     if (!context.mounted) {
       return;
     }
+    if (selectedItem == item) {
+      return;
+    }
     if (item == AppNavigationItem.groupTimeline) {
-      if (selectedItem == AppNavigationItem.groupTimeline) {
-        return;
-      }
-
       final currentMember = ref.read(currentMemberNotifierProvider).member;
       if (currentMember != null) {
         unawaited(
@@ -259,15 +258,35 @@ class TopPage extends HookConsumerWidget {
       case AppNavigationItem.groupTimeline:
         return;
       case AppNavigationItem.map:
-        const MapRoute().push(context);
+        if (selectedItem == AppNavigationItem.groupTimeline) {
+          const MapRoute().push(context);
+        } else {
+          const MapRoute().pushReplacement(context);
+        }
       case AppNavigationItem.memberManagement:
-        const MemberManagementRoute().push(context);
+        if (selectedItem == AppNavigationItem.groupTimeline) {
+          const MemberManagementRoute().push(context);
+        } else {
+          const MemberManagementRoute().pushReplacement(context);
+        }
       case AppNavigationItem.groupManagement:
-        const GroupManagementRoute().push(context);
+        if (selectedItem == AppNavigationItem.groupTimeline) {
+          const GroupManagementRoute().push(context);
+        } else {
+          const GroupManagementRoute().pushReplacement(context);
+        }
       case AppNavigationItem.settings:
-        const SettingsRoute().push(context);
+        if (selectedItem == AppNavigationItem.groupTimeline) {
+          const SettingsRoute().push(context);
+        } else {
+          const SettingsRoute().pushReplacement(context);
+        }
       case AppNavigationItem.accountSettings:
-        const AccountSettingsRoute().push(context);
+        if (selectedItem == AppNavigationItem.groupTimeline) {
+          const AccountSettingsRoute().push(context);
+        } else {
+          const AccountSettingsRoute().pushReplacement(context);
+        }
     }
   }
 

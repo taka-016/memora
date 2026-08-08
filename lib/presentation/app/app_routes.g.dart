@@ -21,10 +21,18 @@ RouteBase get $loadingRoute => GoRouteData.$route(
 );
 
 mixin $LoadingRoute on GoRouteData {
-  static LoadingRoute _fromState(GoRouterState state) => const LoadingRoute();
+  static LoadingRoute _fromState(GoRouterState state) =>
+      LoadingRoute(redirectLocation: state.uri.queryParameters['redirect']);
+
+  LoadingRoute get _self => this as LoadingRoute;
 
   @override
-  String get location => GoRouteData.$location('/loading');
+  String get location => GoRouteData.$location(
+    '/loading',
+    queryParams: {
+      if (_self.redirectLocation != null) 'redirect': _self.redirectLocation,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);
