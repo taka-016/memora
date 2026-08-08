@@ -22,8 +22,13 @@ final appRouterDelegateProvider = Provider<AppRouterDelegate>((ref) {
 });
 
 final appRouterConfigProvider = Provider<RouterConfig<AppRoute>>((ref) {
+  final initialRoute = Uri.tryParse(
+    WidgetsBinding.instance.platformDispatcher.defaultRouteName,
+  );
   final routeInformationProvider = PlatformRouteInformationProvider(
-    initialRouteInformation: RouteInformation(uri: Uri(path: '/groups')),
+    initialRouteInformation: RouteInformation(
+      uri: initialRoute ?? Uri(path: '/groups'),
+    ),
   );
   ref.onDispose(routeInformationProvider.dispose);
   return RouterConfig<AppRoute>(

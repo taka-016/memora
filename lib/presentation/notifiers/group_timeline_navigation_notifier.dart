@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/presentation/app/app_route.dart';
 import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 export 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 

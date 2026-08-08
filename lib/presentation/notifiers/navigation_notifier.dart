@@ -20,10 +20,6 @@ class NavigationState {
   final NavigationItem selectedItem;
 
   const NavigationState({required this.selectedItem});
-
-  NavigationState copyWith({NavigationItem? selectedItem}) {
-    return NavigationState(selectedItem: selectedItem ?? this.selectedItem);
-  }
 }
 
 class NavigationNotifier extends Notifier<NavigationState> {

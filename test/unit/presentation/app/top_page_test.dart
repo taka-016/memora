@@ -1609,7 +1609,9 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('初期フレーム後もRouterで指定したナビゲーション状態を維持する', (WidgetTester tester) async {
+    testWidgets('初期フレーム後もRouterで指定したナビゲーション状態を維持する', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final defaultMember = MemberDto(
         id: 'default_member',
