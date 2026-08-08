@@ -93,6 +93,17 @@ class _IdleAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   }
 }
 
+class _MutableAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  @override
+  AndroidWidgetLaunchState build() {
+    return const AndroidWidgetLaunchState();
+  }
+
+  void receiveTrip(String tripId) {
+    state = AndroidWidgetLaunchState(pendingTripId: tripId);
+  }
+}
+
 class _InitialUriLoadingAndroidWidgetLaunchNotifier
     extends AndroidWidgetLaunchNotifier {
   @override
@@ -705,6 +716,45 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('旅行管理画面でウィジェット指定の旅行がない場合はグループ一覧へ戻る', (
+      WidgetTester tester,
+    ) async {
+      final launchNotifier = _MutableAndroidWidgetLaunchNotifier();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'missing-trip',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => null);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: launchNotifier,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      final timelineNotifier = container.read(
+        groupTimelineNavigationNotifierProvider.notifier,
+      );
+      timelineNotifier.showGroupTimeline(groupsWithMembers.first.id);
+      timelineNotifier.showTripManagement(groupsWithMembers.first.id, 2025);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+
+      launchNotifier.receiveTrip('missing-trip');
+      await tester.pumpAndSettle();
+
+      expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
+      expect(find.byKey(const Key('trip_management')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
