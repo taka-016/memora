@@ -14,7 +14,10 @@ final appRouterDelegateProvider = Provider<AppRouterDelegate>((ref) {
   ref.listen<AppRoute>(appNavigationNotifierProvider, (_, _) {
     delegate.refresh();
   });
-  ref.listen<AuthState>(authNotifierProvider, (_, _) {
+  ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+    if (previous?.isAuthenticated ?? false && !next.isAuthenticated) {
+      ref.read(appNavigationNotifierProvider.notifier).showGroupList();
+    }
     delegate.refresh();
   });
   ref.onDispose(delegate.dispose);
@@ -112,6 +115,11 @@ class AppRouterDelegate extends RouterDelegate<AppRoute>
 
   @override
   Future<bool> popRoute() async {
+    final navigator = navigatorKey?.currentState;
+    if (navigator != null && await navigator.maybePop()) {
+      return true;
+    }
+
     final route = currentConfiguration;
     if (route is AppSignupRoute) {
       ref.read(appNavigationNotifierProvider.notifier).showLogin();
