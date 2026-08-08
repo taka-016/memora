@@ -132,6 +132,12 @@
 
 ### Presentation層の責務を整理する
 
+- 画面遷移の互換Notifierを削除する
+  - `NavigationState`、`NavigationNotifier`、`navigationNotifierProvider`を削除し、`TopPage`は`appNavigationNotifierProvider`の`AppRoute`からDrawerの選択状態と表示対象を直接導出する
+  - `GroupTimelineNavigationState`、`GroupTimelineNavigationNotifier`、`groupTimelineNavigationNotifierProvider`を削除し、`GroupTimelineNavigationView`は`AppRoute`から年表内の遷移先を直接導出する
+  - Drawer画面へ遷移するときの`returnRoute`引き継ぎと、グループ一覧・年表・旅行管理・DVCポイント計算への遷移操作を`AppNavigationNotifier`へ集約する
+  - 年表の`IndexedStack`のindex計算は状態管理から分離し、`GroupTimelineDestination`から求める純粋関数として画面側へ配置する
+  - 既存のNotifier差し替えテストを`AppRoute`と`appNavigationNotifierProvider`を基準に整理し、不要になったNotifier単体テストを削除する
 - Viewに集中しているUseCaseのオーケストレーションと状態管理を分離する
   - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
   - `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する
