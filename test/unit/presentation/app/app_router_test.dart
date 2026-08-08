@@ -1,216 +1,132 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
-import 'package:memora/presentation/app/app_route.dart';
 import 'package:memora/presentation/app/app_router.dart';
-import 'package:memora/presentation/notifiers/app_navigation_notifier.dart';
+import 'package:memora/presentation/app/app_routes.dart';
+import 'package:memora/presentation/features/auth/signup_page.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 
 import '../../../helpers/fake_auth_notifier.dart';
 
+class _MutableAuthNotifier extends FakeAuthNotifier {
+  _MutableAuthNotifier(super.initialState);
+
+  void authenticate(String userId) {
+    state = AuthState.authenticated(
+      UserDto(id: userId, loginId: '$userId@example.com', isVerified: true),
+    );
+  }
+}
+
 void main() {
-  group('AppRouteInformationParser', () {
-    const parser = AppRouteInformationParser();
-    const routes = <AppRoute>[
-      AppLoginRoute(),
-      AppSignupRoute(),
-      GroupTimelineGroupListDestination(),
-      GroupTimelineOverviewDestination(groupId: 'group 1'),
-      GroupTimelineTripManagementDestination(
-        groupId: 'group 1',
-        year: 2026,
-        initialTripId: 'trip 1',
-      ),
-      GroupTimelineDvcPointCalculationDestination(groupId: 'group 1'),
-      AppMapRoute(),
-      AppMemberManagementRoute(),
-      AppGroupManagementRoute(),
-      AppSettingsRoute(),
-      AppAccountSettingsRoute(),
-    ];
-
-    for (final route in routes) {
-      test('$route をURLから復元できる', () async {
-        final information = parser.restoreRouteInformation(route);
-        final restored = await parser.parseRouteInformation(information);
-
-        expect(restored, route);
-      });
-    }
-  });
-
-  group('resolveAppRoute', () {
-    test('未認証で保護対象へ遷移するとログインへリダイレクトする', () {
-      expect(
-        resolveAppRoute(
-          const AuthState.unauthenticated(''),
-          const AppMapRoute(),
-        ),
-        const AppLoginRoute(),
-      );
-    });
-
-    test('未認証では新規登録ルートを維持する', () {
-      expect(
-        resolveAppRoute(
-          const AuthState.unauthenticated(''),
-          const AppSignupRoute(),
-        ),
-        const AppSignupRoute(),
-      );
-    });
-
-    test('メンバー未作成ではログインと別の選択導線へリダイレクトする', () {
-      expect(
-        resolveAppRoute(
-          const AuthState.unauthenticated(memberSelectionRequiredMessage),
-          const GroupTimelineGroupListDestination(),
-        ),
-        const AppMemberSetupRoute(),
-      );
-    });
-
-    test('認証済みで認証画面を指定するとグループ選択へリダイレクトする', () {
-      expect(
-        resolveAppRoute(
-          const AuthState.authenticated(
-            UserDto(
-              id: 'user-1',
-              loginId: 'test@example.com',
-              isVerified: true,
-            ),
-          ),
-          const AppLoginRoute(),
-        ),
-        const GroupTimelineGroupListDestination(),
-      );
-    });
-  });
-
-  group('AppRouterDelegate', () {
-    testWidgets('戻る操作ではアプリのルートより先にダイアログを閉じる', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authNotifierProvider.overrideWith(
-              () => FakeAuthNotifier.unauthenticated(),
-            ),
-          ],
-          child: Consumer(
-            builder: (context, ref, _) {
-              return MaterialApp.router(
-                routerConfig: ref.watch(appRouterConfigProvider),
-              );
-            },
-          ),
-        ),
-      );
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(MaterialApp)),
-      );
-      container.read(appNavigationNotifierProvider.notifier).showSignup();
-      await tester.pumpAndSettle();
-      final delegate = container.read(appRouterDelegateProvider);
-
-      showDialog<void>(
-        context: delegate.navigatorKey!.currentContext!,
-        builder: (_) => const AlertDialog(content: Text('確認ダイアログ')),
-      );
-      await tester.pumpAndSettle();
-
-      expect(await delegate.popRoute(), isTrue);
-      await tester.pumpAndSettle();
-
-      expect(find.text('確認ダイアログ'), findsNothing);
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const AppSignupRoute(),
-      );
-    });
-
-    test('ログアウトすると前の認証セッションの保護ルートを破棄する', () async {
-      final authNotifier = FakeAuthNotifier.authenticated(userId: 'user-1');
-      final container = ProviderContainer(
+  Future<(ProviderContainer, GoRouter)> pumpRouter(
+    WidgetTester tester,
+    FakeAuthNotifier authNotifier,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
         overrides: [authNotifierProvider.overrideWith(() => authNotifier)],
-      );
-      addTearDown(container.dispose);
-      container.read(appRouterDelegateProvider);
-      container
-          .read(appNavigationNotifierProvider.notifier)
-          .showGroupTimeline('previous-session-group');
+        child: Consumer(
+          builder: (context, ref, _) {
+            return MaterialApp.router(
+              routerConfig: ref.watch(appRouterConfigProvider),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    return (container, container.read(appRouterConfigProvider));
+  }
 
-      await authNotifier.logout();
+  testWidgets('詳細画面から年表、グループ一覧の順に戻る', (tester) async {
+    final (_, router) = await pumpRouter(
+      tester,
+      FakeAuthNotifier.authenticated(),
+    );
+    const timelineRoute = GroupTimelineRoute(groupId: 'group-1');
+    const tripRoute = TripManagementRoute(
+      groupId: 'group-1',
+      year: 2026,
+      tripId: 'trip-1',
+    );
 
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const GroupTimelineGroupListDestination(),
-      );
-    });
+    router.go(tripRoute.location);
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, tripRoute.location.split('?').first);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, timelineRoute.location);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, const GroupListRoute().location);
   });
 
-  group('AppNavigationNotifier', () {
-    late ProviderContainer container;
+  testWidgets('Drawer画面から戻ると遷移前の年表へ戻る', (tester) async {
+    final (_, router) = await pumpRouter(
+      tester,
+      FakeAuthNotifier.authenticated(),
+    );
+    const timelineRoute = GroupTimelineRoute(groupId: 'group-1');
 
-    setUp(() {
-      container = ProviderContainer();
-    });
+    router.go(timelineRoute.location);
+    await tester.pumpAndSettle();
+    router.push(const SettingsRoute().location);
+    await tester.pumpAndSettle();
 
-    tearDown(() {
-      container.dispose();
-    });
+    expect(router.state.matchedLocation, const SettingsRoute().location);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, timelineRoute.location);
+  });
 
-    test('詳細画面から年表、グループ選択の順に戻る', () {
-      final notifier = container.read(appNavigationNotifierProvider.notifier);
-      notifier.showTripManagement(
-        groupId: 'group-1',
-        year: 2026,
-        initialTripId: 'trip-1',
-      );
+  testWidgets('ログアウト後の再認証では前セッションの保護ルートを破棄する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final (_, router) = await pumpRouter(tester, authNotifier);
+    router.go(
+      const GroupTimelineRoute(groupId: 'previous-session-group').location,
+    );
+    await tester.pumpAndSettle();
 
-      expect(notifier.goBack(), isTrue);
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const GroupTimelineOverviewDestination(groupId: 'group-1'),
-      );
+    await authNotifier.logout();
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, const LoginRoute().location);
 
-      expect(notifier.goBack(), isTrue);
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const GroupTimelineGroupListDestination(),
-      );
-      expect(notifier.goBack(), isFalse);
-    });
+    authNotifier.authenticate('user-2');
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, const GroupListRoute().location);
+  });
 
-    test('Drawer画面から戻るとグループ選択へ遷移する', () {
-      final notifier = container.read(appNavigationNotifierProvider.notifier);
-      notifier.go(const AppSettingsRoute());
+  testWidgets('戻る操作では画面ルートより先にダイアログを閉じる', (tester) async {
+    final (_, router) = await pumpRouter(
+      tester,
+      FakeAuthNotifier.unauthenticated(),
+    );
+    router.go(const SignupRoute().location);
+    await tester.pumpAndSettle();
 
-      expect(notifier.goBack(), isTrue);
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const GroupTimelineGroupListDestination(),
-      );
-    });
+    showDialog<void>(
+      context: tester.element(find.byType(SignupPage)),
+      builder: (_) => const AlertDialog(content: Text('確認ダイアログ')),
+    );
+    await tester.pumpAndSettle();
 
-    test('ウィジェットとアプリ内操作で同じ旅行管理ルートを使用する', () {
-      final notifier = container.read(appNavigationNotifierProvider.notifier);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
 
-      notifier.showTripManagement(
-        groupId: 'group-1',
-        year: 2026,
-        initialTripId: 'trip-1',
-      );
-
-      expect(
-        container.read(appNavigationNotifierProvider),
-        const GroupTimelineTripManagementDestination(
-          groupId: 'group-1',
-          year: 2026,
-          initialTripId: 'trip-1',
-        ),
-      );
-    });
+    expect(find.text('確認ダイアログ'), findsNothing);
+    expect(router.state.matchedLocation, const SignupRoute().location);
   });
 }
