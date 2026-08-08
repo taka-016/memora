@@ -45,8 +45,9 @@ void main() {
 
   Future<(ProviderContainer, GoRouter)> pumpRouter(
     WidgetTester tester,
-    FakeAuthNotifier authNotifier,
-  ) async {
+    FakeAuthNotifier authNotifier, {
+    String initialLocation = '/groups',
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -62,6 +63,7 @@ void main() {
           groupTimelineGroupSelectionNotifierProvider.overrideWith(
             _LoadedGroupSelectionNotifier.new,
           ),
+          appInitialLocationProvider.overrideWithValue(initialLocation),
         ],
         child: Consumer(
           builder: (context, ref, _) {
@@ -98,6 +100,25 @@ void main() {
     authNotifier.authenticate('user-2');
     await pumpNavigation(tester);
     expect(router.state.matchedLocation, const GroupListRoute().location);
+  });
+
+  testWidgets('初期認証の完了後に保護ルートのディープリンクを復元する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(const AuthState.loading());
+    const initialRoute = TripManagementRoute(
+      groupId: 'deep-link-group',
+      year: 2026,
+      tripId: 'deep-link-trip',
+    );
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: initialRoute.location,
+    );
+
+    authNotifier.authenticate('user-1');
+    await pumpNavigation(tester);
+
+    expect(router.state.uri.toString(), initialRoute.location);
   });
 
   testWidgets('戻る操作では画面ルートより先にダイアログを閉じる', (tester) async {

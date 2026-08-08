@@ -1469,6 +1469,98 @@ void main() {
       }
     });
 
+    testWidgets('選択中のDrawer画面を再度選んでも同じルートを重複して積まない', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+    });
+
+    testWidgets('Drawerのトップレベル画面を切り替えた後の戻る操作で年表に戻る', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('設定'));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    });
+
+    testWidgets('存在しないグループIDを指定するとグループ一覧へ戻る', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const GroupTimelineRoute(
+            groupId: 'missing-group',
+          ).location,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      expect(
+        container.read(appRouterConfigProvider).state.matchedLocation,
+        const GroupListRoute().location,
+      );
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('指定されたグループが見つかりませんでした'), findsOneWidget);
+    });
+
     testWidgets('別画面からメニューでグループ年表を開き直すとグループ一覧から再開する', (
       WidgetTester tester,
     ) async {
