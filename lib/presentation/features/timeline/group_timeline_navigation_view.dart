@@ -33,27 +33,32 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       groupTimelineGroupSelectionNotifierProvider,
     );
     final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
-    final autoSelectedGroups = useRef<List<GroupDto>?>(null);
+    final autoSelectedGroups = useState<List<GroupDto>?>(null);
+    final shouldAutoSelectGroup =
+        groupSelectionState.status ==
+            GroupTimelineGroupSelectionStatus.loaded &&
+        groupSelectionState.groups.length == 1 &&
+        autoSelectedGroups.value != groupSelectionState.groups &&
+        groupId == null &&
+        GoRouter.of(context).state.matchedLocation ==
+            const GroupListRoute().location;
 
     useEffect(() {
-      if (groupSelectionState.status ==
-              GroupTimelineGroupSelectionStatus.loaded &&
-          groupSelectionState.groups.length == 1 &&
-          autoSelectedGroups.value != groupSelectionState.groups &&
-          groupId == null &&
-          GoRouter.of(context).state.matchedLocation ==
-              const GroupListRoute().location) {
-        autoSelectedGroups.value = groupSelectionState.groups;
+      if (shouldAutoSelectGroup) {
+        final groups = groupSelectionState.groups;
         Future.microtask(() {
           if (context.mounted) {
-            GroupTimelineRoute(
-              groupId: groupSelectionState.groups.single.id,
-            ).go(context);
+            GroupTimelineRoute(groupId: groups.single.id).go(context);
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                autoSelectedGroups.value = groups;
+              }
+            });
           }
         });
       }
       return null;
-    }, [groupId, groupSelectionState.status, groupSelectionState.groups]);
+    }, [shouldAutoSelectGroup, groupSelectionState.groups]);
 
     final selectedGroup = _findSelectedGroup(
       groupSelectionState.groups,
@@ -122,6 +127,10 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           },
         );
       }
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (shouldAutoSelectGroup) {
       return const Center(child: CircularProgressIndicator());
     }
 
