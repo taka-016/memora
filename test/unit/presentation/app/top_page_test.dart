@@ -794,6 +794,56 @@ void main() {
         tester.getCenter(targetYearHeader).dx,
         closeTo(tester.getCenter(horizontalScrollView).dx, 1),
       );
+
+      scrollController.jumpTo(0);
+      unawaited(
+        TripManagementRoute(
+          groupId: trip.groupId,
+          year: DateTime.now().year,
+        ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(scrollController.offset, 0);
+    });
+
+    testWidgets('通常起動では旅行管理から戻った後も年表のスクロール位置を維持する', (
+      WidgetTester tester,
+    ) async {
+      final singleGroup = [groupsWithMembers.first];
+      await tester.pumpWidget(
+        createTestWidget(availableGroupsWithMembers: singleGroup),
+      );
+      await tester.pumpAndSettle();
+
+      final horizontalScrollView = find
+          .descendant(
+            of: find.byKey(const Key('group_timeline')),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is SingleChildScrollView &&
+                  widget.scrollDirection == Axis.horizontal,
+            ),
+          )
+          .first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(horizontalScrollView)
+          .controller!;
+      scrollController.jumpTo(0);
+
+      unawaited(
+        TripManagementRoute(
+          groupId: singleGroup.single.id,
+          year: DateTime.now().year - 1,
+        ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(scrollController.offset, 0);
     });
 
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
