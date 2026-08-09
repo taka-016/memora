@@ -301,33 +301,40 @@ class _GroupRouteGuard extends ConsumerWidget {
           groupSelectionState.memberId == currentMember.id;
       if (hasCurrentMemberLoadError) {
         return Material(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  groupSelectionState.message,
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    await ref
-                        .read(
-                          groupTimelineGroupSelectionNotifierProvider.notifier,
-                        )
-                        .load(currentMember);
-                  },
-                  child: const Text('再読み込み'),
-                ),
-              ],
-            ),
+          child: _GroupRouteLoadError(
+            message: groupSelectionState.message,
+            onRetry: () async {
+              await ref
+                  .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                  .load(currentMember);
+            },
           ),
         );
       }
       return const Material(child: Center(child: CircularProgressIndicator()));
     }
     return builder(context);
+  }
+}
+
+class _GroupRouteLoadError extends StatelessWidget {
+  const _GroupRouteLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(message, style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+        ],
+      ),
+    );
   }
 }
 
