@@ -4,9 +4,8 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
-
-final timelineTripEntriesRefreshProvider = Provider<Object>((ref) => Object());
 
 class TripRow extends TimelineRowDefinition {
   const TripRow({
