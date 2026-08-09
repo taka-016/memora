@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 class TimelineViewState {
   TimelineViewState({
     required this.baseYear,
@@ -20,12 +22,8 @@ class TimelineViewState {
     final focusEndYearOffset = focusYearOffset + initialYearRange;
     return TimelineViewState(
       baseYear: baseYear,
-      startYearOffset: focusStartYearOffset < -initialYearRange
-          ? focusStartYearOffset
-          : -initialYearRange,
-      endYearOffset: focusEndYearOffset > initialYearRange
-          ? focusEndYearOffset
-          : initialYearRange,
+      startYearOffset: math.min(-initialYearRange, focusStartYearOffset),
+      endYearOffset: math.max(initialYearRange, focusEndYearOffset),
       refreshKey: 0,
       rowHeights:
           initialRowHeights ?? List.filled(totalDataRows, dataRowHeight),
