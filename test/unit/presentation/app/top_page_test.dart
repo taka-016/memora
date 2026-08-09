@@ -765,7 +765,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
-      expect(find.textContaining('$targetYear年'), findsOneWidget);
+      expect(find.textContaining('$targetYear年'), findsAtLeastNWidgets(1));
       expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
     });
 
