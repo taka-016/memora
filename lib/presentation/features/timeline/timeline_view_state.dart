@@ -13,11 +13,19 @@ class TimelineViewState {
     required int initialYearRange,
     required double dataRowHeight,
     List<double>? initialRowHeights,
+    int? initialFocusYear,
   }) {
+    final focusYearOffset = (initialFocusYear ?? baseYear) - baseYear;
+    final focusStartYearOffset = focusYearOffset - initialYearRange;
+    final focusEndYearOffset = focusYearOffset + initialYearRange;
     return TimelineViewState(
       baseYear: baseYear,
-      startYearOffset: -initialYearRange,
-      endYearOffset: initialYearRange,
+      startYearOffset: focusStartYearOffset < -initialYearRange
+          ? focusStartYearOffset
+          : -initialYearRange,
+      endYearOffset: focusEndYearOffset > initialYearRange
+          ? focusEndYearOffset
+          : initialYearRange,
       refreshKey: 0,
       rowHeights:
           initialRowHeights ?? List.filled(totalDataRows, dataRowHeight),

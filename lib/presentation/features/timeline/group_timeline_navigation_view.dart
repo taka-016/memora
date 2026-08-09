@@ -33,6 +33,12 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       groupTimelineGroupSelectionNotifierProvider,
     );
     final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
+    final initialFocusYear = useMemoized(
+      () => timelineFocusYearForLocation(
+        GoRouter.of(context).state.uri.toString(),
+      ),
+      const [],
+    );
     final autoSelectedGroups = useState<List<GroupDto>?>(null);
     final isAutoSelectingGroup =
         groupSelectionState.status ==
@@ -156,6 +162,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
                 key: ValueKey(selectedGroup.id),
                 groupWithMembers: selectedGroup,
                 rowDefinitions: rowDefinitions,
+                initialFocusYear: initialFocusYear,
                 onBackPressed: () {
                   if (context.canPop()) {
                     context.pop();
@@ -254,4 +261,17 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
         );
     }
   }
+}
+
+int? timelineFocusYearForLocation(String location) {
+  final segments = Uri.tryParse(location)?.pathSegments;
+  if (segments == null) {
+    return null;
+  }
+  for (var index = 0; index + 2 < segments.length; index++) {
+    if (segments[index] == 'timeline' && segments[index + 1] == 'trips') {
+      return int.tryParse(segments[index + 2]);
+    }
+  }
+  return null;
 }

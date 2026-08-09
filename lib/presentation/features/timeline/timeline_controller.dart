@@ -52,6 +52,7 @@ TimelineController useTimelineController({
   required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+  int? initialFocusYear,
 }) {
   final viewStateState = useState(
     TimelineViewState.initial(
@@ -60,6 +61,7 @@ TimelineController useTimelineController({
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,
       initialRowHeights: initialRowHeights,
+      initialFocusYear: initialFocusYear,
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
@@ -152,7 +154,7 @@ TimelineController useTimelineController({
     return null;
   }, [onSetRefreshCallback]);
 
-  void scrollToCurrentYear() {
+  void scrollToInitialFocusYear() {
     if (rowScrollControllers.isEmpty) {
       return;
     }
@@ -164,10 +166,15 @@ TimelineController useTimelineController({
     }
 
     final viewportWidth = primaryController.position.viewportDimension;
-    final totalWidth =
-        (2 * layoutConfig.buttonColumnWidth) +
-        (viewState.visibleYears.length * layoutConfig.yearColumnWidth);
-    final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
+    final focusYear = initialFocusYear ?? baseYear;
+    final focusYearIndex = viewState.visibleYears.indexOf(focusYear);
+    if (focusYearIndex == -1) {
+      return;
+    }
+    final focusYearCenter =
+        layoutConfig.buttonColumnWidth +
+        ((focusYearIndex + 0.5) * layoutConfig.yearColumnWidth);
+    final scrollOffset = focusYearCenter - (viewportWidth / 2);
     final maxExtent = primaryController.position.maxScrollExtent;
     final targetOffset = scrollOffset.clamp(0.0, maxExtent);
 
@@ -183,7 +190,7 @@ TimelineController useTimelineController({
       if (!context.mounted) {
         return;
       }
-      scrollToCurrentYear();
+      scrollToInitialFocusYear();
     });
     return null;
   }, [rowScrollControllers]);

@@ -135,6 +135,7 @@ class TripManagement extends HookConsumerWidget {
 
       try {
         await createTripEntryUsecase.execute(tripEntry);
+        ref.invalidate(timelineTripEntriesRefreshProvider);
         if (!context.mounted) {
           return;
         }
