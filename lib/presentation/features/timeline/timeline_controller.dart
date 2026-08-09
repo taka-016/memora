@@ -73,6 +73,7 @@ TimelineController useTimelineController({
     [totalDataRows],
   );
   final isSyncingRef = useRef(false);
+  final hasAppliedInitialFocus = useRef(false);
   final viewState = viewStateState.value.ensureRowCount(
     totalDataRows: totalDataRows,
     dataRowHeight: layoutConfig.dataRowHeight,
@@ -155,22 +156,22 @@ TimelineController useTimelineController({
     return null;
   }, [onSetRefreshCallback]);
 
-  void scrollToInitialFocusYear() {
+  bool scrollToInitialFocusYear() {
     if (rowScrollControllers.isEmpty) {
-      return;
+      return false;
     }
 
     final primaryController = rowScrollControllers.first;
     if (!primaryController.hasClients ||
         !primaryController.position.hasViewportDimension) {
-      return;
+      return false;
     }
 
     final viewportWidth = primaryController.position.viewportDimension;
     final focusYear = initialFocusYear ?? baseYear;
     final focusYearIndex = viewState.visibleYears.indexOf(focusYear);
     if (focusYearIndex == -1) {
-      return;
+      return false;
     }
     final focusYearCenter =
         layoutConfig.buttonColumnWidth +
@@ -184,17 +185,18 @@ TimelineController useTimelineController({
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+    return true;
   }
 
   useEffect(() {
-    if (!isCurrentRoute) {
+    if (!isCurrentRoute || hasAppliedInitialFocus.value) {
       return null;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!context.mounted) {
+      if (!context.mounted || hasAppliedInitialFocus.value) {
         return;
       }
-      scrollToInitialFocusYear();
+      hasAppliedInitialFocus.value = scrollToInitialFocusYear();
     });
     return null;
   }, [rowScrollControllers, isCurrentRoute]);
