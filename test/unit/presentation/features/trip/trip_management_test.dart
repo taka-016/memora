@@ -898,6 +898,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 旅行追加ボタンをタップ
       await tester.tap(find.text('旅行追加'));
       await tester.pumpAndSettle();
@@ -925,6 +930,10 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('初期化時にグループメンバーが読み込まれること', (WidgetTester tester) async {

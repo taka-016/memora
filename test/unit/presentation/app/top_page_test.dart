@@ -722,6 +722,53 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
     });
 
+    testWidgets('ウィジェット起動の旅行管理から戻ると対象年を中心に年表を表示する', (
+      WidgetTester tester,
+    ) async {
+      final singleGroup = [groupsWithMembers.first];
+      final targetYear = DateTime.now().year - 20;
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: singleGroup.first.id,
+        year: targetYear,
+        name: '過去の旅行',
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          trip.groupId,
+          trip.year,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [trip]);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          availableGroupsWithMembers: singleGroup,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            trip.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.textContaining('$targetYear年'), findsOneWidget);
+      expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
+    });
+
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
       when(
         mockTripEntryQueryService.getTripEntryById(
