@@ -13,7 +13,6 @@ class TimelineViewState {
     required int initialYearRange,
     required double dataRowHeight,
     List<double>? initialRowHeights,
-    int? initialFocusYear,
   }) {
     return TimelineViewState(
       baseYear: baseYear,

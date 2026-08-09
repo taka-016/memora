@@ -61,7 +61,6 @@ TimelineController useTimelineController({
       initialYearRange: layoutConfig.initialYearRange,
       dataRowHeight: layoutConfig.dataRowHeight,
       initialRowHeights: initialRowHeights,
-      initialFocusYear: initialFocusYear,
     ),
   );
   final isDraggingOnFixedRowState = useState(false);
@@ -251,14 +250,13 @@ bool _tryScrollToYear({
     return false;
   }
 
-  if (visibleYears.isEmpty) {
+  final focusYearIndex = _resolveFocusYearIndex(
+    visibleYears: visibleYears,
+    focusYear: focusYear,
+  );
+  if (focusYearIndex == null) {
     return false;
   }
-  final focusYearIndex = focusYear < visibleYears.first
-      ? 0
-      : focusYear > visibleYears.last
-      ? visibleYears.length - 1
-      : visibleYears.indexOf(focusYear);
 
   final focusYearCenter =
       layoutConfig.buttonColumnWidth +
@@ -276,4 +274,20 @@ bool _tryScrollToYear({
     curve: Curves.easeInOut,
   );
   return true;
+}
+
+int? _resolveFocusYearIndex({
+  required List<int> visibleYears,
+  required int focusYear,
+}) {
+  if (visibleYears.isEmpty) {
+    return null;
+  }
+  if (focusYear <= visibleYears.first) {
+    return 0;
+  }
+  if (focusYear >= visibleYears.last) {
+    return visibleYears.length - 1;
+  }
+  return visibleYears.indexOf(focusYear);
 }

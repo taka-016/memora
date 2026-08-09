@@ -19,19 +19,6 @@ void main() {
       ]);
     });
 
-    test('初期フォーカス年が表示範囲外でも表示対象年を拡張しない', () {
-      final state = TimelineViewState.initial(
-        baseYear: 2026,
-        totalDataRows: 4,
-        initialYearRange: 5,
-        dataRowHeight: 100,
-        initialFocusYear: 999999999,
-      );
-
-      expect(state.startYearOffset, -5);
-      expect(state.endYearOffset, 5);
-    });
-
     test('行数が増えたときは既存の高さを維持して不足分だけデフォルト値を補う', () {
       final state = TimelineViewState(
         baseYear: 2026,
