@@ -18,7 +18,10 @@ final appInitialLocationProvider = Provider<String>((ref) {
 
 final appRouterConfigProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _RouterRefreshNotifier();
-  ref.listen<AuthState>(authNotifierProvider, (_, _) {
+  var preserveProtectedRedirect = true;
+  ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+    preserveProtectedRedirect =
+        previous?.isAuthenticated != true || !next.isLoading;
     refreshNotifier.refresh();
   });
 
@@ -31,6 +34,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
         authState: ref.read(authNotifierProvider),
         matchedLocation: state.matchedLocation,
         location: state.uri.toString(),
+        preserveProtectedRedirect: preserveProtectedRedirect,
       );
     },
   );

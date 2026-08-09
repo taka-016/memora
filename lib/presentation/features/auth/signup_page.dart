@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/core/validators/password_validator.dart';
 import 'package:memora/presentation/app/app_routes.dart';
@@ -27,13 +28,21 @@ class SignupPage extends HookConsumerWidget {
         );
         if (isSuccess && context.mounted) {
           TextInput.finishAutofillContext();
-          const LoginRoute().go(context);
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            const LoginRoute().go(context);
+          }
         }
       }
     }
 
     void navigateToLogin() {
-      const LoginRoute().go(context);
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        const LoginRoute().go(context);
+      }
     }
 
     Widget buildMessageContainer(AuthViewState authState) {

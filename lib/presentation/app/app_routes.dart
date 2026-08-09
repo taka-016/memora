@@ -315,6 +315,7 @@ String? resolveAppRedirect({
   required AuthState authState,
   required String matchedLocation,
   String? location,
+  bool preserveProtectedRedirect = true,
 }) {
   final currentUri = Uri.parse(location ?? matchedLocation);
   final signupLocation = const SignupRoute().location;
@@ -328,6 +329,9 @@ String? resolveAppRedirect({
     if (matchedLocation == signupLocation ||
         matchedLocation == loadingLocation) {
       return null;
+    }
+    if (!preserveProtectedRedirect) {
+      return loadingLocation;
     }
     if (_isProtectedLocation(currentUri.path)) {
       return LoadingRoute(redirectLocation: currentUri.toString()).location;

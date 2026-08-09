@@ -32,8 +32,8 @@ class LoginPage extends HookConsumerWidget {
       }
     }
 
-    void navigateToSignup() {
-      const SignupRoute().go(context);
+    Future<void> navigateToSignup() async {
+      await const SignupRoute().push<void>(context);
     }
 
     Widget buildMessageContainer(AuthViewState authState) {
