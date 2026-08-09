@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +48,7 @@ import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,6 +91,23 @@ class _InitialUriLoadingAndroidWidgetLaunchNotifier
   @override
   AndroidWidgetLaunchState build() {
     return const AndroidWidgetLaunchState(isInitialUriLoading: true);
+  }
+}
+
+class _PendingGroupSelectionNotifier
+    extends GroupTimelineGroupSelectionNotifier {
+  final loadCompleter = Completer<void>();
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return const GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.loading,
+    );
+  }
+
+  @override
+  Future<void> load(MemberDto currentMember) {
+    return loadCompleter.future;
   }
 }
 
@@ -407,6 +427,7 @@ void main() {
     String initialLocation = '/groups',
     FakeCurrentMemberNotifier? currentMemberNotifier,
     AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
+    GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -460,6 +481,10 @@ void main() {
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
       ),
+      if (groupSelectionNotifier != null)
+        groupTimelineGroupSelectionNotifierProvider.overrideWith(
+          () => groupSelectionNotifier,
+        ),
       androidWidgetLaunchNotifierProvider.overrideWith(
         () => androidWidgetLaunchNotifier ?? _IdleAndroidWidgetLaunchNotifier(),
       ),
@@ -528,6 +553,7 @@ void main() {
     String initialLocation = '/groups',
     FakeCurrentMemberNotifier? currentMemberNotifier,
     AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
+    GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
   }) {
     return ProviderScope(
       overrides: createTopPageTestOverrides(
@@ -539,6 +565,7 @@ void main() {
         initialLocation: initialLocation,
         currentMemberNotifier: currentMemberNotifier,
         androidWidgetLaunchNotifier: androidWidgetLaunchNotifier,
+        groupSelectionNotifier: groupSelectionNotifier,
       ),
       child: Consumer(
         builder: (context, ref, _) {
@@ -853,6 +880,58 @@ void main() {
 
       // Assert
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('所属グループの確認中はDVC詳細のデータを取得しない', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const DvcPointCalculationRoute(
+            groupId: 'unverified-group',
+          ).location,
+          groupSelectionNotifier: _PendingGroupSelectionNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      verifyNever(
+        mockDvcPointContractQueryService.getDvcPointContractsByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      verifyNever(
+        mockDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      verifyNever(
+        mockDvcPointUsageQueryService.getDvcPointUsagesByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+    });
+
+    testWidgets('所属グループの確認中は旅行管理のデータを取得しない', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const TripManagementRoute(
+            groupId: 'unverified-group',
+            year: 2026,
+          ).location,
+          groupSelectionNotifier: _PendingGroupSelectionNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      verifyNever(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
     });
 
     testWidgets('所属グループが1件のみなら初回表示でグループ年表を直接開く', (WidgetTester tester) async {
@@ -1684,7 +1763,10 @@ void main() {
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
-      const initialRoute = TripManagementRoute(groupId: 'g1', year: 2024);
+      final initialRoute = TripManagementRoute(
+        groupId: groupsWithMembers.first.id,
+        year: 2024,
+      );
       final widget = createTestWidget(
         memberQueryService: mockMemberQueryService,
         authService: mockAuthService,

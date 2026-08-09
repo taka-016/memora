@@ -23,6 +23,10 @@ class _MutableAuthNotifier extends FakeAuthNotifier {
       UserDto(id: userId, loginId: '$userId@example.com', isVerified: true),
     );
   }
+
+  void unauthenticate() {
+    state = const AuthState.unauthenticated('');
+  }
 }
 
 class _LoadedGroupSelectionNotifier
@@ -114,6 +118,25 @@ void main() {
       authNotifier,
       initialLocation: initialRoute.location,
     );
+
+    authNotifier.authenticate('user-1');
+    await pumpNavigation(tester);
+
+    expect(router.state.uri.toString(), initialRoute.location);
+  });
+
+  testWidgets('未認証確定後にログインしても保護ルートのディープリンクを復元する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(const AuthState.loading());
+    const initialRoute = SettingsRoute();
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: initialRoute.location,
+    );
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+    expect(router.state.matchedLocation, const LoginRoute().location);
 
     authNotifier.authenticate('user-1');
     await pumpNavigation(tester);
