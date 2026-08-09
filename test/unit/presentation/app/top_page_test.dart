@@ -111,6 +111,27 @@ class _PendingGroupSelectionNotifier
   }
 }
 
+class _ErrorGroupSelectionNotifier extends GroupTimelineGroupSelectionNotifier {
+  _ErrorGroupSelectionNotifier(this.memberId);
+
+  final String memberId;
+  bool loadCalled = false;
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.error,
+      memberId: memberId,
+      message: 'エラーが発生しました',
+    );
+  }
+
+  @override
+  Future<void> load(MemberDto currentMember) async {
+    loadCalled = true;
+  }
+}
+
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   String? targetGroupId;
 
@@ -932,6 +953,31 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       );
+    });
+
+    testWidgets('詳細ルートの所属グループ取得に失敗した場合は再読み込みできる', (tester) async {
+      final groupSelectionNotifier = _ErrorGroupSelectionNotifier(
+        'default_member',
+      );
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const TripManagementRoute(
+            groupId: 'unverified-group',
+            year: 2026,
+          ).location,
+          groupSelectionNotifier: groupSelectionNotifier,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.text('再読み込み'), findsOneWidget);
+
+      await tester.tap(find.text('再読み込み'));
+      await tester.pump();
+
+      expect(groupSelectionNotifier.loadCalled, isTrue);
     });
 
     testWidgets('所属グループが1件のみなら初回表示でグループ年表を直接開く', (WidgetTester tester) async {
