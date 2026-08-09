@@ -598,6 +598,19 @@ void main() {
     );
   }
 
+  Finder findTimelineHorizontalScrollView() {
+    return find
+        .descendant(
+          of: find.byKey(const Key('group_timeline')),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is SingleChildScrollView &&
+                widget.scrollDirection == Axis.horizontal,
+          ),
+        )
+        .first;
+  }
+
   group('TopPage', () {
     test('地図表示用の旅行一覧モックは空一覧を返す', () async {
       final trips = await mockTripEntryQueryService.getTripEntriesByGroupId(
@@ -768,16 +781,7 @@ void main() {
       expect(find.textContaining('$targetYear年'), findsAtLeastNWidgets(1));
       expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
 
-      final horizontalScrollView = find
-          .descendant(
-            of: find.byKey(const Key('group_timeline')),
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is SingleChildScrollView &&
-                  widget.scrollDirection == Axis.horizontal,
-            ),
-          )
-          .first;
+      final horizontalScrollView = findTimelineHorizontalScrollView();
       final scrollController = tester
           .widget<SingleChildScrollView>(horizontalScrollView)
           .controller;
@@ -818,16 +822,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final horizontalScrollView = find
-          .descendant(
-            of: find.byKey(const Key('group_timeline')),
-            matching: find.byWidgetPredicate(
-              (widget) =>
-                  widget is SingleChildScrollView &&
-                  widget.scrollDirection == Axis.horizontal,
-            ),
-          )
-          .first;
+      final horizontalScrollView = findTimelineHorizontalScrollView();
       final scrollController = tester
           .widget<SingleChildScrollView>(horizontalScrollView)
           .controller!;
