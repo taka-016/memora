@@ -15,6 +15,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -633,6 +634,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 旅行項目をタップして編集モーダルを開く
       await tester.tap(find.byType(ListTile).first);
       await tester.pumpAndSettle();
@@ -656,6 +662,10 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('旅行更新時にバリデーションエラーが発生した場合はモーダルを閉じずにエラー表示すること', (

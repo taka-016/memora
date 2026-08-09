@@ -12,6 +12,7 @@ import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
@@ -536,6 +537,58 @@ void main() {
       expect(find.byType(TripEditModal), findsNothing);
       expect(find.text('首里城'), findsOneWidget);
       expect(find.text('沖縄旅行2024'), findsOneWidget);
+    });
+
+    testWidgets('地図で旅行を更新すると年表の旅行データを再取得対象にする', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [location]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const [trip]);
+      when(
+        mockGetTripEntryByIdUsecase.execute('trip1'),
+      ).thenAnswer((_) async => trip);
+      when(mockUpdateTripEntryUsecase.execute(any)).thenAnswer((_) async {});
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MapScreen)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('沖縄旅行2024'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '沖縄旅行2024'),
+        '更新後の沖縄旅行',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      verify(mockUpdateTripEntryUsecase.execute(any)).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('旅行名タップ時に旅行が存在しない場合はエラーを表示する', (tester) async {
