@@ -288,17 +288,27 @@ class _GroupRouteGuard extends ConsumerWidget {
     final groupSelectionState = ref.watch(
       groupTimelineGroupSelectionNotifierProvider,
     );
-    final canAccessGroup =
-        currentMember != null &&
-        groupSelectionState.status ==
-            GroupTimelineGroupSelectionStatus.loaded &&
-        groupSelectionState.memberId == currentMember.id &&
-        groupSelectionState.groups.any((group) => group.id == groupId);
+    final canAccessGroup = _hasVerifiedGroupAccess(
+      currentMemberId: currentMember?.id,
+      groupId: groupId,
+      groupSelectionState: groupSelectionState,
+    );
     if (!canAccessGroup) {
       return const Material(child: Center(child: CircularProgressIndicator()));
     }
     return builder(context);
   }
+}
+
+bool _hasVerifiedGroupAccess({
+  required String? currentMemberId,
+  required String groupId,
+  required GroupTimelineGroupSelectionState groupSelectionState,
+}) {
+  return currentMemberId != null &&
+      groupSelectionState.status == GroupTimelineGroupSelectionStatus.loaded &&
+      groupSelectionState.memberId == currentMemberId &&
+      groupSelectionState.groups.any((group) => group.id == groupId);
 }
 
 String? resolveAppRedirect({
