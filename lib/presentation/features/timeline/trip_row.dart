@@ -6,6 +6,8 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
+final timelineTripEntriesRefreshProvider = Provider<Object>((ref) => Object());
+
 class TripRow extends TimelineRowDefinition {
   const TripRow({
     required this.groupId,
@@ -57,6 +59,7 @@ class TripRow extends TimelineRowDefinition {
 
 final _tripEntriesProvider = FutureProvider.autoDispose
     .family<List<TripEntryDto>, _TripEntriesQuery>((ref, query) async {
+      ref.watch(timelineTripEntriesRefreshProvider);
       try {
         final getTripEntriesUsecase = ref.watch(getTripEntriesUsecaseProvider);
         return await getTripEntriesUsecase.execute(query.groupId, query.year);

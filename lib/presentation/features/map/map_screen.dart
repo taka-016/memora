@@ -11,6 +11,7 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
+import 'package:memora/presentation/features/timeline/trip_row.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
@@ -196,6 +197,7 @@ class MapScreen extends HookConsumerWidget {
             isTestEnvironment: isTestEnvironment,
             onSave: (updatedTrip) async {
               await updateTripEntryUsecase.execute(updatedTrip);
+              ref.invalidate(timelineTripEntriesRefreshProvider);
               replaceUpdatedTrip(updatedTrip);
               if (context.mounted) {
                 ScaffoldMessenger.of(
