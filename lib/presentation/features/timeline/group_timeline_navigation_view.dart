@@ -34,7 +34,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
     );
     final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
     final autoSelectedGroups = useState<List<GroupDto>?>(null);
-    final shouldAutoSelectGroup =
+    final isAutoSelectingGroup =
         groupSelectionState.status ==
             GroupTimelineGroupSelectionStatus.loaded &&
         groupSelectionState.groups.length == 1 &&
@@ -44,7 +44,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             const GroupListRoute().location;
 
     useEffect(() {
-      if (shouldAutoSelectGroup) {
+      if (isAutoSelectingGroup) {
         final groups = groupSelectionState.groups;
         Future.microtask(() {
           if (context.mounted) {
@@ -58,7 +58,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
         });
       }
       return null;
-    }, [shouldAutoSelectGroup, groupSelectionState.groups]);
+    }, [isAutoSelectingGroup, groupSelectionState.groups]);
 
     final selectedGroup = _findSelectedGroup(
       groupSelectionState.groups,
@@ -130,7 +130,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (shouldAutoSelectGroup) {
+    if (isAutoSelectingGroup) {
       return const Center(child: CircularProgressIndicator());
     }
 
