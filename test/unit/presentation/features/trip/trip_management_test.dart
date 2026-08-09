@@ -818,6 +818,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 削除ボタンをタップ
       await tester.tap(find.byIcon(Icons.delete).first);
       await tester.pumpAndSettle();
@@ -830,6 +835,10 @@ void main() {
       verify(
         mockTripEntryRepository.deleteTripEntry(testTripEntries.first.id),
       ).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('戻るボタンをタップするとonBackPressedが呼ばれること', (
