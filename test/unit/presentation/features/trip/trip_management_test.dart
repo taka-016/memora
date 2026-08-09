@@ -418,6 +418,72 @@ void main() {
       );
     });
 
+    testWidgets('初期編集対象が別グループの旅行なら編集画面を開かない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer(
+        (_) async => detailedTripEntry.copyWith(groupId: 'other-group-id'),
+      );
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+    });
+
+    testWidgets('初期編集対象が別年の旅行なら編集画面を開かない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry.copyWith(year: testYear - 1));
+
+      await tester.pumpWidget(
+        createApp(
+          home: TripManagement(
+            groupId: testGroupId,
+            year: testYear,
+            initialTripId: 'trip-1',
+            isTestEnvironment: true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+    });
+
     testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (WidgetTester tester) async {
       final detailCompleter = Completer<TripEntryDto?>();
       when(

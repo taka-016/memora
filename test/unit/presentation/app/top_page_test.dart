@@ -735,9 +735,7 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
     });
 
-    testWidgets('ウィジェット起動の旅行管理から戻ると対象年を中心に年表を表示する', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('ウィジェットの対象年が範囲外なら年表の過去側端を表示する', (WidgetTester tester) async {
       final singleGroup = [groupsWithMembers.first];
       final targetYear = DateTime.now().year - 20;
       final trip = TripEntryDto(
@@ -778,7 +776,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
-      expect(find.textContaining('$targetYear年'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('$targetYear年'), findsNothing);
       expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
 
       final horizontalScrollView = findTimelineHorizontalScrollView();
@@ -786,20 +784,10 @@ void main() {
           .widget<SingleChildScrollView>(horizontalScrollView)
           .controller;
       expect(scrollController, isNotNull);
-      expect(scrollController!.offset, greaterThan(0));
+      expect(scrollController!.offset, 0);
 
-      final targetYearHeader = find
-          .descendant(
-            of: horizontalScrollView,
-            matching: find.textContaining('$targetYear年'),
-          )
-          .first;
-      expect(
-        tester.getCenter(targetYearHeader).dx,
-        closeTo(tester.getCenter(horizontalScrollView).dx, 1),
-      );
-
-      scrollController.jumpTo(0);
+      final preservedOffset = scrollController.position.maxScrollExtent;
+      scrollController.jumpTo(preservedOffset);
       unawaited(
         TripManagementRoute(
           groupId: trip.groupId,
@@ -810,7 +798,7 @@ void main() {
       await tester.tap(find.byKey(const Key('back_button')));
       await tester.pumpAndSettle();
 
-      expect(scrollController.offset, 0);
+      expect(scrollController.offset, preservedOffset);
     });
 
     testWidgets('通常起動では旅行管理から戻った後も年表のスクロール位置を維持する', (
