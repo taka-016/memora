@@ -767,6 +767,22 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(find.textContaining('$targetYear年'), findsAtLeastNWidgets(1));
       expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
+
+      final horizontalScrollView = find
+          .descendant(
+            of: find.byKey(const Key('group_timeline')),
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is SingleChildScrollView &&
+                  widget.scrollDirection == Axis.horizontal,
+            ),
+          )
+          .first;
+      final scrollController = tester
+          .widget<SingleChildScrollView>(horizontalScrollView)
+          .controller;
+      expect(scrollController, isNotNull);
+      expect(scrollController!.offset, greaterThan(0));
     });
 
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
