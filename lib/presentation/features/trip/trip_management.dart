@@ -7,14 +7,11 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class TripManagement extends HookConsumerWidget {
@@ -36,9 +33,9 @@ class TripManagement extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
-    final createTripEntryUsecase = ref.read(createTripEntryUsecaseProvider);
-    final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
-    final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
+    final tripEntryMutationCoordinator = ref.read(
+      tripEntryMutationCoordinatorProvider,
+    );
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
     final getGroupWithMembersByIdUsecase = ref.read(
       getGroupWithMembersByIdUsecaseProvider,
@@ -134,8 +131,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await createTripEntryUsecase.execute(tripEntry);
-        ref.invalidate(timelineTripEntriesRefreshProvider);
+        await tripEntryMutationCoordinator.createTripEntry(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -179,8 +175,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await updateTripEntryUsecase.execute(tripEntry);
-        ref.invalidate(timelineTripEntriesRefreshProvider);
+        await tripEntryMutationCoordinator.updateTripEntry(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -300,8 +295,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await deleteTripEntryUsecase.execute(tripEntry.id);
-        ref.invalidate(timelineTripEntriesRefreshProvider);
+        await tripEntryMutationCoordinator.deleteTripEntry(tripEntry.id);
         if (!context.mounted) {
           return;
         }
