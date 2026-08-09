@@ -19,6 +19,14 @@ class SignupPage extends HookConsumerWidget {
     final obscurePassword = useState(true);
     final obscureConfirmPassword = useState(true);
 
+    void returnToLogin() {
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        const LoginRoute().go(context);
+      }
+    }
+
     Future<void> signup() async {
       if (formKey.currentState?.validate() ?? false) {
         final authNotifier = ref.read(authNotifierProvider.notifier);
@@ -28,21 +36,13 @@ class SignupPage extends HookConsumerWidget {
         );
         if (isSuccess && context.mounted) {
           TextInput.finishAutofillContext();
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            const LoginRoute().go(context);
-          }
+          returnToLogin();
         }
       }
     }
 
     void navigateToLogin() {
-      if (context.canPop()) {
-        context.pop();
-      } else {
-        const LoginRoute().go(context);
-      }
+      returnToLogin();
     }
 
     Widget buildMessageContainer(AuthViewState authState) {

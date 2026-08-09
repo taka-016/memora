@@ -20,8 +20,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _RouterRefreshNotifier();
   var preserveProtectedRedirect = true;
   ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-    preserveProtectedRedirect =
-        previous?.isAuthenticated != true || !next.isLoading;
+    preserveProtectedRedirect = !_isLogoutStarting(previous, next);
     refreshNotifier.refresh();
   });
 
@@ -44,6 +43,10 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
   });
   return router;
 });
+
+bool _isLogoutStarting(AuthState? previous, AuthState next) {
+  return previous?.isAuthenticated == true && next.isLoading;
+}
 
 class _RouterRefreshNotifier extends ChangeNotifier {
   void refresh() {
