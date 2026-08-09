@@ -294,6 +294,37 @@ class _GroupRouteGuard extends ConsumerWidget {
       groupSelectionState: groupSelectionState,
     );
     if (!canAccessGroup) {
+      final hasCurrentMemberLoadError =
+          currentMember != null &&
+          groupSelectionState.status ==
+              GroupTimelineGroupSelectionStatus.error &&
+          groupSelectionState.memberId == currentMember.id;
+      if (hasCurrentMemberLoadError) {
+        return Material(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  groupSelectionState.message,
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () async {
+                    await ref
+                        .read(
+                          groupTimelineGroupSelectionNotifierProvider.notifier,
+                        )
+                        .load(currentMember);
+                  },
+                  child: const Text('再読み込み'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
       return const Material(child: Center(child: CircularProgressIndicator()));
     }
     return builder(context);
