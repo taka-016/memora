@@ -783,6 +783,17 @@ void main() {
           .controller;
       expect(scrollController, isNotNull);
       expect(scrollController!.offset, greaterThan(0));
+
+      final targetYearHeader = find
+          .descendant(
+            of: horizontalScrollView,
+            matching: find.textContaining('$targetYear年'),
+          )
+          .first;
+      expect(
+        tester.getCenter(targetYearHeader).dx,
+        closeTo(tester.getCenter(horizontalScrollView).dx, 1),
+      );
     });
 
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
