@@ -12,11 +12,15 @@ import '../../../../helpers/fake_auth_notifier.dart';
 
 void main() {
   group('LoginPage', () {
-    Future<GoRouter> pumpRouter(WidgetTester tester) async {
+    Future<GoRouter> pumpRouter(
+      WidgetTester tester, {
+      String initialLocation = '/groups',
+    }) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
             authNotifierProvider.overrideWith(FakeAuthNotifier.unauthenticated),
+            appInitialLocationProvider.overrideWithValue(initialLocation),
           ],
           child: Consumer(
             builder: (context, ref, _) {
@@ -69,6 +73,25 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(router.state.matchedLocation, const SignupRoute().location);
+    });
+
+    testWidgets('保護ルートから新規登録へ進んで戻ると復帰先付きログイン画面へ戻る', (
+      WidgetTester tester,
+    ) async {
+      final loginLocation = const LoginRoute(
+        redirectLocation: '/settings',
+      ).location;
+      final router = await pumpRouter(tester, initialLocation: loginLocation);
+      expect(router.state.uri.toString(), loginLocation);
+
+      await tester.tap(find.byKey(const Key('signup_link')));
+      await tester.pumpAndSettle();
+      expect(router.state.matchedLocation, const SignupRoute().location);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.toString(), loginLocation);
     });
 
     testWidgets('パスワード表示切り替えアイコンが表示される', (WidgetTester tester) async {

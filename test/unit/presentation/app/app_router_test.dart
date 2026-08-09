@@ -27,6 +27,10 @@ class _MutableAuthNotifier extends FakeAuthNotifier {
   void unauthenticate() {
     state = const AuthState.unauthenticated('');
   }
+
+  void startLogout() {
+    state = const AuthState.loading();
+  }
 }
 
 class _LoadedGroupSelectionNotifier
@@ -85,21 +89,23 @@ void main() {
     return (container, container.read(appRouterConfigProvider));
   }
 
-  testWidgets('ログアウト後の再認証では前セッションの保護ルートを破棄する', (tester) async {
+  testWidgets('ログアウトのloading状態では前セッションの保護ルートを保持しない', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
         UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
       ),
     );
     final (_, router) = await pumpRouter(tester, authNotifier);
-    router.go(
-      const GroupTimelineRoute(groupId: 'previous-session-group').location,
-    );
+    router.go(const SettingsRoute().location);
     await pumpNavigation(tester);
 
-    await authNotifier.logout();
+    authNotifier.startLogout();
     await pumpNavigation(tester);
-    expect(router.state.matchedLocation, const LoginRoute().location);
+    expect(router.state.uri.toString(), const LoadingRoute().location);
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), const LoginRoute().location);
 
     authNotifier.authenticate('user-2');
     await pumpNavigation(tester);
