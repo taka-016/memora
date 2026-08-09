@@ -871,6 +871,9 @@ void main() {
         createTestWidget(availableGroupsWithMembers: singleGroup),
       );
       await tester.pump();
+
+      expect(find.byKey(const Key('group_list')), findsNothing);
+
       await tester.pumpAndSettle();
 
       // Assert
