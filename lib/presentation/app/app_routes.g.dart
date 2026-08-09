@@ -55,10 +55,18 @@ RouteBase get $loginRoute => GoRouteData.$route(
 );
 
 mixin $LoginRoute on GoRouteData {
-  static LoginRoute _fromState(GoRouterState state) => const LoginRoute();
+  static LoginRoute _fromState(GoRouterState state) =>
+      LoginRoute(redirectLocation: state.uri.queryParameters['redirect']);
+
+  LoginRoute get _self => this as LoginRoute;
 
   @override
-  String get location => GoRouteData.$location('/login');
+  String get location => GoRouteData.$location(
+    '/login',
+    queryParams: {
+      if (_self.redirectLocation != null) 'redirect': _self.redirectLocation,
+    },
+  );
 
   @override
   void go(BuildContext context) => context.go(location);

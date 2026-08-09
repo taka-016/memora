@@ -15,6 +15,7 @@ import 'package:memora/presentation/features/timeline/group_timeline_navigation_
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 
 part 'app_routes.g.dart';
 
@@ -68,7 +69,11 @@ class LoadingRoute extends GoRouteData with $LoadingRoute {
 
 @TypedGoRoute<LoginRoute>(path: '/login')
 class LoginRoute extends GoRouteData with $LoginRoute {
-  const LoginRoute();
+  const LoginRoute({
+    @TypedQueryParameter(name: 'redirect') this.redirectLocation,
+  });
+
+  final String? redirectLocation;
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -164,12 +169,15 @@ class TripManagementRoute extends GoRouteData with $TripManagementRoute {
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return Material(
-      child: TripManagement(
-        groupId: groupId,
-        year: year,
-        initialTripId: tripId,
-        onBackPressed: context.pop,
+    return _GroupRouteGuard(
+      groupId: groupId,
+      builder: (context) => Material(
+        child: TripManagement(
+          groupId: groupId,
+          year: year,
+          initialTripId: tripId,
+          onBackPressed: context.pop,
+        ),
       ),
     );
   }
@@ -183,10 +191,13 @@ class DvcPointCalculationRoute extends GoRouteData
 
   @override
   Widget build(BuildContext context, GoRouterState state) {
-    return Material(
-      child: DvcPointCalculationScreen(
-        groupId: groupId,
-        onBackPressed: context.pop,
+    return _GroupRouteGuard(
+      groupId: groupId,
+      builder: (context) => Material(
+        child: DvcPointCalculationScreen(
+          groupId: groupId,
+          onBackPressed: context.pop,
+        ),
       ),
     );
   }
@@ -265,6 +276,31 @@ class _GroupTimelineRoutePage extends ConsumerWidget {
   }
 }
 
+class _GroupRouteGuard extends ConsumerWidget {
+  const _GroupRouteGuard({required this.groupId, required this.builder});
+
+  final String groupId;
+  final WidgetBuilder builder;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMember = ref.watch(currentMemberNotifierProvider).member;
+    final groupSelectionState = ref.watch(
+      groupTimelineGroupSelectionNotifierProvider,
+    );
+    final canAccessGroup =
+        currentMember != null &&
+        groupSelectionState.status ==
+            GroupTimelineGroupSelectionStatus.loaded &&
+        groupSelectionState.memberId == currentMember.id &&
+        groupSelectionState.groups.any((group) => group.id == groupId);
+    if (!canAccessGroup) {
+      return const Material(child: Center(child: CircularProgressIndicator()));
+    }
+    return builder(context);
+  }
+}
+
 String? resolveAppRedirect({
   required AuthState authState,
   required String matchedLocation,
@@ -276,6 +312,7 @@ String? resolveAppRedirect({
   final loginLocation = const LoginRoute().location;
   final memberSetupLocation = const MemberSetupRoute().location;
   final groupListLocation = const GroupListRoute().location;
+  final protectedRedirectLocation = _protectedRedirectLocation(currentUri);
 
   if (authState.isLoading) {
     if (matchedLocation == signupLocation ||
@@ -285,7 +322,7 @@ String? resolveAppRedirect({
     if (_isProtectedLocation(currentUri.path)) {
       return LoadingRoute(redirectLocation: currentUri.toString()).location;
     }
-    return loadingLocation;
+    return LoadingRoute(redirectLocation: protectedRedirectLocation).location;
   }
   if (authState.requiresMemberSelection) {
     return matchedLocation == memberSetupLocation ? null : memberSetupLocation;
@@ -294,14 +331,12 @@ String? resolveAppRedirect({
     if (matchedLocation == loginLocation || matchedLocation == signupLocation) {
       return null;
     }
-    return loginLocation;
+    return LoginRoute(redirectLocation: protectedRedirectLocation).location;
   }
-  if (matchedLocation == loadingLocation) {
-    final redirectLocation = currentUri.queryParameters['redirect'];
-    if (redirectLocation != null &&
-        _isProtectedLocation(Uri.parse(redirectLocation).path)) {
-      return redirectLocation;
-    }
+  if ((matchedLocation == loadingLocation ||
+          matchedLocation == loginLocation) &&
+      protectedRedirectLocation != null) {
+    return protectedRedirectLocation;
   }
   if (matchedLocation == loadingLocation ||
       matchedLocation == loginLocation ||
@@ -310,6 +345,16 @@ String? resolveAppRedirect({
     return groupListLocation;
   }
   return null;
+}
+
+String? _protectedRedirectLocation(Uri currentUri) {
+  final redirectLocation = currentUri.queryParameters['redirect'];
+  final redirectUri = redirectLocation == null
+      ? null
+      : Uri.tryParse(redirectLocation);
+  return redirectUri != null && _isProtectedLocation(redirectUri.path)
+      ? redirectLocation
+      : null;
 }
 
 bool _isProtectedLocation(String path) {
