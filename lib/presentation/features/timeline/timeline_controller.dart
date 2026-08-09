@@ -67,6 +67,7 @@ TimelineController useTimelineController({
   final isDraggingOnFixedRowState = useState(false);
   final activeResizePointerState = useState<int?>(null);
   final displaySettingsState = useState(TimelineDisplaySettings.defaults);
+  final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
   final rowScrollControllers = useMemoized(
     () => List.generate(totalDataRows + 1, (_) => ScrollController()),
     [totalDataRows],
@@ -186,6 +187,9 @@ TimelineController useTimelineController({
   }
 
   useEffect(() {
+    if (!isCurrentRoute) {
+      return null;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!context.mounted) {
         return;
@@ -193,7 +197,7 @@ TimelineController useTimelineController({
       scrollToInitialFocusYear();
     });
     return null;
-  }, [rowScrollControllers]);
+  }, [rowScrollControllers, isCurrentRoute]);
 
   return TimelineController(
     viewState: viewState,
