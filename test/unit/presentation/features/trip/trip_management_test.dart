@@ -438,11 +438,13 @@ void main() {
 
       await tester.pumpWidget(
         createApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            initialTripId: 'trip-1',
-            isTestEnvironment: true,
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              initialTripId: 'trip-1',
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );
@@ -470,11 +472,13 @@ void main() {
 
       await tester.pumpWidget(
         createApp(
-          home: TripManagement(
-            groupId: testGroupId,
-            year: testYear,
-            initialTripId: 'trip-1',
-            isTestEnvironment: true,
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              initialTripId: 'trip-1',
+              isTestEnvironment: true,
+            ),
           ),
         ),
       );

@@ -212,7 +212,9 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
-        if (detailedTripEntry == null) {
+        if (detailedTripEntry == null ||
+            detailedTripEntry.groupId != groupId ||
+            detailedTripEntry.year != year) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('旅行の詳細取得に失敗しました: データが見つかりませんでした')),
           );

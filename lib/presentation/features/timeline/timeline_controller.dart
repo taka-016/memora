@@ -251,10 +251,14 @@ bool _tryScrollToYear({
     return false;
   }
 
-  final focusYearIndex = visibleYears.indexOf(focusYear);
-  if (focusYearIndex == -1) {
+  if (visibleYears.isEmpty) {
     return false;
   }
+  final focusYearIndex = focusYear < visibleYears.first
+      ? 0
+      : focusYear > visibleYears.last
+      ? visibleYears.length - 1
+      : visibleYears.indexOf(focusYear);
 
   final focusYearCenter =
       layoutConfig.buttonColumnWidth +
