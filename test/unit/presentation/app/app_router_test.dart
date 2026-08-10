@@ -28,6 +28,10 @@ class _MutableAuthNotifier extends FakeAuthNotifier {
     state = const AuthState.unauthenticated('');
   }
 
+  void requireMemberSelection() {
+    state = const AuthState.unauthenticated(memberSelectionRequiredMessage);
+  }
+
   void startLogout() {
     state = const AuthState.loading();
   }
@@ -148,6 +152,52 @@ void main() {
     await pumpNavigation(tester);
 
     expect(router.state.uri.toString(), initialRoute.location);
+  });
+
+  testWidgets('認証画面とメンバー作成画面を経由してもディープリンクを復元する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(const AuthState.loading());
+    const initialRoute = SettingsRoute();
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: initialRoute.location,
+    );
+    expect(router.state.uri.toString(), const LoadingRoute().location);
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), const LoginRoute().location);
+
+    router.push(const SignupRoute().location);
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), const SignupRoute().location);
+
+    authNotifier.requireMemberSelection();
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), const MemberSetupRoute().location);
+
+    authNotifier.authenticate('user-1');
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), initialRoute.location);
+  });
+
+  testWidgets('旅行管理ルートの年が整数でない場合はグループ年表へ戻る', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: '/groups/deep-link-group/timeline/trips/not-a-year',
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(
+      router.state.uri.toString(),
+      const GroupTimelineRoute(groupId: 'deep-link-group').location,
+    );
   });
 
   testWidgets('戻る操作では画面ルートより先にダイアログを閉じる', (tester) async {
