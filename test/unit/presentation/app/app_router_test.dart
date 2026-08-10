@@ -283,6 +283,38 @@ void main() {
     );
   });
 
+  testWidgets('起動済みアプリへ届いたウィジェットURIはグループ一覧へ退避する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: 'memorawidget://opentrip/?tripId=trip-1',
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(router.state.uri.toString(), const GroupListRoute().location);
+  });
+
+  testWidgets('ルートパスはグループ一覧へ退避する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      initialLocation: '/',
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(router.state.uri.toString(), const GroupListRoute().location);
+  });
+
   testWidgets('戻る操作では画面ルートより先にダイアログを閉じる', (tester) async {
     final (_, router) = await pumpRouter(
       tester,
