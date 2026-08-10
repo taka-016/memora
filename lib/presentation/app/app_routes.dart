@@ -31,6 +31,16 @@ enum AppNavigationItem {
   accountSettings,
 }
 
+@TypedGoRoute<AppRootRoute>(path: '/')
+class AppRootRoute extends GoRouteData with $AppRootRoute {
+  const AppRootRoute();
+
+  @override
+  String redirect(BuildContext context, GoRouterState state) {
+    return const GroupListRoute().location;
+  }
+}
+
 AppNavigationItem appNavigationItemForLocation(String location) {
   if (location == const MapRoute().location) {
     return AppNavigationItem.map;
