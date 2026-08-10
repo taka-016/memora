@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dar
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_refresh_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
@@ -95,6 +96,7 @@ final _dvcPointUsagesByYearProvider = FutureProvider.autoDispose
       query,
     ) async {
       try {
+        ref.watch(timelineDvcPointUsagesRefreshProvider);
         final getDvcPointUsagesUsecase = ref.watch(
           getDvcPointUsagesUsecaseProvider,
         );
