@@ -113,6 +113,27 @@ void main() {
     expect(router.state.matchedLocation, const GroupListRoute().location);
   });
 
+  testWidgets('認証済みから直接未認証になった場合は前セッションの保護ルートを保持しない', (
+    tester,
+  ) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final (_, router) = await pumpRouter(tester, authNotifier);
+    router.go(const SettingsRoute().location);
+    await pumpNavigation(tester);
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+    expect(router.state.uri.toString(), const LoginRoute().location);
+
+    authNotifier.authenticate('user-2');
+    await pumpNavigation(tester);
+    expect(router.state.matchedLocation, const GroupListRoute().location);
+  });
+
   testWidgets('初期認証の完了後に保護ルートのディープリンクを復元する', (tester) async {
     final authNotifier = _MutableAuthNotifier(const AuthState.loading());
     const initialRoute = TripManagementRoute(
