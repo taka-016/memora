@@ -113,9 +113,7 @@ void main() {
     expect(router.state.matchedLocation, const GroupListRoute().location);
   });
 
-  testWidgets('認証済みから直接未認証になった場合は前セッションの保護ルートを保持しない', (
-    tester,
-  ) async {
+  testWidgets('認証済みから直接未認証になった場合は前セッションの保護ルートを保持しない', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
         UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
