@@ -28,10 +28,6 @@ class _MutableAuthNotifier extends FakeAuthNotifier {
     state = const AuthState.unauthenticated('');
   }
 
-  void requireMemberSelection() {
-    state = const AuthState.unauthenticated(memberSelectionRequiredMessage);
-  }
-
   void startLogout() {
     state = const AuthState.loading();
   }
@@ -154,31 +150,69 @@ void main() {
     expect(router.state.uri.toString(), initialRoute.location);
   });
 
-  testWidgets('認証画面とメンバー作成画面を経由してもディープリンクを復元する', (tester) async {
-    final authNotifier = _MutableAuthNotifier(const AuthState.loading());
+  test('認証画面とメンバー作成画面を経由してもディープリンクを復元する', () {
+    final controller = AppRedirectController();
     const initialRoute = SettingsRoute();
-    final (_, router) = await pumpRouter(
-      tester,
-      authNotifier,
-      initialLocation: initialRoute.location,
+    const loading = AuthState.loading();
+    const unauthenticated = AuthState.unauthenticated('');
+    const memberSelection = AuthState.unauthenticated(
+      memberSelectionRequiredMessage,
     );
-    expect(router.state.uri.toString(), const LoadingRoute().location);
+    const authenticated = AuthState.authenticated(
+      UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+    );
 
-    authNotifier.unauthenticate();
-    await pumpNavigation(tester);
-    expect(router.state.uri.toString(), const LoginRoute().location);
-
-    router.push(const SignupRoute().location);
-    await pumpNavigation(tester);
-    expect(router.state.uri.toString(), const SignupRoute().location);
-
-    authNotifier.requireMemberSelection();
-    await pumpNavigation(tester);
-    expect(router.state.uri.toString(), const MemberSetupRoute().location);
-
-    authNotifier.authenticate('user-1');
-    await pumpNavigation(tester);
-    expect(router.state.uri.toString(), initialRoute.location);
+    expect(
+      controller.resolve(
+        authState: loading,
+        matchedLocation: initialRoute.location,
+        location: initialRoute.location,
+      ),
+      const LoadingRoute().location,
+    );
+    controller.handleAuthStateChange(loading, unauthenticated);
+    expect(
+      controller.resolve(
+        authState: unauthenticated,
+        matchedLocation: const LoadingRoute().location,
+        location: const LoadingRoute().location,
+      ),
+      const LoginRoute().location,
+    );
+    expect(
+      controller.resolve(
+        authState: unauthenticated,
+        matchedLocation: const SignupRoute().location,
+        location: const SignupRoute().location,
+      ),
+      isNull,
+    );
+    controller.handleAuthStateChange(unauthenticated, memberSelection);
+    expect(
+      controller.resolve(
+        authState: memberSelection,
+        matchedLocation: const SignupRoute().location,
+        location: const SignupRoute().location,
+      ),
+      const MemberSetupRoute().location,
+    );
+    expect(
+      controller.resolve(
+        authState: memberSelection,
+        matchedLocation: const MemberSetupRoute().location,
+        location: const MemberSetupRoute().location,
+      ),
+      isNull,
+    );
+    controller.handleAuthStateChange(memberSelection, authenticated);
+    expect(
+      controller.resolve(
+        authState: authenticated,
+        matchedLocation: const MemberSetupRoute().location,
+        location: const MemberSetupRoute().location,
+      ),
+      initialRoute.location,
+    );
   });
 
   testWidgets('旅行管理ルートの年が整数でない場合はグループ年表へ戻る', (tester) async {
