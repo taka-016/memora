@@ -68,7 +68,9 @@ class AppRedirectController {
 }
 
 bool _isLogoutStarting(AuthState? previous, AuthState next) {
-  return previous?.isAuthenticated == true && next.isLoading;
+  return (previous?.isAuthenticated == true ||
+          previous?.requiresMemberSelection == true) &&
+      next.isLoading;
 }
 
 String? _safeLocationFor(Uri uri) {
