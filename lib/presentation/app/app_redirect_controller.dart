@@ -6,7 +6,7 @@ class AppRedirectController {
   bool _canCaptureProtectedLocation = true;
 
   void handleAuthStateChange(AuthState? previous, AuthState next) {
-    if (_isLogoutStarting(previous, next)) {
+    if (_isAuthenticationSessionEnding(previous, next)) {
       _discardPendingProtectedLocation();
       _canCaptureProtectedLocation = false;
       return;
@@ -75,10 +75,13 @@ class AppRedirectController {
   }
 }
 
-bool _isLogoutStarting(AuthState? previous, AuthState next) {
-  return (previous?.isAuthenticated == true ||
-          previous?.requiresMemberSelection == true) &&
-      next.isLoading;
+bool _isAuthenticationSessionEnding(AuthState? previous, AuthState next) {
+  final hadAuthenticationSession =
+      previous?.isAuthenticated == true ||
+      previous?.requiresMemberSelection == true;
+  final keepsAuthenticationSession =
+      next.isAuthenticated || next.requiresMemberSelection;
+  return hadAuthenticationSession && !keepsAuthenticationSession;
 }
 
 String? _safeLocationFor(Uri uri) {
