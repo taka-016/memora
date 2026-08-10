@@ -7,7 +7,7 @@ class AppRedirectController {
 
   void handleAuthStateChange(AuthState? previous, AuthState next) {
     if (_isLogoutStarting(previous, next)) {
-      _pendingProtectedLocation = null;
+      _discardPendingProtectedLocation();
       _canCaptureProtectedLocation = false;
       return;
     }
@@ -58,12 +58,20 @@ class AppRedirectController {
       return loginLocation;
     }
     if (_isAuthenticationLocation(matchedLocation)) {
-      final destination =
-          _pendingProtectedLocation ?? const GroupListRoute().location;
-      _pendingProtectedLocation = null;
-      return destination;
+      return _consumePendingProtectedLocation();
     }
     return null;
+  }
+
+  String _consumePendingProtectedLocation() {
+    final destination =
+        _pendingProtectedLocation ?? const GroupListRoute().location;
+    _discardPendingProtectedLocation();
+    return destination;
+  }
+
+  void _discardPendingProtectedLocation() {
+    _pendingProtectedLocation = null;
   }
 }
 
