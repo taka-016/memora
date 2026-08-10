@@ -216,6 +216,54 @@ void main() {
     );
   });
 
+  test('メンバー作成を中断してログアウトするとディープリンクを破棄する', () {
+    final controller = AppRedirectController();
+    const initialRoute = SettingsRoute();
+    const loading = AuthState.loading();
+    const unauthenticated = AuthState.unauthenticated('');
+    const memberSelection = AuthState.unauthenticated(
+      memberSelectionRequiredMessage,
+    );
+    const authenticated = AuthState.authenticated(
+      UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+    );
+
+    controller.resolve(
+      authState: loading,
+      matchedLocation: initialRoute.location,
+      location: initialRoute.location,
+    );
+    controller.handleAuthStateChange(loading, memberSelection);
+    controller.resolve(
+      authState: memberSelection,
+      matchedLocation: const LoadingRoute().location,
+      location: const LoadingRoute().location,
+    );
+
+    controller.handleAuthStateChange(memberSelection, loading);
+    controller.resolve(
+      authState: loading,
+      matchedLocation: const MemberSetupRoute().location,
+      location: const MemberSetupRoute().location,
+    );
+    controller.handleAuthStateChange(loading, unauthenticated);
+    controller.resolve(
+      authState: unauthenticated,
+      matchedLocation: const LoadingRoute().location,
+      location: const LoadingRoute().location,
+    );
+    controller.handleAuthStateChange(unauthenticated, authenticated);
+
+    expect(
+      controller.resolve(
+        authState: authenticated,
+        matchedLocation: const LoginRoute().location,
+        location: const LoginRoute().location,
+      ),
+      const GroupListRoute().location,
+    );
+  });
+
   testWidgets('旅行管理ルートの年が整数でない場合はグループ年表へ戻る', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
