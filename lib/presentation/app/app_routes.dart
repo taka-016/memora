@@ -13,7 +13,6 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 
@@ -53,11 +52,7 @@ AppNavigationItem appNavigationItemForLocation(String location) {
 
 @TypedGoRoute<LoadingRoute>(path: '/loading')
 class LoadingRoute extends GoRouteData with $LoadingRoute {
-  const LoadingRoute({
-    @TypedQueryParameter(name: 'redirect') this.redirectLocation,
-  });
-
-  final String? redirectLocation;
+  const LoadingRoute();
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -69,11 +64,7 @@ class LoadingRoute extends GoRouteData with $LoadingRoute {
 
 @TypedGoRoute<LoginRoute>(path: '/login')
 class LoginRoute extends GoRouteData with $LoginRoute {
-  const LoginRoute({
-    @TypedQueryParameter(name: 'redirect') this.redirectLocation,
-  });
-
-  final String? redirectLocation;
+  const LoginRoute();
 
   @override
   Page<void> buildPage(BuildContext context, GoRouterState state) {
@@ -347,74 +338,4 @@ bool _hasVerifiedGroupAccess({
       groupSelectionState.status == GroupTimelineGroupSelectionStatus.loaded &&
       groupSelectionState.memberId == currentMemberId &&
       groupSelectionState.groups.any((group) => group.id == groupId);
-}
-
-String? resolveAppRedirect({
-  required AuthState authState,
-  required String matchedLocation,
-  String? location,
-  bool preserveProtectedRedirect = true,
-}) {
-  final currentUri = Uri.parse(location ?? matchedLocation);
-  final signupLocation = const SignupRoute().location;
-  final loadingLocation = const LoadingRoute().location;
-  final loginLocation = const LoginRoute().location;
-  final memberSetupLocation = const MemberSetupRoute().location;
-  final groupListLocation = const GroupListRoute().location;
-  final protectedRedirectLocation = _protectedRedirectLocation(currentUri);
-
-  if (authState.isLoading) {
-    if (matchedLocation == signupLocation ||
-        matchedLocation == loadingLocation) {
-      return null;
-    }
-    if (!preserveProtectedRedirect) {
-      return loadingLocation;
-    }
-    if (_isProtectedLocation(currentUri.path)) {
-      return LoadingRoute(redirectLocation: currentUri.toString()).location;
-    }
-    return LoadingRoute(redirectLocation: protectedRedirectLocation).location;
-  }
-  if (authState.requiresMemberSelection) {
-    return matchedLocation == memberSetupLocation ? null : memberSetupLocation;
-  }
-  if (!authState.isAuthenticated) {
-    if (matchedLocation == loginLocation || matchedLocation == signupLocation) {
-      return null;
-    }
-    return LoginRoute(redirectLocation: protectedRedirectLocation).location;
-  }
-  if ((matchedLocation == loadingLocation ||
-          matchedLocation == loginLocation) &&
-      protectedRedirectLocation != null) {
-    return protectedRedirectLocation;
-  }
-  if (matchedLocation == loadingLocation ||
-      matchedLocation == loginLocation ||
-      matchedLocation == signupLocation ||
-      matchedLocation == memberSetupLocation) {
-    return groupListLocation;
-  }
-  return null;
-}
-
-String? _protectedRedirectLocation(Uri currentUri) {
-  final redirectLocation = currentUri.queryParameters['redirect'];
-  final redirectUri = redirectLocation == null
-      ? null
-      : Uri.tryParse(redirectLocation);
-  return redirectUri != null && _isProtectedLocation(redirectUri.path)
-      ? redirectLocation
-      : null;
-}
-
-bool _isProtectedLocation(String path) {
-  return path == const GroupListRoute().location ||
-      path.startsWith('${const GroupListRoute().location}/') ||
-      path == const MapRoute().location ||
-      path == const MemberManagementRoute().location ||
-      path == const GroupManagementRoute().location ||
-      path == const SettingsRoute().location ||
-      path == const AccountSettingsRoute().location;
 }

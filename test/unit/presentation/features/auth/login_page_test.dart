@@ -75,12 +75,8 @@ void main() {
       expect(router.state.matchedLocation, const SignupRoute().location);
     });
 
-    testWidgets('保護ルートから新規登録へ進んで戻ると復帰先付きログイン画面へ戻る', (
-      WidgetTester tester,
-    ) async {
-      final loginLocation = const LoginRoute(
-        redirectLocation: '/settings',
-      ).location;
+    testWidgets('新規登録へ進んで戻るとログイン画面へ戻る', (WidgetTester tester) async {
+      final loginLocation = const LoginRoute().location;
       final router = await pumpRouter(tester, initialLocation: loginLocation);
       expect(router.state.uri.toString(), loginLocation);
 

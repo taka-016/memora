@@ -21,18 +21,10 @@ RouteBase get $loadingRoute => GoRouteData.$route(
 );
 
 mixin $LoadingRoute on GoRouteData {
-  static LoadingRoute _fromState(GoRouterState state) =>
-      LoadingRoute(redirectLocation: state.uri.queryParameters['redirect']);
-
-  LoadingRoute get _self => this as LoadingRoute;
+  static LoadingRoute _fromState(GoRouterState state) => const LoadingRoute();
 
   @override
-  String get location => GoRouteData.$location(
-    '/loading',
-    queryParams: {
-      if (_self.redirectLocation != null) 'redirect': _self.redirectLocation,
-    },
-  );
+  String get location => GoRouteData.$location('/loading');
 
   @override
   void go(BuildContext context) => context.go(location);
@@ -55,18 +47,10 @@ RouteBase get $loginRoute => GoRouteData.$route(
 );
 
 mixin $LoginRoute on GoRouteData {
-  static LoginRoute _fromState(GoRouterState state) =>
-      LoginRoute(redirectLocation: state.uri.queryParameters['redirect']);
-
-  LoginRoute get _self => this as LoginRoute;
+  static LoginRoute _fromState(GoRouterState state) => const LoginRoute();
 
   @override
-  String get location => GoRouteData.$location(
-    '/login',
-    queryParams: {
-      if (_self.redirectLocation != null) 'redirect': _self.redirectLocation,
-    },
-  );
+  String get location => GoRouteData.$location('/login');
 
   @override
   void go(BuildContext context) => context.go(location);
