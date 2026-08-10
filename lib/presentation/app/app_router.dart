@@ -10,9 +10,7 @@ final appInitialLocationProvider = Provider<String>((ref) {
   final platformLocation = Uri.tryParse(
     WidgetsBinding.instance.platformDispatcher.defaultRouteName,
   );
-  return platformLocation == null ||
-          platformLocation.path.isEmpty ||
-          platformLocation.path == '/'
+  return platformLocation == null || platformLocation.path.isEmpty
       ? const GroupListRoute().location
       : platformLocation.toString();
 });
