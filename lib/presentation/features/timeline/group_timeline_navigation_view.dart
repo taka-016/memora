@@ -107,11 +107,9 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             },
             onDvcSelected: (selectedGroupId) {
               unawaited(
-                _openDvcPointCalculation(
-                  context: context,
+                DvcPointCalculationRoute(
                   groupId: selectedGroupId,
-                  refreshTimeline: refreshTimeline,
-                ),
+                ).push<void>(context),
               );
             },
           );
@@ -185,17 +183,6 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
     required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
   }) async {
     await TripManagementRoute(groupId: groupId, year: year).push<void>(context);
-    if (context.mounted) {
-      await refreshTimeline.value?.call();
-    }
-  }
-
-  Future<void> _openDvcPointCalculation({
-    required BuildContext context,
-    required String groupId,
-    required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
-  }) async {
-    await DvcPointCalculationRoute(groupId: groupId).push<void>(context);
     if (context.mounted) {
       await refreshTimeline.value?.call();
     }
