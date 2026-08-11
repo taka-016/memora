@@ -3,14 +3,9 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
-import 'package:memora/application/usecases/group/create_group_usecase.dart';
-import 'package:memora/application/usecases/group/delete_group_usecase.dart';
-import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class GroupManagement extends HookConsumerWidget {
@@ -23,213 +18,113 @@ class GroupManagement extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final getManagedGroupsWithMembersUsecase = ref.read(
-      getManagedGroupsWithMembersUsecaseProvider,
+    final managementState = ref.watch(groupManagementNotifierProvider);
+    final managementNotifier = ref.read(
+      groupManagementNotifierProvider.notifier,
     );
-    final deleteGroupUsecase = ref.read(deleteGroupUsecaseProvider);
-    final createGroupUsecase = ref.read(createGroupUsecaseProvider);
-    final updateGroupUsecase = ref.read(updateGroupUsecaseProvider);
-    final getManagedMembersUsecase = ref.read(getManagedMembersUsecaseProvider);
-
-    final managedGroups = useState<List<GroupDto>>([]);
-    final isLoading = useState(true);
-
-    Future<void> loadData() async {
-      isLoading.value = true;
-
-      try {
-        final data = await getManagedGroupsWithMembersUsecase.execute(
-          currentMember,
-        );
-        managedGroups.value = List<GroupDto>.from(data);
-      } catch (e, stack) {
-        logger.e(
-          'GroupManagement.loadData: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('データの読み込みに失敗しました: $e')));
-        }
-      } finally {
-        if (context.mounted) {
-          isLoading.value = false;
-        }
-      }
-    }
 
     useEffect(() {
-      loadData();
+      Future.microtask(() => managementNotifier.load(currentMember));
       return null;
     }, [currentMember.id]);
 
-    Future<void> deleteGroup(GroupDto groupWithMembers) async {
+    ref.listen<GroupManagementState>(groupManagementNotifierProvider, (
+      previous,
+      next,
+    ) {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
+      final initialLoadFailed =
+          previous?.status != next.status &&
+          next.status == GroupManagementStatus.error;
+      final refreshFailed =
+          previous?.refreshStatus != next.refreshStatus &&
+          next.refreshStatus == GroupManagementRefreshStatus.error;
+      final operationFailed =
+          previous?.operationStatus != next.operationStatus &&
+          next.operationStatus == GroupManagementOperationStatus.error;
 
-      try {
-        await deleteGroupUsecase.execute(groupWithMembers.id);
-        if (!context.mounted) {
-          return;
-        }
-        await loadData();
+      if (initialLoadFailed || refreshFailed || operationFailed) {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('グループを削除しました')),
+          SnackBar(content: Text(next.errorMessage)),
         );
-      } catch (e, stack) {
-        logger.e(
-          'GroupManagement.deleteGroup: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('削除に失敗しました: $e')),
-          );
-        }
+        return;
       }
-    }
+
+      final operationSucceeded =
+          previous?.operationStatus != next.operationStatus &&
+          next.operationStatus == GroupManagementOperationStatus.success;
+      if (!operationSucceeded) {
+        return;
+      }
+
+      final message = switch (next.operationType) {
+        GroupManagementOperationType.create => 'グループを作成しました',
+        GroupManagementOperationType.update => 'グループを更新しました',
+        GroupManagementOperationType.delete => 'グループを削除しました',
+        GroupManagementOperationType.loadAvailableMembers => null,
+        null => null,
+      };
+      if (message != null) {
+        scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
+      }
+    });
 
     Future<void> showDeleteConfirmDialog(GroupDto groupWithMembers) async {
       await DeleteConfirmDialog.show(
         context,
         title: 'グループ削除',
         content: '${groupWithMembers.name}を削除しますか？',
-        onConfirm: () => deleteGroup(groupWithMembers),
+        onConfirm: () => managementNotifier.deleteGroup(groupWithMembers.id),
       );
     }
 
     Future<void> showAddGroupDialog() async {
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-      try {
-        final group = GroupDto(
-          id: '',
-          ownerId: currentMember.id,
-          name: '',
-          members: const [],
-        );
-        final availableMembers = await getManagedMembersUsecase.execute(
-          currentMember,
-        );
-        final availableMemberDtos = GroupMemberMapper.fromMemberList(
-          availableMembers,
-          group.id,
-        );
-
-        if (!context.mounted) {
-          return;
-        }
-
-        await showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (_) => GroupEditModal(
-            group: group,
-            availableMembers: availableMemberDtos,
-            member: GroupMemberMapper.fromMember(currentMember, group.id),
-            onSave: (createdGroup) async {
-              try {
-                await createGroupUsecase.execute(createdGroup);
-                if (!context.mounted) {
-                  return;
-                }
-                await loadData();
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('グループを作成しました')),
-                );
-              } catch (e, stack) {
-                logger.e(
-                  'GroupManagement.showAddGroupDialog.onSave: ${e.toString()}',
-                  error: e,
-                  stackTrace: stack,
-                );
-                if (context.mounted) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(content: Text('作成に失敗しました: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        );
-      } catch (e, stack) {
-        logger.e(
-          'GroupManagement.showAddGroupDialog: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
-        }
+      final group = GroupDto(
+        id: '',
+        ownerId: currentMember.id,
+        name: '',
+        members: const [],
+      );
+      final availableMembers = await managementNotifier.loadAvailableMembers(
+        group.id,
+      );
+      if (!context.mounted || availableMembers == null) {
+        return;
       }
+
+      await showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (_) => GroupEditModal(
+          group: group,
+          availableMembers: availableMembers,
+          member: GroupMemberMapper.fromMember(currentMember, group.id),
+          onSave: managementNotifier.createGroup,
+        ),
+      );
     }
 
     Future<void> showEditGroupDialog(GroupDto groupWithMembers) async {
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-      try {
-        final availableMembers = await getManagedMembersUsecase.execute(
-          currentMember,
-        );
-        final availableMemberDtos = GroupMemberMapper.fromMemberList(
-          availableMembers,
-          groupWithMembers.id,
-        );
-        if (!context.mounted) {
-          return;
-        }
-
-        await showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (_) => GroupEditModal(
-            group: groupWithMembers,
-            availableMembers: availableMemberDtos,
-            member: GroupMemberMapper.fromMember(
-              currentMember,
-              groupWithMembers.id,
-            ),
-            onSave: (updatedGroup) async {
-              try {
-                await updateGroupUsecase.execute(updatedGroup);
-                if (!context.mounted) {
-                  return;
-                }
-                await loadData();
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('グループを更新しました')),
-                );
-              } catch (e, stack) {
-                logger.e(
-                  'GroupManagement.showEditGroupDialog.onSave: ${e.toString()}',
-                  error: e,
-                  stackTrace: stack,
-                );
-                if (context.mounted) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(content: Text('更新に失敗しました: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        );
-      } catch (e, stack) {
-        logger.e(
-          'GroupManagement.showEditGroupDialog: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
-        }
+      final availableMembers = await managementNotifier.loadAvailableMembers(
+        groupWithMembers.id,
+      );
+      if (!context.mounted || availableMembers == null) {
+        return;
       }
+
+      await showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (_) => GroupEditModal(
+          group: groupWithMembers,
+          availableMembers: availableMembers,
+          member: GroupMemberMapper.fromMember(
+            currentMember,
+            groupWithMembers.id,
+          ),
+          onSave: managementNotifier.updateGroup,
+        ),
+      );
     }
 
     Widget buildHeader() {
@@ -279,7 +174,7 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Widget buildGroupCard(int index) {
-      final groupWithMembers = managedGroups.value[index];
+      final groupWithMembers = managementState.groups[index];
 
       return Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -299,16 +194,19 @@ class GroupManagement extends HookConsumerWidget {
 
     Widget buildGroupListView() {
       return ListView.builder(
-        itemCount: managedGroups.value.length,
+        itemCount: managementState.groups.length,
         itemBuilder: (context, index) => buildGroupCard(index),
       );
     }
 
     Widget buildGroupListContent() {
-      if (managedGroups.value.isEmpty) {
+      if (managementState.groups.isEmpty) {
         return buildEmptyState();
       }
-      return RefreshIndicator(onRefresh: loadData, child: buildGroupListView());
+      return RefreshIndicator(
+        onRefresh: managementNotifier.refresh,
+        child: buildGroupListView(),
+      );
     }
 
     Widget buildLoadingState() {
@@ -316,15 +214,32 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Widget buildBody() {
-      if (isLoading.value) {
+      if (managementState.status == GroupManagementStatus.initial ||
+          managementState.status == GroupManagementStatus.loading) {
         return buildLoadingState();
       }
+
+      final content = managementState.status == GroupManagementStatus.error
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('グループ一覧を読み込めませんでした'),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () => managementNotifier.load(currentMember),
+                    child: const Text('再試行'),
+                  ),
+                ],
+              ),
+            )
+          : buildGroupListContent();
 
       return Column(
         children: [
           buildHeader(),
           const Divider(),
-          Expanded(child: buildGroupListContent()),
+          Expanded(child: content),
         ],
       );
     }
