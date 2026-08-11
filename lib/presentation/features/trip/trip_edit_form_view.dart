@@ -7,6 +7,7 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/presentation/features/trip/trip_date_range.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
@@ -392,8 +393,8 @@ class TripEditFormView extends HookWidget {
               selectedDate,
               isEndDate: isEndDate,
             ),
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
+            firstDate: DateTime(TripDateRange.firstYear),
+            lastDate: DateTime(TripDateRange.lastYear),
           );
           if (date != null) {
             onDateSelected(date);
