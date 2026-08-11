@@ -330,7 +330,7 @@ void main() {
       expect(deletedLocations, [location]);
     });
 
-    testWidgets('旅程の場所指定マップは単独表示し、場所選択後も閉じないこと', (tester) async {
+    testWidgets('旅程の場所指定マップは背景を暗くして単独表示し、場所選択後も閉じないこと', (tester) async {
       const location = LocationDto(
         id: 'location-1',
         tripId: 'trip-1',
@@ -370,6 +370,10 @@ void main() {
       );
       expect(find.byKey(const Key('itinerary_location_map')), findsNothing);
       expect(find.byKey(const Key('map_view')), findsOneWidget);
+      final modalBarriers = tester
+          .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+          .toList();
+      expect(modalBarriers.last.color, Colors.black54);
     });
 
     testWidgets('旅程マップの灰色ピンは確認ボタンで場所変更すること', (tester) async {

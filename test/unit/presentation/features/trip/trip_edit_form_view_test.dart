@@ -102,7 +102,7 @@ void main() {
       expect(taskRequested, 1);
     });
 
-    testWidgets('訪問場所ボタンから旅行のlocationsマップを単独表示すること', (
+    testWidgets('訪問場所ボタンから背景を暗くせず旅行のlocationsマップを単独表示すること', (
       WidgetTester tester,
     ) async {
       const initialValue = TripEntryDto(
@@ -155,6 +155,10 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('map_view')), findsOneWidget);
+      final modalBarriers = tester
+          .widgetList<ModalBarrier>(find.byType(ModalBarrier))
+          .toList();
+      expect(modalBarriers.last.color, isNull);
     });
 
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
