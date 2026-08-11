@@ -45,6 +45,16 @@ class _LoadedGroupSelectionNotifier
   }
 }
 
+class _ReloadTrackingGroupSelectionNotifier
+    extends _LoadedGroupSelectionNotifier {
+  var loadCallCount = 0;
+
+  @override
+  Future<void> load(MemberDto currentMember) async {
+    loadCallCount++;
+  }
+}
+
 void main() {
   Future<void> pumpNavigation(WidgetTester tester) async {
     await tester.pump();
@@ -56,6 +66,7 @@ void main() {
     WidgetTester tester,
     FakeAuthNotifier authNotifier, {
     String initialLocation = '/groups',
+    GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -70,7 +81,7 @@ void main() {
             ),
           ),
           groupTimelineGroupSelectionNotifierProvider.overrideWith(
-            _LoadedGroupSelectionNotifier.new,
+            () => groupSelectionNotifier ?? _LoadedGroupSelectionNotifier(),
           ),
           appInitialLocationProvider.overrideWithValue(initialLocation),
         ],
@@ -130,6 +141,31 @@ void main() {
     authNotifier.authenticate('user-2');
     await pumpNavigation(tester);
     expect(router.state.matchedLocation, const GroupListRoute().location);
+  });
+
+  testWidgets('同じユーザーで再ログインした場合はグループ一覧を再取得する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final groupSelectionNotifier = _ReloadTrackingGroupSelectionNotifier();
+    final (_, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      groupSelectionNotifier: groupSelectionNotifier,
+    );
+    expect(groupSelectionNotifier.loadCallCount, 0);
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+    expect(router.state.matchedLocation, const LoginRoute().location);
+
+    authNotifier.authenticate('user-1');
+    await pumpNavigation(tester);
+
+    expect(router.state.matchedLocation, const GroupListRoute().location);
+    expect(groupSelectionNotifier.loadCallCount, 1);
   });
 
   testWidgets('初期認証の完了後に保護ルートのディープリンクを復元する', (tester) async {
