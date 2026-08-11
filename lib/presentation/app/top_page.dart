@@ -420,15 +420,13 @@ class TopPage extends HookConsumerWidget {
     AppNavigationItem item,
     Future<void> Function() closeDrawer,
   ) {
-    return Material(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        selected: selectedItem == item,
-        onTap: () {
-          unawaited(_onNavigationItemSelected(context, ref, item, closeDrawer));
-        },
-      ),
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      selected: selectedItem == item,
+      onTap: () {
+        unawaited(_onNavigationItemSelected(context, ref, item, closeDrawer));
+      },
     );
   }
 
