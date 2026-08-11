@@ -12,6 +12,7 @@ import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
+import 'package:memora/presentation/shared/supported_year_range.dart';
 import 'package:uuid/uuid.dart';
 
 typedef ItineraryLocationCreated =
@@ -119,8 +120,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       final picked = await DatePickerHelper.showCustomDatePicker(
         context,
         initialDate: initialDateFor(startDate.value),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
+        firstDate: DateTime(SupportedYearRange.firstYear),
+        lastDate: DateTime(SupportedYearRange.lastYear),
       );
       if (picked != null) {
         startDate.value = picked;
@@ -146,8 +147,8 @@ class ItineraryItemEditBottomSheet extends HookWidget {
           endDate.value,
           fallbackDate: startDate.value,
         ),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
+        firstDate: DateTime(SupportedYearRange.firstYear),
+        lastDate: DateTime(SupportedYearRange.lastYear),
       );
       if (picked != null) {
         endDate.value = picked;

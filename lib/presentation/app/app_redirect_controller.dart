@@ -1,6 +1,6 @@
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/features/trip/trip_date_range.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/shared/supported_year_range.dart';
 
 class AppRedirectController {
   String? _pendingProtectedLocation;
@@ -96,7 +96,7 @@ String? _safeLocationFor(Uri uri) {
     return null;
   }
   final year = int.tryParse(segments[4]);
-  if (TripDateRange.containsYear(year)) {
+  if (SupportedYearRange.contains(year)) {
     return null;
   }
   return GroupTimelineRoute(groupId: segments[1]).location;

@@ -1,4 +1,4 @@
-import 'package:memora/presentation/features/trip/trip_date_range.dart';
+import 'package:memora/presentation/shared/supported_year_range.dart';
 
 class TimelineViewState {
   TimelineViewState({
@@ -16,8 +16,8 @@ class TimelineViewState {
     required double dataRowHeight,
     List<double>? initialRowHeights,
   }) {
-    final minimumYearOffset = TripDateRange.firstYear - baseYear;
-    final maximumYearOffset = TripDateRange.lastYear - baseYear;
+    final minimumYearOffset = SupportedYearRange.firstYear - baseYear;
+    final maximumYearOffset = SupportedYearRange.lastYear - baseYear;
     return TimelineViewState(
       baseYear: baseYear,
       startYearOffset: (-initialYearRange).clamp(
@@ -66,8 +66,8 @@ class TimelineViewState {
   TimelineViewState expandPast(int yearRangeIncrement) {
     return copyWith(
       startYearOffset: (startYearOffset - yearRangeIncrement).clamp(
-        TripDateRange.firstYear - baseYear,
-        TripDateRange.lastYear - baseYear,
+        SupportedYearRange.firstYear - baseYear,
+        SupportedYearRange.lastYear - baseYear,
       ),
     );
   }
@@ -75,8 +75,8 @@ class TimelineViewState {
   TimelineViewState expandFuture(int yearRangeIncrement) {
     return copyWith(
       endYearOffset: (endYearOffset + yearRangeIncrement).clamp(
-        TripDateRange.firstYear - baseYear,
-        TripDateRange.lastYear - baseYear,
+        SupportedYearRange.firstYear - baseYear,
+        SupportedYearRange.lastYear - baseYear,
       ),
     );
   }
