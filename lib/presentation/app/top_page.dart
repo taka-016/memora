@@ -412,7 +412,7 @@ class TopPage extends HookConsumerWidget {
     ];
   }
 
-  Widget _buildDrawerItem(
+  ListTile _buildDrawerItem(
     BuildContext context,
     WidgetRef ref,
     IconData icon,
@@ -430,7 +430,7 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Widget _buildLogoutItem(WidgetRef ref) {
+  ListTile _buildLogoutItem(WidgetRef ref) {
     return ListTile(
       leading: const Icon(Icons.logout),
       title: const Text('ログアウト'),
