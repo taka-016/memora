@@ -275,6 +275,7 @@ class TripEditFormView extends HookWidget {
         var dialogLocations = List<LocationDto>.from(locations);
         await showDialog<void>(
           context: context,
+          barrierColor: Colors.transparent,
           builder: (context) {
             return StatefulBuilder(
               builder: (context, setDialogState) {

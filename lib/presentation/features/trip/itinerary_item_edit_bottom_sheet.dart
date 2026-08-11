@@ -359,6 +359,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
         var dialogLocations = List<LocationDto>.from(mapLocations.value);
         await showDialog<void>(
           context: context,
+          barrierColor: Colors.transparent,
           builder: (context) {
             return StatefulBuilder(
               builder: (context, setDialogState) {
