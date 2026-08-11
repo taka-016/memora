@@ -158,7 +158,7 @@ void main() {
       final modalBarriers = tester
           .widgetList<ModalBarrier>(find.byType(ModalBarrier))
           .toList();
-      expect(modalBarriers.last.color, Colors.transparent);
+      expect(modalBarriers.last.color, isNull);
     });
 
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (

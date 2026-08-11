@@ -373,7 +373,7 @@ void main() {
       final modalBarriers = tester
           .widgetList<ModalBarrier>(find.byType(ModalBarrier))
           .toList();
-      expect(modalBarriers.last.color, Colors.transparent);
+      expect(modalBarriers.last.color, isNull);
     });
 
     testWidgets('旅程マップの灰色ピンは確認ボタンで場所変更すること', (tester) async {
