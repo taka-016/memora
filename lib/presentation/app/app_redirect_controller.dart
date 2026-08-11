@@ -7,7 +7,7 @@ class AppRedirectController {
   bool _canCaptureProtectedLocation = true;
 
   void handleAuthStateChange(AuthState? previous, AuthState next) {
-    if (_isAuthenticationSessionEnding(previous, next)) {
+    if (isAuthenticationSessionEnding(previous, next)) {
       _discardPendingProtectedLocation();
       _canCaptureProtectedLocation = false;
       return;
@@ -76,7 +76,7 @@ class AppRedirectController {
   }
 }
 
-bool _isAuthenticationSessionEnding(AuthState? previous, AuthState next) {
+bool isAuthenticationSessionEnding(AuthState? previous, AuthState next) {
   final hadAuthenticationSession =
       previous?.isAuthenticated == true ||
       previous?.requiresMemberSelection == true;

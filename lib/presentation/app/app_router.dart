@@ -21,7 +21,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
   final redirectController = AppRedirectController();
   ref.listen<AuthState>(authNotifierProvider, (previous, next) {
     redirectController.handleAuthStateChange(previous, next);
-    if (previous?.isAuthenticated == true && !next.isAuthenticated) {
+    if (isAuthenticationSessionEnding(previous, next)) {
       ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
     }
     refreshNotifier.refresh();
