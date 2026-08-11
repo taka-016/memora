@@ -132,16 +132,81 @@
 
 ### Presentation層の責務を整理する
 
-- Viewに集中しているUseCaseのオーケストレーションと状態管理を分離する
-  - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
-  - `MapScreen`のグループ・訪問場所・旅行の取得、古いリクエスト結果の破棄、旅行更新後の表示反映を機能単位のControllerまたはNotifierへ分離する
-  - `GroupManagement`と`MemberManagement`の一覧取得、作成・更新・削除、再読み込み、招待処理の状態管理を、それぞれの機能単位のControllerまたはNotifierへ分離する
-  - `TripManagement`の旅行・グループメンバーの並行取得、Androidウィジェットから指定された旅行の初期表示、旅行の作成・更新・削除をControllerまたはNotifierへ分離する
-  - `DvcPointCalculationScreen`のグループ・契約・期間限定ポイント・利用ポイントの並行取得、再計算、保存・削除後の再読み込みをControllerまたはNotifierへ分離する
-  - `TopPage`のAndroidウィジェット起動時における旅行・グループの解決と遷移制御、`AccountSettings`の再認証と更新再試行、`Settings`のAndroidウィジェット設定取得・更新を、それぞれ画面から分離する
-  - 年表の旅行、グループイベント、DVC、メンバーイベント行にあるデータ取得Providerと保存・削除処理を機能単位に整理し、行Widgetは受け取った状態の表示と操作通知を中心にする
-  - ControllerまたはNotifierは`loading`、`loaded`、`error`と操作結果を管理し、Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当する
-  - 分離した状態遷移とUseCaseの実行順序を単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
+#### 共通方針
+
+- Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
+- 画面・機能単位に不変な`XxxState`とRiverpodの`XxxNotifier`を作成し、初期取得状態、保持データ、操作中状態、エラーを管理する
+- NotifierはUseCaseの実行順序、再試行、古いリクエスト結果の破棄、作成・更新・削除後の状態反映を担当する
+- Viewは状態の描画、入力、Notifierへの操作通知、Dialog・Snackbar・画面遷移の実表示を担当する
+- 分離した状態遷移とUseCaseの実行順序をNotifierの単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
+
+#### 1. GroupManagementの状態管理をNotifierへ分離する
+
+- `GroupManagementState`と`GroupManagementNotifier`を作成し、管理対象グループの一覧、初期取得状態、再取得状態、作成・更新・削除の操作状態とエラーを管理する
+- 利用可能なメンバーの取得と、グループ作成・更新・削除後の一覧再取得をNotifierへ移す
+- `GroupManagement`には編集・削除Dialogの表示、入力の受け渡し、状態に応じた一覧・ローディング・エラーの表示を残す
+- 一覧取得、利用可能メンバー取得、各更新処理、更新後の再取得について、成功・失敗時の状態遷移とUseCaseの実行順序を単体テストで検証する
+
+#### 2. MapScreenの状態管理をNotifierへ分離する
+
+- `MapState`と`MapNotifier`を作成し、所属グループ、選択中のグループ、訪問場所、旅行、フォーカス中の訪問場所と各取得状態を管理する
+- グループ選択後の訪問場所・旅行取得、再試行、グループ切り替え時に古いリクエスト結果を破棄する処理をNotifierへ移す
+- 訪問場所取得と旅行取得の部分成功・部分失敗を区別し、表示可能なデータを失敗していない取得結果だけで維持する
+- 旅行詳細の再取得と、旅行更新後に旅行一覧・訪問場所一覧へ変更を反映する処理をNotifierへ移す
+- `MapScreen`には地図、グループ選択、旅行編集Dialog、Snackbarの実表示を残す
+- グループ切り替え、古いリクエストの完了、部分失敗、再試行、旅行更新時の状態遷移を単体テストで検証する
+
+#### 3. MemberManagementの状態管理をNotifierへ分離する
+
+- `MemberManagementState`と`MemberManagementNotifier`を作成し、管理対象メンバーの一覧、本人メンバーの再取得結果、初期取得状態、各操作状態とエラーを管理する
+- メンバーの作成・更新・削除、招待コードの作成・更新、各処理後の一覧再取得をNotifierへ移す
+- 招待コードの取得結果はNotifierの操作結果としてViewへ返し、招待DialogとSnackbarの実表示は`MemberManagement`へ残す
+- 一覧取得、本人メンバーの解決、各更新処理、招待処理、更新後の再取得について、成功・失敗時の状態遷移を単体テストで検証する
+
+#### 4. TripManagementの状態管理をNotifierへ分離する
+
+- `TripManagementState`と`TripManagementNotifier`を作成し、対象年の旅行一覧、グループメンバー、初期取得状態、旅行の操作状態とエラーを管理する
+- 旅行一覧とグループメンバーの並行取得、旅行詳細の取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移す
+- Androidウィジェットから指定された旅行IDの受け取り、対象旅行の解決、初期表示を一度だけ要求する状態遷移をNotifierへ移す
+- `TripManagement`には旅行編集・削除Dialog、Androidウィジェットから要求された旅行Dialog、Snackbarの実表示を残す
+- 並行取得の部分失敗、旅行の各更新処理、存在しない旅行ID、初期表示の重複防止を単体テストで検証する
+
+#### 5. DvcPointCalculationScreenの状態管理をNotifierへ分離する
+
+- `DvcPointCalculationState`と`DvcPointCalculationNotifier`を作成し、グループ、契約、期間限定ポイント、利用ポイント、表示期間、計算結果と各操作状態を管理する
+- グループと各ポイントデータの並行取得、表示期間変更時の再計算、契約・期間限定ポイント・利用ポイントの保存または削除後の再取得をNotifierへ移す
+- データ取得と再計算を分離し、取得済みデータから表示期間だけを変更した場合は不要な再取得を行わない
+- `DvcPointCalculationScreen`には期間入力、各登録・詳細Dialog、計算結果の表、Snackbarの実表示を残す
+- 並行取得、表示期間変更、保存・削除、再取得失敗時に既存データを維持する状態遷移を単体テストで検証する
+
+#### 6. SettingsのAndroidウィジェット設定状態をNotifierへ分離する
+
+- `SettingsState`と`SettingsNotifier`を作成し、Androidウィジェットの更新間隔、対象グループ候補、選択中の対象グループ、取得・更新状態とエラーを管理する
+- 設定値とグループ一覧の取得、更新間隔の保存、対象グループの選択・解除をNotifierへ移す
+- `Settings`には設定項目の描画、選択Dialog、更新結果を知らせるSnackbarの実表示を残す
+- 初期取得、各設定の更新、更新失敗時の状態復元と再試行を単体テストで検証する
+
+#### 7. AccountSettingsの再認証と更新再試行をNotifierへ分離する
+
+- `AccountSettingsState`と`AccountSettingsNotifier`を作成し、メール変更、パスワード変更、アカウント削除の操作状態とエラーを管理する
+- 認証期限切れを検出した場合の再認証要求と、再認証成功後に元の操作を一度だけ再試行する処理をNotifierへ移す
+- `AccountSettings`には入力Modal、再認証Modal、成功・失敗を知らせるSnackbarの実表示を残す
+- 初回成功、再認証後の成功、再認証のキャンセル・失敗、再試行の失敗について状態遷移とUseCaseの呼び出し回数を単体テストで検証する
+
+#### 8. TopPageのAndroidウィジェット起動処理をNotifierへ分離する
+
+- `TopPageState`と`TopPageNotifier`を作成し、既存のAndroidウィジェット起動Notifierから旅行IDを受け取り、起動処理中状態、対象旅行・グループの解決結果、エラーを管理する
+- Androidウィジェットから受け取った旅行IDによる旅行取得、所属グループ一覧との照合、遷移先の解決、処理済みIDの消費をViewから分離する
+- Notifierは遷移先を値として通知し、Drawerの制御、実際の画面遷移、失敗時のSnackbar表示は`TopPage`へ残す
+- 初期URI読み込み中、対象旅行・グループの解決成功、存在しない旅行、取得失敗、同じ要求の重複処理防止を単体テストで検証する
+
+#### 9. Timelineの行データ状態を機能単位のNotifierへ分離する
+
+- 旅行、グループイベント、DVC、メンバーイベントについて、グループID・メンバーID・年を引数に取得状態を管理する機能単位のStateとNotifierを作成する
+- 行Widget内のデータ取得Provider、ローカルな更新状態、保存・削除後の再取得を各機能のNotifierへ移し、複数機能へ更新を通知する必要がある場合だけ既存のMutationCoordinatorを使用する
+- 行Widgetには受け取った状態の描画、編集Dialog、Notifierへの操作通知を残し、同じデータを表示する行の更新結果を一貫して反映する
+- 引数ごとの状態分離、保存・削除後の再取得、取得失敗からの再試行、Widget破棄後に完了した処理の扱いを単体テストで検証する
+
 - 大規模なViewを責務単位に分割する
   - 500行を超えるPresentation層の画面・編集UIを対象に責務を確認し、状態制御、フォーム、一覧、ダイアログなどの単位へ分割する
 
