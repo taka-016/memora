@@ -91,7 +91,11 @@ String? _safeLocationFor(Uri uri) {
       segments[0] == 'groups' &&
       segments[2] == 'timeline' &&
       segments[3] == 'trips';
-  if (!isTripManagementLocation || int.tryParse(segments[4]) != null) {
+  if (!isTripManagementLocation) {
+    return null;
+  }
+  final year = int.tryParse(segments[4]);
+  if (year != null && year >= 2000 && year <= 2100) {
     return null;
   }
   return GroupTimelineRoute(groupId: segments[1]).location;
