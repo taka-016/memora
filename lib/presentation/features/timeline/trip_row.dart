@@ -3,34 +3,28 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/features/timeline/timeline_destination_page_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
-import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/presentation/notifiers/group_timeline_destination.dart';
 
 class TripRow extends TimelineRowDefinition {
   const TripRow({
     required this.groupId,
     required this.initialHeight,
-    required this.onDestinationSelected,
+    required this.onTripSelected,
   });
 
   final String groupId;
 
   @override
   final double initialHeight;
-  final ValueChanged<GroupTimelineDestination>? onDestinationSelected;
+  final void Function(String groupId, int year)? onTripSelected;
 
   @override
   String get fixedColumnLabel => '旅行';
 
   @override
   Color get backgroundColor => Colors.lightBlue.shade50;
-
-  @override
-  Iterable<TimelineDestinationPageDefinition> get destinationPageDefinitions =>
-      const [_TripManagementDestinationPageDefinition()];
 
   @override
   Widget buildYearCell(
@@ -53,45 +47,18 @@ class TripRow extends TimelineRowDefinition {
     TimelineRowContext rowContext,
     int year,
   ) {
-    final callback = onDestinationSelected;
+    final callback = onTripSelected;
     if (callback == null) {
       return null;
     }
 
-    return () => callback(
-      GroupTimelineTripManagementDestination(groupId: groupId, year: year),
-    );
-  }
-}
-
-class _TripManagementDestinationPageDefinition
-    extends TimelineDestinationPageDefinition {
-  const _TripManagementDestinationPageDefinition();
-
-  @override
-  bool matches(GroupTimelineDestination destination) {
-    return destination is GroupTimelineTripManagementDestination;
-  }
-
-  @override
-  Widget buildPage({
-    required BuildContext context,
-    required GroupTimelineDestination destination,
-    required VoidCallback onBackPressed,
-  }) {
-    final tripDestination =
-        destination as GroupTimelineTripManagementDestination;
-    return TripManagement(
-      groupId: tripDestination.groupId,
-      year: tripDestination.year,
-      initialTripId: tripDestination.initialTripId,
-      onBackPressed: onBackPressed,
-    );
+    return () => callback(groupId, year);
   }
 }
 
 final _tripEntriesProvider = FutureProvider.autoDispose
     .family<List<TripEntryDto>, _TripEntriesQuery>((ref, query) async {
+      ref.watch(timelineTripEntriesRefreshProvider);
       try {
         final getTripEntriesUsecase = ref.watch(getTripEntriesUsecaseProvider);
         return await getTripEntriesUsecase.execute(query.groupId, query.year);

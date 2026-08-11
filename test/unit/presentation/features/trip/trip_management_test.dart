@@ -15,6 +15,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -417,6 +418,76 @@ void main() {
       );
     });
 
+    testWidgets('初期編集対象が別グループの旅行なら編集画面を開かない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer(
+        (_) async => detailedTripEntry.copyWith(groupId: 'other-group-id'),
+      );
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              initialTripId: 'trip-1',
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+    });
+
+    testWidgets('初期編集対象が別年の旅行なら編集画面を開かない', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry.copyWith(year: testYear - 1));
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              initialTripId: 'trip-1',
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsNothing);
+      expect(find.text('旅行の詳細取得に失敗しました: データが見つかりませんでした'), findsOneWidget);
+    });
+
     testWidgets('初期編集対象の詳細取得中は旅行管理画面の内容を表示しない', (WidgetTester tester) async {
       final detailCompleter = Completer<TripEntryDto?>();
       when(
@@ -633,6 +704,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 旅行項目をタップして編集モーダルを開く
       await tester.tap(find.byType(ListTile).first);
       await tester.pumpAndSettle();
@@ -656,6 +732,10 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('旅行更新時にバリデーションエラーが発生した場合はモーダルを閉じずにエラー表示すること', (
@@ -808,6 +888,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 削除ボタンをタップ
       await tester.tap(find.byIcon(Icons.delete).first);
       await tester.pumpAndSettle();
@@ -820,6 +905,10 @@ void main() {
       verify(
         mockTripEntryRepository.deleteTripEntry(testTripEntries.first.id),
       ).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('戻るボタンをタップするとonBackPressedが呼ばれること', (
@@ -888,6 +977,11 @@ void main() {
 
       await tester.pumpAndSettle();
 
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
+
       // 旅行追加ボタンをタップ
       await tester.tap(find.text('旅行追加'));
       await tester.pumpAndSettle();
@@ -915,6 +1009,10 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
+      expect(
+        container.read(timelineTripEntriesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('初期化時にグループメンバーが読み込まれること', (WidgetTester tester) async {

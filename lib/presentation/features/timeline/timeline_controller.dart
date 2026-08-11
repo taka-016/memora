@@ -52,6 +52,7 @@ TimelineController useTimelineController({
   required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
   required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+  int? initialFocusYear,
 }) {
   final viewStateState = useState(
     TimelineViewState.initial(
@@ -74,6 +75,13 @@ TimelineController useTimelineController({
     totalDataRows: totalDataRows,
     dataRowHeight: layoutConfig.dataRowHeight,
     initialRowHeights: initialRowHeights,
+  );
+  _useInitialYearFocus(
+    context: context,
+    rowScrollControllers: rowScrollControllers,
+    visibleYears: viewState.visibleYears,
+    focusYear: initialFocusYear ?? baseYear,
+    layoutConfig: layoutConfig,
   );
 
   useEffect(() {
@@ -152,41 +160,6 @@ TimelineController useTimelineController({
     return null;
   }, [onSetRefreshCallback]);
 
-  void scrollToCurrentYear() {
-    if (rowScrollControllers.isEmpty) {
-      return;
-    }
-
-    final primaryController = rowScrollControllers.first;
-    if (!primaryController.hasClients) {
-      return;
-    }
-
-    final viewportWidth = primaryController.position.viewportDimension;
-    final totalWidth =
-        (2 * layoutConfig.buttonColumnWidth) +
-        (viewState.visibleYears.length * layoutConfig.yearColumnWidth);
-    final scrollOffset = (totalWidth / 2) - (viewportWidth / 2);
-    final maxExtent = primaryController.position.maxScrollExtent;
-    final targetOffset = scrollOffset.clamp(0.0, maxExtent);
-
-    primaryController.animateTo(
-      targetOffset,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  }
-
-  useEffect(() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!context.mounted) {
-        return;
-      }
-      scrollToCurrentYear();
-    });
-    return null;
-  }, [rowScrollControllers]);
-
   return TimelineController(
     viewState: viewState,
     displaySettings: displaySettingsState.value,
@@ -230,4 +203,91 @@ TimelineController useTimelineController({
       isDraggingOnFixedRowState.value = false;
     },
   );
+}
+
+void _useInitialYearFocus({
+  required BuildContext context,
+  required List<ScrollController> rowScrollControllers,
+  required List<int> visibleYears,
+  required int focusYear,
+  required TimelineLayoutConfig layoutConfig,
+}) {
+  final hasAppliedInitialFocus = useRef(false);
+  final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
+
+  useEffect(() {
+    if (!isCurrentRoute || hasAppliedInitialFocus.value) {
+      return null;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted || hasAppliedInitialFocus.value) {
+        return;
+      }
+      hasAppliedInitialFocus.value = _tryScrollToYear(
+        rowScrollControllers: rowScrollControllers,
+        visibleYears: visibleYears,
+        focusYear: focusYear,
+        layoutConfig: layoutConfig,
+      );
+    });
+    return null;
+  }, [rowScrollControllers, isCurrentRoute, focusYear]);
+}
+
+bool _tryScrollToYear({
+  required List<ScrollController> rowScrollControllers,
+  required List<int> visibleYears,
+  required int focusYear,
+  required TimelineLayoutConfig layoutConfig,
+}) {
+  if (rowScrollControllers.isEmpty) {
+    return false;
+  }
+
+  final primaryController = rowScrollControllers.first;
+  if (!primaryController.hasClients ||
+      !primaryController.position.hasViewportDimension) {
+    return false;
+  }
+
+  final focusYearIndex = _resolveFocusYearIndex(
+    visibleYears: visibleYears,
+    focusYear: focusYear,
+  );
+  if (focusYearIndex == null) {
+    return false;
+  }
+
+  final focusYearCenter =
+      layoutConfig.buttonColumnWidth +
+      ((focusYearIndex + 0.5) * layoutConfig.yearColumnWidth);
+  final viewportWidth = primaryController.position.viewportDimension;
+  final maxExtent = primaryController.position.maxScrollExtent;
+  final targetOffset = (focusYearCenter - (viewportWidth / 2)).clamp(
+    0.0,
+    maxExtent,
+  );
+
+  primaryController.animateTo(
+    targetOffset,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeInOut,
+  );
+  return true;
+}
+
+int? _resolveFocusYearIndex({
+  required List<int> visibleYears,
+  required int focusYear,
+}) {
+  if (visibleYears.isEmpty) {
+    return null;
+  }
+  if (focusYear <= visibleYears.first) {
+    return 0;
+  }
+  if (focusYear >= visibleYears.last) {
+    return visibleYears.length - 1;
+  }
+  return visibleYears.indexOf(focusYear);
 }

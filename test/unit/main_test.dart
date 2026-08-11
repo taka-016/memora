@@ -9,6 +9,8 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/main.dart' as app;
+import 'package:memora/presentation/app/app_router.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/app/top_page.dart';
@@ -74,12 +76,12 @@ void main() {
         androidWidgetLaunchNotifierProvider.overrideWith(
           () => _IdleAndroidWidgetLaunchNotifier(),
         ),
+        appInitialLocationProvider.overrideWithValue(
+          const GroupListRoute().location,
+        ),
+        appTestEnvironmentProvider.overrideWithValue(true),
       ],
-      child: MaterialApp(
-        title: 'memora',
-        locale: const Locale('ja'),
-        home: TopPage(isTestEnvironment: true),
-      ),
+      child: const app.MyApp(),
     );
   }
 
@@ -133,6 +135,7 @@ void main() {
       final materialApp = tester.widget<MaterialApp>(find.byType(MaterialApp));
 
       expect(materialApp.theme!.buttonTheme.alignedDropdown, isTrue);
+      expect(materialApp.routerConfig, isNotNull);
     });
   });
 

@@ -36,7 +36,8 @@ void main() {
     test('行順未指定時は既存のデフォルト順を返す', () {
       final rowDefinitions = buildTimelineRows(
         groupWithMembers: testGroupWithMembers,
-        onDestinationSelected: null,
+        onTripSelected: null,
+        onDvcSelected: null,
       );
 
       expect(rowDefinitions, hasLength(5));
@@ -50,7 +51,8 @@ void main() {
     test('指定した行順でTimelineRowDefinitionを生成できる', () {
       final rowDefinitions = buildTimelineRows(
         groupWithMembers: testGroupWithMembers,
-        onDestinationSelected: null,
+        onTripSelected: null,
+        onDvcSelected: null,
         rowOrder: const [
           TimelineRowType.member,
           TimelineRowType.trip,

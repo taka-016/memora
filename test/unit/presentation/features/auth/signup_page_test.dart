@@ -1,14 +1,65 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/app/app_router.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
 
 import '../../../../helpers/fake_auth_notifier.dart';
 
+class _PendingSignupAuthNotifier extends FakeAuthNotifier {
+  _PendingSignupAuthNotifier() : super(const AuthState.unauthenticated(''));
+
+  final signupCompleter = Completer<bool>();
+
+  @override
+  Future<bool> signup({required String email, required String password}) {
+    state = const AuthState.loading();
+    return signupCompleter.future;
+  }
+
+  void failSignup() {
+    state = const AuthState.unauthenticated(
+      '登録に失敗しました',
+      messageType: MessageType.error,
+    );
+    signupCompleter.complete(false);
+  }
+}
+
 void main() {
   group('SignupPage', () {
+    Future<(ProviderContainer, GoRouter)> pumpRouter(
+      WidgetTester tester,
+      AuthNotifier authNotifier,
+    ) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [authNotifierProvider.overrideWith(() => authNotifier)],
+          child: Consumer(
+            builder: (context, ref, _) {
+              return MaterialApp.router(
+                routerConfig: ref.watch(appRouterConfigProvider),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      final router = container.read(appRouterConfigProvider);
+      router.go(const SignupRoute().location);
+      await tester.pumpAndSettle();
+      return (container, router);
+    }
+
     Widget createTestWidget({AuthState? authState}) {
       return ProviderScope(
         overrides: [
@@ -89,14 +140,7 @@ void main() {
         const AuthState.unauthenticated(''),
       );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authNotifierProvider.overrideWith(() => fakeAuthNotifier),
-          ],
-          child: const MaterialApp(home: SignupPage()),
-        ),
-      );
+      await pumpRouter(tester, fakeAuthNotifier);
 
       final emailField = find.byKey(const Key('email_field'));
       final passwordField = find.byKey(const Key('password_field'));
@@ -115,17 +159,49 @@ void main() {
       expect(fakeAuthNotifier.signupCalled, isTrue);
     });
 
-    testWidgets('ログインリンクをタップすると画面が戻る', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        createTestWidget(authState: const AuthState.unauthenticated('')),
+    testWidgets('登録失敗後も新規登録画面と入力内容を維持する', (WidgetTester tester) async {
+      final authNotifier = _PendingSignupAuthNotifier();
+      await pumpRouter(tester, authNotifier);
+
+      await tester.enterText(
+        find.byKey(const Key('email_field')),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('password_field')),
+        'ValidPass123!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('confirm_password_field')),
+        'ValidPass123!',
+      );
+      await tester.tap(find.byKey(const Key('signup_button')));
+      await tester.pump();
+
+      expect(find.byType(SignupPage), findsOneWidget);
+
+      authNotifier.failSignup();
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(SignupPage), findsOneWidget);
+      expect(find.text('test@example.com'), findsOneWidget);
+      expect(find.text('ValidPass123!'), findsNWidgets(2));
+    });
+
+    testWidgets('ログインリンクをタップするとRouterのログインルートへ遷移する', (
+      WidgetTester tester,
+    ) async {
+      final (_, router) = await pumpRouter(
+        tester,
+        FakeAuthNotifier.unauthenticated(),
       );
 
       final loginLink = find.byKey(const Key('login_link'));
       await tester.tap(loginLink);
       await tester.pumpAndSettle();
 
-      // 画面が戻ることを確認
-      expect(find.byType(SignupPage), findsNothing);
+      expect(router.state.matchedLocation, const LoginRoute().location);
     });
 
     testWidgets('loading状態の時はローディングインジケーターが表示される', (WidgetTester tester) async {

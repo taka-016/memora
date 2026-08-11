@@ -7,13 +7,11 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class TripManagement extends HookConsumerWidget {
@@ -35,9 +33,9 @@ class TripManagement extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
-    final createTripEntryUsecase = ref.read(createTripEntryUsecaseProvider);
-    final updateTripEntryUsecase = ref.read(updateTripEntryUsecaseProvider);
-    final deleteTripEntryUsecase = ref.read(deleteTripEntryUsecaseProvider);
+    final tripEntryMutationCoordinator = ref.read(
+      tripEntryMutationCoordinatorProvider,
+    );
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
     final getGroupWithMembersByIdUsecase = ref.read(
       getGroupWithMembersByIdUsecaseProvider,
@@ -133,7 +131,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await createTripEntryUsecase.execute(tripEntry);
+        await tripEntryMutationCoordinator.createTripEntry(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -177,7 +175,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await updateTripEntryUsecase.execute(tripEntry);
+        await tripEntryMutationCoordinator.updateTripEntry(tripEntry);
         if (!context.mounted) {
           return;
         }
@@ -214,7 +212,9 @@ class TripManagement extends HookConsumerWidget {
           return;
         }
 
-        if (detailedTripEntry == null) {
+        if (detailedTripEntry == null ||
+            detailedTripEntry.groupId != groupId ||
+            detailedTripEntry.year != year) {
           scaffoldMessenger.showSnackBar(
             const SnackBar(content: Text('旅行の詳細取得に失敗しました: データが見つかりませんでした')),
           );
@@ -297,7 +297,7 @@ class TripManagement extends HookConsumerWidget {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await deleteTripEntryUsecase.execute(tripEntry.id);
+        await tripEntryMutationCoordinator.deleteTripEntry(tripEntry.id);
         if (!context.mounted) {
           return;
         }

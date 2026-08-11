@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
+import 'package:memora/presentation/shared/supported_year_range.dart';
 
 class TaskEditBottomSheet extends HookWidget {
   const TaskEditBottomSheet({
@@ -74,8 +75,8 @@ class TaskEditBottomSheet extends HookWidget {
         context,
         initialDate:
             dueDateState.value ?? tripStartDate ?? effectiveClock.now(),
-        firstDate: DateTime(2000),
-        lastDate: DateTime(2100),
+        firstDate: DateTime(SupportedYearRange.firstYear),
+        lastDate: DateTime(SupportedYearRange.lastYear),
       );
       if (selected != null) {
         dueDateState.value = selected;

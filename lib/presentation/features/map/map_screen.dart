@@ -8,10 +8,10 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
+import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
@@ -40,8 +40,8 @@ class MapScreen extends HookConsumerWidget {
     final getTripEntryByIdUsecase = useMemoized(
       () => ref.read(getTripEntryByIdUsecaseProvider),
     );
-    final updateTripEntryUsecase = useMemoized(
-      () => ref.read(updateTripEntryUsecaseProvider),
+    final tripEntryMutationCoordinator = useMemoized(
+      () => ref.read(tripEntryMutationCoordinatorProvider),
     );
     final groupLoadGeneration = useState(0);
     final groupsFuture = useMemoized(
@@ -195,7 +195,7 @@ class MapScreen extends HookConsumerWidget {
             year: currentTrip.year,
             isTestEnvironment: isTestEnvironment,
             onSave: (updatedTrip) async {
-              await updateTripEntryUsecase.execute(updatedTrip);
+              await tripEntryMutationCoordinator.updateTripEntry(updatedTrip);
               replaceUpdatedTrip(updatedTrip);
               if (context.mounted) {
                 ScaffoldMessenger.of(

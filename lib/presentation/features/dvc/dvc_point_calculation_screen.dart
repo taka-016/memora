@@ -8,7 +8,6 @@ import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/usecases/dvc/delete_dvc_limited_point_usecase.dart';
-import 'package:memora/application/usecases/dvc/delete_dvc_point_usage_usecase.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
 import 'package:memora/application/usecases/dvc/get_dvc_limited_points_usecase.dart';
@@ -16,13 +15,13 @@ import 'package:memora/application/usecases/dvc/get_dvc_point_contracts_usecase.
 import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
-import 'package:memora/application/usecases/dvc/save_dvc_point_usage_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
+import 'package:memora/presentation/features/dvc/dvc_point_usage_mutation_coordinator.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_registration_modal.dart';
 
@@ -76,12 +75,11 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     final saveDvcLimitedPointUsecase = ref.read(
       saveDvcLimitedPointUsecaseProvider,
     );
-    final saveDvcPointUsageUsecase = ref.read(saveDvcPointUsageUsecaseProvider);
+    final dvcPointUsageMutationCoordinator = ref.read(
+      dvcPointUsageMutationCoordinatorProvider,
+    );
     final deleteDvcLimitedPointUsecase = ref.read(
       deleteDvcLimitedPointUsecaseProvider,
-    );
-    final deleteDvcPointUsageUsecase = ref.read(
-      deleteDvcPointUsageUsecaseProvider,
     );
 
     Future<void> loadData({bool showLoading = true}) async {
@@ -199,7 +197,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      await saveDvcPointUsageUsecase.execute(usage);
+      await dvcPointUsageMutationCoordinator.saveDvcPointUsage(usage);
       await loadData(showLoading: false);
     }
 
@@ -209,7 +207,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     }
 
     Future<void> deleteUsage(String pointUsageId) async {
-      await deleteDvcPointUsageUsecase.execute(pointUsageId);
+      await dvcPointUsageMutationCoordinator.deleteDvcPointUsage(pointUsageId);
       await loadData(showLoading: false);
     }
 

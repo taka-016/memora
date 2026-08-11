@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'signup_page.dart';
 
 class LoginPage extends HookConsumerWidget {
   const LoginPage({super.key});
@@ -32,10 +32,8 @@ class LoginPage extends HookConsumerWidget {
       }
     }
 
-    void navigateToSignup() {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (context) => const SignupPage()));
+    Future<void> navigateToSignup() async {
+      await const SignupRoute().push<void>(context);
     }
 
     Widget buildMessageContainer(AuthViewState authState) {

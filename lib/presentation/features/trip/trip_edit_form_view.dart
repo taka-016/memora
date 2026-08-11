@@ -11,6 +11,7 @@ import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
+import 'package:memora/presentation/shared/supported_year_range.dart';
 import 'package:uuid/uuid.dart';
 
 typedef TripLocationCreated =
@@ -392,8 +393,8 @@ class TripEditFormView extends HookWidget {
               selectedDate,
               isEndDate: isEndDate,
             ),
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
+            firstDate: DateTime(SupportedYearRange.firstYear),
+            lastDate: DateTime(SupportedYearRange.lastYear),
           );
           if (date != null) {
             onDateSelected(date);

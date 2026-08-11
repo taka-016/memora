@@ -20,6 +20,7 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
+import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_refresh_provider.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {
@@ -272,6 +273,12 @@ void main() {
 
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DvcPointCalculationScreen)),
+      );
+      final refreshToken = container.read(
+        timelineDvcPointUsagesRefreshProvider,
+      );
 
       await tester.drag(
         find.byKey(const Key('dvc_table_horizontal_scroll')),
@@ -314,6 +321,10 @@ void main() {
 
       final offsetAfter = _horizontalScrollOffset(tester);
       expect(offsetAfter, closeTo(offsetBefore, 0.1));
+      expect(
+        container.read(timelineDvcPointUsagesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
 
     testWidgets('3点メニューで操作メニューを開ける', (tester) async {
@@ -639,6 +650,12 @@ void main() {
 
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DvcPointCalculationScreen)),
+      );
+      final refreshToken = container.read(
+        timelineDvcPointUsagesRefreshProvider,
+      );
 
       await _tapUsageCellBody(tester, currentMonth);
       await tester.pumpAndSettle();
@@ -655,6 +672,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(usageRepository.deletedUsageIds, contains('u1'));
+      expect(
+        container.read(timelineDvcPointUsagesRefreshProvider),
+        isNot(same(refreshToken)),
+      );
     });
   });
 }

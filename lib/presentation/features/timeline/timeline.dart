@@ -17,6 +17,7 @@ class Timeline extends HookConsumerWidget {
     required this.rowDefinitions,
     this.onBackPressed,
     this.onSetRefreshCallback,
+    this.initialFocusYear,
   });
 
   static const TimelineLayoutConfig _layoutConfig =
@@ -26,6 +27,7 @@ class Timeline extends HookConsumerWidget {
   final VoidCallback? onBackPressed;
   final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
   final List<TimelineRowDefinition> rowDefinitions;
+  final int? initialFocusYear;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,6 +44,7 @@ class Timeline extends HookConsumerWidget {
           .toList(),
       layoutConfig: _layoutConfig,
       onSetRefreshCallback: onSetRefreshCallback,
+      initialFocusYear: initialFocusYear,
     );
 
     void showDisplaySettingsSheet() {

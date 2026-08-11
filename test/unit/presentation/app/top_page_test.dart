@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -32,8 +34,8 @@ import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_navigation_notifier.dart';
-import 'package:memora/presentation/notifiers/navigation_notifier.dart';
+import 'package:memora/presentation/app/app_router.dart';
+import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
@@ -46,6 +48,7 @@ import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -54,24 +57,15 @@ import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';
 import 'top_page_test.mocks.dart';
 
-// テスト用の初期状態を持つNotifier（TopPageのpostFrameでのリセット検証用）
-class _TestNavigationNotifier extends NavigationNotifier {
-  @override
-  NavigationState build() {
-    return const NavigationState(selectedItem: NavigationItem.settings);
-  }
-}
+class _MutableAuthNotifier extends FakeAuthNotifier {
+  _MutableAuthNotifier(super.initialState);
 
-class _TestGroupTimelineNavigationNotifier
-    extends GroupTimelineNavigationNotifier {
-  @override
-  GroupTimelineNavigationState build() {
-    return const GroupTimelineNavigationState(
-      destination: GroupTimelineTripManagementDestination(
-        groupId: 'g1',
-        year: 2024,
-      ),
-    );
+  void authenticate(UserDto user) {
+    state = AuthState.authenticated(user);
+  }
+
+  void unauthenticate() {
+    state = const AuthState.unauthenticated('');
   }
 }
 
@@ -109,6 +103,44 @@ class _InitialUriLoadingAndroidWidgetLaunchNotifier
   @override
   AndroidWidgetLaunchState build() {
     return const AndroidWidgetLaunchState(isInitialUriLoading: true);
+  }
+}
+
+class _PendingGroupSelectionNotifier
+    extends GroupTimelineGroupSelectionNotifier {
+  final loadCompleter = Completer<void>();
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return const GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.loading,
+    );
+  }
+
+  @override
+  Future<void> load(MemberDto currentMember) {
+    return loadCompleter.future;
+  }
+}
+
+class _ErrorGroupSelectionNotifier extends GroupTimelineGroupSelectionNotifier {
+  _ErrorGroupSelectionNotifier(this.memberId);
+
+  final String memberId;
+  bool loadCalled = false;
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.error,
+      memberId: memberId,
+      message: 'エラーが発生しました',
+    );
+  }
+
+  @override
+  Future<void> load(MemberDto currentMember) async {
+    loadCalled = true;
   }
 }
 
@@ -425,10 +457,10 @@ void main() {
     AuthNotifier? authNotifier,
     MemberDto? currentMember,
     List<GroupDto>? availableGroupsWithMembers,
-    NavigationNotifier? navigationNotifier,
-    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    String initialLocation = '/groups',
     FakeCurrentMemberNotifier? currentMemberNotifier,
     AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
+    GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
   }) {
     final defaultMember = MemberDto(
       id: 'default_member',
@@ -477,15 +509,15 @@ void main() {
       authNotifierProvider.overrideWith(
         () => authNotifier ?? FakeAuthNotifier.authenticated(),
       ),
-      if (navigationNotifier != null)
-        navigationNotifierProvider.overrideWith(() => navigationNotifier),
-      if (groupTimelineNavigationNotifier != null)
-        groupTimelineNavigationNotifierProvider.overrideWith(
-          () => groupTimelineNavigationNotifier,
-        ),
+      appInitialLocationProvider.overrideWithValue(initialLocation),
+      appTestEnvironmentProvider.overrideWithValue(true),
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
       ),
+      if (groupSelectionNotifier != null)
+        groupTimelineGroupSelectionNotifierProvider.overrideWith(
+          () => groupSelectionNotifier,
+        ),
       androidWidgetLaunchNotifierProvider.overrideWith(
         () => androidWidgetLaunchNotifier ?? _IdleAndroidWidgetLaunchNotifier(),
       ),
@@ -551,10 +583,10 @@ void main() {
     AuthNotifier? authNotifier,
     MemberDto? currentMember,
     List<GroupDto>? availableGroupsWithMembers,
-    NavigationNotifier? navigationNotifier,
-    GroupTimelineNavigationNotifier? groupTimelineNavigationNotifier,
+    String initialLocation = '/groups',
     FakeCurrentMemberNotifier? currentMemberNotifier,
     AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
+    GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
   }) {
     return ProviderScope(
       overrides: createTopPageTestOverrides(
@@ -563,16 +595,64 @@ void main() {
         authNotifier: authNotifier,
         currentMember: currentMember,
         availableGroupsWithMembers: availableGroupsWithMembers,
-        navigationNotifier: navigationNotifier,
-        groupTimelineNavigationNotifier: groupTimelineNavigationNotifier,
+        initialLocation: initialLocation,
         currentMemberNotifier: currentMemberNotifier,
         androidWidgetLaunchNotifier: androidWidgetLaunchNotifier,
+        groupSelectionNotifier: groupSelectionNotifier,
       ),
-      child: MaterialApp(home: TopPage(isTestEnvironment: true)),
+      child: Consumer(
+        builder: (context, ref, _) {
+          return MaterialApp.router(
+            routerConfig: ref.watch(appRouterConfigProvider),
+          );
+        },
+      ),
     );
   }
 
+  Finder findTimelineHorizontalScrollView() {
+    return find
+        .descendant(
+          of: find.byKey(const Key('group_timeline')),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is SingleChildScrollView &&
+                widget.scrollDirection == Axis.horizontal,
+          ),
+        )
+        .first;
+  }
+
   group('TopPage', () {
+    testWidgets('同じユーザーで再ログインした場合はグループ一覧を再取得する', (WidgetTester tester) async {
+      const user = UserDto(
+        id: 'test_user_id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final authNotifier = _MutableAuthNotifier(
+        const AuthState.authenticated(user),
+      );
+      await tester.pumpWidget(
+        createTestWidget(authNotifier: authNotifier, currentMember: testMember),
+      );
+      await tester.pumpAndSettle();
+
+      authNotifier.unauthenticate();
+      await tester.pumpAndSettle();
+
+      authNotifier.authenticate(user);
+      await tester.pumpAndSettle();
+
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(2);
+    });
+
     test('地図表示用の旅行一覧モックは空一覧を返す', () async {
       final trips = await mockTripEntryQueryService.getTripEntriesByGroupId(
         '1',
@@ -696,6 +776,100 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
     });
 
+    testWidgets('ウィジェットの対象年が範囲外なら年表の過去側端を表示する', (WidgetTester tester) async {
+      final singleGroup = [groupsWithMembers.first];
+      final targetYear = DateTime.now().year - 20;
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: singleGroup.first.id,
+        year: targetYear,
+        name: '過去の旅行',
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          trip.groupId,
+          trip.year,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [trip]);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          availableGroupsWithMembers: singleGroup,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            trip.id,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('キャンセル'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.textContaining('$targetYear年'), findsNothing);
+      expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
+
+      final horizontalScrollView = findTimelineHorizontalScrollView();
+      final scrollController = tester
+          .widget<SingleChildScrollView>(horizontalScrollView)
+          .controller;
+      expect(scrollController, isNotNull);
+      expect(scrollController!.offset, 0);
+
+      final preservedOffset = scrollController.position.maxScrollExtent;
+      scrollController.jumpTo(preservedOffset);
+      unawaited(
+        TripManagementRoute(
+          groupId: trip.groupId,
+          year: DateTime.now().year,
+        ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(scrollController.offset, preservedOffset);
+    });
+
+    testWidgets('通常起動では旅行管理から戻った後も年表のスクロール位置を維持する', (
+      WidgetTester tester,
+    ) async {
+      final singleGroup = [groupsWithMembers.first];
+      await tester.pumpWidget(
+        createTestWidget(availableGroupsWithMembers: singleGroup),
+      );
+      await tester.pumpAndSettle();
+
+      final horizontalScrollView = findTimelineHorizontalScrollView();
+      final scrollController = tester
+          .widget<SingleChildScrollView>(horizontalScrollView)
+          .controller!;
+      scrollController.jumpTo(0);
+
+      unawaited(
+        TripManagementRoute(
+          groupId: singleGroup.single.id,
+          year: DateTime.now().year - 1,
+        ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      expect(scrollController.offset, 0);
+    });
+
     testWidgets('ウィジェットで指定された旅行がない場合は通知して通常画面へ戻る', (WidgetTester tester) async {
       when(
         mockTripEntryQueryService.getTripEntryById(
@@ -742,11 +916,14 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(TopPage)),
       );
-      final timelineNotifier = container.read(
-        groupTimelineNavigationNotifierProvider.notifier,
-      );
-      timelineNotifier.showGroupTimeline(groupsWithMembers.first.id);
-      timelineNotifier.showTripManagement(groupsWithMembers.first.id, 2025);
+      container
+          .read(appRouterConfigProvider)
+          .go(
+            TripManagementRoute(
+              groupId: groupsWithMembers.first.id,
+              year: 2025,
+            ).location,
+          );
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('trip_management')), findsOneWidget);
 
@@ -810,6 +987,38 @@ void main() {
       expect(find.byIcon(Icons.settings), findsOneWidget);
     });
 
+    testWidgets('通常メニューとログアウトは同じ背景を使用する', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      final logoutBackground = tester
+          .element(find.text('ログアウト'))
+          .findAncestorWidgetOfExactType<Material>();
+      for (final title in [
+        'グループ年表',
+        '地図表示',
+        'メンバー管理',
+        'グループ管理',
+        '設定',
+        'アカウント設定',
+      ]) {
+        final menuBackground = tester
+            .element(find.text(title))
+            .findAncestorWidgetOfExactType<Material>();
+        expect(menuBackground, same(logoutBackground), reason: title);
+      }
+    });
+
     testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
       when(
@@ -863,13 +1072,92 @@ void main() {
       // Act
       await tester.pumpWidget(
         createTestWidget(
-          groupTimelineNavigationNotifier:
-              _TestGroupTimelineNavigationNotifier(),
+          initialLocation: const TripManagementRoute(
+            groupId: 'g1',
+            year: 2024,
+          ).location,
         ),
       );
 
       // Assert
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('所属グループの確認中はDVC詳細のデータを取得しない', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const DvcPointCalculationRoute(
+            groupId: 'unverified-group',
+          ).location,
+          groupSelectionNotifier: _PendingGroupSelectionNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      verifyNever(
+        mockDvcPointContractQueryService.getDvcPointContractsByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      verifyNever(
+        mockDvcLimitedPointQueryService.getDvcLimitedPointsByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      verifyNever(
+        mockDvcPointUsageQueryService.getDvcPointUsagesByGroupId(
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+    });
+
+    testWidgets('所属グループの確認中は旅行管理のデータを取得しない', (tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const TripManagementRoute(
+            groupId: 'unverified-group',
+            year: 2026,
+          ).location,
+          groupSelectionNotifier: _PendingGroupSelectionNotifier(),
+        ),
+      );
+      await tester.pump();
+
+      verifyNever(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          any,
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+    });
+
+    testWidgets('詳細ルートの所属グループ取得に失敗した場合は再読み込みできる', (tester) async {
+      final groupSelectionNotifier = _ErrorGroupSelectionNotifier(
+        'default_member',
+      );
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const TripManagementRoute(
+            groupId: 'unverified-group',
+            year: 2026,
+          ).location,
+          groupSelectionNotifier: groupSelectionNotifier,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('エラーが発生しました'), findsOneWidget);
+      expect(find.text('再読み込み'), findsOneWidget);
+
+      await tester.tap(find.text('再読み込み'));
+      await tester.pump();
+
+      expect(groupSelectionNotifier.loadCalled, isTrue);
     });
 
     testWidgets('所属グループが1件のみなら初回表示でグループ年表を直接開く', (WidgetTester tester) async {
@@ -888,6 +1176,9 @@ void main() {
         createTestWidget(availableGroupsWithMembers: singleGroup),
       );
       await tester.pump();
+
+      expect(find.byKey(const Key('group_list')), findsNothing);
+
       await tester.pumpAndSettle();
 
       // Assert
@@ -1346,12 +1637,14 @@ void main() {
       final container = ProviderScope.containerOf(
         tester.element(find.byType(TopPage)),
       );
-      final notifier = container.read(
-        groupTimelineNavigationNotifierProvider.notifier,
-      );
-      notifier.showGroupTimeline(groupsWithMembers.first.id);
-      await tester.pumpAndSettle();
-      notifier.showTripManagement(groupsWithMembers.first.id, 2024);
+      container
+          .read(appRouterConfigProvider)
+          .go(
+            TripManagementRoute(
+              groupId: groupsWithMembers.first.id,
+              year: 2024,
+            ).location,
+          );
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('trip_management')), findsOneWidget);
 
@@ -1484,6 +1777,98 @@ void main() {
       }
     });
 
+    testWidgets('選択中のDrawer画面を再度選んでも同じルートを重複して積まない', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+    });
+
+    testWidgets('Drawerのトップレベル画面を切り替えた後の戻る操作で年表に戻る', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('地図表示'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('設定'));
+      await tester.pumpAndSettle();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+      expect(find.byKey(const Key('map_view')), findsNothing);
+      expect(find.byKey(const Key('settings')), findsNothing);
+    });
+
+    testWidgets('存在しないグループIDを指定するとグループ一覧へ戻る', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          initialLocation: const GroupTimelineRoute(
+            groupId: 'missing-group',
+          ).location,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      expect(
+        container.read(appRouterConfigProvider).state.matchedLocation,
+        const GroupListRoute().location,
+      );
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.text('指定されたグループが見つかりませんでした'), findsOneWidget);
+    });
+
     testWidgets('別画面からメニューでグループ年表を開き直すとグループ一覧から再開する', (
       WidgetTester tester,
     ) async {
@@ -1504,43 +1889,22 @@ void main() {
       await tester.pumpWidget(widget);
       await tester.pumpAndSettle();
 
-      // TopPageウィジェットを取得
-      final topPageFinder = find.byType(TopPage);
-
-      // 1. IndexedStackが正しくセットアップされていることを検証
-      final indexedStack = tester.widget<IndexedStack>(
-        find.byType(IndexedStack),
-      );
-      expect(indexedStack.children.length, 4);
-      expect(indexedStack.index, 0); // 初期状態はGroupList（index: 0）
-      expect(find.byKey(const Key('group_list')), findsOneWidget);
-
-      // 2. 初期状態でグループ一覧が選択されていることを検証
       final container = ProviderScope.containerOf(
-        tester.element(topPageFinder),
+        tester.element(find.byType(TopPage)),
       );
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.groupList,
-      );
+      final router = container.read(appRouterConfigProvider);
+
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(router.state.matchedLocation, const GroupListRoute().location);
 
       // GroupTimelineに遷移
       await tester.tap(find.text('グループ1'));
       await tester.pumpAndSettle();
 
-      // 3. グループ選択後のIndexと画面状態を検証
-      final timelineIndexedStack = tester.widget<IndexedStack>(
-        find.byType(IndexedStack),
-      );
-      expect(
-        timelineIndexedStack.children.length,
-        4,
-      ); // GroupList, GroupTimeline, TripManagement, DvcPointCalculation
-      expect(timelineIndexedStack.index, 1); // GroupTimeline（index: 1）
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(
-        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.timeline,
+        router.state.matchedLocation,
+        GroupTimelineRoute(groupId: groupsWithMembers.first.id).location,
       );
 
       // 他画面に遷移（地図表示）
@@ -1549,11 +1913,7 @@ void main() {
       await tester.tap(find.text('地図表示'));
       await tester.pumpAndSettle();
 
-      // 4. 他画面遷移時も値としての遷移先が維持されることを検証
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.timeline,
-      );
+      expect(router.state.matchedLocation, const MapRoute().location);
 
       // グループ年表に戻る
       await tester.tap(find.byIcon(Icons.menu));
@@ -1561,15 +1921,7 @@ void main() {
       await tester.tap(find.text('グループ年表'));
       await tester.pumpAndSettle();
 
-      // 5. グループ年表メニューに戻った時の状態を検証
-      final backToTimelineStack = tester.widget<IndexedStack>(
-        find.byType(IndexedStack),
-      );
-      expect(backToTimelineStack.index, 0); // GroupList（index: 0）に戻る
-      expect(
-        container.read(groupTimelineNavigationNotifierProvider).currentScreen,
-        GroupTimelineScreenState.groupList,
-      );
+      expect(router.state.matchedLocation, const GroupListRoute().location);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
       expect(find.byKey(const Key('group_timeline')), findsNothing);
     });
@@ -1609,7 +1961,9 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('初期フレーム後にナビゲーションとタイムラインがリセットされる', (WidgetTester tester) async {
+    testWidgets('初期フレーム後もRouterで指定したナビゲーション状態を維持する', (
+      WidgetTester tester,
+    ) async {
       // Arrange
       final defaultMember = MemberDto(
         id: 'default_member',
@@ -1635,37 +1989,29 @@ void main() {
         ),
       ).thenAnswer((_) async => groupsWithMembers);
 
-      // Providerをオーバーライドして、非デフォルト状態から開始
-      final widget = ProviderScope(
-        overrides: createTopPageTestOverrides(
-          memberQueryService: mockMemberQueryService,
-          authService: mockAuthService,
-          currentMember: defaultMember,
-          navigationNotifier: _TestNavigationNotifier(),
-          groupTimelineNavigationNotifier:
-              _TestGroupTimelineNavigationNotifier(),
-        ),
-        child: MaterialApp(home: TopPage(isTestEnvironment: true)),
+      final initialRoute = TripManagementRoute(
+        groupId: groupsWithMembers.first.id,
+        year: 2024,
+      );
+      final widget = createTestWidget(
+        memberQueryService: mockMemberQueryService,
+        authService: mockAuthService,
+        currentMember: defaultMember,
+        initialLocation: initialRoute.location,
       );
 
       // Act
       await tester.pumpWidget(widget); // 初期フレーム
       await tester.pump(); // post frame callback を実行
 
-      // Providerの状態を取得
       final topPageElement = tester.element(find.byType(TopPage));
       final container = ProviderScope.containerOf(topPageElement);
 
-      // Assert - TopPageのpost frame処理でリセットされていること
-      final navState = container.read(navigationNotifierProvider);
-      expect(navState.selectedItem, NavigationItem.groupTimeline);
-
-      final timelineState = container.read(
-        groupTimelineNavigationNotifierProvider,
+      expect(
+        container.read(appRouterConfigProvider).state.matchedLocation,
+        initialRoute.location,
       );
-      expect(timelineState.currentScreen, GroupTimelineScreenState.groupList);
-      expect(timelineState.selectedGroupId, isNull);
-      expect(timelineState.selectedYear, isNull);
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
     });
 
     testWidgets('_currentMember取得でエラーになった場合、SnackBarでエラーを表示してログアウトする', (
@@ -1689,16 +2035,13 @@ void main() {
       final fakeAuthNotifier = FakeAuthNotifier(
         const AuthState.authenticated(testUser),
       );
-      final widget = ProviderScope(
-        overrides: createTopPageTestOverrides(
-          memberQueryService: mockMemberQueryService,
-          authService: mockAuthService,
-          authNotifier: fakeAuthNotifier,
-          currentMemberNotifier: FakeCurrentMemberNotifier.error(
-            'メンバー情報の取得に失敗しました。再度ログインしてください。',
-          ),
+      final widget = createTestWidget(
+        memberQueryService: mockMemberQueryService,
+        authService: mockAuthService,
+        authNotifier: fakeAuthNotifier,
+        currentMemberNotifier: FakeCurrentMemberNotifier.error(
+          'メンバー情報の取得に失敗しました。再度ログインしてください。',
         ),
-        child: MaterialApp(home: TopPage(isTestEnvironment: true)),
       );
 
       // Act
