@@ -57,6 +57,18 @@ import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';
 import 'top_page_test.mocks.dart';
 
+class _MutableAuthNotifier extends FakeAuthNotifier {
+  _MutableAuthNotifier(super.initialState);
+
+  void authenticate(UserDto user) {
+    state = AuthState.authenticated(user);
+  }
+
+  void unauthenticate() {
+    state = const AuthState.unauthenticated('');
+  }
+}
+
 class _PendingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   _PendingAndroidWidgetLaunchNotifier(this.tripId);
 
@@ -612,6 +624,35 @@ void main() {
   }
 
   group('TopPage', () {
+    testWidgets('同じユーザーで再ログインした場合はグループ一覧を再取得する', (WidgetTester tester) async {
+      const user = UserDto(
+        id: 'test_user_id',
+        loginId: 'test@example.com',
+        isVerified: true,
+      );
+      final authNotifier = _MutableAuthNotifier(
+        const AuthState.authenticated(user),
+      );
+      await tester.pumpWidget(
+        createTestWidget(authNotifier: authNotifier, currentMember: testMember),
+      );
+      await tester.pumpAndSettle();
+
+      authNotifier.unauthenticate();
+      await tester.pumpAndSettle();
+
+      authNotifier.authenticate(user);
+      await tester.pumpAndSettle();
+
+      verify(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(2);
+    });
+
     test('地図表示用の旅行一覧モックは空一覧を返す', () async {
       final trips = await mockTripEntryQueryService.getTripEntriesByGroupId(
         '1',
