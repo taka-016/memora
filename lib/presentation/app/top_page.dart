@@ -94,10 +94,14 @@ class TopPage extends HookConsumerWidget {
         (state) => state.memberId,
       ),
     );
+    final isAuthenticated = ref.watch(
+      authNotifierProvider.select((state) => state.isAuthenticated),
+    );
 
     useEffect(
       () {
-        if (selectedItem != AppNavigationItem.groupTimeline ||
+        if (!isAuthenticated ||
+            selectedItem != AppNavigationItem.groupTimeline ||
             currentMember == null ||
             shouldHideForAndroidWidgetLaunch) {
           return null;
@@ -119,6 +123,7 @@ class TopPage extends HookConsumerWidget {
         return null;
       },
       [
+        isAuthenticated,
         selectedItem,
         currentMember?.id,
         shouldHideForAndroidWidgetLaunch,
