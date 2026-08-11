@@ -19,6 +19,38 @@ void main() {
       ]);
     });
 
+    test('初期表示年は2000年から2100年の範囲に収める', () {
+      final pastBoundaryState = TimelineViewState.initial(
+        baseYear: 2002,
+        totalDataRows: 1,
+        initialYearRange: 5,
+        dataRowHeight: 100,
+      );
+      final futureBoundaryState = TimelineViewState.initial(
+        baseYear: 2098,
+        totalDataRows: 1,
+        initialYearRange: 5,
+        dataRowHeight: 100,
+      );
+
+      expect(pastBoundaryState.visibleYears.first, 2000);
+      expect(futureBoundaryState.visibleYears.last, 2100);
+    });
+
+    test('表示年の拡張は2000年から2100年の範囲に収める', () {
+      final state = TimelineViewState.initial(
+        baseYear: 2026,
+        totalDataRows: 1,
+        initialYearRange: 5,
+        dataRowHeight: 100,
+      );
+
+      final expanded = state.expandPast(100).expandFuture(100);
+
+      expect(expanded.visibleYears.first, 2000);
+      expect(expanded.visibleYears.last, 2100);
+    });
+
     test('行数が増えたときは既存の高さを維持して不足分だけデフォルト値を補う', () {
       final state = TimelineViewState(
         baseYear: 2026,
