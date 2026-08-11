@@ -140,13 +140,6 @@
 - Viewは状態の描画、入力、Notifierへの操作通知、Dialog・Snackbar・画面遷移の実表示を担当する
 - 分離した状態遷移とUseCaseの実行順序をNotifierの単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
 
-#### 1. GroupManagementの状態管理をNotifierへ分離する
-
-- `GroupManagementState`と`GroupManagementNotifier`を作成し、管理対象グループの一覧、初期取得状態、再取得状態、作成・更新・削除の操作状態とエラーを管理する
-- 利用可能なメンバーの取得と、グループ作成・更新・削除後の一覧再取得をNotifierへ移す
-- `GroupManagement`には編集・削除Dialogの表示、入力の受け渡し、状態に応じた一覧・ローディング・エラーの表示を残す
-- 一覧取得、利用可能メンバー取得、各更新処理、更新後の再取得について、成功・失敗時の状態遷移とUseCaseの実行順序を単体テストで検証する
-
 #### 2. MapScreenの状態管理をNotifierへ分離する
 
 - `MapState`と`MapNotifier`を作成し、所属グループ、選択中のグループ、訪問場所、旅行、フォーカス中の訪問場所と各取得状態を管理する
