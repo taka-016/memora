@@ -946,6 +946,38 @@ void main() {
       expect(find.byIcon(Icons.settings), findsOneWidget);
     });
 
+    testWidgets('通常メニューとログアウトは同じ背景を使用する', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+
+      final logoutBackground = tester
+          .element(find.text('ログアウト'))
+          .findAncestorWidgetOfExactType<Material>();
+      for (final title in [
+        'グループ年表',
+        '地図表示',
+        'メンバー管理',
+        'グループ管理',
+        '設定',
+        'アカウント設定',
+      ]) {
+        final menuBackground = tester
+            .element(find.text(title))
+            .findAncestorWidgetOfExactType<Material>();
+        expect(menuBackground, same(logoutBackground), reason: title);
+      }
+    });
+
     testWidgets('初期状態ではグループ一覧画面が表示される', (WidgetTester tester) async {
       // Arrange
       when(
