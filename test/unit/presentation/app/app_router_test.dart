@@ -302,6 +302,31 @@ void main() {
     );
   });
 
+  for (final invalidYear in [1999, 2101, 999999999]) {
+    testWidgets('旅行管理ルートの年が$invalidYearの場合はグループ年表へ戻る', (tester) async {
+      final authNotifier = _MutableAuthNotifier(
+        const AuthState.authenticated(
+          UserDto(
+            id: 'user-1',
+            loginId: 'user-1@example.com',
+            isVerified: true,
+          ),
+        ),
+      );
+      final (_, router) = await pumpRouter(
+        tester,
+        authNotifier,
+        initialLocation: '/groups/deep-link-group/timeline/trips/$invalidYear',
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        router.state.uri.toString(),
+        const GroupTimelineRoute(groupId: 'deep-link-group').location,
+      );
+    });
+  }
+
   testWidgets('起動済みアプリへ届いたウィジェットURIはグループ一覧へ退避する', (tester) async {
     final authNotifier = _MutableAuthNotifier(
       const AuthState.authenticated(
