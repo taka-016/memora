@@ -150,7 +150,7 @@ void main() {
       ),
     );
     final groupSelectionNotifier = _ReloadTrackingGroupSelectionNotifier();
-    final (_, router) = await pumpRouter(
+    final (container, router) = await pumpRouter(
       tester,
       authNotifier,
       groupSelectionNotifier: groupSelectionNotifier,
@@ -160,6 +160,10 @@ void main() {
     authNotifier.unauthenticate();
     await pumpNavigation(tester);
     expect(router.state.matchedLocation, const LoginRoute().location);
+    expect(
+      container.read(groupTimelineGroupSelectionNotifierProvider).memberId,
+      isNull,
+    );
 
     authNotifier.authenticate('user-1');
     await pumpNavigation(tester);
