@@ -25,6 +25,7 @@ import 'group_management_notifier_test.mocks.dart';
 ])
 void main() {
   const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
+  const secondMember = MemberDto(id: 'member-3', displayName: '次郎');
   const availableMember = MemberDto(id: 'member-2', displayName: '花子');
   const managedGroup = GroupDto(
     id: 'group-1',
@@ -42,6 +43,12 @@ void main() {
     id: '',
     ownerId: 'member-1',
     name: '友人',
+    members: [],
+  );
+  const secondMemberGroup = GroupDto(
+    id: 'group-2',
+    ownerId: 'member-3',
+    name: '次郎の家族',
     members: [],
   );
 
@@ -161,6 +168,27 @@ void main() {
       expect(state.errorMessage, 'データの読み込みに失敗しました: TestException: 再取得失敗');
     });
 
+    test('新しい初期取得後に完了した古い再取得結果を破棄する', () async {
+      await loadGroups();
+      final refreshCompleter = Completer<List<GroupDto>>();
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) => refreshCompleter.future);
+      when(
+        getGroupsUsecase.execute(secondMember),
+      ).thenAnswer((_) async => const [secondMemberGroup]);
+
+      final refreshFuture = notifier.refresh();
+      await notifier.load(secondMember);
+      refreshCompleter.complete(const [updatedGroup]);
+      await refreshFuture;
+
+      final state = container.read(groupManagementNotifierProvider);
+      expect(state.status, GroupManagementStatus.loaded);
+      expect(state.groups, const [secondMemberGroup]);
+      expect(state.refreshStatus, GroupManagementRefreshStatus.idle);
+    });
+
     test('利用可能なメンバーを取得してグループメンバーへ変換する', () async {
       await loadGroups();
       final completer = Completer<List<MemberDto>>();
@@ -203,6 +231,28 @@ void main() {
       expect(members, isNull);
       expect(state.operationStatus, GroupManagementOperationStatus.error);
       expect(state.errorMessage, 'メンバー情報の取得に失敗しました: TestException: メンバー取得失敗');
+    });
+
+    test('新しい初期取得後に完了した古い利用可能メンバー取得結果を破棄する', () async {
+      await loadGroups();
+      final membersCompleter = Completer<List<MemberDto>>();
+      when(
+        getMembersUsecase.execute(currentMember),
+      ).thenAnswer((_) => membersCompleter.future);
+      when(
+        getGroupsUsecase.execute(secondMember),
+      ).thenAnswer((_) async => const [secondMemberGroup]);
+
+      final membersFuture = notifier.loadAvailableMembers(managedGroup.id);
+      await notifier.load(secondMember);
+      membersCompleter.complete(const [availableMember]);
+      final members = await membersFuture;
+
+      final state = container.read(groupManagementNotifierProvider);
+      expect(members, isNull);
+      expect(state.groups, const [secondMemberGroup]);
+      expect(state.operationStatus, GroupManagementOperationStatus.idle);
+      expect(state.availableMembers, isEmpty);
     });
 
     test('作成後に一覧を再取得して成功状態へ遷移する', () async {
@@ -338,6 +388,28 @@ void main() {
         updateGroupUsecase.execute(updatedGroup),
         getGroupsUsecase.execute(currentMember),
       ]);
+    });
+
+    test('新しい初期取得後に完了した古い更新後の再取得結果を破棄する', () async {
+      await loadGroups();
+      final refreshCompleter = Completer<List<GroupDto>>();
+      when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) => refreshCompleter.future);
+      when(
+        getGroupsUsecase.execute(secondMember),
+      ).thenAnswer((_) async => const [secondMemberGroup]);
+
+      final updateFuture = notifier.updateGroup(updatedGroup);
+      await notifier.load(secondMember);
+      refreshCompleter.complete(const [updatedGroup]);
+      await updateFuture;
+
+      final state = container.read(groupManagementNotifierProvider);
+      expect(state.status, GroupManagementStatus.loaded);
+      expect(state.groups, const [secondMemberGroup]);
+      expect(state.operationStatus, GroupManagementOperationStatus.idle);
     });
   });
 }
