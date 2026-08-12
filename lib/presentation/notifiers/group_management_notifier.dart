@@ -34,7 +34,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
 
     try {
       final groups = await _getGroups(currentMember);
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return;
       }
       state = GroupManagementState(
@@ -42,7 +42,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
         groups: groups,
       );
     } catch (e, stack) {
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return;
       }
       logger.e(
@@ -70,7 +70,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     );
     try {
       final groups = await _getGroups(currentMember);
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return;
       }
       state = state.copyWith(
@@ -80,7 +80,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
         errorMessage: '',
       );
     } catch (e, stack) {
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return;
       }
       logger.e(
@@ -111,7 +111,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       final members = await ref
           .read(getManagedMembersUsecaseProvider)
           .execute(currentMember);
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return null;
       }
       final availableMembers = GroupMemberMapper.fromMemberList(
@@ -125,7 +125,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       );
       return availableMembers;
     } catch (e, stack) {
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return null;
       }
       logger.e(
@@ -185,11 +185,11 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     );
     try {
       await execute();
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return false;
       }
       final groups = await _getGroups(currentMember);
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return false;
       }
       state = state.copyWith(
@@ -201,7 +201,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       );
       return true;
     } catch (e, stack) {
-      if (loadGeneration != _loadGeneration) {
+      if (!_isCurrentLoad(loadGeneration)) {
         return false;
       }
       logger.e(
@@ -221,5 +221,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     return ref
         .read(getManagedGroupsWithMembersUsecaseProvider)
         .execute(currentMember);
+  }
+
+  bool _isCurrentLoad(int loadGeneration) {
+    return loadGeneration == _loadGeneration;
   }
 }
