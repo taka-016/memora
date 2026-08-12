@@ -62,6 +62,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     if (currentMember == null) {
       return;
     }
+    final loadGeneration = _loadGeneration;
 
     state = state.copyWith(
       refreshStatus: GroupManagementRefreshStatus.loading,
@@ -69,6 +70,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     );
     try {
       final groups = await _getGroups(currentMember);
+      if (loadGeneration != _loadGeneration) {
+        return;
+      }
       state = state.copyWith(
         status: GroupManagementStatus.loaded,
         refreshStatus: GroupManagementRefreshStatus.idle,
@@ -76,6 +80,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
         errorMessage: '',
       );
     } catch (e, stack) {
+      if (loadGeneration != _loadGeneration) {
+        return;
+      }
       logger.e(
         'GroupManagementNotifier.refresh: ${e.toString()}',
         error: e,
@@ -93,6 +100,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     if (currentMember == null) {
       return null;
     }
+    final loadGeneration = _loadGeneration;
 
     state = state.copyWith(
       operationType: GroupManagementOperationType.loadAvailableMembers,
@@ -103,6 +111,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       final members = await ref
           .read(getManagedMembersUsecaseProvider)
           .execute(currentMember);
+      if (loadGeneration != _loadGeneration) {
+        return null;
+      }
       final availableMembers = GroupMemberMapper.fromMemberList(
         members,
         groupId,
@@ -114,6 +125,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       );
       return availableMembers;
     } catch (e, stack) {
+      if (loadGeneration != _loadGeneration) {
+        return null;
+      }
       logger.e(
         'GroupManagementNotifier.loadAvailableMembers: ${e.toString()}',
         error: e,
@@ -162,6 +176,7 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     if (currentMember == null) {
       return false;
     }
+    final loadGeneration = _loadGeneration;
 
     state = state.copyWith(
       operationType: type,
@@ -170,7 +185,13 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     );
     try {
       await execute();
+      if (loadGeneration != _loadGeneration) {
+        return false;
+      }
       final groups = await _getGroups(currentMember);
+      if (loadGeneration != _loadGeneration) {
+        return false;
+      }
       state = state.copyWith(
         status: GroupManagementStatus.loaded,
         refreshStatus: GroupManagementRefreshStatus.idle,
@@ -180,6 +201,9 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
       );
       return true;
     } catch (e, stack) {
+      if (loadGeneration != _loadGeneration) {
+        return false;
+      }
       logger.e(
         'GroupManagementNotifier.${type.name}: ${e.toString()}',
         error: e,
