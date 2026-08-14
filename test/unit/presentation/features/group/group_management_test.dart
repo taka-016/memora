@@ -226,6 +226,40 @@ void main() {
       ).called(2);
     });
 
+    testWidgets('リフレッシュ失敗時は例外をUI内で処理してエラーを表示すること', (WidgetTester tester) async {
+      final managedGroupsWithMembers = [groupWithMembers1];
+      var callCount = 0;
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async {
+        callCount++;
+        if (callCount == 1) {
+          return managedGroupsWithMembers;
+        }
+        throw TestException('再取得失敗');
+      });
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.fling(
+        find.byType(RefreshIndicator),
+        const Offset(0, 300),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('データの読み込みに失敗しました: TestException: 再取得失敗'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('削除ボタンが表示されること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
