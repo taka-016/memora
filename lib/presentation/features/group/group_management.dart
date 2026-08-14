@@ -72,8 +72,12 @@ class GroupManagement extends ConsumerWidget {
     });
 
     Future<void> refreshGroups() async {
-      final refreshFuture = ref.refresh(managementProvider.future);
-      await refreshFuture;
+      try {
+        final refreshFuture = ref.refresh(managementProvider.future);
+        await refreshFuture;
+      } catch (_) {
+        // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
+      }
     }
 
     Future<void> showDeleteConfirmDialog(GroupDto groupWithMembers) async {
