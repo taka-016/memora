@@ -136,6 +136,8 @@
 
 - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期状態、再試行、データ更新、エラー処理がViewに集中している画面を改修対象とする
 - 画面・機能単位に不変な`XxxState`とRiverpodの`XxxNotifier`を作成し、初期取得状態、保持データ、操作中状態、エラーを管理する
+- Notifier化では既存のhooks構成を維持することを前提とせず、データ取得や状態のライフサイクルはRiverpodの`family`、`autoDispose`、`build()`、Providerの再構築で表現する
+- hooksはフォーカス、入力、スクロールなどのUI固有状態に必要な場合だけ使用し、不要になった画面は`HookConsumerWidget`から`ConsumerWidget`へ変更する
 - NotifierはUseCaseの実行順序、再試行、古いリクエスト結果の破棄、作成・更新・削除後の状態反映を担当する
 - Viewは状態の描画、入力、Notifierへの操作通知、Dialog・Snackbar・画面遷移の実表示を担当する
 - 分離した状態遷移とUseCaseの実行順序をNotifierの単体テストで検証し、ViewのWidgetテストは状態に応じた表示とユーザー操作の通知を中心にする
