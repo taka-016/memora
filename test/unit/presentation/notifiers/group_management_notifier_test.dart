@@ -136,14 +136,14 @@ void main() {
     });
 
     test('再取得中は既存一覧を維持し、成功後に一覧を更新する', () async {
-      final notifier = await startNotifier();
+      await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       final completer = Completer<List<GroupDto>>();
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
 
-      final refreshFuture = notifier.refresh();
+      final refreshFuture = container.refresh(provider.future);
       await container.pump();
 
       final refreshingState = container.read(provider);
@@ -159,13 +159,16 @@ void main() {
     });
 
     test('再取得失敗時は既存一覧を維持してAsyncErrorへ遷移する', () async {
-      final notifier = await startNotifier();
+      await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenThrow(TestException('再取得失敗'));
 
-      await expectLater(notifier.refresh(), throwsA(isA<TestException>()));
+      await expectLater(
+        container.refresh(provider.future),
+        throwsA(isA<TestException>()),
+      );
 
       final state = container.read(provider);
       expect(state.hasError, isTrue);
