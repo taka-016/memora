@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
@@ -8,7 +7,7 @@ import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
-class GroupManagement extends HookConsumerWidget {
+class GroupManagement extends ConsumerWidget {
   const GroupManagement({super.key});
 
   @override
@@ -18,46 +17,49 @@ class GroupManagement extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final managementState = ref.watch(groupManagementNotifierProvider);
-    final managementNotifier = ref.read(
-      groupManagementNotifierProvider.notifier,
-    );
+    final managementProvider = groupManagementNotifierProvider(currentMember);
+    final managementState = ref.watch(managementProvider);
+    final managementNotifier = ref.read(managementProvider.notifier);
 
-    useEffect(() {
-      Future.microtask(() => managementNotifier.load(currentMember));
-      return null;
-    }, [currentMember.id]);
-
-    ref.listen<GroupManagementState>(groupManagementNotifierProvider, (
+    ref.listen<AsyncValue<GroupManagementState>>(managementProvider, (
       previous,
       next,
     ) {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-      final initialLoadFailed =
-          previous?.status != next.status &&
-          next.status == GroupManagementStatus.error;
-      final refreshFailed =
-          previous?.refreshStatus != next.refreshStatus &&
-          next.refreshStatus == GroupManagementRefreshStatus.error;
-      final operationFailed =
-          previous?.operationStatus != next.operationStatus &&
-          next.operationStatus == GroupManagementOperationStatus.error;
-
-      if (initialLoadFailed || refreshFailed || operationFailed) {
+      final loadFailed =
+          next.hasError &&
+          (!(previous?.hasError ?? false) || previous?.error != next.error);
+      if (loadFailed) {
         scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(next.errorMessage)),
+          SnackBar(content: Text('データの読み込みに失敗しました: ${next.error}')),
+        );
+        return;
+      }
+
+      final previousValue = previous?.value;
+      final nextValue = next.value;
+      if (nextValue == null) {
+        return;
+      }
+      final operationFailed =
+          previousValue?.operationStatus != nextValue.operationStatus &&
+          nextValue.operationStatus == GroupManagementOperationStatus.error;
+
+      if (operationFailed) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text(nextValue.errorMessage)),
         );
         return;
       }
 
       final operationSucceeded =
-          previous?.operationStatus != next.operationStatus &&
-          next.operationStatus == GroupManagementOperationStatus.success;
+          previousValue?.operationStatus != nextValue.operationStatus &&
+          nextValue.operationStatus == GroupManagementOperationStatus.success;
       if (!operationSucceeded) {
         return;
       }
 
-      final message = switch (next.operationType) {
+      final message = switch (nextValue.operationType) {
         GroupManagementOperationType.create => 'グループを作成しました',
         GroupManagementOperationType.update => 'グループを更新しました',
         GroupManagementOperationType.delete => 'グループを削除しました',
@@ -68,6 +70,10 @@ class GroupManagement extends HookConsumerWidget {
         scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
       }
     });
+
+    Future<void> refreshGroups() async {
+      await ref.refresh(managementProvider.future);
+    }
 
     Future<void> showDeleteConfirmDialog(GroupDto groupWithMembers) async {
       await DeleteConfirmDialog.show(
@@ -174,7 +180,7 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Widget buildGroupCard(int index) {
-      final groupWithMembers = managementState.groups[index];
+      final groupWithMembers = managementState.requireValue.groups[index];
 
       return Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -194,17 +200,17 @@ class GroupManagement extends HookConsumerWidget {
 
     Widget buildGroupListView() {
       return ListView.builder(
-        itemCount: managementState.groups.length,
+        itemCount: managementState.requireValue.groups.length,
         itemBuilder: (context, index) => buildGroupCard(index),
       );
     }
 
     Widget buildGroupListContent() {
-      if (managementState.groups.isEmpty) {
+      if (managementState.requireValue.groups.isEmpty) {
         return buildEmptyState();
       }
       return RefreshIndicator(
-        onRefresh: managementNotifier.refresh,
+        onRefresh: refreshGroups,
         child: buildGroupListView(),
       );
     }
@@ -214,32 +220,38 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Widget buildBody() {
-      if (managementState.status == GroupManagementStatus.initial ||
-          managementState.status == GroupManagementStatus.loading) {
+      if (!managementState.hasValue) {
+        if (managementState.hasError) {
+          return Column(
+            children: [
+              buildHeader(),
+              const Divider(),
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('グループ一覧を読み込めませんでした'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: refreshGroups,
+                        child: const Text('再試行'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
         return buildLoadingState();
       }
-
-      final content = managementState.status == GroupManagementStatus.error
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('グループ一覧を読み込めませんでした'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => managementNotifier.load(currentMember),
-                    child: const Text('再試行'),
-                  ),
-                ],
-              ),
-            )
-          : buildGroupListContent();
 
       return Column(
         children: [
           buildHeader(),
           const Divider(),
-          Expanded(child: content),
+          Expanded(child: buildGroupListContent()),
         ],
       );
     }

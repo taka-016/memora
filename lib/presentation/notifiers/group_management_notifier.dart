@@ -13,119 +13,68 @@ import 'package:memora/presentation/notifiers/group_management_state.dart';
 
 export 'group_management_state.dart';
 
-final groupManagementNotifierProvider =
-    NotifierProvider<GroupManagementNotifier, GroupManagementState>(
+final groupManagementNotifierProvider = AsyncNotifierProvider.autoDispose
+    .family<GroupManagementNotifier, GroupManagementState, MemberDto>(
       GroupManagementNotifier.new,
+      retry: (_, _) => null,
     );
 
-class GroupManagementNotifier extends Notifier<GroupManagementState> {
-  MemberDto? _currentMember;
-  var _loadGeneration = 0;
+class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
+  GroupManagementNotifier(this._currentMember);
+
+  final MemberDto _currentMember;
 
   @override
-  GroupManagementState build() {
-    return const GroupManagementState();
-  }
-
-  Future<void> load(MemberDto currentMember) async {
-    _currentMember = currentMember;
-    final loadGeneration = ++_loadGeneration;
-    state = const GroupManagementState(status: GroupManagementStatus.loading);
-
+  Future<GroupManagementState> build() async {
     try {
-      final groups = await _getGroups(currentMember);
-      if (!_isCurrentLoad(loadGeneration)) {
-        return;
-      }
-      state = GroupManagementState(
-        status: GroupManagementStatus.loaded,
-        groups: groups,
-      );
+      final groups = await _getGroups();
+      return GroupManagementState(groups: groups);
     } catch (e, stack) {
-      if (!_isCurrentLoad(loadGeneration)) {
-        return;
-      }
       logger.e(
-        'GroupManagementNotifier.load: ${e.toString()}',
+        'GroupManagementNotifier.build: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
-      state = GroupManagementState(
-        status: GroupManagementStatus.error,
-        errorMessage: 'データの読み込みに失敗しました: $e',
-      );
-    }
-  }
-
-  Future<void> refresh() async {
-    final currentMember = _currentMember;
-    if (currentMember == null) {
-      return;
-    }
-    final loadGeneration = _loadGeneration;
-
-    state = state.copyWith(
-      refreshStatus: GroupManagementRefreshStatus.loading,
-      errorMessage: '',
-    );
-    try {
-      final groups = await _getGroups(currentMember);
-      if (!_isCurrentLoad(loadGeneration)) {
-        return;
-      }
-      state = state.copyWith(
-        status: GroupManagementStatus.loaded,
-        refreshStatus: GroupManagementRefreshStatus.idle,
-        groups: groups,
-        errorMessage: '',
-      );
-    } catch (e, stack) {
-      if (!_isCurrentLoad(loadGeneration)) {
-        return;
-      }
-      logger.e(
-        'GroupManagementNotifier.refresh: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      state = state.copyWith(
-        refreshStatus: GroupManagementRefreshStatus.error,
-        errorMessage: 'データの読み込みに失敗しました: $e',
-      );
+      rethrow;
     }
   }
 
   Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
-    final currentMember = _currentMember;
-    if (currentMember == null) {
+    final currentState = state.value;
+    if (currentState == null ||
+        currentState.operationStatus ==
+            GroupManagementOperationStatus.loading) {
       return null;
     }
-    final loadGeneration = _loadGeneration;
 
-    state = state.copyWith(
-      operationType: GroupManagementOperationType.loadAvailableMembers,
-      operationStatus: GroupManagementOperationStatus.loading,
-      errorMessage: '',
+    state = AsyncData(
+      currentState.copyWith(
+        operationType: GroupManagementOperationType.loadAvailableMembers,
+        operationStatus: GroupManagementOperationStatus.loading,
+        errorMessage: '',
+      ),
     );
     try {
       final members = await ref
           .read(getManagedMembersUsecaseProvider)
-          .execute(currentMember);
-      if (!_isCurrentLoad(loadGeneration)) {
+          .execute(_currentMember);
+      if (!ref.mounted) {
         return null;
       }
       final availableMembers = GroupMemberMapper.fromMemberList(
         members,
         groupId,
       );
-      state = state.copyWith(
-        operationStatus: GroupManagementOperationStatus.success,
-        availableMembers: availableMembers,
-        errorMessage: '',
+      state = AsyncData(
+        state.requireValue.copyWith(
+          operationStatus: GroupManagementOperationStatus.success,
+          availableMembers: availableMembers,
+          errorMessage: '',
+        ),
       );
       return availableMembers;
     } catch (e, stack) {
-      if (!_isCurrentLoad(loadGeneration)) {
+      if (!ref.mounted) {
         return null;
       }
       logger.e(
@@ -133,9 +82,11 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        operationStatus: GroupManagementOperationStatus.error,
-        errorMessage: 'メンバー情報の取得に失敗しました: $e',
+      state = AsyncData(
+        state.requireValue.copyWith(
+          operationStatus: GroupManagementOperationStatus.error,
+          errorMessage: 'メンバー情報の取得に失敗しました: $e',
+        ),
       );
       return null;
     }
@@ -172,36 +123,35 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
     required String failureMessage,
     required Future<void> Function() execute,
   }) async {
-    final currentMember = _currentMember;
-    if (currentMember == null) {
+    final currentState = state.value;
+    if (currentState == null ||
+        currentState.operationStatus ==
+            GroupManagementOperationStatus.loading) {
       return false;
     }
-    final loadGeneration = _loadGeneration;
 
-    state = state.copyWith(
-      operationType: type,
-      operationStatus: GroupManagementOperationStatus.loading,
-      errorMessage: '',
+    state = AsyncData(
+      currentState.copyWith(
+        operationType: type,
+        operationStatus: GroupManagementOperationStatus.loading,
+        errorMessage: '',
+      ),
     );
     try {
       await execute();
-      if (!_isCurrentLoad(loadGeneration)) {
+      if (!ref.mounted) {
         return false;
       }
-      final groups = await _getGroups(currentMember);
-      if (!_isCurrentLoad(loadGeneration)) {
-        return false;
-      }
-      state = state.copyWith(
-        status: GroupManagementStatus.loaded,
-        refreshStatus: GroupManagementRefreshStatus.idle,
-        operationStatus: GroupManagementOperationStatus.success,
-        groups: groups,
-        errorMessage: '',
+      state = AsyncData(
+        state.requireValue.copyWith(
+          operationStatus: GroupManagementOperationStatus.success,
+          errorMessage: '',
+        ),
       );
+      ref.invalidateSelf();
       return true;
     } catch (e, stack) {
-      if (!_isCurrentLoad(loadGeneration)) {
+      if (!ref.mounted) {
         return false;
       }
       logger.e(
@@ -209,21 +159,19 @@ class GroupManagementNotifier extends Notifier<GroupManagementState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        operationStatus: GroupManagementOperationStatus.error,
-        errorMessage: '$failureMessage: $e',
+      state = AsyncData(
+        state.requireValue.copyWith(
+          operationStatus: GroupManagementOperationStatus.error,
+          errorMessage: '$failureMessage: $e',
+        ),
       );
       return false;
     }
   }
 
-  Future<List<GroupDto>> _getGroups(MemberDto currentMember) {
+  Future<List<GroupDto>> _getGroups() {
     return ref
         .read(getManagedGroupsWithMembersUsecaseProvider)
-        .execute(currentMember);
-  }
-
-  bool _isCurrentLoad(int loadGeneration) {
-    return loadGeneration == _loadGeneration;
+        .execute(_currentMember);
   }
 }
