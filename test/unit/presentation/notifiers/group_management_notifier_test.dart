@@ -58,7 +58,6 @@ void main() {
   late MockUpdateGroupUsecase updateGroupUsecase;
   late MockDeleteGroupUsecase deleteGroupUsecase;
   late ProviderContainer container;
-  late GroupManagementNotifier notifier;
 
   setUp(() {
     getGroupsUsecase = MockGetManagedGroupsWithMembersUsecase();
@@ -77,20 +76,23 @@ void main() {
         deleteGroupUsecaseProvider.overrideWithValue(deleteGroupUsecase),
       ],
     );
-    notifier = container.read(groupManagementNotifierProvider.notifier);
   });
 
   tearDown(() {
     container.dispose();
   });
 
-  Future<void> loadGroups([
+  Future<GroupManagementNotifier> startNotifier({
     List<GroupDto> groups = const [managedGroup],
-  ]) async {
+  }) async {
     when(
       getGroupsUsecase.execute(currentMember),
     ).thenAnswer((_) async => groups);
-    await notifier.load(currentMember);
+    final provider = groupManagementNotifierProvider(currentMember);
+    final subscription = container.listen(provider, (_, _) {});
+    addTearDown(subscription.close);
+    await container.read(provider.future);
+    return container.read(provider.notifier);
   }
 
   group('GroupManagementNotifier', () {
@@ -99,98 +101,113 @@ void main() {
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
+      final provider = groupManagementNotifierProvider(currentMember);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
 
-      final loadFuture = notifier.load(currentMember);
-
-      expect(
-        container.read(groupManagementNotifierProvider).status,
-        GroupManagementStatus.loading,
-      );
+      expect(container.read(provider).isLoading, isTrue);
 
       completer.complete(const [managedGroup]);
-      await loadFuture;
+      await container.read(provider.future);
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.status, GroupManagementStatus.loaded);
-      expect(state.groups, const [managedGroup]);
-      expect(state.errorMessage, isEmpty);
+      final state = container.read(provider);
+      expect(state.hasValue, isTrue);
+      expect(state.requireValue.groups, const [managedGroup]);
+      expect(state.requireValue.errorMessage, isEmpty);
     });
 
-    test('初期取得失敗時はエラー状態へ遷移する', () async {
+    test('初期取得失敗時はAsyncErrorへ遷移し、自動再試行しない', () async {
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenThrow(TestException('取得失敗'));
+      final provider = groupManagementNotifierProvider(currentMember);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
 
-      await notifier.load(currentMember);
+      await expectLater(
+        container.read(provider.future),
+        throwsA(isA<TestException>()),
+      );
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.status, GroupManagementStatus.error);
-      expect(state.groups, isEmpty);
-      expect(state.errorMessage, 'データの読み込みに失敗しました: TestException: 取得失敗');
+      final state = container.read(provider);
+      expect(state.hasError, isTrue);
+      expect(state.error, isA<TestException>());
+      verify(getGroupsUsecase.execute(currentMember)).called(1);
     });
 
     test('再取得中は既存一覧を維持し、成功後に一覧を更新する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       final completer = Completer<List<GroupDto>>();
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
 
       final refreshFuture = notifier.refresh();
+      await container.pump();
 
-      final refreshingState = container.read(groupManagementNotifierProvider);
-      expect(
-        refreshingState.refreshStatus,
-        GroupManagementRefreshStatus.loading,
-      );
-      expect(refreshingState.groups, const [managedGroup]);
+      final refreshingState = container.read(provider);
+      expect(refreshingState.isRefreshing, isTrue);
+      expect(refreshingState.value?.groups, const [managedGroup]);
 
       completer.complete(const [updatedGroup]);
       await refreshFuture;
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.refreshStatus, GroupManagementRefreshStatus.idle);
-      expect(state.groups, const [updatedGroup]);
-      expect(state.errorMessage, isEmpty);
+      expect(container.read(provider).requireValue.groups, const [
+        updatedGroup,
+      ]);
     });
 
-    test('再取得失敗時は既存一覧を維持してエラー状態へ遷移する', () async {
-      await loadGroups();
+    test('再取得失敗時は既存一覧を維持してAsyncErrorへ遷移する', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenThrow(TestException('再取得失敗'));
 
-      await notifier.refresh();
+      await expectLater(notifier.refresh(), throwsA(isA<TestException>()));
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.refreshStatus, GroupManagementRefreshStatus.error);
-      expect(state.groups, const [managedGroup]);
-      expect(state.errorMessage, 'データの読み込みに失敗しました: TestException: 再取得失敗');
+      final state = container.read(provider);
+      expect(state.hasError, isTrue);
+      expect(state.value?.groups, const [managedGroup]);
     });
 
-    test('新しい初期取得後に完了した古い再取得結果を破棄する', () async {
-      await loadGroups();
-      final refreshCompleter = Completer<List<GroupDto>>();
+    test('メンバーごとにProviderの状態を分離する', () async {
+      final firstCompleter = Completer<List<GroupDto>>();
       when(
         getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => refreshCompleter.future);
+      ).thenAnswer((_) => firstCompleter.future);
       when(
         getGroupsUsecase.execute(secondMember),
       ).thenAnswer((_) async => const [secondMemberGroup]);
+      final firstProvider = groupManagementNotifierProvider(currentMember);
+      final secondProvider = groupManagementNotifierProvider(secondMember);
+      final firstSubscription = container.listen(firstProvider, (_, _) {});
+      final secondSubscription = container.listen(secondProvider, (_, _) {});
+      addTearDown(firstSubscription.close);
+      addTearDown(secondSubscription.close);
 
-      final refreshFuture = notifier.refresh();
-      await notifier.load(secondMember);
-      refreshCompleter.complete(const [updatedGroup]);
-      await refreshFuture;
+      await container.read(secondProvider.future);
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.status, GroupManagementStatus.loaded);
-      expect(state.groups, const [secondMemberGroup]);
-      expect(state.refreshStatus, GroupManagementRefreshStatus.idle);
+      expect(container.read(firstProvider).isLoading, isTrue);
+      expect(container.read(secondProvider).requireValue.groups, const [
+        secondMemberGroup,
+      ]);
+
+      firstCompleter.complete(const [managedGroup]);
+      await container.read(firstProvider.future);
+
+      expect(container.read(firstProvider).requireValue.groups, const [
+        managedGroup,
+      ]);
+      expect(container.read(secondProvider).requireValue.groups, const [
+        secondMemberGroup,
+      ]);
     });
 
     test('利用可能なメンバーを取得してグループメンバーへ変換する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       final completer = Completer<List<MemberDto>>();
       when(
         getMembersUsecase.execute(currentMember),
@@ -198,7 +215,7 @@ void main() {
 
       final loadMembersFuture = notifier.loadAvailableMembers('group-1');
 
-      final loadingState = container.read(groupManagementNotifierProvider);
+      final loadingState = container.read(provider).requireValue;
       expect(
         loadingState.operationType,
         GroupManagementOperationType.loadAvailableMembers,
@@ -211,7 +228,7 @@ void main() {
       completer.complete(const [availableMember]);
       final members = await loadMembersFuture;
 
-      final state = container.read(groupManagementNotifierProvider);
+      final state = container.read(provider).requireValue;
       expect(state.operationStatus, GroupManagementOperationStatus.success);
       expect(state.availableMembers, members);
       expect(members, hasLength(1));
@@ -220,43 +237,52 @@ void main() {
     });
 
     test('利用可能なメンバーの取得失敗時はエラー状態へ遷移する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       when(
         getMembersUsecase.execute(currentMember),
       ).thenThrow(TestException('メンバー取得失敗'));
 
       final members = await notifier.loadAvailableMembers(managedGroup.id);
 
-      final state = container.read(groupManagementNotifierProvider);
+      final state = container.read(provider).requireValue;
       expect(members, isNull);
       expect(state.operationStatus, GroupManagementOperationStatus.error);
       expect(state.errorMessage, 'メンバー情報の取得に失敗しました: TestException: メンバー取得失敗');
     });
 
-    test('新しい初期取得後に完了した古い利用可能メンバー取得結果を破棄する', () async {
-      await loadGroups();
-      final membersCompleter = Completer<List<MemberDto>>();
+    test('破棄済みProviderでは利用可能なメンバーの取得結果を反映しない', () async {
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) async => const [managedGroup]);
+      final provider = groupManagementNotifierProvider(currentMember);
+      final subscription = container.listen(provider, (_, _) {});
+      await container.read(provider.future);
+      final notifier = container.read(provider.notifier);
+      final completer = Completer<List<MemberDto>>();
       when(
         getMembersUsecase.execute(currentMember),
-      ).thenAnswer((_) => membersCompleter.future);
-      when(
-        getGroupsUsecase.execute(secondMember),
-      ).thenAnswer((_) async => const [secondMemberGroup]);
+      ).thenAnswer((_) => completer.future);
 
       final membersFuture = notifier.loadAvailableMembers(managedGroup.id);
-      await notifier.load(secondMember);
-      membersCompleter.complete(const [availableMember]);
-      final members = await membersFuture;
+      subscription.close();
+      await container.pump();
+      completer.complete(const [availableMember]);
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(members, isNull);
-      expect(state.groups, const [secondMemberGroup]);
-      expect(state.operationStatus, GroupManagementOperationStatus.idle);
-      expect(state.availableMembers, isEmpty);
+      expect(await membersFuture, isNull);
     });
 
-    test('作成後に一覧を再取得して成功状態へ遷移する', () async {
-      await loadGroups();
+    test('作成成功後にProviderを再構築して一覧を更新する', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
+      final operationStatuses = <GroupManagementOperationStatus>[];
+      final subscription = container.listen(provider, (_, next) {
+        final value = next.value;
+        if (value != null) {
+          operationStatuses.add(value.operationStatus);
+        }
+      });
+      addTearDown(subscription.close);
       when(
         createGroupUsecase.execute(createdGroup),
       ).thenAnswer((_) async => 'group-2');
@@ -265,12 +291,21 @@ void main() {
       ).thenAnswer((_) async => const [managedGroup, createdGroup]);
 
       final result = await notifier.createGroup(createdGroup);
+      await container.read(provider.future);
 
-      final state = container.read(groupManagementNotifierProvider);
       expect(result, isTrue);
-      expect(state.operationType, GroupManagementOperationType.create);
-      expect(state.operationStatus, GroupManagementOperationStatus.success);
-      expect(state.groups, const [managedGroup, createdGroup]);
+      expect(
+        operationStatuses,
+        contains(GroupManagementOperationStatus.loading),
+      );
+      expect(
+        operationStatuses,
+        contains(GroupManagementOperationStatus.success),
+      );
+      expect(container.read(provider).requireValue.groups, const [
+        managedGroup,
+        createdGroup,
+      ]);
       verifyInOrder([
         createGroupUsecase.execute(createdGroup),
         getGroupsUsecase.execute(currentMember),
@@ -278,7 +313,8 @@ void main() {
     });
 
     test('作成失敗時は一覧を再取得せずエラー状態へ遷移する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       clearInteractions(getGroupsUsecase);
       when(
         createGroupUsecase.execute(createdGroup),
@@ -286,7 +322,7 @@ void main() {
 
       final result = await notifier.createGroup(createdGroup);
 
-      final state = container.read(groupManagementNotifierProvider);
+      final state = container.read(provider).requireValue;
       expect(result, isFalse);
       expect(state.operationStatus, GroupManagementOperationStatus.error);
       expect(state.groups, const [managedGroup]);
@@ -294,20 +330,21 @@ void main() {
       verifyNever(getGroupsUsecase.execute(any));
     });
 
-    test('更新後に一覧を再取得して成功状態へ遷移する', () async {
-      await loadGroups();
+    test('更新成功後にProviderを再構築して一覧を更新する', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) async => const [updatedGroup]);
 
       final result = await notifier.updateGroup(updatedGroup);
+      await container.read(provider.future);
 
-      final state = container.read(groupManagementNotifierProvider);
       expect(result, isTrue);
-      expect(state.operationType, GroupManagementOperationType.update);
-      expect(state.operationStatus, GroupManagementOperationStatus.success);
-      expect(state.groups, const [updatedGroup]);
+      expect(container.read(provider).requireValue.groups, const [
+        updatedGroup,
+      ]);
       verifyInOrder([
         updateGroupUsecase.execute(updatedGroup),
         getGroupsUsecase.execute(currentMember),
@@ -315,7 +352,8 @@ void main() {
     });
 
     test('更新失敗時は一覧を再取得せずエラー状態へ遷移する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       clearInteractions(getGroupsUsecase);
       when(
         updateGroupUsecase.execute(updatedGroup),
@@ -323,7 +361,7 @@ void main() {
 
       final result = await notifier.updateGroup(updatedGroup);
 
-      final state = container.read(groupManagementNotifierProvider);
+      final state = container.read(provider).requireValue;
       expect(result, isFalse);
       expect(state.operationStatus, GroupManagementOperationStatus.error);
       expect(state.groups, const [managedGroup]);
@@ -331,8 +369,9 @@ void main() {
       verifyNever(getGroupsUsecase.execute(any));
     });
 
-    test('削除後に一覧を再取得して成功状態へ遷移する', () async {
-      await loadGroups();
+    test('削除成功後にProviderを再構築して一覧を更新する', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       when(
         deleteGroupUsecase.execute(managedGroup.id),
       ).thenAnswer((_) async {});
@@ -341,12 +380,10 @@ void main() {
       ).thenAnswer((_) async => const []);
 
       final result = await notifier.deleteGroup(managedGroup.id);
+      await container.read(provider.future);
 
-      final state = container.read(groupManagementNotifierProvider);
       expect(result, isTrue);
-      expect(state.operationType, GroupManagementOperationType.delete);
-      expect(state.operationStatus, GroupManagementOperationStatus.success);
-      expect(state.groups, isEmpty);
+      expect(container.read(provider).requireValue.groups, isEmpty);
       verifyInOrder([
         deleteGroupUsecase.execute(managedGroup.id),
         getGroupsUsecase.execute(currentMember),
@@ -354,7 +391,8 @@ void main() {
     });
 
     test('削除失敗時は一覧を再取得せずエラー状態へ遷移する', () async {
-      await loadGroups();
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
       clearInteractions(getGroupsUsecase);
       when(
         deleteGroupUsecase.execute(managedGroup.id),
@@ -362,7 +400,7 @@ void main() {
 
       final result = await notifier.deleteGroup(managedGroup.id);
 
-      final state = container.read(groupManagementNotifierProvider);
+      final state = container.read(provider).requireValue;
       expect(result, isFalse);
       expect(state.operationStatus, GroupManagementOperationStatus.error);
       expect(state.groups, const [managedGroup]);
@@ -370,46 +408,26 @@ void main() {
       verifyNever(getGroupsUsecase.execute(any));
     });
 
-    test('更新後の一覧再取得失敗時は既存一覧を維持してエラー状態へ遷移する', () async {
-      await loadGroups();
-      when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
+    test('処理中に同じNotifierへ更新を要求しても重複実行しない', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
+      final completer = Completer<void>();
       when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenThrow(TestException('再取得失敗'));
-
-      final result = await notifier.updateGroup(updatedGroup);
-
-      final state = container.read(groupManagementNotifierProvider);
-      expect(result, isFalse);
-      expect(state.operationStatus, GroupManagementOperationStatus.error);
-      expect(state.groups, const [managedGroup]);
-      expect(state.errorMessage, '更新に失敗しました: TestException: 再取得失敗');
-      verifyInOrder([
         updateGroupUsecase.execute(updatedGroup),
-        getGroupsUsecase.execute(currentMember),
-      ]);
-    });
-
-    test('新しい初期取得後に完了した古い更新後の再取得結果を破棄する', () async {
-      await loadGroups();
-      final refreshCompleter = Completer<List<GroupDto>>();
-      when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
+      ).thenAnswer((_) => completer.future);
       when(
         getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => refreshCompleter.future);
-      when(
-        getGroupsUsecase.execute(secondMember),
-      ).thenAnswer((_) async => const [secondMemberGroup]);
+      ).thenAnswer((_) async => const [updatedGroup]);
 
-      final updateFuture = notifier.updateGroup(updatedGroup);
-      await notifier.load(secondMember);
-      refreshCompleter.complete(const [updatedGroup]);
-      await updateFuture;
+      final firstResult = notifier.updateGroup(updatedGroup);
+      final secondResult = await notifier.updateGroup(updatedGroup);
 
-      final state = container.read(groupManagementNotifierProvider);
-      expect(state.status, GroupManagementStatus.loaded);
-      expect(state.groups, const [secondMemberGroup]);
-      expect(state.operationStatus, GroupManagementOperationStatus.idle);
+      expect(secondResult, isFalse);
+      verify(updateGroupUsecase.execute(updatedGroup)).called(1);
+
+      completer.complete();
+      expect(await firstResult, isTrue);
+      await container.read(provider.future);
     });
   });
 }
