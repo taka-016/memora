@@ -137,6 +137,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
         errorMessage: '',
       ),
     );
+    final keepAliveLink = ref.keepAlive();
     try {
       await execute();
       if (!ref.mounted) {
@@ -166,6 +167,8 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
         ),
       );
       return false;
+    } finally {
+      keepAliveLink.close();
     }
   }
 
