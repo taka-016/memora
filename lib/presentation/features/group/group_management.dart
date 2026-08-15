@@ -73,8 +73,11 @@ class GroupManagement extends ConsumerWidget {
 
     Future<void> refreshGroups() async {
       try {
-        final refreshFuture = ref.refresh(managementProvider.future);
-        await refreshFuture;
+        final refreshStarted = await managementNotifier.refreshGroups();
+        if (!refreshStarted) {
+          return;
+        }
+        await ref.read(managementProvider.future);
       } catch (_) {
         // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
       }

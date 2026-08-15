@@ -39,6 +39,16 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     }
   }
 
+  Future<bool> refreshGroups() async {
+    if (state.value?.operationStatus ==
+        GroupManagementOperationStatus.loading) {
+      return false;
+    }
+
+    ref.invalidateSelf();
+    return true;
+  }
+
   Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
     final currentState = state.value;
     if (currentState == null ||
