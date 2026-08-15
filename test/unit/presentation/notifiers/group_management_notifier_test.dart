@@ -393,6 +393,37 @@ void main() {
       ]);
     });
 
+    test('削除中の再取得要求を無視して削除完了後に一覧を再取得する', () async {
+      var isDeleted = false;
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
+      final provider = groupManagementNotifierProvider(currentMember);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      await container.read(provider.future);
+      final notifier = container.read(provider.notifier);
+      final deleteCompleter = Completer<void>();
+      when(deleteGroupUsecase.execute(managedGroup.id)).thenAnswer((_) async {
+        await deleteCompleter.future;
+        isDeleted = true;
+      });
+
+      final deleteFuture = notifier.deleteGroup(managedGroup.id);
+
+      await notifier.refreshGroups();
+      expect(container.read(provider).requireValue.groups, const [
+        managedGroup,
+      ]);
+
+      deleteCompleter.complete();
+
+      expect(await deleteFuture, isTrue);
+      await container.read(provider.future);
+      expect(container.read(provider).requireValue.groups, isEmpty);
+      verify(getGroupsUsecase.execute(currentMember)).called(2);
+    });
+
     test('削除中に画面を離れて戻っても完了後に一覧を再取得する', () async {
       var isDeleted = false;
       when(
