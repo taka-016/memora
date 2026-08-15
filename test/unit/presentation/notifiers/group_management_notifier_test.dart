@@ -395,9 +395,9 @@ void main() {
 
     test('削除中に画面を離れて戻っても完了後に一覧を再取得する', () async {
       var isDeleted = false;
-      when(getGroupsUsecase.execute(currentMember)).thenAnswer(
-        (_) async => isDeleted ? const [] : const [managedGroup],
-      );
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
       final provider = groupManagementNotifierProvider(currentMember);
       final firstSubscription = container.listen(provider, (_, _) {});
       await container.read(provider.future);
