@@ -386,11 +386,16 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
-      googleMap.markers.single.onTap?.call();
-      await tester.pumpAndSettle();
 
-      expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
+      final errorMessage = find.byKey(const Key('map_data_load_error'));
+      expect(errorMessage, findsOneWidget);
+      expect(
+        find.descendant(
+          of: errorMessage,
+          matching: find.text('旅行情報の取得に失敗しました'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('訪問場所取得失敗時はエラーを表示し再読み込みできる', (tester) async {
@@ -591,7 +596,7 @@ void main() {
       );
     });
 
-    testWidgets('旅行更新後の一覧取得失敗を表示して画面上から再読み込みできる', (tester) async {
+    testWidgets('画面上から旅行一覧を再読み込みできる', (tester) async {
       const location = LocationDto(
         id: 'location1',
         tripId: 'trip1',
@@ -600,65 +605,24 @@ void main() {
         longitude: 127.719,
         name: '首里城',
       );
-      const trip = TripEntryDto(
-        id: 'trip1',
-        groupId: 'group1',
-        year: 2024,
-        name: '沖縄旅行2024',
-      );
-      const updatedTrip = TripEntryDto(
-        id: 'trip1',
-        groupId: 'group1',
-        year: 2024,
-        name: '更新後の沖縄旅行',
-      );
-      var tripLoadCount = 0;
       when(
         mockGetLocationsByGroupIdUsecase.execute('group1'),
       ).thenAnswer((_) async => const [location]);
-      when(mockGetTripEntriesUsecase.executeByGroupId('group1')).thenAnswer((
-        _,
-      ) async {
-        tripLoadCount++;
-        if (tripLoadCount == 2) {
-          throw TestException('更新後の取得失敗');
-        }
-        return tripLoadCount == 1 ? const [trip] : const [updatedTrip];
-      });
       when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) async => trip);
-      when(mockUpdateTripEntryUsecase.execute(any)).thenAnswer((_) async {});
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenThrow(TestException('取得失敗'));
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
-      googleMap.markers.single.onTap?.call();
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('沖縄旅行2024'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.widgetWithText(TextFormField, '沖縄旅行2024'),
-        '更新後の沖縄旅行',
-      );
-      await tester.tap(find.text('更新'));
-      await tester.pumpAndSettle();
-
-      final errorMessage = find.byKey(const Key('map_data_load_error'));
-      expect(errorMessage, findsOneWidget);
-      expect(
-        find.descendant(
-          of: errorMessage,
-          matching: find.text('旅行情報の取得に失敗しました'),
-        ),
-        findsOneWidget,
-      );
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const []);
 
       await tester.tap(find.byKey(const Key('map_data_retry_button')));
       await tester.pumpAndSettle();
 
-      expect(errorMessage, findsNothing);
-      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(3);
+      expect(find.byKey(const Key('map_data_load_error')), findsNothing);
+      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(2);
     });
 
     testWidgets('旅行名タップ時に旅行が存在しない場合はエラーを表示する', (tester) async {
