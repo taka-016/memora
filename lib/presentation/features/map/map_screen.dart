@@ -103,7 +103,7 @@ class MapScreen extends ConsumerWidget {
               return MapPinBottomSheet(
                 location: location,
                 trips: matchingTrips,
-                hasTripLoadError: state.tripsStatus == MapLoadStatus.error,
+                hasTripLoadError: false,
                 onTripTapped: handleTripTapped,
                 onClose: onClose,
                 onPreviousLocation: onPreviousLocation,
@@ -124,8 +124,15 @@ class MapScreen extends ConsumerWidget {
           mapView,
           if (state.isGroupDataLoading)
             const Center(child: CircularProgressIndicator())
-          else if (state.locationsStatus == MapLoadStatus.error)
-            _VisitLocationsLoadErrorMessage(
+          else if (state.locationsStatus == MapLoadStatus.error ||
+              state.tripsStatus == MapLoadStatus.error)
+            _MapDataLoadErrorMessage(
+              messages: [
+                if (state.locationsStatus == MapLoadStatus.error)
+                  state.locationsErrorMessage,
+                if (state.tripsStatus == MapLoadStatus.error)
+                  state.tripsErrorMessage,
+              ],
               onRetry: () => unawaited(notifier.retryGroupData()),
             )
           else if (state.locations.isEmpty)
@@ -271,9 +278,13 @@ class _NoVisitLocationsMessage extends StatelessWidget {
   }
 }
 
-class _VisitLocationsLoadErrorMessage extends StatelessWidget {
-  const _VisitLocationsLoadErrorMessage({required this.onRetry});
+class _MapDataLoadErrorMessage extends StatelessWidget {
+  const _MapDataLoadErrorMessage({
+    required this.messages,
+    required this.onRetry,
+  });
 
+  final List<String> messages;
   final VoidCallback onRetry;
 
   @override
@@ -281,14 +292,19 @@ class _VisitLocationsLoadErrorMessage extends StatelessWidget {
     return Positioned.fill(
       child: Center(
         child: Card(
+          key: const Key('map_data_load_error'),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('訪問場所の取得に失敗しました'),
+                for (final message in messages) Text(message),
                 const SizedBox(height: 16),
-                ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+                ElevatedButton(
+                  key: const Key('map_data_retry_button'),
+                  onPressed: onRetry,
+                  child: const Text('再読み込み'),
+                ),
               ],
             ),
           ),
