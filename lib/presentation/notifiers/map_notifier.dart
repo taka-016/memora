@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
@@ -72,7 +71,6 @@ class MapNotifier extends Notifier<MapState> {
   }
 
   Future<void> selectGroup(GroupDto group) async {
-    _groupDataRequestId++;
     state = state.copyWith(
       selectedGroup: group,
       locations: const [],
