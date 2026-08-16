@@ -359,7 +359,7 @@ void main() {
       expect(find.text('東京旅行'), findsNothing);
     });
 
-    testWidgets('旅行取得失敗時はピンのボトムシートにエラーを表示する', (tester) async {
+    testWidgets('旅行取得失敗時は画面上にエラーを表示する', (tester) async {
       const group = GroupDto(
         id: 'group1',
         ownerId: 'owner',

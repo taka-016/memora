@@ -103,7 +103,6 @@ class MapScreen extends ConsumerWidget {
               return MapPinBottomSheet(
                 location: location,
                 trips: matchingTrips,
-                hasTripLoadError: false,
                 onTripTapped: handleTripTapped,
                 onClose: onClose,
                 onPreviousLocation: onPreviousLocation,
