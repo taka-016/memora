@@ -77,19 +77,15 @@ class MapScreen extends ConsumerWidget {
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    final groupSelector = _MapGroupSelector(
-      groups: state.groups,
-      selectedGroup: selectedGroup,
-      onSelected: (group) => unawaited(notifier.selectGroup(group)),
-    );
-
     final mapView = KeyedSubtree(
       key: ValueKey(selectedGroup.id),
       child: MapViewFactory.create(mapViewType).createMapView(
         locations: state.locations,
         focusedLocation: state.focusedLocation,
         topLeadingOverlay: _MapToolbar(
-          groupSelector: groupSelector,
+          groups: state.groups,
+          selectedGroup: selectedGroup,
+          onGroupSelected: (group) => unawaited(notifier.selectGroup(group)),
           isLoading: state.isGroupDataLoading,
           onReload: () => unawaited(notifier.retryGroupData()),
         ),
@@ -147,12 +143,16 @@ class MapScreen extends ConsumerWidget {
 
 class _MapToolbar extends StatelessWidget {
   const _MapToolbar({
-    required this.groupSelector,
+    required this.groups,
+    required this.selectedGroup,
+    required this.onGroupSelected,
     required this.isLoading,
     required this.onReload,
   });
 
-  final Widget groupSelector;
+  final List<GroupDto> groups;
+  final GroupDto selectedGroup;
+  final ValueChanged<GroupDto> onGroupSelected;
   final bool isLoading;
   final VoidCallback onReload;
 
@@ -162,7 +162,11 @@ class _MapToolbar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        groupSelector,
+        _MapGroupSelector(
+          groups: groups,
+          selectedGroup: selectedGroup,
+          onSelected: onGroupSelected,
+        ),
         const SizedBox(width: 8),
         _MapReloadButton(isLoading: isLoading, onReload: onReload),
       ],
