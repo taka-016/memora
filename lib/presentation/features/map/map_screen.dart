@@ -159,15 +159,14 @@ class _MapToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         _MapGroupSelector(
           groups: groups,
           selectedGroup: selectedGroup,
           onSelected: onGroupSelected,
         ),
-        const SizedBox(width: 8),
+        const Spacer(),
         _MapReloadButton(isLoading: isLoading, onReload: onReload),
       ],
     );

@@ -35,7 +35,7 @@ class PlaceholderMapView extends StatelessWidget {
             ),
           ),
           if (topLeadingOverlay != null)
-            Positioned(top: 68, left: 16, child: topLeadingOverlay!),
+            Positioned(top: 68, left: 16, right: 16, child: topLeadingOverlay!),
         ],
       ),
     );
