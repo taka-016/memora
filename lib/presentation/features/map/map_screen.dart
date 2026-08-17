@@ -135,19 +135,32 @@ class MapScreen extends ConsumerWidget {
             )
           else if (state.locations.isEmpty)
             const _NoVisitLocationsMessage(),
-          Positioned(
-            top: 68,
-            right: 16,
-            child: IconButton.filledTonal(
-              key: const Key('map_reload_button'),
-              tooltip: '再読み込み',
-              onPressed: state.isGroupDataLoading
-                  ? null
-                  : () => unawaited(notifier.retryGroupData()),
-              icon: const Icon(Icons.refresh),
-            ),
+          _MapReloadButton(
+            isLoading: state.isGroupDataLoading,
+            onReload: () => unawaited(notifier.retryGroupData()),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _MapReloadButton extends StatelessWidget {
+  const _MapReloadButton({required this.isLoading, required this.onReload});
+
+  final bool isLoading;
+  final VoidCallback onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 68,
+      right: 16,
+      child: IconButton.filledTonal(
+        key: const Key('map_reload_button'),
+        tooltip: '再読み込み',
+        onPressed: isLoading ? null : onReload,
+        icon: const Icon(Icons.refresh),
       ),
     );
   }
