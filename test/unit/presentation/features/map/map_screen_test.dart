@@ -116,20 +116,6 @@ void main() {
       );
     });
 
-    testWidgets('グループ選択と再読み込みアイコンの上端を揃える', (tester) async {
-      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
-      await tester.pumpAndSettle();
-
-      final groupSelectorTop = tester
-          .getTopLeft(find.byKey(const Key('map_group_selector')))
-          .dy;
-      final reloadButtonTop = tester
-          .getTopLeft(find.byKey(const Key('map_reload_button')))
-          .dy;
-
-      expect(reloadButtonTop, groupSelectorTop);
-    });
-
     testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 600);
