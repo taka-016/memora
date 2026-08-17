@@ -132,10 +132,21 @@ class MapScreen extends ConsumerWidget {
                 if (state.tripsStatus == MapLoadStatus.error)
                   state.tripsErrorMessage,
               ],
-              onRetry: () => unawaited(notifier.retryGroupData()),
             )
           else if (state.locations.isEmpty)
             const _NoVisitLocationsMessage(),
+          Positioned(
+            top: 68,
+            right: 16,
+            child: IconButton.filledTonal(
+              key: const Key('map_reload_button'),
+              tooltip: '再読み込み',
+              onPressed: state.isGroupDataLoading
+                  ? null
+                  : () => unawaited(notifier.retryGroupData()),
+              icon: const Icon(Icons.refresh),
+            ),
+          ),
         ],
       ),
     );
@@ -278,13 +289,9 @@ class _NoVisitLocationsMessage extends StatelessWidget {
 }
 
 class _MapDataLoadErrorMessage extends StatelessWidget {
-  const _MapDataLoadErrorMessage({
-    required this.messages,
-    required this.onRetry,
-  });
+  const _MapDataLoadErrorMessage({required this.messages});
 
   final List<String> messages;
-  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -296,15 +303,7 @@ class _MapDataLoadErrorMessage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final message in messages) Text(message),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  key: const Key('map_data_retry_button'),
-                  onPressed: onRetry,
-                  child: const Text('再読み込み'),
-                ),
-              ],
+              children: [for (final message in messages) Text(message)],
             ),
           ),
         ),
