@@ -11,18 +11,46 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 
 enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
+GroupMemberDto _createGroupMemberForEdit(
+  MemberDto member,
+  String groupId, {
+  bool isAdministrator = false,
+  int orderIndex = 0,
+}) {
+  return GroupMemberDto(
+    memberId: member.id,
+    groupId: groupId,
+    isAdministrator: isAdministrator,
+    orderIndex: orderIndex,
+    accountId: member.accountId,
+    ownerId: member.ownerId,
+    hiraganaFirstName: member.hiraganaFirstName,
+    hiraganaLastName: member.hiraganaLastName,
+    kanjiFirstName: member.kanjiFirstName,
+    kanjiLastName: member.kanjiLastName,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    displayName: member.displayName,
+    type: member.type,
+    birthday: member.birthday,
+    gender: member.gender,
+    email: member.email,
+    phoneNumber: member.phoneNumber,
+  );
+}
+
 class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
   final Future<bool> Function(GroupDto) onSave;
   final List<MemberDto> availableMembers;
-  final MemberDto member;
+  final MemberDto currentMember;
 
   const GroupEditModal({
     super.key,
     required this.group,
     required this.onSave,
     required this.availableMembers,
-    required this.member,
+    required this.currentMember,
   });
 
   @override
@@ -33,37 +61,9 @@ class GroupEditModal extends HookConsumerWidget {
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
 
-    GroupMemberDto createGroupMember(
-      MemberDto member,
-      String groupId, {
-      bool isAdministrator = false,
-      int orderIndex = 0,
-    }) {
-      return GroupMemberDto(
-        memberId: member.id,
-        groupId: groupId,
-        isAdministrator: isAdministrator,
-        orderIndex: orderIndex,
-        accountId: member.accountId,
-        ownerId: member.ownerId,
-        hiraganaFirstName: member.hiraganaFirstName,
-        hiraganaLastName: member.hiraganaLastName,
-        kanjiFirstName: member.kanjiFirstName,
-        kanjiLastName: member.kanjiLastName,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        displayName: member.displayName,
-        type: member.type,
-        birthday: member.birthday,
-        gender: member.gender,
-        email: member.email,
-        phoneNumber: member.phoneNumber,
-      );
-    }
-
     MemberDto? findMemberById(String memberId) {
-      if (member.id == memberId) {
-        return member;
+      if (currentMember.id == memberId) {
+        return currentMember;
       }
       for (final member in availableMembers) {
         if (member.id == memberId) {
@@ -96,7 +96,7 @@ class GroupEditModal extends HookConsumerWidget {
       final resolvedOwner = ownerIndex != -1
           ? normalizedMembers[ownerIndex]
           : null;
-      final fallbackOwner = member.id == ownerId ? member : null;
+      final fallbackOwner = currentMember.id == ownerId ? currentMember : null;
 
       if (resolvedOwner != null) {
         normalizedMembers[ownerIndex] = resolvedOwner.copyWith(
@@ -105,7 +105,11 @@ class GroupEditModal extends HookConsumerWidget {
         );
       } else if (fallbackOwner != null) {
         normalizedMembers.add(
-          createGroupMember(fallbackOwner, groupId, isAdministrator: true),
+          _createGroupMemberForEdit(
+            fallbackOwner,
+            groupId,
+            isAdministrator: true,
+          ),
         );
       }
 
@@ -121,7 +125,7 @@ class GroupEditModal extends HookConsumerWidget {
 
     final initialMembers = useMemoized(
       () => normalizeMembers(group.ownerId, group.id, group.members),
-      [group],
+      [group, currentMember],
     );
     final initialGroupForComparison = useMemoized(
       () => group.copyWith(members: initialMembers, memo: group.memo ?? ''),
@@ -295,7 +299,7 @@ class GroupEditModal extends HookConsumerWidget {
             final updatedMembers = List<GroupMemberDto>.from(
               groupState.value.members,
             );
-            updatedMembers[index] = createGroupMember(
+            updatedMembers[index] = _createGroupMemberForEdit(
               selectedMember,
               groupState.value.id,
             );
@@ -533,7 +537,10 @@ class GroupEditModal extends HookConsumerWidget {
                       groupState.value.members,
                     );
                     updatedMembers.add(
-                      createGroupMember(selectedMember, groupState.value.id),
+                      _createGroupMemberForEdit(
+                        selectedMember,
+                        groupState.value.id,
+                      ),
                     );
                     updateGroupMembers(updatedMembers);
                   });

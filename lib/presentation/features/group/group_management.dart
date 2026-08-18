@@ -126,7 +126,7 @@ class GroupManagement extends ConsumerWidget {
         builder: (_) => GroupEditModal(
           group: group,
           availableMembers: availableMembers,
-          member: currentMember,
+          currentMember: currentMember,
           onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.createGroup(group),
             successMessage: 'グループを作成しました',
@@ -148,7 +148,7 @@ class GroupManagement extends ConsumerWidget {
         builder: (_) => GroupEditModal(
           group: groupWithMembers,
           availableMembers: availableMembers,
-          member: currentMember,
+          currentMember: currentMember,
           onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.updateGroup(group),
             successMessage: 'グループを更新しました',

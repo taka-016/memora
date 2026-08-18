@@ -93,7 +93,7 @@ Widget buildSubject({
   required GroupDto group,
   required Future<void> Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
-  required MemberDto member,
+  required MemberDto currentMember,
 }) {
   Future<bool> save(GroupDto group) async {
     await onSave(group);
@@ -106,7 +106,7 @@ Widget buildSubject({
         group: group,
         onSave: save,
         availableMembers: availableMembers.map(toMemberDto).toList(),
-        member: member,
+        currentMember: currentMember,
       ),
     ),
   );
@@ -120,7 +120,7 @@ void main() {
           group: createGroupDto(id: '', name: '', memo: ''),
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -140,7 +140,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -153,7 +153,7 @@ void main() {
           group: createGroupDto(id: '', name: '', memo: ''),
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -174,7 +174,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -205,7 +205,7 @@ void main() {
                       group: createGroupDto(id: '', name: '', memo: ''),
                       onSave: failToSave,
                       availableMembers: const [],
-                      member: createCurrentMember(),
+                      currentMember: createCurrentMember(),
                     ),
                   ),
                   child: const Text('開く'),
@@ -242,7 +242,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -309,7 +309,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -344,7 +344,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -379,7 +379,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -424,7 +424,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -490,7 +490,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -541,7 +541,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -589,7 +589,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -638,7 +638,7 @@ void main() {
               type: 'member',
             ),
           ],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -680,7 +680,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -721,7 +721,7 @@ void main() {
                       ),
                       onSave: saveSuccessfully,
                       availableMembers: const [],
-                      member: createCurrentMember(),
+                      currentMember: createCurrentMember(),
                     ),
                   ),
                   child: const Text('Open Modal'),
@@ -789,7 +789,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -855,7 +855,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -879,7 +879,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -954,7 +954,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -1043,7 +1043,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -1116,7 +1116,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 

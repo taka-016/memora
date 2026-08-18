@@ -1,46 +1,7 @@
 import 'package:memora/application/dtos/group/group_member_dto.dart';
-import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/domain/entities/group/group_member.dart';
 
 class GroupMemberMapper {
-  static GroupMemberDto fromMember(
-    MemberDto member,
-    String groupId, {
-    int orderIndex = 0,
-  }) {
-    return GroupMemberDto(
-      memberId: member.id,
-      groupId: groupId,
-      isAdministrator: false,
-      orderIndex: orderIndex,
-      accountId: member.accountId,
-      ownerId: member.ownerId,
-      hiraganaFirstName: member.hiraganaFirstName,
-      hiraganaLastName: member.hiraganaLastName,
-      kanjiFirstName: member.kanjiFirstName,
-      kanjiLastName: member.kanjiLastName,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      displayName: member.displayName,
-      type: member.type,
-      birthday: member.birthday,
-      gender: member.gender,
-      email: member.email,
-      phoneNumber: member.phoneNumber,
-    );
-  }
-
-  static List<GroupMemberDto> fromMemberList(
-    List<MemberDto> members,
-    String groupId,
-  ) {
-    return members
-        .asMap()
-        .entries
-        .map((entry) => fromMember(entry.value, groupId, orderIndex: entry.key))
-        .toList();
-  }
-
   static GroupMember toEntity(GroupMemberDto dto) {
     return GroupMember(
       groupId: dto.groupId,
