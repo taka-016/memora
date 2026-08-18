@@ -13,7 +13,6 @@ import 'group_edit_available_members_provider_test.mocks.dart';
 void main() {
   const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
   const availableMember = MemberDto(id: 'member-2', displayName: '花子');
-  const groupId = 'group-1';
 
   late MockGetManagedMembersUsecase getMembersUsecase;
   late ProviderContainer container;
@@ -32,32 +31,24 @@ void main() {
   });
 
   group('groupEditAvailableMembersProvider', () {
-    test('管理対象メンバーを編集対象グループのメンバーへ変換する', () async {
+    test('管理対象メンバーを選択候補としてそのまま返す', () async {
       when(
         getMembersUsecase.execute(currentMember),
       ).thenAnswer((_) async => const [availableMember]);
-      final provider = groupEditAvailableMembersProvider((
-        currentMember: currentMember,
-        groupId: groupId,
-      ));
+      final provider = groupEditAvailableMembersProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
 
       final members = await container.read(provider.future);
 
-      expect(members, hasLength(1));
-      expect(members.single.memberId, availableMember.id);
-      expect(members.single.groupId, groupId);
+      expect(members, const [availableMember]);
     });
 
     test('取得失敗を呼び出し元へ伝播する', () async {
       when(
         getMembersUsecase.execute(currentMember),
       ).thenThrow(TestException('メンバー取得失敗'));
-      final provider = groupEditAvailableMembersProvider((
-        currentMember: currentMember,
-        groupId: groupId,
-      ));
+      final provider = groupEditAvailableMembersProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
 

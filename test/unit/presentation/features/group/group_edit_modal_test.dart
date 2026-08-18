@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({
@@ -22,12 +23,8 @@ GroupDto createGroupDto({
   );
 }
 
-GroupMemberDto createCurrentMember({String groupId = ''}) {
-  return createGroupMemberDto(
-    memberId: 'owner-id',
-    groupId: groupId,
-    displayName: 'オーナー',
-  );
+MemberDto createCurrentMember() {
+  return const MemberDto(id: 'owner-id', displayName: 'オーナー');
 }
 
 GroupMemberDto createGroupMemberDto({
@@ -72,11 +69,31 @@ GroupMemberDto createGroupMemberDto({
   );
 }
 
+MemberDto toMemberDto(GroupMemberDto member) {
+  return MemberDto(
+    id: member.memberId,
+    accountId: member.accountId,
+    ownerId: member.ownerId,
+    hiraganaFirstName: member.hiraganaFirstName,
+    hiraganaLastName: member.hiraganaLastName,
+    kanjiFirstName: member.kanjiFirstName,
+    kanjiLastName: member.kanjiLastName,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    displayName: member.displayName,
+    type: member.type,
+    birthday: member.birthday,
+    gender: member.gender,
+    email: member.email,
+    phoneNumber: member.phoneNumber,
+  );
+}
+
 Widget buildSubject({
   required GroupDto group,
   required Future<void> Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
-  required GroupMemberDto member,
+  required MemberDto member,
 }) {
   Future<bool> save(GroupDto group) async {
     await onSave(group);
@@ -88,7 +105,7 @@ Widget buildSubject({
       home: GroupEditModal(
         group: group,
         onSave: save,
-        availableMembers: availableMembers,
+        availableMembers: availableMembers.map(toMemberDto).toList(),
         member: member,
       ),
     ),
