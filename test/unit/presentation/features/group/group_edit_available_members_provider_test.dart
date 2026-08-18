@@ -3,11 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/presentation/features/group/group_edit_available_members_provider.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import '../../../../helpers/test_exception.dart';
-import '../../notifiers/group_management_notifier_test.mocks.dart';
+import 'group_edit_available_members_provider_test.mocks.dart';
 
+@GenerateMocks([GetManagedMembersUsecase])
 void main() {
   const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
   const availableMember = MemberDto(id: 'member-2', displayName: '花子');

@@ -136,11 +136,11 @@
 
 - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期処理の競合、部分失敗、再試行、更新後の整合性維持がViewに集中している機能を改修対象とする
 - 単純なデータ取得は`FutureProvider`、複雑な状態遷移や更新後の整合性維持は`Notifier`、Dialog・Snackbar・画面遷移と一時的な入力状態はView、複数画面で再利用する業務フローはApplication層のUseCaseへ配置する
-- `XxxState`には描画、操作可否、再試行に継続して必要な状態だけを保持し、単発の操作結果、Dialogへ渡すだけの取得結果、Snackbar用の成功・失敗イベントはNotifierの戻り値または例外としてViewへ返す
+- `XxxState`には描画、操作可否、再試行に継続して必要な状態だけを保持する。Stateの更新に関係する単発の操作結果はNotifierの戻り値または例外、Stateから独立した単純な取得結果は`FutureProvider`またはUseCaseの戻り値としてViewへ返す
 - 操作中状態は進捗表示や操作無効化などViewの描画に使用する場合だけStateへ含め、重複実行防止だけが目的の場合はNotifier内部で管理する
 - Notifier化では既存のhooks構成を維持することを前提とせず、データ取得や状態のライフサイクルはRiverpodの`family`、`autoDispose`、`build()`、Providerの再構築で表現する
 - hooksはフォーカス、入力、スクロールなどのUI固有状態に必要な場合だけ使用し、不要になった画面は`HookConsumerWidget`から`ConsumerWidget`へ変更する
-- NotifierはUseCaseの実行順序、再試行、古いリクエスト結果の破棄、作成・更新・削除後の状態反映を担当する
+- Notifierは公開するStateに関係するUseCaseの実行順序、再試行、古いリクエスト結果の破棄、作成・更新・削除後の状態反映を担当し、Stateから独立した単発取得を集約しない
 - Viewは状態の描画、入力、Notifierへの操作通知、Dialog・Snackbar・画面遷移の実表示を担当する
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
@@ -149,17 +149,17 @@
 
 - `MemberManagementState`には管理対象メンバーと本人メンバーを統合した一覧を保持し、操作中状態はViewで操作無効化や進捗表示に使用する場合だけ追加する
 - 一覧取得、本人メンバーの解決、メンバーの作成・更新・削除と各処理後の一覧再取得をNotifierへ移す
-- 招待コードはNotifierのStateへ保存せず操作結果としてViewへ返し、招待Dialog、共有、Snackbarの実表示は`MemberManagement`へ残す
-- 一覧取得、本人メンバーの解決、各更新処理、更新後の再取得、招待処理の失敗伝播を単体テストで検証する
+- 招待コード生成は一覧Stateから独立した単発操作としてNotifierへ移さず、既存UseCaseの操作結果をViewで受け取り、招待Dialog、共有、Snackbarを実表示する
+- 一覧取得、本人メンバーの解決、各更新処理、更新後の再取得はNotifier単体テスト、招待コード生成の成功・失敗とDialog・共有・SnackbarはUseCase単体テストとWidgetテストで検証する
 
 #### 3. TripManagementのデータ状態をNotifierへ分離する
 
 - `TripManagementState`と`TripManagementNotifier`を作成し、対象年の旅行一覧、グループメンバー、取得元ごとの読み込み・再試行状態を管理する
-- 旅行一覧とグループメンバーの並行取得、旅行詳細の取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移す
+- 旅行一覧とグループメンバーの並行取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移し、旅行IDを引数にした旅行詳細の単発取得は専用の`FutureProvider.autoDispose.family`へ分離する
 - 一覧とグループメンバーの部分失敗を区別し、成功した取得結果を維持して個別に再試行できる状態だけを保持する
-- Androidウィジェットから渡された旅行IDの詳細取得はNotifierへ移すが、初期Dialogを一度だけ表示する制御はUI固有状態として`TripManagement`へ残す
-- 旅行詳細や更新処理の結果はStateへ蓄積せず呼び出し元へ返し、旅行編集・削除DialogとSnackbarの実表示は`TripManagement`へ残す
-- 並行取得の部分失敗、旅行の各更新処理、更新後の再取得、存在しない旅行IDを単体テストで検証し、Dialogの重複表示防止はWidgetテストで検証する
+- Androidウィジェットから渡された旅行IDにも同じ旅行詳細Providerを使用し、初期Dialogを一度だけ表示する制御はUI固有状態として`TripManagement`へ残す
+- 更新処理の結果はStateへ蓄積せずNotifierの戻り値または例外として呼び出し元へ返し、旅行編集・削除DialogとSnackbarの実表示は`TripManagement`へ残す
+- 並行取得の部分失敗、旅行の各更新処理、更新後の再取得はNotifier単体テスト、旅行詳細の取得成功・存在しない旅行ID・取得失敗はProvider単体テスト、Dialogの重複表示防止はWidgetテストで検証する
 
 #### 4. DvcPointCalculationScreenの計算状態をNotifierへ分離する
 
