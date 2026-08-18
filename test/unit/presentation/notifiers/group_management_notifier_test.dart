@@ -219,7 +219,7 @@ void main() {
         getMembersUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
 
-      final loadMembersFuture = notifier.loadAvailableMembers('group-1');
+      final loadMembersFuture = notifier.getAvailableMembersForEdit('group-1');
 
       expect(container.read(provider).requireValue, initialState);
 
@@ -241,7 +241,7 @@ void main() {
       ).thenThrow(TestException('メンバー取得失敗'));
 
       await expectLater(
-        notifier.loadAvailableMembers(managedGroup.id),
+        notifier.getAvailableMembersForEdit(managedGroup.id),
         throwsA(isA<TestException>()),
       );
 
@@ -261,7 +261,9 @@ void main() {
         getMembersUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
 
-      final membersFuture = notifier.loadAvailableMembers(managedGroup.id);
+      final membersFuture = notifier.getAvailableMembersForEdit(
+        managedGroup.id,
+      );
       subscription.close();
       await container.pump();
       completer.complete(const [availableMember]);
