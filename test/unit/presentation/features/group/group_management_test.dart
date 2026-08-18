@@ -359,6 +359,40 @@ void main() {
       verify(mockGroupRepository.updateGroup(any)).called(1);
     });
 
+    testWidgets('グループ更新失敗時は編集画面を維持してエラーを表示すること', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+      when(
+        mockGroupRepository.updateGroup(any),
+      ).thenThrow(TestException('更新エラー'));
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'グループ名').first,
+        'Updated Group Name',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ編集'), findsOneWidget);
+      expect(find.text('更新に失敗しました: TestException: 更新エラー'), findsOneWidget);
+      expect(find.text('保存に失敗しました。もう一度お試しください。'), findsNothing);
+    });
+
     testWidgets('グループ編集後に一覧が最新情報で再取得されること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
