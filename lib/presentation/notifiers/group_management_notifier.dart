@@ -49,7 +49,9 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     return true;
   }
 
-  Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
+  Future<List<GroupMemberDto>?> getAvailableMembersForEdit(
+    String groupId,
+  ) async {
     try {
       final members = await ref
           .read(getManagedMembersUsecaseProvider)
@@ -60,7 +62,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
       return GroupMemberMapper.fromMemberList(members, groupId);
     } catch (e, stack) {
       logger.e(
-        'GroupManagementNotifier.loadAvailableMembers: ${e.toString()}',
+        'GroupManagementNotifier.getAvailableMembersForEdit: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );

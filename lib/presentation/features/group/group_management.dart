@@ -61,9 +61,11 @@ class GroupManagement extends ConsumerWidget {
       }
     }
 
-    Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
+    Future<List<GroupMemberDto>?> getAvailableMembersForEdit(
+      String groupId,
+    ) async {
       try {
-        return await managementNotifier.loadAvailableMembers(groupId);
+        return await managementNotifier.getAvailableMembersForEdit(groupId);
       } catch (e) {
         if (context.mounted) {
           showMessage('メンバー情報の取得に失敗しました: $e');
@@ -106,7 +108,7 @@ class GroupManagement extends ConsumerWidget {
         name: '',
         members: const [],
       );
-      final availableMembers = await loadAvailableMembers(group.id);
+      final availableMembers = await getAvailableMembersForEdit(group.id);
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -128,7 +130,9 @@ class GroupManagement extends ConsumerWidget {
     }
 
     Future<void> showEditGroupDialog(GroupDto groupWithMembers) async {
-      final availableMembers = await loadAvailableMembers(groupWithMembers.id);
+      final availableMembers = await getAvailableMembersForEdit(
+        groupWithMembers.id,
+      );
       if (!context.mounted || availableMembers == null) {
         return;
       }
