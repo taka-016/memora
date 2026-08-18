@@ -34,10 +34,7 @@ class MapNotifier extends Notifier<MapState> {
       return;
     }
 
-    state = state.copyWith(
-      groupsStatus: MapLoadStatus.loading,
-      groupsErrorMessage: '',
-    );
+    state = state.copyWith(groupsStatus: MapLoadStatus.loading);
     try {
       final groups = await ref
           .read(getGroupsWithMembersUsecaseProvider)
@@ -48,7 +45,6 @@ class MapNotifier extends Notifier<MapState> {
       state = state.copyWith(
         groups: groups,
         groupsStatus: MapLoadStatus.success,
-        groupsErrorMessage: '',
         clearSelectedGroup: state.selectedGroup != null,
       );
       if (groups.length == 1) {
@@ -63,10 +59,7 @@ class MapNotifier extends Notifier<MapState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        groupsStatus: MapLoadStatus.error,
-        groupsErrorMessage: 'グループの取得に失敗しました',
-      );
+      state = state.copyWith(groupsStatus: MapLoadStatus.error);
     }
   }
 
@@ -75,7 +68,6 @@ class MapNotifier extends Notifier<MapState> {
       selectedGroup: group,
       locations: const [],
       trips: const [],
-      clearFocusedLocation: true,
       locationsStatus: MapLoadStatus.initial,
       tripsStatus: MapLoadStatus.initial,
       locationsErrorMessage: '',
@@ -92,10 +84,6 @@ class MapNotifier extends Notifier<MapState> {
   }
 
   Future<TripEntryDto?> loadTripDetail(String tripId) async {
-    state = state.copyWith(
-      tripOperationStatus: MapTripOperationStatus.loading,
-      tripOperationErrorMessage: '',
-    );
     try {
       final trip = await ref
           .read(getTripEntryByIdUsecaseProvider)
@@ -103,17 +91,6 @@ class MapNotifier extends Notifier<MapState> {
       if (!ref.mounted) {
         return null;
       }
-      if (trip == null) {
-        state = state.copyWith(
-          tripOperationStatus: MapTripOperationStatus.error,
-          tripOperationErrorMessage: '指定された旅行が見つかりませんでした',
-        );
-        return null;
-      }
-      state = state.copyWith(
-        tripOperationStatus: MapTripOperationStatus.success,
-        tripOperationErrorMessage: '',
-      );
       return trip;
     } catch (e, stack) {
       if (!ref.mounted) {
@@ -124,19 +101,11 @@ class MapNotifier extends Notifier<MapState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        tripOperationStatus: MapTripOperationStatus.error,
-        tripOperationErrorMessage: '指定された旅行が見つかりませんでした',
-      );
       return null;
     }
   }
 
   Future<bool> updateTripEntry(TripEntryDto tripEntry) async {
-    state = state.copyWith(
-      tripOperationStatus: MapTripOperationStatus.loading,
-      tripOperationErrorMessage: '',
-    );
     final keepAliveLink = ref.keepAlive();
     try {
       await ref
@@ -145,10 +114,6 @@ class MapNotifier extends Notifier<MapState> {
       if (!ref.mounted) {
         return false;
       }
-      state = state.copyWith(
-        tripOperationStatus: MapTripOperationStatus.success,
-        tripOperationErrorMessage: '',
-      );
       await _loadSelectedGroupData(preserveData: true);
       return ref.mounted;
     } catch (e, stack) {
@@ -157,10 +122,6 @@ class MapNotifier extends Notifier<MapState> {
           'MapNotifier.updateTripEntry: ${e.toString()}',
           error: e,
           stackTrace: stack,
-        );
-        state = state.copyWith(
-          tripOperationStatus: MapTripOperationStatus.error,
-          tripOperationErrorMessage: '旅行の更新に失敗しました',
         );
       }
       rethrow;
@@ -179,7 +140,6 @@ class MapNotifier extends Notifier<MapState> {
     state = state.copyWith(
       locations: preserveData ? state.locations : const [],
       trips: preserveData ? state.trips : const [],
-      clearFocusedLocation: !preserveData,
       locationsStatus: MapLoadStatus.loading,
       tripsStatus: MapLoadStatus.loading,
       locationsErrorMessage: '',
@@ -202,8 +162,6 @@ class MapNotifier extends Notifier<MapState> {
       }
       state = state.copyWith(
         locations: locations,
-        focusedLocation: locations.firstOrNull,
-        clearFocusedLocation: locations.isEmpty,
         locationsStatus: MapLoadStatus.success,
         locationsErrorMessage: '',
       );
