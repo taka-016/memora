@@ -249,32 +249,32 @@ void main() {
       verify(getTripsUsecase.executeByGroupId(firstGroup.id)).called(2);
     });
 
-    test('旅行詳細を再取得し取得状態を更新する', () async {
+    test('旅行詳細を再取得しても地図の描画状態を変更しない', () async {
       final notifier = await startNotifier();
+      final provider = mapNotifierProvider(currentMember);
+      final stateBeforeLoad = container.read(provider);
       when(
         getTripByIdUsecase.execute(firstTrip.id),
       ).thenAnswer((_) async => firstTrip);
 
       final trip = await notifier.loadTripDetail(firstTrip.id);
 
-      final state = container.read(mapNotifierProvider(currentMember));
       expect(trip, firstTrip);
-      expect(state.tripOperationStatus, MapTripOperationStatus.success);
-      expect(state.tripOperationErrorMessage, isEmpty);
+      expect(container.read(provider), stateBeforeLoad);
     });
 
-    test('旅行詳細の取得失敗を操作エラーとして保持する', () async {
+    test('旅行詳細の取得失敗時も地図の描画状態を変更しない', () async {
       final notifier = await startNotifier();
+      final provider = mapNotifierProvider(currentMember);
+      final stateBeforeLoad = container.read(provider);
       when(
         getTripByIdUsecase.execute(firstTrip.id),
       ).thenThrow(TestException('旅行詳細取得失敗'));
 
       final trip = await notifier.loadTripDetail(firstTrip.id);
 
-      final state = container.read(mapNotifierProvider(currentMember));
       expect(trip, isNull);
-      expect(state.tripOperationStatus, MapTripOperationStatus.error);
-      expect(state.tripOperationErrorMessage, '指定された旅行が見つかりませんでした');
+      expect(container.read(provider), stateBeforeLoad);
     });
 
     test('旅行更新後に旅行一覧と訪問場所一覧を再取得する', () async {
@@ -301,7 +301,6 @@ void main() {
 
       final state = container.read(mapNotifierProvider(currentMember));
       expect(result, isTrue);
-      expect(state.tripOperationStatus, MapTripOperationStatus.success);
       expect(state.locations, const [secondLocation]);
       expect(state.trips, [updatedTrip]);
       verifyInOrder([
