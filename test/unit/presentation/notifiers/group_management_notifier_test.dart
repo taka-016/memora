@@ -8,7 +8,6 @@ import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -18,7 +17,6 @@ import 'group_management_notifier_test.mocks.dart';
 
 @GenerateMocks([
   GetManagedGroupsWithMembersUsecase,
-  GetManagedMembersUsecase,
   CreateGroupUsecase,
   UpdateGroupUsecase,
   DeleteGroupUsecase,
@@ -26,7 +24,6 @@ import 'group_management_notifier_test.mocks.dart';
 void main() {
   const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
   const secondMember = MemberDto(id: 'member-3', displayName: '次郎');
-  const availableMember = MemberDto(id: 'member-2', displayName: '花子');
   const managedGroup = GroupDto(
     id: 'group-1',
     ownerId: 'member-1',
@@ -53,7 +50,6 @@ void main() {
   );
 
   late MockGetManagedGroupsWithMembersUsecase getGroupsUsecase;
-  late MockGetManagedMembersUsecase getMembersUsecase;
   late MockCreateGroupUsecase createGroupUsecase;
   late MockUpdateGroupUsecase updateGroupUsecase;
   late MockDeleteGroupUsecase deleteGroupUsecase;
@@ -61,7 +57,6 @@ void main() {
 
   setUp(() {
     getGroupsUsecase = MockGetManagedGroupsWithMembersUsecase();
-    getMembersUsecase = MockGetManagedMembersUsecase();
     createGroupUsecase = MockCreateGroupUsecase();
     updateGroupUsecase = MockUpdateGroupUsecase();
     deleteGroupUsecase = MockDeleteGroupUsecase();
@@ -70,7 +65,6 @@ void main() {
         getManagedGroupsWithMembersUsecaseProvider.overrideWithValue(
           getGroupsUsecase,
         ),
-        getManagedMembersUsecaseProvider.overrideWithValue(getMembersUsecase),
         createGroupUsecaseProvider.overrideWithValue(createGroupUsecase),
         updateGroupUsecaseProvider.overrideWithValue(updateGroupUsecase),
         deleteGroupUsecaseProvider.overrideWithValue(deleteGroupUsecase),
@@ -208,67 +202,6 @@ void main() {
       expect(container.read(secondProvider).requireValue.groups, const [
         secondMemberGroup,
       ]);
-    });
-
-    test('利用可能なメンバーを取得してグループメンバーへ変換する', () async {
-      final notifier = await startNotifier();
-      final provider = groupManagementNotifierProvider(currentMember);
-      final initialState = container.read(provider).requireValue;
-      final completer = Completer<List<MemberDto>>();
-      when(
-        getMembersUsecase.execute(currentMember),
-      ).thenAnswer((_) => completer.future);
-
-      final loadMembersFuture = notifier.getAvailableMembersForEdit('group-1');
-
-      expect(container.read(provider).requireValue, initialState);
-
-      completer.complete(const [availableMember]);
-      final members = await loadMembersFuture;
-
-      expect(container.read(provider).requireValue, initialState);
-      expect(members, hasLength(1));
-      expect(members!.single.memberId, availableMember.id);
-      expect(members.single.groupId, managedGroup.id);
-    });
-
-    test('利用可能なメンバーの取得失敗を呼び出し元へ伝播する', () async {
-      final notifier = await startNotifier();
-      final provider = groupManagementNotifierProvider(currentMember);
-      final initialState = container.read(provider).requireValue;
-      when(
-        getMembersUsecase.execute(currentMember),
-      ).thenThrow(TestException('メンバー取得失敗'));
-
-      await expectLater(
-        notifier.getAvailableMembersForEdit(managedGroup.id),
-        throwsA(isA<TestException>()),
-      );
-
-      expect(container.read(provider).requireValue, initialState);
-    });
-
-    test('破棄済みProviderでは利用可能なメンバーの取得結果を反映しない', () async {
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [managedGroup]);
-      final provider = groupManagementNotifierProvider(currentMember);
-      final subscription = container.listen(provider, (_, _) {});
-      await container.read(provider.future);
-      final notifier = container.read(provider.notifier);
-      final completer = Completer<List<MemberDto>>();
-      when(
-        getMembersUsecase.execute(currentMember),
-      ).thenAnswer((_) => completer.future);
-
-      final membersFuture = notifier.getAvailableMembersForEdit(
-        managedGroup.id,
-      );
-      subscription.close();
-      await container.pump();
-      completer.complete(const [availableMember]);
-
-      expect(await membersFuture, isNull);
     });
 
     test('作成成功後にProviderを再構築して一覧を更新する', () async {
