@@ -136,6 +136,7 @@
 
 - Viewからの単発のUseCase呼び出しは一律に移動せず、複数UseCaseの実行順序、非同期処理の競合、部分失敗、再試行、更新後の整合性維持がViewに集中している機能を改修対象とする
 - 単純なデータ取得は`FutureProvider`、複雑な状態遷移や更新後の整合性維持は`Notifier`、Dialog・Snackbar・画面遷移と一時的な入力状態はView、複数画面で再利用する業務フローはApplication層のUseCaseへ配置する
+- 責務の分離とファイルの分割は別に判断し、単一View専用の小さなProviderや補助処理はViewと同じファイルに置く。複数ファイルから再利用する場合や、ファイル肥大化により可読性が損なわれる場合だけ別ファイルへ分割する
 - `XxxState`には描画、操作可否、再試行に継続して必要な状態だけを保持する。Stateの更新に関係する単発の操作結果はNotifierの戻り値または例外、Stateから独立した単純な取得結果は`FutureProvider`またはUseCaseの戻り値としてViewへ返す
 - 操作中状態は進捗表示や操作無効化などViewの描画に使用する場合だけStateへ含め、重複実行防止だけが目的の場合はNotifier内部で管理する
 - Notifier化では既存のhooks構成を維持することを前提とせず、データ取得や状態のライフサイクルはRiverpodの`family`、`autoDispose`、`build()`、Providerの再構築で表現する
@@ -155,7 +156,7 @@
 #### 3. TripManagementのデータ状態をNotifierへ分離する
 
 - `TripManagementState`と`TripManagementNotifier`を作成し、対象年の旅行一覧、グループメンバー、取得元ごとの読み込み・再試行状態を管理する
-- 旅行一覧とグループメンバーの並行取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移し、旅行IDを引数にした旅行詳細の単発取得は専用の`FutureProvider.autoDispose.family`へ分離する
+- 旅行一覧とグループメンバーの並行取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移し、旅行IDを引数にした旅行詳細の単発取得は`TripManagement`のファイル上部に置く`FutureProvider.autoDispose.family`で扱う
 - 一覧とグループメンバーの部分失敗を区別し、成功した取得結果を維持して個別に再試行できる状態だけを保持する
 - Androidウィジェットから渡された旅行IDにも同じ旅行詳細Providerを使用し、初期Dialogを一度だけ表示する制御はUI固有状態として`TripManagement`へ残す
 - 更新処理の結果はStateへ蓄積せずNotifierの戻り値または例外として呼び出し元へ返し、旅行編集・削除DialogとSnackbarの実表示は`TripManagement`へ残す
@@ -173,7 +174,7 @@
 #### 5. SettingsのAndroidウィジェット設定を機能別Providerへ分離する
 
 - 画面全体を表す`SettingsState`と`SettingsNotifier`は作成せず、更新間隔と対象グループを独立した設定機能として扱う
-- 更新間隔の取得は専用Providerへ分離し、保存中の操作無効化と失敗時の値復元が必要な場合だけ機能単位のNotifierを使用する
+- 更新間隔の取得は`Settings`のファイル上部に置くProviderで扱い、保存中の操作無効化と失敗時の値復元が必要な場合だけ機能単位のNotifierを使用する
 - 対象グループ候補と選択中IDは引数のメンバーごとに取得状態を管理し、選択・解除後に同じProviderへ結果を反映する
 - `Settings`には設定項目の描画と更新結果を知らせるSnackbarの実表示を残す
 - 各設定の初期取得、保存、解除、失敗時の表示値維持と再試行を機能単位で検証する
@@ -198,7 +199,7 @@
 - 読み取り専用の行データは既存の`FutureProvider.autoDispose.family`を維持し、旅行はグループID・年、グループイベントとDVCはグループID、メンバーイベントはメンバーIDを引数に取得状態を管理する
 - グループイベント、DVC、メンバーイベントは各UseCaseの全期間取得契約に合わせて取得結果を年別に保持し、年ごとのセルから同一条件の全件取得を重複実行しない
 - `GetGroupEventsUsecase`と`GetMemberEventsUsecase`が取得失敗を空リストへ変換する処理を廃止し、例外をProviderまで伝播させてデータなしと取得失敗を区別できるようにする
-- 行Widget内のデータ取得Providerを機能単位の公開Providerへ移し、保存・削除後は対象Providerを無効化して同じデータを表示する行へ更新結果を反映する
+- 行Widget内で取得と更新が完結するProviderはprivateのまま同じファイルに置く。別ファイルの保存・削除処理から同じ取得結果を無効化する必要があるProviderだけを機能単位の公開Providerとして分離し、更新結果を同じデータを表示する行へ反映する
 - 更新中も既存データを維持する必要がある機能や複数の更新状態を描画する機能だけNotifierを使用し、複数機能へ更新を通知する必要がある場合だけ既存のMutationCoordinatorを使用する
 - 行Widgetには受け取った状態の描画、編集Dialog、保存・削除結果のSnackbar表示を残す
 - 引数ごとの状態分離、全期間取得の重複防止、保存・削除後の再取得、取得失敗からの再試行を検証し、Provider破棄そのものの一般的な挙動を機能ごとに重複して検証しない

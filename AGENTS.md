@@ -90,6 +90,7 @@ Robert C.Martinが提唱した『クリーンアーキテクチャの原則』�
 - `XxxNotifier`は`Notifier<XxxState>`を基本とし、単一の非同期結果では表現しにくい部分成功や複数の操作状態を`XxxState`で明示する
 - `XxxNotifier`の公開操作は、管理するStateの整合性やライフサイクルに影響する処理に限定し、Stateから独立した単純な取得や単発操作を、ViewからUseCaseを隠す目的だけで集約しない
 - Stateから独立した単純な取得は`FutureProvider`を使用し、結果をDialog表示や共有にだけ使う単発操作は必要に応じてViewからUseCaseを実行する
+- 責務の分離とファイルの分割は別に判断し、単一のViewだけで使用する小さなProviderや補助処理は対象Viewと同じファイルに置く。複数ファイルから再利用する場合や、ファイル肥大化により可読性が損なわれる場合に別ファイルへ分割する
 - スクロール、フォーカス、ルーティング判定など、Riverpodで監視しないUI固有の制御を担当するクラスは`XxxController`とする
 - 複数機能にまたがる更新処理と、更新後に必要なProviderの再取得を調整するクラスは`XxxMutationCoordinator`とする
 - Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当し、Notifierは`BuildContext`やWidgetを参照しない
