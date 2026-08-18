@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
@@ -35,41 +36,31 @@ class GroupManagement extends ConsumerWidget {
         );
         return;
       }
-
-      final previousValue = previous?.value;
-      final nextValue = next.value;
-      if (nextValue == null) {
-        return;
-      }
-      final operationFailed =
-          previousValue?.operationStatus != nextValue.operationStatus &&
-          nextValue.operationStatus == GroupManagementOperationStatus.error;
-
-      if (operationFailed) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(nextValue.errorMessage)),
-        );
-        return;
-      }
-
-      final operationSucceeded =
-          previousValue?.operationStatus != nextValue.operationStatus &&
-          nextValue.operationStatus == GroupManagementOperationStatus.success;
-      if (!operationSucceeded) {
-        return;
-      }
-
-      final message = switch (nextValue.operationType) {
-        GroupManagementOperationType.create => 'グループを作成しました',
-        GroupManagementOperationType.update => 'グループを更新しました',
-        GroupManagementOperationType.delete => 'グループを削除しました',
-        GroupManagementOperationType.loadAvailableMembers => null,
-        null => null,
-      };
-      if (message != null) {
-        scaffoldMessenger.showSnackBar(SnackBar(content: Text(message)));
-      }
     });
+
+    Future<bool> runMutation({
+      required Future<bool> Function() execute,
+      required String successMessage,
+      required String failureMessage,
+    }) async {
+      try {
+        final succeeded = await execute();
+        if (!context.mounted || !succeeded) {
+          return false;
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(successMessage)));
+        return true;
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$failureMessage: $e')));
+        }
+        return false;
+      }
+    }
 
     Future<void> refreshGroups() async {
       try {
@@ -88,7 +79,13 @@ class GroupManagement extends ConsumerWidget {
         context,
         title: 'グループ削除',
         content: '${groupWithMembers.name}を削除しますか？',
-        onConfirm: () => managementNotifier.deleteGroup(groupWithMembers.id),
+        onConfirm: () async {
+          await runMutation(
+            execute: () => managementNotifier.deleteGroup(groupWithMembers.id),
+            successMessage: 'グループを削除しました',
+            failureMessage: '削除に失敗しました',
+          );
+        },
       );
     }
 
@@ -99,9 +96,19 @@ class GroupManagement extends ConsumerWidget {
         name: '',
         members: const [],
       );
-      final availableMembers = await managementNotifier.loadAvailableMembers(
-        group.id,
-      );
+      late final List<GroupMemberDto>? availableMembers;
+      try {
+        availableMembers = await managementNotifier.loadAvailableMembers(
+          group.id,
+        );
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
+        }
+        return;
+      }
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -111,17 +118,31 @@ class GroupManagement extends ConsumerWidget {
         context: context,
         builder: (_) => GroupEditModal(
           group: group,
-          availableMembers: availableMembers,
+          availableMembers: availableMembers!,
           member: GroupMemberMapper.fromMember(currentMember, group.id),
-          onSave: managementNotifier.createGroup,
+          onSave: (group) => runMutation(
+            execute: () => managementNotifier.createGroup(group),
+            successMessage: 'グループを作成しました',
+            failureMessage: '作成に失敗しました',
+          ),
         ),
       );
     }
 
     Future<void> showEditGroupDialog(GroupDto groupWithMembers) async {
-      final availableMembers = await managementNotifier.loadAvailableMembers(
-        groupWithMembers.id,
-      );
+      late final List<GroupMemberDto>? availableMembers;
+      try {
+        availableMembers = await managementNotifier.loadAvailableMembers(
+          groupWithMembers.id,
+        );
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
+        }
+        return;
+      }
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -131,12 +152,16 @@ class GroupManagement extends ConsumerWidget {
         context: context,
         builder: (_) => GroupEditModal(
           group: groupWithMembers,
-          availableMembers: availableMembers,
+          availableMembers: availableMembers!,
           member: GroupMemberMapper.fromMember(
             currentMember,
             groupWithMembers.id,
           ),
-          onSave: managementNotifier.updateGroup,
+          onSave: (group) => runMutation(
+            execute: () => managementNotifier.updateGroup(group),
+            successMessage: 'グループを更新しました',
+            failureMessage: '更新に失敗しました',
+          ),
         ),
       );
     }

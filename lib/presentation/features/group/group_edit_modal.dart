@@ -12,7 +12,7 @@ enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
 class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
-  final Future<void> Function(GroupDto) onSave;
+  final Future<bool> Function(GroupDto) onSave;
   final List<GroupMemberDto> availableMembers;
   final GroupMemberDto member;
 
@@ -574,7 +574,10 @@ class GroupEditModal extends HookConsumerWidget {
             onPressed: () async {
               if (formKey.currentState!.validate()) {
                 try {
-                  await onSave(buildUpdatedGroup());
+                  final succeeded = await onSave(buildUpdatedGroup());
+                  if (!succeeded) {
+                    return;
+                  }
                   if (!context.mounted) {
                     return;
                   }
