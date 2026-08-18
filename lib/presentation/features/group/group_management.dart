@@ -22,18 +22,21 @@ class GroupManagement extends ConsumerWidget {
     final managementState = ref.watch(managementProvider);
     final managementNotifier = ref.read(managementProvider.notifier);
 
+    void showMessage(String message) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+
     ref.listen<AsyncValue<GroupManagementState>>(managementProvider, (
       previous,
       next,
     ) {
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
       final loadFailed =
           next.hasError &&
           (!(previous?.hasError ?? false) || previous?.error != next.error);
       if (loadFailed) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text('データの読み込みに失敗しました: ${next.error}')),
-        );
+        showMessage('データの読み込みに失敗しました: ${next.error}');
         return;
       }
     });
@@ -48,17 +51,24 @@ class GroupManagement extends ConsumerWidget {
         if (!context.mounted || !succeeded) {
           return false;
         }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(successMessage)));
+        showMessage(successMessage);
         return true;
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('$failureMessage: $e')));
+          showMessage('$failureMessage: $e');
         }
         return false;
+      }
+    }
+
+    Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
+      try {
+        return await managementNotifier.loadAvailableMembers(groupId);
+      } catch (e) {
+        if (context.mounted) {
+          showMessage('メンバー情報の取得に失敗しました: $e');
+        }
+        return null;
       }
     }
 
@@ -96,19 +106,7 @@ class GroupManagement extends ConsumerWidget {
         name: '',
         members: const [],
       );
-      late final List<GroupMemberDto>? availableMembers;
-      try {
-        availableMembers = await managementNotifier.loadAvailableMembers(
-          group.id,
-        );
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
-        }
-        return;
-      }
+      final availableMembers = await loadAvailableMembers(group.id);
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -118,7 +116,7 @@ class GroupManagement extends ConsumerWidget {
         context: context,
         builder: (_) => GroupEditModal(
           group: group,
-          availableMembers: availableMembers!,
+          availableMembers: availableMembers,
           member: GroupMemberMapper.fromMember(currentMember, group.id),
           onSave: (group) => runMutation(
             execute: () => managementNotifier.createGroup(group),
@@ -130,19 +128,7 @@ class GroupManagement extends ConsumerWidget {
     }
 
     Future<void> showEditGroupDialog(GroupDto groupWithMembers) async {
-      late final List<GroupMemberDto>? availableMembers;
-      try {
-        availableMembers = await managementNotifier.loadAvailableMembers(
-          groupWithMembers.id,
-        );
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('メンバー情報の取得に失敗しました: $e')));
-        }
-        return;
-      }
+      final availableMembers = await loadAvailableMembers(groupWithMembers.id);
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -152,7 +138,7 @@ class GroupManagement extends ConsumerWidget {
         context: context,
         builder: (_) => GroupEditModal(
           group: groupWithMembers,
-          availableMembers: availableMembers!,
+          availableMembers: availableMembers,
           member: GroupMemberMapper.fromMember(
             currentMember,
             groupWithMembers.id,
