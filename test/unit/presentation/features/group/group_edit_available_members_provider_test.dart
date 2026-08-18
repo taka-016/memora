@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/presentation/features/group/group_edit_available_members_provider.dart';
+import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
