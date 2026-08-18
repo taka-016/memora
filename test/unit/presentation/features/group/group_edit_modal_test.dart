@@ -78,11 +78,16 @@ Widget buildSubject({
   required List<GroupMemberDto> availableMembers,
   required GroupMemberDto member,
 }) {
+  Future<bool> save(GroupDto group) async {
+    await onSave(group);
+    return true;
+  }
+
   return ProviderScope(
     child: MaterialApp(
       home: GroupEditModal(
         group: group,
-        onSave: onSave,
+        onSave: save,
         availableMembers: availableMembers,
         member: member,
       ),
@@ -166,6 +171,41 @@ void main() {
 
       expect(savedGroup, isNotNull);
       expect(savedGroup!.name, 'テストグループ');
+    });
+
+    testWidgets('保存結果が失敗の場合はダイアログを閉じない', (WidgetTester tester) async {
+      Future<bool> failToSave(GroupDto group) async => false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (context) => GroupEditModal(
+                      group: createGroupDto(id: '', name: '', memo: ''),
+                      onSave: failToSave,
+                      availableMembers: const [],
+                      member: createCurrentMember(),
+                    ),
+                  ),
+                  child: const Text('開く'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('開く'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'テストグループ');
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ新規作成'), findsOneWidget);
     });
 
     testWidgets('メモを空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
@@ -645,6 +685,8 @@ void main() {
     });
 
     testWidgets('キャンセルボタンでダイアログが閉じる', (WidgetTester tester) async {
+      Future<bool> saveSuccessfully(GroupDto group) async => true;
+
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
@@ -660,7 +702,7 @@ void main() {
                         name: '',
                         memo: '',
                       ),
-                      onSave: (group) async {},
+                      onSave: saveSuccessfully,
                       availableMembers: const [],
                       member: createCurrentMember(),
                     ),
