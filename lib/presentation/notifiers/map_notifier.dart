@@ -70,8 +70,6 @@ class MapNotifier extends Notifier<MapState> {
       trips: const [],
       locationsStatus: MapLoadStatus.initial,
       tripsStatus: MapLoadStatus.initial,
-      locationsErrorMessage: '',
-      tripsErrorMessage: '',
     );
     await _loadSelectedGroupData(preserveData: false);
   }
@@ -142,8 +140,6 @@ class MapNotifier extends Notifier<MapState> {
       trips: preserveData ? state.trips : const [],
       locationsStatus: MapLoadStatus.loading,
       tripsStatus: MapLoadStatus.loading,
-      locationsErrorMessage: '',
-      tripsErrorMessage: '',
     );
 
     await Future.wait([
@@ -163,7 +159,6 @@ class MapNotifier extends Notifier<MapState> {
       state = state.copyWith(
         locations: locations,
         locationsStatus: MapLoadStatus.success,
-        locationsErrorMessage: '',
       );
     } catch (e, stack) {
       if (!_isCurrentRequest(groupId, requestId)) {
@@ -174,10 +169,7 @@ class MapNotifier extends Notifier<MapState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        locationsStatus: MapLoadStatus.error,
-        locationsErrorMessage: '訪問場所の取得に失敗しました',
-      );
+      state = state.copyWith(locationsStatus: MapLoadStatus.error);
     }
   }
 
@@ -189,11 +181,7 @@ class MapNotifier extends Notifier<MapState> {
       if (!_isCurrentRequest(groupId, requestId)) {
         return;
       }
-      state = state.copyWith(
-        trips: trips,
-        tripsStatus: MapLoadStatus.success,
-        tripsErrorMessage: '',
-      );
+      state = state.copyWith(trips: trips, tripsStatus: MapLoadStatus.success);
     } catch (e, stack) {
       if (!_isCurrentRequest(groupId, requestId)) {
         return;
@@ -203,10 +191,7 @@ class MapNotifier extends Notifier<MapState> {
         error: e,
         stackTrace: stack,
       );
-      state = state.copyWith(
-        tripsStatus: MapLoadStatus.error,
-        tripsErrorMessage: '旅行情報の取得に失敗しました',
-      );
+      state = state.copyWith(tripsStatus: MapLoadStatus.error);
     }
   }
 

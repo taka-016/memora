@@ -140,7 +140,6 @@ void main() {
       expect(state.selectedGroup, firstGroup);
       expect(state.locations, const [firstLocation]);
       expect(state.trips, const [firstTrip]);
-      expect(state.focusedLocation, firstLocation);
       expect(state.locationsStatus, MapLoadStatus.success);
       expect(state.tripsStatus, MapLoadStatus.success);
     });
@@ -178,7 +177,6 @@ void main() {
       expect(state.selectedGroup, secondGroup);
       expect(state.locations, const [secondLocation]);
       expect(state.trips, const [secondTrip]);
-      expect(state.focusedLocation, secondLocation);
     });
 
     test('訪問場所取得だけが失敗しても旅行取得結果を維持する', () async {

@@ -81,7 +81,7 @@ class MapScreen extends ConsumerWidget {
       key: ValueKey(selectedGroup.id),
       child: MapViewFactory.create(mapViewType).createMapView(
         locations: state.locations,
-        focusedLocation: state.focusedLocation,
+        focusedLocation: state.locations.firstOrNull,
         topLeadingOverlay: _MapToolbar(
           groups: state.groups,
           selectedGroup: selectedGroup,
@@ -128,9 +128,8 @@ class MapScreen extends ConsumerWidget {
             _MapDataLoadErrorMessage(
               messages: [
                 if (state.locationsStatus == MapLoadStatus.error)
-                  state.locationsErrorMessage,
-                if (state.tripsStatus == MapLoadStatus.error)
-                  state.tripsErrorMessage,
+                  '訪問場所の取得に失敗しました',
+                if (state.tripsStatus == MapLoadStatus.error) '旅行情報の取得に失敗しました',
               ],
             )
           else if (state.locations.isEmpty)

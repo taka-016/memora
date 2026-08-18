@@ -14,8 +14,6 @@ class MapState extends Equatable {
     this.groupsStatus = MapLoadStatus.initial,
     this.locationsStatus = MapLoadStatus.initial,
     this.tripsStatus = MapLoadStatus.initial,
-    this.locationsErrorMessage = '',
-    this.tripsErrorMessage = '',
   });
 
   final List<GroupDto> groups;
@@ -25,10 +23,6 @@ class MapState extends Equatable {
   final MapLoadStatus groupsStatus;
   final MapLoadStatus locationsStatus;
   final MapLoadStatus tripsStatus;
-  final String locationsErrorMessage;
-  final String tripsErrorMessage;
-
-  LocationDto? get focusedLocation => locations.firstOrNull;
 
   bool get isGroupDataLoading =>
       locationsStatus == MapLoadStatus.loading ||
@@ -43,8 +37,6 @@ class MapState extends Equatable {
     MapLoadStatus? groupsStatus,
     MapLoadStatus? locationsStatus,
     MapLoadStatus? tripsStatus,
-    String? locationsErrorMessage,
-    String? tripsErrorMessage,
   }) {
     return MapState(
       groups: groups ?? this.groups,
@@ -56,9 +48,6 @@ class MapState extends Equatable {
       groupsStatus: groupsStatus ?? this.groupsStatus,
       locationsStatus: locationsStatus ?? this.locationsStatus,
       tripsStatus: tripsStatus ?? this.tripsStatus,
-      locationsErrorMessage:
-          locationsErrorMessage ?? this.locationsErrorMessage,
-      tripsErrorMessage: tripsErrorMessage ?? this.tripsErrorMessage,
     );
   }
 
@@ -71,7 +60,5 @@ class MapState extends Equatable {
     groupsStatus,
     locationsStatus,
     tripsStatus,
-    locationsErrorMessage,
-    tripsErrorMessage,
   ];
 }
