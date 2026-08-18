@@ -1,13 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/group_management_state.dart';
 
@@ -47,27 +44,6 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
 
     ref.invalidateSelf();
     return true;
-  }
-
-  Future<List<GroupMemberDto>?> getAvailableMembersForEdit(
-    String groupId,
-  ) async {
-    try {
-      final members = await ref
-          .read(getManagedMembersUsecaseProvider)
-          .execute(_currentMember);
-      if (!ref.mounted) {
-        return null;
-      }
-      return GroupMemberMapper.fromMemberList(members, groupId);
-    } catch (e, stack) {
-      logger.e(
-        'GroupManagementNotifier.getAvailableMembersForEdit: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
-    }
   }
 
   Future<bool> createGroup(GroupDto group) async {

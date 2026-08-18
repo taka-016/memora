@@ -3,6 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
+import 'package:memora/presentation/features/group/group_edit_available_members_provider.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
@@ -65,7 +66,12 @@ class GroupManagement extends ConsumerWidget {
       String groupId,
     ) async {
       try {
-        return await managementNotifier.getAvailableMembersForEdit(groupId);
+        return await ref.read(
+          groupEditAvailableMembersProvider((
+            currentMember: currentMember,
+            groupId: groupId,
+          )).future,
+        );
       } catch (e) {
         if (context.mounted) {
           showSnackBar('メンバー情報の取得に失敗しました: $e');
