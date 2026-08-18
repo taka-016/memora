@@ -28,7 +28,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
   @override
   Future<GroupManagementState> build() async {
     try {
-      final groups = await _getGroups();
+      final groups = await _getManagedGroupsWithMembers();
       return GroupManagementState(groups: groups);
     } catch (e, stack) {
       logger.e(
@@ -126,7 +126,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     }
   }
 
-  Future<List<GroupDto>> _getGroups() {
+  Future<List<GroupDto>> _getManagedGroupsWithMembers() {
     return ref
         .read(getManagedGroupsWithMembersUsecaseProvider)
         .execute(_currentMember);

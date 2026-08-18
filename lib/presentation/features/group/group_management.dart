@@ -22,7 +22,7 @@ class GroupManagement extends ConsumerWidget {
     final managementState = ref.watch(managementProvider);
     final managementNotifier = ref.read(managementProvider.notifier);
 
-    void showMessage(String message) {
+    void showSnackBar(String message) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
@@ -36,12 +36,12 @@ class GroupManagement extends ConsumerWidget {
           next.hasError &&
           (!(previous?.hasError ?? false) || previous?.error != next.error);
       if (loadFailed) {
-        showMessage('データの読み込みに失敗しました: ${next.error}');
+        showSnackBar('データの読み込みに失敗しました: ${next.error}');
         return;
       }
     });
 
-    Future<bool> runMutation({
+    Future<bool> runMutationWithFeedback({
       required Future<bool> Function() execute,
       required String successMessage,
       required String failureMessage,
@@ -51,11 +51,11 @@ class GroupManagement extends ConsumerWidget {
         if (!context.mounted || !succeeded) {
           return false;
         }
-        showMessage(successMessage);
+        showSnackBar(successMessage);
         return true;
       } catch (e) {
         if (context.mounted) {
-          showMessage('$failureMessage: $e');
+          showSnackBar('$failureMessage: $e');
         }
         return false;
       }
@@ -68,7 +68,7 @@ class GroupManagement extends ConsumerWidget {
         return await managementNotifier.getAvailableMembersForEdit(groupId);
       } catch (e) {
         if (context.mounted) {
-          showMessage('メンバー情報の取得に失敗しました: $e');
+          showSnackBar('メンバー情報の取得に失敗しました: $e');
         }
         return null;
       }
@@ -92,7 +92,7 @@ class GroupManagement extends ConsumerWidget {
         title: 'グループ削除',
         content: '${groupWithMembers.name}を削除しますか？',
         onConfirm: () async {
-          await runMutation(
+          await runMutationWithFeedback(
             execute: () => managementNotifier.deleteGroup(groupWithMembers.id),
             successMessage: 'グループを削除しました',
             failureMessage: '削除に失敗しました',
@@ -120,7 +120,7 @@ class GroupManagement extends ConsumerWidget {
           group: group,
           availableMembers: availableMembers,
           member: GroupMemberMapper.fromMember(currentMember, group.id),
-          onSave: (group) => runMutation(
+          onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.createGroup(group),
             successMessage: 'グループを作成しました',
             failureMessage: '作成に失敗しました',
@@ -147,7 +147,7 @@ class GroupManagement extends ConsumerWidget {
             currentMember,
             groupWithMembers.id,
           ),
-          onSave: (group) => runMutation(
+          onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.updateGroup(group),
             successMessage: 'グループを更新しました',
             failureMessage: '更新に失敗しました',
