@@ -2,12 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/mappers/group/group_member_mapper.dart';
-import 'package:memora/presentation/features/group/group_edit_available_members_provider.dart';
+import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
+
+typedef GroupEditAvailableMembersQuery = ({
+  MemberDto currentMember,
+  String groupId,
+});
+
+final groupEditAvailableMembersProvider = FutureProvider.autoDispose
+    .family<List<GroupMemberDto>, GroupEditAvailableMembersQuery>((
+      ref,
+      query,
+    ) async {
+      final members = await ref
+          .watch(getManagedMembersUsecaseProvider)
+          .execute(query.currentMember);
+      return GroupMemberMapper.fromMemberList(members, query.groupId);
+    }, retry: (_, _) => null);
 
 class GroupManagement extends ConsumerWidget {
   const GroupManagement({super.key});
