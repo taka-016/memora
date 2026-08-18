@@ -145,15 +145,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 1. GroupManagementのStateを描画に必要な状態へ絞る
-
-- `GroupManagementState`から、Viewが参照していない利用可能メンバーとSnackbar通知のためだけの操作種別、成功・失敗状態、エラーメッセージを除外する
-- Stateにはグループ一覧と、進捗表示または操作無効化に使用する場合だけ更新中状態を保持する
-- 利用可能メンバーは`loadAvailableMembers`の戻り値としてDialogへ渡し、取得失敗は例外としてViewへ伝播させる
-- 作成・更新・削除は成功・失敗を呼び出し元へ返し、ViewがDialogの継続可否とSnackbar表示を決定する
-- 初期取得と再取得の`AsyncValue`、更新中の重複実行防止、画面離脱後の更新完了、更新成功後の一覧再取得は既存の動作を維持する
-- テストはStateから削除した一時値を検証せず、一覧の更新、操作失敗の伝播、重複実行防止、画面離脱後の整合性を検証する
-
 #### 2. MemberManagementの一覧と更新後の整合性をNotifierへ分離する
 
 - `MemberManagementState`には管理対象メンバーと本人メンバーを統合した一覧を保持し、操作中状態はViewで操作無効化や進捗表示に使用する場合だけ追加する
