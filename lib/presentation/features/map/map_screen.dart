@@ -1,22 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/shared/group_selection/group_selection_list.dart';
+import 'package:memora/presentation/notifiers/map_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-class MapScreen extends HookConsumerWidget {
+class MapScreen extends ConsumerWidget {
   final bool isTestEnvironment;
 
   const MapScreen({super.key, this.isTestEnvironment = false});
@@ -28,230 +23,86 @@ class MapScreen extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final getGroupsWithMembersUsecase = useMemoized(
-      () => ref.read(getGroupsWithMembersUsecaseProvider),
-    );
-    final getLocationsByGroupIdUsecase = useMemoized(
-      () => ref.read(getLocationsByGroupIdUsecaseProvider),
-    );
-    final getTripEntriesUsecase = useMemoized(
-      () => ref.read(getMapTripEntriesUsecaseProvider),
-    );
-    final getTripEntryByIdUsecase = useMemoized(
-      () => ref.read(getTripEntryByIdUsecaseProvider),
-    );
-    final tripEntryMutationCoordinator = useMemoized(
-      () => ref.read(tripEntryMutationCoordinatorProvider),
-    );
-    final groupLoadGeneration = useState(0);
-    final groupsFuture = useMemoized(
-      () => getGroupsWithMembersUsecase.execute(currentMember),
-      [getGroupsWithMembersUsecase, currentMember, groupLoadGeneration.value],
-    );
-    final groupsSnapshot = useFuture(groupsFuture);
-    final selectedGroupState = useState<GroupDto?>(null);
-    final locations = useState<List<LocationDto>>([]);
-    final trips = useState<List<TripEntryDto>>([]);
-    final hasTripLoadError = useState(false);
-    final hasLocationLoadError = useState(false);
-    final isGroupDataLoading = useState(false);
-    final groupDataLoadGeneration = useState(0);
-    final focusedLocation = useState<LocationDto?>(null);
-    final latestGroupLoad = useRef<Object?>(null);
-    final groups = groupsSnapshot.data ?? const <GroupDto>[];
-    final selectedGroup =
-        selectedGroupState.value ?? (groups.length == 1 ? groups.single : null);
-
-    void replaceUpdatedTrip(TripEntryDto updatedTrip) {
-      trips.value = [
-        for (final item in trips.value)
-          if (item.id == updatedTrip.id) updatedTrip else item,
-      ];
-      locations.value = [
-        ...locations.value.where(
-          (location) => location.tripId != updatedTrip.id,
-        ),
-        ...?updatedTrip.locations,
-      ];
-    }
-
-    void retryGroupDataLoad() {
-      groupDataLoadGeneration.value++;
-    }
-
-    useEffect(
-      () {
-        final group = selectedGroup;
-        if (group == null) {
-          return null;
-        }
-
-        final loadToken = Object();
-        latestGroupLoad.value = loadToken;
-        Future.microtask(() async {
-          isGroupDataLoading.value = true;
-          locations.value = const [];
-          trips.value = const [];
-          hasTripLoadError.value = false;
-          hasLocationLoadError.value = false;
-          focusedLocation.value = null;
-
-          try {
-            final fetchedLocations = await getLocationsByGroupIdUsecase.execute(
-              group.id,
-            );
-            if (latestGroupLoad.value != loadToken) {
-              return;
-            }
-            locations.value = fetchedLocations;
-            focusedLocation.value = fetchedLocations.firstOrNull;
-
-            try {
-              final fetchedTrips = await getTripEntriesUsecase.executeByGroupId(
-                group.id,
-              );
-              if (latestGroupLoad.value != loadToken) {
-                return;
-              }
-              trips.value = fetchedTrips;
-            } catch (e, stack) {
-              if (latestGroupLoad.value != loadToken) {
-                return;
-              }
-              hasTripLoadError.value = true;
-              logger.e(
-                'MapScreen.loadTrips: ${e.toString()}',
-                error: e,
-                stackTrace: stack,
-              );
-            }
-          } catch (e, stack) {
-            if (latestGroupLoad.value != loadToken) {
-              return;
-            }
-            hasLocationLoadError.value = true;
-            logger.e(
-              'MapScreen.loadLocations: ${e.toString()}',
-              error: e,
-              stackTrace: stack,
-            );
-          } finally {
-            if (latestGroupLoad.value == loadToken) {
-              isGroupDataLoading.value = false;
-            }
-          }
-        });
-        return () {
-          if (latestGroupLoad.value == loadToken) {
-            latestGroupLoad.value = null;
-          }
-        };
-      },
-      [
-        getLocationsByGroupIdUsecase,
-        getTripEntriesUsecase,
-        selectedGroup?.id,
-        groupDataLoadGeneration.value,
-      ],
-    );
+    final provider = mapNotifierProvider(currentMember);
+    final state = ref.watch(provider);
+    final notifier = ref.read(provider.notifier);
+    final selectedGroup = state.selectedGroup;
 
     if (selectedGroup == null) {
-      return GroupSelectionList(
-        title: 'グループを選択',
-        listKey: const Key('map_group_list'),
-        groupsFuture: groupsFuture,
-        onGroupSelected: (group) {
-          selectedGroupState.value = group;
-        },
-        onRetry: () {
-          groupLoadGeneration.value++;
-        },
+      return _MapGroupSelection(
+        state: state,
+        onGroupSelected: (group) => unawaited(notifier.selectGroup(group)),
+        onRetry: () => unawaited(notifier.loadGroups()),
       );
     }
 
     Future<void> handleTripTapped(TripEntryDto trip) async {
-      try {
-        final currentTrip = await getTripEntryByIdUsecase.execute(trip.id);
-        if (!context.mounted) {
-          return;
-        }
-        final group = groups
-            .where((item) => item.id == currentTrip?.groupId)
-            .firstOrNull;
-        if (currentTrip == null || group == null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
-          return;
-        }
-
-        await showDialog<void>(
-          barrierDismissible: false,
-          context: context,
-          builder: (dialogContext) => TripEditModal(
-            groupId: currentTrip.groupId,
-            groupMembers: group.members,
-            tripEntry: currentTrip,
-            year: currentTrip.year,
-            isTestEnvironment: isTestEnvironment,
-            onSave: (updatedTrip) async {
-              await tripEntryMutationCoordinator.updateTripEntry(updatedTrip);
-              replaceUpdatedTrip(updatedTrip);
-              if (context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
-              }
-            },
-          ),
-        );
-      } catch (e, stack) {
-        logger.e(
-          'MapScreen.openTrip: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
-        }
+      final currentTrip = await notifier.loadTripDetail(trip.id);
+      if (!context.mounted) {
+        return;
       }
+      final currentState = ref.read(provider);
+      final group = currentState.groups
+          .where((item) => item.id == currentTrip?.groupId)
+          .firstOrNull;
+      if (currentTrip == null || group == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
+        return;
+      }
+
+      await showDialog<void>(
+        barrierDismissible: false,
+        context: context,
+        builder: (dialogContext) => TripEditModal(
+          groupId: currentTrip.groupId,
+          groupMembers: group.members,
+          tripEntry: currentTrip,
+          year: currentTrip.year,
+          isTestEnvironment: isTestEnvironment,
+          onSave: (updatedTrip) async {
+            await notifier.updateTripEntry(updatedTrip);
+            if (context.mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
+            }
+          },
+        ),
+      );
     }
 
     final mapViewType = isTestEnvironment
         ? MapViewType.placeholder
         : MapViewType.google;
 
-    final groupSelector = _MapGroupSelector(
-      groups: groups,
-      selectedGroup: selectedGroup,
-      onSelected: (group) {
-        selectedGroupState.value = group;
-      },
-    );
-
     final mapView = KeyedSubtree(
       key: ValueKey(selectedGroup.id),
       child: MapViewFactory.create(mapViewType).createMapView(
-        locations: locations.value,
-        focusedLocation: focusedLocation.value,
-        topLeadingOverlay: groupSelector,
+        locations: state.locations,
+        focusedLocation: state.locations.firstOrNull,
+        topLeadingOverlay: _MapToolbar(
+          groups: state.groups,
+          selectedGroup: selectedGroup,
+          onGroupSelected: (group) => unawaited(notifier.selectGroup(group)),
+          isLoading: state.isGroupDataLoading,
+          onReload: () => unawaited(notifier.retryGroupData()),
+        ),
         locationDetailBuilder:
             (location, onClose, {onPreviousLocation, onNextLocation}) {
-              final matchingLocations = locations.value
+              final matchingLocations = state.locations
                   .where((item) => _hasSameCoordinate(item, location))
                   .toList(growable: false);
               final tripIds = matchingLocations
                   .map((item) => item.tripId)
                   .toSet();
-              final matchingTrips = trips.value
+              final matchingTrips = state.trips
                   .where((trip) => tripIds.contains(trip.id))
                   .toList(growable: false);
               return MapPinBottomSheet(
                 location: location,
                 trips: matchingTrips,
-                hasTripLoadError: hasTripLoadError.value,
                 onTripTapped: handleTripTapped,
                 onClose: onClose,
                 onPreviousLocation: onPreviousLocation,
@@ -270,14 +121,132 @@ class MapScreen extends HookConsumerWidget {
       child: Stack(
         children: [
           mapView,
-          if (isGroupDataLoading.value)
+          if (state.isGroupDataLoading)
             const Center(child: CircularProgressIndicator())
-          else if (hasLocationLoadError.value)
-            _VisitLocationsLoadErrorMessage(onRetry: retryGroupDataLoad)
-          else if (locations.value.isEmpty)
+          else if (state.locationsStatus == MapLoadStatus.error ||
+              state.tripsStatus == MapLoadStatus.error)
+            _MapDataLoadErrorMessage(
+              messages: [
+                if (state.locationsStatus == MapLoadStatus.error)
+                  '訪問場所の取得に失敗しました',
+                if (state.tripsStatus == MapLoadStatus.error) '旅行情報の取得に失敗しました',
+              ],
+            )
+          else if (state.locations.isEmpty)
             const _NoVisitLocationsMessage(),
         ],
       ),
+    );
+  }
+}
+
+class _MapToolbar extends StatelessWidget {
+  const _MapToolbar({
+    required this.groups,
+    required this.selectedGroup,
+    required this.onGroupSelected,
+    required this.isLoading,
+    required this.onReload,
+  });
+
+  final List<GroupDto> groups;
+  final GroupDto selectedGroup;
+  final ValueChanged<GroupDto> onGroupSelected;
+  final bool isLoading;
+  final VoidCallback onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _MapGroupSelector(
+          groups: groups,
+          selectedGroup: selectedGroup,
+          onSelected: onGroupSelected,
+        ),
+        const Spacer(),
+        _MapReloadButton(isLoading: isLoading, onReload: onReload),
+      ],
+    );
+  }
+}
+
+class _MapReloadButton extends StatelessWidget {
+  const _MapReloadButton({required this.isLoading, required this.onReload});
+
+  final bool isLoading;
+  final VoidCallback onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      key: const Key('map_reload_button'),
+      tooltip: '再読み込み',
+      onPressed: isLoading ? null : onReload,
+      icon: const Icon(Icons.refresh),
+    );
+  }
+}
+
+class _MapGroupSelection extends StatelessWidget {
+  const _MapGroupSelection({
+    required this.state,
+    required this.onGroupSelected,
+    required this.onRetry,
+  });
+
+  final MapState state;
+  final ValueChanged<GroupDto> onGroupSelected;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('map_group_list'),
+      child: switch (state.groupsStatus) {
+        MapLoadStatus.initial || MapLoadStatus.loading => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        MapLoadStatus.error => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('エラーが発生しました', style: TextStyle(fontSize: 18)),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
+            ],
+          ),
+        ),
+        MapLoadStatus.success when state.groups.isEmpty => const Center(
+          child: Text('グループがありません', style: TextStyle(fontSize: 18)),
+        ),
+        MapLoadStatus.success => Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'グループを選択',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: state.groups.length,
+                itemBuilder: (context, index) {
+                  final group = state.groups[index];
+                  return ListTile(
+                    title: Text(group.name),
+                    subtitle: Text('${group.members.length}人のメンバー'),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () => onGroupSelected(group),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      },
     );
   }
 }
@@ -355,25 +324,22 @@ class _NoVisitLocationsMessage extends StatelessWidget {
   }
 }
 
-class _VisitLocationsLoadErrorMessage extends StatelessWidget {
-  const _VisitLocationsLoadErrorMessage({required this.onRetry});
+class _MapDataLoadErrorMessage extends StatelessWidget {
+  const _MapDataLoadErrorMessage({required this.messages});
 
-  final VoidCallback onRetry;
+  final List<String> messages;
 
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
       child: Center(
         child: Card(
+          key: const Key('map_data_load_error'),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('訪問場所の取得に失敗しました'),
-                const SizedBox(height: 16),
-                ElevatedButton(onPressed: onRetry, child: const Text('再読み込み')),
-              ],
+              children: [for (final message in messages) Text(message)],
             ),
           ),
         ),

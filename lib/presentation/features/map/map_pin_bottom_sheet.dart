@@ -8,7 +8,6 @@ class MapPinBottomSheet extends StatelessWidget {
     super.key,
     required this.location,
     required this.trips,
-    required this.hasTripLoadError,
     required this.onTripTapped,
     required this.onClose,
     this.onPreviousLocation,
@@ -17,7 +16,6 @@ class MapPinBottomSheet extends StatelessWidget {
 
   final LocationDto location;
   final List<TripEntryDto> trips;
-  final bool hasTripLoadError;
   final ValueChanged<TripEntryDto> onTripTapped;
   final VoidCallback onClose;
   final VoidCallback? onPreviousLocation;
@@ -56,9 +54,6 @@ class MapPinBottomSheet extends StatelessWidget {
   }
 
   Widget _buildTripList() {
-    if (hasTripLoadError) {
-      return const Center(child: Text('旅行情報の取得に失敗しました'));
-    }
     if (trips.isEmpty) {
       return const Center(child: Text('この場所を訪問した旅行はありません'));
     }

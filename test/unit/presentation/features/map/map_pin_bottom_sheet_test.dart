@@ -16,7 +16,6 @@ void main() {
 
   Widget buildTestWidget({
     List<TripEntryDto> trips = const [],
-    bool hasTripLoadError = false,
     ValueChanged<TripEntryDto>? onTripTapped,
   }) {
     return MaterialApp(
@@ -24,7 +23,6 @@ void main() {
         body: MapPinBottomSheet(
           location: location,
           trips: trips,
-          hasTripLoadError: hasTripLoadError,
           onTripTapped: onTripTapped ?? (_) {},
           onClose: () {},
         ),
@@ -58,13 +56,6 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
 
       expect(find.text('この場所を訪問した旅行はありません'), findsOneWidget);
-    });
-
-    testWidgets('旅行取得失敗時はエラーを表示する', (tester) async {
-      await tester.pumpWidget(buildTestWidget(hasTripLoadError: true));
-
-      expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
-      expect(find.text('この場所を訪問した旅行はありません'), findsNothing);
     });
 
     testWidgets('旅行一覧は固定高のスクロール領域に表示する', (tester) async {

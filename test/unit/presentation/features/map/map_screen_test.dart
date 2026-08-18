@@ -104,6 +104,18 @@ void main() {
       expect(find.text('家族'), findsOneWidget);
     });
 
+    testWidgets('地図上に再読み込みアイコンを常時表示する', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      final reloadButton = find.byKey(const Key('map_reload_button'));
+      expect(reloadButton, findsOneWidget);
+      expect(
+        find.descendant(of: reloadButton, matching: find.byIcon(Icons.refresh)),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('地図は上端に余白を追加せずAndroidのナビゲーション領域を避けて表示する', (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(800, 600);
@@ -359,7 +371,7 @@ void main() {
       expect(find.text('東京旅行'), findsNothing);
     });
 
-    testWidgets('旅行取得失敗時はピンのボトムシートにエラーを表示する', (tester) async {
+    testWidgets('旅行取得失敗時は画面上にエラーを表示する', (tester) async {
       const group = GroupDto(
         id: 'group1',
         ownerId: 'owner',
@@ -386,14 +398,20 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
-      googleMap.markers.single.onTap?.call();
-      await tester.pumpAndSettle();
 
-      expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
+      final errorMessage = find.byKey(const Key('map_data_load_error'));
+      expect(errorMessage, findsOneWidget);
+      expect(
+        find.descendant(
+          of: errorMessage,
+          matching: find.text('旅行情報の取得に失敗しました'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('map_data_retry_button')), findsNothing);
     });
 
-    testWidgets('訪問場所取得失敗時はエラーを表示し再読み込みできる', (tester) async {
+    testWidgets('訪問場所取得失敗時は画面上にエラーを表示する', (tester) async {
       when(
         mockGetLocationsByGroupIdUsecase.execute('group1'),
       ).thenThrow(TestException('取得失敗'));
@@ -403,17 +421,7 @@ void main() {
 
       expect(find.text('訪問場所の取得に失敗しました'), findsOneWidget);
       expect(find.text('このグループには訪問場所がありません'), findsNothing);
-      expect(find.text('再読み込み'), findsOneWidget);
-
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const []);
-      await tester.tap(find.text('再読み込み'));
-      await tester.pumpAndSettle();
-
-      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(2);
-      expect(find.text('訪問場所の取得に失敗しました'), findsNothing);
-      expect(find.text('このグループには訪問場所がありません'), findsOneWidget);
+      expect(find.byKey(const Key('map_data_retry_button')), findsNothing);
     });
 
     testWidgets('地図上で別グループへ切り替えると詳細を閉じて対象ピンだけを表示する', (tester) async {
@@ -589,6 +597,35 @@ void main() {
         container.read(timelineTripEntriesRefreshProvider),
         isNot(same(refreshToken)),
       );
+    });
+
+    testWidgets('地図上の再読み込みアイコンから一覧を再取得できる', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [location]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenThrow(TestException('取得失敗'));
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const []);
+
+      await tester.tap(find.byKey(const Key('map_reload_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('map_data_load_error')), findsNothing);
+      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(2);
     });
 
     testWidgets('旅行名タップ時に旅行が存在しない場合はエラーを表示する', (tester) async {
