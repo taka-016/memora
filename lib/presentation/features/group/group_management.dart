@@ -1,29 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
-typedef GroupEditAvailableMembersQuery = ({
-  MemberDto currentMember,
-  String groupId,
-});
-
 final groupEditAvailableMembersProvider = FutureProvider.autoDispose
-    .family<List<GroupMemberDto>, GroupEditAvailableMembersQuery>((
-      ref,
-      query,
-    ) async {
-      final members = await ref
+    .family<List<MemberDto>, MemberDto>((ref, currentMember) async {
+      return await ref
           .watch(getManagedMembersUsecaseProvider)
-          .execute(query.currentMember);
-      return GroupMemberMapper.fromMemberList(members, query.groupId);
+          .execute(currentMember);
     }, retry: (_, _) => null);
 
 class GroupManagement extends ConsumerWidget {
@@ -79,15 +68,10 @@ class GroupManagement extends ConsumerWidget {
       }
     }
 
-    Future<List<GroupMemberDto>?> getAvailableMembersForEdit(
-      String groupId,
-    ) async {
+    Future<List<MemberDto>?> getAvailableMembersForEdit() async {
       try {
         return await ref.read(
-          groupEditAvailableMembersProvider((
-            currentMember: currentMember,
-            groupId: groupId,
-          )).future,
+          groupEditAvailableMembersProvider(currentMember).future,
         );
       } catch (e) {
         if (context.mounted) {
@@ -131,7 +115,7 @@ class GroupManagement extends ConsumerWidget {
         name: '',
         members: const [],
       );
-      final availableMembers = await getAvailableMembersForEdit(group.id);
+      final availableMembers = await getAvailableMembersForEdit();
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -142,7 +126,7 @@ class GroupManagement extends ConsumerWidget {
         builder: (_) => GroupEditModal(
           group: group,
           availableMembers: availableMembers,
-          member: GroupMemberMapper.fromMember(currentMember, group.id),
+          member: currentMember,
           onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.createGroup(group),
             successMessage: 'グループを作成しました',
@@ -153,9 +137,7 @@ class GroupManagement extends ConsumerWidget {
     }
 
     Future<void> showEditGroupDialog(GroupDto groupWithMembers) async {
-      final availableMembers = await getAvailableMembersForEdit(
-        groupWithMembers.id,
-      );
+      final availableMembers = await getAvailableMembersForEdit();
       if (!context.mounted || availableMembers == null) {
         return;
       }
@@ -166,10 +148,7 @@ class GroupManagement extends ConsumerWidget {
         builder: (_) => GroupEditModal(
           group: groupWithMembers,
           availableMembers: availableMembers,
-          member: GroupMemberMapper.fromMember(
-            currentMember,
-            groupWithMembers.id,
-          ),
+          member: currentMember,
           onSave: (group) => runMutationWithFeedback(
             execute: () => managementNotifier.updateGroup(group),
             successMessage: 'グループを更新しました',
