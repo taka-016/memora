@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +13,7 @@ import 'package:memora/application/usecases/trip/get_locations_by_group_id_useca
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
+import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
@@ -545,6 +548,173 @@ void main() {
       expect(find.byType(TripEditModal), findsNothing);
       expect(find.text('首里城'), findsOneWidget);
       expect(find.text('沖縄旅行2024'), findsOneWidget);
+    });
+
+    testWidgets('旅行詳細の取得中は連続タップと再読み込みを開始しない', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      final tripDetailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [location]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const [trip]);
+      when(
+        mockGetTripEntryByIdUsecase.execute('trip1'),
+      ).thenAnswer((_) => tripDetailCompleter.future);
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('沖縄旅行2024'));
+      await tester.tap(find.text('沖縄旅行2024'));
+      await tester.tap(find.byKey(const Key('map_reload_button')));
+      await tester.pump();
+
+      tripDetailCompleter.complete(trip);
+      await tester.pumpAndSettle();
+
+      verify(mockGetTripEntryByIdUsecase.execute('trip1')).called(1);
+      verify(mockGetLocationsByGroupIdUsecase.execute('group1')).called(1);
+      verify(mockGetTripEntriesUsecase.executeByGroupId('group1')).called(1);
+      expect(find.byType(TripEditModal), findsOneWidget);
+    });
+
+    testWidgets('旅行詳細の取得中は別グループへの切り替えを開始しない', (tester) async {
+      const groups = [
+        GroupDto(id: 'group1', ownerId: 'owner', name: '家族', members: []),
+        GroupDto(id: 'group2', ownerId: 'owner', name: '友人', members: []),
+      ];
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      final tripDetailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockGetGroupsWithMembersUsecase.execute(testMember),
+      ).thenAnswer((_) async => groups);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [location]);
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group2'),
+      ).thenAnswer((_) async => const []);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const [trip]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group2'),
+      ).thenAnswer((_) async => const []);
+      when(
+        mockGetTripEntryByIdUsecase.execute('trip1'),
+      ).thenAnswer((_) => tripDetailCompleter.future);
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('家族'));
+      await tester.pumpAndSettle();
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('沖縄旅行2024'));
+      await tester.tap(find.byKey(const Key('map_group_selector')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('友人').last);
+      await tester.pump();
+
+      tripDetailCompleter.complete(trip);
+      await tester.pumpAndSettle();
+
+      verifyNever(mockGetLocationsByGroupIdUsecase.execute('group2'));
+      verifyNever(mockGetTripEntriesUsecase.executeByGroupId('group2'));
+      expect(find.byType(TripEditModal), findsOneWidget);
+    });
+
+    testWidgets('地図データの再読み込み中は旅行詳細の取得を開始しない', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      final locationsCompleter = Completer<List<LocationDto>>();
+      final tripsCompleter = Completer<List<TripEntryDto>>();
+      var locationsLoadCount = 0;
+      var tripsLoadCount = 0;
+      when(mockGetLocationsByGroupIdUsecase.execute('group1')).thenAnswer((_) {
+        locationsLoadCount++;
+        if (locationsLoadCount == 1) {
+          return Future.value(const [location]);
+        }
+        return locationsCompleter.future;
+      });
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1')).thenAnswer((
+        _,
+      ) {
+        tripsLoadCount++;
+        if (tripsLoadCount == 1) {
+          return Future.value(const [trip]);
+        }
+        return tripsCompleter.future;
+      });
+      when(
+        mockGetTripEntryByIdUsecase.execute('trip1'),
+      ).thenAnswer((_) async => trip);
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+      final bottomSheet = tester.widget<MapPinBottomSheet>(
+        find.byType(MapPinBottomSheet),
+      );
+
+      await tester.tap(find.byKey(const Key('map_reload_button')));
+      await tester.pump();
+      bottomSheet.onTripTapped(trip);
+      await tester.pump();
+
+      locationsCompleter.complete(const [location]);
+      tripsCompleter.complete(const [trip]);
+      await tester.pumpAndSettle();
+
+      verifyNever(mockGetTripEntryByIdUsecase.execute('trip1'));
+      expect(find.byType(TripEditModal), findsNothing);
     });
 
     testWidgets('地図で旅行を更新すると年表の旅行データを再取得対象にする', (tester) async {
