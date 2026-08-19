@@ -353,6 +353,104 @@ void main() {
       expect(find.text('グループ編集'), findsOneWidget);
     });
 
+    testWidgets('メンバー候補の取得中に削除を確定しても削除処理を開始しないこと', (WidgetTester tester) async {
+      final availableMembersCompleter = Completer<List<MemberDto>>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => availableMembersCompleter.future);
+      when(
+        mockTripEntryRepository.deleteTripEntriesByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockGroupEventRepository.deleteGroupEventsByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockGroupRepository.deleteGroup(groupWithMembers1.id),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+
+      availableMembersCompleter.complete([testMember]);
+      await tester.pumpAndSettle();
+
+      verifyNever(mockGroupRepository.deleteGroup(groupWithMembers1.id));
+      expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('削除処理中にグループ行をタップしてもメンバー候補を取得しないこと', (
+      WidgetTester tester,
+    ) async {
+      final deleteTripEntriesCompleter = Completer<void>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+      when(
+        mockTripEntryRepository.deleteTripEntriesByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) => deleteTripEntriesCompleter.future);
+      when(
+        mockGroupEventRepository.deleteGroupEventsByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockGroupRepository.deleteGroup(groupWithMembers1.id),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pump();
+
+      deleteTripEntriesCompleter.complete();
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      expect(find.text('グループ編集'), findsNothing);
+    });
+
     testWidgets('メンバー候補の取得失敗時は編集画面を開かずエラーを表示すること', (WidgetTester tester) async {
       when(
         mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
