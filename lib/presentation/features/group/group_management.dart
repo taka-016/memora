@@ -199,7 +199,7 @@ class GroupManagement extends HookConsumerWidget {
             ),
             const Spacer(),
             ElevatedButton.icon(
-              onPressed: showAddGroupDialog,
+              onPressed: managementState.hasValue ? showAddGroupDialog : null,
               icon: const Icon(Icons.add),
               label: const Text('グループ追加'),
             ),
