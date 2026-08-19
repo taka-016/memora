@@ -193,6 +193,35 @@ void main() {
       );
     });
 
+    testWidgets('データ読み込みエラー時はグループ追加を開始しないこと', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('Network error'));
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ追加'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      expect(find.text('グループ編集'), findsNothing);
+    });
+
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
