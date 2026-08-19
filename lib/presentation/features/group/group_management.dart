@@ -43,49 +43,62 @@ class GroupManagement extends HookConsumerWidget {
       }
     });
 
-    Future<bool> runMutationWithFeedback({
-      required Future<bool> Function() execute,
-      required String successMessage,
-      required String failureMessage,
+    Future<T> runGroupOperation<T>({
+      required T blockedResult,
+      required Future<T> Function() execute,
     }) async {
       if (isGroupOperationInProgressRef.value) {
-        return false;
+        return blockedResult;
       }
       isGroupOperationInProgressRef.value = true;
       try {
-        final succeeded = await execute();
-        if (!context.mounted || !succeeded) {
-          return false;
-        }
-        showSnackBar(successMessage);
-        return true;
-      } catch (e) {
-        if (context.mounted) {
-          showSnackBar('$failureMessage: $e');
-        }
-        return false;
+        return await execute();
       } finally {
         isGroupOperationInProgressRef.value = false;
       }
     }
 
-    Future<List<MemberDto>?> getAvailableMembersForEdit() async {
-      if (isGroupOperationInProgressRef.value) {
-        return null;
-      }
-      isGroupOperationInProgressRef.value = true;
-      try {
-        return await ref
-            .read(getManagedMembersUsecaseProvider)
-            .execute(currentMember);
-      } catch (e) {
-        if (context.mounted) {
-          showSnackBar('メンバー情報の取得に失敗しました: $e');
-        }
-        return null;
-      } finally {
-        isGroupOperationInProgressRef.value = false;
-      }
+    Future<bool> runMutationWithFeedback({
+      required Future<bool> Function() execute,
+      required String successMessage,
+      required String failureMessage,
+    }) {
+      return runGroupOperation(
+        blockedResult: false,
+        execute: () async {
+          try {
+            final succeeded = await execute();
+            if (!context.mounted || !succeeded) {
+              return false;
+            }
+            showSnackBar(successMessage);
+            return true;
+          } catch (e) {
+            if (context.mounted) {
+              showSnackBar('$failureMessage: $e');
+            }
+            return false;
+          }
+        },
+      );
+    }
+
+    Future<List<MemberDto>?> getAvailableMembersForEdit() {
+      return runGroupOperation(
+        blockedResult: null,
+        execute: () async {
+          try {
+            return await ref
+                .read(getManagedMembersUsecaseProvider)
+                .execute(currentMember);
+          } catch (e) {
+            if (context.mounted) {
+              showSnackBar('メンバー情報の取得に失敗しました: $e');
+            }
+            return null;
+          }
+        },
+      );
     }
 
     Future<void> refreshGroups() async {
