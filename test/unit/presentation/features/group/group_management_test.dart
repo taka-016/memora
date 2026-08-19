@@ -210,6 +210,11 @@ void main() {
 
       await tester.pumpWidget(createGroupManagementApp());
       await tester.pumpAndSettle();
+      final addButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'グループ追加'),
+      );
+
+      expect(addButton.onPressed, isNull);
       await tester.tap(find.text('グループ追加'));
       await tester.pumpAndSettle();
 
