@@ -43,7 +43,7 @@ class GroupManagement extends HookConsumerWidget {
       }
     });
 
-    Future<T> runGroupOperation<T>({
+    Future<T> runExclusiveGroupOperation<T>({
       required T blockedResult,
       required Future<T> Function() execute,
     }) async {
@@ -63,7 +63,7 @@ class GroupManagement extends HookConsumerWidget {
       required String successMessage,
       required String failureMessage,
     }) {
-      return runGroupOperation(
+      return runExclusiveGroupOperation(
         blockedResult: false,
         execute: () async {
           try {
@@ -84,7 +84,7 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Future<List<MemberDto>?> getAvailableMembersForEdit() {
-      return runGroupOperation(
+      return runExclusiveGroupOperation(
         blockedResult: null,
         execute: () async {
           try {
@@ -102,7 +102,7 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Future<void> refreshGroups() async {
-      await runGroupOperation(
+      await runExclusiveGroupOperation(
         blockedResult: false,
         execute: () async {
           try {

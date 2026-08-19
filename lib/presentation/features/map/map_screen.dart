@@ -31,7 +31,9 @@ class MapScreen extends HookConsumerWidget {
     final selectedGroup = state.selectedGroup;
     final isMapOperationInProgressRef = useRef(false);
 
-    Future<void> runMapOperation(Future<void> Function() execute) async {
+    Future<void> runExclusiveMapOperation(
+      Future<void> Function() execute,
+    ) async {
       if (isMapOperationInProgressRef.value) {
         return;
       }
@@ -44,15 +46,15 @@ class MapScreen extends HookConsumerWidget {
     }
 
     void handleGroupSelected(GroupDto group) {
-      unawaited(runMapOperation(() => notifier.selectGroup(group)));
+      unawaited(runExclusiveMapOperation(() => notifier.selectGroup(group)));
     }
 
     void handleGroupsRetry() {
-      unawaited(runMapOperation(notifier.loadGroups));
+      unawaited(runExclusiveMapOperation(notifier.loadGroups));
     }
 
     void handleGroupDataRetry() {
-      unawaited(runMapOperation(notifier.retryGroupData));
+      unawaited(runExclusiveMapOperation(notifier.retryGroupData));
     }
 
     if (selectedGroup == null) {
@@ -64,7 +66,7 @@ class MapScreen extends HookConsumerWidget {
     }
 
     Future<void> handleTripTapped(TripEntryDto trip) {
-      return runMapOperation(() async {
+      return runExclusiveMapOperation(() async {
         final TripEntryDto? currentTrip;
         try {
           currentTrip = await ref
