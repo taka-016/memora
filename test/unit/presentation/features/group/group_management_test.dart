@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -311,6 +313,43 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - 編集モーダルが開かれることを期待
+      expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('メンバー候補の取得中にグループ行を連続タップしても編集画面を1つだけ開くこと', (
+      WidgetTester tester,
+    ) async {
+      final availableMembersCompleter = Completer<List<MemberDto>>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => availableMembersCompleter.future);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.tap(find.byType(ListTile));
+
+      verify(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(1);
+
+      availableMembersCompleter.complete([testMember]);
+      await tester.pumpAndSettle();
+
       expect(find.text('グループ編集'), findsOneWidget);
     });
 
