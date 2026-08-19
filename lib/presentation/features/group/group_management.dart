@@ -22,7 +22,7 @@ class GroupManagement extends HookConsumerWidget {
     final managementProvider = groupManagementNotifierProvider(currentMember);
     final managementState = ref.watch(managementProvider);
     final managementNotifier = ref.read(managementProvider.notifier);
-    final isLoadingAvailableMembersRef = useRef(false);
+    final isGroupOperationInProgressRef = useRef(false);
 
     void showSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -48,6 +48,10 @@ class GroupManagement extends HookConsumerWidget {
       required String successMessage,
       required String failureMessage,
     }) async {
+      if (isGroupOperationInProgressRef.value) {
+        return false;
+      }
+      isGroupOperationInProgressRef.value = true;
       try {
         final succeeded = await execute();
         if (!context.mounted || !succeeded) {
@@ -60,14 +64,16 @@ class GroupManagement extends HookConsumerWidget {
           showSnackBar('$failureMessage: $e');
         }
         return false;
+      } finally {
+        isGroupOperationInProgressRef.value = false;
       }
     }
 
     Future<List<MemberDto>?> getAvailableMembersForEdit() async {
-      if (isLoadingAvailableMembersRef.value) {
+      if (isGroupOperationInProgressRef.value) {
         return null;
       }
-      isLoadingAvailableMembersRef.value = true;
+      isGroupOperationInProgressRef.value = true;
       try {
         return await ref
             .read(getManagedMembersUsecaseProvider)
@@ -78,7 +84,7 @@ class GroupManagement extends HookConsumerWidget {
         }
         return null;
       } finally {
-        isLoadingAvailableMembersRef.value = false;
+        isGroupOperationInProgressRef.value = false;
       }
     }
 
