@@ -22,7 +22,7 @@ class GroupManagement extends HookConsumerWidget {
     final managementProvider = groupManagementNotifierProvider(currentMember);
     final managementState = ref.watch(managementProvider);
     final managementNotifier = ref.read(managementProvider.notifier);
-    final isLoadingAvailableMembers = useRef(false);
+    final isLoadingAvailableMembersRef = useRef(false);
 
     void showSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -64,10 +64,10 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Future<List<MemberDto>?> getAvailableMembersForEdit() async {
-      if (isLoadingAvailableMembers.value) {
+      if (isLoadingAvailableMembersRef.value) {
         return null;
       }
-      isLoadingAvailableMembers.value = true;
+      isLoadingAvailableMembersRef.value = true;
       try {
         return await ref
             .read(getManagedMembersUsecaseProvider)
@@ -78,7 +78,7 @@ class GroupManagement extends HookConsumerWidget {
         }
         return null;
       } finally {
-        isLoadingAvailableMembers.value = false;
+        isLoadingAvailableMembersRef.value = false;
       }
     }
 
