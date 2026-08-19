@@ -669,5 +669,42 @@ void main() {
 
       expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
     });
+
+    testWidgets('旅行名タップ時に旅行詳細の取得が失敗した場合は取得エラーを表示する', (tester) async {
+      const location = LocationDto(
+        id: 'location1',
+        tripId: 'trip1',
+        groupId: 'group1',
+        latitude: 26.217,
+        longitude: 127.719,
+        name: '首里城',
+      );
+      const trip = TripEntryDto(
+        id: 'trip1',
+        groupId: 'group1',
+        year: 2024,
+        name: '沖縄旅行2024',
+      );
+      when(
+        mockGetLocationsByGroupIdUsecase.execute('group1'),
+      ).thenAnswer((_) async => const [location]);
+      when(
+        mockGetTripEntriesUsecase.executeByGroupId('group1'),
+      ).thenAnswer((_) async => const [trip]);
+      when(
+        mockGetTripEntryByIdUsecase.execute('trip1'),
+      ).thenThrow(TestException('旅行詳細取得失敗'));
+
+      await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
+      await tester.pumpAndSettle();
+      final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
+      googleMap.markers.single.onTap?.call();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('沖縄旅行2024'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行情報の取得に失敗しました'), findsOneWidget);
+      expect(find.text('指定された旅行が見つかりませんでした'), findsNothing);
+    });
   });
 }
