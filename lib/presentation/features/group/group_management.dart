@@ -8,13 +8,6 @@ import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
-final groupEditAvailableMembersProvider = FutureProvider.autoDispose
-    .family<List<MemberDto>, MemberDto>((ref, currentMember) async {
-      return await ref
-          .watch(getManagedMembersUsecaseProvider)
-          .execute(currentMember);
-    }, retry: (_, _) => null);
-
 class GroupManagement extends ConsumerWidget {
   const GroupManagement({super.key});
 
@@ -70,9 +63,9 @@ class GroupManagement extends ConsumerWidget {
 
     Future<List<MemberDto>?> getAvailableMembersForEdit() async {
       try {
-        return await ref.read(
-          groupEditAvailableMembersProvider(currentMember).future,
-        );
+        return await ref
+            .read(getManagedMembersUsecaseProvider)
+            .execute(currentMember);
       } catch (e) {
         if (context.mounted) {
           showSnackBar('メンバー情報の取得に失敗しました: $e');

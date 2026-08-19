@@ -12,11 +12,6 @@ import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/map_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-final mapTripDetailProvider = FutureProvider.autoDispose
-    .family<TripEntryDto?, String>((ref, tripId) async {
-      return await ref.watch(getTripEntryByIdUsecaseProvider).execute(tripId);
-    }, retry: (_, _) => null);
-
 class MapScreen extends ConsumerWidget {
   final bool isTestEnvironment;
 
@@ -45,7 +40,9 @@ class MapScreen extends ConsumerWidget {
     Future<void> handleTripTapped(TripEntryDto trip) async {
       final TripEntryDto? currentTrip;
       try {
-        currentTrip = await ref.read(mapTripDetailProvider(trip.id).future);
+        currentTrip = await ref
+            .read(getTripEntryByIdUsecaseProvider)
+            .execute(trip.id);
       } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(
