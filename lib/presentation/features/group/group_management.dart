@@ -102,18 +102,27 @@ class GroupManagement extends HookConsumerWidget {
     }
 
     Future<void> refreshGroups() async {
-      try {
-        final refreshStarted = await managementNotifier.refreshGroups();
-        if (!refreshStarted) {
-          return;
-        }
-        await ref.read(managementProvider.future);
-      } catch (_) {
-        // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
-      }
+      await runGroupOperation(
+        blockedResult: false,
+        execute: () async {
+          try {
+            final refreshStarted = await managementNotifier.refreshGroups();
+            if (!refreshStarted) {
+              return false;
+            }
+            await ref.read(managementProvider.future);
+          } catch (_) {
+            // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
+          }
+          return true;
+        },
+      );
     }
 
     Future<void> showDeleteConfirmDialog(GroupDto groupWithMembers) async {
+      if (isGroupOperationInProgressRef.value) {
+        return;
+      }
       await DeleteConfirmDialog.show(
         context,
         title: 'グループ削除',
