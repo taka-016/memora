@@ -314,6 +314,36 @@ void main() {
       expect(find.text('グループ編集'), findsOneWidget);
     });
 
+    testWidgets('メンバー候補の取得失敗時は編集画面を開かずエラーを表示すること', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenThrow(TestException('メンバー取得失敗'));
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ編集'), findsNothing);
+      expect(
+        find.text(
+          'メンバー情報の取得に失敗しました: '
+          'TestException: メンバー取得失敗',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('グループ情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
