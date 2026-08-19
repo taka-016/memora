@@ -5,11 +5,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/map_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+
+final mapTripDetailProvider = FutureProvider.autoDispose
+    .family<TripEntryDto?, String>((ref, tripId) async {
+      return await ref.watch(getTripEntryByIdUsecaseProvider).execute(tripId);
+    }, retry: (_, _) => null);
 
 class MapScreen extends ConsumerWidget {
   final bool isTestEnvironment;
@@ -37,15 +43,32 @@ class MapScreen extends ConsumerWidget {
     }
 
     Future<void> handleTripTapped(TripEntryDto trip) async {
-      final currentTrip = await notifier.loadTripDetail(trip.id);
+      final TripEntryDto? currentTrip;
+      try {
+        currentTrip = await ref.read(mapTripDetailProvider(trip.id).future);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('旅行情報の取得に失敗しました')));
+        }
+        return;
+      }
       if (!context.mounted) {
+        return;
+      }
+      final loadedTrip = currentTrip;
+      if (loadedTrip == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
         return;
       }
       final currentState = ref.read(provider);
       final group = currentState.groups
-          .where((item) => item.id == currentTrip?.groupId)
+          .where((item) => item.id == loadedTrip.groupId)
           .firstOrNull;
-      if (currentTrip == null || group == null) {
+      if (group == null) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
@@ -56,10 +79,10 @@ class MapScreen extends ConsumerWidget {
         barrierDismissible: false,
         context: context,
         builder: (dialogContext) => TripEditModal(
-          groupId: currentTrip.groupId,
+          groupId: loadedTrip.groupId,
           groupMembers: group.members,
-          tripEntry: currentTrip,
-          year: currentTrip.year,
+          tripEntry: loadedTrip,
+          year: loadedTrip.year,
           isTestEnvironment: isTestEnvironment,
           onSave: (updatedTrip) async {
             await notifier.updateTripEntry(updatedTrip);
