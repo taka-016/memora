@@ -9,7 +9,6 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/presentation/notifiers/map_notifier.dart';
 import 'package:mockito/annotations.dart';
@@ -22,7 +21,6 @@ import 'map_notifier_test.mocks.dart';
   GetGroupsWithMembersUsecase,
   GetLocationsByGroupIdUsecase,
   GetTripEntriesUsecase,
-  GetTripEntryByIdUsecase,
   UpdateTripEntryUsecase,
 ])
 void main() {
@@ -71,7 +69,6 @@ void main() {
   late MockGetGroupsWithMembersUsecase getGroupsUsecase;
   late MockGetLocationsByGroupIdUsecase getLocationsUsecase;
   late MockGetTripEntriesUsecase getTripsUsecase;
-  late MockGetTripEntryByIdUsecase getTripByIdUsecase;
   late MockUpdateTripEntryUsecase updateTripUsecase;
   late ProviderContainer container;
 
@@ -79,7 +76,6 @@ void main() {
     getGroupsUsecase = MockGetGroupsWithMembersUsecase();
     getLocationsUsecase = MockGetLocationsByGroupIdUsecase();
     getTripsUsecase = MockGetTripEntriesUsecase();
-    getTripByIdUsecase = MockGetTripEntryByIdUsecase();
     updateTripUsecase = MockUpdateTripEntryUsecase();
     container = ProviderContainer(
       overrides: [
@@ -88,7 +84,6 @@ void main() {
           getLocationsUsecase,
         ),
         getMapTripEntriesUsecaseProvider.overrideWithValue(getTripsUsecase),
-        getTripEntryByIdUsecaseProvider.overrideWithValue(getTripByIdUsecase),
         updateTripEntryUsecaseProvider.overrideWithValue(updateTripUsecase),
       ],
     );
@@ -96,7 +91,6 @@ void main() {
     when(
       getTripsUsecase.executeByGroupId(any),
     ).thenAnswer((_) async => const []);
-    when(getTripByIdUsecase.execute(any)).thenAnswer((_) async => null);
   });
 
   tearDown(() {
@@ -245,34 +239,6 @@ void main() {
       expect(state.trips, const [secondTrip]);
       verify(getLocationsUsecase.execute(firstGroup.id)).called(2);
       verify(getTripsUsecase.executeByGroupId(firstGroup.id)).called(2);
-    });
-
-    test('旅行詳細を再取得しても地図の描画状態を変更しない', () async {
-      final notifier = await startNotifier();
-      final provider = mapNotifierProvider(currentMember);
-      final stateBeforeLoad = container.read(provider);
-      when(
-        getTripByIdUsecase.execute(firstTrip.id),
-      ).thenAnswer((_) async => firstTrip);
-
-      final trip = await notifier.loadTripDetail(firstTrip.id);
-
-      expect(trip, firstTrip);
-      expect(container.read(provider), stateBeforeLoad);
-    });
-
-    test('旅行詳細の取得失敗時も地図の描画状態を変更しない', () async {
-      final notifier = await startNotifier();
-      final provider = mapNotifierProvider(currentMember);
-      final stateBeforeLoad = container.read(provider);
-      when(
-        getTripByIdUsecase.execute(firstTrip.id),
-      ).thenThrow(TestException('旅行詳細取得失敗'));
-
-      final trip = await notifier.loadTripDetail(firstTrip.id);
-
-      expect(trip, isNull);
-      expect(container.read(provider), stateBeforeLoad);
     });
 
     test('旅行更新後に旅行一覧と訪問場所一覧を再取得する', () async {
