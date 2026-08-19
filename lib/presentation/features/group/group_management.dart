@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
@@ -8,7 +9,7 @@ import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/group_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
-class GroupManagement extends ConsumerWidget {
+class GroupManagement extends HookConsumerWidget {
   const GroupManagement({super.key});
 
   @override
@@ -21,6 +22,7 @@ class GroupManagement extends ConsumerWidget {
     final managementProvider = groupManagementNotifierProvider(currentMember);
     final managementState = ref.watch(managementProvider);
     final managementNotifier = ref.read(managementProvider.notifier);
+    final isLoadingAvailableMembers = useRef(false);
 
     void showSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -62,6 +64,10 @@ class GroupManagement extends ConsumerWidget {
     }
 
     Future<List<MemberDto>?> getAvailableMembersForEdit() async {
+      if (isLoadingAvailableMembers.value) {
+        return null;
+      }
+      isLoadingAvailableMembers.value = true;
       try {
         return await ref
             .read(getManagedMembersUsecaseProvider)
@@ -71,6 +77,8 @@ class GroupManagement extends ConsumerWidget {
           showSnackBar('メンバー情報の取得に失敗しました: $e');
         }
         return null;
+      } finally {
+        isLoadingAvailableMembers.value = false;
       }
     }
 
