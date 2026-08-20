@@ -438,12 +438,65 @@ void main() {
 
       await tester.tap(find.text('招待'));
       await tester.pump();
+
+      final cancelButton = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'キャンセル'),
+      );
+      final updateButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '更新'),
+      );
+      expect(cancelButton.onPressed, isNull);
+      expect(updateButton.onPressed, isNull);
+
       await tester.tap(find.text('招待'));
       await tester.pump();
 
       expect(inviteCallCount, 1);
 
       inviteCompleter.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('保存処理中は保存・招待・キャンセルを多重実行できないこと', (WidgetTester tester) async {
+      const existingMember = MemberDto(
+        id: 'test-id',
+        accountId: 'test-account',
+        displayName: 'テストユーザー',
+      );
+      final saveCompleter = Completer<void>();
+      var saveCallCount = 0;
+
+      await tester.pumpWidget(
+        _createApp(
+          child: MemberEditModal(
+            member: existingMember,
+            onSave: (_) async {
+              saveCallCount++;
+              await saveCompleter.future;
+            },
+            onInvite: (_) async {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      final cancelButton = tester.widget<TextButton>(
+        find.widgetWithText(TextButton, 'キャンセル'),
+      );
+      final inviteButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '招待'),
+      );
+      final updateButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '更新'),
+      );
+      expect(cancelButton.onPressed, isNull);
+      expect(inviteButton.onPressed, isNull);
+      expect(updateButton.onPressed, isNull);
+      expect(saveCallCount, 1);
+
+      saveCompleter.complete();
       await tester.pumpAndSettle();
     });
   });
