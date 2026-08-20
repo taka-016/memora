@@ -55,4 +55,35 @@ void main() {
     );
     expect(mapScreenSource, isNot(contains('mapTripDetailProvider')));
   });
+
+  test('MemberManagementの一覧と更新後の整合性はNotifierが管理する', () {
+    final memberManagementSource = File(
+      'lib/presentation/features/member/member_management.dart',
+    ).readAsStringSync();
+
+    expect(
+      memberManagementSource,
+      contains('ref.watch(memberManagementNotifierProvider(currentMember))'),
+    );
+    expect(
+      memberManagementSource,
+      isNot(contains('useState<List<MemberDto>>')),
+    );
+    expect(
+      memberManagementSource,
+      isNot(contains('ref.read(createMemberUsecaseProvider)')),
+    );
+    expect(
+      memberManagementSource,
+      isNot(contains('ref.read(updateMemberUsecaseProvider)')),
+    );
+    expect(
+      memberManagementSource,
+      isNot(contains('ref.read(deleteMemberUsecaseProvider)')),
+    );
+    expect(
+      memberManagementSource,
+      contains('ref.read(createOrUpdateMemberInvitationUsecaseProvider)'),
+    );
+  });
 }

@@ -245,6 +245,25 @@ void main() {
       );
     });
 
+    testWidgets('データ読み込みエラー時は追加を無効化し再試行を表示すること', (WidgetTester tester) async {
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenThrow(TestException('Network error'));
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+
+      final addButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'メンバー追加'),
+      );
+      expect(addButton.onPressed, isNull);
+      expect(find.text('メンバー一覧を読み込めませんでした'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
+    });
+
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       final managedMembers = [
@@ -799,6 +818,39 @@ void main() {
       verify(
         mockMemberInvitationRepository.saveMemberInvitation(any),
       ).called(1);
+    });
+
+    testWidgets('招待コードの生成失敗時にスナックバーが表示されること', (WidgetTester tester) async {
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => managedMembers);
+      when(
+        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
+      ).thenThrow(TestException('招待生成失敗'));
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('招待コードの生成に失敗しました: TestException: 招待生成失敗'),
+        findsOneWidget,
+      );
+      expect(find.text('招待コード'), findsNothing);
     });
 
     testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {
