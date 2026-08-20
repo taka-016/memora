@@ -8,6 +8,7 @@ import 'package:memora/application/usecases/member/delete_member_usecase.dart';
 import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
+import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/member_management_notifier.dart';
 
 import '../../../helpers/test_exception.dart';
@@ -30,6 +31,7 @@ void main() {
   late ProviderContainer container;
 
   setUp(() {
+    AppLogger.suppressLogging(true);
     getManagedMembersUsecase = _FakeGetManagedMembersUsecase();
     getMemberByIdUseCase = _FakeGetMemberByIdUseCase();
     createMemberUsecase = _FakeCreateMemberUsecase();
@@ -126,6 +128,25 @@ void main() {
       ]);
     });
 
+    test('再取得失敗時は既存一覧を維持してAsyncErrorへ遷移する', () async {
+      final notifier = await startNotifier();
+      final provider = memberManagementNotifierProvider(currentMember);
+      getManagedMembersUsecase.result = TestException('再取得失敗');
+
+      expect(await notifier.refreshMembers(), isTrue);
+      await expectLater(
+        container.read(provider.future),
+        throwsA(isA<TestException>()),
+      );
+
+      final state = container.read(provider);
+      expect(state.hasError, isTrue);
+      expect(state.value?.members, const [
+        refreshedCurrentMember,
+        managedMember,
+      ]);
+    });
+
     test('作成成功後に一覧を再取得する', () async {
       final calls = <String>[];
       final notifier = await startNotifier();
@@ -148,6 +169,24 @@ void main() {
       ]);
       expect(calls, ['メンバー作成', '管理対象メンバー取得', '本人メンバー取得']);
       expect(createMemberUsecase.ownerIds, [currentMember.id]);
+    });
+
+    test('作成失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
+      final notifier = await startNotifier();
+      final provider = memberManagementNotifierProvider(currentMember);
+      final initialState = container.read(provider).requireValue;
+      getManagedMembersUsecase.callCount = 0;
+      getMemberByIdUseCase.callCount = 0;
+      createMemberUsecase.error = TestException('作成失敗');
+
+      await expectLater(
+        notifier.createMember(createdMember),
+        throwsA(isA<TestException>()),
+      );
+
+      expect(container.read(provider).requireValue, initialState);
+      expect(getManagedMembersUsecase.callCount, 0);
+      expect(getMemberByIdUseCase.callCount, 0);
     });
 
     test('更新成功後に本人を含む一覧を再取得する', () async {
@@ -191,6 +230,24 @@ void main() {
         refreshedCurrentMember,
       ]);
       expect(calls, ['メンバー削除', '管理対象メンバー取得', '本人メンバー取得']);
+    });
+
+    test('削除失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
+      final notifier = await startNotifier();
+      final provider = memberManagementNotifierProvider(currentMember);
+      final initialState = container.read(provider).requireValue;
+      getManagedMembersUsecase.callCount = 0;
+      getMemberByIdUseCase.callCount = 0;
+      deleteMemberUsecase.error = TestException('削除失敗');
+
+      await expectLater(
+        notifier.deleteMember(managedMember.id),
+        throwsA(isA<TestException>()),
+      );
+
+      expect(container.read(provider).requireValue, initialState);
+      expect(getManagedMembersUsecase.callCount, 0);
+      expect(getMemberByIdUseCase.callCount, 0);
     });
 
     test('更新失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
@@ -245,10 +302,10 @@ class _FakeGetManagedMembersUsecase implements GetManagedMembersUsecase {
     if (value is Future<List<MemberDto>>) {
       return value;
     }
-    if (value is Object && value is! List<MemberDto>) {
-      throw value;
+    if (value is List<MemberDto>) {
+      return value;
     }
-    return value as List<MemberDto>;
+    throw value;
   }
 }
 
@@ -275,11 +332,15 @@ class _FakeGetMemberByIdUseCase implements GetMemberByIdUseCase {
 class _FakeCreateMemberUsecase implements CreateMemberUsecase {
   List<String>? calls;
   final ownerIds = <String>[];
+  Object? error;
 
   @override
   Future<void> execute(MemberDto editedMember, String ownerId) async {
     calls?.add('メンバー作成');
     ownerIds.add(ownerId);
+    if (error case final error?) {
+      throw error;
+    }
   }
 }
 
@@ -305,9 +366,13 @@ class _FakeUpdateMemberUsecase implements UpdateMemberUsecase {
 
 class _FakeDeleteMemberUsecase implements DeleteMemberUsecase {
   List<String>? calls;
+  Object? error;
 
   @override
   Future<void> execute(String memberId) async {
     calls?.add('メンバー削除');
+    if (error case final error?) {
+      throw error;
+    }
   }
 }
