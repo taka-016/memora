@@ -86,12 +86,13 @@ Robert C.Martinが提唱した『クリーンアーキテクチャの原則』�
 
 ### Presentation層の状態管理・制御クラスの命名規則
 
-- Riverpodで公開し、Viewが監視する機能状態とUseCaseの実行順序、再試行、データ更新を管理するクラスは`XxxNotifier`とし、状態は不変な`XxxState`として分離する
+- Riverpodで公開し、Viewが監視する機能状態と、その状態に関係するUseCaseの実行順序、再試行、データ更新を管理するクラスは`XxxNotifier`とし、状態は不変な`XxxState`として分離する
 - `XxxNotifier`は`Notifier<XxxState>`を基本とし、単一の非同期結果では表現しにくい部分成功や複数の操作状態を`XxxState`で明示する
+- `XxxNotifier`の公開操作は、管理するStateの整合性やライフサイクルに影響する処理に限定し、Stateから独立した単純な取得や単発操作を、ViewからUseCaseを隠す目的だけで集約しない
 - スクロール、フォーカス、ルーティング判定など、Riverpodで監視しないUI固有の制御を担当するクラスは`XxxController`とする
 - 複数機能にまたがる更新処理と、更新後に必要なProviderの再取得を調整するクラスは`XxxMutationCoordinator`とする
 - Viewは状態の描画、入力、Dialog・Snackbarの実表示を担当し、Notifierは`BuildContext`やWidgetを参照しない
-- 画面表示のためのオーケストレーションはNotifierへ分離し、複数画面で再利用する業務フローや業務上の不変条件はApplication層のUseCaseへ配置する
+- 画面状態の整合性維持に必要なオーケストレーションはNotifierへ分離し、複数画面で再利用する業務フローや業務上の不変条件はApplication層のUseCaseへ配置する
 
 ## ブランチ名
 

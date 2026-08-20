@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/features/group/group_edit_modal.dart';
 
 GroupDto createGroupDto({
@@ -22,12 +23,8 @@ GroupDto createGroupDto({
   );
 }
 
-GroupMemberDto createCurrentMember({String groupId = ''}) {
-  return createGroupMemberDto(
-    memberId: 'owner-id',
-    groupId: groupId,
-    displayName: 'オーナー',
-  );
+MemberDto createCurrentMember() {
+  return const MemberDto(id: 'owner-id', displayName: 'オーナー');
 }
 
 GroupMemberDto createGroupMemberDto({
@@ -72,19 +69,44 @@ GroupMemberDto createGroupMemberDto({
   );
 }
 
+MemberDto toMemberDto(GroupMemberDto member) {
+  return MemberDto(
+    id: member.memberId,
+    accountId: member.accountId,
+    ownerId: member.ownerId,
+    hiraganaFirstName: member.hiraganaFirstName,
+    hiraganaLastName: member.hiraganaLastName,
+    kanjiFirstName: member.kanjiFirstName,
+    kanjiLastName: member.kanjiLastName,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    displayName: member.displayName,
+    type: member.type,
+    birthday: member.birthday,
+    gender: member.gender,
+    email: member.email,
+    phoneNumber: member.phoneNumber,
+  );
+}
+
 Widget buildSubject({
   required GroupDto group,
   required Future<void> Function(GroupDto) onSave,
   required List<GroupMemberDto> availableMembers,
-  required GroupMemberDto member,
+  required MemberDto currentMember,
 }) {
+  Future<bool> save(GroupDto group) async {
+    await onSave(group);
+    return true;
+  }
+
   return ProviderScope(
     child: MaterialApp(
       home: GroupEditModal(
         group: group,
-        onSave: onSave,
-        availableMembers: availableMembers,
-        member: member,
+        onSave: save,
+        availableMembers: availableMembers.map(toMemberDto).toList(),
+        currentMember: currentMember,
       ),
     ),
   );
@@ -98,7 +120,7 @@ void main() {
           group: createGroupDto(id: '', name: '', memo: ''),
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -118,7 +140,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -131,7 +153,7 @@ void main() {
           group: createGroupDto(id: '', name: '', memo: ''),
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -152,7 +174,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -166,6 +188,41 @@ void main() {
 
       expect(savedGroup, isNotNull);
       expect(savedGroup!.name, 'テストグループ');
+    });
+
+    testWidgets('保存結果が失敗の場合はダイアログを閉じない', (WidgetTester tester) async {
+      Future<bool> failToSave(GroupDto group) async => false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ElevatedButton(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (context) => GroupEditModal(
+                      group: createGroupDto(id: '', name: '', memo: ''),
+                      onSave: failToSave,
+                      availableMembers: const [],
+                      currentMember: createCurrentMember(),
+                    ),
+                  ),
+                  child: const Text('開く'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('開く'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextFormField).first, 'テストグループ');
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ新規作成'), findsOneWidget);
     });
 
     testWidgets('メモを空欄にして更新すると空文字で保存される', (WidgetTester tester) async {
@@ -185,7 +242,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -252,7 +309,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -287,7 +344,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -322,7 +379,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -367,7 +424,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -433,7 +490,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -484,7 +541,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -532,7 +589,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -581,7 +638,7 @@ void main() {
               type: 'member',
             ),
           ],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -623,7 +680,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -645,6 +702,8 @@ void main() {
     });
 
     testWidgets('キャンセルボタンでダイアログが閉じる', (WidgetTester tester) async {
+      Future<bool> saveSuccessfully(GroupDto group) async => true;
+
       await tester.pumpWidget(
         ProviderScope(
           child: MaterialApp(
@@ -660,9 +719,9 @@ void main() {
                         name: '',
                         memo: '',
                       ),
-                      onSave: (group) async {},
+                      onSave: saveSuccessfully,
                       availableMembers: const [],
-                      member: createCurrentMember(),
+                      currentMember: createCurrentMember(),
                     ),
                   ),
                   child: const Text('Open Modal'),
@@ -730,7 +789,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -796,7 +855,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -820,7 +879,7 @@ void main() {
           group: group,
           onSave: (group) async {},
           availableMembers: const [],
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -895,7 +954,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -984,7 +1043,7 @@ void main() {
           ),
           onSave: (group) async {},
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 
@@ -1057,7 +1116,7 @@ void main() {
             savedGroup = group;
           },
           availableMembers: availableMembers,
-          member: createCurrentMember(),
+          currentMember: createCurrentMember(),
         ),
       );
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
@@ -191,6 +193,40 @@ void main() {
       );
     });
 
+    testWidgets('データ読み込みエラー時はグループ追加を開始しないこと', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('Network error'));
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      final addButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'グループ追加'),
+      );
+
+      expect(addButton.onPressed, isNull);
+      await tester.tap(find.text('グループ追加'));
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      expect(find.text('グループ編集'), findsNothing);
+    });
+
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
@@ -314,6 +350,286 @@ void main() {
       expect(find.text('グループ編集'), findsOneWidget);
     });
 
+    testWidgets('メンバー候補の取得中にグループ行を連続タップしても編集画面を1つだけ開くこと', (
+      WidgetTester tester,
+    ) async {
+      final availableMembersCompleter = Completer<List<MemberDto>>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => availableMembersCompleter.future);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.tap(find.byType(ListTile));
+
+      verify(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(1);
+
+      availableMembersCompleter.complete([testMember]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('メンバー候補の取得中に削除ボタンを押しても削除確認を開かないこと', (
+      WidgetTester tester,
+    ) async {
+      final availableMembersCompleter = Completer<List<MemberDto>>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => availableMembersCompleter.future);
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile));
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+
+      availableMembersCompleter.complete([testMember]);
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ削除'), findsNothing);
+      verifyNever(mockGroupRepository.deleteGroup(groupWithMembers1.id));
+      expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('メンバー候補の取得中に再読み込みしても一覧を再取得しないこと', (WidgetTester tester) async {
+      final availableMembersCompleter = Completer<List<MemberDto>>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => availableMembersCompleter.future);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      final groupTile = tester.widget<ListTile>(find.byType(ListTile));
+      final refreshIndicator = tester.widget<RefreshIndicator>(
+        find.byType(RefreshIndicator),
+      );
+
+      groupTile.onTap?.call();
+      await tester.pump();
+      await refreshIndicator.onRefresh();
+
+      availableMembersCompleter.complete([testMember]);
+      await tester.pumpAndSettle();
+
+      verify(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(1);
+      expect(find.text('グループ編集'), findsOneWidget);
+    });
+
+    testWidgets('再読み込み中にグループ行をタップしてもメンバー候補を取得しないこと', (
+      WidgetTester tester,
+    ) async {
+      final refreshCompleter = Completer<List<GroupDto>>();
+      var loadCount = 0;
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) {
+        loadCount++;
+        if (loadCount == 1) {
+          return Future.value([groupWithMembers1]);
+        }
+        return refreshCompleter.future;
+      });
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      final groupTile = tester.widget<ListTile>(find.byType(ListTile));
+      final refreshIndicator = tester.widget<RefreshIndicator>(
+        find.byType(RefreshIndicator),
+      );
+
+      final refreshFuture = refreshIndicator.onRefresh();
+      await tester.pump();
+      groupTile.onTap?.call();
+      await tester.pump();
+
+      refreshCompleter.complete([groupWithMembers1]);
+      await refreshFuture;
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      expect(find.text('グループ編集'), findsNothing);
+    });
+
+    testWidgets('再読み込み中に削除ボタンを押しても削除確認を開かないこと', (WidgetTester tester) async {
+      final refreshCompleter = Completer<List<GroupDto>>();
+      var loadCount = 0;
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) {
+        loadCount++;
+        if (loadCount == 1) {
+          return Future.value([groupWithMembers1]);
+        }
+        return refreshCompleter.future;
+      });
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      final deleteButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.delete),
+      );
+      final refreshIndicator = tester.widget<RefreshIndicator>(
+        find.byType(RefreshIndicator),
+      );
+
+      final refreshFuture = refreshIndicator.onRefresh();
+      await tester.pump();
+      deleteButton.onPressed?.call();
+      await tester.pump();
+
+      expect(find.text('グループ削除'), findsNothing);
+
+      refreshCompleter.complete([groupWithMembers1]);
+      await refreshFuture;
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('削除処理中にグループ行をタップしてもメンバー候補を取得しないこと', (
+      WidgetTester tester,
+    ) async {
+      final deleteTripEntriesCompleter = Completer<void>();
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+      when(
+        mockTripEntryRepository.deleteTripEntriesByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) => deleteTripEntriesCompleter.future);
+      when(
+        mockGroupEventRepository.deleteGroupEventsByGroupId(
+          groupWithMembers1.id,
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockGroupRepository.deleteGroup(groupWithMembers1.id),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('削除'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pump();
+
+      deleteTripEntriesCompleter.complete();
+      await tester.pumpAndSettle();
+
+      verifyNever(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      );
+      expect(find.text('グループ編集'), findsNothing);
+    });
+
+    testWidgets('メンバー候補の取得失敗時は編集画面を開かずエラーを表示すること', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenThrow(TestException('メンバー取得失敗'));
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ編集'), findsNothing);
+      expect(
+        find.text(
+          'メンバー情報の取得に失敗しました: '
+          'TestException: メンバー取得失敗',
+        ),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('グループ情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       final managedGroupsWithMembers = [groupWithMembers1];
@@ -357,6 +673,40 @@ void main() {
 
       // Assert - 更新処理が呼ばれることを確認
       verify(mockGroupRepository.updateGroup(any)).called(1);
+    });
+
+    testWidgets('グループ更新失敗時は編集画面を維持してエラーを表示すること', (WidgetTester tester) async {
+      when(
+        mockGroupQueryService.getManagedGroupsWithMembersByOwnerId(
+          testMember.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => [groupWithMembers1]);
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => [testMember]);
+      when(
+        mockGroupRepository.updateGroup(any),
+      ).thenThrow(TestException('更新エラー'));
+
+      await tester.pumpWidget(createGroupManagementApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'グループ名').first,
+        'Updated Group Name',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループ編集'), findsOneWidget);
+      expect(find.text('更新に失敗しました: TestException: 更新エラー'), findsOneWidget);
+      expect(find.text('保存に失敗しました。もう一度お試しください。'), findsNothing);
     });
 
     testWidgets('グループ編集後に一覧が最新情報で再取得されること', (WidgetTester tester) async {

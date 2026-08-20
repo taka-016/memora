@@ -3,6 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
 import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
@@ -10,18 +11,46 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 
 enum _MemberAction { toggleAdministrator, changeMember, removeMember }
 
+GroupMemberDto _createGroupMemberForEdit(
+  MemberDto member,
+  String groupId, {
+  bool isAdministrator = false,
+  int orderIndex = 0,
+}) {
+  return GroupMemberDto(
+    memberId: member.id,
+    groupId: groupId,
+    isAdministrator: isAdministrator,
+    orderIndex: orderIndex,
+    accountId: member.accountId,
+    ownerId: member.ownerId,
+    hiraganaFirstName: member.hiraganaFirstName,
+    hiraganaLastName: member.hiraganaLastName,
+    kanjiFirstName: member.kanjiFirstName,
+    kanjiLastName: member.kanjiLastName,
+    firstName: member.firstName,
+    lastName: member.lastName,
+    displayName: member.displayName,
+    type: member.type,
+    birthday: member.birthday,
+    gender: member.gender,
+    email: member.email,
+    phoneNumber: member.phoneNumber,
+  );
+}
+
 class GroupEditModal extends HookConsumerWidget {
   final GroupDto group;
-  final Future<void> Function(GroupDto) onSave;
-  final List<GroupMemberDto> availableMembers;
-  final GroupMemberDto member;
+  final Future<bool> Function(GroupDto) onSave;
+  final List<MemberDto> availableMembers;
+  final MemberDto currentMember;
 
   const GroupEditModal({
     super.key,
     required this.group,
     required this.onSave,
     required this.availableMembers,
-    required this.member,
+    required this.currentMember,
   });
 
   @override
@@ -32,9 +61,12 @@ class GroupEditModal extends HookConsumerWidget {
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
 
-    GroupMemberDto? findMemberById(String memberId) {
+    MemberDto? findMemberById(String memberId) {
+      if (currentMember.id == memberId) {
+        return currentMember;
+      }
       for (final member in availableMembers) {
-        if (member.memberId == memberId) {
+        if (member.id == memberId) {
           return member;
         }
       }
@@ -64,7 +96,7 @@ class GroupEditModal extends HookConsumerWidget {
       final resolvedOwner = ownerIndex != -1
           ? normalizedMembers[ownerIndex]
           : null;
-      final fallbackOwner = member.memberId == ownerId ? member : null;
+      final fallbackOwner = currentMember.id == ownerId ? currentMember : null;
 
       if (resolvedOwner != null) {
         normalizedMembers[ownerIndex] = resolvedOwner.copyWith(
@@ -73,7 +105,11 @@ class GroupEditModal extends HookConsumerWidget {
         );
       } else if (fallbackOwner != null) {
         normalizedMembers.add(
-          fallbackOwner.copyWith(groupId: groupId, isAdministrator: true),
+          _createGroupMemberForEdit(
+            fallbackOwner,
+            groupId,
+            isAdministrator: true,
+          ),
         );
       }
 
@@ -89,7 +125,7 @@ class GroupEditModal extends HookConsumerWidget {
 
     final initialMembers = useMemoized(
       () => normalizeMembers(group.ownerId, group.id, group.members),
-      [group],
+      [group, currentMember],
     );
     final initialGroupForComparison = useMemoized(
       () => group.copyWith(members: initialMembers, memo: group.memo ?? ''),
@@ -130,16 +166,16 @@ class GroupEditModal extends HookConsumerWidget {
       return null;
     }, [groupState.value]);
 
-    List<GroupMemberDto> getAddableMembers() {
+    List<MemberDto> getAddableMembers() {
       final selectedIds = groupState.value.members
           .map((gm) => gm.memberId)
           .toSet();
       return availableMembers
-          .where((member) => !selectedIds.contains(member.memberId))
+          .where((member) => !selectedIds.contains(member.id))
           .toList();
     }
 
-    List<GroupMemberDto> getChangeCandidates(int index) {
+    List<MemberDto> getChangeCandidates(int index) {
       final currentMemberId = groupState.value.members[index].memberId;
       final selectedIds = groupState.value.members
           .asMap()
@@ -148,7 +184,7 @@ class GroupEditModal extends HookConsumerWidget {
           .map((entry) => entry.value.memberId)
           .toSet();
 
-      final candidates = <GroupMemberDto>[];
+      final candidates = <MemberDto>[];
       final currentMember = findMemberById(currentMemberId);
       if (currentMember != null) {
         candidates.add(currentMember);
@@ -156,10 +192,10 @@ class GroupEditModal extends HookConsumerWidget {
 
       candidates.addAll(
         availableMembers.where((member) {
-          if (member.memberId == currentMemberId) {
+          if (member.id == currentMemberId) {
             return false;
           }
-          return !selectedIds.contains(member.memberId);
+          return !selectedIds.contains(member.id);
         }),
       );
 
@@ -194,7 +230,7 @@ class GroupEditModal extends HookConsumerWidget {
     }
 
     Future<void> showMemberSelectionMenu(
-      List<GroupMemberDto> candidates,
+      List<MemberDto> candidates,
       ValueChanged<String> onSelected,
     ) async {
       final selectedMemberId = await showModalBottomSheet<String>(
@@ -239,7 +275,7 @@ class GroupEditModal extends HookConsumerWidget {
     void handleMemberAction(
       int index,
       _MemberAction action,
-      List<GroupMemberDto> changeCandidates,
+      List<MemberDto> changeCandidates,
     ) {
       switch (action) {
         case _MemberAction.toggleAdministrator:
@@ -248,7 +284,7 @@ class GroupEditModal extends HookConsumerWidget {
         case _MemberAction.changeMember:
           final currentMemberId = groupState.value.members[index].memberId;
           final hasAlternative = changeCandidates
-              .where((candidate) => candidate.memberId != currentMemberId)
+              .where((candidate) => candidate.id != currentMemberId)
               .isNotEmpty;
 
           if (!hasAlternative) {
@@ -263,7 +299,10 @@ class GroupEditModal extends HookConsumerWidget {
             final updatedMembers = List<GroupMemberDto>.from(
               groupState.value.members,
             );
-            updatedMembers[index] = selectedMember;
+            updatedMembers[index] = _createGroupMemberForEdit(
+              selectedMember,
+              groupState.value.id,
+            );
             updateGroupMembers(updatedMembers);
           });
           break;
@@ -310,10 +349,10 @@ class GroupEditModal extends HookConsumerWidget {
     Widget buildMemberActionMenu(
       int index,
       GroupMemberDto groupMember,
-      List<GroupMemberDto> changeCandidates,
+      List<MemberDto> changeCandidates,
     ) {
       final hasAlternative = changeCandidates
-          .where((candidate) => candidate.memberId != groupMember.memberId)
+          .where((candidate) => candidate.id != groupMember.memberId)
           .isNotEmpty;
 
       return PopupMenuButton<_MemberAction>(
@@ -373,7 +412,7 @@ class GroupEditModal extends HookConsumerWidget {
       int index,
       bool isOwner,
       GroupMemberDto groupMember,
-      List<GroupMemberDto> changeCandidates,
+      List<MemberDto> changeCandidates,
     ) {
       const actionSlotSize = 40.0;
       return SizedBox(
@@ -497,7 +536,12 @@ class GroupEditModal extends HookConsumerWidget {
                     final updatedMembers = List<GroupMemberDto>.from(
                       groupState.value.members,
                     );
-                    updatedMembers.add(selectedMember);
+                    updatedMembers.add(
+                      _createGroupMemberForEdit(
+                        selectedMember,
+                        groupState.value.id,
+                      ),
+                    );
                     updateGroupMembers(updatedMembers);
                   });
                 },
@@ -574,7 +618,10 @@ class GroupEditModal extends HookConsumerWidget {
             onPressed: () async {
               if (formKey.currentState!.validate()) {
                 try {
-                  await onSave(buildUpdatedGroup());
+                  final succeeded = await onSave(buildUpdatedGroup());
+                  if (!succeeded) {
+                    return;
+                  }
                   if (!context.mounted) {
                     return;
                   }
@@ -702,7 +749,7 @@ class GroupEditModal extends HookConsumerWidget {
   }
 
   Widget _buildMemberSelectionList(
-    List<GroupMemberDto> candidates,
+    List<MemberDto> candidates,
     ScrollController scrollController,
   ) {
     return ListView.builder(
@@ -734,7 +781,7 @@ class GroupEditModal extends HookConsumerWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              onTap: () => Navigator.of(context).pop(member.memberId),
+              onTap: () => Navigator.of(context).pop(member.id),
               hoverColor: Colors.grey[50],
             ),
           ),

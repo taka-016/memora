@@ -7,7 +7,6 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/map_state.dart';
@@ -79,28 +78,6 @@ class MapNotifier extends Notifier<MapState> {
       return;
     }
     await _loadSelectedGroupData(preserveData: true);
-  }
-
-  Future<TripEntryDto?> loadTripDetail(String tripId) async {
-    try {
-      final trip = await ref
-          .read(getTripEntryByIdUsecaseProvider)
-          .execute(tripId);
-      if (!ref.mounted) {
-        return null;
-      }
-      return trip;
-    } catch (e, stack) {
-      if (!ref.mounted) {
-        return null;
-      }
-      logger.e(
-        'MapNotifier.loadTripDetail: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      return null;
-    }
   }
 
   Future<bool> updateTripEntry(TripEntryDto tripEntry) async {

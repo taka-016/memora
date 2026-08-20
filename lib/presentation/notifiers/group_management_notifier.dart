@@ -1,13 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/mappers/group/group_member_mapper.dart';
 import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/group_management_state.dart';
 
@@ -23,11 +20,12 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
   GroupManagementNotifier(this._currentMember);
 
   final MemberDto _currentMember;
+  bool _isMutationInProgress = false;
 
   @override
   Future<GroupManagementState> build() async {
     try {
-      final groups = await _getGroups();
+      final groups = await _getManagedGroupsWithMembers();
       return GroupManagementState(groups: groups);
     } catch (e, stack) {
       logger.e(
@@ -40,8 +38,7 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
   }
 
   Future<bool> refreshGroups() async {
-    if (state.value?.operationStatus ==
-        GroupManagementOperationStatus.loading) {
+    if (_isMutationInProgress) {
       return false;
     }
 
@@ -49,63 +46,9 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
     return true;
   }
 
-  Future<List<GroupMemberDto>?> loadAvailableMembers(String groupId) async {
-    final currentState = state.value;
-    if (currentState == null ||
-        currentState.operationStatus ==
-            GroupManagementOperationStatus.loading) {
-      return null;
-    }
-
-    state = AsyncData(
-      currentState.copyWith(
-        operationType: GroupManagementOperationType.loadAvailableMembers,
-        operationStatus: GroupManagementOperationStatus.loading,
-        errorMessage: '',
-      ),
-    );
-    try {
-      final members = await ref
-          .read(getManagedMembersUsecaseProvider)
-          .execute(_currentMember);
-      if (!ref.mounted) {
-        return null;
-      }
-      final availableMembers = GroupMemberMapper.fromMemberList(
-        members,
-        groupId,
-      );
-      state = AsyncData(
-        state.requireValue.copyWith(
-          operationStatus: GroupManagementOperationStatus.success,
-          availableMembers: availableMembers,
-          errorMessage: '',
-        ),
-      );
-      return availableMembers;
-    } catch (e, stack) {
-      if (!ref.mounted) {
-        return null;
-      }
-      logger.e(
-        'GroupManagementNotifier.loadAvailableMembers: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      state = AsyncData(
-        state.requireValue.copyWith(
-          operationStatus: GroupManagementOperationStatus.error,
-          errorMessage: 'メンバー情報の取得に失敗しました: $e',
-        ),
-      );
-      return null;
-    }
-  }
-
   Future<bool> createGroup(GroupDto group) async {
     return _runMutation(
-      type: GroupManagementOperationType.create,
-      failureMessage: '作成に失敗しました',
+      operationName: 'createGroup',
       execute: () async {
         await ref.read(createGroupUsecaseProvider).execute(group);
       },
@@ -114,51 +57,33 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
 
   Future<bool> updateGroup(GroupDto group) async {
     return _runMutation(
-      type: GroupManagementOperationType.update,
-      failureMessage: '更新に失敗しました',
+      operationName: 'updateGroup',
       execute: () => ref.read(updateGroupUsecaseProvider).execute(group),
     );
   }
 
   Future<bool> deleteGroup(String groupId) async {
     return _runMutation(
-      type: GroupManagementOperationType.delete,
-      failureMessage: '削除に失敗しました',
+      operationName: 'deleteGroup',
       execute: () => ref.read(deleteGroupUsecaseProvider).execute(groupId),
     );
   }
 
   Future<bool> _runMutation({
-    required GroupManagementOperationType type,
-    required String failureMessage,
+    required String operationName,
     required Future<void> Function() execute,
   }) async {
-    final currentState = state.value;
-    if (currentState == null ||
-        currentState.operationStatus ==
-            GroupManagementOperationStatus.loading) {
+    if (state.value == null || _isMutationInProgress) {
       return false;
     }
 
-    state = AsyncData(
-      currentState.copyWith(
-        operationType: type,
-        operationStatus: GroupManagementOperationStatus.loading,
-        errorMessage: '',
-      ),
-    );
+    _isMutationInProgress = true;
     final keepAliveLink = ref.keepAlive();
     try {
       await execute();
       if (!ref.mounted) {
         return false;
       }
-      state = AsyncData(
-        state.requireValue.copyWith(
-          operationStatus: GroupManagementOperationStatus.success,
-          errorMessage: '',
-        ),
-      );
       ref.invalidateSelf();
       return true;
     } catch (e, stack) {
@@ -166,23 +91,18 @@ class GroupManagementNotifier extends AsyncNotifier<GroupManagementState> {
         return false;
       }
       logger.e(
-        'GroupManagementNotifier.${type.name}: ${e.toString()}',
+        'GroupManagementNotifier.$operationName: ${e.toString()}',
         error: e,
         stackTrace: stack,
       );
-      state = AsyncData(
-        state.requireValue.copyWith(
-          operationStatus: GroupManagementOperationStatus.error,
-          errorMessage: '$failureMessage: $e',
-        ),
-      );
-      return false;
+      rethrow;
     } finally {
+      _isMutationInProgress = false;
       keepAliveLink.close();
     }
   }
 
-  Future<List<GroupDto>> _getGroups() {
+  Future<List<GroupDto>> _getManagedGroupsWithMembers() {
     return ref
         .read(getManagedGroupsWithMembersUsecaseProvider)
         .execute(_currentMember);

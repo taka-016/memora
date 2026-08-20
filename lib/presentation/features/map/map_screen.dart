@@ -1,17 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/map_notifier.dart';
 import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
-class MapScreen extends ConsumerWidget {
+class MapScreen extends HookConsumerWidget {
   final bool isTestEnvironment;
 
   const MapScreen({super.key, this.isTestEnvironment = false});
@@ -27,50 +29,98 @@ class MapScreen extends ConsumerWidget {
     final state = ref.watch(provider);
     final notifier = ref.read(provider.notifier);
     final selectedGroup = state.selectedGroup;
+    final isMapOperationInProgressRef = useRef(false);
+
+    Future<void> runExclusiveMapOperation(
+      Future<void> Function() execute,
+    ) async {
+      if (isMapOperationInProgressRef.value) {
+        return;
+      }
+      isMapOperationInProgressRef.value = true;
+      try {
+        await execute();
+      } finally {
+        isMapOperationInProgressRef.value = false;
+      }
+    }
+
+    void handleGroupSelected(GroupDto group) {
+      unawaited(runExclusiveMapOperation(() => notifier.selectGroup(group)));
+    }
+
+    void handleGroupsRetry() {
+      unawaited(runExclusiveMapOperation(notifier.loadGroups));
+    }
+
+    void handleGroupDataRetry() {
+      unawaited(runExclusiveMapOperation(notifier.retryGroupData));
+    }
 
     if (selectedGroup == null) {
       return _MapGroupSelection(
         state: state,
-        onGroupSelected: (group) => unawaited(notifier.selectGroup(group)),
-        onRetry: () => unawaited(notifier.loadGroups()),
+        onGroupSelected: handleGroupSelected,
+        onRetry: handleGroupsRetry,
       );
     }
 
-    Future<void> handleTripTapped(TripEntryDto trip) async {
-      final currentTrip = await notifier.loadTripDetail(trip.id);
-      if (!context.mounted) {
-        return;
-      }
-      final currentState = ref.read(provider);
-      final group = currentState.groups
-          .where((item) => item.id == currentTrip?.groupId)
-          .firstOrNull;
-      if (currentTrip == null || group == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
-        return;
-      }
+    Future<void> handleTripTapped(TripEntryDto trip) {
+      return runExclusiveMapOperation(() async {
+        final TripEntryDto? currentTrip;
+        try {
+          currentTrip = await ref
+              .read(getTripEntryByIdUsecaseProvider)
+              .execute(trip.id);
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('旅行情報の取得に失敗しました')));
+          }
+          return;
+        }
+        if (!context.mounted) {
+          return;
+        }
+        final loadedTrip = currentTrip;
+        if (loadedTrip == null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
+          return;
+        }
+        final currentState = ref.read(provider);
+        final group = currentState.groups
+            .where((item) => item.id == loadedTrip.groupId)
+            .firstOrNull;
+        if (group == null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
+          return;
+        }
 
-      await showDialog<void>(
-        barrierDismissible: false,
-        context: context,
-        builder: (dialogContext) => TripEditModal(
-          groupId: currentTrip.groupId,
-          groupMembers: group.members,
-          tripEntry: currentTrip,
-          year: currentTrip.year,
-          isTestEnvironment: isTestEnvironment,
-          onSave: (updatedTrip) async {
-            await notifier.updateTripEntry(updatedTrip);
-            if (context.mounted) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
-            }
-          },
-        ),
-      );
+        await showDialog<void>(
+          barrierDismissible: false,
+          context: context,
+          builder: (dialogContext) => TripEditModal(
+            groupId: loadedTrip.groupId,
+            groupMembers: group.members,
+            tripEntry: loadedTrip,
+            year: loadedTrip.year,
+            isTestEnvironment: isTestEnvironment,
+            onSave: (updatedTrip) async {
+              await notifier.updateTripEntry(updatedTrip);
+              if (context.mounted) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
+              }
+            },
+          ),
+        );
+      });
     }
 
     final mapViewType = isTestEnvironment
@@ -85,9 +135,9 @@ class MapScreen extends ConsumerWidget {
         topLeadingOverlay: _MapToolbar(
           groups: state.groups,
           selectedGroup: selectedGroup,
-          onGroupSelected: (group) => unawaited(notifier.selectGroup(group)),
+          onGroupSelected: handleGroupSelected,
           isLoading: state.isGroupDataLoading,
-          onReload: () => unawaited(notifier.retryGroupData()),
+          onReload: handleGroupDataRetry,
         ),
         locationDetailBuilder:
             (location, onClose, {onPreviousLocation, onNextLocation}) {

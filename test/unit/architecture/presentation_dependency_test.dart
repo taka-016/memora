@@ -22,4 +22,37 @@ void main() {
 
     expect(violations, isEmpty, reason: violations.join('\n'));
   });
+
+  test('Dialog表示前の単発取得はViewからUseCaseを直接実行する', () {
+    final groupManagementSource = File(
+      'lib/presentation/features/group/group_management.dart',
+    ).readAsStringSync();
+    final mapScreenSource = File(
+      'lib/presentation/features/map/map_screen.dart',
+    ).readAsStringSync();
+
+    expect(
+      groupManagementSource,
+      matches(
+        RegExp(
+          r'ref\s*\.read\(\s*getManagedMembersUsecaseProvider\s*\)'
+          r'\s*\.execute\(currentMember\)',
+        ),
+      ),
+    );
+    expect(
+      groupManagementSource,
+      isNot(contains('groupEditAvailableMembersProvider')),
+    );
+    expect(
+      mapScreenSource,
+      matches(
+        RegExp(
+          r'ref\s*\.read\(\s*getTripEntryByIdUsecaseProvider\s*\)'
+          r'\s*\.execute\(trip\.id\)',
+        ),
+      ),
+    );
+    expect(mapScreenSource, isNot(contains('mapTripDetailProvider')));
+  });
 }
