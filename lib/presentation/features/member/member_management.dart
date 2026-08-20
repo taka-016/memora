@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
@@ -9,7 +10,7 @@ import 'package:memora/presentation/notifiers/member_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 
-class MemberManagement extends ConsumerWidget {
+class MemberManagement extends HookConsumerWidget {
   const MemberManagement({super.key});
 
   @override
@@ -23,6 +24,7 @@ class MemberManagement extends ConsumerWidget {
     final state = ref.watch(memberManagementNotifierProvider(currentMember));
     final managementNotifier = ref.read(managementProvider.notifier);
     final invite = ref.read(createOrUpdateMemberInvitationUsecaseProvider);
+    final isMemberOperationInProgressRef = useRef(false);
 
     void showSnackBar(String message) {
       ScaffoldMessenger.of(
@@ -46,16 +48,37 @@ class MemberManagement extends ConsumerWidget {
       }
     });
 
-    Future<void> refreshMembers() async {
-      try {
-        final refreshStarted = await managementNotifier.refreshMembers();
-        if (!refreshStarted) {
-          return;
-        }
-        await ref.read(managementProvider.future);
-      } catch (_) {
-        // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
+    Future<T> runExclusiveMemberOperation<T>({
+      required T blockedResult,
+      required Future<T> Function() execute,
+    }) async {
+      if (isMemberOperationInProgressRef.value) {
+        return blockedResult;
       }
+      isMemberOperationInProgressRef.value = true;
+      try {
+        return await execute();
+      } finally {
+        isMemberOperationInProgressRef.value = false;
+      }
+    }
+
+    Future<void> refreshMembers() async {
+      await runExclusiveMemberOperation(
+        blockedResult: false,
+        execute: () async {
+          try {
+            final refreshStarted = await managementNotifier.refreshMembers();
+            if (!refreshStarted) {
+              return false;
+            }
+            await ref.read(managementProvider.future);
+          } catch (_) {
+            // 失敗表示はProviderのAsyncErrorを監視するref.listenで行う。
+          }
+          return true;
+        },
+      );
     }
 
     Future<void> runMutationWithFeedback({
@@ -63,92 +86,116 @@ class MemberManagement extends ConsumerWidget {
       required String successMessage,
       required String failureMessage,
     }) async {
-      try {
-        final succeeded = await execute();
-        if (context.mounted && succeeded) {
-          showSnackBar(successMessage);
-        }
-      } catch (e) {
-        if (context.mounted) {
-          showSnackBar('$failureMessage: $e');
-        }
-      }
+      await runExclusiveMemberOperation(
+        blockedResult: false,
+        execute: () async {
+          try {
+            final succeeded = await execute();
+            if (!context.mounted || !succeeded) {
+              return false;
+            }
+            showSnackBar(successMessage);
+            return true;
+          } catch (e) {
+            if (context.mounted) {
+              showSnackBar('$failureMessage: $e');
+            }
+            return false;
+          }
+        },
+      );
     }
 
-    Future<void> handleMemberInvite(MemberDto targetMember) async {
+    Future<void> handleMemberInvite(
+      MemberDto targetMember,
+      BuildContext editDialogContext,
+    ) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-      try {
-        final invitationCode = await invite.execute(
-          inviteeId: targetMember.id,
-          inviterId: currentMember.id,
-        );
+      await runExclusiveMemberOperation(
+        blockedResult: false,
+        execute: () async {
+          try {
+            final invitationCode = await invite.execute(
+              inviteeId: targetMember.id,
+              inviterId: currentMember.id,
+            );
 
-        if (!context.mounted) {
-          return;
-        }
+            if (!context.mounted || !editDialogContext.mounted) {
+              return false;
+            }
 
-        await showDialog(
-          context: context,
-          builder: (dialogContext) => AlertDialog(
-            title: const Text('招待コード'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${targetMember.displayName}さんの招待コードが生成されました。'),
-                const SizedBox(height: 16),
-                SelectableText(
-                  invitationCode,
-                  style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  try {
-                    await SharePlus.instance.share(
-                      ShareParams(
-                        text:
-                            'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
-                        subject: 'Memoraへの招待',
+            await showDialog(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('招待コード'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${targetMember.displayName}さんの招待コードが生成されました。'),
+                    const SizedBox(height: 16),
+                    SelectableText(
+                      invitationCode,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 14,
                       ),
-                    );
-                  } catch (e, stack) {
-                    logger.e(
-                      'MemberManagement.handleMemberInvite.share: ${e.toString()}',
-                      error: e,
-                      stackTrace: stack,
-                    );
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(content: Text('共有に失敗しました')),
-                    );
-                  }
-                },
-                child: const Text('共有'),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () async {
+                      try {
+                        await SharePlus.instance.share(
+                          ShareParams(
+                            text:
+                                'あなたのMemoraへの招待コード\n\n$invitationCode\n\nこのコードをアプリで入力してください。',
+                            subject: 'Memoraへの招待',
+                          ),
+                        );
+                      } catch (e, stack) {
+                        logger.e(
+                          'MemberManagement.handleMemberInvite.share: ${e.toString()}',
+                          error: e,
+                          stackTrace: stack,
+                        );
+                        scaffoldMessenger.showSnackBar(
+                          const SnackBar(content: Text('共有に失敗しました')),
+                        );
+                      }
+                    },
+                    child: const Text('共有'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text('閉じる'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('閉じる'),
-              ),
-            ],
-          ),
-        );
-      } catch (e, stack) {
-        logger.e(
-          'MemberManagement.handleMemberInvite: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          scaffoldMessenger.showSnackBar(
-            SnackBar(content: Text('招待コードの生成に失敗しました: $e')),
-          );
-        }
-      }
+            );
+            return true;
+          } catch (e, stack) {
+            logger.e(
+              'MemberManagement.handleMemberInvite: ${e.toString()}',
+              error: e,
+              stackTrace: stack,
+            );
+            if (context.mounted && editDialogContext.mounted) {
+              scaffoldMessenger.showSnackBar(
+                SnackBar(content: Text('招待コードの生成に失敗しました: $e')),
+              );
+            }
+            return false;
+          }
+        },
+      );
     }
 
     Future<void> showDeleteConfirmDialog(MemberDto targetMember) async {
+      if (isMemberOperationInProgressRef.value) {
+        return;
+      }
       await DeleteConfirmDialog.show(
         context,
         title: 'メンバー削除',
@@ -162,6 +209,9 @@ class MemberManagement extends ConsumerWidget {
     }
 
     Future<void> showAddMemberDialog() async {
+      if (isMemberOperationInProgressRef.value) {
+        return;
+      }
       await showDialog(
         barrierDismissible: false,
         context: context,
@@ -176,10 +226,13 @@ class MemberManagement extends ConsumerWidget {
     }
 
     Future<void> showEditMemberDialog(MemberDto targetMember) async {
+      if (isMemberOperationInProgressRef.value) {
+        return;
+      }
       await showDialog(
         barrierDismissible: false,
         context: context,
-        builder: (_) => MemberEditModal(
+        builder: (dialogContext) => MemberEditModal(
           member: targetMember,
           onSave: (updatedMember) => runMutationWithFeedback(
             execute: () => managementNotifier.updateMember(updatedMember),
@@ -188,7 +241,7 @@ class MemberManagement extends ConsumerWidget {
           ),
           onInvite: targetMember.id != currentMember.id
               ? (memberDto) async {
-                  await handleMemberInvite(memberDto);
+                  await handleMemberInvite(memberDto, dialogContext);
                 }
               : null,
         ),

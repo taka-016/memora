@@ -52,6 +52,8 @@ class MemberEditModal extends HookConsumerWidget {
     final gender = useState<String?>(member?.gender);
     final birthday = useState<DateTime?>(member?.birthday);
     final isInviting = useState(false);
+    final isSaving = useState(false);
+    final isOperationInProgress = isInviting.value || isSaving.value;
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
     final editState = ref.watch(editStateNotifierProvider);
 
@@ -329,7 +331,7 @@ class MemberEditModal extends HookConsumerWidget {
     }
 
     Future<void> handleInvite() async {
-      if (member == null || onInvite == null || isInviting.value) {
+      if (member == null || onInvite == null || isOperationInProgress) {
         return;
       }
       isInviting.value = true;
@@ -355,7 +357,11 @@ class MemberEditModal extends HookConsumerWidget {
     }
 
     Future<void> handleSave() async {
+      if (isOperationInProgress) {
+        return;
+      }
       if (formKey.currentState!.validate()) {
+        isSaving.value = true;
         try {
           await onSave(buildUpdatedMember());
           if (!context.mounted) {
@@ -375,6 +381,10 @@ class MemberEditModal extends HookConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('保存に失敗しました。もう一度お試しください。')),
           );
+        } finally {
+          if (context.mounted) {
+            isSaving.value = false;
+          }
         }
       }
     }
@@ -387,7 +397,7 @@ class MemberEditModal extends HookConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: isInviting.value ? null : handleInvite,
+                  onPressed: isOperationInProgress ? null : handleInvite,
                   icon: const Icon(Icons.person_add),
                   label: const Text('招待'),
                   style: ElevatedButton.styleFrom(
@@ -403,30 +413,32 @@ class MemberEditModal extends HookConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               TextButton(
-                onPressed: () async {
-                  if (!editState.isDirty) {
-                    editStateNotifier.reset();
-                    Navigator.of(context).pop();
-                    return;
-                  }
+                onPressed: isOperationInProgress
+                    ? null
+                    : () async {
+                        if (!editState.isDirty) {
+                          editStateNotifier.reset();
+                          Navigator.of(context).pop();
+                          return;
+                        }
 
-                  final shouldClose = await EditDiscardConfirmDialog.show(
-                    context,
-                  );
-                  if (!context.mounted) {
-                    return;
-                  }
+                        final shouldClose = await EditDiscardConfirmDialog.show(
+                          context,
+                        );
+                        if (!context.mounted) {
+                          return;
+                        }
 
-                  if (shouldClose) {
-                    editStateNotifier.reset();
-                    Navigator.of(context).pop();
-                  }
-                },
+                        if (shouldClose) {
+                          editStateNotifier.reset();
+                          Navigator.of(context).pop();
+                        }
+                      },
                 child: const Text('キャンセル'),
               ),
               const SizedBox(width: 8),
               ElevatedButton(
-                onPressed: handleSave,
+                onPressed: isOperationInProgress ? null : handleSave,
                 child: Text(isEditing ? '更新' : '作成'),
               ),
             ],
