@@ -148,13 +148,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 2. MemberManagementの一覧と更新後の整合性をNotifierへ分離する
-
-- `MemberManagementState`には管理対象メンバーと本人メンバーを統合した一覧を保持し、操作中状態はViewで操作無効化や進捗表示に使用する場合だけ追加する
-- 一覧取得、本人メンバーの解決、メンバーの作成・更新・削除と各処理後の一覧再取得をNotifierへ移す
-- 招待コード生成は一覧Stateから独立した単発操作としてNotifierへ移さず、既存UseCaseの操作結果をViewで受け取り、招待Dialog、共有、Snackbarを実表示する
-- 一覧取得、本人メンバーの解決、各更新処理、更新後の再取得はNotifier単体テスト、招待コード生成の成功・失敗とDialog・共有・SnackbarはUseCase単体テストとWidgetテストで検証する
-
 #### 3. TripManagementのデータ状態をNotifierへ分離する
 
 - `TripManagementState`と`TripManagementNotifier`を作成し、対象年の旅行一覧、グループメンバー、取得元ごとの読み込み・再試行状態を管理する
