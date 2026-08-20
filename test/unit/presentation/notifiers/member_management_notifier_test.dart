@@ -178,7 +178,7 @@ void main() {
       final provider = memberManagementNotifierProvider(currentMember);
       getManagedMembersUsecase
         ..calls = calls
-        ..result = const [];
+        ..result = const <MemberDto>[];
       getMemberByIdUseCase
         ..calls = calls
         ..result = refreshedCurrentMember;
