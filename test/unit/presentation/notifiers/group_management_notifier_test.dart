@@ -136,17 +136,15 @@ void main() {
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) => completer.future);
 
-      final refreshStarted = await notifier.refreshGroups();
-      final refreshFuture = container.read(provider.future);
+      final refreshResult = notifier.refreshGroups();
       await container.pump();
 
-      expect(refreshStarted, isTrue);
       final refreshingState = container.read(provider);
       expect(refreshingState.isRefreshing, isTrue);
       expect(refreshingState.value?.groups, const [managedGroup]);
 
       completer.complete(const [updatedGroup]);
-      await refreshFuture;
+      expect(await refreshResult, isTrue);
 
       expect(container.read(provider).requireValue.groups, const [
         updatedGroup,
@@ -408,6 +406,35 @@ void main() {
       completer.complete();
       expect(await firstResult, isTrue);
       await container.read(provider.future);
+    });
+
+    test('更新後の再取得完了まで操作を排他する', () async {
+      final notifier = await startNotifier();
+      final provider = groupManagementNotifierProvider(currentMember);
+      final refreshCompleter = Completer<List<GroupDto>>();
+      when(
+        updateGroupUsecase.execute(updatedGroup),
+      ).thenAnswer((_) async {});
+      when(
+        getGroupsUsecase.execute(currentMember),
+      ).thenAnswer((_) => refreshCompleter.future);
+      var updateCompleted = false;
+
+      final updateFuture = notifier.updateGroup(updatedGroup)
+        ..whenComplete(() => updateCompleted = true);
+      await container.pump();
+
+      expect(updateCompleted, isFalse);
+      expect(await notifier.refreshGroups(), isFalse);
+      expect(await notifier.updateGroup(updatedGroup), isFalse);
+      verify(updateGroupUsecase.execute(updatedGroup)).called(1);
+
+      refreshCompleter.complete(const [updatedGroup]);
+
+      expect(await updateFuture, isTrue);
+      expect(container.read(provider).requireValue.groups, const [
+        updatedGroup,
+      ]);
     });
   });
 }

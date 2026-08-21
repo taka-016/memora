@@ -108,8 +108,7 @@ void main() {
       getManagedMembersUsecase.result = completer.future;
       getMemberByIdUseCase.result = refreshedCurrentMember;
 
-      expect(await notifier.refreshMembers(), isTrue);
-      final refreshFuture = container.read(provider.future);
+      final refreshResult = notifier.refreshMembers();
       await container.pump();
 
       final refreshingState = container.read(provider);
@@ -120,7 +119,7 @@ void main() {
       ]);
 
       completer.complete(const [updatedManagedMember]);
-      await refreshFuture;
+      expect(await refreshResult, isTrue);
 
       expect(container.read(provider).requireValue.members, const [
         refreshedCurrentMember,
@@ -285,6 +284,31 @@ void main() {
       completer.complete();
       expect(await firstUpdate, isTrue);
       await container.read(provider.future);
+    });
+
+    test('更新後の再取得完了まで操作を排他する', () async {
+      final notifier = await startNotifier();
+      final provider = memberManagementNotifierProvider(currentMember);
+      final refreshCompleter = Completer<List<MemberDto>>();
+      getManagedMembersUsecase.result = refreshCompleter.future;
+      var updateCompleted = false;
+
+      final updateFuture = notifier.updateMember(updatedManagedMember)
+        ..whenComplete(() => updateCompleted = true);
+      await container.pump();
+
+      expect(updateCompleted, isFalse);
+      expect(await notifier.refreshMembers(), isFalse);
+      expect(await notifier.updateMember(updatedManagedMember), isFalse);
+      expect(updateMemberUsecase.callCount, 1);
+
+      refreshCompleter.complete(const [updatedManagedMember]);
+
+      expect(await updateFuture, isTrue);
+      expect(container.read(provider).requireValue.members, const [
+        refreshedCurrentMember,
+        updatedManagedMember,
+      ]);
     });
   });
 }
