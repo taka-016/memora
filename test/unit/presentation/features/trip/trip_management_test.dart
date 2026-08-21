@@ -668,6 +668,56 @@ void main() {
       ).called(1);
     });
 
+    testWidgets('旅行詳細の取得中に行を再度タップしても取得とダイアログを重複させない', (
+      WidgetTester tester,
+    ) async {
+      final detailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => detailCompleter.future);
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pump();
+
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+
+      detailCompleter.complete(detailedTripEntry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+    });
+
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       when(
