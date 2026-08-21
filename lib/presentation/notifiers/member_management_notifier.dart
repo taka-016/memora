@@ -20,7 +20,7 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
   MemberManagementNotifier(this._currentMember);
 
   final MemberDto _currentMember;
-  bool _isMutationInProgress = false;
+  bool _isOperationInProgress = false;
 
   @override
   Future<MemberManagementState> build() async {
@@ -36,13 +36,8 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
     }
   }
 
-  Future<bool> refreshMembers() async {
-    if (_isMutationInProgress) {
-      return false;
-    }
-
-    ref.invalidateSelf();
-    return true;
+  Future<bool> refreshMembers() {
+    return _runExclusiveOperation(execute: _refreshMembers);
   }
 
   Future<bool> createMember(MemberDto member) {
@@ -72,32 +67,56 @@ class MemberManagementNotifier extends AsyncNotifier<MemberManagementState> {
     required String operationName,
     required Future<void> Function() execute,
   }) async {
-    if (state.value == null || _isMutationInProgress) {
+    return _runExclusiveOperation(
+      requireValue: true,
+      execute: () async {
+        try {
+          await execute();
+        } catch (e, stack) {
+          if (!ref.mounted) {
+            return;
+          }
+          logger.e(
+            'MemberManagementNotifier.$operationName: ${e.toString()}',
+            error: e,
+            stackTrace: stack,
+          );
+          rethrow;
+        }
+        if (ref.mounted) {
+          await _refreshMembers();
+        }
+      },
+    );
+  }
+
+  Future<bool> _runExclusiveOperation({
+    bool requireValue = false,
+    required Future<void> Function() execute,
+  }) async {
+    if (_isOperationInProgress ||
+        state.isLoading ||
+        (requireValue && state.value == null)) {
       return false;
     }
 
-    _isMutationInProgress = true;
+    _isOperationInProgress = true;
     final keepAliveLink = ref.keepAlive();
     try {
       await execute();
-      if (!ref.mounted) {
-        return false;
-      }
-      ref.invalidateSelf();
-      return true;
-    } catch (e, stack) {
-      if (!ref.mounted) {
-        return false;
-      }
-      logger.e(
-        'MemberManagementNotifier.$operationName: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      rethrow;
+      return ref.mounted;
     } finally {
-      _isMutationInProgress = false;
+      _isOperationInProgress = false;
       keepAliveLink.close();
+    }
+  }
+
+  Future<void> _refreshMembers() async {
+    ref.invalidateSelf();
+    try {
+      await future;
+    } catch (_) {
+      // 読み込み失敗はbuildで記録し、AsyncErrorをViewへ通知する。
     }
   }
 
