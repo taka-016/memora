@@ -271,6 +271,22 @@ void main() {
       );
     });
 
+    test('更新成功後の一覧再取得が失敗しても取得済み一覧を維持する', () async {
+      final notifier = await startNotifier();
+      when(
+        mutationCoordinator.updateTripEntry(updatedTrip),
+      ).thenAnswer((_) async {});
+      when(
+        getTripEntriesUsecase.execute(query.groupId, query.year),
+      ).thenThrow(TestException('再取得失敗'));
+
+      expect(await notifier.updateTripEntry(updatedTrip), isTrue);
+
+      final state = container.read(tripManagementNotifierProvider(query));
+      expect(state.tripEntries, const [trip]);
+      expect(state.tripEntriesStatus, TripManagementLoadStatus.error);
+    });
+
     test('削除成功後に旅行一覧だけを再取得する', () async {
       final notifier = await startNotifier();
       clearInteractions(getTripEntriesUsecase);

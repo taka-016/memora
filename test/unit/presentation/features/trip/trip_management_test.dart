@@ -718,6 +718,129 @@ void main() {
       expect(find.text('旅行編集'), findsOneWidget);
     });
 
+    testWidgets('別の旅行を連続で選択した場合は後の旅行だけをダイアログに表示する', (
+      WidgetTester tester,
+    ) async {
+      final firstDetailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => firstDetailCompleter.future);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-2',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries[1]);
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+
+      expect(find.widgetWithText(TextFormField, '沖縄旅行'), findsOneWidget);
+
+      firstDetailCompleter.complete(detailedTripEntry);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '沖縄旅行'), findsOneWidget);
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-2',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(1);
+    });
+
+    testWidgets('旅行詳細の取得失敗後は同じ旅行を再度選択できる', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      var requestCount = 0;
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async {
+        requestCount++;
+        if (requestCount == 1) {
+          throw TestException('詳細取得失敗');
+        }
+        return detailedTripEntry;
+      });
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('旅行の詳細取得に失敗しました: TestException: 詳細取得失敗'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      verify(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).called(2);
+    });
+
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       when(
