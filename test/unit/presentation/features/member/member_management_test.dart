@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/dtos/member/member_invitation_dto.dart';
 import 'package:memora/application/queries/member/member_invitation_query_service.dart';
 import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/core/app_logger.dart';
@@ -14,6 +17,7 @@ import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
+import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';
@@ -243,6 +247,25 @@ void main() {
         find.text('データの読み込みに失敗しました: TestException: Network error'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('データ読み込みエラー時は追加を無効化し再試行を表示すること', (WidgetTester tester) async {
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenThrow(TestException('Network error'));
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+
+      final addButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, 'メンバー追加'),
+      );
+      expect(addButton.onPressed, isNull);
+      expect(find.text('メンバー一覧を読み込めませんでした'), findsOneWidget);
+      expect(find.text('再試行'), findsOneWidget);
     });
 
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
@@ -799,6 +822,164 @@ void main() {
       verify(
         mockMemberInvitationRepository.saveMemberInvitation(any),
       ).called(1);
+    });
+
+    testWidgets('招待コードの生成失敗時にスナックバーが表示されること', (WidgetTester tester) async {
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => managedMembers);
+      when(
+        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
+      ).thenThrow(TestException('招待生成失敗'));
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('招待'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('招待コードの生成に失敗しました: TestException: 招待生成失敗'),
+        findsOneWidget,
+      );
+      expect(find.text('招待コード'), findsNothing);
+    });
+
+    testWidgets('削除中は削除対象の編集画面を開かないこと', (WidgetTester tester) async {
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      final deleteCompleter = Completer<void>();
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => managedMembers);
+      when(
+        mockGroupRepository.deleteGroupMembersByMemberId('managed-member-1'),
+      ).thenAnswer((_) => deleteCompleter.future);
+      when(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(
+          'managed-member-1',
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockMemberRepository.deleteMember('managed-member-1'),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '削除'));
+      await tester.pump();
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pump();
+
+      deleteCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('メンバー編集'), findsNothing);
+    });
+
+    testWidgets('削除中はメンバー追加画面を開かないこと', (WidgetTester tester) async {
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      final deleteCompleter = Completer<void>();
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => managedMembers);
+      when(
+        mockGroupRepository.deleteGroupMembersByMemberId('managed-member-1'),
+      ).thenAnswer((_) => deleteCompleter.future);
+      when(
+        mockMemberEventRepository.deleteMemberEventsByMemberId(
+          'managed-member-1',
+        ),
+      ).thenAnswer((_) async {});
+      when(
+        mockMemberRepository.deleteMember('managed-member-1'),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, '削除'));
+      await tester.pump();
+      await tester.tap(find.text('メンバー追加'));
+      await tester.pump();
+
+      deleteCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.text('メンバー新規作成'), findsNothing);
+    });
+
+    testWidgets('招待生成中に編集画面を閉じた場合は招待コード画面を開かないこと', (WidgetTester tester) async {
+      final managedMembers = [
+        MemberDto(
+          id: 'managed-member-1',
+          accountId: null,
+          ownerId: testMember.id,
+          displayName: 'Managed User 1',
+        ),
+      ];
+      final invitationCompleter = Completer<MemberInvitationDto?>();
+      when(
+        mockMemberQueryService.getMembersByOwnerId(
+          testMember.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => managedMembers);
+      when(
+        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
+      ).thenAnswer((_) => invitationCompleter.future);
+      when(
+        mockMemberInvitationRepository.saveMemberInvitation(any),
+      ).thenAnswer((_) async {});
+
+      await tester.pumpWidget(createApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile).at(1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('招待'));
+      await tester.pump();
+
+      final editContext = tester.element(find.byType(MemberEditModal));
+      Navigator.of(editContext).pop();
+      await tester.pumpAndSettle();
+      invitationCompleter.complete(null);
+      await tester.pumpAndSettle();
+
+      expect(find.text('招待コード'), findsNothing);
     });
 
     testWidgets('ログインユーザーの編集画面には招待ボタンが表示されないこと', (WidgetTester tester) async {

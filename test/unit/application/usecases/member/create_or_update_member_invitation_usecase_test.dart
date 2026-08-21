@@ -6,6 +6,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 
+import '../../../../helpers/test_exception.dart';
 import 'create_or_update_member_invitation_usecase_test.mocks.dart';
 
 final _uuidV7Pattern = RegExp(r'^[0-9a-f]{12}7[0-9a-f]{3}[89ab][0-9a-f]{15}$');
@@ -100,6 +101,22 @@ void main() {
 
       // Assert
       expect(_uuidV7Pattern.hasMatch(invitationCode), isTrue);
+    });
+
+    test('招待情報の取得に失敗した場合は例外を呼び出し元へ伝播する', () async {
+      const inviteeId = 'invitee123';
+      const inviterId = 'inviter456';
+      when(
+        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
+      ).thenThrow(TestException('招待情報取得失敗'));
+
+      await expectLater(
+        usecase.execute(inviteeId: inviteeId, inviterId: inviterId),
+        throwsA(isA<TestException>()),
+      );
+
+      verifyNever(mockMemberInvitationRepository.saveMemberInvitation(any));
+      verifyNever(mockMemberInvitationRepository.updateMemberInvitation(any));
     });
   });
 }
