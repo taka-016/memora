@@ -41,6 +41,16 @@ class TripManagement extends HookConsumerWidget {
     final initialTripHandled = useRef(false);
     final initialTripDialogReady = useRef(initialTripId == null);
     final isTripDialogInProgress = useRef(false);
+    final activeTripDetailId = useRef<String?>(null);
+    final tripDetailRequestId = useRef(0);
+    final tripDialogScope = useRef((groupId, year, initialTripId));
+    final currentTripDialogScope = (groupId, year, initialTripId);
+    if (tripDialogScope.value != currentTripDialogScope) {
+      tripDialogScope.value = currentTripDialogScope;
+      tripDetailRequestId.value++;
+      activeTripDetailId.value = null;
+      isTripDialogInProgress.value = false;
+    }
 
     ref.listen<TripManagementState>(managementProvider, (previous, next) {
       if (next.tripEntriesStatus == TripManagementLoadStatus.error &&
@@ -161,16 +171,20 @@ class TripManagement extends HookConsumerWidget {
       String tripId, {
       VoidCallback? onBeforeShowDialog,
     }) async {
-      if (isTripDialogInProgress.value) {
+      if (isTripDialogInProgress.value &&
+          (activeTripDetailId.value == null ||
+              activeTripDetailId.value == tripId)) {
         return;
       }
+      final requestId = ++tripDetailRequestId.value;
+      activeTripDetailId.value = tripId;
       isTripDialogInProgress.value = true;
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
         final detailedTripEntry = await getTripEntryByIdUsecase.execute(tripId);
 
-        if (!context.mounted) {
+        if (!context.mounted || requestId != tripDetailRequestId.value) {
           return;
         }
 
@@ -199,6 +213,9 @@ class TripManagement extends HookConsumerWidget {
           ),
         );
       } catch (e, stack) {
+        if (requestId != tripDetailRequestId.value) {
+          return;
+        }
         logger.e(
           'TripManagement.showEditTripDialog: ${e.toString()}',
           error: e,
@@ -210,7 +227,10 @@ class TripManagement extends HookConsumerWidget {
           );
         }
       } finally {
-        isTripDialogInProgress.value = false;
+        if (requestId == tripDetailRequestId.value) {
+          activeTripDetailId.value = null;
+          isTripDialogInProgress.value = false;
+        }
       }
     }
 
