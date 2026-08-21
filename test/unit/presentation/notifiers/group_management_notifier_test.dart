@@ -412,9 +412,7 @@ void main() {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       final refreshCompleter = Completer<List<GroupDto>>();
-      when(
-        updateGroupUsecase.execute(updatedGroup),
-      ).thenAnswer((_) async {});
+      when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
       when(
         getGroupsUsecase.execute(currentMember),
       ).thenAnswer((_) => refreshCompleter.future);
