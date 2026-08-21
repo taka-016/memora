@@ -88,6 +88,21 @@ void main() {
     return subscription;
   }
 
+  Future<void> waitForInitialLoad() async {
+    final completer = Completer<void>();
+    final subscription = container.listen(
+      tripManagementNotifierProvider(query),
+      (_, next) {
+        if (!next.isInitialLoading && !completer.isCompleted) {
+          completer.complete();
+        }
+      },
+      fireImmediately: true,
+    );
+    await completer.future;
+    subscription.close();
+  }
+
   Future<TripManagementNotifier> startNotifier({
     List<TripEntryDto> trips = const [trip],
     GroupDto? loadedGroup = loadedGroupDto,
@@ -102,7 +117,7 @@ void main() {
       ),
     ).thenAnswer((_) async => loadedGroup);
     listenProvider();
-    await container.pump();
+    await waitForInitialLoad();
     return container.read(tripManagementNotifierProvider(query).notifier);
   }
 
@@ -123,7 +138,9 @@ void main() {
       listenProvider();
       await Future<void>.delayed(Duration.zero);
 
-      verify(getTripEntriesUsecase.execute(query.groupId, query.year)).called(1);
+      verify(
+        getTripEntriesUsecase.execute(query.groupId, query.year),
+      ).called(1);
       verify(
         getGroupUsecase.execute(
           query.groupId,
@@ -137,10 +154,7 @@ void main() {
       var state = container.read(tripManagementNotifierProvider(query));
       expect(state.tripEntries, const [trip]);
       expect(state.tripEntriesStatus, TripManagementLoadStatus.success);
-      expect(
-        state.groupMembersStatus,
-        TripManagementLoadStatus.initialLoading,
-      );
+      expect(state.groupMembersStatus, TripManagementLoadStatus.initialLoading);
 
       groupCompleter.complete(loadedGroupDto);
       await container.pump();
@@ -161,7 +175,7 @@ void main() {
         ),
       ).thenAnswer((_) async => loadedGroupDto);
       listenProvider();
-      await container.pump();
+      await waitForInitialLoad();
 
       var state = container.read(tripManagementNotifierProvider(query));
       expect(state.tripEntriesStatus, TripManagementLoadStatus.error);
@@ -227,10 +241,7 @@ void main() {
         getTripEntriesUsecase.execute(query.groupId, query.year),
       ]);
       verifyNever(
-        getGroupUsecase.execute(
-          any,
-          membersSort: anyNamed('membersSort'),
-        ),
+        getGroupUsecase.execute(any, membersSort: anyNamed('membersSort')),
       );
     });
 
@@ -256,10 +267,7 @@ void main() {
         getTripEntriesUsecase.execute(query.groupId, query.year),
       ]);
       verifyNever(
-        getGroupUsecase.execute(
-          any,
-          membersSort: anyNamed('membersSort'),
-        ),
+        getGroupUsecase.execute(any, membersSort: anyNamed('membersSort')),
       );
     });
 
@@ -285,10 +293,7 @@ void main() {
         getTripEntriesUsecase.execute(query.groupId, query.year),
       ]);
       verifyNever(
-        getGroupUsecase.execute(
-          any,
-          membersSort: anyNamed('membersSort'),
-        ),
+        getGroupUsecase.execute(any, membersSort: anyNamed('membersSort')),
       );
     });
 
