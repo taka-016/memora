@@ -274,6 +274,26 @@ void main() {
         find.text('旅行一覧の読み込みに失敗しました: TestException: Network error'),
         findsOneWidget,
       );
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+
+      await tester.tap(find.byKey(const Key('trip_entries_retry_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('北海道旅行'), findsOneWidget);
+      verify(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(2);
     });
 
     testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
@@ -1255,6 +1275,27 @@ void main() {
 
       // Assert - エラーメッセージのスナックバーが表示されること
       expect(find.textContaining('グループメンバーの読み込みに失敗しました'), findsOneWidget);
+
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => testGroup);
+
+      await tester.tap(find.byKey(const Key('group_members_retry_button')));
+      await tester.pumpAndSettle();
+
+      final addButton = tester.widget<ElevatedButton>(
+        find.widgetWithText(ElevatedButton, '旅行追加'),
+      );
+      expect(addButton.onPressed, isNotNull);
+      verify(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).called(2);
     });
 
     testWidgets('グループメンバーが存在しない場合でも正常に動作すること', (WidgetTester tester) async {
