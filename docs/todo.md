@@ -148,16 +148,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 3. TripManagementのデータ状態をNotifierへ分離する
-
-- `TripManagementState`と`TripManagementNotifier`を作成し、対象年の旅行一覧、グループメンバー、取得元ごとの読み込み・再試行状態を管理する
-- 旅行一覧とグループメンバーの並行取得、旅行の作成・更新・削除後の一覧反映をNotifierへ移し、旅行IDを引数にした旅行詳細の単発取得は`TripManagement`のDialog表示処理から既存UseCaseを直接実行する
-- 一覧とグループメンバーの部分失敗を区別し、成功した取得結果を維持して個別に再試行できる状態だけを保持する
-- Androidウィジェットから渡された旅行IDも同じDialog表示処理で取得し、初期Dialogを一度だけ表示する制御はUI固有状態として`TripManagement`へ残す
-- 更新処理の結果はStateへ蓄積せずNotifierの戻り値または例外として呼び出し元へ返し、旅行編集・削除DialogとSnackbarの実表示は`TripManagement`へ残す
-- 並行取得の部分失敗、旅行の各更新処理、更新後の再取得はNotifier単体テスト、旅行詳細の取得成功・存在しない旅行ID・取得失敗とDialogの重複表示防止はWidgetテストで検証する
-- 旅行詳細取得、作成・更新・削除、再取得、初期Dialog表示を相互に切り替えた場合も、古い旅行のDialogや複数のDialogが開かないことを双方向と連続操作のWidgetテストで検証する
-
 #### 4. DvcPointCalculationScreenの計算状態をNotifierへ分離する
 
 - `DvcPointCalculationState`と`DvcPointCalculationNotifier`を作成し、グループ、契約、期間限定ポイント、利用ポイント、表示期間、計算結果と取得元ごとの読み込み・再試行状態を管理する

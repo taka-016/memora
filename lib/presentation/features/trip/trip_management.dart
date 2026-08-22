@@ -4,14 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
-import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
+import 'package:memora/presentation/notifiers/trip_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class TripManagement extends HookConsumerWidget {
@@ -32,80 +29,45 @@ class TripManagement extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final getTripEntriesUsecase = ref.read(getTripEntriesUsecaseProvider);
-    final tripEntryMutationCoordinator = ref.read(
-      tripEntryMutationCoordinatorProvider,
+    final managementProvider = tripManagementNotifierProvider(
+      TripManagementQuery(groupId: groupId, year: year),
     );
+    final managementState = ref.watch(managementProvider);
+    final managementNotifier = ref.read(managementProvider.notifier);
     final getTripEntryByIdUsecase = ref.read(getTripEntryByIdUsecaseProvider);
-    final getGroupWithMembersByIdUsecase = ref.read(
-      getGroupWithMembersByIdUsecaseProvider,
-    );
 
-    final tripEntries = useState<List<TripEntryDto>>([]);
-    final groupMembers = useState<List<GroupMemberDto>>([]);
-    final isLoading = useState(true);
     final isOpeningInitialTrip = useState(false);
     final isShowingInitialTripDialog = useState(false);
     final initialTripHandled = useRef(false);
     final initialTripDialogReady = useRef(initialTripId == null);
-
-    Future<void> loadTripEntries() async {
-      try {
-        final data = await getTripEntriesUsecase.execute(groupId, year);
-        if (!context.mounted) return;
-        tripEntries.value = data;
-      } catch (e, stack) {
-        logger.e(
-          'TripManagement.loadTripEntries: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('旅行一覧の読み込みに失敗しました: $e')));
-        }
-      }
+    final isTripDialogInProgress = useRef(false);
+    final activeTripDetailId = useRef<String?>(null);
+    final tripDetailRequestId = useRef(0);
+    final tripDialogScope = useRef((groupId, year, initialTripId));
+    final currentTripDialogScope = (groupId, year, initialTripId);
+    if (tripDialogScope.value != currentTripDialogScope) {
+      tripDialogScope.value = currentTripDialogScope;
+      tripDetailRequestId.value++;
+      activeTripDetailId.value = null;
+      isTripDialogInProgress.value = false;
     }
 
-    Future<void> loadGroupMembers() async {
-      try {
-        final result = await getGroupWithMembersByIdUsecase.execute(
-          groupId,
-          membersSort: GroupMemberSort.displayOrder,
+    ref.listen<TripManagementState>(managementProvider, (previous, next) {
+      if (next.tripEntriesStatus == TripManagementLoadStatus.error &&
+          previous?.tripEntriesStatus != TripManagementLoadStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('旅行一覧の読み込みに失敗しました: ${next.tripEntriesError}')),
         );
-        if (!context.mounted) {
-          return;
-        }
-        groupMembers.value = result?.members ?? [];
-      } catch (e, stack) {
-        logger.e(
-          'TripManagement.loadGroupMembers: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
+      }
+      if (next.groupMembersStatus == TripManagementLoadStatus.error &&
+          previous?.groupMembersStatus != TripManagementLoadStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('グループメンバーの読み込みに失敗しました: ${next.groupMembersError}'),
+          ),
         );
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('グループメンバーの読み込みに失敗しました: $e')));
-        }
       }
-    }
-
-    useEffect(() {
-      isLoading.value = true;
-
-      Future<void> initialize() async {
-        await Future.wait([loadTripEntries(), loadGroupMembers()]);
-        if (!context.mounted) {
-          return;
-        }
-        isLoading.value = false;
-      }
-
-      initialize();
-      return null;
-    }, [groupId, year]);
+    });
 
     String formatDate(DateTime? date) {
       if (date == null) {
@@ -127,18 +89,18 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> handleAddTripSave(TripEntryDto tripEntry) async {
+    Future<bool> handleAddTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await tripEntryMutationCoordinator.createTripEntry(tripEntry);
-        if (!context.mounted) {
-          return;
+        final succeeded = await managementNotifier.createTripEntry(tripEntry);
+        if (!context.mounted || !succeeded) {
+          return false;
         }
-        await loadTripEntries();
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を作成しました')),
         );
+        return true;
       } on ApplicationValidationException {
         rethrow;
       } catch (e, stack) {
@@ -152,37 +114,44 @@ class TripManagement extends HookConsumerWidget {
             SnackBar(content: Text('作成に失敗しました: $e')),
           );
         }
+        return false;
       }
     }
 
     Future<void> showAddTripDialog() async {
-      await showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (dialogContext) => TripEditModal(
-          groupId: groupId,
-          groupMembers: groupMembers.value,
-          year: year,
-          isTestEnvironment: isTestEnvironment,
-          onSave: (tripEntry) async {
-            await handleAddTripSave(tripEntry);
-          },
-        ),
-      );
+      if (isTripDialogInProgress.value) {
+        return;
+      }
+      isTripDialogInProgress.value = true;
+      try {
+        await showDialog(
+          barrierDismissible: false,
+          context: context,
+          builder: (dialogContext) => TripEditModal(
+            groupId: groupId,
+            groupMembers: ref.read(managementProvider).groupMembers,
+            year: year,
+            isTestEnvironment: isTestEnvironment,
+            onSave: handleAddTripSave,
+          ),
+        );
+      } finally {
+        isTripDialogInProgress.value = false;
+      }
     }
 
-    Future<void> handleEditTripSave(TripEntryDto tripEntry) async {
+    Future<bool> handleEditTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await tripEntryMutationCoordinator.updateTripEntry(tripEntry);
-        if (!context.mounted) {
-          return;
+        final succeeded = await managementNotifier.updateTripEntry(tripEntry);
+        if (!context.mounted || !succeeded) {
+          return false;
         }
-        await loadTripEntries();
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を更新しました')),
         );
+        return true;
       } on ApplicationValidationException {
         rethrow;
       } catch (e, stack) {
@@ -196,6 +165,7 @@ class TripManagement extends HookConsumerWidget {
             SnackBar(content: Text('更新に失敗しました: $e')),
           );
         }
+        return false;
       }
     }
 
@@ -203,12 +173,20 @@ class TripManagement extends HookConsumerWidget {
       String tripId, {
       VoidCallback? onBeforeShowDialog,
     }) async {
+      if (isTripDialogInProgress.value &&
+          (activeTripDetailId.value == null ||
+              activeTripDetailId.value == tripId)) {
+        return;
+      }
+      final requestId = ++tripDetailRequestId.value;
+      activeTripDetailId.value = tripId;
+      isTripDialogInProgress.value = true;
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
         final detailedTripEntry = await getTripEntryByIdUsecase.execute(tripId);
 
-        if (!context.mounted) {
+        if (!context.mounted || requestId != tripDetailRequestId.value) {
           return;
         }
 
@@ -227,16 +205,17 @@ class TripManagement extends HookConsumerWidget {
           context: context,
           builder: (dialogContext) => TripEditModal(
             groupId: groupId,
-            groupMembers: groupMembers.value,
+            groupMembers: ref.read(managementProvider).groupMembers,
             tripEntry: detailedTripEntry,
             year: year,
             isTestEnvironment: isTestEnvironment,
-            onSave: (updatedTrip) async {
-              await handleEditTripSave(updatedTrip);
-            },
+            onSave: handleEditTripSave,
           ),
         );
       } catch (e, stack) {
+        if (requestId != tripDetailRequestId.value) {
+          return;
+        }
         logger.e(
           'TripManagement.showEditTripDialog: ${e.toString()}',
           error: e,
@@ -246,6 +225,11 @@ class TripManagement extends HookConsumerWidget {
           scaffoldMessenger.showSnackBar(
             SnackBar(content: Text('旅行の詳細取得に失敗しました: $e')),
           );
+        }
+      } finally {
+        if (requestId == tripDetailRequestId.value) {
+          activeTripDetailId.value = null;
+          isTripDialogInProgress.value = false;
         }
       }
     }
@@ -258,7 +242,9 @@ class TripManagement extends HookConsumerWidget {
 
     useEffect(() {
       final tripId = initialTripId;
-      if (tripId == null || isLoading.value || initialTripHandled.value) {
+      if (tripId == null ||
+          managementState.isInitialLoading ||
+          initialTripHandled.value) {
         return null;
       }
       Future<void> showInitialTripDialog() async {
@@ -291,17 +277,24 @@ class TripManagement extends HookConsumerWidget {
         }
       });
       return null;
-    }, [initialTripId, isLoading.value, groupId, year]);
+    }, [initialTripId, managementState.isInitialLoading, groupId, year]);
 
     Future<void> deleteTripEntry(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
-        await tripEntryMutationCoordinator.deleteTripEntry(tripEntry.id);
+        final succeeded = await managementNotifier.deleteTripEntry(
+          tripEntry.id,
+        );
         if (!context.mounted) {
           return;
         }
-        await loadTripEntries();
+        if (!succeeded) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('旅行を削除できませんでした。旅行一覧の更新後にもう一度お試しください')),
+          );
+          return;
+        }
         scaffoldMessenger.showSnackBar(
           SnackBar(content: Text('${tripEntry.name}を削除しました')),
         );
@@ -320,12 +313,20 @@ class TripManagement extends HookConsumerWidget {
     }
 
     Future<void> showDeleteConfirmDialog(TripEntryDto tripEntry) async {
-      await DeleteConfirmDialog.show(
-        context,
-        title: '旅行削除',
-        content: '「${tripEntry.name ?? '旅行名未設定'}」を削除しますか？',
-        onConfirm: () async => deleteTripEntry(tripEntry),
-      );
+      if (isTripDialogInProgress.value) {
+        return;
+      }
+      isTripDialogInProgress.value = true;
+      try {
+        await DeleteConfirmDialog.show(
+          context,
+          title: '旅行削除',
+          content: '「${tripEntry.name ?? '旅行名未設定'}」を削除しますか？',
+          onConfirm: () async => deleteTripEntry(tripEntry),
+        );
+      } finally {
+        isTripDialogInProgress.value = false;
+      }
     }
 
     Widget buildBackButton() {
@@ -360,7 +361,11 @@ class TripManagement extends HookConsumerWidget {
                 ),
                 const Spacer(),
                 ElevatedButton.icon(
-                  onPressed: showAddTripDialog,
+                  onPressed:
+                      managementState.groupMembersStatus ==
+                          TripManagementLoadStatus.success
+                      ? showAddTripDialog
+                      : null,
                   icon: const Icon(Icons.add),
                   label: const Text('旅行追加'),
                 ),
@@ -412,9 +417,9 @@ class TripManagement extends HookConsumerWidget {
 
     Widget buildTripListView() {
       return ListView.builder(
-        itemCount: tripEntries.value.length,
+        itemCount: managementState.tripEntries.length,
         itemBuilder: (context, index) {
-          final tripEntry = tripEntries.value[index];
+          final tripEntry = managementState.tripEntries[index];
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
@@ -431,13 +436,51 @@ class TripManagement extends HookConsumerWidget {
       );
     }
 
+    Widget buildLoadError({
+      required String message,
+      required Key retryButtonKey,
+      required VoidCallback onRetry,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(child: Text(message)),
+            const SizedBox(width: 8),
+            TextButton(
+              key: retryButtonKey,
+              onPressed: onRetry,
+              child: const Text('再試行'),
+            ),
+          ],
+        ),
+      );
+    }
+
     Widget buildTripListContent() {
-      if (tripEntries.value.isEmpty) {
-        return buildEmptyState();
+      final listContent = managementState.tripEntries.isEmpty
+          ? buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: () async {
+                await managementNotifier.retryTripEntries();
+              },
+              child: buildTripListView(),
+            );
+      if (managementState.tripEntriesStatus != TripManagementLoadStatus.error) {
+        return listContent;
       }
-      return RefreshIndicator(
-        onRefresh: loadTripEntries,
-        child: buildTripListView(),
+      return Column(
+        children: [
+          buildLoadError(
+            message: '旅行一覧を読み込めませんでした',
+            retryButtonKey: const Key('trip_entries_retry_button'),
+            onRetry: () {
+              unawaited(managementNotifier.retryTripEntries());
+            },
+          ),
+          Expanded(child: listContent),
+        ],
       );
     }
 
@@ -456,7 +499,7 @@ class TripManagement extends HookConsumerWidget {
       if (shouldHideForInitialTrip && isShowingInitialTripDialog.value) {
         return buildInitialTripBackdrop();
       }
-      if (isLoading.value || shouldHideForInitialTrip) {
+      if (managementState.isInitialLoading || shouldHideForInitialTrip) {
         return buildLoadingState();
       }
 
@@ -464,6 +507,15 @@ class TripManagement extends HookConsumerWidget {
         children: [
           buildHeader(),
           const Divider(),
+          if (managementState.groupMembersStatus ==
+              TripManagementLoadStatus.error)
+            buildLoadError(
+              message: 'グループメンバーを読み込めませんでした',
+              retryButtonKey: const Key('group_members_retry_button'),
+              onRetry: () {
+                unawaited(managementNotifier.retryGroupMembers());
+              },
+            ),
           Expanded(child: buildTripListContent()),
         ],
       );

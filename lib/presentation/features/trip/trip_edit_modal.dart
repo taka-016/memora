@@ -18,7 +18,7 @@ import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.d
 
 enum TripEditExpandedSection { itinerary, tasks }
 
-typedef TripEditSave = Future<void> Function(TripEntryDto tripEntry);
+typedef TripEditSave = Future<bool> Function(TripEntryDto tripEntry);
 
 class TripEditModal extends HookConsumerWidget {
   const TripEditModal({
@@ -177,7 +177,7 @@ class TripEditModal extends HookConsumerWidget {
         final sortedItineraryItems = sortItineraryItems(
           currentItineraryItems(),
         );
-        await onSave(
+        final succeeded = await onSave(
           tripToSave.copyWith(
             startDate: selectedStart,
             endDate: selectedEnd,
@@ -186,6 +186,10 @@ class TripEditModal extends HookConsumerWidget {
             itineraryItems: sortedItineraryItems,
           ),
         );
+        if (!succeeded) {
+          errorMessage.value = '保存を実行できませんでした。しばらくしてからもう一度お試しください';
+          return;
+        }
         editStateNotifier.reset();
         if (context.mounted) {
           Navigator.of(context).pop();
