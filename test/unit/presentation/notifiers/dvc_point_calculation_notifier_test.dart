@@ -248,6 +248,43 @@ void main() {
       verifyNever(getPointUsagesUsecase.execute(any));
     });
 
+    test('初期取得中の表示期間変更では未取得データから計算結果を作らない', () async {
+      final limitedPointsCompleter = Completer<List<DvcLimitedPointDto>>();
+      final pointUsagesCompleter = Completer<List<DvcPointUsageDto>>();
+      when(getGroupUsecase.execute(groupId)).thenAnswer((_) async => groupDto);
+      when(
+        getContractsUsecase.execute(groupId),
+      ).thenAnswer((_) async => [contract]);
+      when(
+        getLimitedPointsUsecase.execute(groupId),
+      ).thenAnswer((_) => limitedPointsCompleter.future);
+      when(
+        getPointUsagesUsecase.execute(groupId),
+      ).thenAnswer((_) => pointUsagesCompleter.future);
+      listenProvider();
+      await container.pump();
+      final notifier = container.read(
+        dvcPointCalculationNotifierProvider(groupId).notifier,
+      );
+
+      notifier.showMorePast();
+
+      var state = container.read(dvcPointCalculationNotifierProvider(groupId));
+      expect(state.visibleStartYearMonth, DateTime(2020, 1));
+      expect(state.calculationResult, isNull);
+
+      limitedPointsCompleter.complete([limitedPoint]);
+      pointUsagesCompleter.complete([pointUsage]);
+      await waitForInitialLoad();
+
+      state = container.read(dvcPointCalculationNotifierProvider(groupId));
+      expect(state.calculationResult, isNotNull);
+      expect(
+        state.calculationResult!.monthlySummaries.first.yearMonth,
+        DateTime(2020, 1),
+      );
+    });
+
     test('契約保存後は契約だけを再取得して再計算する', () async {
       final notifier = await startNotifier();
       clearInteractions(getGroupUsecase);

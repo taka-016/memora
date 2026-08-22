@@ -245,6 +245,19 @@ void main() {
       expect(find.text('メモ'), findsOneWidget);
     });
 
+    testWidgets('利用登録ボタンを連続で押してもダイアログを重複表示しない', (tester) async {
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      final addButton = _findAddUsageButtons().first;
+      final onPressed = tester.widget<IconButton>(addButton).onPressed!;
+      onPressed();
+      onPressed();
+      await tester.pumpAndSettle();
+
+      expect(find.text('ポイント利用登録'), findsOneWidget);
+    });
+
     testWidgets('利用ポイント登録後に横スクロール位置を維持したまま再計算できる', (tester) async {
       final currentMonth = _monthStart(DateTime.now());
       final usages = <DvcPointUsageDto>[];
