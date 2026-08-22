@@ -308,20 +308,16 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
       ? DvcPointDataLoadStatus.initialLoading
       : DvcPointDataLoadStatus.refreshing;
 
-  bool get _isGroupLoading =>
-      state.groupStatus == DvcPointDataLoadStatus.initialLoading ||
-      state.groupStatus == DvcPointDataLoadStatus.refreshing;
-  bool get _areContractsLoading =>
-      state.contractsStatus == DvcPointDataLoadStatus.initialLoading ||
-      state.contractsStatus == DvcPointDataLoadStatus.refreshing;
-  bool get _areLimitedPointsLoading =>
-      state.limitedPointsStatus == DvcPointDataLoadStatus.initialLoading ||
-      state.limitedPointsStatus == DvcPointDataLoadStatus.refreshing;
-  bool get _arePointUsagesLoading =>
-      state.pointUsagesStatus == DvcPointDataLoadStatus.initialLoading ||
-      state.pointUsagesStatus == DvcPointDataLoadStatus.refreshing;
+  bool get _isGroupLoading => _isLoading(state.groupStatus);
+  bool get _areContractsLoading => _isLoading(state.contractsStatus);
+  bool get _areLimitedPointsLoading => _isLoading(state.limitedPointsStatus);
+  bool get _arePointUsagesLoading => _isLoading(state.pointUsagesStatus);
   bool get _isAnyPointDataLoading =>
       _areContractsLoading ||
       _areLimitedPointsLoading ||
       _arePointUsagesLoading;
+
+  bool _isLoading(DvcPointDataLoadStatus status) =>
+      status == DvcPointDataLoadStatus.initialLoading ||
+      status == DvcPointDataLoadStatus.refreshing;
 }
