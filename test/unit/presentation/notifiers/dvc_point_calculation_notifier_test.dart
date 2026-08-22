@@ -130,6 +130,21 @@ void main() {
     return subscription;
   }
 
+  Future<void> waitForInitialLoad() async {
+    final completer = Completer<void>();
+    final subscription = container.listen(
+      dvcPointCalculationNotifierProvider(groupId),
+      (_, next) {
+        if (!next.isInitialLoading && !completer.isCompleted) {
+          completer.complete();
+        }
+      },
+      fireImmediately: true,
+    );
+    await completer.future;
+    subscription.close();
+  }
+
   void stubInitialLoad({
     List<DvcPointContractDto>? contracts,
     List<DvcLimitedPointDto>? limitedPoints,
@@ -150,7 +165,7 @@ void main() {
   Future<DvcPointCalculationNotifier> startNotifier() async {
     stubInitialLoad();
     listenProvider();
-    await container.pump();
+    await waitForInitialLoad();
     return container.read(
       dvcPointCalculationNotifierProvider(groupId).notifier,
     );
@@ -218,7 +233,9 @@ void main() {
       notifier.showMorePast();
       notifier.showMoreFuture();
 
-      final after = container.read(dvcPointCalculationNotifierProvider(groupId));
+      final after = container.read(
+        dvcPointCalculationNotifierProvider(groupId),
+      );
       expect(after.visibleStartYearMonth, DateTime(2020, 1));
       expect(after.visibleEndYearMonth, DateTime(2035, 1));
       expect(
@@ -270,7 +287,9 @@ void main() {
 
       expect(await notifier.saveLimitedPoint(limitedPoint), isTrue);
 
-      final state = container.read(dvcPointCalculationNotifierProvider(groupId));
+      final state = container.read(
+        dvcPointCalculationNotifierProvider(groupId),
+      );
       expect(state.limitedPoints, [limitedPoint]);
       expect(state.limitedPointsStatus, DvcPointDataLoadStatus.error);
       expect(state.calculationResult, isNotNull);
@@ -366,7 +385,7 @@ void main() {
         getPointUsagesUsecase.execute(groupId),
       ).thenAnswer((_) async => [pointUsage]);
       listenProvider();
-      await container.pump();
+      await waitForInitialLoad();
       final notifier = container.read(
         dvcPointCalculationNotifierProvider(groupId).notifier,
       );
@@ -380,7 +399,9 @@ void main() {
 
       expect(await notifier.retryContracts(), isTrue);
 
-      final state = container.read(dvcPointCalculationNotifierProvider(groupId));
+      final state = container.read(
+        dvcPointCalculationNotifierProvider(groupId),
+      );
       expect(state.contracts, [contract]);
       expect(state.contractsStatus, DvcPointDataLoadStatus.success);
       expect(state.calculationResult, isNotNull);
