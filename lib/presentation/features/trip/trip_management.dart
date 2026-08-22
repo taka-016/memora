@@ -129,7 +129,7 @@ class TripManagement extends HookConsumerWidget {
           context: context,
           builder: (dialogContext) => TripEditModal(
             groupId: groupId,
-            groupMembers: managementState.groupMembers,
+            groupMembers: ref.read(managementProvider).groupMembers,
             year: year,
             isTestEnvironment: isTestEnvironment,
             onSave: handleAddTripSave,
@@ -205,7 +205,7 @@ class TripManagement extends HookConsumerWidget {
           context: context,
           builder: (dialogContext) => TripEditModal(
             groupId: groupId,
-            groupMembers: managementState.groupMembers,
+            groupMembers: ref.read(managementProvider).groupMembers,
             tripEntry: detailedTripEntry,
             year: year,
             isTestEnvironment: isTestEnvironment,
@@ -286,7 +286,13 @@ class TripManagement extends HookConsumerWidget {
         final succeeded = await managementNotifier.deleteTripEntry(
           tripEntry.id,
         );
-        if (!context.mounted || !succeeded) {
+        if (!context.mounted) {
+          return;
+        }
+        if (!succeeded) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('旅行を削除できませんでした。旅行一覧の更新後にもう一度お試しください')),
+          );
           return;
         }
         scaffoldMessenger.showSnackBar(

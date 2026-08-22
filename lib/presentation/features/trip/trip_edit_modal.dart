@@ -187,6 +187,7 @@ class TripEditModal extends HookConsumerWidget {
           ),
         );
         if (!succeeded) {
+          errorMessage.value = '保存を実行できませんでした。しばらくしてからもう一度お試しください';
           return;
         }
         editStateNotifier.reset();
