@@ -11,6 +11,35 @@ Widget _createApp({required Widget child}) {
   );
 }
 
+Widget _createDialogApp({
+  TripEntryDto? tripEntry,
+  required Future<bool> Function(TripEntryDto tripEntry) onSave,
+}) {
+  return ProviderScope(
+    child: MaterialApp(
+      home: Builder(
+        builder: (context) => Scaffold(
+          body: ElevatedButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => TripEditModal(
+                groupId: 'test-group-id',
+                groupMembers: const [],
+                tripEntry: tripEntry,
+                year: 2024,
+                onSave: onSave,
+                isTestEnvironment: true,
+              ),
+            ),
+            child: const Text('モーダルを開く'),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 void main() {
   group('TripEditModal', () {
     testWidgets('新規作成モードでタイトルが正しく表示されること', (tester) async {
@@ -19,7 +48,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (tripEntry) async {},
+            onSave: (tripEntry) async => true,
             isTestEnvironment: true,
           ),
         ),
@@ -45,7 +74,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             tripEntry: tripEntry,
-            onSave: (tripEntry) async {},
+            onSave: (tripEntry) async => true,
             isTestEnvironment: true,
           ),
         ),
@@ -62,7 +91,7 @@ void main() {
           child: TripEditModal(
             groupId: 'test-group-id',
             groupMembers: const [],
-            onSave: (tripEntry) async {},
+            onSave: (tripEntry) async => true,
             isTestEnvironment: true,
           ),
         ),
@@ -92,7 +121,7 @@ void main() {
                 ),
               ],
             ),
-            onSave: (tripEntry) async {},
+            onSave: (tripEntry) async => true,
             isTestEnvironment: true,
           ),
         ),
@@ -116,6 +145,10 @@ void main() {
 
     testWidgets('入力した旅行情報を保存できること', (tester) async {
       TripEntryDto? savedTripEntry;
+      Future<bool> saveTripEntry(TripEntryDto tripEntry) async {
+        savedTripEntry = tripEntry;
+        return true;
+      }
 
       await tester.pumpWidget(
         _createApp(
@@ -123,9 +156,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             year: 2024,
-            onSave: (tripEntry) async {
-              savedTripEntry = tripEntry;
-            },
+            onSave: saveTripEntry,
             isTestEnvironment: true,
           ),
         ),
@@ -139,6 +170,62 @@ void main() {
       expect(savedTripEntry, isNotNull);
       expect(savedTripEntry!.name, '沖縄旅行');
       expect(savedTripEntry!.memo, '家族旅行');
+    });
+
+    testWidgets('新規作成が実行されなかった場合はモーダルを閉じず入力を保持すること', (tester) async {
+      var saveCallCount = 0;
+      await tester.pumpWidget(
+        _createDialogApp(
+          onSave: (tripEntry) async {
+            saveCallCount++;
+            return false;
+          },
+        ),
+      );
+      await tester.tap(find.text('モーダルを開く'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '旅行名'),
+        '編集中の旅行',
+      );
+      await tester.tap(find.text('作成'));
+      await tester.pumpAndSettle();
+
+      expect(saveCallCount, 1);
+      expect(find.text('旅行新規作成'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '編集中の旅行'), findsOneWidget);
+    });
+
+    testWidgets('更新が実行されなかった場合はモーダルを閉じず入力を保持すること', (tester) async {
+      var saveCallCount = 0;
+      await tester.pumpWidget(
+        _createDialogApp(
+          tripEntry: TripEntryDto(
+            id: 'trip-1',
+            groupId: 'test-group-id',
+            year: 2024,
+            name: 'テスト旅行',
+          ),
+          onSave: (tripEntry) async {
+            saveCallCount++;
+            return false;
+          },
+        ),
+      );
+      await tester.tap(find.text('モーダルを開く'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'テスト旅行'),
+        '編集中のテスト旅行',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(saveCallCount, 1);
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '編集中のテスト旅行'), findsOneWidget);
     });
   });
 }

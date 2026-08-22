@@ -931,6 +931,52 @@ void main() {
       );
     });
 
+    testWidgets('旅行更新に失敗した場合はモーダルを閉じず入力を保持すること', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => detailedTripEntry);
+      when(
+        mockTripEntryRepository.updateTripEntry(any),
+      ).thenThrow(TestException('更新失敗'));
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, '北海道旅行'),
+        '編集中の北海道旅行',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('旅行編集'), findsOneWidget);
+      expect(find.widgetWithText(TextFormField, '編集中の北海道旅行'), findsOneWidget);
+      expect(find.text('更新に失敗しました: TestException: 更新失敗'), findsOneWidget);
+    });
+
     testWidgets('旅行更新時にバリデーションエラーが発生した場合はモーダルを閉じずにエラー表示すること', (
       WidgetTester tester,
     ) async {
