@@ -4,7 +4,7 @@ import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_util
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 typedef DvcLimitedPointDeleteCallback =
-    Future<void> Function(String limitedPointId);
+    Future<bool> Function(String limitedPointId);
 
 Future<void> showDvcAvailableBreakdownModal({
   required BuildContext context,
@@ -74,8 +74,12 @@ Future<void> showDvcAvailableBreakdownModal({
                                 if (!dialogContext.mounted) {
                                   return;
                                 }
-                                Navigator.of(dialogContext).pop();
-                                await onDeleteLimitedPoint(breakdown.sourceId);
+                                final didDelete = await onDeleteLimitedPoint(
+                                  breakdown.sourceId,
+                                );
+                                if (didDelete && dialogContext.mounted) {
+                                  Navigator.of(dialogContext).pop();
+                                }
                               },
                             )
                           : null,

@@ -61,7 +61,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       }
     }
 
-    Future<void> saveContractSettings(
+    Future<bool> showRejectedOperation(Future<bool> operation) async {
+      final didRun = await operation;
+      if (!didRun && context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('別の操作が完了してから再度お試しください')));
+      }
+      return didRun;
+    }
+
+    Future<bool> saveContractSettings(
       List<DvcEditableContract> editable,
     ) async {
       final contracts = editable
@@ -79,10 +89,10 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           )
           .toList();
 
-      await notifier.saveContracts(contracts);
+      return showRejectedOperation(notifier.saveContracts(contracts));
     }
 
-    Future<void> saveLimitedPoint({
+    Future<bool> saveLimitedPoint({
       required DateTime startYearMonth,
       required DateTime endYearMonth,
       required int point,
@@ -96,10 +106,10 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      await notifier.saveLimitedPoint(limitedPoint);
+      return showRejectedOperation(notifier.saveLimitedPoint(limitedPoint));
     }
 
-    Future<void> saveUsage({
+    Future<bool> saveUsage({
       required DateTime usageYearMonth,
       required int usedPoint,
       required String memo,
@@ -111,15 +121,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      await notifier.savePointUsage(usage);
+      return showRejectedOperation(notifier.savePointUsage(usage));
     }
 
-    Future<void> deleteLimitedPoint(String limitedPointId) async {
-      await notifier.deleteLimitedPoint(limitedPointId);
+    Future<bool> deleteLimitedPoint(String limitedPointId) {
+      return showRejectedOperation(notifier.deleteLimitedPoint(limitedPointId));
     }
 
-    Future<void> deleteUsage(String pointUsageId) async {
-      await notifier.deletePointUsage(pointUsageId);
+    Future<bool> deleteUsage(String pointUsageId) {
+      return showRejectedOperation(notifier.deletePointUsage(pointUsageId));
     }
 
     Widget buildHeader() {

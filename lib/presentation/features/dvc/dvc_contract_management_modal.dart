@@ -5,7 +5,7 @@ import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_util
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
 typedef DvcContractSaveCallback =
-    Future<void> Function(List<DvcEditableContract> contracts);
+    Future<bool> Function(List<DvcEditableContract> contracts);
 
 Future<void> showDvcContractManagementModal({
   required BuildContext context,
@@ -157,8 +157,10 @@ Future<void> showDvcContractManagementModal({
                     });
                     return;
                   }
-                  Navigator.of(dialogContext).pop();
-                  await onSave(editable);
+                  final didSave = await onSave(editable);
+                  if (didSave && dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                 },
                 child: const Text('更新'),
               ),

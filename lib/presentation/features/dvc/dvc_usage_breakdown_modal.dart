@@ -3,7 +3,7 @@ import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
-typedef DvcUsageDeleteCallback = Future<void> Function(String pointUsageId);
+typedef DvcUsageDeleteCallback = Future<bool> Function(String pointUsageId);
 
 Future<void> showDvcUsageBreakdownModal({
   required BuildContext context,
@@ -43,8 +43,10 @@ Future<void> showDvcUsageBreakdownModal({
                           if (!dialogContext.mounted) {
                             return;
                           }
-                          Navigator.of(dialogContext).pop();
-                          await onDelete(usage.id);
+                          final didDelete = await onDelete(usage.id);
+                          if (didDelete && dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                          }
                         },
                       ),
                     );
