@@ -4,7 +4,7 @@ import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_util
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
 typedef DvcLimitedPointSaveCallback =
-    Future<void> Function({
+    Future<bool> Function({
       required DateTime startYearMonth,
       required DateTime endYearMonth,
       required int point,
@@ -91,13 +91,15 @@ Future<void> showDvcLimitedPointRegistrationModal({
                     });
                     return;
                   }
-                  Navigator.of(dialogContext).pop();
-                  await onSave(
+                  final didSave = await onSave(
                     startYearMonth: startYearMonth,
                     endYearMonth: endYearMonth,
                     point: point,
                     memo: memoController.text.trim(),
                   );
+                  if (didSave && dialogContext.mounted) {
+                    Navigator.of(dialogContext).pop();
+                  }
                 },
                 child: const Text('登録'),
               ),
