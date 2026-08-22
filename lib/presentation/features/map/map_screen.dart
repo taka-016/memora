@@ -111,12 +111,13 @@ class MapScreen extends HookConsumerWidget {
             year: loadedTrip.year,
             isTestEnvironment: isTestEnvironment,
             onSave: (updatedTrip) async {
-              await notifier.updateTripEntry(updatedTrip);
-              if (context.mounted) {
+              final succeeded = await notifier.updateTripEntry(updatedTrip);
+              if (succeeded && context.mounted) {
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
               }
+              return succeeded;
             },
           ),
         );

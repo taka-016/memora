@@ -89,17 +89,18 @@ class TripManagement extends HookConsumerWidget {
       return '$startLabel - $endLabel';
     }
 
-    Future<void> handleAddTripSave(TripEntryDto tripEntry) async {
+    Future<bool> handleAddTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
         final succeeded = await managementNotifier.createTripEntry(tripEntry);
         if (!context.mounted || !succeeded) {
-          return;
+          return false;
         }
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を作成しました')),
         );
+        return true;
       } on ApplicationValidationException {
         rethrow;
       } catch (e, stack) {
@@ -113,6 +114,7 @@ class TripManagement extends HookConsumerWidget {
             SnackBar(content: Text('作成に失敗しました: $e')),
           );
         }
+        return false;
       }
     }
 
@@ -130,9 +132,7 @@ class TripManagement extends HookConsumerWidget {
             groupMembers: managementState.groupMembers,
             year: year,
             isTestEnvironment: isTestEnvironment,
-            onSave: (tripEntry) async {
-              await handleAddTripSave(tripEntry);
-            },
+            onSave: handleAddTripSave,
           ),
         );
       } finally {
@@ -140,17 +140,18 @@ class TripManagement extends HookConsumerWidget {
       }
     }
 
-    Future<void> handleEditTripSave(TripEntryDto tripEntry) async {
+    Future<bool> handleEditTripSave(TripEntryDto tripEntry) async {
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       try {
         final succeeded = await managementNotifier.updateTripEntry(tripEntry);
         if (!context.mounted || !succeeded) {
-          return;
+          return false;
         }
         scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text('旅行を更新しました')),
         );
+        return true;
       } on ApplicationValidationException {
         rethrow;
       } catch (e, stack) {
@@ -164,6 +165,7 @@ class TripManagement extends HookConsumerWidget {
             SnackBar(content: Text('更新に失敗しました: $e')),
           );
         }
+        return false;
       }
     }
 
@@ -207,9 +209,7 @@ class TripManagement extends HookConsumerWidget {
             tripEntry: detailedTripEntry,
             year: year,
             isTestEnvironment: isTestEnvironment,
-            onSave: (updatedTrip) async {
-              await handleEditTripSave(updatedTrip);
-            },
+            onSave: handleEditTripSave,
           ),
         );
       } catch (e, stack) {
