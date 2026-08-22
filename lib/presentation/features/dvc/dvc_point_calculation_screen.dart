@@ -61,7 +61,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       }
     }
 
-    Future<bool> showRejectedOperation(Future<bool> operation) async {
+    Future<bool> runOperationWithFeedback(Future<bool> operation) async {
       final didRun = await operation;
       if (!didRun && context.mounted) {
         ScaffoldMessenger.of(
@@ -89,7 +89,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           )
           .toList();
 
-      return showRejectedOperation(notifier.saveContracts(contracts));
+      return runOperationWithFeedback(notifier.saveContracts(contracts));
     }
 
     Future<bool> saveLimitedPoint({
@@ -106,7 +106,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      return showRejectedOperation(notifier.saveLimitedPoint(limitedPoint));
+      return runOperationWithFeedback(notifier.saveLimitedPoint(limitedPoint));
     }
 
     Future<bool> saveUsage({
@@ -121,15 +121,17 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      return showRejectedOperation(notifier.savePointUsage(usage));
+      return runOperationWithFeedback(notifier.savePointUsage(usage));
     }
 
     Future<bool> deleteLimitedPoint(String limitedPointId) {
-      return showRejectedOperation(notifier.deleteLimitedPoint(limitedPointId));
+      return runOperationWithFeedback(
+        notifier.deleteLimitedPoint(limitedPointId),
+      );
     }
 
     Future<bool> deleteUsage(String pointUsageId) {
-      return showRejectedOperation(notifier.deletePointUsage(pointUsageId));
+      return runOperationWithFeedback(notifier.deletePointUsage(pointUsageId));
     }
 
     Widget buildHeader() {
