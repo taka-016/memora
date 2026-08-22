@@ -6,26 +6,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/application/dtos/group/group_dto.dart';
-import 'package:memora/application/usecases/dvc/delete_dvc_limited_point_usecase.dart';
-import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
-import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_limited_points_usecase.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_contracts_usecase.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
-import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.dart';
-import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/dvc/dvc_point_usage_mutation_coordinator.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_registration_modal.dart';
-
-enum _DvcScreenState { loading, loaded, error }
+import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dart';
 
 enum _DvcActionMenu { contractRegistration, limitedPointRegistration }
 
@@ -36,8 +24,6 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
     required this.onBackPressed,
   });
 
-  static const int _initialMonthRange = 60;
-  static const int _rangeIncrement = 60;
   static const double _labelColumnWidth = 70;
   static const double _monthColumnWidth = 40;
   static const double _rowHeight = 96;
@@ -47,100 +33,33 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = useState(_DvcScreenState.loading);
-    final errorMessage = useState('');
-    final contractsState = useState<List<DvcPointContractDto>>([]);
-    final limitedPointsState = useState<List<DvcLimitedPointDto>>([]);
-    final pointUsagesState = useState<List<DvcPointUsageDto>>([]);
-    final groupNameState = useState('');
-    final startMonthOffset = useState(0);
-    final endMonthOffset = useState(_initialMonthRange);
+    final state = ref.watch(dvcPointCalculationNotifierProvider(groupId));
+    final notifier = ref.read(
+      dvcPointCalculationNotifierProvider(groupId).notifier,
+    );
     final tableHorizontalScrollController = useScrollController();
+    final isDialogOpen = useRef(false);
     final clock = ref.watch(appClockProvider);
 
-    final calculator = useMemoized(() => const CalculateDvcPointTableUsecase());
-    final getGroupWithMembersByIdUsecase = ref.read(
-      getGroupWithMembersByIdUsecaseProvider,
-    );
-    final getDvcPointContractsUsecase = ref.read(
-      getDvcPointContractsUsecaseProvider,
-    );
-    final getDvcLimitedPointsUsecase = ref.read(
-      getDvcLimitedPointsUsecaseProvider,
-    );
-    final getDvcPointUsagesUsecase = ref.read(getDvcPointUsagesUsecaseProvider);
-    final saveDvcPointContractsUsecase = ref.read(
-      saveDvcPointContractsUsecaseProvider,
-    );
-    final saveDvcLimitedPointUsecase = ref.read(
-      saveDvcLimitedPointUsecaseProvider,
-    );
-    final dvcPointUsageMutationCoordinator = ref.read(
-      dvcPointUsageMutationCoordinatorProvider,
-    );
-    final deleteDvcLimitedPointUsecase = ref.read(
-      deleteDvcLimitedPointUsecaseProvider,
-    );
-
-    Future<void> loadData({bool showLoading = true}) async {
-      try {
-        final shouldShowLoading =
-            showLoading || state.value != _DvcScreenState.loaded;
-        if (shouldShowLoading) {
-          state.value = _DvcScreenState.loading;
-        }
-        final results = await Future.wait([
-          getGroupWithMembersByIdUsecase.execute(groupId),
-          getDvcPointContractsUsecase.execute(groupId),
-          getDvcLimitedPointsUsecase.execute(groupId),
-          getDvcPointUsagesUsecase.execute(groupId),
-        ]);
-
-        if (!context.mounted) {
-          return;
-        }
-
-        final group = results[0] as GroupDto?;
-        groupNameState.value = group?.name ?? '';
-        contractsState.value = results[1] as List<DvcPointContractDto>;
-        limitedPointsState.value = results[2] as List<DvcLimitedPointDto>;
-        pointUsagesState.value = results[3] as List<DvcPointUsageDto>;
-        state.value = _DvcScreenState.loaded;
-      } catch (e, stack) {
-        logger.e(
-          'DvcPointCalculationScreen.loadData: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        if (!context.mounted) {
-          return;
-        }
-        errorMessage.value = 'DVCポイント計算画面の読込に失敗しました';
-        state.value = _DvcScreenState.error;
-      }
-    }
-
-    useEffect(() {
-      Future.microtask(loadData);
-      return null;
-    }, [groupId]);
-
-    final currentMonth = dvcMonthStart(clock.now());
-    final visibleStart = dvcAddMonths(currentMonth, startMonthOffset.value);
-    final visibleEnd = dvcAddMonths(currentMonth, endMonthOffset.value);
-    final visibleMonths = _buildMonthList(visibleStart, visibleEnd);
-
-    final calculationResult = calculator.execute(
-      contracts: contractsState.value,
-      limitedPoints: limitedPointsState.value,
-      pointUsages: pointUsagesState.value,
-      startYearMonth: visibleStart,
-      endYearMonth: visibleEnd,
+    final visibleMonths = _buildMonthList(
+      state.visibleStartYearMonth,
+      state.visibleEndYearMonth,
     );
     final summaryByMonthKey = {
-      for (final summary in calculationResult.monthlySummaries)
+      for (final summary
+          in state.calculationResult?.monthlySummaries ?? const [])
         dvcMonthKey(summary.yearMonth): summary,
     };
+
+    Future<void> showDialogOnce(Future<void> Function() showDialog) async {
+      if (isDialogOpen.value) return;
+      isDialogOpen.value = true;
+      try {
+        await showDialog();
+      } finally {
+        isDialogOpen.value = false;
+      }
+    }
 
     Future<void> saveContractSettings(
       List<DvcEditableContract> editable,
@@ -160,11 +79,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
           )
           .toList();
 
-      await saveDvcPointContractsUsecase.execute(
-        groupId: groupId,
-        contracts: contracts,
-      );
-      await loadData(showLoading: false);
+      await notifier.saveContracts(contracts);
     }
 
     Future<void> saveLimitedPoint({
@@ -181,8 +96,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         point: point,
         memo: memo.isEmpty ? null : memo,
       );
-      await saveDvcLimitedPointUsecase.execute(limitedPoint);
-      await loadData(showLoading: false);
+      await notifier.saveLimitedPoint(limitedPoint);
     }
 
     Future<void> saveUsage({
@@ -197,18 +111,15 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
         usedPoint: usedPoint,
         memo: memo.isEmpty ? null : memo,
       );
-      await dvcPointUsageMutationCoordinator.saveDvcPointUsage(usage);
-      await loadData(showLoading: false);
+      await notifier.savePointUsage(usage);
     }
 
     Future<void> deleteLimitedPoint(String limitedPointId) async {
-      await deleteDvcLimitedPointUsecase.execute(limitedPointId);
-      await loadData(showLoading: false);
+      await notifier.deleteLimitedPoint(limitedPointId);
     }
 
     Future<void> deleteUsage(String pointUsageId) async {
-      await dvcPointUsageMutationCoordinator.deleteDvcPointUsage(pointUsageId);
-      await loadData(showLoading: false);
+      await notifier.deletePointUsage(pointUsageId);
     }
 
     Widget buildHeader() {
@@ -227,7 +138,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
             ),
             Center(
               child: Text(
-                groupNameState.value,
+                state.group?.name ?? '',
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -245,20 +156,24 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                   switch (action) {
                     case _DvcActionMenu.contractRegistration:
                       unawaited(
-                        showDvcContractManagementModal(
-                          context: context,
-                          contracts: contractsState.value,
-                          onSave: saveContractSettings,
-                          clock: clock,
+                        showDialogOnce(
+                          () => showDvcContractManagementModal(
+                            context: context,
+                            contracts: state.contracts,
+                            onSave: saveContractSettings,
+                            clock: clock,
+                          ),
                         ),
                       );
                       break;
                     case _DvcActionMenu.limitedPointRegistration:
                       unawaited(
-                        showDvcLimitedPointRegistrationModal(
-                          context: context,
-                          onSave: saveLimitedPoint,
-                          clock: clock,
+                        showDialogOnce(
+                          () => showDvcLimitedPointRegistrationModal(
+                            context: context,
+                            onSave: saveLimitedPoint,
+                            clock: clock,
+                          ),
                         ),
                       );
                       break;
@@ -369,8 +284,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onPressed: () {
-                startMonthOffset.value =
-                    startMonthOffset.value - _rangeIncrement;
+                notifier.showMorePast();
               },
             ),
           ),
@@ -390,7 +304,7 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               onPressed: () {
-                endMonthOffset.value = endMonthOffset.value + _rangeIncrement;
+                notifier.showMoreFuture();
               },
             ),
           ),
@@ -419,11 +333,13 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               borderColor: borderColor,
               onTap: () {
                 unawaited(
-                  showDvcAvailableBreakdownModal(
-                    context: context,
-                    month: month,
-                    breakdowns: breakdowns,
-                    onDeleteLimitedPoint: deleteLimitedPoint,
+                  showDialogOnce(
+                    () => showDvcAvailableBreakdownModal(
+                      context: context,
+                      month: month,
+                      breakdowns: breakdowns,
+                      onDeleteLimitedPoint: deleteLimitedPoint,
+                    ),
                   ),
                 );
               },
@@ -450,11 +366,13 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
               borderColor: borderColor,
               onTap: () {
                 unawaited(
-                  showDvcUsageBreakdownModal(
-                    context: context,
-                    month: month,
-                    usages: usageDetails,
-                    onDelete: deleteUsage,
+                  showDialogOnce(
+                    () => showDvcUsageBreakdownModal(
+                      context: context,
+                      month: month,
+                      usages: usageDetails,
+                      onDelete: deleteUsage,
+                    ),
                   ),
                 );
               },
@@ -468,11 +386,13 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
                   iconSize: 20,
                   onPressed: () {
                     unawaited(
-                      showDvcUsageRegistrationModal(
-                        context: context,
-                        targetYearMonth: month,
-                        maxAvailablePoint: availablePoint,
-                        onSave: saveUsage,
+                      showDialogOnce(
+                        () => showDvcUsageRegistrationModal(
+                          context: context,
+                          targetYearMonth: month,
+                          maxAvailablePoint: availablePoint,
+                          onSave: saveUsage,
+                        ),
                       ),
                     );
                   },
@@ -534,24 +454,65 @@ class DvcPointCalculationScreen extends HookConsumerWidget {
       );
     }
 
+    List<Widget> buildRetryButtons() {
+      return [
+        if (state.groupStatus == DvcPointDataLoadStatus.error)
+          ElevatedButton(
+            key: const Key('dvc_retry_group_button'),
+            onPressed: notifier.retryGroup,
+            child: const Text('グループを再取得'),
+          ),
+        if (state.contractsStatus == DvcPointDataLoadStatus.error)
+          ElevatedButton(
+            key: const Key('dvc_retry_contracts_button'),
+            onPressed: notifier.retryContracts,
+            child: const Text('契約を再取得'),
+          ),
+        if (state.limitedPointsStatus == DvcPointDataLoadStatus.error)
+          ElevatedButton(
+            key: const Key('dvc_retry_limited_points_button'),
+            onPressed: notifier.retryLimitedPoints,
+            child: const Text('期間限定ポイントを再取得'),
+          ),
+        if (state.pointUsagesStatus == DvcPointDataLoadStatus.error)
+          ElevatedButton(
+            key: const Key('dvc_retry_point_usages_button'),
+            onPressed: notifier.retryPointUsages,
+            child: const Text('利用ポイントを再取得'),
+          ),
+      ];
+    }
+
     Widget buildBody() {
-      switch (state.value) {
-        case _DvcScreenState.loading:
-          return const Center(child: CircularProgressIndicator());
-        case _DvcScreenState.error:
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(errorMessage.value),
-                const SizedBox(height: 12),
-                ElevatedButton(onPressed: loadData, child: const Text('再読み込み')),
-              ],
-            ),
-          );
-        case _DvcScreenState.loaded:
-          return buildTableContent();
+      if (state.isInitialLoading) {
+        return const Center(child: CircularProgressIndicator());
       }
+      if (!state.hasUsableData) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('DVCポイント計算画面の読込に失敗しました'),
+              const SizedBox(height: 12),
+              Wrap(spacing: 8, runSpacing: 8, children: buildRetryButtons()),
+            ],
+          ),
+        );
+      }
+      return Column(
+        children: [
+          if (state.hasLoadError)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: buildRetryButtons(),
+              ),
+            ),
+          Expanded(child: buildTableContent()),
+        ],
+      );
     }
 
     return Container(
