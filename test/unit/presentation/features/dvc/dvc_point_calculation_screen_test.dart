@@ -21,6 +21,7 @@ import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
 import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_refresh_provider.dart';
+import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {
@@ -316,7 +317,7 @@ void main() {
         '10',
       );
       await tester.tap(find.widgetWithText(TextButton, '登録'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('dvc_point_table')), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -398,6 +399,48 @@ void main() {
       expect(find.text('開始年月'), findsOneWidget);
       expect(find.text('終了年月'), findsOneWidget);
       expect(find.text('ポイント数'), findsOneWidget);
+    });
+
+    testWidgets('別操作中の登録は入力を保持して再試行を案内する', (tester) async {
+      final deleteCompleter = Completer<void>();
+      addTearDown(() {
+        if (!deleteCompleter.isCompleted) {
+          deleteCompleter.complete();
+        }
+      });
+      usageRepository = _FakeDvcPointUsageRepository(
+        onDelete: (_) => deleteCompleter.future,
+      );
+      await tester.pumpWidget(createWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('dvc_action_menu_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('期間限定ポイント登録'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('dvc_limited_point_field')),
+        '20',
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(DvcPointCalculationScreen)),
+      );
+      final deleteFuture = container
+          .read(dvcPointCalculationNotifierProvider(groupId).notifier)
+          .deletePointUsage('usage-in-progress');
+      await tester.pump();
+
+      await tester.tap(find.widgetWithText(TextButton, '登録'));
+      await tester.pump();
+
+      expect(find.text('期間限定ポイント登録'), findsOneWidget);
+      expect(find.text('20'), findsOneWidget);
+      expect(find.text('別の操作が完了してから再度お試しください'), findsOneWidget);
+      expect(limitedRepository.savedLimitedPoints, isEmpty);
+
+      deleteCompleter.complete();
+      await deleteFuture;
     });
 
     testWidgets('利用可能ポイント内訳タイトルは年月で改行して2段表示する', (tester) async {
@@ -825,16 +868,18 @@ class _FakeDvcLimitedPointRepository implements DvcLimitedPointRepository {
 }
 
 class _FakeDvcPointUsageRepository implements DvcPointUsageRepository {
-  _FakeDvcPointUsageRepository({this.onSave});
+  _FakeDvcPointUsageRepository({this.onSave, this.onDelete});
 
   final List<DvcPointUsage> savedUsages = [];
   final List<String> deletedUsageIds = [];
   final List<String> deletedGroupIds = [];
   final void Function(DvcPointUsage pointUsage)? onSave;
+  final Future<void> Function(String pointUsageId)? onDelete;
 
   @override
   Future<void> deleteDvcPointUsage(String pointUsageId) async {
     deletedUsageIds.add(pointUsageId);
+    await onDelete?.call(pointUsageId);
   }
 
   @override
