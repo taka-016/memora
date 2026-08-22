@@ -195,6 +195,7 @@ void main() {
       expect(saveCallCount, 1);
       expect(find.text('旅行新規作成'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, '編集中の旅行'), findsOneWidget);
+      expect(find.text('保存を実行できませんでした。しばらくしてからもう一度お試しください'), findsOneWidget);
     });
 
     testWidgets('更新が実行されなかった場合はモーダルを閉じず入力を保持すること', (tester) async {
@@ -226,6 +227,7 @@ void main() {
       expect(saveCallCount, 1);
       expect(find.text('旅行編集'), findsOneWidget);
       expect(find.widgetWithText(TextFormField, '編集中のテスト旅行'), findsOneWidget);
+      expect(find.text('保存を実行できませんでした。しばらくしてからもう一度お試しください'), findsOneWidget);
     });
   });
 }

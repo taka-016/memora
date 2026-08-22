@@ -7,6 +7,7 @@ import 'package:memora/application/exceptions/application_validation_exception.d
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
+import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -17,6 +18,7 @@ import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
+import 'package:memora/presentation/notifiers/trip_management_notifier.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
@@ -861,6 +863,82 @@ void main() {
       ).called(2);
     });
 
+    testWidgets('旅行詳細の取得中に再取得された最新のグループメンバーを編集画面へ渡す', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('グループメンバー取得エラー'));
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final groupCompleter = Completer<GroupDto?>();
+      final detailCompleter = Completer<TripEntryDto?>();
+      when(
+        mockGroupQueryService.getGroupWithMembersById(
+          testGroupId,
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) => groupCompleter.future);
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => detailCompleter.future);
+
+      await tester.tap(find.byKey(const Key('group_members_retry_button')));
+      await tester.tap(find.byType(ListTile).first);
+      await tester.pump();
+
+      groupCompleter.complete(testGroup);
+      await tester.pump();
+      detailCompleter.complete(
+        detailedTripEntry.copyWith(
+          tasks: const [
+            TaskDto(
+              id: 'task-1',
+              tripId: 'trip-1',
+              orderIndex: 0,
+              name: '旅行準備',
+              isCompleted: false,
+              assignedMemberId: 'member-1',
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final taskButton = find.widgetWithText(ElevatedButton, 'タスク');
+      await tester.ensureVisible(taskButton);
+      await tester.tap(taskButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('担当: 太郎'), findsOneWidget);
+    });
+
     testWidgets('旅行情報の更新ができること', (WidgetTester tester) async {
       // Arrange
       when(
@@ -1148,6 +1226,60 @@ void main() {
         container.read(timelineTripEntriesRefreshProvider),
         isNot(same(refreshToken)),
       );
+    });
+
+    testWidgets('旅行一覧の再取得中に削除した場合は未実行を通知すること', (WidgetTester tester) async {
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => testTripEntries);
+
+      await tester.pumpWidget(
+        createApp(
+          home: Scaffold(
+            body: TripManagement(
+              groupId: testGroupId,
+              year: testYear,
+              isTestEnvironment: true,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.delete).first);
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TripManagement)),
+      );
+      final refreshCompleter = Completer<List<TripEntryDto>>();
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          testGroupId,
+          testYear,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) => refreshCompleter.future);
+      final managementProvider = tripManagementNotifierProvider(
+        const TripManagementQuery(groupId: testGroupId, year: testYear),
+      );
+      final refreshFuture = container
+          .read(managementProvider.notifier)
+          .retryTripEntries();
+      await tester.pump();
+
+      await tester.tap(find.text('削除'));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('旅行を削除できませんでした。旅行一覧の更新後にもう一度お試しください'), findsOneWidget);
+      verifyNever(mockTripEntryRepository.deleteTripEntry(any));
+
+      refreshCompleter.complete(testTripEntries);
+      expect(await refreshFuture, isTrue);
+      await tester.pumpAndSettle();
     });
 
     testWidgets('戻るボタンをタップするとonBackPressedが呼ばれること', (
