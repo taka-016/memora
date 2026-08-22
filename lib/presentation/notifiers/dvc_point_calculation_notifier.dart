@@ -53,7 +53,7 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
         -_rangeIncrement,
       ),
     );
-    _recalculate();
+    _recalculateIfReady();
   }
 
   void showMoreFuture() {
@@ -63,7 +63,7 @@ class DvcPointCalculationNotifier extends Notifier<DvcPointCalculationState> {
         _rangeIncrement,
       ),
     );
-    _recalculate();
+    _recalculateIfReady();
   }
 
   Future<bool> retryGroup() => _retry(_isGroupLoading, _loadGroup);
