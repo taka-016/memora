@@ -20,6 +20,7 @@ import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 import '../../../../helpers/fake_current_member_notifier.dart';
+import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('Settings', () {
@@ -150,6 +151,24 @@ void main() {
       expect(storage.targetGroupId, isNull);
     });
 
+    testWidgets('所属グループがなくても候補外のウィジェット表示対象を解除できる', (tester) async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
+
+      await tester.pumpWidget(
+        _buildTestApp(storage: storage, groups: const []),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('所属グループがありません'), findsOneWidget);
+      expect(find.text('表示対象を解除'), findsOneWidget);
+
+      await tester.tap(find.text('表示対象を解除'));
+      await tester.pumpAndSettle();
+
+      expect(storage.targetGroupId, isNull);
+      expect(find.text('ウィジェット表示対象を解除しました'), findsOneWidget);
+    });
+
     testWidgets('Androidウィジェットの更新間隔は未保存の場合24時間を表示する', (tester) async {
       final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage();
 
@@ -215,6 +234,113 @@ void main() {
       );
       expect(registeredFrequency, const Duration(hours: 6));
     });
+
+    testWidgets('表示対象グループの初期取得失敗を表示し再試行できる', (tester) async {
+      final groupQueryService = _FakeGroupQueryService(const [
+        GroupDto(id: 'group-a', ownerId: 'owner', name: 'グループA', members: []),
+      ], loadError: TestException('取得失敗'));
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          groups: const [],
+          groupQueryService: groupQueryService,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ウィジェット表示対象を取得できませんでした'), findsOneWidget);
+
+      groupQueryService.loadError = null;
+      await tester.tap(find.text('再試行'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('グループA'), findsOneWidget);
+    });
+
+    testWidgets('更新間隔の初期取得失敗を表示し再試行できる', (tester) async {
+      final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage(
+        loadError: TestException('取得失敗'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: intervalStorage,
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('ウィジェット更新間隔を取得できませんでした'), findsOneWidget);
+
+      intervalStorage.loadError = null;
+      await tester.tap(find.text('再試行'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('24時間'), findsOneWidget);
+    });
+
+    testWidgets('表示対象グループの保存失敗時は表示値を維持してSnackbarを表示する', (tester) async {
+      final storage = _FakeAndroidWidgetCacheStorage(
+        targetGroupId: 'group-a',
+        saveTargetGroupError: TestException('保存失敗'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: storage,
+          groups: const [
+            GroupDto(
+              id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+            GroupDto(
+              id: 'group-b',
+              ownerId: 'owner',
+              name: 'グループB',
+              members: [],
+            ),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループB').last);
+      await tester.pumpAndSettle();
+
+      expect(_selectedDropdownValue(tester), 'group-a');
+      expect(find.text('ウィジェット表示対象を保存できませんでした'), findsOneWidget);
+    });
+
+    testWidgets('更新間隔の保存失敗時は表示値を維持してSnackbarを表示する', (tester) async {
+      final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage(
+        saveError: TestException('保存失敗'),
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          storage: _FakeAndroidWidgetCacheStorage(),
+          intervalStorage: intervalStorage,
+          groups: const [],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byType(DropdownButtonFormField<AndroidWidgetUpdateInterval>),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('6時間').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('24時間'), findsOneWidget);
+      expect(find.text('ウィジェット更新間隔を保存できませんでした'), findsOneWidget);
+    });
   });
 }
 
@@ -223,6 +349,7 @@ Widget _buildTestApp({
   required List<GroupDto> groups,
   _FakeAndroidWidgetUpdateIntervalStorage? intervalStorage,
   RegisterAndroidWidgetPeriodicUpdateTask? registerPeriodicUpdateTask,
+  _FakeGroupQueryService? groupQueryService,
 }) {
   const member = MemberDto(id: 'member-1', displayName: '太郎');
 
@@ -240,7 +367,7 @@ Widget _buildTestApp({
           registerPeriodicUpdateTask,
         ),
       groupQueryServiceProvider.overrideWithValue(
-        _FakeGroupQueryService(groups),
+        groupQueryService ?? _FakeGroupQueryService(groups),
       ),
       tripEntryQueryServiceProvider.overrideWithValue(
         _FakeTripEntryQueryService(),
@@ -267,9 +394,10 @@ String? _selectedDropdownValue(WidgetTester tester) {
 }
 
 class _FakeGroupQueryService implements GroupQueryService {
-  const _FakeGroupQueryService(this.groups);
+  _FakeGroupQueryService(this.groups, {this.loadError});
 
   final List<GroupDto> groups;
+  TestException? loadError;
 
   @override
   Future<List<GroupDto>> getGroupsWithMembersByMemberId(
@@ -277,6 +405,10 @@ class _FakeGroupQueryService implements GroupQueryService {
     List<OrderBy>? groupsOrderBy,
     List<OrderBy>? membersOrderBy,
   }) async {
+    final error = loadError;
+    if (error != null) {
+      throw error;
+    }
     return groups;
   }
 
@@ -337,9 +469,13 @@ class _FakeItineraryItemQueryService implements ItineraryItemQueryService {
 }
 
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
-  _FakeAndroidWidgetCacheStorage({this.targetGroupId});
+  _FakeAndroidWidgetCacheStorage({
+    this.targetGroupId,
+    this.saveTargetGroupError,
+  });
 
   String? targetGroupId;
+  TestException? saveTargetGroupError;
   String? selectedItineraryDateId;
   AndroidWidgetItineraryCacheDto? cache;
 
@@ -383,6 +519,10 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<void> saveTargetGroupId(String groupId) async {
+    final error = saveTargetGroupError;
+    if (error != null) {
+      throw error;
+    }
     targetGroupId = groupId;
   }
 
@@ -392,16 +532,28 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
 class _FakeAndroidWidgetUpdateIntervalStorage
     implements AndroidWidgetUpdateIntervalStorage {
+  _FakeAndroidWidgetUpdateIntervalStorage({this.loadError, this.saveError});
+
   AndroidWidgetUpdateInterval savedInterval =
       AndroidWidgetUpdateInterval.every24Hours;
+  TestException? loadError;
+  TestException? saveError;
 
   @override
   Future<AndroidWidgetUpdateInterval> load() async {
+    final error = loadError;
+    if (error != null) {
+      throw error;
+    }
     return savedInterval;
   }
 
   @override
   Future<void> save(AndroidWidgetUpdateInterval interval) async {
+    final error = saveError;
+    if (error != null) {
+      throw error;
+    }
     savedInterval = interval;
   }
 }

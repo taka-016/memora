@@ -148,15 +148,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 5. SettingsのAndroidウィジェット設定を機能別Providerへ分離する
-
-- 画面全体を表す`SettingsState`と`SettingsNotifier`は作成せず、更新間隔と対象グループを独立した設定機能として扱う
-- 更新間隔の取得は`Settings`のファイル上部に置くProviderで扱い、保存中の操作無効化と失敗時の値復元が必要な場合だけ機能単位のNotifierを使用する
-- 対象グループ候補と選択中IDは引数のメンバーごとに取得状態を管理し、選択・解除後に同じProviderへ結果を反映する
-- `Settings`には設定項目の描画と更新結果を知らせるSnackbarの実表示を残す
-- 各設定の初期取得、保存、解除、失敗時の表示値維持と再試行を機能単位で検証する
-- 同じ設定項目の取得、保存、解除、再試行を連続または逆順に実行した場合も、古い結果で表示値が上書きされず重複保存が発生しないことを検証する
-
 #### 6. AccountSettingsの再認証と更新再試行を共通化する
 
 - 画面共有状態がないため`AccountSettingsState`と`AccountSettingsNotifier`は作成しない
