@@ -144,9 +144,11 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
   void _receiveUri(Uri? uri) {
     final tripId = _extractTripId(uri);
+    final resolvingRequest = _resolvingRequest;
     if (tripId == null ||
         tripId == state.pendingTripId ||
-        tripId == _resolvingRequest?.tripId ||
+        (tripId == resolvingRequest?.tripId &&
+            resolvingRequest?.requestVersion == _requestVersion) ||
         tripId == _resolvedTripId) {
       return;
     }
