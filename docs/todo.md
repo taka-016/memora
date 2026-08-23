@@ -148,15 +148,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 6. AccountSettingsの再認証と更新再試行を共通化する
-
-- 画面共有状態がないため`AccountSettingsState`と`AccountSettingsNotifier`は作成しない
-- 文字列照合で認証期限切れを判定する処理を型付きのApplication例外へ置き換える
-- メール変更、パスワード変更、アカウント削除で重複している、認証期限切れの検出、再認証Modal表示、成功後の一度だけの再試行をPresentation層の共通処理へ抽出する
-- 入力Modal、再認証Modal、成功・失敗を知らせるSnackbarの実表示は`AccountSettings`へ残す
-- 初回成功、再認証後の成功、再認証のキャンセル・失敗、再試行の失敗についてUseCaseの呼び出し回数と画面上の結果を検証する
-- 更新処理、再認証Modal、再試行、キャンセルを連続または逆順に実行した場合も、更新の重複実行や閉じたModalからの再試行・画面更新が発生しないことを検証する
-
 #### 7. Androidウィジェット起動Notifierで遷移先を解決する
 
 - `TopPageState`と`TopPageNotifier`は作成せず、既存のAndroidウィジェット起動Notifierを起動要求の処理単位として拡張する
