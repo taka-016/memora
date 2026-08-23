@@ -161,15 +161,6 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     );
   }
 
-  String? takePendingTripId() {
-    final tripId = state.pendingTripId;
-    if (tripId == null) {
-      return null;
-    }
-    state = state.copyWith(clearPendingTripId: true);
-    return tripId;
-  }
-
   Future<void> resolvePendingLaunch(MemberDto member) async {
     final tripId = state.pendingTripId;
     if (tripId == null) {

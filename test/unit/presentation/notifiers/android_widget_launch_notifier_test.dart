@@ -68,7 +68,7 @@ void main() {
       getGroupsUsecase = MockGetGroupsWithMembersUsecase();
     });
 
-    test('ウィジェットからの初回起動URIを保留し一度だけ取り出す', () async {
+    test('ウィジェットからの初回起動URIを解決対象として保留する', () async {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
@@ -85,11 +85,8 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
 
-      final notifier = container.read(
-        androidWidgetLaunchNotifierProvider.notifier,
-      );
       expect(
         container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
         'trip-1',
@@ -98,8 +95,6 @@ void main() {
         container.read(androidWidgetLaunchNotifierProvider).isInitialUriLoading,
         isFalse,
       );
-      expect(notifier.takePendingTripId(), 'trip-1');
-      expect(notifier.takePendingTripId(), isNull);
     });
 
     test('初回起動URIの確認中だけ読み込み中になる', () async {
@@ -125,7 +120,7 @@ void main() {
       );
 
       initialUriCompleter.complete(null);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(
         container.read(androidWidgetLaunchNotifierProvider).isInitialUriLoading,
@@ -149,14 +144,14 @@ void main() {
 
       container.read(androidWidgetLaunchNotifierProvider);
       source.controller.add(Uri.parse('memoraWidget://refresh'));
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       expect(
         container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
         isNull,
       );
 
       source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-2'));
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
 
       expect(
         container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
@@ -182,7 +177,7 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
@@ -232,7 +227,7 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
@@ -255,7 +250,7 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
@@ -287,7 +282,7 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
@@ -328,14 +323,14 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
       final oldResolution = notifier.resolvePendingLaunch(member);
 
       source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-2'));
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final latestResolution = notifier.resolvePendingLaunch(member);
       latestTripCompleter.complete(latestTrip);
       await latestResolution;
@@ -370,7 +365,7 @@ void main() {
       });
 
       container.read(androidWidgetLaunchNotifierProvider);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue();
       final notifier = container.read(
         androidWidgetLaunchNotifierProvider.notifier,
       );
