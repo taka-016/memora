@@ -315,6 +315,23 @@ class Settings extends ConsumerWidget {
       );
     }
     if (setting.groups.isEmpty) {
+      if (setting.persistedGroupId != null) {
+        return Row(
+          children: [
+            const Expanded(child: Text('所属グループがありません')),
+            TextButton(
+              onPressed: setting.isSaving
+                  ? null
+                  : () => _saveTargetGroupSelection(
+                      context,
+                      ref.read(provider.notifier),
+                      null,
+                    ),
+              child: const Text('表示対象を解除'),
+            ),
+          ],
+        );
+      }
       return const Text('所属グループがありません');
     }
 
@@ -345,28 +362,38 @@ class Settings extends ConsumerWidget {
       ],
       onChanged: setting.isSaving
           ? null
-          : (groupId) async {
-              try {
-                final saved = await ref.read(provider.notifier).select(groupId);
-                if (!saved || !context.mounted) {
-                  return;
-                }
-                final message = groupId == null
-                    ? 'ウィジェット表示対象を解除しました'
-                    : 'ウィジェット表示対象を保存しました';
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(message)));
-              } catch (_) {
-                if (!context.mounted) {
-                  return;
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ウィジェット表示対象を保存できませんでした')),
-                );
-              }
-            },
+          : (groupId) => _saveTargetGroupSelection(
+              context,
+              ref.read(provider.notifier),
+              groupId,
+            ),
     );
+  }
+
+  Future<void> _saveTargetGroupSelection(
+    BuildContext context,
+    AndroidWidgetTargetGroupNotifier notifier,
+    String? groupId,
+  ) async {
+    try {
+      final saved = await notifier.select(groupId);
+      if (!saved || !context.mounted) {
+        return;
+      }
+      final message = groupId == null
+          ? 'ウィジェット表示対象を解除しました'
+          : 'ウィジェット表示対象を保存しました';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!context.mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ウィジェット表示対象を保存できませんでした')));
+    }
   }
 
   Widget _buildLoadingOrRetry({
