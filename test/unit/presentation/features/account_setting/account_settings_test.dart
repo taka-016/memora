@@ -657,7 +657,7 @@ void main() {
       expect(authService.updatePasswordCallCount, 1);
       expect(authService.reauthenticateCallCount, 1);
       expect(find.text('パスワード再入力'), findsOneWidget);
-      expect(find.text('TestException: 再認証に失敗しました'), findsOneWidget);
+      expect(find.text('Test再認証に失敗しました'), findsOneWidget);
       expect(find.text('パスワードを更新しました'), findsNothing);
     });
 
