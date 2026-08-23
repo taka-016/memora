@@ -19,6 +19,9 @@ final androidWidgetUpdateIntervalProvider =
 class AndroidWidgetUpdateIntervalNotifier
     extends AsyncNotifier<AndroidWidgetUpdateInterval> {
   bool _isSaving = false;
+  int _operationRevision = 0;
+
+  int get operationRevision => _operationRevision;
 
   @override
   Future<AndroidWidgetUpdateInterval> build() {
@@ -32,6 +35,7 @@ class AndroidWidgetUpdateIntervalNotifier
     }
 
     _isSaving = true;
+    _operationRevision++;
     final keepAliveLink = ref.keepAlive();
     final previousState = state;
     state = const AsyncLoading<AndroidWidgetUpdateInterval>().copyWithPrevious(
@@ -91,6 +95,9 @@ class AndroidWidgetTargetGroupNotifier
 
   final MemberDto _member;
   bool _isSaving = false;
+  int _operationRevision = 0;
+
+  int get operationRevision => _operationRevision;
 
   @override
   Future<AndroidWidgetTargetGroupState> build() async {
@@ -120,6 +127,7 @@ class AndroidWidgetTargetGroupNotifier
     }
 
     _isSaving = true;
+    _operationRevision++;
     final keepAliveLink = ref.keepAlive();
     final previousState = state;
     state = const AsyncLoading<AndroidWidgetTargetGroupState>()
@@ -181,12 +189,18 @@ class Settings extends ConsumerWidget {
     if (selectedInterval == null) {
       return _buildLoadingOrRetry(
         hasError: intervalState.hasError,
+        errorMessage: 'ウィジェット更新間隔を取得できませんでした',
         onRetry: () => ref.invalidate(androidWidgetUpdateIntervalProvider),
       );
     }
 
     return DropdownButtonFormField<AndroidWidgetUpdateInterval>(
-      key: ValueKey(selectedInterval),
+      key: ValueKey((
+        selectedInterval,
+        ref
+            .read(androidWidgetUpdateIntervalProvider.notifier)
+            .operationRevision,
+      )),
       initialValue: selectedInterval,
       decoration: const InputDecoration(
         labelText: '更新間隔',
@@ -248,6 +262,7 @@ class Settings extends ConsumerWidget {
     if (setting == null) {
       return _buildLoadingOrRetry(
         hasError: targetGroupState.hasError,
+        errorMessage: 'ウィジェット表示対象を取得できませんでした',
         onRetry: () => ref.invalidate(provider),
       );
     }
@@ -256,7 +271,11 @@ class Settings extends ConsumerWidget {
     }
 
     return DropdownButtonFormField<String>(
-      key: ValueKey('${member.id}:${setting.selectedGroupId}'),
+      key: ValueKey((
+        member.id,
+        setting.selectedGroupId,
+        ref.read(provider.notifier).operationRevision,
+      )),
       initialValue: setting.selectedGroupId,
       isExpanded: true,
       decoration: const InputDecoration(
@@ -304,12 +323,13 @@ class Settings extends ConsumerWidget {
 
   Widget _buildLoadingOrRetry({
     required bool hasError,
+    required String errorMessage,
     required VoidCallback onRetry,
   }) {
     if (hasError) {
       return Row(
         children: [
-          const Expanded(child: Text('設定を取得できませんでした')),
+          Expanded(child: Text(errorMessage)),
           TextButton(onPressed: onRetry, child: const Text('再試行')),
         ],
       );
