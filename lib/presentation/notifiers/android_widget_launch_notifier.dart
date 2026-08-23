@@ -10,12 +10,15 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/core/app_logger.dart';
 
 sealed class AndroidWidgetLaunchResolution extends Equatable {
-  const AndroidWidgetLaunchResolution();
+  const AndroidWidgetLaunchResolution({required this.memberId});
+
+  final String memberId;
 }
 
 final class AndroidWidgetLaunchDestination
     extends AndroidWidgetLaunchResolution {
   const AndroidWidgetLaunchDestination({
+    required super.memberId,
     required this.groupId,
     required this.year,
     required this.tripId,
@@ -28,14 +31,14 @@ final class AndroidWidgetLaunchDestination
   final List<GroupDto> groups;
 
   @override
-  List<Object?> get props => [groupId, year, tripId, groups];
+  List<Object?> get props => [memberId, groupId, year, tripId, groups];
 }
 
 final class AndroidWidgetLaunchFailure extends AndroidWidgetLaunchResolution {
-  const AndroidWidgetLaunchFailure();
+  const AndroidWidgetLaunchFailure({required super.memberId});
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [memberId];
 }
 
 class AndroidWidgetLaunchState extends Equatable {
@@ -91,6 +94,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   StreamSubscription<Uri?>? _subscription;
   int _requestVersion = 0;
   String? _resolvingTripId;
+  int? _resolvingRequestVersion;
   String? _resolvedTripId;
 
   @override
@@ -169,6 +173,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
     final requestVersion = _requestVersion;
     _resolvingTripId = tripId;
+    _resolvingRequestVersion = requestVersion;
     state = state.copyWith(
       isResolving: true,
       clearPendingTripId: true,
@@ -186,7 +191,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         _completeResolution(
           requestVersion,
           tripId,
-          const AndroidWidgetLaunchFailure(),
+          AndroidWidgetLaunchFailure(memberId: member.id),
         );
         return;
       }
@@ -201,7 +206,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         _completeResolution(
           requestVersion,
           tripId,
-          const AndroidWidgetLaunchFailure(),
+          AndroidWidgetLaunchFailure(memberId: member.id),
         );
         return;
       }
@@ -210,6 +215,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         requestVersion,
         tripId,
         AndroidWidgetLaunchDestination(
+          memberId: member.id,
           groupId: trip.groupId,
           year: trip.year,
           tripId: trip.id,
@@ -226,29 +232,33 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         _completeResolution(
           requestVersion,
           tripId,
-          const AndroidWidgetLaunchFailure(),
+          AndroidWidgetLaunchFailure(memberId: member.id),
         );
       }
     } finally {
-      if (_resolvingTripId == tripId && !_isCurrentRequest(requestVersion)) {
+      if (_resolvingTripId == tripId &&
+          _resolvingRequestVersion == requestVersion &&
+          !_isCurrentRequest(requestVersion)) {
         _resolvingTripId = null;
+        _resolvingRequestVersion = null;
       }
     }
   }
 
-  AndroidWidgetLaunchResolution? takeResolution() {
+  AndroidWidgetLaunchResolution? takeResolution(String memberId) {
     final resolution = state.resolution;
     if (resolution == null) {
       return null;
     }
     _resolvedTripId = null;
     state = state.copyWith(clearResolution: true);
-    return resolution;
+    return resolution.memberId == memberId ? resolution : null;
   }
 
   void cancelPendingLaunch() {
     _requestVersion++;
     _resolvingTripId = null;
+    _resolvingRequestVersion = null;
     _resolvedTripId = null;
     state = AndroidWidgetLaunchState(
       isInitialUriLoading: state.isInitialUriLoading,
@@ -268,6 +278,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
       return;
     }
     _resolvingTripId = null;
+    _resolvingRequestVersion = null;
     _resolvedTripId = tripId;
     state = state.copyWith(isResolving: false, resolution: resolution);
   }

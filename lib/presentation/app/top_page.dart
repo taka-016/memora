@@ -91,7 +91,7 @@ class TopPage extends HookConsumerWidget {
         }
         final resolution = ref
             .read(androidWidgetLaunchNotifierProvider.notifier)
-            .takeResolution();
+            .takeResolution(currentMember.id);
         if (resolution == null) {
           return;
         }
