@@ -151,6 +151,24 @@ void main() {
       expect(storage.targetGroupId, isNull);
     });
 
+    testWidgets('所属グループがなくても候補外のウィジェット表示対象を解除できる', (tester) async {
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
+
+      await tester.pumpWidget(
+        _buildTestApp(storage: storage, groups: const []),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('所属グループがありません'), findsOneWidget);
+      expect(find.text('表示対象を解除'), findsOneWidget);
+
+      await tester.tap(find.text('表示対象を解除'));
+      await tester.pumpAndSettle();
+
+      expect(storage.targetGroupId, isNull);
+      expect(find.text('ウィジェット表示対象を解除しました'), findsOneWidget);
+    });
+
     testWidgets('Androidウィジェットの更新間隔は未保存の場合24時間を表示する', (tester) async {
       final intervalStorage = _FakeAndroidWidgetUpdateIntervalStorage();
 
