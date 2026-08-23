@@ -93,8 +93,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
   StreamSubscription<Uri?>? _subscription;
   int _requestVersion = 0;
-  String? _resolvingTripId;
-  int? _resolvingRequestVersion;
+  ({String tripId, int requestVersion})? _resolvingRequest;
   String? _resolvedTripId;
 
   @override
@@ -147,7 +146,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     final tripId = _extractTripId(uri);
     if (tripId == null ||
         tripId == state.pendingTripId ||
-        tripId == _resolvingTripId ||
+        tripId == _resolvingRequest?.tripId ||
         tripId == _resolvedTripId) {
       return;
     }
@@ -172,8 +171,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     }
 
     final requestVersion = _requestVersion;
-    _resolvingTripId = tripId;
-    _resolvingRequestVersion = requestVersion;
+    _resolvingRequest = (tripId: tripId, requestVersion: requestVersion);
     state = state.copyWith(
       isResolving: true,
       clearPendingTripId: true,
@@ -236,11 +234,10 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
         );
       }
     } finally {
-      if (_resolvingTripId == tripId &&
-          _resolvingRequestVersion == requestVersion &&
+      if (_resolvingRequest ==
+              (tripId: tripId, requestVersion: requestVersion) &&
           !_isCurrentRequest(requestVersion)) {
-        _resolvingTripId = null;
-        _resolvingRequestVersion = null;
+        _resolvingRequest = null;
       }
     }
   }
@@ -257,8 +254,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
 
   void cancelPendingLaunch() {
     _requestVersion++;
-    _resolvingTripId = null;
-    _resolvingRequestVersion = null;
+    _resolvingRequest = null;
     _resolvedTripId = null;
     state = AndroidWidgetLaunchState(
       isInitialUriLoading: state.isInitialUriLoading,
@@ -277,8 +273,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     if (!_isCurrentRequest(requestVersion)) {
       return;
     }
-    _resolvingTripId = null;
-    _resolvingRequestVersion = null;
+    _resolvingRequest = null;
     _resolvedTripId = tripId;
     state = state.copyWith(isResolving: false, resolution: resolution);
   }
