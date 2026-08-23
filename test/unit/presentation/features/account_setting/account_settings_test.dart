@@ -651,7 +651,8 @@ void main() {
       );
 
       await tester.tap(find.text('認証'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump();
 
       expect(authService.updatePasswordCallCount, 1);
       expect(authService.reauthenticateCallCount, 1);
@@ -680,13 +681,14 @@ void main() {
 
       expect(authService.updateEmailCallCount, 1);
       expect(
-        tester
-            .widget<ElevatedButton>(find.widgetWithText(ElevatedButton, '更新'))
-            .onPressed,
-        isNull,
+        find.descendant(
+          of: find.byType(EmailChangeModal),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
       );
 
-      await tester.pageBack();
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       updateCompleter.completeError(
         const ReauthenticationRequiredException(),
@@ -730,7 +732,7 @@ void main() {
 
       expect(authService.updateEmailCallCount, 2);
 
-      await tester.pageBack();
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       retryCompleter.complete();
       await tester.pumpAndSettle();
