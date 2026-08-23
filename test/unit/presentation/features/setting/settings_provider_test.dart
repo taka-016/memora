@@ -243,6 +243,84 @@ void main() {
       expect(secondState.selectedGroupId, isNull);
     });
 
+    test('候補外の保存済みグループIDを未選択操作で解除する', () async {
+      when(getGroupsUsecase.execute(member)).thenAnswer((_) async => [groupB]);
+      when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
+      when(clearTargetGroupUsecase.execute()).thenAnswer((_) async {});
+      final provider = androidWidgetTargetGroupProvider(member);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      await container.read(provider.future);
+      final notifier = container.read(provider.notifier);
+
+      expect(container.read(provider).requireValue.selectedGroupId, isNull);
+      expect(await notifier.select(null), isTrue);
+
+      verify(clearTargetGroupUsecase.execute()).called(1);
+    });
+
+    test('所属グループがなくても候補外の保存済みグループIDを解除する', () async {
+      when(getGroupsUsecase.execute(member)).thenAnswer((_) async => []);
+      when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
+      when(clearTargetGroupUsecase.execute()).thenAnswer((_) async {});
+      final provider = androidWidgetTargetGroupProvider(member);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      await container.read(provider.future);
+      final notifier = container.read(provider.notifier);
+
+      expect(await notifier.select(null), isTrue);
+
+      verify(clearTargetGroupUsecase.execute()).called(1);
+    });
+
+    test('対象ID取得が先に失敗しても未処理例外を発生させない', () async {
+      final groupsCompleter = Completer<List<GroupDto>>();
+      final targetGroupIdCompleter = Completer<String?>();
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) => groupsCompleter.future);
+      when(
+        cacheStorage.getTargetGroupId(),
+      ).thenAnswer((_) => targetGroupIdCompleter.future);
+      final provider = androidWidgetTargetGroupProvider(member);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      final loadExpectation = expectLater(
+        container.read(provider.future),
+        throwsA(isA<TestException>()),
+      );
+
+      targetGroupIdCompleter.completeError(TestException('対象ID取得失敗'));
+      await Future<void>.value();
+      groupsCompleter.complete([groupA]);
+
+      await loadExpectation;
+    });
+
+    test('グループ取得が先に失敗しても対象ID取得の未処理例外を発生させない', () async {
+      final groupsCompleter = Completer<List<GroupDto>>();
+      final targetGroupIdCompleter = Completer<String?>();
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) => groupsCompleter.future);
+      when(
+        cacheStorage.getTargetGroupId(),
+      ).thenAnswer((_) => targetGroupIdCompleter.future);
+      final provider = androidWidgetTargetGroupProvider(member);
+      final subscription = container.listen(provider, (_, _) {});
+      addTearDown(subscription.close);
+      final loadExpectation = expectLater(
+        container.read(provider.future),
+        throwsA(isA<TestException>()),
+      );
+
+      groupsCompleter.completeError(TestException('グループ取得失敗'));
+      await loadExpectation;
+      targetGroupIdCompleter.completeError(TestException('対象ID取得失敗'));
+      await Future<void>.value();
+    });
+
     test('初期取得失敗後にProviderを再構築して再試行できる', () async {
       when(getGroupsUsecase.execute(member)).thenThrow(TestException('取得失敗'));
       when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
