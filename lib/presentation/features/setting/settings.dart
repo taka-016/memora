@@ -92,12 +92,14 @@ class AndroidWidgetTargetGroupState extends Equatable {
   const AndroidWidgetTargetGroupState({
     required this.groups,
     required this.selectedGroupId,
+    required this.persistedGroupId,
     this.isSaving = false,
     this.operationRevision = 0,
   });
 
   final List<GroupDto> groups;
   final String? selectedGroupId;
+  final String? persistedGroupId;
   final bool isSaving;
   final int operationRevision;
 
@@ -105,6 +107,7 @@ class AndroidWidgetTargetGroupState extends Equatable {
   List<Object?> get props => [
     groups,
     selectedGroupId,
+    persistedGroupId,
     isSaving,
     operationRevision,
   ];
@@ -131,14 +134,19 @@ class AndroidWidgetTargetGroupNotifier
     final selectedGroupIdFuture = ref
         .read(androidWidgetCacheStorageProvider)
         .getTargetGroupId();
-    final groups = await groupsFuture;
-    final selectedGroupId = await selectedGroupIdFuture;
+    final results = await Future.wait<Object?>([
+      groupsFuture,
+      selectedGroupIdFuture,
+    ], eagerError: true);
+    final groups = results[0]! as List<GroupDto>;
+    final persistedGroupId = results[1] as String?;
 
     return AndroidWidgetTargetGroupState(
       groups: groups,
-      selectedGroupId: groups.any((group) => group.id == selectedGroupId)
-          ? selectedGroupId
+      selectedGroupId: groups.any((group) => group.id == persistedGroupId)
+          ? persistedGroupId
           : null,
+      persistedGroupId: persistedGroupId,
     );
   }
 
@@ -146,7 +154,7 @@ class AndroidWidgetTargetGroupNotifier
     final currentState = state.value;
     if (currentState == null ||
         currentState.isSaving ||
-        currentState.selectedGroupId == groupId) {
+        currentState.persistedGroupId == groupId) {
       return false;
     }
 
@@ -156,6 +164,7 @@ class AndroidWidgetTargetGroupNotifier
       AndroidWidgetTargetGroupState(
         groups: currentState.groups,
         selectedGroupId: currentState.selectedGroupId,
+        persistedGroupId: currentState.persistedGroupId,
         isSaving: true,
         operationRevision: operationRevision,
       ),
@@ -169,6 +178,7 @@ class AndroidWidgetTargetGroupNotifier
         AndroidWidgetTargetGroupState(
           groups: currentState.groups,
           selectedGroupId: groupId,
+          persistedGroupId: groupId,
           operationRevision: operationRevision,
         ),
       );
@@ -179,6 +189,7 @@ class AndroidWidgetTargetGroupNotifier
           AndroidWidgetTargetGroupState(
             groups: currentState.groups,
             selectedGroupId: currentState.selectedGroupId,
+            persistedGroupId: currentState.persistedGroupId,
             operationRevision: operationRevision,
           ),
         );
