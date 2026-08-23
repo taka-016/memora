@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -126,6 +127,43 @@ void main() {
       await firebaseAuthService.signOut();
 
       verify(mockFirebaseAuth.signOut()).called(1);
+    });
+
+    test('メールアドレス更新で認証期限切れの場合は型付き例外へ変換する', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.verifyBeforeUpdateEmail('new@example.com'),
+      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+
+      expect(
+        () => firebaseAuthService.updateEmail(newEmail: 'new@example.com'),
+        throwsA(isA<ReauthenticationRequiredException>()),
+      );
+    });
+
+    test('パスワード更新で認証期限切れの場合は型付き例外へ変換する', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.updatePassword('NewPassword123#'),
+      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+
+      expect(
+        () =>
+            firebaseAuthService.updatePassword(newPassword: 'NewPassword123#'),
+        throwsA(isA<ReauthenticationRequiredException>()),
+      );
+    });
+
+    test('アカウント削除で認証期限切れの場合は型付き例外へ変換する', () async {
+      when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
+      when(
+        mockFirebaseUser.delete(),
+      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+
+      expect(
+        firebaseAuthService.deleteUser,
+        throwsA(isA<ReauthenticationRequiredException>()),
+      );
     });
 
     test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {

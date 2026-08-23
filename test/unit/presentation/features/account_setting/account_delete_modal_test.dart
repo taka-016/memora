@@ -6,7 +6,7 @@ import '../../../../helpers/test_exception.dart';
 void main() {
   group('AccountDeleteModal', () {
     Widget createTestWidget({
-      required Future<void> Function() onAccountDelete,
+      required Future<bool> Function() onAccountDelete,
     }) {
       return MaterialApp(
         home: Scaffold(
@@ -27,7 +27,9 @@ void main() {
     }
 
     testWidgets('アカウント削除ダイアログの基本要素が表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
+      await tester.pumpWidget(
+        createTestWidget(onAccountDelete: () async => true),
+      );
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -51,6 +53,7 @@ void main() {
         createTestWidget(
           onAccountDelete: () async {
             isCalled = true;
+            return true;
           },
         ),
       );
@@ -64,7 +67,9 @@ void main() {
     });
 
     testWidgets('キャンセルボタンをタップするとダイアログが閉じる', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
+      await tester.pumpWidget(
+        createTestWidget(onAccountDelete: () async => true),
+      );
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
@@ -75,7 +80,9 @@ void main() {
     });
 
     testWidgets('削除ボタンは赤色で表示される', (WidgetTester tester) async {
-      await tester.pumpWidget(createTestWidget(onAccountDelete: () async {}));
+      await tester.pumpWidget(
+        createTestWidget(onAccountDelete: () async => true),
+      );
       await tester.tap(find.text('Show Dialog'));
       await tester.pumpAndSettle();
 
