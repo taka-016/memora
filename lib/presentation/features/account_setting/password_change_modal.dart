@@ -4,7 +4,7 @@ import 'package:memora/core/validators/password_validator.dart';
 import 'package:memora/core/app_logger.dart';
 
 class PasswordChangeModal extends HookWidget {
-  final Function(String) onPasswordChange;
+  final Future<bool> Function(String) onPasswordChange;
 
   const PasswordChangeModal({super.key, required this.onPasswordChange});
 
@@ -26,8 +26,8 @@ class PasswordChangeModal extends HookWidget {
       isLoading.value = true;
 
       try {
-        await onPasswordChange(newPasswordController.text);
-        if (context.mounted) {
+        final didUpdate = await onPasswordChange(newPasswordController.text);
+        if (didUpdate && context.mounted) {
           Navigator.of(context).pop();
         }
       } catch (e, stack) {

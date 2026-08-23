@@ -1,200 +1,169 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
+import 'account_delete_modal.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
-import 'account_delete_modal.dart';
 import 'reauthenticate_modal.dart';
 
 class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});
 
+  Future<void> _showUpdateModal({
+    required BuildContext context,
+    required Widget Function(
+      BuildContext dialogContext,
+      _AccountUpdateSession session,
+    )
+    builder,
+  }) async {
+    final session = _AccountUpdateSession();
+    try {
+      await showDialog(
+        context: context,
+        builder: (dialogContext) => builder(dialogContext, session),
+      );
+    } finally {
+      session.close();
+    }
+  }
+
   Future<void> _showEmailChangeModal(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    await showDialog(
+    await _showUpdateModal(
       context: context,
-      builder: (context) => EmailChangeModal(
-        onEmailChange: (newEmail) =>
-            _handleEmailChange(context: context, ref: ref, newEmail: newEmail),
+      builder: (dialogContext, session) => EmailChangeModal(
+        onEmailChange: (newEmail) => _handleEmailChange(
+          context: dialogContext,
+          ref: ref,
+          session: session,
+          newEmail: newEmail,
+        ),
       ),
     );
   }
 
-  Future<void> _handleEmailChange({
+  Future<bool> _handleEmailChange({
     required BuildContext context,
     required WidgetRef ref,
+    required _AccountUpdateSession session,
     required String newEmail,
   }) async {
     final updateEmailUseCase = ref.read(updateEmailUseCaseProvider);
-
-    Future<void> updateEmail() async {
-      await updateEmailUseCase.execute(newEmail: newEmail);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
-            duration: Duration(seconds: 5),
-          ),
-        );
-      }
-    }
-
-    try {
-      await updateEmail();
-    } catch (e) {
-      if (e.toString().contains('requires-recent-login')) {
-        if (!context.mounted) return;
-        final result = await showDialog<bool>(
-          context: context,
-          builder: (context) => ReauthenticateModal(),
-        );
-        if (result == true && context.mounted) {
-          try {
-            await updateEmail();
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-              );
-            }
-            rethrow;
-          }
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-        rethrow;
-      }
-    }
+    return _executeAccountUpdate(
+      context: context,
+      session: session,
+      update: () => updateEmailUseCase.execute(newEmail: newEmail),
+      successMessage: '確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。',
+      successMessageDuration: const Duration(seconds: 5),
+    );
   }
 
   Future<void> _showPasswordChangeModal(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    await showDialog(
+    await _showUpdateModal(
       context: context,
-      builder: (context) => PasswordChangeModal(
+      builder: (dialogContext, session) => PasswordChangeModal(
         onPasswordChange: (newPassword) => _handlePasswordChange(
-          context: context,
+          context: dialogContext,
           ref: ref,
+          session: session,
           newPassword: newPassword,
         ),
       ),
     );
   }
 
-  Future<void> _handlePasswordChange({
+  Future<bool> _handlePasswordChange({
     required BuildContext context,
     required WidgetRef ref,
+    required _AccountUpdateSession session,
     required String newPassword,
   }) async {
     final updatePasswordUseCase = ref.read(updatePasswordUseCaseProvider);
-
-    Future<void> updatePassword() async {
-      await updatePasswordUseCase.execute(newPassword: newPassword);
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('パスワードを更新しました')));
-      }
-    }
-
-    try {
-      await updatePassword();
-    } catch (e) {
-      if (e.toString().contains('requires-recent-login')) {
-        if (!context.mounted) return;
-        final result = await showDialog<bool>(
-          context: context,
-          builder: (context) => ReauthenticateModal(),
-        );
-        if (result == true && context.mounted) {
-          try {
-            await updatePassword();
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-              );
-            }
-            rethrow;
-          }
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-        rethrow;
-      }
-    }
+    return _executeAccountUpdate(
+      context: context,
+      session: session,
+      update: () => updatePasswordUseCase.execute(newPassword: newPassword),
+      successMessage: 'パスワードを更新しました',
+    );
   }
 
   Future<void> _showAccountDeleteModal(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    await showDialog(
+    await _showUpdateModal(
       context: context,
-      builder: (context) => AccountDeleteModal(
-        onAccountDelete: () => _handleAccountDelete(context: context, ref: ref),
+      builder: (dialogContext, session) => AccountDeleteModal(
+        onAccountDelete: () => _handleAccountDelete(
+          context: dialogContext,
+          ref: ref,
+          session: session,
+        ),
       ),
     );
   }
 
-  Future<void> _handleAccountDelete({
+  Future<bool> _handleAccountDelete({
     required BuildContext context,
     required WidgetRef ref,
+    required _AccountUpdateSession session,
   }) async {
     final deleteUserUseCase = ref.read(deleteUserUseCaseProvider);
+    return _executeAccountUpdate(
+      context: context,
+      session: session,
+      update: deleteUserUseCase.execute,
+      successMessage: 'アカウントを削除しました',
+    );
+  }
 
-    Future<void> deleteUser() async {
-      await deleteUserUseCase.execute();
-      if (context.mounted) {
+  Future<bool> _executeAccountUpdate({
+    required BuildContext context,
+    required _AccountUpdateSession session,
+    required Future<void> Function() update,
+    required String successMessage,
+    Duration? successMessageDuration,
+  }) async {
+    try {
+      final didUpdate = await session.execute(
+        update: update,
+        reauthenticate: () {
+          if (!context.mounted) {
+            return Future<bool?>.value(false);
+          }
+          return showDialog<bool>(
+            context: context,
+            builder: (context) => const ReauthenticateModal(),
+          );
+        },
+      );
+      if (!didUpdate || !context.mounted) {
+        return false;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(successMessage),
+          duration: successMessageDuration ?? const Duration(seconds: 4),
+        ),
+      );
+      return true;
+    } catch (e) {
+      if (session.isActive && context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('アカウントを削除しました')));
+        ).showSnackBar(SnackBar(content: Text('エラーが発生しました: ${e.toString()}')));
       }
-    }
-
-    try {
-      await deleteUser();
-    } catch (e) {
-      if (e.toString().contains('requires-recent-login')) {
-        if (!context.mounted) return;
-        final result = await showDialog<bool>(
-          context: context,
-          builder: (context) => ReauthenticateModal(),
-        );
-        if (result == true && context.mounted) {
-          try {
-            await deleteUser();
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-              );
-            }
-            rethrow;
-          }
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('エラーが発生しました: ${e.toString()}')),
-          );
-        }
-        rethrow;
-      }
+      rethrow;
     }
   }
 
@@ -202,22 +171,18 @@ class AccountSettings extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(title: const Text('アカウント設定')),
-      body: _buildBody(context, ref),
-    );
-  }
-
-  Widget _buildBody(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildEmailChangeCard(context, ref),
-          const SizedBox(height: 16),
-          _buildPasswordChangeCard(context, ref),
-          const SizedBox(height: 16),
-          _buildAccountDeleteCard(context, ref),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildEmailChangeCard(context, ref),
+            const SizedBox(height: 16),
+            _buildPasswordChangeCard(context, ref),
+            const SizedBox(height: 16),
+            _buildAccountDeleteCard(context, ref),
+          ],
+        ),
       ),
     );
   }
@@ -256,5 +221,46 @@ class AccountSettings extends ConsumerWidget {
         onTap: () => _showAccountDeleteModal(context, ref),
       ),
     );
+  }
+}
+
+class _AccountUpdateSession {
+  bool _isActive = true;
+  bool _isRunning = false;
+
+  bool get isActive => _isActive;
+
+  void close() {
+    _isActive = false;
+  }
+
+  Future<bool> execute({
+    required Future<void> Function() update,
+    required Future<bool?> Function() reauthenticate,
+  }) async {
+    if (!_isActive || _isRunning) {
+      return false;
+    }
+
+    _isRunning = true;
+    try {
+      try {
+        await update();
+      } on ReauthenticationRequiredException {
+        if (!_isActive) {
+          return false;
+        }
+
+        final didReauthenticate = await reauthenticate();
+        if (didReauthenticate != true || !_isActive) {
+          return false;
+        }
+
+        await update();
+      }
+      return _isActive;
+    } finally {
+      _isRunning = false;
+    }
   }
 }
