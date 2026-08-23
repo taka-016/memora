@@ -196,17 +196,18 @@ void main() {
         getTripUsecase.execute(trip.id),
         getGroupsUsecase.execute(member),
       ]);
-      final resolution = notifier.takeResolution();
+      final resolution = notifier.takeResolution(member.id);
       expect(
         resolution,
         const AndroidWidgetLaunchDestination(
+          memberId: 'member-1',
           groupId: 'group-1',
           year: 2025,
           tripId: 'trip-1',
           groups: [testGroup],
         ),
       );
-      expect(notifier.takeResolution(), isNull);
+      expect(notifier.takeResolution(member.id), isNull);
       expect(
         container.read(androidWidgetLaunchNotifierProvider),
         const AndroidWidgetLaunchState(),
@@ -234,7 +235,10 @@ void main() {
 
       await notifier.resolvePendingLaunch(member);
 
-      expect(notifier.takeResolution(), const AndroidWidgetLaunchFailure());
+      expect(
+        notifier.takeResolution(member.id),
+        const AndroidWidgetLaunchFailure(memberId: 'member-1'),
+      );
       verifyNever(getGroupsUsecase.execute(any));
     });
 
@@ -257,7 +261,10 @@ void main() {
 
       await notifier.resolvePendingLaunch(member);
 
-      expect(notifier.takeResolution(), const AndroidWidgetLaunchFailure());
+      expect(
+        notifier.takeResolution(member.id),
+        const AndroidWidgetLaunchFailure(memberId: 'member-1'),
+      );
       expect(
         container.read(androidWidgetLaunchNotifierProvider).isResolving,
         isFalse,
@@ -336,8 +343,9 @@ void main() {
       await latestResolution;
 
       expect(
-        notifier.takeResolution(),
+        notifier.takeResolution(member.id),
         const AndroidWidgetLaunchDestination(
+          memberId: 'member-1',
           groupId: 'group-1',
           year: 2026,
           tripId: 'trip-2',
@@ -347,7 +355,7 @@ void main() {
 
       oldTripCompleter.complete(trip);
       await oldResolution;
-      expect(notifier.takeResolution(), isNull);
+      expect(notifier.takeResolution(member.id), isNull);
     });
 
     test('解決をキャンセルした場合は遅れて完了した結果を通知しない', () async {
@@ -379,6 +387,95 @@ void main() {
         container.read(androidWidgetLaunchNotifierProvider),
         const AndroidWidgetLaunchState(),
       );
+    });
+
+    test('別のメンバーが取得した解決結果は消費せず破棄する', () async {
+      const otherMember = MemberDto(id: 'member-2', displayName: '別ユーザー');
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(getTripUsecase.execute(trip.id)).thenAnswer((_) async => trip);
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) async => [testGroup]);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      await notifier.resolvePendingLaunch(member);
+
+      expect(notifier.takeResolution(otherMember.id), isNull);
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).resolution,
+        isNull,
+      );
+    });
+
+    test('同じ旅行の再解決中に古い要求が完了しても重複要求として無視する', () async {
+      final firstTripCompleter = Completer<TripEntryDto?>();
+      final secondTripCompleter = Completer<TripEntryDto?>();
+      var executionCount = 0;
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(getTripUsecase.execute(trip.id)).thenAnswer((_) {
+        executionCount++;
+        return executionCount == 1
+            ? firstTripCompleter.future
+            : secondTripCompleter.future;
+      });
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) async => [testGroup]);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      final firstResolution = notifier.resolvePendingLaunch(member);
+
+      notifier.cancelPendingLaunch();
+      source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-1'));
+      await pumpEventQueue();
+      final secondResolution = notifier.resolvePendingLaunch(member);
+
+      firstTripCompleter.complete(trip);
+      await firstResolution;
+      source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-1'));
+      await pumpEventQueue();
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
+        isNull,
+      );
+
+      secondTripCompleter.complete(trip);
+      await secondResolution;
+
+      expect(
+        notifier.takeResolution(member.id),
+        const AndroidWidgetLaunchDestination(
+          memberId: 'member-1',
+          groupId: 'group-1',
+          year: 2025,
+          tripId: 'trip-1',
+          groups: [testGroup],
+        ),
+      );
+      verify(getTripUsecase.execute(trip.id)).called(2);
     });
   });
 }

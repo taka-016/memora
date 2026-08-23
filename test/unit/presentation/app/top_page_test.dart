@@ -107,6 +107,17 @@ class _InitialUriLoadingAndroidWidgetLaunchNotifier
   }
 }
 
+class _ResolvedAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  _ResolvedAndroidWidgetLaunchNotifier(this.resolution);
+
+  final AndroidWidgetLaunchResolution resolution;
+
+  @override
+  AndroidWidgetLaunchState build() {
+    return AndroidWidgetLaunchState(resolution: resolution);
+  }
+}
+
 class _PendingGroupSelectionNotifier
     extends GroupTimelineGroupSelectionNotifier {
   final loadCompleter = Completer<void>();
@@ -891,6 +902,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('別のメンバーが取得したウィジェット起動結果では遷移しない', (WidgetTester tester) async {
+      final staleDestination = AndroidWidgetLaunchDestination(
+        memberId: 'previous-member',
+        groupId: groupsWithMembers.first.id,
+        year: 2025,
+        tripId: 'trip-1',
+        groups: groupsWithMembers,
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _ResolvedAndroidWidgetLaunchNotifier(
+            staleDestination,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('trip_management')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
