@@ -9,16 +9,15 @@ import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'reauthenticate_modal.dart';
 
+typedef _AccountUpdateModalBuilder =
+    Widget Function(BuildContext dialogContext, _AccountUpdateSession session);
+
 class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});
 
   Future<void> _showUpdateModal({
     required BuildContext context,
-    required Widget Function(
-      BuildContext dialogContext,
-      _AccountUpdateSession session,
-    )
-    builder,
+    required _AccountUpdateModalBuilder builder,
   }) async {
     final session = _AccountUpdateSession();
     try {
