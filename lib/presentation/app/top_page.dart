@@ -12,9 +12,15 @@ import 'package:memora/presentation/notifiers/group_timeline_group_selection_not
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 class TopPage extends HookConsumerWidget {
-  const TopPage({super.key, required this.selectedItem, required this.child});
+  const TopPage({
+    super.key,
+    required this.selectedItem,
+    required this.location,
+    required this.child,
+  });
 
   final AppNavigationItem selectedItem;
+  final String location;
   final Widget child;
 
   @override
@@ -22,7 +28,7 @@ class TopPage extends HookConsumerWidget {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
     final drawerCloseCompleter = useRef<Completer<void>?>(null);
-    final previousSelectedItem = useRef(selectedItem);
+    final previousLocation = useRef(location);
 
     Future<void> closeDrawer() {
       if (!isDrawerOpen.value) {
@@ -108,10 +114,10 @@ class TopPage extends HookConsumerWidget {
     }, [androidWidgetLaunchResolution, currentMember?.id]);
 
     useEffect(() {
-      if (previousSelectedItem.value == selectedItem) {
+      if (previousLocation.value == location) {
         return null;
       }
-      previousSelectedItem.value = selectedItem;
+      previousLocation.value = location;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
           return;
@@ -121,7 +127,7 @@ class TopPage extends HookConsumerWidget {
             .cancelPendingLaunch();
       });
       return null;
-    }, [selectedItem]);
+    }, [location]);
 
     final groupSelectionMemberId = ref.watch(
       groupTimelineGroupSelectionNotifierProvider.select(

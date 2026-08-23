@@ -132,6 +132,7 @@ class AppShellRoute extends ShellRouteData {
   Widget builder(BuildContext context, GoRouterState state, Widget navigator) {
     return TopPage(
       selectedItem: appNavigationItemForLocation(state.uri.path),
+      location: state.uri.toString(),
       child: navigator,
     );
   }
