@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
@@ -92,7 +91,9 @@ void main() {
       addTearDown(subscription.close);
 
       expect(
-        await container.read(androidWidgetUpdateIntervalProvider.future),
+        (await container.read(
+          androidWidgetUpdateIntervalProvider.future,
+        )).interval,
         AndroidWidgetUpdateInterval.every24Hours,
       );
     });
@@ -116,7 +117,9 @@ void main() {
       container.invalidate(androidWidgetUpdateIntervalProvider);
 
       expect(
-        await container.read(androidWidgetUpdateIntervalProvider.future),
+        (await container.read(
+          androidWidgetUpdateIntervalProvider.future,
+        )).interval,
         AndroidWidgetUpdateInterval.every6Hours,
       );
       verify(intervalStorage.load()).called(2);
@@ -147,8 +150,11 @@ void main() {
       );
 
       final savingState = container.read(androidWidgetUpdateIntervalProvider);
-      expect(savingState.isRefreshing, isTrue);
-      expect(savingState.value, AndroidWidgetUpdateInterval.every24Hours);
+      expect(savingState.requireValue.isSaving, isTrue);
+      expect(
+        savingState.requireValue.interval,
+        AndroidWidgetUpdateInterval.every24Hours,
+      );
       expect(secondSave, isFalse);
       verifyNever(
         updateIntervalUsecase.execute(AndroidWidgetUpdateInterval.every3Hours),
@@ -157,7 +163,10 @@ void main() {
       completer.complete();
       expect(await firstSave, isTrue);
       expect(
-        container.read(androidWidgetUpdateIntervalProvider).requireValue,
+        container
+            .read(androidWidgetUpdateIntervalProvider)
+            .requireValue
+            .interval,
         AndroidWidgetUpdateInterval.every6Hours,
       );
     });
@@ -184,7 +193,10 @@ void main() {
         throwsA(isA<TestException>()),
       );
       expect(
-        container.read(androidWidgetUpdateIntervalProvider).requireValue,
+        container
+            .read(androidWidgetUpdateIntervalProvider)
+            .requireValue
+            .interval,
         AndroidWidgetUpdateInterval.every24Hours,
       );
 
@@ -196,7 +208,10 @@ void main() {
         isTrue,
       );
       expect(
-        container.read(androidWidgetUpdateIntervalProvider).requireValue,
+        container
+            .read(androidWidgetUpdateIntervalProvider)
+            .requireValue
+            .interval,
         AndroidWidgetUpdateInterval.every6Hours,
       );
       verify(

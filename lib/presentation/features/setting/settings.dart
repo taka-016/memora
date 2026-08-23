@@ -13,33 +13,50 @@ import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 final androidWidgetUpdateIntervalProvider =
     AsyncNotifierProvider.autoDispose<
       AndroidWidgetUpdateIntervalNotifier,
-      AndroidWidgetUpdateInterval
+      AndroidWidgetUpdateIntervalState
     >(AndroidWidgetUpdateIntervalNotifier.new, retry: (_, _) => null);
 
-class AndroidWidgetUpdateIntervalNotifier
-    extends AsyncNotifier<AndroidWidgetUpdateInterval> {
-  bool _isSaving = false;
-  int _operationRevision = 0;
+class AndroidWidgetUpdateIntervalState extends Equatable {
+  const AndroidWidgetUpdateIntervalState({
+    required this.interval,
+    this.isSaving = false,
+    this.operationRevision = 0,
+  });
 
-  int get operationRevision => _operationRevision;
+  final AndroidWidgetUpdateInterval interval;
+  final bool isSaving;
+  final int operationRevision;
 
   @override
-  Future<AndroidWidgetUpdateInterval> build() {
-    return ref.read(androidWidgetUpdateIntervalStorageProvider).load();
+  List<Object?> get props => [interval, isSaving, operationRevision];
+}
+
+class AndroidWidgetUpdateIntervalNotifier
+    extends AsyncNotifier<AndroidWidgetUpdateIntervalState> {
+  @override
+  Future<AndroidWidgetUpdateIntervalState> build() async {
+    final interval = await ref
+        .read(androidWidgetUpdateIntervalStorageProvider)
+        .load();
+    return AndroidWidgetUpdateIntervalState(interval: interval);
   }
 
   Future<bool> save(AndroidWidgetUpdateInterval interval) async {
-    final currentInterval = state.value;
-    if (_isSaving || currentInterval == null || currentInterval == interval) {
+    final currentState = state.value;
+    if (currentState == null ||
+        currentState.isSaving ||
+        currentState.interval == interval) {
       return false;
     }
 
-    _isSaving = true;
-    _operationRevision++;
     final keepAliveLink = ref.keepAlive();
-    final previousState = state;
-    state = const AsyncLoading<AndroidWidgetUpdateInterval>().copyWithPrevious(
-      previousState,
+    final operationRevision = currentState.operationRevision + 1;
+    state = AsyncData(
+      AndroidWidgetUpdateIntervalState(
+        interval: currentState.interval,
+        isSaving: true,
+        operationRevision: operationRevision,
+      ),
     );
     try {
       await ref
@@ -48,15 +65,24 @@ class AndroidWidgetUpdateIntervalNotifier
       if (!ref.mounted) {
         return false;
       }
-      state = AsyncData(interval);
+      state = AsyncData(
+        AndroidWidgetUpdateIntervalState(
+          interval: interval,
+          operationRevision: operationRevision,
+        ),
+      );
       return true;
     } catch (_) {
       if (ref.mounted) {
-        state = previousState;
+        state = AsyncData(
+          AndroidWidgetUpdateIntervalState(
+            interval: currentState.interval,
+            operationRevision: operationRevision,
+          ),
+        );
       }
       rethrow;
     } finally {
-      _isSaving = false;
       keepAliveLink.close();
     }
   }
@@ -66,20 +92,22 @@ class AndroidWidgetTargetGroupState extends Equatable {
   const AndroidWidgetTargetGroupState({
     required this.groups,
     required this.selectedGroupId,
+    this.isSaving = false,
+    this.operationRevision = 0,
   });
 
   final List<GroupDto> groups;
   final String? selectedGroupId;
-
-  AndroidWidgetTargetGroupState copyWith({required String? selectedGroupId}) {
-    return AndroidWidgetTargetGroupState(
-      groups: groups,
-      selectedGroupId: selectedGroupId,
-    );
-  }
+  final bool isSaving;
+  final int operationRevision;
 
   @override
-  List<Object?> get props => [groups, selectedGroupId];
+  List<Object?> get props => [
+    groups,
+    selectedGroupId,
+    isSaving,
+    operationRevision,
+  ];
 }
 
 final androidWidgetTargetGroupProvider = AsyncNotifierProvider.autoDispose
@@ -94,10 +122,6 @@ class AndroidWidgetTargetGroupNotifier
   AndroidWidgetTargetGroupNotifier(this._member);
 
   final MemberDto _member;
-  bool _isSaving = false;
-  int _operationRevision = 0;
-
-  int get operationRevision => _operationRevision;
 
   @override
   Future<AndroidWidgetTargetGroupState> build() async {
@@ -120,40 +144,58 @@ class AndroidWidgetTargetGroupNotifier
 
   Future<bool> select(String? groupId) async {
     final currentState = state.value;
-    if (_isSaving ||
-        currentState == null ||
+    if (currentState == null ||
+        currentState.isSaving ||
         currentState.selectedGroupId == groupId) {
       return false;
     }
 
-    _isSaving = true;
-    _operationRevision++;
     final keepAliveLink = ref.keepAlive();
-    final previousState = state;
-    state = const AsyncLoading<AndroidWidgetTargetGroupState>()
-        .copyWithPrevious(previousState);
+    final operationRevision = currentState.operationRevision + 1;
+    state = AsyncData(
+      AndroidWidgetTargetGroupState(
+        groups: currentState.groups,
+        selectedGroupId: currentState.selectedGroupId,
+        isSaving: true,
+        operationRevision: operationRevision,
+      ),
+    );
     try {
-      if (groupId == null) {
-        await ref.read(clearAndroidWidgetTargetGroupUsecaseProvider).execute();
-      } else {
-        await ref
-            .read(selectAndroidWidgetTargetGroupUsecaseProvider)
-            .execute(groupId);
-      }
+      await _saveSelection(groupId);
       if (!ref.mounted) {
         return false;
       }
-      state = AsyncData(currentState.copyWith(selectedGroupId: groupId));
+      state = AsyncData(
+        AndroidWidgetTargetGroupState(
+          groups: currentState.groups,
+          selectedGroupId: groupId,
+          operationRevision: operationRevision,
+        ),
+      );
       return true;
     } catch (_) {
       if (ref.mounted) {
-        state = previousState;
+        state = AsyncData(
+          AndroidWidgetTargetGroupState(
+            groups: currentState.groups,
+            selectedGroupId: currentState.selectedGroupId,
+            operationRevision: operationRevision,
+          ),
+        );
       }
       rethrow;
     } finally {
-      _isSaving = false;
       keepAliveLink.close();
     }
+  }
+
+  Future<void> _saveSelection(String? groupId) {
+    if (groupId == null) {
+      return ref.read(clearAndroidWidgetTargetGroupUsecaseProvider).execute();
+    }
+    return ref
+        .read(selectAndroidWidgetTargetGroupUsecaseProvider)
+        .execute(groupId);
   }
 }
 
@@ -185,8 +227,8 @@ class Settings extends ConsumerWidget {
     WidgetRef ref,
   ) {
     final intervalState = ref.watch(androidWidgetUpdateIntervalProvider);
-    final selectedInterval = intervalState.value;
-    if (selectedInterval == null) {
+    final setting = intervalState.value;
+    if (setting == null) {
       return _buildLoadingOrRetry(
         hasError: intervalState.hasError,
         errorMessage: 'ウィジェット更新間隔を取得できませんでした',
@@ -195,13 +237,8 @@ class Settings extends ConsumerWidget {
     }
 
     return DropdownButtonFormField<AndroidWidgetUpdateInterval>(
-      key: ValueKey((
-        selectedInterval,
-        ref
-            .read(androidWidgetUpdateIntervalProvider.notifier)
-            .operationRevision,
-      )),
-      initialValue: selectedInterval,
+      key: ValueKey((setting.interval, setting.operationRevision)),
+      initialValue: setting.interval,
       decoration: const InputDecoration(
         labelText: '更新間隔',
         border: OutlineInputBorder(),
@@ -214,7 +251,7 @@ class Settings extends ConsumerWidget {
             ),
           )
           .toList(),
-      onChanged: intervalState.isLoading
+      onChanged: setting.isSaving
           ? null
           : (interval) async {
               if (interval == null) {
@@ -274,7 +311,7 @@ class Settings extends ConsumerWidget {
       key: ValueKey((
         member.id,
         setting.selectedGroupId,
-        ref.read(provider.notifier).operationRevision,
+        setting.operationRevision,
       )),
       initialValue: setting.selectedGroupId,
       isExpanded: true,
@@ -295,7 +332,7 @@ class Settings extends ConsumerWidget {
           ),
         ),
       ],
-      onChanged: targetGroupState.isLoading
+      onChanged: setting.isSaving
           ? null
           : (groupId) async {
               try {
