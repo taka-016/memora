@@ -2,10 +2,24 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/dtos/group/group_dto.dart';
+import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/services/android_widget_launch_uri_source.dart';
 import 'package:memora/application/usecases/android_widget/watch_android_widget_launch_uri_usecase.dart';
+import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
 
+import '../../../helpers/test_exception.dart';
+import 'android_widget_launch_notifier_test.mocks.dart';
+
+@GenerateNiceMocks([
+  MockSpec<GetTripEntryByIdUsecase>(),
+  MockSpec<GetGroupsWithMembersUsecase>(),
+])
 class _FakeAndroidWidgetLaunchUriSource
     implements AndroidWidgetLaunchUriSource {
   _FakeAndroidWidgetLaunchUriSource({this.initialUri, this.initialUriFuture});
@@ -24,7 +38,36 @@ class _FakeAndroidWidgetLaunchUriSource
 }
 
 void main() {
+  const member = MemberDto(id: 'member-1', displayName: 'テストユーザー');
+  const trip = TripEntryDto(id: 'trip-1', groupId: 'group-1', year: 2025);
+  const testGroup = GroupDto(
+    id: 'group-1',
+    ownerId: 'member-1',
+    name: 'グループ1',
+    members: [],
+  );
+
+  late MockGetTripEntryByIdUsecase getTripUsecase;
+  late MockGetGroupsWithMembersUsecase getGroupsUsecase;
+
+  ProviderContainer createContainer(_FakeAndroidWidgetLaunchUriSource source) {
+    return ProviderContainer(
+      overrides: [
+        watchAndroidWidgetLaunchUriUsecaseProvider.overrideWithValue(
+          WatchAndroidWidgetLaunchUriUsecase(source),
+        ),
+        getTripEntryByIdUsecaseProvider.overrideWithValue(getTripUsecase),
+        getGroupsWithMembersUsecaseProvider.overrideWithValue(getGroupsUsecase),
+      ],
+    );
+  }
+
   group('AndroidWidgetLaunchNotifier', () {
+    setUp(() {
+      getTripUsecase = MockGetTripEntryByIdUsecase();
+      getGroupsUsecase = MockGetGroupsWithMembersUsecase();
+    });
+
     test('ウィジェットからの初回起動URIを保留し一度だけ取り出す', () async {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
@@ -118,6 +161,228 @@ void main() {
       expect(
         container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
         'trip-2',
+      );
+    });
+
+    test('旅行と所属グループを順に取得して遷移要求を一度だけ通知する', () async {
+      final tripCompleter = Completer<TripEntryDto?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(
+        getTripUsecase.execute(trip.id),
+      ).thenAnswer((_) => tripCompleter.future);
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) async => [testGroup]);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+
+      final resolving = notifier.resolvePendingLaunch(member);
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider),
+        const AndroidWidgetLaunchState(isResolving: true),
+      );
+
+      tripCompleter.complete(trip);
+      await resolving;
+
+      verifyInOrder([
+        getTripUsecase.execute(trip.id),
+        getGroupsUsecase.execute(member),
+      ]);
+      final resolution = notifier.takeResolution();
+      expect(
+        resolution,
+        const AndroidWidgetLaunchDestination(
+          groupId: 'group-1',
+          year: 2025,
+          tripId: 'trip-1',
+          groups: [testGroup],
+        ),
+      );
+      expect(notifier.takeResolution(), isNull);
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider),
+        const AndroidWidgetLaunchState(),
+      );
+    });
+
+    test('指定された旅行が存在しない場合は失敗を通知して所属グループを取得しない', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=missing-trip'),
+      );
+      when(
+        getTripUsecase.execute('missing-trip'),
+      ).thenAnswer((_) async => null);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+
+      await notifier.resolvePendingLaunch(member);
+
+      expect(notifier.takeResolution(), const AndroidWidgetLaunchFailure());
+      verifyNever(getGroupsUsecase.execute(any));
+    });
+
+    test('旅行取得に失敗した場合は失敗を通知して再び起動要求を処理できる', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(getTripUsecase.execute(trip.id)).thenThrow(TestException('旅行取得エラー'));
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+
+      await notifier.resolvePendingLaunch(member);
+
+      expect(notifier.takeResolution(), const AndroidWidgetLaunchFailure());
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).isResolving,
+        isFalse,
+      );
+    });
+
+    test('同じ保留要求を連続して処理しても取得は一度だけ実行する', () async {
+      final tripCompleter = Completer<TripEntryDto?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(
+        getTripUsecase.execute(trip.id),
+      ).thenAnswer((_) => tripCompleter.future);
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) async => [testGroup]);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+
+      final first = notifier.resolvePendingLaunch(member);
+      final duplicate = notifier.resolvePendingLaunch(member);
+      tripCompleter.complete(trip);
+      await Future.wait([first, duplicate]);
+
+      verify(getTripUsecase.execute(trip.id)).called(1);
+      verify(getGroupsUsecase.execute(member)).called(1);
+    });
+
+    test('解決中に別の起動要求を受けた場合は古い結果を破棄する', () async {
+      const latestTrip = TripEntryDto(
+        id: 'trip-2',
+        groupId: 'group-1',
+        year: 2026,
+      );
+      final oldTripCompleter = Completer<TripEntryDto?>();
+      final latestTripCompleter = Completer<TripEntryDto?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(
+        getTripUsecase.execute(trip.id),
+      ).thenAnswer((_) => oldTripCompleter.future);
+      when(
+        getTripUsecase.execute(latestTrip.id),
+      ).thenAnswer((_) => latestTripCompleter.future);
+      when(
+        getGroupsUsecase.execute(member),
+      ).thenAnswer((_) async => [testGroup]);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      final oldResolution = notifier.resolvePendingLaunch(member);
+
+      source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-2'));
+      await Future<void>.delayed(Duration.zero);
+      final latestResolution = notifier.resolvePendingLaunch(member);
+      latestTripCompleter.complete(latestTrip);
+      await latestResolution;
+
+      expect(
+        notifier.takeResolution(),
+        const AndroidWidgetLaunchDestination(
+          groupId: 'group-1',
+          year: 2026,
+          tripId: 'trip-2',
+          groups: [testGroup],
+        ),
+      );
+
+      oldTripCompleter.complete(trip);
+      await oldResolution;
+      expect(notifier.takeResolution(), isNull);
+    });
+
+    test('解決をキャンセルした場合は遅れて完了した結果を通知しない', () async {
+      final tripCompleter = Completer<TripEntryDto?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(
+        getTripUsecase.execute(trip.id),
+      ).thenAnswer((_) => tripCompleter.future);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await Future<void>.delayed(Duration.zero);
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      final resolving = notifier.resolvePendingLaunch(member);
+
+      notifier.cancelPendingLaunch();
+      tripCompleter.complete(trip);
+      await resolving;
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider),
+        const AndroidWidgetLaunchState(),
       );
     });
   });
