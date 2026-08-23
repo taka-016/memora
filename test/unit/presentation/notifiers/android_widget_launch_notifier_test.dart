@@ -358,6 +358,41 @@ void main() {
       expect(notifier.takeResolution(member.id), isNull);
     });
 
+    test('別の要求を受信後に古い処理と同じ旅行を受信した場合は最新要求として保留する', () async {
+      final oldTripCompleter = Completer<TripEntryDto?>();
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
+      );
+      when(
+        getTripUsecase.execute(trip.id),
+      ).thenAnswer((_) => oldTripCompleter.future);
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+      final oldResolution = notifier.resolvePendingLaunch(member);
+
+      source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-2'));
+      await pumpEventQueue();
+      source.controller.add(Uri.parse('memoraWidget://openTrip?tripId=trip-1'));
+      await pumpEventQueue();
+
+      expect(
+        container.read(androidWidgetLaunchNotifierProvider).pendingTripId,
+        'trip-1',
+      );
+
+      oldTripCompleter.complete(trip);
+      await oldResolution;
+    });
+
     test('解決をキャンセルした場合は遅れて完了した結果を通知しない', () async {
       final tripCompleter = Completer<TripEntryDto?>();
       final source = _FakeAndroidWidgetLaunchUriSource(
