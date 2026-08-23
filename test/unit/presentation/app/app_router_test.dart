@@ -8,6 +8,7 @@ import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
@@ -45,6 +46,28 @@ class _LoadedGroupSelectionNotifier
   }
 }
 
+class _TrackingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  _TrackingAndroidWidgetLaunchNotifier({
+    this.initialState = const AndroidWidgetLaunchState(
+      isInitialUriLoading: true,
+    ),
+  });
+
+  final AndroidWidgetLaunchState initialState;
+  var cancelCount = 0;
+
+  @override
+  AndroidWidgetLaunchState build() {
+    return initialState;
+  }
+
+  @override
+  void cancelPendingLaunch() {
+    cancelCount++;
+    super.cancelPendingLaunch();
+  }
+}
+
 void main() {
   Future<void> pumpNavigation(WidgetTester tester) async {
     await tester.pump();
@@ -57,6 +80,7 @@ void main() {
     FakeAuthNotifier authNotifier, {
     String initialLocation = '/groups',
     GroupTimelineGroupSelectionNotifier? groupSelectionNotifier,
+    AndroidWidgetLaunchNotifier? androidWidgetLaunchNotifier,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -72,6 +96,11 @@ void main() {
           ),
           groupTimelineGroupSelectionNotifierProvider.overrideWith(
             () => groupSelectionNotifier ?? _LoadedGroupSelectionNotifier(),
+          ),
+          androidWidgetLaunchNotifierProvider.overrideWith(
+            () =>
+                androidWidgetLaunchNotifier ??
+                _TrackingAndroidWidgetLaunchNotifier(),
           ),
           appInitialLocationProvider.overrideWithValue(initialLocation),
         ],
@@ -152,6 +181,32 @@ void main() {
     expect(
       container.read(groupTimelineGroupSelectionNotifierProvider).memberId,
       isNull,
+    );
+  });
+
+  testWidgets('ログアウト時はAndroidウィジェットの起動要求を破棄する', (tester) async {
+    final authNotifier = _MutableAuthNotifier(
+      const AuthState.authenticated(
+        UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
+      ),
+    );
+    final androidWidgetLaunchNotifier = _TrackingAndroidWidgetLaunchNotifier(
+      initialState: const AndroidWidgetLaunchState(isResolving: true),
+    );
+    final (container, router) = await pumpRouter(
+      tester,
+      authNotifier,
+      androidWidgetLaunchNotifier: androidWidgetLaunchNotifier,
+    );
+
+    authNotifier.unauthenticate();
+    await pumpNavigation(tester);
+
+    expect(router.state.matchedLocation, const LoginRoute().location);
+    expect(androidWidgetLaunchNotifier.cancelCount, 1);
+    expect(
+      container.read(androidWidgetLaunchNotifierProvider),
+      const AndroidWidgetLaunchState(),
     );
   });
 
