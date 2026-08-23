@@ -131,15 +131,15 @@ class AndroidWidgetTargetGroupNotifier
     final groupsFuture = ref
         .read(getGroupsWithMembersUsecaseProvider)
         .execute(_member);
-    final selectedGroupIdFuture = ref
+    final persistedGroupIdFuture = ref
         .read(androidWidgetCacheStorageProvider)
         .getTargetGroupId();
-    final results = await Future.wait<Object?>([
+    final loadResults = await Future.wait<Object?>([
       groupsFuture,
-      selectedGroupIdFuture,
+      persistedGroupIdFuture,
     ], eagerError: true);
-    final groups = results[0]! as List<GroupDto>;
-    final persistedGroupId = results[1] as String?;
+    final groups = loadResults[0]! as List<GroupDto>;
+    final persistedGroupId = loadResults[1] as String?;
 
     return AndroidWidgetTargetGroupState(
       groups: groups,
