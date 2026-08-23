@@ -31,6 +31,7 @@ void main() {
                       await mockUpdatePasswordUseCase.execute(
                         newPassword: password,
                       );
+                      return true;
                     },
                   ),
                 );

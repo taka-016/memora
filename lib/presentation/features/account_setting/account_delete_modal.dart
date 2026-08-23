@@ -3,7 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/core/app_logger.dart';
 
 class AccountDeleteModal extends HookWidget {
-  final Future<void> Function() onAccountDelete;
+  final Future<bool> Function() onAccountDelete;
 
   const AccountDeleteModal({super.key, required this.onAccountDelete});
 
@@ -15,9 +15,9 @@ class AccountDeleteModal extends HookWidget {
       isLoading.value = true;
 
       try {
-        await onAccountDelete();
+        final didDelete = await onAccountDelete();
 
-        if (context.mounted) {
+        if (didDelete && context.mounted) {
           Navigator.of(context).pop();
         }
       } catch (e, stack) {

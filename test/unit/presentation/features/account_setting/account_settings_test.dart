@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/domain/entities/account/user.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
@@ -209,8 +212,7 @@ void main() {
     ) async {
       final authService = _TestAuthService(
         updateEmailBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
           () async {},
         ],
       );
@@ -252,8 +254,7 @@ void main() {
     testWidgets('アカウント削除で再認証が必要な場合は再認証モーダルが表示される', (WidgetTester tester) async {
       final authService = _TestAuthService(
         deleteUserBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
           () async {},
         ],
       );
@@ -286,8 +287,7 @@ void main() {
     testWidgets('パスワード変更で再認証が必要な場合は再認証モーダルが表示される', (WidgetTester tester) async {
       final authService = _TestAuthService(
         updatePasswordBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
           () async {},
         ],
       );
@@ -332,10 +332,8 @@ void main() {
     ) async {
       final authService = _TestAuthService(
         updateEmailBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
+          () async => throw TestException('再試行に失敗しました'),
         ],
       );
 
@@ -368,9 +366,7 @@ void main() {
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(EmailChangeModal), findsOneWidget);
       expect(
-        find.text(
-          'エラーが発生しました: TestException: [firebase_auth/requires-recent-login]',
-        ),
+        find.text('エラーが発生しました: TestException: 再試行に失敗しました'),
         findsOneWidget,
       );
     });
@@ -380,10 +376,8 @@ void main() {
     ) async {
       final authService = _TestAuthService(
         deleteUserBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
+          () async => throw TestException('再試行に失敗しました'),
         ],
       );
 
@@ -407,9 +401,7 @@ void main() {
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(AccountDeleteModal), findsOneWidget);
       expect(
-        find.text(
-          'エラーが発生しました: TestException: [firebase_auth/requires-recent-login]',
-        ),
+        find.text('エラーが発生しました: TestException: 再試行に失敗しました'),
         findsOneWidget,
       );
     });
@@ -419,10 +411,8 @@ void main() {
     ) async {
       final authService = _TestAuthService(
         updatePasswordBehaviors: [
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
-          () async =>
-              throw TestException('[firebase_auth/requires-recent-login]'),
+          () async => throw const ReauthenticationRequiredException(),
+          () async => throw TestException('再試行に失敗しました'),
         ],
       );
 
@@ -459,9 +449,7 @@ void main() {
       expect(authService.reauthenticateCallCount, 1);
       expect(find.byType(PasswordChangeModal), findsOneWidget);
       expect(
-        find.text(
-          'エラーが発生しました: TestException: [firebase_auth/requires-recent-login]',
-        ),
+        find.text('エラーが発生しました: TestException: 再試行に失敗しました'),
         findsOneWidget,
       );
     });
@@ -552,6 +540,209 @@ void main() {
       expect(
         find.text('エラーが発生しました: TestException: パスワード変更に失敗しました'),
         findsOneWidget,
+      );
+    });
+
+    testWidgets('例外メッセージに認証期限切れコードが含まれていても型が異なる場合は再認証しない', (
+      WidgetTester tester,
+    ) async {
+      final authService = _TestAuthService(
+        updateEmailBehaviors: [
+          () async =>
+              throw TestException('[firebase_auth/requires-recent-login]'),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+      await tester.tap(find.text('メールアドレス変更'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('newEmailField')),
+        'newemail@example.com',
+      );
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(authService.updateEmailCallCount, 1);
+      expect(authService.reauthenticateCallCount, 0);
+      expect(find.text('パスワード再入力'), findsNothing);
+      expect(
+        find.text(
+          'エラーが発生しました: '
+          'TestException: [firebase_auth/requires-recent-login]',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('再認証をキャンセルすると入力ダイアログを維持し再度更新できる', (WidgetTester tester) async {
+      final authService = _TestAuthService(
+        updateEmailBehaviors: [
+          () async => throw const ReauthenticationRequiredException(),
+          () async {},
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+      await tester.tap(find.text('メールアドレス変更'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('newEmailField')),
+        'newemail@example.com',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      await tester.tap(find.widgetWithText(TextButton, 'キャンセル').last);
+      await tester.pumpAndSettle();
+
+      expect(authService.updateEmailCallCount, 1);
+      expect(authService.reauthenticateCallCount, 0);
+      expect(find.byType(EmailChangeModal), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+
+      await tester.tap(find.text('更新'));
+      await tester.pumpAndSettle();
+
+      expect(authService.updateEmailCallCount, 2);
+      expect(find.byType(EmailChangeModal), findsNothing);
+      expect(
+        find.text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('再認証に失敗すると更新を再試行せず再認証ダイアログへエラーを表示する', (
+      WidgetTester tester,
+    ) async {
+      final authService =
+          _TestAuthService(
+              updatePasswordBehaviors: [
+                () async => throw const ReauthenticationRequiredException(),
+              ],
+            )
+            ..onReauthenticate = (_) async {
+              throw TestException('再認証に失敗しました');
+            };
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+      await tester.tap(find.text('パスワード変更'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('newPasswordField')),
+        'NewPassword123#',
+      );
+      await tester.enterText(
+        find.byKey(const Key('confirmPasswordField')),
+        'NewPassword123#',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('passwordField')),
+        'password123',
+      );
+
+      await tester.tap(find.text('認証'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(authService.updatePasswordCallCount, 1);
+      expect(authService.reauthenticateCallCount, 1);
+      expect(find.text('パスワード再入力'), findsOneWidget);
+      expect(find.text('Test再認証に失敗しました'), findsOneWidget);
+      expect(find.text('パスワードを更新しました'), findsNothing);
+    });
+
+    testWidgets('更新中に入力ダイアログを閉じると完了後に再認証を表示しない', (WidgetTester tester) async {
+      final updateCompleter = Completer<void>();
+      final authService = _TestAuthService(
+        updateEmailBehaviors: [() => updateCompleter.future],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+      await tester.tap(find.text('メールアドレス変更'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('newEmailField')),
+        'newemail@example.com',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+
+      expect(authService.updateEmailCallCount, 1);
+      expect(
+        find.descendant(
+          of: find.byType(EmailChangeModal),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      updateCompleter.completeError(
+        const ReauthenticationRequiredException(),
+        StackTrace.current,
+      );
+      await tester.pumpAndSettle();
+
+      expect(authService.updateEmailCallCount, 1);
+      expect(authService.reauthenticateCallCount, 0);
+      expect(find.text('パスワード再入力'), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('再試行中に入力ダイアログを閉じると完了後に成功表示を行わない', (WidgetTester tester) async {
+      final retryCompleter = Completer<void>();
+      final authService = _TestAuthService(
+        updateEmailBehaviors: [
+          () async => throw const ReauthenticationRequiredException(),
+          () => retryCompleter.future,
+        ],
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(const AccountSettings(), authService: authService),
+      );
+      await tester.tap(find.text('メールアドレス変更'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('newEmailField')),
+        'newemail@example.com',
+      );
+      await tester.tap(find.text('更新'));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('passwordField')),
+        'password123',
+      );
+      await tester.tap(find.text('認証'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(authService.updateEmailCallCount, 2);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      retryCompleter.complete();
+      await tester.pumpAndSettle();
+
+      expect(authService.updateEmailCallCount, 2);
+      expect(authService.reauthenticateCallCount, 1);
+      expect(find.byType(EmailChangeModal), findsNothing);
+      expect(
+        find.text('確認メールを送信しました。メール内のリンクをクリックして変更を完了してください。'),
+        findsNothing,
       );
     });
   });

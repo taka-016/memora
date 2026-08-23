@@ -3,7 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/core/app_logger.dart';
 
 class EmailChangeModal extends HookWidget {
-  final Function(String) onEmailChange;
+  final Future<bool> Function(String) onEmailChange;
 
   const EmailChangeModal({super.key, required this.onEmailChange});
 
@@ -22,8 +22,8 @@ class EmailChangeModal extends HookWidget {
       isLoading.value = true;
 
       try {
-        await onEmailChange(newEmailController.text.trim());
-        if (context.mounted) {
+        final didUpdate = await onEmailChange(newEmailController.text.trim());
+        if (didUpdate && context.mounted) {
           Navigator.of(context).pop();
         }
       } catch (e, stack) {

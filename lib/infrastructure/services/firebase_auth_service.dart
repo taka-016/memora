@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
 import 'package:memora/infrastructure/errors/firebase_error_mapper.dart';
 import 'package:memora/domain/entities/account/user.dart' as domain;
 import 'package:memora/application/services/auth_service.dart';
@@ -89,29 +90,39 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<void> updateEmail({required String newEmail}) async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-    await currentUser.verifyBeforeUpdateEmail(newEmail);
+    await _executeCurrentUserUpdate(
+      (currentUser) => currentUser.verifyBeforeUpdateEmail(newEmail),
+    );
   }
 
   @override
   Future<void> updatePassword({required String newPassword}) async {
-    final currentUser = _firebaseAuth.currentUser;
-    if (currentUser == null) {
-      throw Exception('ユーザーがログインしていません');
-    }
-    await currentUser.updatePassword(newPassword);
+    await _executeCurrentUserUpdate(
+      (currentUser) => currentUser.updatePassword(newPassword),
+    );
   }
 
   @override
   Future<void> deleteUser() async {
+    await _executeCurrentUserUpdate((currentUser) => currentUser.delete());
+  }
+
+  Future<void> _executeCurrentUserUpdate(
+    Future<void> Function(User currentUser) update,
+  ) async {
     final currentUser = _firebaseAuth.currentUser;
     if (currentUser == null) {
       throw Exception('ユーザーがログインしていません');
     }
-    await currentUser.delete();
+
+    try {
+      await update(currentUser);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw const ReauthenticationRequiredException();
+      }
+      rethrow;
+    }
   }
 
   @override

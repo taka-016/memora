@@ -29,6 +29,7 @@ void main() {
                   builder: (context) => EmailChangeModal(
                     onEmailChange: (email) async {
                       await mockUpdateEmailUseCase.execute(newEmail: email);
+                      return true;
                     },
                   ),
                 );
