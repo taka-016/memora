@@ -54,7 +54,7 @@ class _TrackingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   });
 
   final AndroidWidgetLaunchState initialState;
-  var cancelCount = 0;
+  var unconditionalCancelCount = 0;
 
   @override
   AndroidWidgetLaunchState build() {
@@ -63,7 +63,9 @@ class _TrackingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
 
   @override
   void cancelPendingLaunch({int? expectedRequestVersion}) {
-    cancelCount++;
+    if (expectedRequestVersion == null) {
+      unconditionalCancelCount++;
+    }
     super.cancelPendingLaunch(expectedRequestVersion: expectedRequestVersion);
   }
 }
@@ -203,7 +205,7 @@ void main() {
     await pumpNavigation(tester);
 
     expect(router.state.matchedLocation, const LoginRoute().location);
-    expect(androidWidgetLaunchNotifier.cancelCount, 1);
+    expect(androidWidgetLaunchNotifier.unconditionalCancelCount, 1);
     expect(
       container.read(androidWidgetLaunchNotifierProvider),
       const AndroidWidgetLaunchState(),

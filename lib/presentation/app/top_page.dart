@@ -12,15 +12,9 @@ import 'package:memora/presentation/notifiers/group_timeline_group_selection_not
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 
 class TopPage extends HookConsumerWidget {
-  const TopPage({
-    super.key,
-    required this.selectedItem,
-    required this.location,
-    required this.child,
-  });
+  const TopPage({super.key, required this.selectedItem, required this.child});
 
   final AppNavigationItem selectedItem;
-  final String location;
   final Widget child;
 
   @override
@@ -48,7 +42,7 @@ class TopPage extends HookConsumerWidget {
       androidWidgetLaunchNotifierProvider.notifier,
     );
     final router = GoRouter.of(context);
-    final previousLocation = useRef(location);
+    final previousLocation = useRef(router.state.uri.toString());
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
     final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
