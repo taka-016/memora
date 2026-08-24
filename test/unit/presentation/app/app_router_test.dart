@@ -62,9 +62,9 @@ class _TrackingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   }
 
   @override
-  void cancelPendingLaunch() {
+  void cancelPendingLaunch({int? expectedRequestVersion}) {
     cancelCount++;
-    super.cancelPendingLaunch();
+    super.cancelPendingLaunch(expectedRequestVersion: expectedRequestVersion);
   }
 }
 

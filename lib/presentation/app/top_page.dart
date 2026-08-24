@@ -28,7 +28,6 @@ class TopPage extends HookConsumerWidget {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
     final drawerCloseCompleter = useRef<Completer<void>?>(null);
-    final previousLocation = useRef(location);
 
     Future<void> closeDrawer() {
       if (!isDrawerOpen.value) {
@@ -48,11 +47,15 @@ class TopPage extends HookConsumerWidget {
     final androidWidgetLaunchNotifier = ref.read(
       androidWidgetLaunchNotifierProvider.notifier,
     );
-    final previousRequestVersion = useRef(
-      androidWidgetLaunchNotifier.requestVersion,
+    final previousRoute = useRef((
+      location: location,
+      requestVersion: androidWidgetLaunchNotifier.requestVersion,
+    ));
+    final routeBeforeBuild = previousRoute.value;
+    previousRoute.value = (
+      location: location,
+      requestVersion: androidWidgetLaunchNotifier.requestVersion,
     );
-    final requestVersionBeforeBuild = previousRequestVersion.value;
-    previousRequestVersion.value = androidWidgetLaunchNotifier.requestVersion;
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
     final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
@@ -122,16 +125,15 @@ class TopPage extends HookConsumerWidget {
     }, [androidWidgetLaunchResolution, currentMember?.id]);
 
     useEffect(() {
-      if (previousLocation.value == location) {
+      if (routeBeforeBuild.location == location) {
         return null;
       }
-      previousLocation.value = location;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
           return;
         }
         androidWidgetLaunchNotifier.cancelPendingLaunch(
-          expectedRequestVersion: requestVersionBeforeBuild,
+          expectedRequestVersion: routeBeforeBuild.requestVersion,
         );
       });
       return null;
