@@ -45,6 +45,14 @@ class TopPage extends HookConsumerWidget {
     final androidWidgetLaunchState = ref.watch(
       androidWidgetLaunchNotifierProvider,
     );
+    final androidWidgetLaunchNotifier = ref.read(
+      androidWidgetLaunchNotifierProvider.notifier,
+    );
+    final previousRequestVersion = useRef(
+      androidWidgetLaunchNotifier.requestVersion,
+    );
+    final requestVersionBeforeBuild = previousRequestVersion.value;
+    previousRequestVersion.value = androidWidgetLaunchNotifier.requestVersion;
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
     final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
@@ -122,9 +130,9 @@ class TopPage extends HookConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        ref
-            .read(androidWidgetLaunchNotifierProvider.notifier)
-            .cancelPendingLaunch();
+        androidWidgetLaunchNotifier.cancelPendingLaunch(
+          expectedRequestVersion: requestVersionBeforeBuild,
+        );
       });
       return null;
     }, [location]);
