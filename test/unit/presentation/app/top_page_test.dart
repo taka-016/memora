@@ -1085,6 +1085,47 @@ void main() {
       expect(find.byKey(const Key('trip_management')), findsOneWidget);
     });
 
+    testWidgets('ウィジェット起動要求の受理後に通常遷移した場合は遅延遷移しない', (WidgetTester tester) async {
+      final launchNotifier = _MutableAndroidWidgetLaunchNotifier();
+      final tripCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => tripCompleter.future);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: launchNotifier,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      launchNotifier.receiveTrip('trip-1');
+      container
+          .read(appRouterConfigProvider)
+          .go(const SettingsRoute().location);
+      await tester.pump();
+
+      tripCompleter.complete(
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupsWithMembers.first.id,
+          year: 2025,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+    });
+
     testWidgets('ウィジェット起動の解決中に同じナビ項目内で遷移した場合は遅延遷移しない', (
       WidgetTester tester,
     ) async {
