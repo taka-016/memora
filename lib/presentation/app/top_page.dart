@@ -47,15 +47,8 @@ class TopPage extends HookConsumerWidget {
     final androidWidgetLaunchNotifier = ref.read(
       androidWidgetLaunchNotifierProvider.notifier,
     );
-    final previousRoute = useRef((
-      location: location,
-      requestVersion: androidWidgetLaunchNotifier.requestVersion,
-    ));
-    final routeBeforeBuild = previousRoute.value;
-    previousRoute.value = (
-      location: location,
-      requestVersion: androidWidgetLaunchNotifier.requestVersion,
-    );
+    final router = GoRouter.of(context);
+    final previousLocation = useRef(location);
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
     final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
@@ -125,19 +118,27 @@ class TopPage extends HookConsumerWidget {
     }, [androidWidgetLaunchResolution, currentMember?.id]);
 
     useEffect(() {
-      if (routeBeforeBuild.location == location) {
-        return null;
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
+      void handleRouteChange() {
+        final nextLocation = router.routerDelegate.currentConfiguration.uri
+            .toString();
+        if (previousLocation.value == nextLocation) {
           return;
         }
-        androidWidgetLaunchNotifier.cancelPendingLaunch(
-          expectedRequestVersion: routeBeforeBuild.requestVersion,
-        );
-      });
-      return null;
-    }, [location]);
+        previousLocation.value = nextLocation;
+        final requestVersion = androidWidgetLaunchNotifier.requestVersion;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
+          androidWidgetLaunchNotifier.cancelPendingLaunch(
+            expectedRequestVersion: requestVersion,
+          );
+        });
+      }
+
+      router.routerDelegate.addListener(handleRouteChange);
+      return () => router.routerDelegate.removeListener(handleRouteChange);
+    }, [router, androidWidgetLaunchNotifier]);
 
     final groupSelectionMemberId = ref.watch(
       groupTimelineGroupSelectionNotifierProvider.select(
