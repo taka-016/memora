@@ -119,8 +119,7 @@ class TopPage extends HookConsumerWidget {
 
     useEffect(() {
       void handleRouteChange() {
-        final nextLocation = router.routerDelegate.currentConfiguration.uri
-            .toString();
+        final nextLocation = router.state.uri.toString();
         if (previousLocation.value == nextLocation) {
           return;
         }
