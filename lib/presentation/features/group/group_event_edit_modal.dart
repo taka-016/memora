@@ -34,6 +34,8 @@ class _GroupEventEditDialog extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final controller = useTextEditingController(text: initialMemo);
+    final isSaving = useState(false);
+    final isSavingRef = useRef(false);
 
     return AlertDialog(
       key: Key('group_event_edit_dialog_$selectedYear'),
@@ -51,12 +53,17 @@ class _GroupEventEditDialog extends HookWidget {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: isSaving.value ? null : () => Navigator.of(context).pop(),
           child: const Text('キャンセル'),
         ),
         TextButton(
           key: Key('group_event_save_button_$selectedYear'),
           onPressed: () async {
+            if (isSavingRef.value) {
+              return;
+            }
+            isSavingRef.value = true;
+            isSaving.value = true;
             final memo = controller.text.trim();
             try {
               await onSave(memo);
@@ -73,9 +80,19 @@ class _GroupEventEditDialog extends HookWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('グループイベントの保存に失敗しました')),
               );
+            } finally {
+              isSavingRef.value = false;
+              if (context.mounted) {
+                isSaving.value = false;
+              }
             }
           },
-          child: const Text('保存'),
+          child: isSaving.value
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('保存'),
         ),
       ],
     );
