@@ -96,8 +96,6 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   ({String tripId, int requestVersion})? _resolvingRequest;
   String? _resolvedTripId;
 
-  int get requestVersion => _requestVersion;
-
   @override
   AndroidWidgetLaunchState build() {
     final usecase = ref.watch(watchAndroidWidgetLaunchUriUsecaseProvider);
@@ -256,11 +254,7 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     return resolution.memberId == memberId ? resolution : null;
   }
 
-  void cancelPendingLaunch({int? expectedRequestVersion}) {
-    if (expectedRequestVersion != null &&
-        expectedRequestVersion != _requestVersion) {
-      return;
-    }
+  void cancelPendingLaunch() {
     _requestVersion++;
     _resolvingRequest = null;
     _resolvedTripId = null;

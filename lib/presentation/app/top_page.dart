@@ -118,15 +118,7 @@ class TopPage extends HookConsumerWidget {
           return;
         }
         previousLocation.value = nextLocation;
-        final requestVersion = androidWidgetLaunchNotifier.requestVersion;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!context.mounted) {
-            return;
-          }
-          androidWidgetLaunchNotifier.cancelPendingLaunch(
-            expectedRequestVersion: requestVersion,
-          );
-        });
+        androidWidgetLaunchNotifier.cancelPendingLaunch();
       }
 
       router.routerDelegate.addListener(handleRouteChange);

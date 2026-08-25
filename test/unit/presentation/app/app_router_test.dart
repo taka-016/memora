@@ -46,27 +46,19 @@ class _LoadedGroupSelectionNotifier
   }
 }
 
-class _TrackingAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
-  _TrackingAndroidWidgetLaunchNotifier({
+class _ConfiguredAndroidWidgetLaunchNotifier
+    extends AndroidWidgetLaunchNotifier {
+  _ConfiguredAndroidWidgetLaunchNotifier({
     this.initialState = const AndroidWidgetLaunchState(
       isInitialUriLoading: true,
     ),
   });
 
   final AndroidWidgetLaunchState initialState;
-  var unconditionalCancelCount = 0;
 
   @override
   AndroidWidgetLaunchState build() {
     return initialState;
-  }
-
-  @override
-  void cancelPendingLaunch({int? expectedRequestVersion}) {
-    if (expectedRequestVersion == null) {
-      unconditionalCancelCount++;
-    }
-    super.cancelPendingLaunch(expectedRequestVersion: expectedRequestVersion);
   }
 }
 
@@ -102,7 +94,7 @@ void main() {
           androidWidgetLaunchNotifierProvider.overrideWith(
             () =>
                 androidWidgetLaunchNotifier ??
-                _TrackingAndroidWidgetLaunchNotifier(),
+                _ConfiguredAndroidWidgetLaunchNotifier(),
           ),
           appInitialLocationProvider.overrideWithValue(initialLocation),
         ],
@@ -192,7 +184,7 @@ void main() {
         UserDto(id: 'user-1', loginId: 'user-1@example.com', isVerified: true),
       ),
     );
-    final androidWidgetLaunchNotifier = _TrackingAndroidWidgetLaunchNotifier(
+    final androidWidgetLaunchNotifier = _ConfiguredAndroidWidgetLaunchNotifier(
       initialState: const AndroidWidgetLaunchState(isResolving: true),
     );
     final (container, router) = await pumpRouter(
@@ -205,7 +197,6 @@ void main() {
     await pumpNavigation(tester);
 
     expect(router.state.matchedLocation, const LoginRoute().location);
-    expect(androidWidgetLaunchNotifier.unconditionalCancelCount, 1);
     expect(
       container.read(androidWidgetLaunchNotifierProvider),
       const AndroidWidgetLaunchState(),
