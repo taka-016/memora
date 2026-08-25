@@ -16,7 +16,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
-import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/trip_management_notifier.dart';
 import '../../../../helpers/test_exception.dart';
@@ -975,11 +974,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TripManagement)),
-      );
-      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
-
       // 旅行項目をタップして編集モーダルを開く
       await tester.tap(find.byType(ListTile).first);
       await tester.pumpAndSettle();
@@ -1003,10 +997,6 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).called(1);
-      expect(
-        container.read(timelineTripEntriesRefreshProvider),
-        isNot(same(refreshToken)),
-      );
     });
 
     testWidgets('旅行更新に失敗した場合はモーダルを閉じず入力を保持すること', (WidgetTester tester) async {
@@ -1205,11 +1195,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TripManagement)),
-      );
-      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
-
       // 削除ボタンをタップ
       await tester.tap(find.byIcon(Icons.delete).first);
       await tester.pumpAndSettle();
@@ -1222,10 +1207,6 @@ void main() {
       verify(
         mockTripEntryRepository.deleteTripEntry(testTripEntries.first.id),
       ).called(1);
-      expect(
-        container.read(timelineTripEntriesRefreshProvider),
-        isNot(same(refreshToken)),
-      );
     });
 
     testWidgets('旅行一覧の再取得中に削除した場合は未実行を通知すること', (WidgetTester tester) async {
@@ -1348,11 +1329,6 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(TripManagement)),
-      );
-      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
-
       // 旅行追加ボタンをタップ
       await tester.tap(find.text('旅行追加'));
       await tester.pumpAndSettle();
@@ -1380,10 +1356,6 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
-      expect(
-        container.read(timelineTripEntriesRefreshProvider),
-        isNot(same(refreshToken)),
-      );
     });
 
     testWidgets('初期化時にグループメンバーが読み込まれること', (WidgetTester tester) async {

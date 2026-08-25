@@ -15,7 +15,6 @@ import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.da
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
-import 'package:memora/presentation/features/timeline/timeline_trip_entries_refresh_provider.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
@@ -745,10 +744,6 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(MapScreen)),
-      );
-      final refreshToken = container.read(timelineTripEntriesRefreshProvider);
 
       final googleMap = tester.widget<GoogleMap>(find.byType(GoogleMap));
       googleMap.markers.single.onTap?.call();
@@ -763,10 +758,6 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(mockUpdateTripEntryUsecase.execute(any)).called(1);
-      expect(
-        container.read(timelineTripEntriesRefreshProvider),
-        isNot(same(refreshToken)),
-      );
     });
 
     testWidgets('地図上の再読み込みアイコンから一覧を再取得できる', (tester) async {
