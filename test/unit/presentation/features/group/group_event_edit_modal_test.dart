@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
@@ -110,6 +112,33 @@ void main() {
         find.byKey(const Key('group_event_edit_dialog_2026')),
         findsOneWidget,
       );
+    });
+
+    testWidgets('保存中に保存ボタンを連続操作しても重複実行しない', (tester) async {
+      final completer = Completer<void>();
+      var callCount = 0;
+      await tester.pumpWidget(
+        buildSubject(
+          onSave: (_) {
+            callCount++;
+            return completer.future;
+          },
+          selectedYear: 2026,
+          initialMemo: '',
+        ),
+      );
+      await tester.tap(find.text('開く'));
+      await tester.pumpAndSettle();
+      final saveButton = find.byKey(const Key('group_event_save_button_2026'));
+
+      await tester.tap(saveButton);
+      await tester.pump();
+      await tester.tap(saveButton);
+      await tester.pump();
+
+      expect(callCount, 1);
+      completer.complete();
+      await tester.pumpAndSettle();
     });
   });
 }
