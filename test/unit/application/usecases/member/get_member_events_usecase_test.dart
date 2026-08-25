@@ -53,17 +53,19 @@ void main() {
       ).called(1);
     });
 
-    test('例外時は空リストを返す', () async {
+    test('取得例外を呼び出し元へ伝播する', () async {
+      final exception = TestException('取得失敗');
       when(
         mockMemberEventQueryService.getMemberEventsByMemberIds(
           any,
           orderBy: anyNamed('orderBy'),
         ),
-      ).thenThrow(TestException('取得失敗'));
+      ).thenThrow(exception);
 
-      final result = await usecase.execute(const ['member-1']);
-
-      expect(result, isEmpty);
+      await expectLater(
+        usecase.execute(const ['member-1']),
+        throwsA(same(exception)),
+      );
     });
   });
 }
