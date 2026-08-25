@@ -148,14 +148,6 @@
 - Notifierの単体テストは仕様上重要な状態遷移、UseCaseの実行順序、競合、失敗後の復旧を検証し、`family`や`autoDispose`などRiverpod自体が保証する一般的な挙動を各Notifierで重複して検証しない
 - ViewのWidgetテストは状態に応じた表示、操作可否、ユーザー操作の通知、Dialog・Snackbarの実表示を中心にする
 
-#### 7. Androidウィジェット起動Notifierで遷移先を解決する
-
-- `TopPageState`と`TopPageNotifier`は作成せず、既存のAndroidウィジェット起動Notifierを起動要求の処理単位として拡張する
-- Androidウィジェットから受け取った旅行IDによる旅行取得、所属グループ一覧との照合、遷移先の解決、処理済みIDの消費を既存Notifierへ移す
-- 既存Notifierは処理中状態と遷移要求または失敗結果を通知し、Drawerの制御、実際の画面遷移、失敗時のSnackbar表示は`TopPage`へ残す
-- 初期URI読み込み中、対象旅行・グループの解決成功、存在しない旅行、取得失敗、同じ要求の重複処理防止を単体テストで検証する
-- 起動要求の解決中に別の起動要求、Drawer操作、通常の画面遷移が発生した場合も、古い要求による遅延遷移や重複遷移が起きないことを双方向と連続操作で検証する
-
 #### 8. Timelineの行データ取得と更新通知を機能単位に整理する
 
 - 読み取り専用の行データは既存の`FutureProvider.autoDispose.family`を維持し、旅行はグループID・年、グループイベントとDVCはグループID、メンバーイベントはメンバーIDを引数に取得状態を管理する

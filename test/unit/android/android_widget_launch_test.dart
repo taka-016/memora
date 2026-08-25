@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 const _itineraryWidgetPath =
     'android/app/src/main/kotlin/com/example/memora/ItineraryWidget.kt';
 const _mainPath = 'lib/main.dart';
+const _topPagePath = 'lib/presentation/app/top_page.dart';
 
 void main() {
   group('Androidウィジェットからのアプリ起動', () {
@@ -46,6 +47,15 @@ void main() {
         source,
         contains('ref.watch(androidWidgetLaunchNotifierProvider)'),
       );
+    });
+
+    test('TopPageはNotifierが解決した遷移要求だけを処理する', () {
+      final source = File(_topPagePath).readAsStringSync();
+
+      expect(source, isNot(contains('get_trip_entry_by_id_usecase.dart')));
+      expect(source, isNot(contains('get_groups_with_members_usecase.dart')));
+      expect(source, contains('resolvePendingLaunch'));
+      expect(source, contains('takeResolution'));
     });
   });
 }

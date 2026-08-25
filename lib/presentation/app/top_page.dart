@@ -5,14 +5,11 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/app/app_routes.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 
 class TopPage extends HookConsumerWidget {
   const TopPage({super.key, required this.selectedItem, required this.child});
@@ -25,7 +22,6 @@ class TopPage extends HookConsumerWidget {
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
     final drawerCloseCompleter = useRef<Completer<void>?>(null);
-    final isHandlingAndroidWidgetLaunch = useState(false);
 
     Future<void> closeDrawer() {
       if (!isDrawerOpen.value) {
@@ -42,22 +38,18 @@ class TopPage extends HookConsumerWidget {
     final androidWidgetLaunchState = ref.watch(
       androidWidgetLaunchNotifierProvider,
     );
+    final androidWidgetLaunchNotifier = ref.read(
+      androidWidgetLaunchNotifierProvider.notifier,
+    );
+    final router = GoRouter.of(context);
+    final previousLocation = useRef(router.state.uri.toString());
     final pendingAndroidWidgetTripId = androidWidgetLaunchState.pendingTripId;
+    final androidWidgetLaunchResolution = androidWidgetLaunchState.resolution;
     final shouldHideForAndroidWidgetLaunch =
         androidWidgetLaunchState.isInitialUriLoading ||
         pendingAndroidWidgetTripId != null ||
-        isHandlingAndroidWidgetLaunch.value;
-
-    Future<void> handleAndroidWidgetLaunch(MemberDto member) async {
-      isHandlingAndroidWidgetLaunch.value = true;
-      try {
-        await _handleAndroidWidgetLaunch(context, ref, member);
-      } finally {
-        if (context.mounted) {
-          isHandlingAndroidWidgetLaunch.value = false;
-        }
-      }
-    }
+        androidWidgetLaunchState.isResolving ||
+        androidWidgetLaunchResolution != null;
 
     useEffect(() {
       if (currentMemberState.status != CurrentMemberStatus.error) {
@@ -84,10 +76,54 @@ class TopPage extends HookConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        unawaited(handleAndroidWidgetLaunch(currentMember));
+        unawaited(
+          ref
+              .read(androidWidgetLaunchNotifierProvider.notifier)
+              .resolvePendingLaunch(currentMember),
+        );
       });
       return null;
     }, [pendingAndroidWidgetTripId, currentMember?.id]);
+
+    useEffect(() {
+      if (androidWidgetLaunchResolution == null || currentMember == null) {
+        return null;
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) {
+          return;
+        }
+        final resolution = ref
+            .read(androidWidgetLaunchNotifierProvider.notifier)
+            .takeResolution(currentMember.id);
+        if (resolution == null) {
+          return;
+        }
+        unawaited(
+          _handleAndroidWidgetLaunchResolution(
+            context,
+            ref,
+            currentMember,
+            resolution,
+          ),
+        );
+      });
+      return null;
+    }, [androidWidgetLaunchResolution, currentMember?.id]);
+
+    useEffect(() {
+      void handleRouteChange() {
+        final nextLocation = router.state.uri.toString();
+        if (previousLocation.value == nextLocation) {
+          return;
+        }
+        previousLocation.value = nextLocation;
+        androidWidgetLaunchNotifier.cancelPendingLaunch();
+      }
+
+      router.routerDelegate.addListener(handleRouteChange);
+      return () => router.routerDelegate.removeListener(handleRouteChange);
+    }, [router, androidWidgetLaunchNotifier]);
 
     final groupSelectionMemberId = ref.watch(
       groupTimelineGroupSelectionNotifierProvider.select(
@@ -143,6 +179,11 @@ class TopPage extends HookConsumerWidget {
         key: scaffoldKey,
         onDrawerChanged: (isOpened) {
           isDrawerOpen.value = isOpened;
+          if (isOpened) {
+            ref
+                .read(androidWidgetLaunchNotifierProvider.notifier)
+                .cancelPendingLaunch();
+          }
           if (!isOpened) {
             drawerCloseCompleter.value?.complete();
             drawerCloseCompleter.value = null;
@@ -157,62 +198,32 @@ class TopPage extends HookConsumerWidget {
     );
   }
 
-  Future<void> _handleAndroidWidgetLaunch(
+  Future<void> _handleAndroidWidgetLaunchResolution(
     BuildContext context,
     WidgetRef ref,
     MemberDto currentMember,
+    AndroidWidgetLaunchResolution resolution,
   ) async {
-    final tripId = ref
-        .read(androidWidgetLaunchNotifierProvider.notifier)
-        .takePendingTripId();
-    if (tripId == null) {
+    if (resolution case AndroidWidgetLaunchFailure()) {
+      await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
       return;
     }
 
-    try {
-      final trip = await ref
-          .read(getTripEntryByIdUsecaseProvider)
-          .execute(tripId);
-      if (!context.mounted) {
-        return;
-      }
-      if (trip == null) {
-        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
-        return;
-      }
-
-      final groups = await ref
-          .read(getGroupsWithMembersUsecaseProvider)
-          .execute(currentMember);
-      if (!context.mounted) {
-        return;
-      }
-      final group = groups
-          .where((group) => group.id == trip.groupId)
-          .firstOrNull;
-      if (group == null) {
-        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
-        return;
-      }
-
-      ref
-          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
-          .setLoadedGroups(memberId: currentMember.id, groups: groups);
-      TripManagementRoute(
-        groupId: trip.groupId,
-        year: trip.year,
-        tripId: trip.id,
-      ).go(context);
-    } catch (e, stack) {
-      logger.e(
-        'TopPage._handleAndroidWidgetLaunch: ${e.toString()}',
-        error: e,
-        stackTrace: stack,
-      );
-      if (context.mounted) {
-        await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
-      }
+    final destination = resolution as AndroidWidgetLaunchDestination;
+    ref
+        .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+        .setLoadedGroups(
+          memberId: currentMember.id,
+          groups: destination.groups,
+        );
+    if (!context.mounted) {
+      return;
     }
+    TripManagementRoute(
+      groupId: destination.groupId,
+      year: destination.year,
+      tripId: destination.tripId,
+    ).go(context);
   }
 
   Future<void> _showAndroidWidgetLaunchFailure(
@@ -237,6 +248,9 @@ class TopPage extends HookConsumerWidget {
     AppNavigationItem item,
     Future<void> Function() closeDrawer,
   ) async {
+    ref
+        .read(androidWidgetLaunchNotifierProvider.notifier)
+        .cancelPendingLaunch();
     await closeDrawer();
     if (!context.mounted) {
       return;

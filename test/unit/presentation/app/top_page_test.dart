@@ -94,6 +94,7 @@ class _MutableAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
   }
 
   void receiveTrip(String tripId) {
+    cancelPendingLaunch();
     state = AndroidWidgetLaunchState(pendingTripId: tripId);
   }
 }
@@ -103,6 +104,17 @@ class _InitialUriLoadingAndroidWidgetLaunchNotifier
   @override
   AndroidWidgetLaunchState build() {
     return const AndroidWidgetLaunchState(isInitialUriLoading: true);
+  }
+}
+
+class _ResolvedAndroidWidgetLaunchNotifier extends AndroidWidgetLaunchNotifier {
+  _ResolvedAndroidWidgetLaunchNotifier(this.resolution);
+
+  final AndroidWidgetLaunchResolution resolution;
+
+  @override
+  AndroidWidgetLaunchState build() {
+    return AndroidWidgetLaunchState(resolution: resolution);
   }
 }
 
@@ -893,6 +905,29 @@ void main() {
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
 
+    testWidgets('別のメンバーが取得したウィジェット起動結果では遷移しない', (WidgetTester tester) async {
+      final staleDestination = AndroidWidgetLaunchDestination(
+        memberId: 'previous-member',
+        groupId: groupsWithMembers.first.id,
+        year: 2025,
+        tripId: 'trip-1',
+        groups: groupsWithMembers,
+      );
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _ResolvedAndroidWidgetLaunchNotifier(
+            staleDestination,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
     testWidgets('旅行管理画面でウィジェット指定の旅行がない場合はグループ一覧へ戻る', (
       WidgetTester tester,
     ) async {
@@ -933,6 +968,216 @@ void main() {
       expect(find.text('指定された旅行が見つかりませんでした'), findsOneWidget);
       expect(find.byKey(const Key('trip_management')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('ウィジェット起動の解決中にDrawerを開いた場合は遅延遷移しない', (
+      WidgetTester tester,
+    ) async {
+      final tripCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => tripCompleter.future);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            'trip-1',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      await tester.tap(find.byKey(const Key('hamburger_menu')));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('グループ年表'), findsOneWidget);
+
+      tripCompleter.complete(
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupsWithMembers.first.id,
+          year: 2025,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('ウィジェット起動の解決中に通常遷移した場合は遅延遷移しない', (WidgetTester tester) async {
+      final tripCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => tripCompleter.future);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _PendingAndroidWidgetLaunchNotifier(
+            'trip-1',
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      container
+          .read(appRouterConfigProvider)
+          .go(const SettingsRoute().location);
+      await tester.pump();
+
+      tripCompleter.complete(
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupsWithMembers.first.id,
+          year: 2025,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+    });
+
+    testWidgets('通常遷移後に届いたウィジェット起動要求は取り消さない', (WidgetTester tester) async {
+      final launchNotifier = _MutableAndroidWidgetLaunchNotifier();
+      final trip = TripEntryDto(
+        id: 'trip-1',
+        groupId: groupsWithMembers.first.id,
+        year: 2025,
+      );
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          trip.id,
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) async => trip);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: launchNotifier,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      container
+          .read(appRouterConfigProvider)
+          .go(const SettingsRoute().location);
+      launchNotifier.receiveTrip(trip.id);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+    });
+
+    testWidgets('ウィジェット起動要求の受理後に通常遷移した場合は遅延遷移しない', (WidgetTester tester) async {
+      final launchNotifier = _MutableAndroidWidgetLaunchNotifier();
+      final tripCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => tripCompleter.future);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: launchNotifier,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      launchNotifier.receiveTrip('trip-1');
+      container
+          .read(appRouterConfigProvider)
+          .go(const SettingsRoute().location);
+      await tester.pump();
+
+      tripCompleter.complete(
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupsWithMembers.first.id,
+          year: 2025,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('trip_management')), findsNothing);
+    });
+
+    testWidgets('ウィジェット起動の解決中に同じナビ項目内で遷移した場合は遅延遷移しない', (
+      WidgetTester tester,
+    ) async {
+      final launchNotifier = _MutableAndroidWidgetLaunchNotifier();
+      final tripCompleter = Completer<TripEntryDto?>();
+      when(
+        mockTripEntryQueryService.getTripEntryById(
+          'trip-1',
+          tasksOrderBy: anyNamed('tasksOrderBy'),
+          itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
+        ),
+      ).thenAnswer((_) => tripCompleter.future);
+
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: launchNotifier,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TopPage)),
+      );
+      final router = container.read(appRouterConfigProvider);
+      unawaited(
+        router.push(
+          TripManagementRoute(
+            groupId: groupsWithMembers.first.id,
+            year: 2025,
+          ).location,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+
+      launchNotifier.receiveTrip('trip-1');
+      await tester.pump();
+      router.go(const GroupListRoute().location);
+      await tester.pump();
+
+      tripCompleter.complete(
+        TripEntryDto(
+          id: 'trip-1',
+          groupId: groupsWithMembers.first.id,
+          year: 2025,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+      expect(find.byKey(const Key('trip_management')), findsNothing);
     });
 
     testWidgets('左上にハンバーガーメニューが表示される', (WidgetTester tester) async {

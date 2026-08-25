@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_routes.dart';
+import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_notifier.dart';
 import 'package:memora/presentation/notifiers/auth_state.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
@@ -22,6 +23,9 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
   ref.listen<AuthState>(authNotifierProvider, (previous, next) {
     redirectController.handleAuthStateChange(previous, next);
     if (isAuthenticationSessionEnding(previous, next)) {
+      ref
+          .read(androidWidgetLaunchNotifierProvider.notifier)
+          .cancelPendingLaunch();
       ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
     }
     refreshNotifier.refresh();
