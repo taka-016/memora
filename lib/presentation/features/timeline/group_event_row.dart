@@ -93,6 +93,9 @@ class _GroupEventYearCell extends HookConsumerWidget {
                       .read(deleteGroupEventUsecaseProvider)
                       .execute(eventAtOpen.id);
                 }
+                if (!context.mounted) {
+                  return;
+                }
                 localEvent.value = null;
               } else {
                 final savedEvent = await ref
@@ -105,6 +108,9 @@ class _GroupEventYearCell extends HookConsumerWidget {
                         memo: memo,
                       ),
                     );
+                if (!context.mounted) {
+                  return;
+                }
                 localEvent.value = savedEvent;
               }
               ref.invalidate(_groupEventsByYearProvider(groupId));

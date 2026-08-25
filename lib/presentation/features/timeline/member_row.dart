@@ -120,6 +120,9 @@ class _MemberYearCell extends HookConsumerWidget {
                         memo: '',
                       ),
                     );
+                if (!context.mounted) {
+                  return;
+                }
                 localEvent.value = null;
               } else {
                 final savedEvent = await ref
@@ -132,6 +135,9 @@ class _MemberYearCell extends HookConsumerWidget {
                         memo: memo,
                       ),
                     );
+                if (!context.mounted) {
+                  return;
+                }
                 localEvent.value = savedEvent;
               }
               ref.invalidate(_memberEventsByYearProvider(member.memberId));
