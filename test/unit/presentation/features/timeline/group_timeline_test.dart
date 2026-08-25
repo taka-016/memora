@@ -474,6 +474,52 @@ void main() {
       expect(reopenedTextField.controller?.text, '運動会');
     });
 
+    testWidgets('グループ切り替え時は旧グループの編集ダイアログを閉じる', (tester) async {
+      final currentYear = DateTime.now().year;
+      await tester.pumpWidget(
+        createTestWidget(
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-1',
+              groupId: '1',
+              year: currentYear,
+              memo: '旧グループのイベント',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(Key('group_event_edit_dialog_$currentYear')),
+        findsOneWidget,
+      );
+
+      final nextGroup = testGroupWithMembers.copyWith(id: '2', name: '切り替え後');
+      await tester.pumpWidget(
+        createTestWidget(
+          groupWithMembers: nextGroup,
+          groupEventService: _FakeGroupEventQueryService([
+            GroupEventDto(
+              id: 'event-2',
+              groupId: '2',
+              year: currentYear,
+              memo: '新グループのイベント',
+            ),
+          ]),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('group_event_edit_dialog_$currentYear')),
+        findsNothing,
+      );
+      expect(find.text('新グループのイベント'), findsOneWidget);
+      expect(find.text('旧グループのイベント'), findsNothing);
+    });
+
     testWidgets('グループイベントのメモを保存すると更新される', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
       final repository = _FakeGroupEventRepository();
