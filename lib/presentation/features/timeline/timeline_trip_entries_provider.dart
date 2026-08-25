@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 final timelineTripEntriesProvider = FutureProvider.autoDispose
     .family<List<TripEntryDto>, TimelineTripEntriesQuery>((ref, query) async {
+      ref.watch(timelineRowsRefreshProvider);
       return await ref
           .watch(getTripEntriesUsecaseProvider)
           .execute(query.groupId, query.year);

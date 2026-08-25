@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
-import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_refresh_provider.dart';
+import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_row_load_error.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
 class DvcRow extends TimelineRowDefinition {
@@ -66,7 +65,6 @@ class DvcRow extends TimelineRowDefinition {
     return _DvcYearCell(
       groupId: groupId,
       year: year,
-      refreshKey: rowContext.controller.refreshKey,
       availableHeight: rowContext.rowHeight,
       availableWidth: rowContext.layoutConfig.yearColumnWidth,
     );
@@ -90,55 +88,57 @@ class DvcRow extends TimelineRowDefinition {
   }
 }
 
-final _dvcPointUsagesByYearProvider = FutureProvider.autoDispose
-    .family<Map<int, List<DvcPointUsageDto>>, _DvcPointUsagesQuery>((
-      ref,
-      query,
-    ) async {
-      try {
-        ref.watch(timelineDvcPointUsagesRefreshProvider);
-        final getDvcPointUsagesUsecase = ref.watch(
-          getDvcPointUsagesUsecaseProvider,
-        );
-        final usages = await getDvcPointUsagesUsecase.execute(query.groupId);
-        return _groupDvcPointUsagesByYear(usages);
-      } catch (e, stack) {
-        logger.e(
-          'DvcRow.loadDvcPointUsages: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        return {};
-      }
-    });
-
 class _DvcYearCell extends ConsumerWidget {
   const _DvcYearCell({
     required this.groupId,
     required this.year,
-    required this.refreshKey,
     required this.availableHeight,
     required this.availableWidth,
   });
 
   final String groupId;
   final int year;
-  final int refreshKey;
   final double availableHeight;
   final double availableWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final usages =
-        ref
-            .watch(
-              _dvcPointUsagesByYearProvider(
-                _DvcPointUsagesQuery(groupId: groupId, refreshKey: refreshKey),
-              ),
-            )
-            .value?[year] ??
-        const [];
+    final usagesByYear = ref.watch(
+      timelineDvcPointUsagesByYearProvider(groupId),
+    );
 
+    return usagesByYear.when(
+      data: (values) => _DvcDataCell(
+        year: year,
+        usages: values[year] ?? const [],
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+      ),
+      error: (_, _) => TimelineRowLoadError(
+        retryButtonKey: Key('timeline_dvc_retry_$year'),
+        onRetry: () =>
+            ref.invalidate(timelineDvcPointUsagesByYearProvider(groupId)),
+      ),
+      loading: () => const SizedBox.expand(),
+    );
+  }
+}
+
+class _DvcDataCell extends StatelessWidget {
+  const _DvcDataCell({
+    required this.year,
+    required this.usages,
+    required this.availableHeight,
+    required this.availableWidth,
+  });
+
+  final int year;
+  final List<DvcPointUsageDto> usages;
+  final double availableHeight;
+  final double availableWidth;
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: usages.isEmpty
@@ -159,44 +159,6 @@ class _DvcYearCell extends ConsumerWidget {
             ),
     );
   }
-}
-
-class _DvcPointUsagesQuery {
-  const _DvcPointUsagesQuery({required this.groupId, required this.refreshKey});
-
-  final String groupId;
-  final int refreshKey;
-
-  @override
-  bool operator ==(Object other) {
-    return other is _DvcPointUsagesQuery &&
-        other.groupId == groupId &&
-        other.refreshKey == refreshKey;
-  }
-
-  @override
-  int get hashCode => Object.hash(groupId, refreshKey);
-}
-
-Map<int, List<DvcPointUsageDto>> _groupDvcPointUsagesByYear(
-  List<DvcPointUsageDto> usages,
-) {
-  final grouped = <int, List<DvcPointUsageDto>>{};
-  for (final usage in usages) {
-    grouped.putIfAbsent(usage.usageYearMonth.year, () => []).add(usage);
-  }
-
-  for (final entry in grouped.entries) {
-    entry.value.sort((a, b) {
-      final comparedMonth = a.usageYearMonth.compareTo(b.usageYearMonth);
-      if (comparedMonth != 0) {
-        return comparedMonth;
-      }
-      return a.id.compareTo(b.id);
-    });
-  }
-
-  return grouped;
 }
 
 class DvcCell extends StatelessWidget {
