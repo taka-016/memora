@@ -85,17 +85,14 @@ class _MemberYearCell extends HookConsumerWidget {
     }, [loadedEvent]);
 
     final currentEvent = localEvent.value;
-    final lines = [
-      ..._buildMemberLabels(
-        birthday: member.birthday,
-        gender: member.gender,
-        targetYear: targetYear,
-        displaySettings: displaySettings,
-        calculateSchoolGrade: ref.read(calculateSchoolGradeUsecaseProvider),
-        calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
-      ),
-      ..._buildMemoLabels(currentEvent?.memo),
-    ];
+    final memberLabels = _buildMemberLabels(
+      birthday: member.birthday,
+      gender: member.gender,
+      targetYear: targetYear,
+      displaySettings: displaySettings,
+      calculateSchoolGrade: ref.read(calculateSchoolGradeUsecaseProvider),
+      calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
+    );
 
     return eventsByYear.when(
       data: (_) => GestureDetector(
@@ -145,19 +142,28 @@ class _MemberYearCell extends HookConsumerWidget {
           );
         },
         child: _MemberCellLabels(
-          lines: lines,
+          lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
           availableHeight: availableHeight,
           availableWidth: availableWidth,
         ),
       ),
-      error: (_, _) => TimelineRowLoadError(
-        retryButtonKey: Key(
-          'timeline_member_event_retry_${member.memberId}_$targetYear',
+      error: (_, _) => _MemberCellLabels(
+        lines: memberLabels,
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+        footer: TimelineRowLoadError(
+          retryButtonKey: Key(
+            'timeline_member_event_retry_${member.memberId}_$targetYear',
+          ),
+          onRetry: () =>
+              ref.invalidate(_memberEventsByYearProvider(member.memberId)),
         ),
-        onRetry: () =>
-            ref.invalidate(_memberEventsByYearProvider(member.memberId)),
       ),
-      loading: () => const SizedBox.expand(),
+      loading: () => _MemberCellLabels(
+        lines: memberLabels,
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+      ),
     );
   }
 }
@@ -167,29 +173,46 @@ class _MemberCellLabels extends StatelessWidget {
     required this.lines,
     required this.availableHeight,
     required this.availableWidth,
+    this.footer,
   });
 
   final List<String> lines;
   final double availableHeight;
   final double availableWidth;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
-    if (lines.isEmpty) {
+    if (lines.isEmpty && footer == null) {
       return const SizedBox.shrink();
     }
 
     final maxLines = (availableHeight / 20).floor().clamp(1, 20);
+    final labelMaxLines = footer == null
+        ? maxLines
+        : (maxLines - 1).clamp(1, 20);
 
     return SizedBox(
       width: availableWidth,
       height: availableHeight,
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Text(
-          lines.join('\n'),
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (lines.isNotEmpty)
+              Flexible(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    lines.join('\n'),
+                    maxLines: labelMaxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            if (footer case final footer?) SizedBox(height: 20, child: footer),
+          ],
         ),
       ),
     );
