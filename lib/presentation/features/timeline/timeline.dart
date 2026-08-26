@@ -35,7 +35,6 @@ class Timeline extends HookConsumerWidget {
     final totalDataRows = rowDefinitions.length;
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
-    final previousGroup = useRef(groupWithMembers);
     final clock = ref.watch(appClockProvider);
     final registerRefreshCallback = useMemoized(() {
       final register = onSetRefreshCallback;
@@ -60,20 +59,6 @@ class Timeline extends HookConsumerWidget {
       onSetRefreshCallback: registerRefreshCallback,
       initialFocusYear: initialFocusYear,
     );
-
-    useEffect(() {
-      if (previousGroup.value == groupWithMembers) {
-        return null;
-      }
-      previousGroup.value = groupWithMembers;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
-        }
-        Navigator.of(context).popUntil((route) => route is PageRoute<dynamic>);
-      });
-      return null;
-    }, [groupWithMembers]);
 
     void showDisplaySettingsSheet() {
       var localSettings = timelineController.displaySettings;
