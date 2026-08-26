@@ -767,17 +767,63 @@ void main() {
       expect(service.callCount, 2);
     });
 
-    testWidgets('メンバーイベント取得失敗を表示して再試行できる', (tester) async {
+    testWidgets('メンバーイベント取得中も計算済みのメンバー情報を表示する', (tester) async {
       final currentYear = DateTime.now().year;
+      final birthday = DateTime(currentYear - 6, 1, 1);
+      final service = _PendingMemberEventQueryService();
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
+      );
+
+      await tester.pumpWidget(createTestWidget(memberEventService: service));
+      await tester.pump();
+
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('${currentYear - birthday.year}歳'),
+        ),
+        findsOneWidget,
+      );
+
+      service.completer.complete([]);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('メンバーイベント取得失敗時もメンバー情報を表示して再試行できる', (
+      tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final birthday = DateTime(currentYear - 6, 1, 1);
       final service = _RetryMemberEventQueryService(
         exception: TestException('取得失敗'),
+      );
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
       );
 
       await tester.pumpWidget(createTestWidget(memberEventService: service));
       await tester.pumpAndSettle();
 
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
       final retryButton = find.byKey(
         Key('timeline_member_event_retry_member1_$currentYear'),
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('${currentYear - birthday.year}歳'),
+        ),
+        findsOneWidget,
       );
       expect(retryButton, findsOneWidget);
 
@@ -2132,6 +2178,16 @@ class _FakeMemberEventQueryService implements MemberEventQueryService {
         .where((event) => memberIds.contains(event.memberId))
         .toList();
   }
+}
+
+class _PendingMemberEventQueryService implements MemberEventQueryService {
+  final completer = Completer<List<MemberEventDto>>();
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) => completer.future;
 }
 
 class _RetryMemberEventQueryService implements MemberEventQueryService {
