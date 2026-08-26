@@ -141,13 +141,13 @@ class _MemberYearCell extends HookConsumerWidget {
             },
           );
         },
-        child: _MemberCellLabels(
+        child: _MemberCellContent(
           lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
           availableHeight: availableHeight,
           availableWidth: availableWidth,
         ),
       ),
-      error: (_, _) => _MemberCellLabels(
+      error: (_, _) => _MemberCellContent(
         lines: memberLabels,
         availableHeight: availableHeight,
         availableWidth: availableWidth,
@@ -159,7 +159,7 @@ class _MemberYearCell extends HookConsumerWidget {
               ref.invalidate(_memberEventsByYearProvider(member.memberId)),
         ),
       ),
-      loading: () => _MemberCellLabels(
+      loading: () => _MemberCellContent(
         lines: memberLabels,
         availableHeight: availableHeight,
         availableWidth: availableWidth,
@@ -168,8 +168,8 @@ class _MemberYearCell extends HookConsumerWidget {
   }
 }
 
-class _MemberCellLabels extends StatelessWidget {
-  const _MemberCellLabels({
+class _MemberCellContent extends StatelessWidget {
+  const _MemberCellContent({
     required this.lines,
     required this.availableHeight,
     required this.availableWidth,
