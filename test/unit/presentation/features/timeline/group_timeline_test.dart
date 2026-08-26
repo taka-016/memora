@@ -795,9 +795,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('メンバーイベント取得失敗時もメンバー情報を表示して再試行できる', (
-      tester,
-    ) async {
+    testWidgets('メンバーイベント取得失敗時もメンバー情報を表示して再試行できる', (tester) async {
       final currentYear = DateTime.now().year;
       final birthday = DateTime(currentYear - 6, 1, 1);
       final service = _RetryMemberEventQueryService(
@@ -840,7 +838,13 @@ void main() {
       await tester.tap(retryButton);
       await tester.pumpAndSettle();
 
-      expect(find.text('再試行後のメンバーイベント'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('再試行後のメンバーイベント'),
+        ),
+        findsOneWidget,
+      );
       expect(service.callCount, 2);
     });
 
