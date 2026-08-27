@@ -140,5 +140,41 @@ void main() {
       completer.complete();
       await tester.pumpAndSettle();
     });
+
+    testWidgets('保存中はバリアタップと戻る操作で閉じない', (tester) async {
+      final completer = Completer<void>();
+      addTearDown(() {
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
+      });
+      await tester.pumpWidget(
+        buildSubject(
+          onSave: (_) => completer.future,
+          selectedYear: 2026,
+          initialMemo: '',
+        ),
+      );
+      await tester.tap(find.text('開く'));
+      await tester.pumpAndSettle();
+      const dialogKey = Key('group_event_edit_dialog_2026');
+
+      await tester.tap(find.byKey(const Key('group_event_save_button_2026')));
+      await tester.pump();
+      await tester.tapAt(const Offset(1, 1));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byKey(dialogKey), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.byKey(dialogKey), findsOneWidget);
+
+      completer.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(dialogKey), findsNothing);
+    });
   });
 }
