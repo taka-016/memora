@@ -165,24 +165,19 @@ class _MemberCellContent extends StatelessWidget {
     required this.lines,
     required this.availableHeight,
     required this.availableWidth,
-    this.footer,
   });
 
   final List<String> lines;
   final double availableHeight;
   final double availableWidth;
-  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
-    if (lines.isEmpty && footer == null) {
+    if (lines.isEmpty) {
       return const SizedBox.shrink();
     }
 
     final maxLines = (availableHeight / 20).floor().clamp(1, 20);
-    final labelMaxLines = footer == null
-        ? maxLines
-        : (maxLines - 1).clamp(1, 20);
 
     return SizedBox(
       width: availableWidth,
@@ -198,12 +193,11 @@ class _MemberCellContent extends StatelessWidget {
                   alignment: Alignment.topLeft,
                   child: Text(
                     lines.join('\n'),
-                    maxLines: labelMaxLines,
+                    maxLines: maxLines,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
-            if (footer case final footer?) SizedBox(height: 20, child: footer),
           ],
         ),
       ),
