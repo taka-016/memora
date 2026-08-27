@@ -666,105 +666,43 @@ void main() {
       expect(find.text('初回イベント'), findsNothing);
     });
 
-    testWidgets('旅行取得失敗を表示して対象年の取得を再試行できる', (tester) async {
+    testWidgets('旅行取得失敗時に再試行ボタンを表示しない', (tester) async {
       final currentYear = DateTime.now().year;
-      Object? exception = TestException('取得失敗');
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
           '1',
           any,
           orderBy: anyNamed('orderBy'),
         ),
-      ).thenAnswer((invocation) async {
-        final currentException = exception;
-        if (currentException != null) {
-          throw currentException;
-        }
-        final year = invocation.positionalArguments[1] as int;
-        return year == currentYear
-            ? [
-                TripEntryDto(
-                  id: 'trip-1',
-                  groupId: '1',
-                  year: year,
-                  name: '再試行後の旅行',
-                ),
-              ]
-            : <TripEntryDto>[];
-      });
+      ).thenAnswer((_) async => throw TestException('取得失敗'));
 
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
-      final retryButton = find.byKey(Key('timeline_trip_retry_$currentYear'));
-      expect(retryButton, findsOneWidget);
-
-      exception = null;
-      await tester.tap(retryButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text('再試行後の旅行'), findsOneWidget);
+      expect(find.byKey(Key('timeline_trip_retry_$currentYear')), findsNothing);
     });
 
-    testWidgets('DVC取得失敗を表示してグループの取得を再試行できる', (tester) async {
+    testWidgets('DVC取得失敗時に再試行ボタンを表示しない', (tester) async {
       final currentYear = DateTime.now().year;
-      final service = _RetryDvcPointUsageQueryService(
-        exception: TestException('取得失敗'),
-      );
+      final service = _ThrowingDvcPointUsageQueryService();
 
       await tester.pumpWidget(createTestWidget(dvcPointUsageService: service));
       await tester.pumpAndSettle();
 
-      final retryButton = find.byKey(Key('timeline_dvc_retry_$currentYear'));
-      expect(retryButton, findsOneWidget);
-
-      service
-        ..exception = null
-        ..pointUsages = [
-          DvcPointUsageDto(
-            id: 'usage-1',
-            groupId: '1',
-            usageYearMonth: DateTime(currentYear, 4),
-            usedPoint: 10,
-            memo: '再試行後のDVC',
-          ),
-        ];
-      await tester.tap(retryButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text('再試行後のDVC'), findsOneWidget);
-      expect(service.callCount, 2);
+      expect(find.byKey(Key('timeline_dvc_retry_$currentYear')), findsNothing);
     });
 
-    testWidgets('グループイベント取得失敗を表示して再試行できる', (tester) async {
+    testWidgets('グループイベント取得失敗時に再試行ボタンを表示しない', (tester) async {
       final currentYear = DateTime.now().year;
-      final service = _RetryGroupEventQueryService(
-        exception: TestException('取得失敗'),
-      );
+      final service = _ThrowingGroupEventQueryService();
 
       await tester.pumpWidget(createTestWidget(groupEventService: service));
       await tester.pumpAndSettle();
 
-      final retryButton = find.byKey(
-        Key('timeline_group_event_retry_$currentYear'),
+      expect(
+        find.byKey(Key('timeline_group_event_retry_$currentYear')),
+        findsNothing,
       );
-      expect(retryButton, findsOneWidget);
-
-      service
-        ..exception = null
-        ..groupEvents = [
-          GroupEventDto(
-            id: 'event-1',
-            groupId: '1',
-            year: currentYear,
-            memo: '再試行後のイベント',
-          ),
-        ];
-      await tester.tap(retryButton);
-      await tester.pumpAndSettle();
-
-      expect(find.text('再試行後のイベント'), findsOneWidget);
-      expect(service.callCount, 2);
     });
 
     testWidgets('メンバーイベント取得中も計算済みのメンバー情報を表示する', (tester) async {
@@ -795,12 +733,10 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('メンバーイベント取得失敗時もメンバー情報を表示して再試行できる', (tester) async {
+    testWidgets('メンバーイベント取得失敗時もメンバー情報だけを表示する', (tester) async {
       final currentYear = DateTime.now().year;
       final birthday = DateTime(currentYear - 6, 1, 1);
-      final service = _RetryMemberEventQueryService(
-        exception: TestException('取得失敗'),
-      );
+      final service = _ThrowingMemberEventQueryService();
       testGroupWithMembers = testGroupWithMembers.copyWith(
         members: [
           testGroupWithMembers.members.first.copyWith(birthday: birthday),
@@ -823,29 +759,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(retryButton, findsOneWidget);
-
-      service
-        ..exception = null
-        ..memberEvents = [
-          MemberEventDto(
-            id: 'event-1',
-            memberId: 'member1',
-            year: currentYear,
-            memo: '再試行後のメンバーイベント',
-          ),
-        ];
-      await tester.tap(retryButton);
-      await tester.pumpAndSettle();
-
-      expect(
-        find.descendant(
-          of: currentYearCell,
-          matching: find.textContaining('再試行後のメンバーイベント'),
-        ),
-        findsOneWidget,
-      );
-      expect(service.callCount, 2);
+      expect(retryButton, findsNothing);
     });
 
     testWidgets('メンバー行セルに対象年のメンバーイベントメモが固定表示の下に表示される', (
@@ -2073,25 +1987,12 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }
 }
 
-class _RetryDvcPointUsageQueryService implements DvcPointUsageQueryService {
-  _RetryDvcPointUsageQueryService({this.exception});
-
-  Object? exception;
-  List<DvcPointUsageDto> pointUsages = [];
-  int callCount = 0;
-
+class _ThrowingDvcPointUsageQueryService implements DvcPointUsageQueryService {
   @override
   Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
-  }) async {
-    callCount++;
-    final currentException = exception;
-    if (currentException != null) {
-      throw currentException;
-    }
-    return pointUsages.where((usage) => usage.groupId == groupId).toList();
-  }
+  }) async => throw TestException('取得失敗');
 }
 
 class _FakeTripEntryQueryService implements TripEntryQueryService {
@@ -2147,25 +2048,12 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
   }
 }
 
-class _RetryGroupEventQueryService implements GroupEventQueryService {
-  _RetryGroupEventQueryService({this.exception});
-
-  Object? exception;
-  List<GroupEventDto> groupEvents = [];
-  int callCount = 0;
-
+class _ThrowingGroupEventQueryService implements GroupEventQueryService {
   @override
   Future<List<GroupEventDto>> getGroupEventsByGroupId(
     String groupId, {
     List<OrderBy>? orderBy,
-  }) async {
-    callCount++;
-    final currentException = exception;
-    if (currentException != null) {
-      throw currentException;
-    }
-    return groupEvents.where((event) => event.groupId == groupId).toList();
-  }
+  }) async => throw TestException('取得失敗');
 }
 
 class _FakeMemberEventQueryService implements MemberEventQueryService {
@@ -2194,27 +2082,12 @@ class _PendingMemberEventQueryService implements MemberEventQueryService {
   }) => completer.future;
 }
 
-class _RetryMemberEventQueryService implements MemberEventQueryService {
-  _RetryMemberEventQueryService({this.exception});
-
-  Object? exception;
-  List<MemberEventDto> memberEvents = [];
-  int callCount = 0;
-
+class _ThrowingMemberEventQueryService implements MemberEventQueryService {
   @override
   Future<List<MemberEventDto>> getMemberEventsByMemberIds(
     List<String> memberIds, {
     List<OrderBy>? orderBy,
-  }) async {
-    callCount++;
-    final currentException = exception;
-    if (currentException != null) {
-      throw currentException;
-    }
-    return memberEvents
-        .where((event) => memberIds.contains(event.memberId))
-        .toList();
-  }
+  }) async => throw TestException('取得失敗');
 }
 
 class _StaticTimelineRowDefinition extends TimelineRowDefinition {
