@@ -7,7 +7,6 @@ import 'package:memora/application/usecases/group/get_group_events_usecase.dart'
 import 'package:memora/application/usecases/group/save_group_event_usecase.dart';
 import 'package:memora/presentation/features/group/group_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_load_error.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class GroupEventRow extends TimelineRowDefinition {
@@ -125,10 +124,7 @@ class _GroupEventYearCell extends HookConsumerWidget {
                 availableWidth: availableWidth,
               ),
       ),
-      error: (_, _) => TimelineRowLoadError(
-        retryButtonKey: Key('timeline_group_event_retry_$year'),
-        onRetry: () => ref.invalidate(_groupEventsByYearProvider(groupId)),
-      ),
+      error: (_, _) => const SizedBox.expand(),
       loading: () => const SizedBox.expand(),
     );
   }

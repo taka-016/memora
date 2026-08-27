@@ -10,7 +10,6 @@ import 'package:memora/application/usecases/member/save_member_event_usecase.dar
 import 'package:memora/presentation/features/member/member_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_load_error.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class MemberRow extends TimelineRowDefinition {
@@ -151,13 +150,6 @@ class _MemberYearCell extends HookConsumerWidget {
         lines: memberLabels,
         availableHeight: availableHeight,
         availableWidth: availableWidth,
-        footer: TimelineRowLoadError(
-          retryButtonKey: Key(
-            'timeline_member_event_retry_${member.memberId}_$targetYear',
-          ),
-          onRetry: () =>
-              ref.invalidate(_memberEventsByYearProvider(member.memberId)),
-        ),
       ),
       loading: () => _MemberCellContent(
         lines: memberLabels,

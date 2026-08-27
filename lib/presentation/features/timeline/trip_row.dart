@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_load_error.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_provider.dart';
@@ -78,10 +77,7 @@ class _TripYearCell extends ConsumerWidget {
             availableHeight: availableHeight,
             availableWidth: availableWidth,
           ),
-          error: (_, _) => TimelineRowLoadError(
-            retryButtonKey: Key('timeline_trip_retry_$year'),
-            onRetry: () => ref.invalidate(timelineTripEntriesProvider(query)),
-          ),
+          error: (_, _) => const SizedBox.expand(),
           loading: () => const SizedBox.expand(),
         );
   }

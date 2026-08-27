@@ -5,7 +5,6 @@ import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.da
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_row_load_error.dart';
 import 'package:memora/presentation/features/timeline/timeline_overflow_cell.dart';
 
 class DvcRow extends TimelineRowDefinition {
@@ -114,11 +113,7 @@ class _DvcYearCell extends ConsumerWidget {
         availableHeight: availableHeight,
         availableWidth: availableWidth,
       ),
-      error: (_, _) => TimelineRowLoadError(
-        retryButtonKey: Key('timeline_dvc_retry_$year'),
-        onRetry: () =>
-            ref.invalidate(timelineDvcPointUsagesByYearProvider(groupId)),
-      ),
+      error: (_, _) => const SizedBox.expand(),
       loading: () => const SizedBox.expand(),
     );
   }
