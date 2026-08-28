@@ -81,6 +81,30 @@ void main() {
 
       expect(queryService.callCount, 2);
     });
+
+    test('初回グループ取得中のアプリ復帰では重複して再取得しない', () async {
+      container
+          .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+          .reset();
+      final notifier = container.read(
+        groupTimelineRefreshNotifierProvider.notifier,
+      );
+
+      expect(await notifier.refreshOnResume(member), isFalse);
+
+      expect(queryService.callCount, 0);
+    });
+
+    test('アプリ復帰直後でも手動更新は抑制しない', () async {
+      final notifier = container.read(
+        groupTimelineRefreshNotifierProvider.notifier,
+      );
+
+      expect(await notifier.refreshOnResume(member), isTrue);
+      await notifier.refreshManually(member);
+
+      expect(queryService.callCount, 2);
+    });
   });
 }
 
