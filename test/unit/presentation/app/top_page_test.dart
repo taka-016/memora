@@ -1902,6 +1902,36 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
+    testWidgets('旅行管理画面から戻っただけでは年表の全行を再取得しない', (
+      WidgetTester tester,
+    ) async {
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => groupsWithMembers);
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('グループ1'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('scrollable_row_0')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('trip_management')), findsOneWidget);
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      verify(
+        mockGroupEventQueryService.getGroupEventsByGroupId(
+          groupsWithMembers.first.id,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(1);
+    });
+
     testWidgets('Androidの戻る操作でDVCポイント計算画面からグループ年表に戻る', (
       WidgetTester tester,
     ) async {

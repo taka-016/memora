@@ -1825,6 +1825,62 @@ void main() {
       expect(find.text('表示中の旅行'), findsOneWidget);
     });
 
+    testWidgets('年表の全行更新に失敗してもイベントとDVCの表示を維持する', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final dvcService = _RefreshFailingDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'usage-1',
+          groupId: '1',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 10,
+          memo: '表示中のDVC',
+        ),
+      ]);
+      final groupEventService = _RefreshFailingGroupEventQueryService([
+        GroupEventDto(
+          id: 'group-event-1',
+          groupId: '1',
+          year: currentYear,
+          memo: '表示中のグループイベント',
+        ),
+      ]);
+      final memberEventService = _RefreshFailingMemberEventQueryService([
+        MemberEventDto(
+          id: 'member-event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '表示中のメンバーイベント',
+        ),
+      ]);
+      RefreshTimelineCallback? capturedRefreshCallback;
+      await tester.pumpWidget(
+        createTestWidget(
+          dvcPointUsageService: dvcService,
+          groupEventService: groupEventService,
+          memberEventService: memberEventService,
+          onSetRefreshCallback: (callback) {
+            capturedRefreshCallback = callback;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('表示中のDVC'), findsOneWidget);
+      expect(find.text('表示中のグループイベント'), findsOneWidget);
+      expect(find.textContaining('表示中のメンバーイベント'), findsOneWidget);
+
+      dvcService.shouldFail = true;
+      groupEventService.shouldFail = true;
+      memberEventService.shouldFail = true;
+      await capturedRefreshCallback!();
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示中のDVC'), findsOneWidget);
+      expect(find.text('表示中のグループイベント'), findsOneWidget);
+      expect(find.textContaining('表示中のメンバーイベント'), findsOneWidget);
+    });
+
     testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
       WidgetTester tester,
     ) async {
@@ -2061,6 +2117,25 @@ class _ThrowingDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }) async => throw TestException('取得失敗');
 }
 
+class _RefreshFailingDvcPointUsageQueryService
+    implements DvcPointUsageQueryService {
+  _RefreshFailingDvcPointUsageQueryService(this.pointUsages);
+
+  final List<DvcPointUsageDto> pointUsages;
+  bool shouldFail = false;
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
+}
+
 class _FakeTripEntryQueryService implements TripEntryQueryService {
   const _FakeTripEntryQueryService(this.tripEntries);
 
@@ -2122,6 +2197,25 @@ class _ThrowingGroupEventQueryService implements GroupEventQueryService {
   }) async => throw TestException('取得失敗');
 }
 
+class _RefreshFailingGroupEventQueryService
+    implements GroupEventQueryService {
+  _RefreshFailingGroupEventQueryService(this.groupEvents);
+
+  final List<GroupEventDto> groupEvents;
+  bool shouldFail = false;
+
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return groupEvents.where((event) => event.groupId == groupId).toList();
+  }
+}
+
 class _FakeMemberEventQueryService implements MemberEventQueryService {
   const _FakeMemberEventQueryService(this.memberEvents);
 
@@ -2154,6 +2248,27 @@ class _ThrowingMemberEventQueryService implements MemberEventQueryService {
     List<String> memberIds, {
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
+}
+
+class _RefreshFailingMemberEventQueryService
+    implements MemberEventQueryService {
+  _RefreshFailingMemberEventQueryService(this.memberEvents);
+
+  final List<MemberEventDto> memberEvents;
+  bool shouldFail = false;
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return memberEvents
+        .where((event) => memberIds.contains(event.memberId))
+        .toList();
+  }
 }
 
 class _StaticTimelineRowDefinition extends TimelineRowDefinition {
