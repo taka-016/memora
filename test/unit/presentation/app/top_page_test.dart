@@ -1839,6 +1839,63 @@ void main() {
       expect(find.text('グループ1'), findsOneWidget);
     });
 
+    testWidgets('手動更新後に戻るボタンを押すと1件だけのグループ一覧へ戻る', (WidgetTester tester) async {
+      // Arrange
+      final singleGroup = [groupsWithMembers.first];
+      final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => List<GroupDto>.of(singleGroup));
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byKey(const Key('timeline_refresh_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
+    testWidgets('アプリ復帰更新後に戻るボタンを押すと1件だけのグループ一覧へ戻る', (
+      WidgetTester tester,
+    ) async {
+      // Arrange
+      final singleGroup = [groupsWithMembers.first];
+      final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
+      when(
+        mockGroupQueryService.getGroupsWithMembersByMemberId(
+          any,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => List<GroupDto>.of(singleGroup));
+
+      await tester.pumpWidget(widget);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('group_timeline')), findsOneWidget);
+
+      // Act
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byKey(const Key('group_timeline')), findsNothing);
+      expect(find.byKey(const Key('group_list')), findsOneWidget);
+    });
+
     testWidgets('Androidの戻る操作でグループ年表からグループ一覧に戻る', (WidgetTester tester) async {
       // Arrange
       final singleGroup = [groupsWithMembers.first];
