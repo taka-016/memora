@@ -259,5 +259,19 @@ void main() {
         throwsA(isA<TestException>()),
       );
     });
+
+    test('年別旅行一覧の取得例外を呼び出し元へ再送出する', () async {
+      when(
+        mockTripEntriesCollection.where(
+          'groupId',
+          isEqualTo: anyNamed('isEqualTo'),
+        ),
+      ).thenThrow(TestException('取得失敗'));
+
+      await expectLater(
+        service.getTripEntriesByGroupIdAndYear('group001', 2026),
+        throwsA(isA<TestException>()),
+      );
+    });
   });
 }

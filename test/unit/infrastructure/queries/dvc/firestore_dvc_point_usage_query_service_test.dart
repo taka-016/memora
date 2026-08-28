@@ -64,14 +64,15 @@ void main() {
       verify(mockQuery.orderBy('usageYearMonth', descending: false)).called(1);
     });
 
-    test('例外時は空リストを返す', () async {
+    test('取得例外を呼び出し元へ再送出する', () async {
       when(
         mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')),
       ).thenThrow(TestException('firestore error'));
 
-      final result = await service.getDvcPointUsagesByGroupId('group001');
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getDvcPointUsagesByGroupId('group001'),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }
