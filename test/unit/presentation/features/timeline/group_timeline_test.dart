@@ -190,6 +190,12 @@ void main() {
     });
   }
 
+  void invalidateTimelineRows(WidgetTester tester) {
+    ProviderScope.containerOf(
+      tester.element(find.byType(Timeline)),
+    ).invalidate(timelineRowsRefreshProvider);
+  }
+
   group('GroupTimeline', () {
     testWidgets('GroupTimelineウィジェットが正しく表示される', (WidgetTester tester) async {
       // Act
@@ -1689,9 +1695,7 @@ void main() {
       expect(find.text('表示中の旅行'), findsOneWidget);
 
       shouldFail = true;
-      ProviderScope.containerOf(
-        tester.element(find.byType(Timeline)),
-      ).invalidate(timelineRowsRefreshProvider);
+      invalidateTimelineRows(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('表示中の旅行'), findsOneWidget);
@@ -1739,9 +1743,7 @@ void main() {
       dvcService.shouldFail = true;
       groupEventService.shouldFail = true;
       memberEventService.shouldFail = true;
-      ProviderScope.containerOf(
-        tester.element(find.byType(Timeline)),
-      ).invalidate(timelineRowsRefreshProvider);
+      invalidateTimelineRows(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('表示中のDVC'), findsOneWidget);
@@ -1756,9 +1758,7 @@ void main() {
       await tester.pumpAndSettle();
 
       service.shouldFail = true;
-      ProviderScope.containerOf(
-        tester.element(find.byType(Timeline)),
-      ).invalidate(timelineRowsRefreshProvider);
+      invalidateTimelineRows(tester);
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
@@ -1786,9 +1786,7 @@ void main() {
       await tester.pumpAndSettle();
 
       service.shouldFail = true;
-      ProviderScope.containerOf(
-        tester.element(find.byType(Timeline)),
-      ).invalidate(timelineRowsRefreshProvider);
+      invalidateTimelineRows(tester);
       await tester.pumpAndSettle();
 
       await tester.tap(
