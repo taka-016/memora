@@ -28,6 +28,14 @@ class GroupTimelineRefreshNotifier extends Notifier<GroupTimelineRefreshState> {
   }
 
   Future<bool> refreshOnResume(MemberDto currentMember) async {
+    final groupSelectionState = ref.read(
+      groupTimelineGroupSelectionNotifierProvider,
+    );
+    if (groupSelectionState.status ==
+        GroupTimelineGroupSelectionStatus.loading) {
+      return false;
+    }
+
     final now = ref.read(appClockProvider).now();
     final lastRefreshAt = state.lastRefreshAt;
     if (lastRefreshAt != null &&
