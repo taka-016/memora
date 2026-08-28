@@ -79,7 +79,9 @@ class _MemberYearCell extends HookConsumerWidget {
     final loadedEvent = eventsByYear.value?[targetYear];
 
     useEffect(() {
-      localEvent.value = loadedEvent;
+      if (eventsByYear.hasValue) {
+        localEvent.value = loadedEvent;
+      }
       return null;
     }, [loadedEvent]);
 
@@ -147,12 +149,12 @@ class _MemberYearCell extends HookConsumerWidget {
         ),
       ),
       error: (_, _) => _MemberCellContent(
-        lines: memberLabels,
+        lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
         availableHeight: availableHeight,
         availableWidth: availableWidth,
       ),
       loading: () => _MemberCellContent(
-        lines: memberLabels,
+        lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
         availableHeight: availableHeight,
         availableWidth: availableWidth,
       ),

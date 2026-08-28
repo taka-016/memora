@@ -7,7 +7,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
@@ -33,7 +32,6 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
     final groupSelectionState = ref.watch(
       groupTimelineGroupSelectionNotifierProvider,
     );
-    final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
     final initialFocusYear = useMemoized(
       () => timelineFocusYearForLocation(
         GoRouter.of(context).state.uri.toString(),
@@ -98,12 +96,10 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             groupWithMembers: selectedGroup,
             onTripSelected: (selectedGroupId, year) {
               unawaited(
-                _openTripManagement(
-                  context: context,
+                TripManagementRoute(
                   groupId: selectedGroupId,
                   year: year,
-                  refreshTimeline: refreshTimeline,
-                ),
+                ).push<void>(context),
               );
             },
             onDvcSelected: (selectedGroupId) {
@@ -174,25 +170,10 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
                   onRefresh: () => ref
                       .read(groupTimelineRefreshNotifierProvider.notifier)
                       .refreshManually(currentMember),
-                  onSetRefreshCallback: (callback) {
-                    refreshTimeline.value = callback;
-                  },
                 ),
         ],
       ),
     );
-  }
-
-  Future<void> _openTripManagement({
-    required BuildContext context,
-    required String groupId,
-    required int year,
-    required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
-  }) async {
-    await TripManagementRoute(groupId: groupId, year: year).push<void>(context);
-    if (context.mounted) {
-      await refreshTimeline.value?.call();
-    }
   }
 
   GroupDto? _findSelectedGroup(List<GroupDto> groups, String? groupId) {
