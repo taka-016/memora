@@ -1749,6 +1749,63 @@ void main() {
       expect(find.textContaining('表示中のメンバーイベント'), findsOneWidget);
     });
 
+    testWidgets('空のグループイベント取得後に全行更新が失敗しても新規作成できる', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      final service = _RefreshFailingGroupEventQueryService(const []);
+      await tester.pumpWidget(createTestWidget(groupEventService: service));
+      await tester.pumpAndSettle();
+
+      service.shouldFail = true;
+      ProviderScope.containerOf(
+        tester.element(find.byType(Timeline)),
+      ).invalidate(timelineRowsRefreshProvider);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('group_event_edit_dialog_$currentYear')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('メンバーイベントの全行更新が失敗しても表示中のイベントを編集できる', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final service = _RefreshFailingMemberEventQueryService([
+        MemberEventDto(
+          id: 'member-event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '表示中のメンバーイベント',
+        ),
+      ]);
+      await tester.pumpWidget(createTestWidget(memberEventService: service));
+      await tester.pumpAndSettle();
+
+      service.shouldFail = true;
+      ProviderScope.containerOf(
+        tester.element(find.byType(Timeline)),
+      ).invalidate(timelineRowsRefreshProvider);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(Key('member_event_cell_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('member_event_edit_dialog_member1_$currentYear')),
+        findsOneWidget,
+      );
+      final textField = tester.widget<TextField>(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+      );
+      expect(textField.controller?.text, '表示中のメンバーイベント');
+    });
+
     testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
       WidgetTester tester,
     ) async {
