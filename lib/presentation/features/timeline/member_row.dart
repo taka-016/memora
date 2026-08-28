@@ -76,14 +76,16 @@ class _MemberYearCell extends HookConsumerWidget {
       _memberEventsByYearProvider(member.memberId),
     );
     final localEvent = useState<MemberEventDto?>(null);
+    final hasLoadedEvents = useState(false);
     final loadedEvent = eventsByYear.value?[targetYear];
 
     useEffect(() {
       if (eventsByYear.hasValue) {
         localEvent.value = loadedEvent;
+        hasLoadedEvents.value = true;
       }
       return null;
-    }, [loadedEvent]);
+    }, [loadedEvent, eventsByYear.hasValue]);
 
     final currentEvent = localEvent.value;
     final memberLabels = _buildMemberLabels(
@@ -95,8 +97,8 @@ class _MemberYearCell extends HookConsumerWidget {
       calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
     );
 
-    return eventsByYear.when(
-      data: (_) => GestureDetector(
+    Widget buildDataCell() {
+      return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () async {
           final eventAtOpen = localEvent.value;
@@ -147,17 +149,23 @@ class _MemberYearCell extends HookConsumerWidget {
           availableHeight: availableHeight,
           availableWidth: availableWidth,
         ),
-      ),
-      error: (_, _) => _MemberCellContent(
+      );
+    }
+
+    Widget buildReadOnlyCell() {
+      return _MemberCellContent(
         lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
         availableHeight: availableHeight,
         availableWidth: availableWidth,
-      ),
-      loading: () => _MemberCellContent(
-        lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
-        availableHeight: availableHeight,
-        availableWidth: availableWidth,
-      ),
+      );
+    }
+
+    return eventsByYear.when(
+      data: (_) => buildDataCell(),
+      error: (_, _) =>
+          hasLoadedEvents.value ? buildDataCell() : buildReadOnlyCell(),
+      loading: () =>
+          hasLoadedEvents.value ? buildDataCell() : buildReadOnlyCell(),
     );
   }
 }

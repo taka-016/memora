@@ -76,7 +76,7 @@ class _GroupEventYearCell extends HookConsumerWidget {
         hasLoadedEvents.value = true;
       }
       return null;
-    }, [loadedEvent]);
+    }, [loadedEvent, eventsByYear.hasValue]);
 
     final currentEvent = localEvent.value;
 
