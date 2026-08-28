@@ -126,5 +126,50 @@ void main() {
       expect(state.memberId, secondMember.id);
       expect(state.groups, [secondGroup]);
     });
+
+    test('サイレント更新成功時は取得したグループ構成へ置き換える', () async {
+      const updatedGroup = GroupDto(
+        id: 'group-1',
+        ownerId: 'member-1',
+        name: '更新後の家族',
+        members: [],
+      );
+      when(
+        queryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenAnswer((_) async => const [updatedGroup]);
+      final notifier = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      )..setLoadedGroups(memberId: member.id, groups: const [group]);
+
+      await notifier.refreshSilently(member);
+
+      final state = container.read(groupTimelineGroupSelectionNotifierProvider);
+      expect(state.status, GroupTimelineGroupSelectionStatus.loaded);
+      expect(state.groups, const [updatedGroup]);
+    });
+
+    test('サイレント更新失敗時は表示中のグループ構成を維持する', () async {
+      when(
+        queryService.getGroupsWithMembersByMemberId(
+          member.id,
+          groupsOrderBy: anyNamed('groupsOrderBy'),
+          membersOrderBy: anyNamed('membersOrderBy'),
+        ),
+      ).thenThrow(TestException('取得失敗'));
+      final notifier = container.read(
+        groupTimelineGroupSelectionNotifierProvider.notifier,
+      )..setLoadedGroups(memberId: member.id, groups: const [group]);
+
+      await notifier.refreshSilently(member);
+
+      final state = container.read(groupTimelineGroupSelectionNotifierProvider);
+      expect(state.status, GroupTimelineGroupSelectionStatus.loaded);
+      expect(state.groups, const [group]);
+      expect(state.message, isEmpty);
+    });
   });
 }
