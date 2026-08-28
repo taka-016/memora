@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_view_state.dart';
@@ -16,7 +15,6 @@ class TimelineController {
     required this.showMorePast,
     required this.showMoreFuture,
     required this.updateDisplaySettings,
-    required this.refreshTimelineRows,
     required this.onRowResizePointerDown,
     required this.onRowResizePointerMove,
     required this.onRowResizePointerUp,
@@ -29,7 +27,6 @@ class TimelineController {
   final VoidCallback showMorePast;
   final VoidCallback showMoreFuture;
   final void Function(TimelineDisplaySettings settings) updateDisplaySettings;
-  final Future<void> Function() refreshTimelineRows;
   final void Function(int rowIndex, PointerDownEvent event)
   onRowResizePointerDown;
   final void Function(int rowIndex, PointerMoveEvent event)
@@ -38,7 +35,6 @@ class TimelineController {
 
   List<double> get rowHeights => viewState.rowHeights;
   List<int> get visibleYears => viewState.visibleYears;
-  int get refreshKey => viewState.refreshKey;
 
   int yearFromColumnIndex(int columnIndex) {
     return viewState.yearFromColumnIndex(columnIndex);
@@ -51,7 +47,6 @@ TimelineController useTimelineController({
   required int totalDataRows,
   required List<double> initialRowHeights,
   required TimelineLayoutConfig layoutConfig,
-  required void Function(RefreshTimelineCallback)? onSetRefreshCallback,
   int? initialFocusYear,
 }) {
   final viewStateState = useState(
@@ -149,17 +144,6 @@ TimelineController useTimelineController({
     };
   }, [rowScrollControllers]);
 
-  Future<void> refreshTimelineRows() async {
-    viewStateState.value = viewStateState.value.refreshRows();
-  }
-
-  useEffect(() {
-    if (onSetRefreshCallback != null) {
-      onSetRefreshCallback(refreshTimelineRows);
-    }
-    return null;
-  }, [onSetRefreshCallback]);
-
   return TimelineController(
     viewState: viewState,
     displaySettings: displaySettingsState.value,
@@ -179,7 +163,6 @@ TimelineController useTimelineController({
       displaySettingsState.value = settings;
       unawaited(settings.save());
     },
-    refreshTimelineRows: refreshTimelineRows,
     onRowResizePointerDown: (rowIndex, event) {
       activeResizePointerState.value = event.pointer;
       isDraggingOnFixedRowState.value = true;

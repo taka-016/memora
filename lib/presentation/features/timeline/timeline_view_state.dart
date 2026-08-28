@@ -5,7 +5,6 @@ class TimelineViewState {
     required this.baseYear,
     required this.startYearOffset,
     required this.endYearOffset,
-    this.refreshKey = 0,
     required List<double> rowHeights,
   }) : rowHeights = List.unmodifiable(rowHeights);
 
@@ -28,7 +27,6 @@ class TimelineViewState {
         minimumYearOffset,
         maximumYearOffset,
       ),
-      refreshKey: 0,
       rowHeights:
           initialRowHeights ?? List.filled(totalDataRows, dataRowHeight),
     );
@@ -37,7 +35,6 @@ class TimelineViewState {
   final int baseYear;
   final int startYearOffset;
   final int endYearOffset;
-  final int refreshKey;
   final List<double> rowHeights;
 
   List<int> get visibleYears {
@@ -51,14 +48,12 @@ class TimelineViewState {
     int? baseYear,
     int? startYearOffset,
     int? endYearOffset,
-    int? refreshKey,
     List<double>? rowHeights,
   }) {
     return TimelineViewState(
       baseYear: baseYear ?? this.baseYear,
       startYearOffset: startYearOffset ?? this.startYearOffset,
       endYearOffset: endYearOffset ?? this.endYearOffset,
-      refreshKey: refreshKey ?? this.refreshKey,
       rowHeights: rowHeights ?? List<double>.from(this.rowHeights),
     );
   }
@@ -79,10 +74,6 @@ class TimelineViewState {
         SupportedYearRange.lastYear - baseYear,
       ),
     );
-  }
-
-  TimelineViewState refreshRows() {
-    return copyWith(refreshKey: refreshKey + 1);
   }
 
   TimelineViewState ensureRowCount({

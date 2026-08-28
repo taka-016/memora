@@ -8,6 +8,7 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
+import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
 
 void main() {
   test('現在のグループルートからIndexedStackのindexを決定する', () {
@@ -33,6 +34,22 @@ void main() {
         ),
       ),
     );
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(GroupTimelineLifecycleObserver)),
+    );
+    container
+        .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+        .setLoadedGroups(
+          memberId: 'member-1',
+          groups: const [
+            GroupDto(
+              id: 'group-1',
+              ownerId: 'member-1',
+              name: '家族',
+              members: [],
+            ),
+          ],
+        );
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);

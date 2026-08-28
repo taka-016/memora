@@ -6,12 +6,10 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/core/time/app_clock.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class Timeline extends HookConsumerWidget {
   const Timeline({
@@ -20,7 +18,6 @@ class Timeline extends HookConsumerWidget {
     required this.rowDefinitions,
     this.onBackPressed,
     this.onRefresh,
-    this.onSetRefreshCallback,
     this.initialFocusYear,
   });
 
@@ -30,7 +27,6 @@ class Timeline extends HookConsumerWidget {
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
   final Future<void> Function()? onRefresh;
-  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
   final List<TimelineRowDefinition> rowDefinitions;
   final int? initialFocusYear;
 
@@ -40,18 +36,6 @@ class Timeline extends HookConsumerWidget {
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final clock = ref.watch(appClockProvider);
-    final registerRefreshCallback = useMemoized(() {
-      final register = onSetRefreshCallback;
-      if (register == null) {
-        return null;
-      }
-      return (RefreshTimelineCallback refreshRows) {
-        register(() async {
-          ref.invalidate(timelineRowsRefreshProvider);
-          await refreshRows();
-        });
-      };
-    }, [onSetRefreshCallback]);
     final timelineController = useTimelineController(
       context: context,
       baseYear: clock.now().year,
@@ -60,7 +44,6 @@ class Timeline extends HookConsumerWidget {
           .map((definition) => definition.initialHeight)
           .toList(),
       layoutConfig: _layoutConfig,
-      onSetRefreshCallback: registerRefreshCallback,
       initialFocusYear: initialFocusYear,
     );
 

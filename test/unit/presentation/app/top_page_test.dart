@@ -1902,9 +1902,7 @@ void main() {
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
     });
 
-    testWidgets('旅行管理画面から戻っただけでは年表の全行を再取得しない', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('旅行管理画面から戻っただけでは年表の全行を再取得しない', (WidgetTester tester) async {
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,

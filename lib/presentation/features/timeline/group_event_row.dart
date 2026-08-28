@@ -132,12 +132,10 @@ class _GroupEventYearCell extends HookConsumerWidget {
 
     return eventsByYear.when(
       data: (_) => buildDataCell(),
-      error: (_, _) => hasLoadedEvents.value
-          ? buildDataCell()
-          : const SizedBox.expand(),
-      loading: () => hasLoadedEvents.value
-          ? buildDataCell()
-          : const SizedBox.expand(),
+      error: (_, _) =>
+          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
+      loading: () =>
+          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
     );
   }
 }
