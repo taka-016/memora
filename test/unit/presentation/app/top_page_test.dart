@@ -635,6 +635,16 @@ void main() {
         .first;
   }
 
+  void stubFreshGroupsWithMembers(List<GroupDto> groups) {
+    when(
+      mockGroupQueryService.getGroupsWithMembersByMemberId(
+        any,
+        groupsOrderBy: anyNamed('groupsOrderBy'),
+        membersOrderBy: anyNamed('membersOrderBy'),
+      ),
+    ).thenAnswer((_) async => List<GroupDto>.of(groups));
+  }
+
   group('TopPage', () {
     testWidgets('同じユーザーで再ログインした場合はグループ一覧を再取得する', (WidgetTester tester) async {
       const user = UserDto(
@@ -1843,13 +1853,7 @@ void main() {
       // Arrange
       final singleGroup = [groupsWithMembers.first];
       final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          any,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => List<GroupDto>.of(singleGroup));
+      stubFreshGroupsWithMembers(singleGroup);
 
       await tester.pumpWidget(widget);
       await tester.pumpAndSettle();
@@ -1872,13 +1876,7 @@ void main() {
       // Arrange
       final singleGroup = [groupsWithMembers.first];
       final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
-      when(
-        mockGroupQueryService.getGroupsWithMembersByMemberId(
-          any,
-          groupsOrderBy: anyNamed('groupsOrderBy'),
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenAnswer((_) async => List<GroupDto>.of(singleGroup));
+      stubFreshGroupsWithMembers(singleGroup);
 
       await tester.pumpWidget(widget);
       await tester.pumpAndSettle();
