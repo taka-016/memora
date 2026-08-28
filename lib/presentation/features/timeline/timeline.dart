@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -17,6 +19,7 @@ class Timeline extends HookConsumerWidget {
     required this.groupWithMembers,
     required this.rowDefinitions,
     this.onBackPressed,
+    this.onRefresh,
     this.onSetRefreshCallback,
     this.initialFocusYear,
   });
@@ -26,6 +29,7 @@ class Timeline extends HookConsumerWidget {
 
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
+  final Future<void> Function()? onRefresh;
   final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
   final List<TimelineRowDefinition> rowDefinitions;
   final int? initialFocusYear;
@@ -420,6 +424,23 @@ class Timeline extends HookConsumerWidget {
       );
     }
 
+    Widget buildRefreshButton() {
+      return Positioned(
+        right: kMinInteractiveDimension,
+        top: -4,
+        child: IconButton(
+          key: const Key('timeline_refresh_button'),
+          tooltip: '年表を更新',
+          icon: const Icon(Icons.refresh),
+          onPressed: onRefresh == null
+              ? null
+              : () {
+                  unawaited(onRefresh!());
+                },
+        ),
+      );
+    }
+
     Widget buildHeader() {
       return Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -430,6 +451,7 @@ class Timeline extends HookConsumerWidget {
               children: [
                 if (onBackPressed != null) buildBackButton(),
                 buildGroupTitle(),
+                if (onRefresh != null) buildRefreshButton(),
                 buildSettingsButton(),
               ],
             ),

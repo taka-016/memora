@@ -12,6 +12,7 @@ import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_refresh_notifier.dart';
 
 int groupTimelineStackIndex({required String? groupId}) {
   return groupId == null ? 0 : 1;
@@ -138,41 +139,47 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return IndexedStack(
-      index: groupTimelineStackIndex(groupId: groupId),
-      children: [
-        _buildGroupSelection(
-          state: groupSelectionState,
-          onGroupSelected: (group) {
-            GroupTimelineRoute(groupId: group.id).go(context);
-          },
-          onRetry: () {
-            unawaited(
-              ref
-                  .read(groupTimelineGroupSelectionNotifierProvider.notifier)
-                  .load(currentMember),
-            );
-          },
-        ),
-        selectedGroup == null
-            ? const SizedBox.shrink()
-            : Timeline(
-                key: ValueKey(selectedGroup.id),
-                groupWithMembers: selectedGroup,
-                rowDefinitions: rowDefinitions,
-                initialFocusYear: initialFocusYear,
-                onBackPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    const GroupListRoute().go(context);
-                  }
-                },
-                onSetRefreshCallback: (callback) {
-                  refreshTimeline.value = callback;
-                },
-              ),
-      ],
+    return GroupTimelineLifecycleObserver(
+      currentMember: currentMember,
+      child: IndexedStack(
+        index: groupTimelineStackIndex(groupId: groupId),
+        children: [
+          _buildGroupSelection(
+            state: groupSelectionState,
+            onGroupSelected: (group) {
+              GroupTimelineRoute(groupId: group.id).go(context);
+            },
+            onRetry: () {
+              unawaited(
+                ref
+                    .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                    .load(currentMember),
+              );
+            },
+          ),
+          selectedGroup == null
+              ? const SizedBox.shrink()
+              : Timeline(
+                  key: ValueKey(selectedGroup.id),
+                  groupWithMembers: selectedGroup,
+                  rowDefinitions: rowDefinitions,
+                  initialFocusYear: initialFocusYear,
+                  onBackPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      const GroupListRoute().go(context);
+                    }
+                  },
+                  onRefresh: () => ref
+                      .read(groupTimelineRefreshNotifierProvider.notifier)
+                      .refreshManually(currentMember),
+                  onSetRefreshCallback: (callback) {
+                    refreshTimeline.value = callback;
+                  },
+                ),
+        ],
+      ),
     );
   }
 
@@ -247,6 +254,54 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           ],
         );
     }
+  }
+}
+
+class GroupTimelineLifecycleObserver extends ConsumerStatefulWidget {
+  const GroupTimelineLifecycleObserver({
+    super.key,
+    required this.currentMember,
+    required this.child,
+  });
+
+  final MemberDto currentMember;
+  final Widget child;
+
+  @override
+  ConsumerState<GroupTimelineLifecycleObserver> createState() =>
+      _GroupTimelineLifecycleObserverState();
+}
+
+class _GroupTimelineLifecycleObserverState
+    extends ConsumerState<GroupTimelineLifecycleObserver>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    unawaited(
+      ref
+          .read(groupTimelineRefreshNotifierProvider.notifier)
+          .refreshOnResume(widget.currentMember),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 
