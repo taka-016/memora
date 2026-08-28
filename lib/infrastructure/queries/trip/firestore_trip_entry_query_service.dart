@@ -173,7 +173,7 @@ class FirestoreTripEntryQueryService implements TripEntryQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }

@@ -135,7 +135,7 @@ void main() {
       );
     });
 
-    test('例外時は空リストを返す', () async {
+    test('取得例外を呼び出し元へ再送出する', () async {
       when(
         mockCollection.where(
           'memberId',
@@ -143,11 +143,10 @@ void main() {
         ),
       ).thenThrow(TestException('firestore error'));
 
-      final result = await service.getMemberEventsByMemberIds(const [
-        'member001',
-      ]);
-
-      expect(result, isEmpty);
+      await expectLater(
+        service.getMemberEventsByMemberIds(const ['member001']),
+        throwsA(isA<TestException>()),
+      );
     });
   });
 }

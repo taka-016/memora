@@ -7,10 +7,10 @@ import 'package:memora/application/usecases/member/calculate_school_grade_usecas
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
 import 'package:memora/application/usecases/member/get_member_events_usecase.dart';
 import 'package:memora/application/usecases/member/save_member_event_usecase.dart';
-import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/member/member_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class MemberRow extends TimelineRowDefinition {
   const MemberRow({required this.member, required this.initialHeight});
@@ -39,7 +39,6 @@ class MemberRow extends TimelineRowDefinition {
     return _MemberYearCell(
       member: member,
       targetYear: year,
-      refreshKey: rowContext.controller.refreshKey,
       displaySettings: rowContext.controller.displaySettings,
       availableHeight: rowContext.rowHeight,
       availableWidth: rowContext.layoutConfig.yearColumnWidth,
@@ -48,28 +47,18 @@ class MemberRow extends TimelineRowDefinition {
 }
 
 final _memberEventsByYearProvider = FutureProvider.autoDispose
-    .family<Map<int, MemberEventDto>, _MemberEventsQuery>((ref, query) async {
-      try {
-        final getMemberEventsUsecase = ref.watch(
-          getMemberEventsUsecaseProvider,
-        );
-        final events = await getMemberEventsUsecase.execute([query.memberId]);
-        return {for (final event in events) event.year: event};
-      } catch (e, stack) {
-        logger.e(
-          'MemberRow.loadMemberEvents: ${e.toString()}',
-          error: e,
-          stackTrace: stack,
-        );
-        return {};
-      }
-    });
+    .family<Map<int, MemberEventDto>, String>((ref, memberId) async {
+      ref.watch(timelineRowsRefreshProvider);
+      final events = await ref.watch(getMemberEventsUsecaseProvider).execute([
+        memberId,
+      ]);
+      return {for (final event in events) event.year: event};
+    }, retry: (_, _) => null);
 
 class _MemberYearCell extends HookConsumerWidget {
   const _MemberYearCell({
     required this.member,
     required this.targetYear,
-    required this.refreshKey,
     required this.displaySettings,
     required this.availableHeight,
     required this.availableWidth,
@@ -77,18 +66,15 @@ class _MemberYearCell extends HookConsumerWidget {
 
   final GroupMemberDto member;
   final int targetYear;
-  final int refreshKey;
   final TimelineDisplaySettings displaySettings;
   final double availableHeight;
   final double availableWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final query = _MemberEventsQuery(
-      memberId: member.memberId,
-      refreshKey: refreshKey,
+    final eventsByYear = ref.watch(
+      _memberEventsByYearProvider(member.memberId),
     );
-    final eventsByYear = ref.watch(_memberEventsByYearProvider(query));
     final localEvent = useState<MemberEventDto?>(null);
     final loadedEvent = eventsByYear.value?[targetYear];
 
@@ -98,60 +84,75 @@ class _MemberYearCell extends HookConsumerWidget {
     }, [loadedEvent]);
 
     final currentEvent = localEvent.value;
-    final lines = [
-      ..._buildMemberLabels(
-        birthday: member.birthday,
-        gender: member.gender,
-        targetYear: targetYear,
-        displaySettings: displaySettings,
-        calculateSchoolGrade: ref.read(calculateSchoolGradeUsecaseProvider),
-        calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
-      ),
-      ..._buildMemoLabels(currentEvent?.memo),
-    ];
+    final memberLabels = _buildMemberLabels(
+      birthday: member.birthday,
+      gender: member.gender,
+      targetYear: targetYear,
+      displaySettings: displaySettings,
+      calculateSchoolGrade: ref.read(calculateSchoolGradeUsecaseProvider),
+      calculateYakudoshi: ref.read(calculateYakudoshiUsecaseProvider),
+    );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () async {
-        final eventAtOpen = localEvent.value;
-        await showMemberEventEditModal(
-          context: context,
-          memberId: member.memberId,
-          memberName: member.displayName,
-          selectedYear: targetYear,
-          initialMemo: eventAtOpen?.memo ?? '',
-          onSave: (memo) async {
-            if (memo.isEmpty) {
-              await ref
-                  .read(saveMemberEventUsecaseProvider)
-                  .execute(
-                    MemberEventDto(
-                      id: eventAtOpen?.id ?? '',
-                      memberId: member.memberId,
-                      year: targetYear,
-                      memo: '',
-                    ),
-                  );
-              localEvent.value = null;
-            } else {
-              final savedEvent = await ref
-                  .read(saveMemberEventUsecaseProvider)
-                  .execute(
-                    MemberEventDto(
-                      id: eventAtOpen?.id ?? '',
-                      memberId: member.memberId,
-                      year: targetYear,
-                      memo: memo,
-                    ),
-                  );
-              localEvent.value = savedEvent;
-            }
-            ref.invalidate(_memberEventsByYearProvider(query));
-          },
-        );
-      },
-      child: _MemberCellLabels(
-        lines: lines,
+    return eventsByYear.when(
+      data: (_) => GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () async {
+          final eventAtOpen = localEvent.value;
+          await showMemberEventEditModal(
+            context: context,
+            memberId: member.memberId,
+            memberName: member.displayName,
+            selectedYear: targetYear,
+            initialMemo: eventAtOpen?.memo ?? '',
+            onSave: (memo) async {
+              if (memo.isEmpty) {
+                await ref
+                    .read(saveMemberEventUsecaseProvider)
+                    .execute(
+                      MemberEventDto(
+                        id: eventAtOpen?.id ?? '',
+                        memberId: member.memberId,
+                        year: targetYear,
+                        memo: '',
+                      ),
+                    );
+                if (!context.mounted) {
+                  return;
+                }
+                localEvent.value = null;
+              } else {
+                final savedEvent = await ref
+                    .read(saveMemberEventUsecaseProvider)
+                    .execute(
+                      MemberEventDto(
+                        id: eventAtOpen?.id ?? '',
+                        memberId: member.memberId,
+                        year: targetYear,
+                        memo: memo,
+                      ),
+                    );
+                if (!context.mounted) {
+                  return;
+                }
+                localEvent.value = savedEvent;
+              }
+              ref.invalidate(_memberEventsByYearProvider(member.memberId));
+            },
+          );
+        },
+        child: _MemberCellContent(
+          lines: [...memberLabels, ..._buildMemoLabels(currentEvent?.memo)],
+          availableHeight: availableHeight,
+          availableWidth: availableWidth,
+        ),
+      ),
+      error: (_, _) => _MemberCellContent(
+        lines: memberLabels,
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+      ),
+      loading: () => _MemberCellContent(
+        lines: memberLabels,
         availableHeight: availableHeight,
         availableWidth: availableWidth,
       ),
@@ -159,8 +160,8 @@ class _MemberYearCell extends HookConsumerWidget {
   }
 }
 
-class _MemberCellLabels extends StatelessWidget {
-  const _MemberCellLabels({
+class _MemberCellContent extends StatelessWidget {
+  const _MemberCellContent({
     required this.lines,
     required this.availableHeight,
     required this.availableWidth,
@@ -183,31 +184,25 @@ class _MemberCellLabels extends StatelessWidget {
       height: availableHeight,
       child: Padding(
         padding: const EdgeInsets.all(8),
-        child: Text(
-          lines.join('\n'),
-          maxLines: maxLines,
-          overflow: TextOverflow.ellipsis,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (lines.isNotEmpty)
+              Flexible(
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Text(
+                    lines.join('\n'),
+                    maxLines: maxLines,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
-}
-
-class _MemberEventsQuery {
-  const _MemberEventsQuery({required this.memberId, required this.refreshKey});
-
-  final String memberId;
-  final int refreshKey;
-
-  @override
-  bool operator ==(Object other) {
-    return other is _MemberEventsQuery &&
-        other.memberId == memberId &&
-        other.refreshKey == refreshKey;
-  }
-
-  @override
-  int get hashCode => Object.hash(memberId, refreshKey);
 }
 
 List<String> _buildMemberLabels({

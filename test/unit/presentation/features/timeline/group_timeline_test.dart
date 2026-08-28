@@ -666,6 +666,102 @@ void main() {
       expect(find.text('初回イベント'), findsNothing);
     });
 
+    testWidgets('旅行取得失敗時に再試行ボタンを表示しない', (tester) async {
+      final currentYear = DateTime.now().year;
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((_) async => throw TestException('取得失敗'));
+
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(Key('timeline_trip_retry_$currentYear')), findsNothing);
+    });
+
+    testWidgets('DVC取得失敗時に再試行ボタンを表示しない', (tester) async {
+      final currentYear = DateTime.now().year;
+      final service = _ThrowingDvcPointUsageQueryService();
+
+      await tester.pumpWidget(createTestWidget(dvcPointUsageService: service));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(Key('timeline_dvc_retry_$currentYear')), findsNothing);
+    });
+
+    testWidgets('グループイベント取得失敗時に再試行ボタンを表示しない', (tester) async {
+      final currentYear = DateTime.now().year;
+      final service = _ThrowingGroupEventQueryService();
+
+      await tester.pumpWidget(createTestWidget(groupEventService: service));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('timeline_group_event_retry_$currentYear')),
+        findsNothing,
+      );
+    });
+
+    testWidgets('メンバーイベント取得中も計算済みのメンバー情報を表示する', (tester) async {
+      final currentYear = DateTime.now().year;
+      final birthday = DateTime(currentYear - 6, 1, 1);
+      final service = _PendingMemberEventQueryService();
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
+      );
+
+      await tester.pumpWidget(createTestWidget(memberEventService: service));
+      await tester.pump();
+
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('${currentYear - birthday.year}歳'),
+        ),
+        findsOneWidget,
+      );
+
+      service.completer.complete([]);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('メンバーイベント取得失敗時もメンバー情報だけを表示する', (tester) async {
+      final currentYear = DateTime.now().year;
+      final birthday = DateTime(currentYear - 6, 1, 1);
+      final service = _ThrowingMemberEventQueryService();
+      testGroupWithMembers = testGroupWithMembers.copyWith(
+        members: [
+          testGroupWithMembers.members.first.copyWith(birthday: birthday),
+        ],
+      );
+
+      await tester.pumpWidget(createTestWidget(memberEventService: service));
+      await tester.pumpAndSettle();
+
+      final currentYearCell = find.byKey(
+        Key('member_event_cell_member1_$currentYear'),
+      );
+      final retryButton = find.byKey(
+        Key('timeline_member_event_retry_member1_$currentYear'),
+      );
+      expect(
+        find.descendant(
+          of: currentYearCell,
+          matching: find.textContaining('${currentYear - birthday.year}歳'),
+        ),
+        findsOneWidget,
+      );
+      expect(retryButton, findsNothing);
+    });
+
     testWidgets('メンバー行セルに対象年のメンバーイベントメモが固定表示の下に表示される', (
       WidgetTester tester,
     ) async {
@@ -1891,6 +1987,14 @@ class _FakeDvcPointUsageQueryService implements DvcPointUsageQueryService {
   }
 }
 
+class _ThrowingDvcPointUsageQueryService implements DvcPointUsageQueryService {
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => throw TestException('取得失敗');
+}
+
 class _FakeTripEntryQueryService implements TripEntryQueryService {
   const _FakeTripEntryQueryService(this.tripEntries);
 
@@ -1944,6 +2048,14 @@ class _FakeGroupEventQueryService implements GroupEventQueryService {
   }
 }
 
+class _ThrowingGroupEventQueryService implements GroupEventQueryService {
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => throw TestException('取得失敗');
+}
+
 class _FakeMemberEventQueryService implements MemberEventQueryService {
   const _FakeMemberEventQueryService(this.memberEvents);
 
@@ -1958,6 +2070,24 @@ class _FakeMemberEventQueryService implements MemberEventQueryService {
         .where((event) => memberIds.contains(event.memberId))
         .toList();
   }
+}
+
+class _PendingMemberEventQueryService implements MemberEventQueryService {
+  final completer = Completer<List<MemberEventDto>>();
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) => completer.future;
+}
+
+class _ThrowingMemberEventQueryService implements MemberEventQueryService {
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) async => throw TestException('取得失敗');
 }
 
 class _StaticTimelineRowDefinition extends TimelineRowDefinition {

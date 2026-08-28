@@ -37,7 +37,7 @@ class FirestoreDvcPointUsageQueryService implements DvcPointUsageQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }

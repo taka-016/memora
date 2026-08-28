@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/usecases/dvc/delete_dvc_point_usage_usecase.dart';
 import 'package:memora/application/usecases/dvc/save_dvc_point_usage_usecase.dart';
-import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_refresh_provider.dart';
+import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';
 
 final dvcPointUsageMutationCoordinatorProvider =
     Provider<DvcPointUsageMutationCoordinator>((ref) {
@@ -16,7 +16,7 @@ final dvcPointUsageMutationCoordinatorProvider =
               .execute(pointUsageId);
         },
         onDvcPointUsagesChanged: () {
-          ref.invalidate(timelineDvcPointUsagesRefreshProvider);
+          ref.invalidate(timelineDvcPointUsagesByYearProvider);
         },
       );
     });

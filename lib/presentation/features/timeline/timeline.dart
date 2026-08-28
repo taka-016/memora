@@ -9,6 +9,7 @@ import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class Timeline extends HookConsumerWidget {
   const Timeline({
@@ -35,6 +36,18 @@ class Timeline extends HookConsumerWidget {
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final clock = ref.watch(appClockProvider);
+    final registerRefreshCallback = useMemoized(() {
+      final register = onSetRefreshCallback;
+      if (register == null) {
+        return null;
+      }
+      return (RefreshTimelineCallback refreshRows) {
+        register(() async {
+          ref.invalidate(timelineRowsRefreshProvider);
+          await refreshRows();
+        });
+      };
+    }, [onSetRefreshCallback]);
     final timelineController = useTimelineController(
       context: context,
       baseYear: clock.now().year,
@@ -43,7 +56,7 @@ class Timeline extends HookConsumerWidget {
           .map((definition) => definition.initialHeight)
           .toList(),
       layoutConfig: _layoutConfig,
-      onSetRefreshCallback: onSetRefreshCallback,
+      onSetRefreshCallback: registerRefreshCallback,
       initialFocusYear: initialFocusYear,
     );
 
