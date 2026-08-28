@@ -38,12 +38,12 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       ),
       const [],
     );
-    final autoSelectedGroups = useState<List<GroupDto>?>(null);
+    final autoSelectedGroupId = useState<String?>(null);
     final isAutoSelectingGroup =
         groupSelectionState.status ==
             GroupTimelineGroupSelectionStatus.loaded &&
         groupSelectionState.groups.length == 1 &&
-        autoSelectedGroups.value != groupSelectionState.groups &&
+        autoSelectedGroupId.value != groupSelectionState.groups.single.id &&
         groupId == null &&
         GoRouter.of(context).state.matchedLocation ==
             const GroupListRoute().location;
@@ -56,7 +56,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             GroupTimelineRoute(groupId: groups.single.id).go(context);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                autoSelectedGroups.value = groups;
+                autoSelectedGroupId.value = groups.single.id;
               }
             });
           }
