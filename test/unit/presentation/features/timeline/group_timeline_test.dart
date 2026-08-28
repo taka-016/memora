@@ -87,6 +87,7 @@ void main() {
     GroupEventRepository? groupEventRepo,
     MemberEventRepository? memberEventRepo,
     VoidCallback? onBackPressed,
+    Future<void> Function()? onRefresh,
     void Function(RefreshTimelineCallback)? onSetRefreshCallback,
     void Function(String groupId, int year)? onTripSelected,
     ValueChanged<String>? onDvcSelected,
@@ -130,6 +131,7 @@ void main() {
             child: Timeline(
               groupWithMembers: effectiveGroupWithMembers,
               onBackPressed: onBackPressed,
+              onRefresh: onRefresh,
               onSetRefreshCallback: onSetRefreshCallback,
               rowDefinitions: effectiveRowDefinitions,
             ),
@@ -1575,6 +1577,25 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
+    testWidgets('手動更新ボタンをタップすると更新コールバックが呼ばれる', (
+      WidgetTester tester,
+    ) async {
+      var refreshCount = 0;
+      await tester.pumpWidget(
+        createTestWidget(
+          onRefresh: () async {
+            refreshCount++;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('timeline_refresh_button')));
+      await tester.pumpAndSettle();
+
+      expect(refreshCount, 1);
+    });
+
     testWidgets('旅行セルをタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
       (String, int)? selectedTrip;
@@ -1757,6 +1778,51 @@ void main() {
 
       expect(find.text('再取得旅行'), findsOneWidget);
       expect(find.text('初回旅行'), findsNothing);
+    });
+
+    testWidgets('年表の全行更新に失敗しても表示中の旅行を維持する', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      var shouldFail = false;
+      RefreshTimelineCallback? capturedRefreshCallback;
+
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) async {
+        final year = invocation.positionalArguments[1] as int;
+        if (year != currentYear) {
+          return <TripEntryDto>[];
+        }
+        if (shouldFail) {
+          throw TestException('取得失敗');
+        }
+        return [
+          TripEntryDto(
+            id: 'trip-1',
+            groupId: '1',
+            year: currentYear,
+            name: '表示中の旅行',
+          ),
+        ];
+      });
+      await tester.pumpWidget(
+        createTestWidget(
+          onSetRefreshCallback: (callback) {
+            capturedRefreshCallback = callback;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('表示中の旅行'), findsOneWidget);
+
+      shouldFail = true;
+      await capturedRefreshCallback!();
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示中の旅行'), findsOneWidget);
     });
 
     testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
