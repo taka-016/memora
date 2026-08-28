@@ -46,7 +46,7 @@ class FirestoreMemberEventQueryService implements MemberEventQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 

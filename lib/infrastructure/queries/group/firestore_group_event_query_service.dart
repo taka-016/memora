@@ -37,7 +37,7 @@ class FirestoreGroupEventQueryService implements GroupEventQueryService {
         error: e,
         stackTrace: stack,
       );
-      return [];
+      rethrow;
     }
   }
 }
