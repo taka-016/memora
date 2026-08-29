@@ -53,24 +53,38 @@ void main() {
     });
 
     testWidgets('文字サイズを拡大しても検索とグループ選択を操作できる', (tester) async {
+      var groupSelectorTapped = false;
+
       await tester.pumpWidget(
         _createApp(
-          const MediaQuery(
-            data: MediaQueryData(textScaler: TextScaler.linear(2)),
+          MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
             child: GoogleMapView(
-              locations: [],
+              locations: const [],
               topLeadingOverlay: SizedBox(
-                key: Key('test_group_selector'),
-                width: 120,
-                height: 32,
+                width: 160,
+                child: TextButton(
+                  key: const Key('test_group_selector'),
+                  onPressed: () {
+                    groupSelectorTapped = true;
+                  },
+                  child: const Text('グループを選択'),
+                ),
               ),
             ),
           ),
         ),
       );
 
-      expect(find.byType(TextField), findsOneWidget);
-      expect(find.byKey(const Key('test_group_selector')), findsOneWidget);
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
+
+      expect(tester.testTextInput.isVisible, isTrue);
+
+      await tester.tap(find.byKey(const Key('test_group_selector')));
+      await tester.pump();
+
+      expect(groupSelectorTapped, isTrue);
       expect(tester.takeException(), isNull);
     });
 
