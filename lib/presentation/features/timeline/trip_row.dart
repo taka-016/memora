@@ -26,6 +26,9 @@ class TripRow extends TimelineRowDefinition {
   Color get backgroundColor => Colors.lightBlue.shade50;
 
   @override
+  Key yearCellKey(int year) => Key('trip_cell_$year');
+
+  @override
   Widget buildYearCell(
     BuildContext context,
     TimelineRowContext rowContext,
