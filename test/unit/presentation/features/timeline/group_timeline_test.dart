@@ -1238,6 +1238,46 @@ void main() {
       }
     });
 
+    testWidgets('過去年を追加して取得に失敗しても別の年の旅行を表示しない', (WidgetTester tester) async {
+      setCustomViewSize(tester, const Size(1200, 800));
+      final currentYear = DateTime.now().year;
+      final initialOldestYear = currentYear - 5;
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) async {
+        final year = invocation.positionalArguments[1] as int;
+        if (year < initialOldestYear) {
+          throw TestException('取得失敗');
+        }
+        if (year == initialOldestYear) {
+          return [
+            TripEntryDto(
+              id: 'oldest-trip',
+              groupId: '1',
+              year: year,
+              name: '追加前の最古年旅行',
+            ),
+          ];
+        }
+        return <TripEntryDto>[];
+      });
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      expect(find.text('追加前の最古年旅行'), findsOneWidget);
+
+      final showMorePastButton = tester.widget<TextButton>(
+        find.byKey(const Key('show_more_past')),
+      );
+      showMorePastButton.onPressed!();
+      await tester.pumpAndSettle();
+
+      expect(find.text('追加前の最古年旅行'), findsOneWidget);
+    });
+
     testWidgets('末尾の「さらに表示する」ボタンをタップすると、さらに未来5年分が表示される', (
       WidgetTester tester,
     ) async {
