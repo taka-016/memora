@@ -81,10 +81,10 @@ echo "MEMORA_APP_MODE=${app_mode}"
 run_step "Test" dart pub global run very_good_cli:very_good test "$@"
 
 TEST_COUNT="$(extract_test_count)"
-ELAPSED_SECONDS=$((SECONDS - CHECK_STARTED_AT))
+echo "テスト実施件数: ${TEST_COUNT}件"
 
 echo "✅ All checks passed!"
 echo "Stdout log: $STDOUT_LOG"
 echo "Stderr log: $STDERR_LOG"
-echo "テスト実施件数: ${TEST_COUNT}件"
+ELAPSED_SECONDS=$((SECONDS - CHECK_STARTED_AT))
 echo "所要時間: $(format_duration "$ELAPSED_SECONDS")"
