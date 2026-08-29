@@ -7,11 +7,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/group_timeline_refresh_notifier.dart';
 
 int groupTimelineStackIndex({required String? groupId}) {
   return groupId == null ? 0 : 1;
@@ -32,19 +32,18 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
     final groupSelectionState = ref.watch(
       groupTimelineGroupSelectionNotifierProvider,
     );
-    final refreshTimeline = useRef<RefreshTimelineCallback?>(null);
     final initialFocusYear = useMemoized(
       () => timelineFocusYearForLocation(
         GoRouter.of(context).state.uri.toString(),
       ),
       const [],
     );
-    final autoSelectedGroups = useState<List<GroupDto>?>(null);
+    final autoSelectedGroupId = useState<String?>(null);
     final isAutoSelectingGroup =
         groupSelectionState.status ==
             GroupTimelineGroupSelectionStatus.loaded &&
         groupSelectionState.groups.length == 1 &&
-        autoSelectedGroups.value != groupSelectionState.groups &&
+        autoSelectedGroupId.value != groupSelectionState.groups.single.id &&
         groupId == null &&
         GoRouter.of(context).state.matchedLocation ==
             const GroupListRoute().location;
@@ -57,7 +56,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             GroupTimelineRoute(groupId: groups.single.id).go(context);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (context.mounted) {
-                autoSelectedGroups.value = groups;
+                autoSelectedGroupId.value = groups.single.id;
               }
             });
           }
@@ -97,12 +96,10 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             groupWithMembers: selectedGroup,
             onTripSelected: (selectedGroupId, year) {
               unawaited(
-                _openTripManagement(
-                  context: context,
+                TripManagementRoute(
                   groupId: selectedGroupId,
                   year: year,
-                  refreshTimeline: refreshTimeline,
-                ),
+                ).push<void>(context),
               );
             },
             onDvcSelected: (selectedGroupId) {
@@ -138,54 +135,45 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return IndexedStack(
-      index: groupTimelineStackIndex(groupId: groupId),
-      children: [
-        _buildGroupSelection(
-          state: groupSelectionState,
-          onGroupSelected: (group) {
-            GroupTimelineRoute(groupId: group.id).go(context);
-          },
-          onRetry: () {
-            unawaited(
-              ref
-                  .read(groupTimelineGroupSelectionNotifierProvider.notifier)
-                  .load(currentMember),
-            );
-          },
-        ),
-        selectedGroup == null
-            ? const SizedBox.shrink()
-            : Timeline(
-                key: ValueKey(selectedGroup.id),
-                groupWithMembers: selectedGroup,
-                rowDefinitions: rowDefinitions,
-                initialFocusYear: initialFocusYear,
-                onBackPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    const GroupListRoute().go(context);
-                  }
-                },
-                onSetRefreshCallback: (callback) {
-                  refreshTimeline.value = callback;
-                },
-              ),
-      ],
+    return GroupTimelineLifecycleObserver(
+      currentMember: currentMember,
+      child: IndexedStack(
+        index: groupTimelineStackIndex(groupId: groupId),
+        children: [
+          _buildGroupSelection(
+            state: groupSelectionState,
+            onGroupSelected: (group) {
+              GroupTimelineRoute(groupId: group.id).go(context);
+            },
+            onRetry: () {
+              unawaited(
+                ref
+                    .read(groupTimelineGroupSelectionNotifierProvider.notifier)
+                    .load(currentMember),
+              );
+            },
+          ),
+          selectedGroup == null
+              ? const SizedBox.shrink()
+              : Timeline(
+                  key: ValueKey(selectedGroup.id),
+                  groupWithMembers: selectedGroup,
+                  rowDefinitions: rowDefinitions,
+                  initialFocusYear: initialFocusYear,
+                  onBackPressed: () {
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      const GroupListRoute().go(context);
+                    }
+                  },
+                  onRefresh: () => ref
+                      .read(groupTimelineRefreshNotifierProvider.notifier)
+                      .refreshManually(currentMember),
+                ),
+        ],
+      ),
     );
-  }
-
-  Future<void> _openTripManagement({
-    required BuildContext context,
-    required String groupId,
-    required int year,
-    required ObjectRef<RefreshTimelineCallback?> refreshTimeline,
-  }) async {
-    await TripManagementRoute(groupId: groupId, year: year).push<void>(context);
-    if (context.mounted) {
-      await refreshTimeline.value?.call();
-    }
   }
 
   GroupDto? _findSelectedGroup(List<GroupDto> groups, String? groupId) {
@@ -247,6 +235,54 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           ],
         );
     }
+  }
+}
+
+class GroupTimelineLifecycleObserver extends ConsumerStatefulWidget {
+  const GroupTimelineLifecycleObserver({
+    super.key,
+    required this.currentMember,
+    required this.child,
+  });
+
+  final MemberDto currentMember;
+  final Widget child;
+
+  @override
+  ConsumerState<GroupTimelineLifecycleObserver> createState() =>
+      _GroupTimelineLifecycleObserverState();
+}
+
+class _GroupTimelineLifecycleObserverState
+    extends ConsumerState<GroupTimelineLifecycleObserver>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      return;
+    }
+    unawaited(
+      ref
+          .read(groupTimelineRefreshNotifierProvider.notifier)
+          .refreshOnResume(widget.currentMember),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
 

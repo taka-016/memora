@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
@@ -23,6 +24,9 @@ class TripRow extends TimelineRowDefinition {
 
   @override
   Color get backgroundColor => Colors.lightBlue.shade50;
+
+  @override
+  Key yearCellKey(int year) => Key('trip_cell_$year');
 
   @override
   Widget buildYearCell(
@@ -53,7 +57,7 @@ class TripRow extends TimelineRowDefinition {
   }
 }
 
-class _TripYearCell extends ConsumerWidget {
+class _TripYearCell extends HookConsumerWidget {
   const _TripYearCell({
     required this.groupId,
     required this.year,
@@ -69,17 +73,30 @@ class _TripYearCell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final query = TimelineTripEntriesQuery(groupId: groupId, year: year);
-    return ref
-        .watch(timelineTripEntriesProvider(query))
-        .when(
-          data: (trips) => TripCell(
-            trips: trips,
-            availableHeight: availableHeight,
-            availableWidth: availableWidth,
-          ),
-          error: (_, _) => const SizedBox.expand(),
-          loading: () => const SizedBox.expand(),
-        );
+    final trips = ref.watch(timelineTripEntriesProvider(query));
+    final lastLoadedTrips = useState(const <TripEntryDto>[]);
+    final loadedTrips = trips.value;
+
+    useEffect(() {
+      if (trips.hasValue) {
+        lastLoadedTrips.value = loadedTrips ?? const [];
+      }
+      return null;
+    }, [loadedTrips]);
+
+    Widget buildCell(List<TripEntryDto> values) {
+      return TripCell(
+        trips: values,
+        availableHeight: availableHeight,
+        availableWidth: availableWidth,
+      );
+    }
+
+    return trips.when(
+      data: buildCell,
+      error: (_, _) => buildCell(lastLoadedTrips.value),
+      loading: () => buildCell(lastLoadedTrips.value),
+    );
   }
 }
 

@@ -26,10 +26,10 @@ import 'package:mockito/annotations.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../helpers/test_exception.dart';
@@ -87,7 +87,7 @@ void main() {
     GroupEventRepository? groupEventRepo,
     MemberEventRepository? memberEventRepo,
     VoidCallback? onBackPressed,
-    void Function(RefreshTimelineCallback)? onSetRefreshCallback,
+    Future<void> Function()? onRefresh,
     void Function(String groupId, int year)? onTripSelected,
     ValueChanged<String>? onDvcSelected,
     List<TimelineRowDefinition>? rowDefinitions,
@@ -130,7 +130,7 @@ void main() {
             child: Timeline(
               groupWithMembers: effectiveGroupWithMembers,
               onBackPressed: onBackPressed,
-              onSetRefreshCallback: onSetRefreshCallback,
+              onRefresh: onRefresh,
               rowDefinitions: effectiveRowDefinitions,
             ),
           ),
@@ -148,7 +148,6 @@ void main() {
     MemberEventQueryService? memberEventService,
     GroupEventRepository? groupEventRepo,
     MemberEventRepository? memberEventRepo,
-    void Function(RefreshTimelineCallback)? onSetRefreshCallback,
   }) {
     return ProviderScope(
       overrides: [
@@ -176,7 +175,6 @@ void main() {
           body: _TimelineControllerProbe(
             groupWithMembers: groupWithMembers,
             onBuilt: onBuilt,
-            onSetRefreshCallback: onSetRefreshCallback,
           ),
         ),
       ),
@@ -190,6 +188,18 @@ void main() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
     });
+  }
+
+  void invalidateTimelineRows(WidgetTester tester) {
+    ProviderScope.containerOf(
+      tester.element(find.byType(Timeline)),
+    ).invalidate(timelineRowsRefreshProvider);
+  }
+
+  void showMorePastYears(WidgetTester tester) {
+    tester
+        .widget<TextButton>(find.byKey(const Key('show_more_past')))
+        .onPressed!();
   }
 
   group('GroupTimeline', () {
@@ -221,6 +231,7 @@ void main() {
         createTestWidget(
           groupWithMembers: testGroupWithMembers.copyWith(name: longGroupName),
           onBackPressed: () {},
+          onRefresh: () async {},
         ),
       );
       await tester.pumpAndSettle();
@@ -232,14 +243,14 @@ void main() {
       final backButtonRect = tester.getRect(
         find.byKey(const Key('back_button')),
       );
-      final settingsButtonRect = tester.getRect(
-        find.byKey(const Key('timeline_settings_button')),
+      final refreshButtonRect = tester.getRect(
+        find.byKey(const Key('timeline_refresh_button')),
       );
 
       expect(title.maxLines, 1);
       expect(title.overflow, TextOverflow.ellipsis);
       expect(titleRect.left, greaterThanOrEqualTo(backButtonRect.right));
-      expect(titleRect.right, lessThanOrEqualTo(settingsButtonRect.left));
+      expect(titleRect.right, lessThanOrEqualTo(refreshButtonRect.left));
     });
 
     testWidgets('右上に設定アイコンが表示される', (WidgetTester tester) async {
@@ -1220,10 +1231,7 @@ void main() {
       expect(find.textContaining('${currentYear - 10}年'), findsNothing);
 
       // Act - 先頭の「さらに表示」ボタンの機能を呼び出し
-      final showMorePastButton = tester.widget<TextButton>(
-        find.byKey(const Key('show_more_past')),
-      );
-      showMorePastButton.onPressed!();
+      showMorePastYears(tester);
       await tester.pumpAndSettle();
 
       // Assert - さらに過去5年分が表示される
@@ -1231,6 +1239,43 @@ void main() {
         final year = currentYear + i;
         expect(find.textContaining('$year年'), findsOneWidget);
       }
+    });
+
+    testWidgets('過去年を追加して取得に失敗しても別の年の旅行を表示しない', (WidgetTester tester) async {
+      setCustomViewSize(tester, const Size(1200, 800));
+      final currentYear = DateTime.now().year;
+      final initialOldestYear = currentYear - 5;
+      when(
+        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
+          '1',
+          any,
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).thenAnswer((invocation) async {
+        final year = invocation.positionalArguments[1] as int;
+        if (year < initialOldestYear) {
+          throw TestException('取得失敗');
+        }
+        if (year == initialOldestYear) {
+          return [
+            TripEntryDto(
+              id: 'oldest-trip',
+              groupId: '1',
+              year: year,
+              name: '追加前の最古年旅行',
+            ),
+          ];
+        }
+        return <TripEntryDto>[];
+      });
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      expect(find.text('追加前の最古年旅行'), findsOneWidget);
+
+      showMorePastYears(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('追加前の最古年旅行'), findsOneWidget);
     });
 
     testWidgets('末尾の「さらに表示する」ボタンをタップすると、さらに未来5年分が表示される', (
@@ -1575,6 +1620,23 @@ void main() {
       expect(callbackCalled, isTrue);
     });
 
+    testWidgets('手動更新ボタンをタップすると更新コールバックが呼ばれる', (WidgetTester tester) async {
+      var refreshCount = 0;
+      await tester.pumpWidget(
+        createTestWidget(
+          onRefresh: () async {
+            refreshCount++;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('timeline_refresh_button')));
+      await tester.pumpAndSettle();
+
+      expect(refreshCount, 1);
+    });
+
     testWidgets('旅行セルをタップすると遷移要求が通知される', (WidgetTester tester) async {
       // Arrange
       (String, int)? selectedTrip;
@@ -1642,79 +1704,9 @@ void main() {
       expect(find.textContaining('$currentYear/12'), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('onSetRefreshCallbackが設定された場合、リフレッシュコールバックが呼ばれる', (
-      WidgetTester tester,
-    ) async {
-      // Arrange
-      RefreshTimelineCallback? capturedCallback;
-
-      // Act
-      await tester.pumpWidget(
-        createTestWidget(
-          onSetRefreshCallback: (callback) {
-            capturedCallback = callback;
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Assert - コールバックが設定されることを確認
-      expect(capturedCallback, isNotNull);
-    });
-
-    testWidgets('リフレッシュコールバックは行更新キーだけを進める', (WidgetTester tester) async {
-      RefreshTimelineCallback? capturedCallback;
-      final capturedControllers = <TimelineController>[];
-
-      await tester.pumpWidget(
-        createControllerProbeWidget(
-          groupWithMembers: testGroupWithMembers,
-          onBuilt: capturedControllers.add,
-          onSetRefreshCallback: (callback) {
-            capturedCallback = callback;
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(capturedCallback, isNotNull);
-      expect(capturedControllers.last.refreshKey, 0);
-
-      await capturedCallback!();
-      await tester.pumpAndSettle();
-
-      expect(capturedControllers.last.refreshKey, 1);
-    });
-
-    testWidgets('年範囲変更時にonSetRefreshCallbackを再登録しない', (
-      WidgetTester tester,
-    ) async {
-      var callbackSetCount = 0;
-
-      await tester.pumpWidget(
-        createTestWidget(
-          onSetRefreshCallback: (_) {
-            callbackSetCount++;
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(callbackSetCount, 1);
-
-      final showMoreFutureButton = tester.widget<TextButton>(
-        find.byKey(const Key('show_more_future')),
-      );
-      showMoreFutureButton.onPressed!.call();
-      await tester.pumpAndSettle();
-
-      expect(callbackSetCount, 1);
-    });
-
-    testWidgets('リフレッシュコールバック後に旅行行が再取得される', (WidgetTester tester) async {
+    testWidgets('年表の全行更新に失敗しても表示中の旅行を維持する', (WidgetTester tester) async {
       final currentYear = DateTime.now().year;
-      var refreshCount = 0;
-      RefreshTimelineCallback? capturedRefreshCallback;
+      var shouldFail = false;
 
       when(
         mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
@@ -1722,41 +1714,135 @@ void main() {
           any,
           orderBy: anyNamed('orderBy'),
         ),
-      ).thenAnswer((invocation) {
+      ).thenAnswer((invocation) async {
         final year = invocation.positionalArguments[1] as int;
         if (year != currentYear) {
-          return Future.value(<TripEntryDto>[]);
+          return <TripEntryDto>[];
         }
-
-        refreshCount++;
-        return Future.value([
+        if (shouldFail) {
+          throw TestException('取得失敗');
+        }
+        return [
           TripEntryDto(
-            id: 'trip_$refreshCount',
+            id: 'trip-1',
             groupId: '1',
             year: currentYear,
-            name: refreshCount == 1 ? '初回旅行' : '再取得旅行',
-            startDate: DateTime(currentYear, 1, 1),
+            name: '表示中の旅行',
           ),
-        ]);
+        ];
       });
+      await tester.pumpWidget(createTestWidget());
+      await tester.pumpAndSettle();
+      expect(find.text('表示中の旅行'), findsOneWidget);
 
+      shouldFail = true;
+      invalidateTimelineRows(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('表示中の旅行'), findsOneWidget);
+    });
+
+    testWidgets('年表の全行更新に失敗してもイベントとDVCの表示を維持する', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      final dvcService = _RefreshFailingDvcPointUsageQueryService([
+        DvcPointUsageDto(
+          id: 'usage-1',
+          groupId: '1',
+          usageYearMonth: DateTime(currentYear, 4),
+          usedPoint: 10,
+          memo: '表示中のDVC',
+        ),
+      ]);
+      final groupEventService = _RefreshFailingGroupEventQueryService([
+        GroupEventDto(
+          id: 'group-event-1',
+          groupId: '1',
+          year: currentYear,
+          memo: '表示中のグループイベント',
+        ),
+      ]);
+      final memberEventService = _RefreshFailingMemberEventQueryService([
+        MemberEventDto(
+          id: 'member-event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '表示中のメンバーイベント',
+        ),
+      ]);
       await tester.pumpWidget(
         createTestWidget(
-          onSetRefreshCallback: (callback) {
-            capturedRefreshCallback = callback;
-          },
+          dvcPointUsageService: dvcService,
+          groupEventService: groupEventService,
+          memberEventService: memberEventService,
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.text('表示中のDVC'), findsOneWidget);
+      expect(find.text('表示中のグループイベント'), findsOneWidget);
+      expect(find.textContaining('表示中のメンバーイベント'), findsOneWidget);
 
-      expect(find.text('初回旅行'), findsOneWidget);
-      expect(capturedRefreshCallback, isNotNull);
-
-      await capturedRefreshCallback!();
+      dvcService.shouldFail = true;
+      groupEventService.shouldFail = true;
+      memberEventService.shouldFail = true;
+      invalidateTimelineRows(tester);
       await tester.pumpAndSettle();
 
-      expect(find.text('再取得旅行'), findsOneWidget);
-      expect(find.text('初回旅行'), findsNothing);
+      expect(find.text('表示中のDVC'), findsOneWidget);
+      expect(find.text('表示中のグループイベント'), findsOneWidget);
+      expect(find.textContaining('表示中のメンバーイベント'), findsOneWidget);
+    });
+
+    testWidgets('空のグループイベント取得後に全行更新が失敗しても新規作成できる', (WidgetTester tester) async {
+      final currentYear = DateTime.now().year;
+      final service = _RefreshFailingGroupEventQueryService(const []);
+      await tester.pumpWidget(createTestWidget(groupEventService: service));
+      await tester.pumpAndSettle();
+
+      service.shouldFail = true;
+      invalidateTimelineRows(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(Key('group_event_cell_$currentYear')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('group_event_edit_dialog_$currentYear')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('メンバーイベントの全行更新が失敗しても表示中のイベントを編集できる', (
+      WidgetTester tester,
+    ) async {
+      final currentYear = DateTime.now().year;
+      final service = _RefreshFailingMemberEventQueryService([
+        MemberEventDto(
+          id: 'member-event-1',
+          memberId: 'member1',
+          year: currentYear,
+          memo: '表示中のメンバーイベント',
+        ),
+      ]);
+      await tester.pumpWidget(createTestWidget(memberEventService: service));
+      await tester.pumpAndSettle();
+
+      service.shouldFail = true;
+      invalidateTimelineRows(tester);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(Key('member_event_cell_member1_$currentYear')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(Key('member_event_edit_dialog_member1_$currentYear')),
+        findsOneWidget,
+      );
+      final textField = tester.widget<TextField>(
+        find.byKey(Key('member_event_edit_field_member1_$currentYear')),
+      );
+      expect(textField.controller?.text, '表示中のメンバーイベント');
     });
 
     testWidgets('グループ切り替え時は旧グループの旅行取得結果を引き継がず新グループを再取得する', (
@@ -1942,12 +2028,10 @@ class _TimelineControllerProbe extends StatelessWidget {
   const _TimelineControllerProbe({
     required this.groupWithMembers,
     required this.onBuilt,
-    this.onSetRefreshCallback,
   });
 
   final GroupDto groupWithMembers;
   final void Function(TimelineController controller) onBuilt;
-  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
 
   @override
   Widget build(BuildContext context) {
@@ -1964,7 +2048,6 @@ class _TimelineControllerProbe extends StatelessWidget {
             TimelineLayoutConfig.defaults.dataRowHeight,
           ),
           layoutConfig: TimelineLayoutConfig.defaults,
-          onSetRefreshCallback: onSetRefreshCallback,
         );
         onBuilt(controller);
         return const SizedBox.shrink();
@@ -1993,6 +2076,25 @@ class _ThrowingDvcPointUsageQueryService implements DvcPointUsageQueryService {
     String groupId, {
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
+}
+
+class _RefreshFailingDvcPointUsageQueryService
+    implements DvcPointUsageQueryService {
+  _RefreshFailingDvcPointUsageQueryService(this.pointUsages);
+
+  final List<DvcPointUsageDto> pointUsages;
+  bool shouldFail = false;
+
+  @override
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return pointUsages.where((usage) => usage.groupId == groupId).toList();
+  }
 }
 
 class _FakeTripEntryQueryService implements TripEntryQueryService {
@@ -2056,6 +2158,24 @@ class _ThrowingGroupEventQueryService implements GroupEventQueryService {
   }) async => throw TestException('取得失敗');
 }
 
+class _RefreshFailingGroupEventQueryService implements GroupEventQueryService {
+  _RefreshFailingGroupEventQueryService(this.groupEvents);
+
+  final List<GroupEventDto> groupEvents;
+  bool shouldFail = false;
+
+  @override
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return groupEvents.where((event) => event.groupId == groupId).toList();
+  }
+}
+
 class _FakeMemberEventQueryService implements MemberEventQueryService {
   const _FakeMemberEventQueryService(this.memberEvents);
 
@@ -2088,6 +2208,27 @@ class _ThrowingMemberEventQueryService implements MemberEventQueryService {
     List<String> memberIds, {
     List<OrderBy>? orderBy,
   }) async => throw TestException('取得失敗');
+}
+
+class _RefreshFailingMemberEventQueryService
+    implements MemberEventQueryService {
+  _RefreshFailingMemberEventQueryService(this.memberEvents);
+
+  final List<MemberEventDto> memberEvents;
+  bool shouldFail = false;
+
+  @override
+  Future<List<MemberEventDto>> getMemberEventsByMemberIds(
+    List<String> memberIds, {
+    List<OrderBy>? orderBy,
+  }) async {
+    if (shouldFail) {
+      throw TestException('取得失敗');
+    }
+    return memberEvents
+        .where((event) => memberIds.contains(event.memberId))
+        .toList();
+  }
 }
 
 class _StaticTimelineRowDefinition extends TimelineRowDefinition {

@@ -1,15 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/core/formatters/japanese_era_formatter.dart';
 import 'package:memora/core/time/app_clock.dart';
-import 'package:memora/presentation/features/timeline/refresh_timeline_callback.dart';
 import 'package:memora/presentation/features/timeline/timeline_controller.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_layout_config.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
-import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 class Timeline extends HookConsumerWidget {
   const Timeline({
@@ -17,7 +17,7 @@ class Timeline extends HookConsumerWidget {
     required this.groupWithMembers,
     required this.rowDefinitions,
     this.onBackPressed,
-    this.onSetRefreshCallback,
+    this.onRefresh,
     this.initialFocusYear,
   });
 
@@ -26,7 +26,7 @@ class Timeline extends HookConsumerWidget {
 
   final GroupDto groupWithMembers;
   final VoidCallback? onBackPressed;
-  final void Function(RefreshTimelineCallback)? onSetRefreshCallback;
+  final Future<void> Function()? onRefresh;
   final List<TimelineRowDefinition> rowDefinitions;
   final int? initialFocusYear;
 
@@ -36,18 +36,9 @@ class Timeline extends HookConsumerWidget {
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final clock = ref.watch(appClockProvider);
-    final registerRefreshCallback = useMemoized(() {
-      final register = onSetRefreshCallback;
-      if (register == null) {
-        return null;
-      }
-      return (RefreshTimelineCallback refreshRows) {
-        register(() async {
-          ref.invalidate(timelineRowsRefreshProvider);
-          await refreshRows();
-        });
-      };
-    }, [onSetRefreshCallback]);
+    final groupTitleEndPadding =
+        kMinInteractiveDimension +
+        (onRefresh == null ? 0 : kMinInteractiveDimension);
     final timelineController = useTimelineController(
       context: context,
       baseYear: clock.now().year,
@@ -56,7 +47,6 @@ class Timeline extends HookConsumerWidget {
           .map((definition) => definition.initialHeight)
           .toList(),
       layoutConfig: _layoutConfig,
-      onSetRefreshCallback: registerRefreshCallback,
       initialFocusYear: initialFocusYear,
     );
 
@@ -394,8 +384,9 @@ class Timeline extends HookConsumerWidget {
 
     Widget buildGroupTitle() {
       return Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: kMinInteractiveDimension,
+        padding: EdgeInsets.only(
+          left: kMinInteractiveDimension,
+          right: groupTitleEndPadding,
         ),
         child: Center(
           child: Text(
@@ -420,6 +411,23 @@ class Timeline extends HookConsumerWidget {
       );
     }
 
+    Widget buildRefreshButton() {
+      return Positioned(
+        right: kMinInteractiveDimension,
+        top: -4,
+        child: IconButton(
+          key: const Key('timeline_refresh_button'),
+          tooltip: '年表を更新',
+          icon: const Icon(Icons.refresh),
+          onPressed: onRefresh == null
+              ? null
+              : () {
+                  unawaited(onRefresh!());
+                },
+        ),
+      );
+    }
+
     Widget buildHeader() {
       return Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -430,6 +438,7 @@ class Timeline extends HookConsumerWidget {
               children: [
                 if (onBackPressed != null) buildBackButton(),
                 buildGroupTitle(),
+                if (onRefresh != null) buildRefreshButton(),
                 buildSettingsButton(),
               ],
             ),

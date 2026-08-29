@@ -73,6 +73,33 @@ class GroupTimelineGroupSelectionNotifier
     }
   }
 
+  Future<void> refreshSilently(MemberDto currentMember) async {
+    final requestGeneration = ++_requestGeneration;
+
+    try {
+      final groups = await ref
+          .read(getGroupsWithMembersUsecaseProvider)
+          .execute(currentMember);
+      if (requestGeneration != _requestGeneration) {
+        return;
+      }
+      state = GroupTimelineGroupSelectionState(
+        status: GroupTimelineGroupSelectionStatus.loaded,
+        memberId: currentMember.id,
+        groups: groups,
+      );
+    } catch (e, stack) {
+      if (requestGeneration != _requestGeneration) {
+        return;
+      }
+      logger.e(
+        'GroupTimelineGroupSelectionNotifier.refreshSilently: ${e.toString()}',
+        error: e,
+        stackTrace: stack,
+      );
+    }
+  }
+
   void setLoadedGroups({
     required String memberId,
     required List<GroupDto> groups,

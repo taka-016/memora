@@ -67,17 +67,21 @@ class _GroupEventYearCell extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsByYear = ref.watch(_groupEventsByYearProvider(groupId));
     final localEvent = useState<GroupEventDto?>(null);
+    final hasLoadedEvents = useState(false);
     final loadedEvent = eventsByYear.value?[year];
 
     useEffect(() {
-      localEvent.value = loadedEvent;
+      if (eventsByYear.hasValue) {
+        localEvent.value = loadedEvent;
+        hasLoadedEvents.value = true;
+      }
       return null;
-    }, [loadedEvent]);
+    }, [loadedEvent, eventsByYear.hasValue]);
 
     final currentEvent = localEvent.value;
 
-    return eventsByYear.when(
-      data: (_) => GestureDetector(
+    Widget buildDataCell() {
+      return GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () async {
           final eventAtOpen = localEvent.value;
@@ -123,9 +127,15 @@ class _GroupEventYearCell extends HookConsumerWidget {
                 availableHeight: availableHeight,
                 availableWidth: availableWidth,
               ),
-      ),
-      error: (_, _) => const SizedBox.expand(),
-      loading: () => const SizedBox.expand(),
+      );
+    }
+
+    return eventsByYear.when(
+      data: (_) => buildDataCell(),
+      error: (_, _) =>
+          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
+      loading: () =>
+          hasLoadedEvents.value ? buildDataCell() : const SizedBox.expand(),
     );
   }
 }

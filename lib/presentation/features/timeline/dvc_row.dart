@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_detail_modal.dart';
@@ -87,7 +88,7 @@ class DvcRow extends TimelineRowDefinition {
   }
 }
 
-class _DvcYearCell extends ConsumerWidget {
+class _DvcYearCell extends HookConsumerWidget {
   const _DvcYearCell({
     required this.groupId,
     required this.year,
@@ -105,16 +106,31 @@ class _DvcYearCell extends ConsumerWidget {
     final usagesByYear = ref.watch(
       timelineDvcPointUsagesByYearProvider(groupId),
     );
+    final lastLoadedUsagesByYear = useState(
+      const <int, List<DvcPointUsageDto>>{},
+    );
+    final loadedUsagesByYear = usagesByYear.value;
 
-    return usagesByYear.when(
-      data: (values) => _DvcDataCell(
+    useEffect(() {
+      if (usagesByYear.hasValue) {
+        lastLoadedUsagesByYear.value = loadedUsagesByYear ?? const {};
+      }
+      return null;
+    }, [loadedUsagesByYear]);
+
+    Widget buildDataCell(Map<int, List<DvcPointUsageDto>> values) {
+      return _DvcDataCell(
         year: year,
         usages: values[year] ?? const [],
         availableHeight: availableHeight,
         availableWidth: availableWidth,
-      ),
-      error: (_, _) => const SizedBox.expand(),
-      loading: () => const SizedBox.expand(),
+      );
+    }
+
+    return usagesByYear.when(
+      data: buildDataCell,
+      error: (_, _) => buildDataCell(lastLoadedUsagesByYear.value),
+      loading: () => buildDataCell(lastLoadedUsagesByYear.value),
     );
   }
 }
