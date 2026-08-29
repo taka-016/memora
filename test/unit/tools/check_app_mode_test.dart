@@ -36,8 +36,16 @@ void main() {
 
     for (final command in ['dart', 'flutter']) {
       final stub = File('${testProject.path}/bin/$command');
+      final testResultOutput = command == 'dart'
+          ? '''
+if [[ "\$*" == "pub global run very_good_cli:very_good test"* ]]; then
+  printf '00:01 +12: All tests passed!\n'
+fi
+'''
+          : '';
       stub.writeAsStringSync('''#!/usr/bin/env bash
 printf '$command %s\\n' "\$*" >> "\$MEMORA_TEST_COMMAND_LOG"
+$testResultOutput
 ''');
       Process.runSync('chmod', ['+x', stub.path]);
     }
@@ -67,5 +75,14 @@ printf '$command %s\\n' "\$*" >> "\$MEMORA_TEST_COMMAND_LOG"
     expect(result.exitCode, isNot(0));
     expect(result.stderr, contains('MEMORA_APP_MODE'));
     expect(commandLog.existsSync(), isFalse);
+  });
+
+  test('成功時はテスト実施件数と所要時間を最後に表示する', () {
+    final result = runCheckScript([]);
+    final stdout = result.stdout as String;
+
+    expect(result.exitCode, 0, reason: result.stderr as String);
+    expect(stdout, contains('テスト実施件数: 12件'));
+    expect(stdout.trim(), matches(RegExp(r'所要時間: \d+分\d+秒$')));
   });
 }
