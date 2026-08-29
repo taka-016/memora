@@ -230,22 +230,36 @@ void main() {
       // Arrange
       setCustomViewSize(tester, const Size(400, 800));
       const longGroupName = 'とても長いグループ名とても長いグループ名とても長いグループ名';
+      var backCount = 0;
+      var refreshCount = 0;
 
       // Act
       await tester.pumpWidget(
         createTestWidget(
           groupWithMembers: testGroupWithMembers.copyWith(name: longGroupName),
-          onBackPressed: () {},
-          onRefresh: () async {},
+          onBackPressed: () {
+            backCount++;
+          },
+          onRefresh: () async {
+            refreshCount++;
+          },
         ),
       );
       await tester.pumpAndSettle();
 
       // Assert
       final titleFinder = find.text(longGroupName);
-      expect(titleFinder, findsOneWidget);
-      expect(find.byKey(const Key('back_button')), findsOneWidget);
-      expect(find.byKey(const Key('timeline_refresh_button')), findsOneWidget);
+      final title = tester.widget<Text>(titleFinder);
+      expect(title.maxLines, 1);
+      expect(title.overflow, TextOverflow.ellipsis);
+
+      await tester.tap(find.byKey(const Key('back_button')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('timeline_refresh_button')));
+      await tester.pump();
+
+      expect(backCount, 1);
+      expect(refreshCount, 1);
       expect(tester.takeException(), isNull);
     });
 

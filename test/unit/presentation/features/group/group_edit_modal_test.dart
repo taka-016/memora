@@ -646,7 +646,9 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(find.text(longName), findsOneWidget);
+      final nameText = tester.widget<Text>(find.text(longName));
+      expect(nameText.maxLines, 1);
+      expect(nameText.overflow, TextOverflow.ellipsis);
       expect(tester.takeException(), isNull);
     });
 

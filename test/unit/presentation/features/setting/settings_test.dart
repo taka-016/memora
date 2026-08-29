@@ -66,13 +66,20 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
       const longGroupName = 'とても長いグループ名とても長いグループ名とても長いグループ名';
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
         _buildTestApp(
-          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          storage: storage,
           groups: const [
             GroupDto(
               id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+            GroupDto(
+              id: 'group-b',
               ownerId: 'owner',
               name: longGroupName,
               members: [],
@@ -82,12 +89,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(longGroupName), findsOneWidget);
+      expect(_selectedDropdownValue(tester), 'group-a');
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(longGroupName).last);
+      await tester.pumpAndSettle();
 
-      expect(find.text(longGroupName), findsWidgets);
+      expect(_selectedDropdownValue(tester), 'group-b');
+      expect(storage.targetGroupId, 'group-b');
       expect(tester.takeException(), isNull);
     });
 
