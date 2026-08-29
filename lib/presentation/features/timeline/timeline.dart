@@ -36,6 +36,9 @@ class Timeline extends HookConsumerWidget {
     final borderColor = Theme.of(context).colorScheme.outlineVariant;
     final dataTableKey = useMemoized(() => GlobalKey(), []);
     final clock = ref.watch(appClockProvider);
+    final groupTitleEndPadding =
+        kMinInteractiveDimension +
+        (onRefresh == null ? 0 : kMinInteractiveDimension);
     final timelineController = useTimelineController(
       context: context,
       baseYear: clock.now().year,
@@ -383,7 +386,7 @@ class Timeline extends HookConsumerWidget {
       return Padding(
         padding: EdgeInsets.only(
           left: kMinInteractiveDimension,
-          right: kMinInteractiveDimension * (onRefresh == null ? 1 : 2),
+          right: groupTitleEndPadding,
         ),
         child: Center(
           child: Text(
