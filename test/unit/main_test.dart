@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/services/auth_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -155,14 +154,6 @@ void main() {
       await tester.pump();
 
       expect(clock.syncCount, 1);
-    });
-  });
-
-  group('Firestore設定', () {
-    test('main関数でFirestoreのローカルキャッシュが無効化されること', () {
-      // 設定オブジェクトの動作確認
-      const settings = Settings(persistenceEnabled: false);
-      expect(settings.persistenceEnabled, false);
     });
   });
 }
