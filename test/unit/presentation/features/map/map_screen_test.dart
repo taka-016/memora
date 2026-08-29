@@ -132,9 +132,14 @@ void main() {
       await tester.pumpAndSettle();
 
       final mapRect = tester.getRect(find.byKey(const Key('map_view')));
+      final scaffoldRect = tester.getRect(find.byType(Scaffold));
 
-      expect(mapRect.top, 0);
-      expect(mapRect.bottom, 552);
+      expect(mapRect.top, scaffoldRect.top);
+      expect(
+        mapRect.bottom,
+        scaffoldRect.bottom - tester.view.viewPadding.bottom,
+      );
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('所属グループが2件以上の場合は選択後に対象グループの地図を表示する', (tester) async {

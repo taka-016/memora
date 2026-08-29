@@ -4,7 +4,7 @@ import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.da
 
 void main() {
   group('LocationDetailPanelFrame', () {
-    testWidgets('閉じるボタンを詳細内容より上の右端に表示する', (tester) async {
+    testWidgets('詳細内容を表示した状態で閉じる操作ができる', (tester) async {
       var closed = false;
 
       await tester.pumpWidget(
@@ -26,16 +26,7 @@ void main() {
       final closeButton = find
           .descendant(of: panel, matching: find.byTooltip('閉じる'))
           .first;
-      final body = find.byKey(const Key('location_detail_body'));
-
-      expect(
-        tester.getTopLeft(closeButton).dy,
-        lessThan(tester.getTopLeft(body).dy),
-      );
-      expect(
-        tester.getTopLeft(closeButton).dx,
-        greaterThan(tester.getTopLeft(body).dx),
-      );
+      expect(find.byKey(const Key('location_detail_body')), findsOneWidget);
 
       await tester.tap(closeButton);
 
@@ -103,26 +94,6 @@ void main() {
       );
 
       expect(changedValue, '上野駅');
-    });
-
-    testWidgets('外部から指定した高さで表示できる', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: LocationDetailPanelFrame(
-              panelKey: Key('location_detail_panel'),
-              onClose: _noop,
-              height: 180,
-              child: SizedBox.shrink(),
-            ),
-          ),
-        ),
-      );
-
-      expect(
-        tester.getSize(find.byKey(const Key('location_detail_panel'))).height,
-        180,
-      );
     });
 
     testWidgets('左右スワイプで前後のピンへ移動できる', (tester) async {

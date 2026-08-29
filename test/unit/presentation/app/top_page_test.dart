@@ -22,6 +22,7 @@ import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
@@ -223,6 +224,8 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   LocationQueryService,
 ])
 void main() {
+  final fixedNow = DateTime(2026, 5, 15);
+
   late MockGroupQueryService mockGroupQueryService;
   late MockGroupEventQueryService mockGroupEventQueryService;
   late MockMemberEventQueryService mockMemberEventQueryService;
@@ -518,6 +521,7 @@ void main() {
         FakeCurrentMemberNotifier.loaded(currentMember ?? defaultMember);
 
     return [
+      appClockProvider.overrideWithValue(FixedAppClock(fixedNow)),
       authNotifierProvider.overrideWith(
         () => authNotifier ?? FakeAuthNotifier.authenticated(),
       ),
@@ -800,7 +804,7 @@ void main() {
 
     testWidgets('ウィジェットの対象年が範囲外なら年表の過去側端を表示する', (WidgetTester tester) async {
       final singleGroup = [groupsWithMembers.first];
-      final targetYear = DateTime.now().year - 20;
+      final targetYear = fixedNow.year - 20;
       final trip = TripEntryDto(
         id: 'trip-1',
         groupId: singleGroup.first.id,
@@ -840,7 +844,7 @@ void main() {
 
       expect(find.byKey(const Key('group_timeline')), findsOneWidget);
       expect(find.textContaining('$targetYear年'), findsNothing);
-      expect(find.textContaining('${DateTime.now().year}年'), findsOneWidget);
+      expect(find.textContaining('${fixedNow.year}年'), findsOneWidget);
 
       final horizontalScrollView = findTimelineHorizontalScrollView();
       final scrollController = tester
@@ -854,7 +858,7 @@ void main() {
       unawaited(
         TripManagementRoute(
           groupId: trip.groupId,
-          year: DateTime.now().year,
+          year: fixedNow.year,
         ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
       );
       await tester.pumpAndSettle();
@@ -882,7 +886,7 @@ void main() {
       unawaited(
         TripManagementRoute(
           groupId: singleGroup.single.id,
-          year: DateTime.now().year - 1,
+          year: fixedNow.year - 1,
         ).push<void>(tester.element(find.byKey(const Key('group_timeline')))),
       );
       await tester.pumpAndSettle();

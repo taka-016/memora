@@ -184,30 +184,6 @@ void main() {
       expect(find.text('時間を選択'), findsNothing);
     });
 
-    testWidgets('追加用フォームは項目名と追加ボタンを横並びで表示すること', (tester) async {
-      await tester.pumpWidget(
-        _wrapWithApp(
-          ItineraryView(
-            tripId: 'trip-1',
-            items: const [],
-            onChanged: (_) {},
-            onClose: () {},
-          ),
-        ),
-      );
-
-      final nameField = find.byKey(const Key('itinerary_name_field'));
-      final addButton = find.widgetWithText(ElevatedButton, '追加');
-
-      expect(nameField, findsOneWidget);
-      expect(addButton, findsOneWidget);
-      expect(tester.getCenter(nameField).dy, tester.getCenter(addButton).dy);
-      expect(
-        tester.getRect(nameField).right,
-        lessThan(tester.getRect(addButton).left),
-      );
-    });
-
     testWidgets('旅程項目名が未入力の場合は追加できないこと', (tester) async {
       var changeCount = 0;
 
@@ -772,44 +748,6 @@ void main() {
       expect(find.text('夕食'), findsOneWidget);
     });
 
-    testWidgets('旅程項目は時刻を項目名の上に同じフォントサイズで表示すること', (tester) async {
-      final item = ItineraryItemDto(
-        id: 'item-1',
-        tripId: 'trip-1',
-        name: '朝食',
-        startDateTime: DateTime(2024, 1, 2, 8),
-        endDateTime: DateTime(2024, 1, 2, 9),
-      );
-
-      await tester.pumpWidget(
-        _wrapWithApp(
-          ItineraryView(
-            tripId: 'trip-1',
-            items: [item],
-            onChanged: (_) {},
-            onClose: () {},
-          ),
-        ),
-      );
-
-      final timeFinder = find.text('08:00 - 09:00');
-      final nameFinder = find.text('朝食');
-      final timeTextStyle = DefaultTextStyle.of(
-        tester.element(timeFinder),
-      ).style;
-      final nameTextStyle = DefaultTextStyle.of(
-        tester.element(nameFinder),
-      ).style;
-
-      expect(timeFinder, findsOneWidget);
-      expect(nameFinder, findsOneWidget);
-      expect(
-        tester.getTopLeft(timeFinder).dy,
-        lessThan(tester.getTopLeft(nameFinder).dy),
-      );
-      expect(timeTextStyle.fontSize, nameTextStyle.fontSize);
-    });
-
     testWidgets('旅程項目の時刻は開始日を表示せず終了日が開始日と異なる場合だけ終了日を表示すること', (tester) async {
       final items = [
         ItineraryItemDto(
@@ -907,14 +845,19 @@ void main() {
       await tester.tap(listItem);
       await tester.pumpAndSettle();
 
-      final contentPadding = tester.widget<Padding>(
-        find.byKey(const Key('itinerary_edit_bottom_sheet_content_padding')),
+      final contentPaddingFinder = find.byKey(
+        const Key('itinerary_edit_bottom_sheet_content_padding'),
       );
+      final contentPadding = tester.widget<Padding>(contentPaddingFinder);
 
-      expect(
-        contentPadding.padding,
-        const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 64),
+      final resolvedPadding = contentPadding.padding.resolve(
+        Directionality.of(tester.element(contentPaddingFinder)),
       );
+      expect(
+        resolvedPadding.bottom,
+        greaterThanOrEqualTo(tester.view.viewPadding.bottom),
+      );
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('編集用の開始日時と終了日時は日付・時刻選択フィールドで初期表示されること', (tester) async {

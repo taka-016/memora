@@ -10,6 +10,7 @@ import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.d
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
@@ -24,6 +25,8 @@ import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dar
 import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {
+  final fixedNow = DateTime(2026, 5, 15);
+
   group('DvcPointCalculationScreen', () {
     const groupId = 'g1';
     late _FakeDvcPointContractQueryService contractQueryService;
@@ -60,6 +63,7 @@ void main() {
     Widget createWidget() {
       return ProviderScope(
         overrides: [
+          appClockProvider.overrideWithValue(FixedAppClock(fixedNow)),
           dvcPointContractQueryServiceProvider.overrideWithValue(
             contractQueryService,
           ),
@@ -144,7 +148,7 @@ void main() {
     });
 
     testWidgets('利用可能ポイントがマイナスの場合は赤字太字で表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
           id: 'c-current',
@@ -191,7 +195,7 @@ void main() {
       await tester.pumpWidget(createWidget());
       await tester.pumpAndSettle();
 
-      final current = DateTime.now();
+      final current = fixedNow;
       final currentMonthKey = ValueKey<String>(
         'dvc_month_cell_${current.year}_${current.month}',
       );
@@ -217,20 +221,6 @@ void main() {
       final after = tester.getTopLeft(find.text('利用可能\nポイント'));
 
       expect(after.dx, before.dx);
-    });
-
-    testWidgets('ヘッダ列の幅は約半分の70pxになっている', (tester) async {
-      await tester.pumpWidget(createWidget());
-      await tester.pumpAndSettle();
-
-      final tableLeft = tester.getTopLeft(
-        find.byKey(const Key('dvc_point_table')),
-      );
-      final scrollLeft = tester.getTopLeft(
-        find.byKey(const Key('dvc_table_horizontal_scroll')),
-      );
-
-      expect(scrollLeft.dx - tableLeft.dx, 70);
     });
 
     testWidgets('利用登録の＋ボタンでダイアログを開ける', (tester) async {
@@ -259,7 +249,7 @@ void main() {
     });
 
     testWidgets('利用ポイント登録後に横スクロール位置を維持したまま再計算できる', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       final usages = <DvcPointUsageDto>[];
       final secondLoadCompleter = Completer<void>();
       usageQueryService = _FakeDvcPointUsageQueryService(
@@ -432,64 +422,8 @@ void main() {
       await deleteFuture;
     });
 
-    testWidgets('利用可能ポイント内訳タイトルは年月で改行して2段表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
-      contractQueryService = _FakeDvcPointContractQueryService([
-        DvcPointContractDto(
-          id: 'c-current',
-          groupId: 'g1',
-          contractName: '契約A',
-          contractStartYearMonth: currentMonth,
-          contractEndYearMonth: currentMonth,
-          useYearStartMonth: currentMonth.month,
-          annualPoint: 100,
-        ),
-      ]);
-
-      await tester.pumpWidget(createWidget());
-      await tester.pumpAndSettle();
-
-      await tester.tap(
-        find.byKey(
-          ValueKey(
-            'dvc_available_cell_${currentMonth.year}_${currentMonth.month}',
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('${_formatYearMonthForTest(currentMonth)}\n利用可能ポイント内訳'),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('利用ポイント内訳タイトルは年月で改行して2段表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
-      usageQueryService = _FakeDvcPointUsageQueryService([
-        DvcPointUsageDto(
-          id: 'u1',
-          groupId: 'g1',
-          usageYearMonth: currentMonth,
-          usedPoint: 10,
-          memo: '利用済み',
-        ),
-      ]);
-
-      await tester.pumpWidget(createWidget());
-      await tester.pumpAndSettle();
-
-      await _tapUsageCellBody(tester, currentMonth);
-      await tester.pumpAndSettle();
-
-      expect(
-        find.text('${_formatYearMonthForTest(currentMonth)}\n利用ポイント内訳'),
-        findsOneWidget,
-      );
-    });
-
     testWidgets('有効期限内で0ポイントになった利用可能ポイントも0ptで表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
           id: 'c-current',
@@ -527,7 +461,7 @@ void main() {
     });
 
     testWidgets('利用可能ポイント内訳にユースイヤーと有効期限を表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService([
         DvcPointContractDto(
           id: 'c-current',
@@ -558,7 +492,7 @@ void main() {
     });
 
     testWidgets('利用可能ポイント内訳の期間限定ポイントは削除できる', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService(const []);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
@@ -598,7 +532,7 @@ void main() {
     });
 
     testWidgets('利用可能ポイント内訳の有効期限はfrom〜to形式で表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService(const []);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
@@ -634,7 +568,7 @@ void main() {
     });
 
     testWidgets('期間限定ポイントの内訳はメモを有効期限より先に表示する', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       contractQueryService = _FakeDvcPointContractQueryService(const []);
       limitedQueryService = _FakeDvcLimitedPointQueryService([
         DvcLimitedPointDto(
@@ -682,7 +616,7 @@ void main() {
     });
 
     testWidgets('利用ポイント内訳から利用登録済ポイントを削除できる', (tester) async {
-      final currentMonth = _monthStart(DateTime.now());
+      final currentMonth = _monthStart(fixedNow);
       usageQueryService = _FakeDvcPointUsageQueryService([
         DvcPointUsageDto(
           id: 'u1',

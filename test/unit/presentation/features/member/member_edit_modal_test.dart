@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import '../../../../helpers/test_exception.dart';
 
+final _fixedNow = DateTime(2026, 5, 15);
+
 Widget _createApp({required Widget child}) {
   return ProviderScope(
+    overrides: [appClockProvider.overrideWithValue(FixedAppClock(_fixedNow))],
     child: MaterialApp(home: Scaffold(body: child)),
   );
 }
@@ -205,7 +209,7 @@ void main() {
       await tester.tap(find.byKey(const Key('date_header')));
       await tester.pumpAndSettle();
 
-      final futureDate = DateTime.now().add(const Duration(days: 30));
+      final futureDate = _fixedNow.add(const Duration(days: 30));
       final inputText =
           '${futureDate.year.toString().padLeft(4, '0')}${futureDate.month.toString().padLeft(2, '0')}${futureDate.day.toString().padLeft(2, '0')}';
       await tester.enterText(find.byKey(const Key('date_field')), inputText);
