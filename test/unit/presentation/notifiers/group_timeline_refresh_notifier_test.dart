@@ -82,6 +82,18 @@ void main() {
       expect(queryService.callCount, 2);
     });
 
+    test('時刻が前回更新時刻より前に戻った場合はアプリ復帰で再取得する', () async {
+      final notifier = container.read(
+        groupTimelineRefreshNotifierProvider.notifier,
+      );
+
+      expect(await notifier.refreshOnResume(member), isTrue);
+      clock.advance(const Duration(hours: -1));
+      expect(await notifier.refreshOnResume(member), isTrue);
+
+      expect(queryService.callCount, 2);
+    });
+
     test('初回グループ取得中のアプリ復帰では重複して再取得しない', () async {
       container
           .read(groupTimelineGroupSelectionNotifierProvider.notifier)
