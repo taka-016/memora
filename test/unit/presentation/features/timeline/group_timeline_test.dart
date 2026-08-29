@@ -196,6 +196,12 @@ void main() {
     ).invalidate(timelineRowsRefreshProvider);
   }
 
+  void showMorePastYears(WidgetTester tester) {
+    tester
+        .widget<TextButton>(find.byKey(const Key('show_more_past')))
+        .onPressed!();
+  }
+
   group('GroupTimeline', () {
     testWidgets('GroupTimelineウィジェットが正しく表示される', (WidgetTester tester) async {
       // Act
@@ -1225,10 +1231,7 @@ void main() {
       expect(find.textContaining('${currentYear - 10}年'), findsNothing);
 
       // Act - 先頭の「さらに表示」ボタンの機能を呼び出し
-      final showMorePastButton = tester.widget<TextButton>(
-        find.byKey(const Key('show_more_past')),
-      );
-      showMorePastButton.onPressed!();
+      showMorePastYears(tester);
       await tester.pumpAndSettle();
 
       // Assert - さらに過去5年分が表示される
@@ -1269,10 +1272,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('追加前の最古年旅行'), findsOneWidget);
 
-      final showMorePastButton = tester.widget<TextButton>(
-        find.byKey(const Key('show_more_past')),
-      );
-      showMorePastButton.onPressed!();
+      showMorePastYears(tester);
       await tester.pumpAndSettle();
 
       expect(find.text('追加前の最古年旅行'), findsOneWidget);
