@@ -2,6 +2,8 @@
 
 set -o pipefail
 
+CHECK_STARTED_AT=$SECONDS
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$ROOT_DIR/tools/ci/app_mode_arguments.sh"
 if ! app_mode="$(resolve_memora_app_mode "$@")"; then
@@ -19,6 +21,31 @@ RESET="$(printf '\033[0m')"
 
 error_log() {
     printf '%b\n' "${RED}$*${RESET}" >&2
+}
+
+extract_test_count() {
+    local test_progress
+    test_progress="$({
+        tr '\r' '\n' < "$STDOUT_LOG" |
+            grep -Eo '\+[0-9]+:' |
+            tail -n 1
+    } || true)"
+
+    if [[ -z "$test_progress" ]]; then
+        echo 0
+        return
+    fi
+
+    test_progress="${test_progress#+}"
+    echo "${test_progress%:}"
+}
+
+format_duration() {
+    local total_seconds="$1"
+    local minutes=$((total_seconds / 60))
+    local seconds=$((total_seconds % 60))
+
+    printf '%d分%d秒' "$minutes" "$seconds"
 }
 
 run_step() {
@@ -53,6 +80,11 @@ echo "MEMORA_APP_MODE=${app_mode}"
 
 run_step "Test" dart pub global run very_good_cli:very_good test "$@"
 
+TEST_COUNT="$(extract_test_count)"
+ELAPSED_SECONDS=$((SECONDS - CHECK_STARTED_AT))
+
 echo "✅ All checks passed!"
 echo "Stdout log: $STDOUT_LOG"
 echo "Stderr log: $STDERR_LOG"
+echo "テスト実施件数: ${TEST_COUNT}件"
+echo "所要時間: $(format_duration "$ELAPSED_SECONDS")"
