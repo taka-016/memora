@@ -37,17 +37,22 @@ class GroupTimelineRefreshNotifier extends Notifier<GroupTimelineRefreshState> {
     }
 
     final now = ref.read(appClockProvider).now();
-    final lastRefreshAt = state.lastRefreshAt;
-    if (lastRefreshAt != null) {
-      final elapsed = now.difference(lastRefreshAt);
-      if (!elapsed.isNegative &&
-          elapsed < groupTimelineResumeRefreshInterval) {
-        return false;
-      }
+    if (_shouldSuppressResumeRefresh(now)) {
+      return false;
     }
 
     await _refresh(currentMember, refreshedAt: now);
     return true;
+  }
+
+  bool _shouldSuppressResumeRefresh(DateTime now) {
+    final lastRefreshAt = state.lastRefreshAt;
+    if (lastRefreshAt == null) {
+      return false;
+    }
+
+    final elapsed = now.difference(lastRefreshAt);
+    return !elapsed.isNegative && elapsed < groupTimelineResumeRefreshInterval;
   }
 
   Future<void> _refresh(
