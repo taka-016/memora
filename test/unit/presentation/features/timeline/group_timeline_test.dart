@@ -225,6 +225,7 @@ void main() {
         createTestWidget(
           groupWithMembers: testGroupWithMembers.copyWith(name: longGroupName),
           onBackPressed: () {},
+          onRefresh: () async {},
         ),
       );
       await tester.pumpAndSettle();
@@ -236,14 +237,14 @@ void main() {
       final backButtonRect = tester.getRect(
         find.byKey(const Key('back_button')),
       );
-      final settingsButtonRect = tester.getRect(
-        find.byKey(const Key('timeline_settings_button')),
+      final refreshButtonRect = tester.getRect(
+        find.byKey(const Key('timeline_refresh_button')),
       );
 
       expect(title.maxLines, 1);
       expect(title.overflow, TextOverflow.ellipsis);
       expect(titleRect.left, greaterThanOrEqualTo(backButtonRect.right));
-      expect(titleRect.right, lessThanOrEqualTo(settingsButtonRect.left));
+      expect(titleRect.right, lessThanOrEqualTo(refreshButtonRect.left));
     });
 
     testWidgets('右上に設定アイコンが表示される', (WidgetTester tester) async {
