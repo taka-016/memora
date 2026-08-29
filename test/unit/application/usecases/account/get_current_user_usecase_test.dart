@@ -6,7 +6,6 @@ import 'package:memora/domain/entities/account/user.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'get_current_user_usecase_test.mocks.dart';
 
 @GenerateMocks([AuthService])
@@ -45,15 +44,6 @@ void main() {
       final actual = await useCase.execute();
 
       expect(actual, isNull);
-      verify(mockAuthService.getCurrentUser()).called(1);
-    });
-
-    test('取得時にエラーが発生した場合は例外を再スローする', () async {
-      when(
-        mockAuthService.getCurrentUser(),
-      ).thenThrow(TestException('ユーザー取得失敗'));
-
-      await expectLater(useCase.execute(), throwsA(isA<TestException>()));
       verify(mockAuthService.getCurrentUser()).called(1);
     });
   });

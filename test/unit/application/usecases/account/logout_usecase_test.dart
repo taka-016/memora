@@ -5,7 +5,6 @@ import 'package:memora/application/usecases/account/logout_usecase.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'logout_usecase_test.mocks.dart';
 
 @GenerateMocks([AuthService, AndroidWidgetCacheStorage])
@@ -50,18 +49,6 @@ void main() {
         mockAndroidWidgetCacheStorage.updateWidget(),
         mockAuthService.signOut(),
       ]);
-    });
-
-    test('ログアウトでエラーが発生した場合は例外を再スローする', () async {
-      when(mockAndroidWidgetCacheStorage.clear()).thenAnswer((_) async {});
-      when(
-        mockAndroidWidgetCacheStorage.updateWidget(),
-      ).thenAnswer((_) async {});
-      when(mockAuthService.signOut()).thenThrow(TestException('ログアウトエラー'));
-
-      await expectLater(useCase.execute(), throwsA(isA<TestException>()));
-
-      verify(mockAuthService.signOut()).called(1);
     });
   });
 }

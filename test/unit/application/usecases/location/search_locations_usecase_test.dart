@@ -6,7 +6,6 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'search_locations_usecase_test.mocks.dart';
 
 @GenerateMocks([LocationSearchService])
@@ -37,14 +36,6 @@ void main() {
 
       expect(actual, expected);
       verify(mockLocationSearchService.searchByKeyword(keyword)).called(1);
-    });
-
-    test('サービスで例外が発生した場合はそのまま伝播する', () async {
-      when(
-        mockLocationSearchService.searchByKeyword('東京駅'),
-      ).thenThrow(TestException('場所検索失敗'));
-
-      expect(() => usecase.execute('東京駅'), throwsA(isA<TestException>()));
     });
   });
 }

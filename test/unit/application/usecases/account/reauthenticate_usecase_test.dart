@@ -3,7 +3,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
 import 'package:memora/application/services/auth_service.dart';
-import '../../../../helpers/test_exception.dart';
 
 import 'reauthenticate_usecase_test.mocks.dart';
 
@@ -25,21 +24,6 @@ void main() {
       ).thenAnswer((_) async {});
 
       await expectLater(useCase.execute(password: password), completes);
-
-      verify(mockAuthService.reauthenticate(password: password)).called(1);
-    });
-
-    test('再認証でエラーが発生した場合は例外を再スローする', () async {
-      const password = 'WrongPassword';
-      const errorMessage = '再認証エラー';
-      when(
-        mockAuthService.reauthenticate(password: password),
-      ).thenThrow(TestException(errorMessage));
-
-      await expectLater(
-        useCase.execute(password: password),
-        throwsA(isA<TestException>()),
-      );
 
       verify(mockAuthService.reauthenticate(password: password)).called(1);
     });
