@@ -28,9 +28,8 @@ void main() {
 
     test('有効なIDでメンバー情報を正常に取得できる', () async {
       // Arrange
-      when(
-        mockMemberQueryService.getMemberById('member123'),
-      ).thenAnswer((_) async => testMember);
+      when(mockMemberQueryService.getMemberById('member123'))
+          .thenAnswer((_) async => testMember);
 
       // Act
       final result = await useCase.execute('member123');
@@ -42,9 +41,8 @@ void main() {
 
     test('存在しないIDを指定した場合、nullを返す', () async {
       // Arrange
-      when(
-        mockMemberQueryService.getMemberById('nonexistent'),
-      ).thenAnswer((_) async => null);
+      when(mockMemberQueryService.getMemberById('nonexistent'))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute('nonexistent');
@@ -56,9 +54,8 @@ void main() {
 
     test('空のIDを指定した場合、nullを返す', () async {
       // Arrange
-      when(
-        mockMemberQueryService.getMemberById(''),
-      ).thenAnswer((_) async => null);
+      when(mockMemberQueryService.getMemberById(''))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute('');

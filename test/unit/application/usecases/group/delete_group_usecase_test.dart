@@ -31,15 +31,12 @@ void main() {
       // arrange
       const groupId = 'group123';
 
-      when(
-        mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupRepository.deleteGroup(groupId),
-      ).thenAnswer((_) async => {});
+      when(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupEventRepository.deleteGroupEventsByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroup(groupId))
+          .thenAnswer((_) async => {});
 
       // act
       await usecase.execute(groupId);
@@ -52,15 +49,12 @@ void main() {
       // arrange
       const groupId = 'group123';
 
-      when(
-        mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupRepository.deleteGroup(groupId),
-      ).thenAnswer((_) async => {});
+      when(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupEventRepository.deleteGroupEventsByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroup(groupId))
+          .thenAnswer((_) async => {});
 
       // act & assert
       expect(() => usecase.execute(groupId), returnsNormally);
@@ -70,15 +64,12 @@ void main() {
       // arrange
       const groupId = 'group123';
 
-      when(
-        mockTripEntryRepository.deleteTripEntriesByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupEventRepository.deleteGroupEventsByGroupId(groupId),
-      ).thenAnswer((_) async => {});
-      when(
-        mockGroupRepository.deleteGroup(groupId),
-      ).thenAnswer((_) async => {});
+      when(mockTripEntryRepository.deleteTripEntriesByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupEventRepository.deleteGroupEventsByGroupId(groupId))
+          .thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroup(groupId))
+          .thenAnswer((_) async => {});
 
       // act
       await usecase.execute(groupId);

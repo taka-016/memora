@@ -25,9 +25,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('dvc_limited_points'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('dvc_limited_points'))
+          .thenReturn(mockCollection);
       service = FirestoreDvcLimitedPointQueryService(firestore: mockFirestore);
     });
 
@@ -37,12 +36,10 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('startYearMonth', descending: false),
-      ).thenReturn(mockQuery);
+      when(mockCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('startYearMonth', descending: false))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('limited001');
@@ -66,9 +63,8 @@ void main() {
     });
 
     test('例外時は空リストを返す', () async {
-      when(
-        mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('firestore error'));
+      when(mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenThrow(TestException('firestore error'));
 
       final result = await service.getDvcLimitedPointsByGroupId('group001');
 

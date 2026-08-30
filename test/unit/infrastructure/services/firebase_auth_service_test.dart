@@ -131,9 +131,8 @@ void main() {
 
     test('メールアドレス更新で認証期限切れの場合は型付き例外へ変換する', () async {
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.verifyBeforeUpdateEmail('new@example.com'),
-      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+      when(mockFirebaseUser.verifyBeforeUpdateEmail('new@example.com'))
+          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
 
       expect(
         () => firebaseAuthService.updateEmail(newEmail: 'new@example.com'),
@@ -143,9 +142,8 @@ void main() {
 
     test('パスワード更新で認証期限切れの場合は型付き例外へ変換する', () async {
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.updatePassword('NewPassword123#'),
-      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+      when(mockFirebaseUser.updatePassword('NewPassword123#'))
+          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
 
       expect(
         () =>
@@ -156,9 +154,8 @@ void main() {
 
     test('アカウント削除で認証期限切れの場合は型付き例外へ変換する', () async {
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.delete(),
-      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+      when(mockFirebaseUser.delete())
+          .thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
 
       expect(
         firebaseAuthService.deleteUser,
@@ -168,9 +165,8 @@ void main() {
 
     test('現在のユーザーが存在し、トークンが有効な場合は正常に完了', () async {
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.getIdToken(true),
-      ).thenAnswer((_) async => 'valid-token');
+      when(mockFirebaseUser.getIdToken(true))
+          .thenAnswer((_) async => 'valid-token');
 
       await firebaseAuthService.validateCurrentUserToken();
 
@@ -196,9 +192,8 @@ void main() {
       AppLogger.suppressLogging(true);
 
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.getIdToken(true),
-      ).thenThrow(FirebaseAuthException(code: 'network-request-failed'));
+      when(mockFirebaseUser.getIdToken(true))
+          .thenThrow(FirebaseAuthException(code: 'network-request-failed'));
 
       expect(
         () => firebaseAuthService.validateCurrentUserToken(),
@@ -216,9 +211,8 @@ void main() {
       AppLogger.suppressLogging(true);
 
       when(mockFirebaseAuth.currentUser).thenReturn(mockFirebaseUser);
-      when(
-        mockFirebaseUser.getIdToken(true),
-      ).thenThrow(FirebaseAuthException(code: 'invalid-credential'));
+      when(mockFirebaseUser.getIdToken(true))
+          .thenThrow(FirebaseAuthException(code: 'invalid-credential'));
 
       expect(
         () => firebaseAuthService.validateCurrentUserToken(),
@@ -233,9 +227,8 @@ void main() {
     });
 
     test('認証状態の変更を監視できる', () {
-      when(
-        mockFirebaseAuth.authStateChanges(),
-      ).thenAnswer((_) => Stream.value(mockFirebaseUser));
+      when(mockFirebaseAuth.authStateChanges())
+          .thenAnswer((_) => Stream.value(mockFirebaseUser));
       when(mockFirebaseUser.uid).thenReturn('user123');
       when(mockFirebaseUser.email).thenReturn('test@example.com');
       when(mockFirebaseUser.displayName).thenReturn('テストユーザー');

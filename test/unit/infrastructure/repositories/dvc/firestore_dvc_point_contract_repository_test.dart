@@ -25,9 +25,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('dvc_point_contracts'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('dvc_point_contracts'))
+          .thenReturn(mockCollection);
       repository = FirestoreDvcPointContractRepository(
         firestore: mockFirestore,
       );
@@ -87,9 +86,8 @@ void main() {
       final mockDocRef = MockDocumentReference<Map<String, dynamic>>();
       final mockBatch = MockWriteBatch();
 
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
+      when(mockCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.reference).thenReturn(mockDocRef);

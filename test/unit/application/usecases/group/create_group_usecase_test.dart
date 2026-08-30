@@ -28,18 +28,16 @@ void main() {
         members: const [],
       );
 
-      when(
-        mockGroupRepository.saveGroup(any),
-      ).thenAnswer((_) async => 'generated_id');
+      when(mockGroupRepository.saveGroup(any))
+          .thenAnswer((_) async => 'generated_id');
 
       // act
       final result = await usecase.execute(group);
 
       // assert
       expect(result, 'generated_id');
-      final captured = verify(
-        mockGroupRepository.saveGroup(captureAny),
-      ).captured;
+      final captured = verify(mockGroupRepository.saveGroup(captureAny))
+          .captured;
       final savedGroup = captured.single as Group;
       expect(savedGroup.id, group.id);
       expect(savedGroup.name, group.name);
@@ -55,9 +53,8 @@ void main() {
         members: const [],
       );
 
-      when(
-        mockGroupRepository.saveGroup(any),
-      ).thenAnswer((_) async => 'generated_id');
+      when(mockGroupRepository.saveGroup(any))
+          .thenAnswer((_) async => 'generated_id');
 
       // act & assert
       expect(() => usecase.execute(group), returnsNormally);

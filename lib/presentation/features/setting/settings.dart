@@ -383,16 +383,14 @@ class Settings extends ConsumerWidget {
       final message = groupId == null
           ? 'ウィジェット表示対象を解除しました'
           : 'ウィジェット表示対象を保存しました';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       if (!context.mounted) {
         return;
       }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('ウィジェット表示対象を保存できませんでした')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('ウィジェット表示対象を保存できませんでした')));
     }
   }
 

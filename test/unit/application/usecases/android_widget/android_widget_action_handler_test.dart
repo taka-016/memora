@@ -15,11 +15,10 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache:
-            ({
-              required String groupId,
-              String? selectedItineraryDateId,
-            }) async {},
+        refreshCache: ({
+          required String groupId,
+          String? selectedItineraryDateId,
+        }) async {},
         moveDate: (_) async => true,
       );
 
@@ -87,11 +86,10 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache:
-            ({
-              required String groupId,
-              String? selectedItineraryDateId,
-            }) async {},
+        refreshCache: ({
+          required String groupId,
+          String? selectedItineraryDateId,
+        }) async {},
         moveDate: (_) async => true,
       );
 
@@ -111,11 +109,10 @@ void main() {
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
         showToast: toastNotifier.show,
-        refreshCache:
-            ({
-              required String groupId,
-              String? selectedItineraryDateId,
-            }) async {},
+        refreshCache: ({
+          required String groupId,
+          String? selectedItineraryDateId,
+        }) async {},
         moveDate: (_) async => false,
       );
 

@@ -24,9 +24,8 @@ void main() {
     test('認証状態の変更をUserDtoへ変換して返す', () async {
       final controller = StreamController<User?>();
       addTearDown(controller.close);
-      when(
-        mockAuthService.authStateChanges,
-      ).thenAnswer((_) => controller.stream);
+      when(mockAuthService.authStateChanges)
+          .thenAnswer((_) => controller.stream);
 
       final stream = useCase.execute();
 

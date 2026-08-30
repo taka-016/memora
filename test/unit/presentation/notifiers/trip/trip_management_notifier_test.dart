@@ -107,9 +107,8 @@ void main() {
     List<TripEntryDto> trips = const [trip],
     GroupDto? loadedGroup = loadedGroupDto,
   }) async {
-    when(
-      getTripEntriesUsecase.execute(query.groupId, query.year),
-    ).thenAnswer((_) async => trips);
+    when(getTripEntriesUsecase.execute(query.groupId, query.year))
+        .thenAnswer((_) async => trips);
     when(
       getGroupUsecase.execute(
         query.groupId,
@@ -125,9 +124,8 @@ void main() {
     test('旅行一覧とグループメンバーを並行取得し、取得元ごとに完了状態を反映する', () async {
       final tripsCompleter = Completer<List<TripEntryDto>>();
       final groupCompleter = Completer<GroupDto?>();
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) => tripsCompleter.future);
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) => tripsCompleter.future);
       when(
         getGroupUsecase.execute(
           query.groupId,
@@ -138,9 +136,8 @@ void main() {
       listenProvider();
       await Future<void>.delayed(Duration.zero);
 
-      verify(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).called(1);
+      verify(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .called(1);
       verify(
         getGroupUsecase.execute(
           query.groupId,
@@ -165,9 +162,8 @@ void main() {
     });
 
     test('旅行一覧だけが失敗してもメンバーを維持し、旅行一覧だけを再試行する', () async {
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenThrow(TestException('旅行取得失敗'));
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenThrow(TestException('旅行取得失敗'));
       when(
         getGroupUsecase.execute(
           query.groupId,
@@ -182,9 +178,8 @@ void main() {
       expect(state.groupMembers, const [member]);
       expect(state.groupMembersStatus, TripManagementLoadStatus.success);
 
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) async => const [trip]);
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) async => const [trip]);
       final notifier = container.read(
         tripManagementNotifierProvider(query).notifier,
       );
@@ -223,12 +218,10 @@ void main() {
       final notifier = await startNotifier();
       clearInteractions(getTripEntriesUsecase);
       clearInteractions(getGroupUsecase);
-      when(
-        mutationCoordinator.createTripEntry(createdTrip),
-      ).thenAnswer((_) async => 'trip-2');
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) async => const [trip, createdTrip]);
+      when(mutationCoordinator.createTripEntry(createdTrip))
+          .thenAnswer((_) async => 'trip-2');
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) async => const [trip, createdTrip]);
 
       expect(await notifier.createTripEntry(createdTrip), isTrue);
 
@@ -249,12 +242,10 @@ void main() {
       final notifier = await startNotifier();
       clearInteractions(getTripEntriesUsecase);
       clearInteractions(getGroupUsecase);
-      when(
-        mutationCoordinator.updateTripEntry(updatedTrip),
-      ).thenAnswer((_) async {});
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) async => const [updatedTrip]);
+      when(mutationCoordinator.updateTripEntry(updatedTrip))
+          .thenAnswer((_) async {});
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) async => const [updatedTrip]);
 
       expect(await notifier.updateTripEntry(updatedTrip), isTrue);
 
@@ -273,12 +264,10 @@ void main() {
 
     test('更新成功後の一覧再取得が失敗しても取得済み一覧を維持する', () async {
       final notifier = await startNotifier();
-      when(
-        mutationCoordinator.updateTripEntry(updatedTrip),
-      ).thenAnswer((_) async {});
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenThrow(TestException('再取得失敗'));
+      when(mutationCoordinator.updateTripEntry(updatedTrip))
+          .thenAnswer((_) async {});
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenThrow(TestException('再取得失敗'));
 
       expect(await notifier.updateTripEntry(updatedTrip), isTrue);
 
@@ -291,12 +280,10 @@ void main() {
       final notifier = await startNotifier();
       clearInteractions(getTripEntriesUsecase);
       clearInteractions(getGroupUsecase);
-      when(
-        mutationCoordinator.deleteTripEntry(trip.id),
-      ).thenAnswer((_) async {});
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) async => const []);
+      when(mutationCoordinator.deleteTripEntry(trip.id))
+          .thenAnswer((_) async {});
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) async => const []);
 
       expect(await notifier.deleteTripEntry(trip.id), isTrue);
 
@@ -316,9 +303,8 @@ void main() {
     test('更新失敗時は一覧を再取得せず例外を呼び出し元へ伝播する', () async {
       final notifier = await startNotifier();
       clearInteractions(getTripEntriesUsecase);
-      when(
-        mutationCoordinator.updateTripEntry(updatedTrip),
-      ).thenThrow(TestException('更新失敗'));
+      when(mutationCoordinator.updateTripEntry(updatedTrip))
+          .thenThrow(TestException('更新失敗'));
 
       await expectLater(
         notifier.updateTripEntry(updatedTrip),
@@ -335,12 +321,10 @@ void main() {
     test('更新中の再取得要求と重複する更新要求を無視する', () async {
       final notifier = await startNotifier();
       final updateCompleter = Completer<void>();
-      when(
-        mutationCoordinator.updateTripEntry(updatedTrip),
-      ).thenAnswer((_) => updateCompleter.future);
-      when(
-        getTripEntriesUsecase.execute(query.groupId, query.year),
-      ).thenAnswer((_) async => const [updatedTrip]);
+      when(mutationCoordinator.updateTripEntry(updatedTrip))
+          .thenAnswer((_) => updateCompleter.future);
+      when(getTripEntriesUsecase.execute(query.groupId, query.year))
+          .thenAnswer((_) async => const [updatedTrip]);
 
       final firstUpdate = notifier.updateTripEntry(updatedTrip);
 

@@ -12,9 +12,8 @@ void main() {
     test('期間限定ポイントを削除できること', () async {
       final repository = MockDvcLimitedPointRepository();
       final usecase = DeleteDvcLimitedPointUsecase(repository);
-      when(
-        repository.deleteDvcLimitedPoint('limited-1'),
-      ).thenAnswer((_) async {});
+      when(repository.deleteDvcLimitedPoint('limited-1'))
+          .thenAnswer((_) async {});
 
       await usecase.execute('limited-1');
 

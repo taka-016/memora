@@ -20,6 +20,7 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import '../../../../helpers/fake_current_member_notifier.dart';
@@ -69,9 +70,8 @@ void main() {
     );
 
     // 共通的なモック設定: getMemberByIdはデフォルトでtestMemberを返す
-    when(
-      mockMemberQueryService.getMemberById(testMember.id),
-    ).thenAnswer((_) async => testMember);
+    when(mockMemberQueryService.getMemberById(testMember.id))
+        .thenAnswer((_) async => testMember);
 
     providerOverrides = [
       memberRepositoryProvider.overrideWithValue(mockMemberRepository),
@@ -354,9 +354,8 @@ void main() {
         ),
       ).thenAnswer((_) async => []);
 
-      when(
-        mockMemberQueryService.getMemberById(testMember.id),
-      ).thenAnswer((_) async => null); // nullを返すように設定
+      when(mockMemberQueryService.getMemberById(testMember.id))
+          .thenAnswer((_) async => null); // nullを返すように設定
 
       // Act
       await tester.pumpWidget(createApp());
@@ -490,13 +489,11 @@ void main() {
         ),
       ).thenAnswer((_) async => managedMembers);
 
-      when(
-        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
-      ).thenAnswer((_) async => null);
+      when(mockMemberInvitationQueryService.getByInviteeId('managed-member-1'))
+          .thenAnswer((_) async => null);
 
-      when(
-        mockMemberInvitationRepository.saveMemberInvitation(any),
-      ).thenAnswer((_) async {});
+      when(mockMemberInvitationRepository.saveMemberInvitation(any))
+          .thenAnswer((_) async {});
 
       // Act
       await tester.pumpWidget(createApp());
@@ -518,9 +515,8 @@ void main() {
       expect(find.text('閉じる'), findsOneWidget);
 
       // 招待の保存処理が呼ばれることを確認
-      verify(
-        mockMemberInvitationRepository.saveMemberInvitation(any),
-      ).called(1);
+      verify(mockMemberInvitationRepository.saveMemberInvitation(any))
+          .called(1);
     });
 
     testWidgets('招待コードの生成失敗時にスナックバーが表示されること', (WidgetTester tester) async {
@@ -538,9 +534,8 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
-      when(
-        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
-      ).thenThrow(TestException('招待生成失敗'));
+      when(mockMemberInvitationQueryService.getByInviteeId('managed-member-1'))
+          .thenThrow(TestException('招待生成失敗'));
 
       await tester.pumpWidget(createApp());
       await tester.pumpAndSettle();
@@ -572,12 +567,10 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => managedMembers);
-      when(
-        mockMemberInvitationQueryService.getByInviteeId('managed-member-1'),
-      ).thenAnswer((_) => invitationCompleter.future);
-      when(
-        mockMemberInvitationRepository.saveMemberInvitation(any),
-      ).thenAnswer((_) async {});
+      when(mockMemberInvitationQueryService.getByInviteeId('managed-member-1'))
+          .thenAnswer((_) => invitationCompleter.future);
+      when(mockMemberInvitationRepository.saveMemberInvitation(any))
+          .thenAnswer((_) async {});
 
       await tester.pumpWidget(createApp());
       await tester.pumpAndSettle();

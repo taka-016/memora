@@ -19,15 +19,13 @@ void main() {
 
     test('パスワード更新が正常に実行される', () async {
       const newPassword = 'NewPassword123!';
-      when(
-        mockAuthService.updatePassword(newPassword: newPassword),
-      ).thenAnswer((_) async {});
+      when(mockAuthService.updatePassword(newPassword: newPassword))
+          .thenAnswer((_) async {});
 
       await expectLater(useCase.execute(newPassword: newPassword), completes);
 
-      verify(
-        mockAuthService.updatePassword(newPassword: newPassword),
-      ).called(1);
+      verify(mockAuthService.updatePassword(newPassword: newPassword))
+          .called(1);
     });
   });
 }

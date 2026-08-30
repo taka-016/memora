@@ -26,9 +26,8 @@ void main() {
           annualPoint: 200,
         ),
       ];
-      when(
-        repository.deleteDvcPointContractsByGroupId(groupId),
-      ).thenAnswer((_) async {});
+      when(repository.deleteDvcPointContractsByGroupId(groupId))
+          .thenAnswer((_) async {});
       when(repository.saveDvcPointContract(any)).thenAnswer((_) async {});
 
       await usecase.execute(groupId: groupId, contracts: contracts);

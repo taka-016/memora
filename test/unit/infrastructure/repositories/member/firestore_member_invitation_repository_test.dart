@@ -24,9 +24,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('member_invitations'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('member_invitations'))
+          .thenReturn(mockCollection);
       repository = FirestoreMemberInvitationRepository(
         firestore: mockFirestore,
       );

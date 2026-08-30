@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/account/get_current_user_usecase.dart';

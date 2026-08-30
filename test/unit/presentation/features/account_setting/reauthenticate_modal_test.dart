@@ -67,9 +67,8 @@ void main() {
     });
 
     testWidgets('認証ボタンをタップすると再認証が実行される', (WidgetTester tester) async {
-      when(
-        mockReauthenticateUseCase.execute(password: anyNamed('password')),
-      ).thenAnswer((_) async {});
+      when(mockReauthenticateUseCase.execute(password: anyNamed('password')))
+          .thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));
@@ -80,9 +79,8 @@ void main() {
       await tester.tap(find.text('認証'));
       await tester.pump();
 
-      verify(
-        mockReauthenticateUseCase.execute(password: 'CurrentPassword123!'),
-      ).called(1);
+      verify(mockReauthenticateUseCase.execute(password: 'CurrentPassword123!'))
+          .called(1);
     });
 
     testWidgets('キャンセルボタンをタップするとダイアログが閉じる', (WidgetTester tester) async {
@@ -111,9 +109,8 @@ void main() {
     });
 
     testWidgets('再認証エラー時にエラーメッセージが表示される', (WidgetTester tester) async {
-      when(
-        mockReauthenticateUseCase.execute(password: anyNamed('password')),
-      ).thenThrow(TestException('認証に失敗しました'));
+      when(mockReauthenticateUseCase.execute(password: anyNamed('password')))
+          .thenThrow(TestException('認証に失敗しました'));
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));

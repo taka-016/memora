@@ -22,9 +22,8 @@ void main() {
       // Arrange
       const accountId = 'test-user-id';
       const testMember = MemberDto(id: 'member-id', displayName: 'Test User');
-      when(
-        mockMemberQueryService.getMemberByAccountId(accountId),
-      ).thenAnswer((_) async => testMember);
+      when(mockMemberQueryService.getMemberByAccountId(accountId))
+          .thenAnswer((_) async => testMember);
 
       // Act
       final result = await useCase.execute(accountId);
@@ -37,9 +36,8 @@ void main() {
     test('ログインユーザーIDでメンバーが存在しない場合falseを返す', () async {
       // Arrange
       const accountId = 'test-user-id';
-      when(
-        mockMemberQueryService.getMemberByAccountId(accountId),
-      ).thenAnswer((_) async => null);
+      when(mockMemberQueryService.getMemberByAccountId(accountId))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute(accountId);

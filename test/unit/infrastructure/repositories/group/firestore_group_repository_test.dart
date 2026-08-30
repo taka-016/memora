@@ -82,15 +82,12 @@ void main() {
 
       when(mockFirestore.batch()).thenReturn(mockBatch);
       when(mockCollection.doc('group001')).thenReturn(mockDocRef);
-      when(
-        mockFirestore.collection('group_members'),
-      ).thenReturn(mockGroupMembersCollection);
-      when(
-        mockGroupMembersCollection.where('groupId', isEqualTo: 'group001'),
-      ).thenReturn(mockGroupMembersQuery);
-      when(
-        mockGroupMembersQuery.get(),
-      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockFirestore.collection('group_members'))
+          .thenReturn(mockGroupMembersCollection);
+      when(mockGroupMembersCollection.where('groupId', isEqualTo: 'group001'))
+          .thenReturn(mockGroupMembersQuery);
+      when(mockGroupMembersQuery.get())
+          .thenAnswer((_) async => mockGroupMembersSnapshot);
       when(mockGroupMembersSnapshot.docs).thenReturn([]);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
@@ -131,15 +128,12 @@ void main() {
       when(mockCollection.doc(groupId)).thenReturn(mockDocRef);
 
       // group_membersの削除処理
-      when(
-        mockFirestore.collection('group_members'),
-      ).thenReturn(mockGroupMembersCollection);
-      when(
-        mockGroupMembersCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockGroupMembersQuery);
-      when(
-        mockGroupMembersQuery.get(),
-      ).thenAnswer((_) async => mockGroupMembersSnapshot);
+      when(mockFirestore.collection('group_members'))
+          .thenReturn(mockGroupMembersCollection);
+      when(mockGroupMembersCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockGroupMembersQuery);
+      when(mockGroupMembersQuery.get())
+          .thenAnswer((_) async => mockGroupMembersSnapshot);
       when(mockGroupMembersSnapshot.docs).thenReturn([]);
 
       when(mockBatch.delete(any)).thenReturn(null);

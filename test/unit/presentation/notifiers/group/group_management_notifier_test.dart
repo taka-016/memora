@@ -79,9 +79,8 @@ void main() {
   Future<GroupManagementNotifier> startNotifier({
     List<GroupDto> groups = const [managedGroup],
   }) async {
-    when(
-      getGroupsUsecase.execute(currentMember),
-    ).thenAnswer((_) async => groups);
+    when(getGroupsUsecase.execute(currentMember))
+        .thenAnswer((_) async => groups);
     final provider = groupManagementNotifierProvider(currentMember);
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
@@ -92,9 +91,8 @@ void main() {
   group('GroupManagementNotifier', () {
     test('初期取得中から取得成功へ遷移する', () async {
       final completer = Completer<List<GroupDto>>();
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => completer.future);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) => completer.future);
       final provider = groupManagementNotifierProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -110,9 +108,8 @@ void main() {
     });
 
     test('初期取得失敗時はAsyncErrorへ遷移し、自動再試行しない', () async {
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenThrow(TestException('取得失敗'));
+      when(getGroupsUsecase.execute(currentMember))
+          .thenThrow(TestException('取得失敗'));
       final provider = groupManagementNotifierProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -132,9 +129,8 @@ void main() {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       final completer = Completer<List<GroupDto>>();
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => completer.future);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) => completer.future);
 
       final refreshResult = notifier.refreshGroups();
       await container.pump();
@@ -154,9 +150,8 @@ void main() {
     test('再取得失敗時は既存一覧を維持してAsyncErrorへ遷移する', () async {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenThrow(TestException('再取得失敗'));
+      when(getGroupsUsecase.execute(currentMember))
+          .thenThrow(TestException('再取得失敗'));
 
       expect(await notifier.refreshGroups(), isTrue);
       await expectLater(
@@ -171,12 +166,10 @@ void main() {
 
     test('メンバーごとにProviderの状態を分離する', () async {
       final firstCompleter = Completer<List<GroupDto>>();
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => firstCompleter.future);
-      when(
-        getGroupsUsecase.execute(secondMember),
-      ).thenAnswer((_) async => const [secondMemberGroup]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) => firstCompleter.future);
+      when(getGroupsUsecase.execute(secondMember))
+          .thenAnswer((_) async => const [secondMemberGroup]);
       final firstProvider = groupManagementNotifierProvider(currentMember);
       final secondProvider = groupManagementNotifierProvider(secondMember);
       final firstSubscription = container.listen(firstProvider, (_, _) {});
@@ -205,12 +198,10 @@ void main() {
     test('作成成功後にProviderを再構築して一覧を更新する', () async {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
-      when(
-        createGroupUsecase.execute(createdGroup),
-      ).thenAnswer((_) async => 'group-2');
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [managedGroup, createdGroup]);
+      when(createGroupUsecase.execute(createdGroup))
+          .thenAnswer((_) async => 'group-2');
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const [managedGroup, createdGroup]);
 
       final result = await notifier.createGroup(createdGroup);
       await container.read(provider.future);
@@ -231,9 +222,8 @@ void main() {
       final provider = groupManagementNotifierProvider(currentMember);
       final initialState = container.read(provider).requireValue;
       clearInteractions(getGroupsUsecase);
-      when(
-        createGroupUsecase.execute(createdGroup),
-      ).thenThrow(TestException('作成失敗'));
+      when(createGroupUsecase.execute(createdGroup))
+          .thenThrow(TestException('作成失敗'));
 
       await expectLater(
         notifier.createGroup(createdGroup),
@@ -248,9 +238,8 @@ void main() {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [updatedGroup]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const [updatedGroup]);
 
       final result = await notifier.updateGroup(updatedGroup);
       await container.read(provider.future);
@@ -270,9 +259,8 @@ void main() {
       final provider = groupManagementNotifierProvider(currentMember);
       final initialState = container.read(provider).requireValue;
       clearInteractions(getGroupsUsecase);
-      when(
-        updateGroupUsecase.execute(updatedGroup),
-      ).thenThrow(TestException('更新失敗'));
+      when(updateGroupUsecase.execute(updatedGroup))
+          .thenThrow(TestException('更新失敗'));
 
       await expectLater(
         notifier.updateGroup(updatedGroup),
@@ -286,12 +274,10 @@ void main() {
     test('削除成功後にProviderを再構築して一覧を更新する', () async {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
-      when(
-        deleteGroupUsecase.execute(managedGroup.id),
-      ).thenAnswer((_) async {});
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const []);
+      when(deleteGroupUsecase.execute(managedGroup.id))
+          .thenAnswer((_) async {});
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const []);
 
       final result = await notifier.deleteGroup(managedGroup.id);
       await container.read(provider.future);
@@ -306,9 +292,8 @@ void main() {
 
     test('削除中の再取得要求を無視して削除完了後に一覧を再取得する', () async {
       var isDeleted = false;
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
       final provider = groupManagementNotifierProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -337,9 +322,8 @@ void main() {
 
     test('削除中に画面を離れて戻っても完了後に一覧を再取得する', () async {
       var isDeleted = false;
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => isDeleted ? const [] : const [managedGroup]);
       final provider = groupManagementNotifierProvider(currentMember);
       final firstSubscription = container.listen(provider, (_, _) {});
       await container.read(provider.future);
@@ -373,9 +357,8 @@ void main() {
       final provider = groupManagementNotifierProvider(currentMember);
       final initialState = container.read(provider).requireValue;
       clearInteractions(getGroupsUsecase);
-      when(
-        deleteGroupUsecase.execute(managedGroup.id),
-      ).thenThrow(TestException('削除失敗'));
+      when(deleteGroupUsecase.execute(managedGroup.id))
+          .thenThrow(TestException('削除失敗'));
 
       await expectLater(
         notifier.deleteGroup(managedGroup.id),
@@ -390,12 +373,10 @@ void main() {
       final notifier = await startNotifier();
       final provider = groupManagementNotifierProvider(currentMember);
       final completer = Completer<void>();
-      when(
-        updateGroupUsecase.execute(updatedGroup),
-      ).thenAnswer((_) => completer.future);
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [updatedGroup]);
+      when(updateGroupUsecase.execute(updatedGroup))
+          .thenAnswer((_) => completer.future);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const [updatedGroup]);
 
       final firstResult = notifier.updateGroup(updatedGroup);
       final secondResult = await notifier.updateGroup(updatedGroup);
@@ -413,9 +394,8 @@ void main() {
       final provider = groupManagementNotifierProvider(currentMember);
       final refreshCompleter = Completer<List<GroupDto>>();
       when(updateGroupUsecase.execute(updatedGroup)).thenAnswer((_) async {});
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) => refreshCompleter.future);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) => refreshCompleter.future);
       var updateCompleted = false;
 
       final updateFuture = notifier.updateGroup(updatedGroup)

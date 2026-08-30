@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 final _fixedNow = DateTime(2026, 5, 15);

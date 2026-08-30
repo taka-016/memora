@@ -26,15 +26,12 @@ void main() {
     );
     Directory('${testProject.path}/tools/ci').createSync(recursive: true);
     Directory('${testProject.path}/bin').createSync(recursive: true);
-    File(
-      _releaseScriptPath,
-    ).copySync('${testProject.path}/tools/ci/release_android_apk.sh');
-    File(
-      _appModeArgumentsScriptPath,
-    ).copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
-    File(
-      '${testProject.path}/pubspec.yaml',
-    ).writeAsStringSync('version: 1.2.3+4\n');
+    File(_releaseScriptPath)
+        .copySync('${testProject.path}/tools/ci/release_android_apk.sh');
+    File(_appModeArgumentsScriptPath)
+        .copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
+    File('${testProject.path}/pubspec.yaml')
+        .writeAsStringSync('version: 1.2.3+4\n');
 
     final flutterStub = File('${testProject.path}/bin/flutter');
     flutterStub.writeAsStringSync('''#!/usr/bin/env bash

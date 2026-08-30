@@ -221,12 +221,11 @@ enum AndroidWidgetBackgroundUpdateStage {
   completed,
 }
 
-typedef AndroidWidgetBackgroundUpdateStageRecorder =
-    void Function(
-      AndroidWidgetBackgroundUpdateStage stage,
-      Object? error,
-      StackTrace? stackTrace,
-    );
+typedef AndroidWidgetBackgroundUpdateStageRecorder = void Function(
+  AndroidWidgetBackgroundUpdateStage stage,
+  Object? error,
+  StackTrace? stackTrace,
+);
 
 class AndroidWidgetBackgroundUpdateRunner {
   const AndroidWidgetBackgroundUpdateRunner({

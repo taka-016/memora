@@ -164,12 +164,10 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
-      when(
-        getTripUsecase.execute(trip.id),
-      ).thenAnswer((_) => tripCompleter.future);
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [testGroup]);
+      when(getTripUsecase.execute(trip.id))
+          .thenAnswer((_) => tripCompleter.future);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -218,9 +216,8 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=missing-trip'),
       );
-      when(
-        getTripUsecase.execute('missing-trip'),
-      ).thenAnswer((_) async => null);
+      when(getTripUsecase.execute('missing-trip'))
+          .thenAnswer((_) async => null);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -276,12 +273,10 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
-      when(
-        getTripUsecase.execute(trip.id),
-      ).thenAnswer((_) => tripCompleter.future);
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [testGroup]);
+      when(getTripUsecase.execute(trip.id))
+          .thenAnswer((_) => tripCompleter.future);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -314,15 +309,12 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
-      when(
-        getTripUsecase.execute(trip.id),
-      ).thenAnswer((_) => oldTripCompleter.future);
-      when(
-        getTripUsecase.execute(latestTrip.id),
-      ).thenAnswer((_) => latestTripCompleter.future);
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [testGroup]);
+      when(getTripUsecase.execute(trip.id))
+          .thenAnswer((_) => oldTripCompleter.future);
+      when(getTripUsecase.execute(latestTrip.id))
+          .thenAnswer((_) => latestTripCompleter.future);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -363,9 +355,8 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
-      when(
-        getTripUsecase.execute(trip.id),
-      ).thenAnswer((_) => oldTripCompleter.future);
+      when(getTripUsecase.execute(trip.id))
+          .thenAnswer((_) => oldTripCompleter.future);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -398,9 +389,8 @@ void main() {
       final source = _FakeAndroidWidgetLaunchUriSource(
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
-      when(
-        getTripUsecase.execute(trip.id),
-      ).thenAnswer((_) => tripCompleter.future);
+      when(getTripUsecase.execute(trip.id))
+          .thenAnswer((_) => tripCompleter.future);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -430,9 +420,8 @@ void main() {
         initialUri: Uri.parse('memoraWidget://openTrip?tripId=trip-1'),
       );
       when(getTripUsecase.execute(trip.id)).thenAnswer((_) async => trip);
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [testGroup]);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();
@@ -466,9 +455,8 @@ void main() {
             ? firstTripCompleter.future
             : secondTripCompleter.future;
       });
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [testGroup]);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [testGroup]);
       final container = createContainer(source);
       addTearDown(() async {
         container.dispose();

@@ -4,13 +4,16 @@ import 'package:memora/application/exceptions/reauthentication_required_exceptio
 import 'package:memora/application/usecases/account/delete_user_usecase.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
+
 import 'account_delete_modal.dart';
 import 'email_change_modal.dart';
 import 'password_change_modal.dart';
 import 'reauthenticate_modal.dart';
 
-typedef _AccountUpdateModalBuilder =
-    Widget Function(BuildContext dialogContext, _AccountUpdateSession session);
+typedef _AccountUpdateModalBuilder = Widget Function(
+  BuildContext dialogContext,
+  _AccountUpdateSession session,
+);
 
 class AccountSettings extends ConsumerWidget {
   const AccountSettings({super.key});

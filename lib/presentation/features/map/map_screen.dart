@@ -74,9 +74,8 @@ class MapScreen extends HookConsumerWidget {
               .execute(trip.id);
         } catch (_) {
           if (context.mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('旅行情報の取得に失敗しました')));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('旅行情報の取得に失敗しました')));
           }
           return;
         }
@@ -113,9 +112,8 @@ class MapScreen extends HookConsumerWidget {
             onSave: (updatedTrip) async {
               final succeeded = await notifier.updateTripEntry(updatedTrip);
               if (succeeded && context.mounted) {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(const SnackBar(content: Text('旅行を更新しました')));
               }
               return succeeded;
             },

@@ -14,9 +14,8 @@ void main() {
     test('FirestoreドキュメントからGroupDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('group001');
-      when(
-        doc.data(),
-      ).thenReturn({'ownerId': 'owner001', 'name': '家族', 'memo': '毎年旅行'});
+      when(doc.data())
+          .thenReturn({'ownerId': 'owner001', 'name': '家族', 'memo': '毎年旅行'});
       const members = [
         GroupMemberDto(
           memberId: 'member001',

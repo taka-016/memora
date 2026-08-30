@@ -15,8 +15,9 @@ import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.da
 import 'package:memora/presentation/shared/supported_year_range.dart';
 import 'package:uuid/uuid.dart';
 
-typedef ItineraryLocationCreated =
-    Future<LocationDto> Function(LocationDto location);
+typedef ItineraryLocationCreated = Future<LocationDto> Function(
+  LocationDto location,
+);
 
 class ItineraryItemEditBottomSheet extends HookWidget {
   const ItineraryItemEditBottomSheet({

@@ -322,86 +322,62 @@ class TopPageTestContext {
         orderBy: anyNamed('orderBy'),
       ),
     ).thenAnswer((_) async => []);
-    when(
-      mockMemberInvitationQueryService.getByInvitationCode(any),
-    ).thenAnswer((_) async => null);
-    when(
-      mockLocationQueryService.getLocationsByGroupId(any),
-    ).thenAnswer((_) async => []);
-    when(
-      mockMemberInvitationQueryService.getByInviteeId(any),
-    ).thenAnswer((_) async => null);
-    when(
-      mockDvcPointContractRepository.deleteDvcPointContract(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcPointContractRepository.deleteDvcPointContractsByGroupId(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcPointContractRepository.saveDvcPointContract(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcLimitedPointRepository.deleteDvcLimitedPoint(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcLimitedPointRepository.deleteDvcLimitedPointsByGroupId(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcLimitedPointRepository.saveDvcLimitedPoint(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcPointUsageRepository.deleteDvcPointUsage(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcPointUsageRepository.deleteDvcPointUsagesByGroupId(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockDvcPointUsageRepository.saveDvcPointUsage(any),
-    ).thenAnswer((_) async {});
+    when(mockMemberInvitationQueryService.getByInvitationCode(any))
+        .thenAnswer((_) async => null);
+    when(mockLocationQueryService.getLocationsByGroupId(any))
+        .thenAnswer((_) async => []);
+    when(mockMemberInvitationQueryService.getByInviteeId(any))
+        .thenAnswer((_) async => null);
+    when(mockDvcPointContractRepository.deleteDvcPointContract(any))
+        .thenAnswer((_) async {});
+    when(mockDvcPointContractRepository.deleteDvcPointContractsByGroupId(any))
+        .thenAnswer((_) async {});
+    when(mockDvcPointContractRepository.saveDvcPointContract(any))
+        .thenAnswer((_) async {});
+    when(mockDvcLimitedPointRepository.deleteDvcLimitedPoint(any))
+        .thenAnswer((_) async {});
+    when(mockDvcLimitedPointRepository.deleteDvcLimitedPointsByGroupId(any))
+        .thenAnswer((_) async {});
+    when(mockDvcLimitedPointRepository.saveDvcLimitedPoint(any))
+        .thenAnswer((_) async {});
+    when(mockDvcPointUsageRepository.deleteDvcPointUsage(any))
+        .thenAnswer((_) async {});
+    when(mockDvcPointUsageRepository.deleteDvcPointUsagesByGroupId(any))
+        .thenAnswer((_) async {});
+    when(mockDvcPointUsageRepository.saveDvcPointUsage(any))
+        .thenAnswer((_) async {});
     when(mockGroupRepository.deleteGroup(any)).thenAnswer((_) async {});
-    when(
-      mockGroupRepository.deleteGroupMembersByMemberId(any),
-    ).thenAnswer((_) async {});
+    when(mockGroupRepository.deleteGroupMembersByMemberId(any))
+        .thenAnswer((_) async {});
     when(mockGroupRepository.saveGroup(any)).thenAnswer((_) async => 'g1');
     when(mockGroupRepository.updateGroup(any)).thenAnswer((_) async {});
-    when(
-      mockGroupEventRepository.deleteGroupEvent(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockGroupEventRepository.deleteGroupEventsByGroupId(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockGroupEventRepository.saveGroupEvent(any),
-    ).thenAnswer((_) async => 'group-event-1');
-    when(
-      mockTripEntryRepository.deleteTripEntriesByGroupId(any),
-    ).thenAnswer((_) async {});
+    when(mockGroupEventRepository.deleteGroupEvent(any))
+        .thenAnswer((_) async {});
+    when(mockGroupEventRepository.deleteGroupEventsByGroupId(any))
+        .thenAnswer((_) async {});
+    when(mockGroupEventRepository.saveGroupEvent(any))
+        .thenAnswer((_) async => 'group-event-1');
+    when(mockTripEntryRepository.deleteTripEntriesByGroupId(any))
+        .thenAnswer((_) async {});
     when(mockTripEntryRepository.deleteTripEntry(any)).thenAnswer((_) async {});
-    when(
-      mockTripEntryRepository.saveTripEntry(any),
-    ).thenAnswer((_) async => 't1');
+    when(mockTripEntryRepository.saveTripEntry(any))
+        .thenAnswer((_) async => 't1');
     when(mockTripEntryRepository.updateTripEntry(any)).thenAnswer((_) async {});
     when(mockMemberRepository.deleteMember(any)).thenAnswer((_) async {});
     when(mockMemberRepository.saveMember(any)).thenAnswer((_) async {});
     when(mockMemberRepository.updateMember(any)).thenAnswer((_) async {});
-    when(
-      mockMemberEventRepository.deleteMemberEvent(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockMemberEventRepository.deleteMemberEventsByMemberId(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockMemberEventRepository.saveMemberEvent(any),
-    ).thenAnswer((_) async => 'member-event-1');
-    when(
-      mockMemberInvitationRepository.deleteMemberInvitation(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockMemberInvitationRepository.saveMemberInvitation(any),
-    ).thenAnswer((_) async {});
-    when(
-      mockMemberInvitationRepository.updateMemberInvitation(any),
-    ).thenAnswer((_) async {});
+    when(mockMemberEventRepository.deleteMemberEvent(any))
+        .thenAnswer((_) async {});
+    when(mockMemberEventRepository.deleteMemberEventsByMemberId(any))
+        .thenAnswer((_) async {});
+    when(mockMemberEventRepository.saveMemberEvent(any))
+        .thenAnswer((_) async => 'member-event-1');
+    when(mockMemberInvitationRepository.deleteMemberInvitation(any))
+        .thenAnswer((_) async {});
+    when(mockMemberInvitationRepository.saveMemberInvitation(any))
+        .thenAnswer((_) async {});
+    when(mockMemberInvitationRepository.updateMemberInvitation(any))
+        .thenAnswer((_) async {});
 
     testMember = MemberDto(
       id: 'admin1',
@@ -496,12 +472,10 @@ class TopPageTestContext {
       isVerified: true,
     );
 
-    when(
-      testMemberQueryService.getMemberByAccountId(any),
-    ).thenAnswer((_) async => defaultMember);
-    when(
-      testMemberQueryService.getMemberById(any),
-    ).thenAnswer((_) async => defaultMember);
+    when(testMemberQueryService.getMemberByAccountId(any))
+        .thenAnswer((_) async => defaultMember);
+    when(testMemberQueryService.getMemberById(any))
+        .thenAnswer((_) async => defaultMember);
     when(
       testMemberQueryService.getMembersByOwnerId(
         any,

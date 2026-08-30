@@ -60,9 +60,8 @@ class TopPage extends HookConsumerWidget {
         if (!context.mounted) {
           return;
         }
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(currentMemberState.message)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(currentMemberState.message)));
         ref.read(authNotifierProvider.notifier).logout();
       });
       return null;
@@ -236,9 +235,8 @@ class TopPage extends HookConsumerWidget {
         .read(groupTimelineGroupSelectionNotifierProvider.notifier)
         .load(currentMember);
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('指定された旅行が見つかりませんでした')));
     }
   }
 

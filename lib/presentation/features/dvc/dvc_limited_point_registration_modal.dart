@@ -3,13 +3,12 @@ import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
-typedef DvcLimitedPointSaveCallback =
-    Future<bool> Function({
-      required DateTime startYearMonth,
-      required DateTime endYearMonth,
-      required int point,
-      required String memo,
-    });
+typedef DvcLimitedPointSaveCallback = Future<bool> Function({
+  required DateTime startYearMonth,
+  required DateTime endYearMonth,
+  required int point,
+  required String memo,
+});
 
 Future<void> showDvcLimitedPointRegistrationModal({
   required BuildContext context,

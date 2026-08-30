@@ -35,12 +35,10 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockTasksCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockQuery);
+      when(mockTasksCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('orderIndex', descending: false))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('task001');

@@ -55,18 +55,14 @@ void main() {
       mockGetTripEntriesUsecase = MockGetTripEntriesUsecase();
       mockGetTripEntryByIdUsecase = MockGetTripEntryByIdUsecase();
       mockUpdateTripEntryUsecase = MockUpdateTripEntryUsecase();
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const [testGroup]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute(any),
-      ).thenAnswer((_) async => const []);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId(any),
-      ).thenAnswer((_) async => const []);
-      when(
-        mockGetTripEntryByIdUsecase.execute(any),
-      ).thenAnswer((_) async => null);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => const [testGroup]);
+      when(mockGetLocationsByGroupIdUsecase.execute(any))
+          .thenAnswer((_) async => const []);
+      when(mockGetTripEntriesUsecase.executeByGroupId(any))
+          .thenAnswer((_) async => const []);
+      when(mockGetTripEntryByIdUsecase.execute(any))
+          .thenAnswer((_) async => null);
     });
 
     Widget buildTestWidget({bool isTestEnvironment = true}) {
@@ -158,12 +154,10 @@ void main() {
         ),
       ];
 
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group2'),
-      ).thenAnswer((_) async => locations);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => groups);
+      when(mockGetLocationsByGroupIdUsecase.execute('group2'))
+          .thenAnswer((_) async => locations);
 
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
@@ -209,12 +203,10 @@ void main() {
         ),
       ];
 
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => locations);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => groups);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => locations);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -260,12 +252,10 @@ void main() {
         ),
       ];
 
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => locations);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => groups);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => locations);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -353,15 +343,12 @@ void main() {
           startDate: DateTime(2024, 6),
         ),
       ];
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const [group]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => locations);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => trips);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => const [group]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => locations);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => trips);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -393,15 +380,12 @@ void main() {
         longitude: 127.719,
         name: '首里城',
       );
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const [group]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenThrow(TestException('取得失敗'));
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => const [group]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenThrow(TestException('取得失敗'));
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -419,9 +403,8 @@ void main() {
     });
 
     testWidgets('訪問場所取得失敗時は画面上にエラーを表示する', (tester) async {
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenThrow(TestException('取得失敗'));
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenThrow(TestException('取得失敗'));
 
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
@@ -450,21 +433,16 @@ void main() {
         year: 2024,
         name: '沖縄旅行2024',
       );
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [group1Location]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group2'),
-      ).thenAnswer((_) async => const []);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group2'),
-      ).thenAnswer((_) async => const []);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => groups);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [group1Location]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group2'))
+          .thenAnswer((_) async => const []);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group2'))
+          .thenAnswer((_) async => const []);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -523,18 +501,14 @@ void main() {
         year: 2024,
         name: '沖縄旅行2024',
       );
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const [group]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) async => trip);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => const [group]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenAnswer((_) async => trip);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -570,15 +544,12 @@ void main() {
         name: '沖縄旅行2024',
       );
       final tripDetailCompleter = Completer<TripEntryDto?>();
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) => tripDetailCompleter.future);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenAnswer((_) => tripDetailCompleter.future);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -620,24 +591,18 @@ void main() {
         name: '沖縄旅行2024',
       );
       final tripDetailCompleter = Completer<TripEntryDto?>();
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => groups);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group2'),
-      ).thenAnswer((_) async => const []);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group2'),
-      ).thenAnswer((_) async => const []);
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) => tripDetailCompleter.future);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => groups);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group2'))
+          .thenAnswer((_) async => const []);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group2'))
+          .thenAnswer((_) async => const []);
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenAnswer((_) => tripDetailCompleter.future);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -686,18 +651,16 @@ void main() {
         }
         return locationsCompleter.future;
       });
-      when(mockGetTripEntriesUsecase.executeByGroupId('group1')).thenAnswer((
-        _,
-      ) {
-        tripsLoadCount++;
-        if (tripsLoadCount == 1) {
-          return Future.value(const [trip]);
-        }
-        return tripsCompleter.future;
-      });
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) async => trip);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) {
+            tripsLoadCount++;
+            if (tripsLoadCount == 1) {
+              return Future.value(const [trip]);
+            }
+            return tripsCompleter.future;
+          });
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenAnswer((_) async => trip);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -736,15 +699,12 @@ void main() {
         year: 2024,
         name: '沖縄旅行2024',
       );
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenAnswer((_) async => trip);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenAnswer((_) async => trip);
       when(mockUpdateTripEntryUsecase.execute(any)).thenAnswer((_) async {});
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
@@ -774,18 +734,15 @@ void main() {
         longitude: 127.719,
         name: '首里城',
       );
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenThrow(TestException('取得失敗'));
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenThrow(TestException('取得失敗'));
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const []);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const []);
 
       await tester.tap(find.byKey(const Key('map_reload_button')));
       await tester.pumpAndSettle();
@@ -815,15 +772,12 @@ void main() {
         year: 2024,
         name: '沖縄旅行2024',
       );
-      when(
-        mockGetGroupsWithMembersUsecase.execute(testMember),
-      ).thenAnswer((_) async => const [group]);
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
+      when(mockGetGroupsWithMembersUsecase.execute(testMember))
+          .thenAnswer((_) async => const [group]);
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();
@@ -851,15 +805,12 @@ void main() {
         year: 2024,
         name: '沖縄旅行2024',
       );
-      when(
-        mockGetLocationsByGroupIdUsecase.execute('group1'),
-      ).thenAnswer((_) async => const [location]);
-      when(
-        mockGetTripEntriesUsecase.executeByGroupId('group1'),
-      ).thenAnswer((_) async => const [trip]);
-      when(
-        mockGetTripEntryByIdUsecase.execute('trip1'),
-      ).thenThrow(TestException('旅行詳細取得失敗'));
+      when(mockGetLocationsByGroupIdUsecase.execute('group1'))
+          .thenAnswer((_) async => const [location]);
+      when(mockGetTripEntriesUsecase.executeByGroupId('group1'))
+          .thenAnswer((_) async => const [trip]);
+      when(mockGetTripEntryByIdUsecase.execute('trip1'))
+          .thenThrow(TestException('旅行詳細取得失敗'));
 
       await tester.pumpWidget(buildTestWidget(isTestEnvironment: false));
       await tester.pumpAndSettle();

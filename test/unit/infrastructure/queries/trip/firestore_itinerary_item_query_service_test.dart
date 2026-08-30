@@ -29,9 +29,8 @@ void main() {
       mockFirestore = MockFirebaseFirestore();
       mockItineraryItemsCollection =
           MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('itinerary_items'),
-      ).thenReturn(mockItineraryItemsCollection);
+      when(mockFirestore.collection('itinerary_items'))
+          .thenReturn(mockItineraryItemsCollection);
       service = FirestoreItineraryItemQueryService(firestore: mockFirestore);
     });
 
@@ -41,15 +40,12 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('startDateTime', descending: false),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('endDateTime', descending: false),
-      ).thenReturn(mockQuery);
+      when(mockItineraryItemsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('startDateTime', descending: false))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('endDateTime', descending: false))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('item001');
@@ -89,24 +85,20 @@ void main() {
           MockDocumentReference<Map<String, dynamic>>();
       final mockLocationSnapshot = MockDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockQuery);
+      when(mockItineraryItemsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('item001');
       when(
         mockDoc.data(),
       ).thenReturn({'tripId': tripId, 'name': '朝食', 'locationId': locationId});
-      when(
-        mockFirestore.collection('locations'),
-      ).thenReturn(mockLocationsCollection);
-      when(
-        mockLocationsCollection.doc(locationId),
-      ).thenReturn(mockLocationReference);
-      when(
-        mockLocationReference.get(),
-      ).thenAnswer((_) async => mockLocationSnapshot);
+      when(mockFirestore.collection('locations'))
+          .thenReturn(mockLocationsCollection);
+      when(mockLocationsCollection.doc(locationId))
+          .thenReturn(mockLocationReference);
+      when(mockLocationReference.get())
+          .thenAnswer((_) async => mockLocationSnapshot);
       when(mockLocationSnapshot.exists).thenReturn(true);
       when(mockLocationSnapshot.id).thenReturn(locationId);
       when(mockLocationSnapshot.data()).thenReturn({

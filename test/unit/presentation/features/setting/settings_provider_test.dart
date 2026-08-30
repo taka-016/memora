@@ -81,9 +81,8 @@ void main() {
 
   group('androidWidgetUpdateIntervalProvider', () {
     test('初期値を取得する', () async {
-      when(
-        intervalStorage.load(),
-      ).thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
+      when(intervalStorage.load())
+          .thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
       final subscription = container.listen(
         androidWidgetUpdateIntervalProvider,
         (_, _) {},
@@ -91,9 +90,8 @@ void main() {
       addTearDown(subscription.close);
 
       expect(
-        (await container.read(
-          androidWidgetUpdateIntervalProvider.future,
-        )).interval,
+        (await container.read(androidWidgetUpdateIntervalProvider.future))
+            .interval,
         AndroidWidgetUpdateInterval.every24Hours,
       );
     });
@@ -111,24 +109,21 @@ void main() {
         throwsA(isA<TestException>()),
       );
 
-      when(
-        intervalStorage.load(),
-      ).thenAnswer((_) async => AndroidWidgetUpdateInterval.every6Hours);
+      when(intervalStorage.load())
+          .thenAnswer((_) async => AndroidWidgetUpdateInterval.every6Hours);
       container.invalidate(androidWidgetUpdateIntervalProvider);
 
       expect(
-        (await container.read(
-          androidWidgetUpdateIntervalProvider.future,
-        )).interval,
+        (await container.read(androidWidgetUpdateIntervalProvider.future))
+            .interval,
         AndroidWidgetUpdateInterval.every6Hours,
       );
       verify(intervalStorage.load()).called(2);
     });
 
     test('保存中は現在値を維持して連続保存を受け付けない', () async {
-      when(
-        intervalStorage.load(),
-      ).thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
+      when(intervalStorage.load())
+          .thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
       final completer = Completer<void>();
       when(
         updateIntervalUsecase.execute(AndroidWidgetUpdateInterval.every6Hours),
@@ -172,9 +167,8 @@ void main() {
     });
 
     test('保存失敗時は表示値を維持し、同じ操作を再試行できる', () async {
-      when(
-        intervalStorage.load(),
-      ).thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
+      when(intervalStorage.load())
+          .thenAnswer((_) async => AndroidWidgetUpdateInterval.every24Hours);
       when(
         updateIntervalUsecase.execute(AndroidWidgetUpdateInterval.every6Hours),
       ).thenThrow(TestException('保存失敗'));
@@ -223,9 +217,8 @@ void main() {
   group('androidWidgetTargetGroupProvider', () {
     test('メンバーごとに候補と選択中IDの取得状態を分離する', () async {
       when(getGroupsUsecase.execute(member)).thenAnswer((_) async => [groupA]);
-      when(
-        getGroupsUsecase.execute(secondMember),
-      ).thenAnswer((_) async => [groupB]);
+      when(getGroupsUsecase.execute(secondMember))
+          .thenAnswer((_) async => [groupB]);
       when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
       final firstProvider = androidWidgetTargetGroupProvider(member);
       final secondProvider = androidWidgetTargetGroupProvider(secondMember);
@@ -277,12 +270,10 @@ void main() {
     test('対象ID取得が先に失敗しても未処理例外を発生させない', () async {
       final groupsCompleter = Completer<List<GroupDto>>();
       final targetGroupIdCompleter = Completer<String?>();
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) => groupsCompleter.future);
-      when(
-        cacheStorage.getTargetGroupId(),
-      ).thenAnswer((_) => targetGroupIdCompleter.future);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) => groupsCompleter.future);
+      when(cacheStorage.getTargetGroupId())
+          .thenAnswer((_) => targetGroupIdCompleter.future);
       final provider = androidWidgetTargetGroupProvider(member);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -301,12 +292,10 @@ void main() {
     test('グループ取得が先に失敗しても対象ID取得の未処理例外を発生させない', () async {
       final groupsCompleter = Completer<List<GroupDto>>();
       final targetGroupIdCompleter = Completer<String?>();
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) => groupsCompleter.future);
-      when(
-        cacheStorage.getTargetGroupId(),
-      ).thenAnswer((_) => targetGroupIdCompleter.future);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) => groupsCompleter.future);
+      when(cacheStorage.getTargetGroupId())
+          .thenAnswer((_) => targetGroupIdCompleter.future);
       final provider = androidWidgetTargetGroupProvider(member);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -343,13 +332,11 @@ void main() {
     });
 
     test('選択と解除の成功後に同じProviderへ結果を反映する', () async {
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [groupA, groupB]);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [groupA, groupB]);
       when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
-      when(
-        selectTargetGroupUsecase.execute('group-b'),
-      ).thenAnswer((_) async {});
+      when(selectTargetGroupUsecase.execute('group-b'))
+          .thenAnswer((_) async {});
       when(clearTargetGroupUsecase.execute()).thenAnswer((_) async {});
       final provider = androidWidgetTargetGroupProvider(member);
       final subscription = container.listen(provider, (_, _) {});
@@ -367,13 +354,11 @@ void main() {
     });
 
     test('選択失敗時は表示値を維持し、同じ操作を再試行できる', () async {
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [groupA, groupB]);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [groupA, groupB]);
       when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
-      when(
-        selectTargetGroupUsecase.execute('group-b'),
-      ).thenThrow(TestException('保存失敗'));
+      when(selectTargetGroupUsecase.execute('group-b'))
+          .thenThrow(TestException('保存失敗'));
       final provider = androidWidgetTargetGroupProvider(member);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -386,23 +371,20 @@ void main() {
       );
       expect(container.read(provider).requireValue.selectedGroupId, 'group-a');
 
-      when(
-        selectTargetGroupUsecase.execute('group-b'),
-      ).thenAnswer((_) async {});
+      when(selectTargetGroupUsecase.execute('group-b'))
+          .thenAnswer((_) async {});
       expect(await notifier.select('group-b'), isTrue);
       expect(container.read(provider).requireValue.selectedGroupId, 'group-b');
       verify(selectTargetGroupUsecase.execute('group-b')).called(2);
     });
 
     test('選択中は逆順の解除を受け付けず古い結果で表示を上書きしない', () async {
-      when(
-        getGroupsUsecase.execute(member),
-      ).thenAnswer((_) async => [groupA, groupB]);
+      when(getGroupsUsecase.execute(member))
+          .thenAnswer((_) async => [groupA, groupB]);
       when(cacheStorage.getTargetGroupId()).thenAnswer((_) async => 'group-a');
       final completer = Completer<void>();
-      when(
-        selectTargetGroupUsecase.execute('group-b'),
-      ).thenAnswer((_) => completer.future);
+      when(selectTargetGroupUsecase.execute('group-b'))
+          .thenAnswer((_) => completer.future);
       final provider = androidWidgetTargetGroupProvider(member);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);

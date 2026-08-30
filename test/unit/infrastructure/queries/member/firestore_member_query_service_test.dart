@@ -27,9 +27,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockMembersCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('members'),
-      ).thenReturn(mockMembersCollection);
+      when(mockFirestore.collection('members'))
+          .thenReturn(mockMembersCollection);
       service = FirestoreMemberQueryService(firestore: mockFirestore);
     });
 
@@ -38,9 +37,8 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockMembersCollection.orderBy('displayName', descending: false),
-      ).thenReturn(mockQuery);
+      when(mockMembersCollection.orderBy('displayName', descending: false))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('member001');
@@ -52,15 +50,13 @@ void main() {
 
       expect(result, hasLength(1));
       expect(result.first.displayName, '山田太郎');
-      verify(
-        mockMembersCollection.orderBy('displayName', descending: false),
-      ).called(1);
+      verify(mockMembersCollection.orderBy('displayName', descending: false))
+          .called(1);
     });
 
     test('メンバー一覧取得で例外が発生した場合は空リストを返す', () async {
-      when(
-        mockMembersCollection.get(),
-      ).thenThrow(TestException('Firestore error'));
+      when(mockMembersCollection.get())
+          .thenThrow(TestException('Firestore error'));
 
       final result = await service.getMembers();
 
@@ -100,9 +96,8 @@ void main() {
     });
 
     test('メンバーIDで取得時に例外が発生した場合はnullを返す', () async {
-      when(
-        mockMembersCollection.doc(any),
-      ).thenThrow(TestException('Firestore error'));
+      when(mockMembersCollection.doc(any))
+          .thenThrow(TestException('Firestore error'));
 
       final result = await service.getMemberById('member001');
 
@@ -115,9 +110,8 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockMembersCollection.where('accountId', isEqualTo: accountId),
-      ).thenReturn(mockQuery);
+      when(mockMembersCollection.where('accountId', isEqualTo: accountId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('member001');
@@ -134,9 +128,8 @@ void main() {
       final mockQuery = MockQuery<Map<String, dynamic>>();
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
 
-      when(
-        mockMembersCollection.where('accountId', isEqualTo: accountId),
-      ).thenReturn(mockQuery);
+      when(mockMembersCollection.where('accountId', isEqualTo: accountId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([]);
 
@@ -146,9 +139,8 @@ void main() {
     });
 
     test('アカウントIDで取得時に例外が発生した場合はnullを返す', () async {
-      when(
-        mockMembersCollection.where(any, isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('Firestore error'));
+      when(mockMembersCollection.where(any, isEqualTo: anyNamed('isEqualTo')))
+          .thenThrow(TestException('Firestore error'));
 
       final result = await service.getMemberByAccountId('account001');
 
@@ -161,12 +153,10 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockMembersCollection.where('ownerId', isEqualTo: ownerId),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('displayName', descending: true),
-      ).thenReturn(mockQuery);
+      when(mockMembersCollection.where('ownerId', isEqualTo: ownerId))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('displayName', descending: true))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('member010');

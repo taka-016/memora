@@ -35,16 +35,14 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
+      when(mockCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockQuery);
       when(mockQuery.orderBy('year', descending: false)).thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('event001');
-      when(
-        mockDoc.data(),
-      ).thenReturn({'groupId': groupId, 'year': 2025, 'memo': '運動会'});
+      when(mockDoc.data())
+          .thenReturn({'groupId': groupId, 'year': 2025, 'memo': '運動会'});
 
       final result = await service.getGroupEventsByGroupId(
         groupId,
@@ -58,9 +56,8 @@ void main() {
     });
 
     test('取得例外を呼び出し元へ再送出する', () async {
-      when(
-        mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('firestore error'));
+      when(mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenThrow(TestException('firestore error'));
 
       await expectLater(
         service.getGroupEventsByGroupId('group001'),

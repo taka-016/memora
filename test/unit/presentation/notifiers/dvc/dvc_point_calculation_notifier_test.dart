@@ -151,15 +151,12 @@ void main() {
     List<DvcPointUsageDto>? pointUsages,
   }) {
     when(getGroupUsecase.execute(groupId)).thenAnswer((_) async => groupDto);
-    when(
-      getContractsUsecase.execute(groupId),
-    ).thenAnswer((_) async => contracts ?? [contract]);
-    when(
-      getLimitedPointsUsecase.execute(groupId),
-    ).thenAnswer((_) async => limitedPoints ?? [limitedPoint]);
-    when(
-      getPointUsagesUsecase.execute(groupId),
-    ).thenAnswer((_) async => pointUsages ?? [pointUsage]);
+    when(getContractsUsecase.execute(groupId))
+        .thenAnswer((_) async => contracts ?? [contract]);
+    when(getLimitedPointsUsecase.execute(groupId))
+        .thenAnswer((_) async => limitedPoints ?? [limitedPoint]);
+    when(getPointUsagesUsecase.execute(groupId))
+        .thenAnswer((_) async => pointUsages ?? [pointUsage]);
   }
 
   Future<DvcPointCalculationNotifier> startNotifier() async {
@@ -177,18 +174,14 @@ void main() {
       final contractsCompleter = Completer<List<DvcPointContractDto>>();
       final limitedPointsCompleter = Completer<List<DvcLimitedPointDto>>();
       final pointUsagesCompleter = Completer<List<DvcPointUsageDto>>();
-      when(
-        getGroupUsecase.execute(groupId),
-      ).thenAnswer((_) => groupCompleter.future);
-      when(
-        getContractsUsecase.execute(groupId),
-      ).thenAnswer((_) => contractsCompleter.future);
-      when(
-        getLimitedPointsUsecase.execute(groupId),
-      ).thenAnswer((_) => limitedPointsCompleter.future);
-      when(
-        getPointUsagesUsecase.execute(groupId),
-      ).thenAnswer((_) => pointUsagesCompleter.future);
+      when(getGroupUsecase.execute(groupId))
+          .thenAnswer((_) => groupCompleter.future);
+      when(getContractsUsecase.execute(groupId))
+          .thenAnswer((_) => contractsCompleter.future);
+      when(getLimitedPointsUsecase.execute(groupId))
+          .thenAnswer((_) => limitedPointsCompleter.future);
+      when(getPointUsagesUsecase.execute(groupId))
+          .thenAnswer((_) => pointUsagesCompleter.future);
 
       listenProvider();
       await container.pump();
@@ -252,15 +245,12 @@ void main() {
       final limitedPointsCompleter = Completer<List<DvcLimitedPointDto>>();
       final pointUsagesCompleter = Completer<List<DvcPointUsageDto>>();
       when(getGroupUsecase.execute(groupId)).thenAnswer((_) async => groupDto);
-      when(
-        getContractsUsecase.execute(groupId),
-      ).thenAnswer((_) async => [contract]);
-      when(
-        getLimitedPointsUsecase.execute(groupId),
-      ).thenAnswer((_) => limitedPointsCompleter.future);
-      when(
-        getPointUsagesUsecase.execute(groupId),
-      ).thenAnswer((_) => pointUsagesCompleter.future);
+      when(getContractsUsecase.execute(groupId))
+          .thenAnswer((_) async => [contract]);
+      when(getLimitedPointsUsecase.execute(groupId))
+          .thenAnswer((_) => limitedPointsCompleter.future);
+      when(getPointUsagesUsecase.execute(groupId))
+          .thenAnswer((_) => pointUsagesCompleter.future);
       listenProvider();
       await container.pump();
       final notifier = container.read(
@@ -294,9 +284,8 @@ void main() {
       when(
         saveContractsUsecase.execute(groupId: groupId, contracts: [contract]),
       ).thenAnswer((_) async {});
-      when(
-        getContractsUsecase.execute(groupId),
-      ).thenAnswer((_) async => const []);
+      when(getContractsUsecase.execute(groupId))
+          .thenAnswer((_) async => const []);
 
       expect(await notifier.saveContracts([contract]), isTrue);
 
@@ -315,12 +304,10 @@ void main() {
 
     test('期間限定ポイント保存後の再取得失敗では既存データを維持する', () async {
       final notifier = await startNotifier();
-      when(
-        saveLimitedPointUsecase.execute(limitedPoint),
-      ).thenAnswer((_) async {});
-      when(
-        getLimitedPointsUsecase.execute(groupId),
-      ).thenThrow(TestException('再取得失敗'));
+      when(saveLimitedPointUsecase.execute(limitedPoint))
+          .thenAnswer((_) async {});
+      when(getLimitedPointsUsecase.execute(groupId))
+          .thenThrow(TestException('再取得失敗'));
 
       expect(await notifier.saveLimitedPoint(limitedPoint), isTrue);
 
@@ -337,12 +324,10 @@ void main() {
       clearInteractions(getContractsUsecase);
       clearInteractions(getLimitedPointsUsecase);
       clearInteractions(getPointUsagesUsecase);
-      when(
-        deleteLimitedPointUsecase.execute(limitedPoint.id),
-      ).thenAnswer((_) async {});
-      when(
-        getLimitedPointsUsecase.execute(groupId),
-      ).thenAnswer((_) async => const []);
+      when(deleteLimitedPointUsecase.execute(limitedPoint.id))
+          .thenAnswer((_) async {});
+      when(getLimitedPointsUsecase.execute(groupId))
+          .thenAnswer((_) async => const []);
 
       expect(await notifier.deleteLimitedPoint(limitedPoint.id), isTrue);
 
@@ -365,12 +350,10 @@ void main() {
       clearInteractions(getContractsUsecase);
       clearInteractions(getLimitedPointsUsecase);
       clearInteractions(getPointUsagesUsecase);
-      when(
-        pointUsageMutationCoordinator.saveDvcPointUsage(pointUsage),
-      ).thenAnswer((_) async {});
-      when(
-        getPointUsagesUsecase.execute(groupId),
-      ).thenAnswer((_) async => const []);
+      when(pointUsageMutationCoordinator.saveDvcPointUsage(pointUsage))
+          .thenAnswer((_) async {});
+      when(getPointUsagesUsecase.execute(groupId))
+          .thenAnswer((_) async => const []);
 
       expect(await notifier.savePointUsage(pointUsage), isTrue);
 
@@ -391,20 +374,17 @@ void main() {
     test('利用ポイント削除中の再試行と重複する更新を無視する', () async {
       final notifier = await startNotifier();
       final deleteCompleter = Completer<void>();
-      when(
-        pointUsageMutationCoordinator.deleteDvcPointUsage(pointUsage.id),
-      ).thenAnswer((_) => deleteCompleter.future);
-      when(
-        getPointUsagesUsecase.execute(groupId),
-      ).thenAnswer((_) async => const []);
+      when(pointUsageMutationCoordinator.deleteDvcPointUsage(pointUsage.id))
+          .thenAnswer((_) => deleteCompleter.future);
+      when(getPointUsagesUsecase.execute(groupId))
+          .thenAnswer((_) async => const []);
 
       final firstDelete = notifier.deletePointUsage(pointUsage.id);
 
       expect(await notifier.retryPointUsages(), isFalse);
       expect(await notifier.deletePointUsage(pointUsage.id), isFalse);
-      verify(
-        pointUsageMutationCoordinator.deleteDvcPointUsage(pointUsage.id),
-      ).called(1);
+      verify(pointUsageMutationCoordinator.deleteDvcPointUsage(pointUsage.id))
+          .called(1);
 
       deleteCompleter.complete();
       expect(await firstDelete, isTrue);
@@ -412,15 +392,12 @@ void main() {
 
     test('取得失敗したデータだけを再試行できる', () async {
       when(getGroupUsecase.execute(groupId)).thenAnswer((_) async => groupDto);
-      when(
-        getContractsUsecase.execute(groupId),
-      ).thenThrow(TestException('契約取得失敗'));
-      when(
-        getLimitedPointsUsecase.execute(groupId),
-      ).thenAnswer((_) async => [limitedPoint]);
-      when(
-        getPointUsagesUsecase.execute(groupId),
-      ).thenAnswer((_) async => [pointUsage]);
+      when(getContractsUsecase.execute(groupId))
+          .thenThrow(TestException('契約取得失敗'));
+      when(getLimitedPointsUsecase.execute(groupId))
+          .thenAnswer((_) async => [limitedPoint]);
+      when(getPointUsagesUsecase.execute(groupId))
+          .thenAnswer((_) async => [pointUsage]);
       listenProvider();
       await waitForInitialLoad();
       final notifier = container.read(
@@ -430,9 +407,8 @@ void main() {
       clearInteractions(getContractsUsecase);
       clearInteractions(getLimitedPointsUsecase);
       clearInteractions(getPointUsagesUsecase);
-      when(
-        getContractsUsecase.execute(groupId),
-      ).thenAnswer((_) async => [contract]);
+      when(getContractsUsecase.execute(groupId))
+          .thenAnswer((_) async => [contract]);
 
       expect(await notifier.retryContracts(), isTrue);
 

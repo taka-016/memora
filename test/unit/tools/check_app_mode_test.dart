@@ -29,9 +29,8 @@ void main() {
     Directory('${testProject.path}/tmp').createSync(recursive: true);
     Directory('${testProject.path}/tools/ci').createSync(recursive: true);
     File(_checkScriptPath).copySync('${testProject.path}/check.sh');
-    File(
-      _appModeArgumentsScriptPath,
-    ).copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
+    File(_appModeArgumentsScriptPath)
+        .copySync('${testProject.path}/tools/ci/app_mode_arguments.sh');
     commandLog = File('${testProject.path}/commands.log');
 
     for (final command in ['dart', 'flutter']) {

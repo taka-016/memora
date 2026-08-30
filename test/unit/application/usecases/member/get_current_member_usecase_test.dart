@@ -38,9 +38,8 @@ void main() {
     test('現在のユーザーがログインしている場合、そのメンバー情報を返す', () async {
       // Arrange
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
-      when(
-        mockMemberQueryService.getMemberByAccountId('user123'),
-      ).thenAnswer((_) async => testMember);
+      when(mockMemberQueryService.getMemberByAccountId('user123'))
+          .thenAnswer((_) async => testMember);
 
       // Act
       final result = await useCase.execute();
@@ -67,9 +66,8 @@ void main() {
     test('メンバー情報が見つからない場合、nullを返す', () async {
       // Arrange
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
-      when(
-        mockMemberQueryService.getMemberByAccountId('user123'),
-      ).thenAnswer((_) async => null);
+      when(mockMemberQueryService.getMemberByAccountId('user123'))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute();

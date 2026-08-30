@@ -40,16 +40,13 @@ void main() {
       mockItineraryItemsCollection =
           MockCollectionReference<Map<String, dynamic>>();
 
-      when(
-        mockFirestore.collection('trip_entries'),
-      ).thenReturn(mockTripEntriesCollection);
-      when(
-        mockFirestore.collection('locations'),
-      ).thenReturn(mockLocationsCollection);
+      when(mockFirestore.collection('trip_entries'))
+          .thenReturn(mockTripEntriesCollection);
+      when(mockFirestore.collection('locations'))
+          .thenReturn(mockLocationsCollection);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasksCollection);
-      when(
-        mockFirestore.collection('itinerary_items'),
-      ).thenReturn(mockItineraryItemsCollection);
+      when(mockFirestore.collection('itinerary_items'))
+          .thenReturn(mockItineraryItemsCollection);
 
       service = FirestoreTripEntryQueryService(firestore: mockFirestore);
     });
@@ -82,12 +79,10 @@ void main() {
         'memo': '楽しかった思い出',
       });
 
-      when(
-        mockLocationsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockLocationsQuery);
-      when(
-        mockLocationsQuery.get(),
-      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocationsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockLocationsQuery);
+      when(mockLocationsQuery.get())
+          .thenAnswer((_) async => mockLocationsSnapshot);
       when(mockLocationsSnapshot.docs).thenReturn([mockLocationDoc]);
       when(mockLocationDoc.data()).thenReturn({
         'tripId': tripId,
@@ -98,12 +93,10 @@ void main() {
       });
       when(mockLocationDoc.id).thenReturn('location001');
 
-      when(
-        mockTasksCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockTasksQuery);
-      when(
-        mockTasksQuery.orderBy('orderIndex', descending: false),
-      ).thenReturn(mockTasksQuery);
+      when(mockTasksCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockTasksQuery);
+      when(mockTasksQuery.orderBy('orderIndex', descending: false))
+          .thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
       when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
       when(mockTaskDoc.data()).thenReturn({
@@ -114,18 +107,14 @@ void main() {
       });
       when(mockTaskDoc.id).thenReturn('task001');
 
-      when(
-        mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.get(),
-      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(mockItineraryItemsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.orderBy('startDateTime', descending: false))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.orderBy('endDateTime', descending: false))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.get())
+          .thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
       when(mockItineraryItemDoc.data()).thenReturn({
         'tripId': tripId,
@@ -160,9 +149,8 @@ void main() {
       verify(
         mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
       ).called(1);
-      verify(
-        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
-      ).called(1);
+      verify(mockItineraryItemsQuery.orderBy('endDateTime', descending: false))
+          .called(1);
     });
 
     test('旅行が存在しない場合はnullを返す', () async {
@@ -199,33 +187,25 @@ void main() {
       when(mockDocRef.get()).thenAnswer((_) async => mockDocSnapshot);
       when(mockDocSnapshot.exists).thenReturn(true);
       when(mockDocSnapshot.id).thenReturn(tripId);
-      when(
-        mockDocSnapshot.data(),
-      ).thenReturn({'groupId': 'group001', 'name': '期間未設定旅行'});
-      when(
-        mockLocationsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockLocationsQuery);
-      when(
-        mockLocationsQuery.get(),
-      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockDocSnapshot.data())
+          .thenReturn({'groupId': 'group001', 'name': '期間未設定旅行'});
+      when(mockLocationsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockLocationsQuery);
+      when(mockLocationsQuery.get())
+          .thenAnswer((_) async => mockLocationsSnapshot);
       when(mockLocationsSnapshot.docs).thenReturn([]);
-      when(
-        mockTasksCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockTasksQuery);
+      when(mockTasksCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
       when(mockTasksSnapshot.docs).thenReturn([]);
-      when(
-        mockItineraryItemsCollection.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.orderBy('startDateTime', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.orderBy('endDateTime', descending: false),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.get(),
-      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(mockItineraryItemsCollection.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.orderBy('startDateTime', descending: false))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.orderBy('endDateTime', descending: false))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.get())
+          .thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([]);
 
       final result = await service.getTripEntryById(tripId);

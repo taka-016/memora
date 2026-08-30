@@ -39,10 +39,9 @@ class FirestoreWriteTransactionScope implements WriteTransactionScope {
   R repository<R extends Object>() {
     if (R == TripEntryRepository) {
       return FirestoreTripEntryRepository(
-            firestore: _firestore,
-            writeContext: _writeContext,
-          )
-          as R;
+        firestore: _firestore,
+        writeContext: _writeContext,
+      ) as R;
     }
     throw ArgumentError('Unsupported repository type: $R');
   }
