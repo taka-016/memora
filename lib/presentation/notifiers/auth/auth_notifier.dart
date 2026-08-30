@@ -12,7 +12,7 @@ import 'package:memora/application/usecases/member/check_member_exists_usecase.d
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 
 final authNotifierProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,

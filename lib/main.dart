@@ -16,7 +16,7 @@ import 'package:memora/infrastructure/services/home_widget_android_widget_cache_
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/app/app_router.dart';
-import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
 import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 

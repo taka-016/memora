@@ -1,5 +1,5 @@
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 
 class FakeCurrentMemberNotifier extends CurrentMemberNotifier {
   FakeCurrentMemberNotifier(this._state);

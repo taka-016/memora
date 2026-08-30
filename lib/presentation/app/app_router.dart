@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
-import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 final appInitialLocationProvider = Provider<String>((ref) {
   final platformLocation = Uri.tryParse(

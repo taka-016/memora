@@ -6,8 +6,8 @@ import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
-import '../../../helpers/test_exception.dart';
+import 'package:memora/presentation/notifiers/map/coordinate_notifier.dart';
+import '../../../../helpers/test_exception.dart';
 
 import 'coordinate_notifier_test.mocks.dart';
 

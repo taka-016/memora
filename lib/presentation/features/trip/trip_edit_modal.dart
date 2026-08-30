@@ -13,7 +13,7 @@ import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
-import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/notifiers/shared/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 enum TripEditExpandedSection { itinerary, tasks }

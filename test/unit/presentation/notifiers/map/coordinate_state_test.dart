@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/coordinate_state.dart';
+import 'package:memora/presentation/notifiers/map/coordinate_state.dart';
 
 void main() {
   group('CoordinateState', () {

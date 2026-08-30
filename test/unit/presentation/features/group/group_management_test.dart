@@ -12,7 +12,7 @@ import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/group/group_management.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import '../../../../helpers/test_exception.dart';

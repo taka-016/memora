@@ -15,7 +15,7 @@ import 'package:memora/application/services/android_widget_update_interval_stora
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 
 import '../../../../helpers/fake_current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';

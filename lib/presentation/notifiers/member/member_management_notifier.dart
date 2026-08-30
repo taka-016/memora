@@ -6,7 +6,7 @@ import 'package:memora/application/usecases/member/get_managed_members_usecase.d
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/member_management_state.dart';
+import 'package:memora/presentation/notifiers/member/member_management_state.dart';
 
 export 'member_management_state.dart';
 

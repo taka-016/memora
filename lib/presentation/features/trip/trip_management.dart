@@ -8,7 +8,7 @@ import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/notifiers/trip_management_notifier.dart';
+import 'package:memora/presentation/notifiers/trip/trip_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 
 class TripManagement extends HookConsumerWidget {

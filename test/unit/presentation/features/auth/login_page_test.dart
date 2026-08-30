@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/login_page.dart';
 
 import '../../../../helpers/fake_auth_notifier.dart';

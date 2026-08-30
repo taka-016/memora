@@ -19,7 +19,7 @@ import 'package:memora/domain/repositories/member/member_invitation_repository.d
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import 'package:memora/presentation/features/member/member_management.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import '../../../../helpers/test_exception.dart';
 
 import '../../../../helpers/fake_current_member_notifier.dart';

@@ -10,11 +10,11 @@ import 'package:memora/application/usecases/group/get_groups_with_members_usecas
 import 'package:memora/application/usecases/trip/get_locations_by_group_id_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
-import 'package:memora/presentation/notifiers/map_notifier.dart';
+import 'package:memora/presentation/notifiers/map/map_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 import 'map_notifier_test.mocks.dart';
 
 @GenerateMocks([

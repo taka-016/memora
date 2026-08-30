@@ -13,7 +13,7 @@ import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_usage_registration_modal.dart';
-import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dart';
+import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_notifier.dart';
 
 enum _DvcActionMenu { contractRegistration, limitedPointRegistration }
 

@@ -10,8 +10,8 @@ import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/timeline/timeline.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows.dart';
-import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_refresh_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_refresh_notifier.dart';
 
 int groupTimelineStackIndex({required String? groupId}) {
   return groupId == null ? 0 : 1;

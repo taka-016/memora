@@ -1,6 +1,6 @@
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 
 /// テスト用のFakeAuthNotifier
 ///

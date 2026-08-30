@@ -10,7 +10,7 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/notifiers/coordinate_notifier.dart';
+import 'package:memora/presentation/notifiers/map/coordinate_notifier.dart';
 import 'package:memora/presentation/shared/inputs/custom_search_bar.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
