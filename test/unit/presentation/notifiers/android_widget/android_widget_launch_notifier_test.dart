@@ -9,11 +9,11 @@ import 'package:memora/application/services/android_widget_launch_uri_source.dar
 import 'package:memora/application/usecases/android_widget/watch_android_widget_launch_uri_usecase.dart';
 import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
-import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 import 'android_widget_launch_notifier_test.mocks.dart';
 
 @GenerateNiceMocks([

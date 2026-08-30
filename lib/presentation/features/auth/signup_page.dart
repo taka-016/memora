@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/core/validators/password_validator.dart';
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 
 class SignupPage extends HookConsumerWidget {
   const SignupPage({super.key});

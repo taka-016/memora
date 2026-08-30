@@ -5,8 +5,8 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/member_management_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/member_management_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/delete_confirm_dialog.dart';
 import 'package:share_plus/share_plus.dart';
 

@@ -16,11 +16,11 @@ import 'package:memora/application/usecases/group/get_group_with_members_by_id_u
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_mutation_coordinator.dart';
-import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dart';
+import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 import 'dvc_point_calculation_notifier_test.mocks.dart';
 
 @GenerateMocks([

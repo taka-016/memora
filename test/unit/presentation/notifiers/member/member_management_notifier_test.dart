@@ -9,9 +9,9 @@ import 'package:memora/application/usecases/member/get_managed_members_usecase.d
 import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
 import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/member_management_notifier.dart';
+import 'package:memora/presentation/notifiers/member/member_management_notifier.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 
 void main() {
   const currentMember = MemberDto(id: 'member-1', displayName: '太郎');

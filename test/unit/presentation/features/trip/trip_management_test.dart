@@ -17,7 +17,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/presentation/notifiers/trip_management_notifier.dart';
+import 'package:memora/presentation/notifiers/trip/trip_management_notifier.dart';
 import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';

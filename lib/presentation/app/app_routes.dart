@@ -13,8 +13,8 @@ import 'package:memora/presentation/features/member/member_management.dart';
 import 'package:memora/presentation/features/setting/settings.dart';
 import 'package:memora/presentation/features/timeline/group_timeline_navigation_view.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 part 'app_routes.g.dart';
 

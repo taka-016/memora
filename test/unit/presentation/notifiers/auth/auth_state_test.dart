@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/account/user_dto.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 
 void main() {
   group('AuthState', () {

@@ -8,11 +8,11 @@ import 'package:memora/presentation/app/app_redirect_controller.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/presentation/features/auth/signup_page.dart';
-import 'package:memora/presentation/notifiers/android_widget_launch_notifier.dart';
-import 'package:memora/presentation/notifiers/auth_notifier.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
-import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 import '../../../helpers/fake_auth_notifier.dart';
 import '../../../helpers/fake_current_member_notifier.dart';

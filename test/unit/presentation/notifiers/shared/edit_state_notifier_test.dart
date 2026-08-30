@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/notifiers/shared/edit_state_notifier.dart';
 
 void main() {
   group('EditStateNotifier', () {

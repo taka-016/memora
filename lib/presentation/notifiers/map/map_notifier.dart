@@ -9,7 +9,7 @@ import 'package:memora/application/usecases/trip/get_locations_by_group_id_useca
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
-import 'package:memora/presentation/notifiers/map_state.dart';
+import 'package:memora/presentation/notifiers/map/map_state.dart';
 
 export 'map_state.dart';
 

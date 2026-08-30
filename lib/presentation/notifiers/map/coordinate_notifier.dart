@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/coordinate_state.dart';
+import 'package:memora/presentation/notifiers/map/coordinate_state.dart';
 
 final coordinateProvider =
     NotifierProvider<CoordinateNotifier, CoordinateState>(

@@ -6,7 +6,7 @@ import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/presentation/notifiers/group_management_state.dart';
+import 'package:memora/presentation/notifiers/group/group_management_state.dart';
 
 export 'group_management_state.dart';
 

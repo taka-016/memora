@@ -8,7 +8,7 @@ import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/task_list.dart';
-import 'package:memora/presentation/notifiers/task_copy_notifier.dart';
+import 'package:memora/presentation/notifiers/trip/task_copy_notifier.dart';
 import 'package:uuid/uuid.dart';
 
 class TaskView extends HookConsumerWidget {

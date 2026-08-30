@@ -16,7 +16,7 @@ import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart'
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/map/map_screen.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
-import 'package:memora/presentation/notifiers/current_member_notifier.dart';
+import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';

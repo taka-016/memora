@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
-import 'package:memora/presentation/notifiers/group_timeline_group_selection_notifier.dart';
+import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 const groupTimelineResumeRefreshInterval = Duration(minutes: 1);
 

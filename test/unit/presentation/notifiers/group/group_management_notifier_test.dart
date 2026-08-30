@@ -8,11 +8,11 @@ import 'package:memora/application/usecases/group/create_group_usecase.dart';
 import 'package:memora/application/usecases/group/delete_group_usecase.dart';
 import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
 import 'package:memora/application/usecases/group/update_group_usecase.dart';
-import 'package:memora/presentation/notifiers/group_management_notifier.dart';
+import 'package:memora/presentation/notifiers/group/group_management_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../helpers/test_exception.dart';
+import '../../../../helpers/test_exception.dart';
 import 'group_management_notifier_test.mocks.dart';
 
 @GenerateMocks([

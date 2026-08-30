@@ -1,5 +1,5 @@
 import 'package:memora/presentation/app/app_routes.dart';
-import 'package:memora/presentation/notifiers/auth_state.dart';
+import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 import 'package:memora/presentation/shared/supported_year_range.dart';
 
 class AppRedirectController {

@@ -5,7 +5,7 @@ import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
-import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/notifiers/shared/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 class MemberEditModal extends HookConsumerWidget {

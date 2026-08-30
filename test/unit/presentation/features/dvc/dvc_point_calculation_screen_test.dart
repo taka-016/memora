@@ -21,7 +21,7 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_screen.dart';
-import 'package:memora/presentation/notifiers/dvc_point_calculation_notifier.dart';
+import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_notifier.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 
 void main() {

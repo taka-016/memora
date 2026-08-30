@@ -6,7 +6,7 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/helpers/focus_killer.dart';
-import 'package:memora/presentation/notifiers/edit_state_notifier.dart';
+import 'package:memora/presentation/notifiers/shared/edit_state_notifier.dart';
 import 'package:memora/presentation/shared/dialogs/edit_discard_confirm_dialog.dart';
 
 enum _MemberAction { toggleAdministrator, changeMember, removeMember }
