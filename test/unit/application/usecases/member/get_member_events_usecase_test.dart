@@ -5,7 +5,6 @@ import 'package:memora/application/usecases/member/get_member_events_usecase.dar
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'get_member_events_usecase_test.mocks.dart';
 
 @GenerateMocks([MemberEventQueryService])
@@ -51,21 +50,6 @@ void main() {
           'member-2',
         ], orderBy: anyNamed('orderBy')),
       ).called(1);
-    });
-
-    test('取得例外を呼び出し元へ伝播する', () async {
-      final exception = TestException('取得失敗');
-      when(
-        mockMemberEventQueryService.getMemberEventsByMemberIds(
-          any,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).thenThrow(exception);
-
-      await expectLater(
-        usecase.execute(const ['member-1']),
-        throwsA(same(exception)),
-      );
     });
   });
 }

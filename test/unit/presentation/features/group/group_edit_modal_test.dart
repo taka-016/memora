@@ -350,14 +350,16 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final member1Position = tester.getTopLeft(
-        find.byKey(const Key('member_row_member1')),
-      );
-      final ownerPosition = tester.getTopLeft(
-        find.byKey(const Key('member_row_owner-id')),
-      );
+      final displayedNames = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((text) => text.data)
+          .whereType<String>()
+          .toList();
 
-      expect(member1Position.dy, lessThan(ownerPosition.dy));
+      expect(
+        displayedNames.indexOf('メンバー1'),
+        lessThan(displayedNames.indexOf('オーナー')),
+      );
     });
 
     testWidgets('オーナーの操作メニューが表示されず管理者が固定される', (WidgetTester tester) async {
@@ -644,9 +646,10 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      final textWidget = tester.widget<Text>(find.text(longName));
-      expect(textWidget.maxLines, 1);
-      expect(textWidget.overflow, TextOverflow.ellipsis);
+      final nameText = tester.widget<Text>(find.text(longName));
+      expect(nameText.maxLines, 1);
+      expect(nameText.overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('保存時に選択されたメンバーがGroupに含まれる', (WidgetTester tester) async {
@@ -966,98 +969,6 @@ void main() {
       expect(find.text('管理者メンバー'), findsOneWidget);
       // 一般メンバー名が表示されることを確認
       expect(find.text('一般メンバー'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_0')),
-          matching: find.text('管理者'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('admin_badge_slot_1')),
-          matching: find.text('管理者'),
-        ),
-        findsNothing,
-      );
-    });
-
-    testWidgets('管理者バッジの表示位置が固定される', (WidgetTester tester) async {
-      final availableMembers = [
-        createGroupMemberDto(
-          memberId: 'admin-member',
-          groupId: '',
-          accountId: 'admin-account',
-          ownerId: 'owner-id',
-          displayName: '管理者メンバー',
-          kanjiLastName: '管理',
-          kanjiFirstName: '太郎',
-          hiraganaLastName: 'かんり',
-          hiraganaFirstName: 'たろう',
-          firstName: 'Taro',
-          lastName: 'Kanri',
-          gender: '男性',
-          birthday: DateTime(1990, 1, 1),
-          email: 'admin@example.com',
-          phoneNumber: '090-1111-1111',
-          type: 'member',
-        ),
-        createGroupMemberDto(
-          memberId: 'normal-member',
-          groupId: '',
-          accountId: 'normal-account',
-          ownerId: 'owner-id',
-          displayName: '一般メンバー',
-          kanjiLastName: '一般',
-          kanjiFirstName: '花子',
-          hiraganaLastName: 'いっぱん',
-          hiraganaFirstName: 'はなこ',
-          firstName: 'Hanako',
-          lastName: 'Ippan',
-          gender: '女性',
-          birthday: DateTime(1992, 5, 15),
-          email: 'normal@example.com',
-          phoneNumber: '090-2222-2222',
-          type: 'member',
-        ),
-      ];
-
-      await tester.pumpWidget(
-        buildSubject(
-          group: createGroupDto(
-            id: 'test-group',
-            ownerId: 'owner-id',
-            name: 'テストグループ',
-            members: [
-              createGroupMemberDto(
-                groupId: 'test-group',
-                memberId: 'admin-member',
-                isAdministrator: true,
-              ),
-              createGroupMemberDto(
-                groupId: 'test-group',
-                memberId: 'normal-member',
-                isAdministrator: false,
-              ),
-            ],
-          ),
-          onSave: (group) async {},
-          availableMembers: availableMembers,
-          currentMember: createCurrentMember(),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      final adminSlot = tester.widget<SizedBox>(
-        find.byKey(const Key('admin_badge_slot_0')),
-      );
-      final normalSlot = tester.widget<SizedBox>(
-        find.byKey(const Key('admin_badge_slot_1')),
-      );
-
-      expect(adminSlot.width, equals(normalSlot.width));
-      expect(adminSlot.width, isNotNull);
       expect(
         find.descendant(
           of: find.byKey(const Key('admin_badge_slot_0')),

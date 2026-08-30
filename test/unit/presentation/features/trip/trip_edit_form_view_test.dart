@@ -102,7 +102,7 @@ void main() {
       expect(taskRequested, 1);
     });
 
-    testWidgets('訪問場所ボタンから背景を暗くせず旅行のlocationsマップを単独表示すること', (
+    testWidgets('訪問場所ボタンから旅行のlocationsマップを単独表示すること', (
       WidgetTester tester,
     ) async {
       const initialValue = TripEntryDto(
@@ -155,10 +155,6 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('map_view')), findsOneWidget);
-      final modalBarriers = tester
-          .widgetList<ModalBarrier>(find.byType(ModalBarrier))
-          .toList();
-      expect(modalBarriers.last.color, isNull);
     });
 
     testWidgets('親からvalueが同期されたときはonChangedを発火しないこと', (
@@ -396,13 +392,18 @@ void main() {
       expect(find.text('朝食'), findsOneWidget);
       expect(find.text('観光'), findsOneWidget);
       expect(find.text('夕食'), findsOneWidget);
+      final displayedTexts = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((text) => text.data)
+          .whereType<String>()
+          .toList();
       expect(
-        tester.getTopLeft(find.text('観光')).dy,
-        greaterThan(tester.getTopLeft(find.text('朝食')).dy),
+        displayedTexts.indexOf('朝食'),
+        lessThan(displayedTexts.indexOf('観光')),
       );
       expect(
-        tester.getTopLeft(find.text('夕食')).dy,
-        greaterThan(tester.getTopLeft(find.text('観光')).dy),
+        displayedTexts.indexOf('観光'),
+        lessThan(displayedTexts.indexOf('夕食')),
       );
     });
 

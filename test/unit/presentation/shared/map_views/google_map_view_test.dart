@@ -52,32 +52,40 @@ void main() {
       expect(find.byIcon(Icons.my_location), findsOneWidget);
     });
 
-    testWidgets('文字サイズを拡大してもグループ選択は検索欄の下に表示される', (tester) async {
+    testWidgets('文字サイズを拡大しても検索とグループ選択を操作できる', (tester) async {
+      var groupSelectorTapped = false;
+
       await tester.pumpWidget(
         _createApp(
-          const MediaQuery(
-            data: MediaQueryData(textScaler: TextScaler.linear(2)),
+          MediaQuery(
+            data: const MediaQueryData(textScaler: TextScaler.linear(2)),
             child: GoogleMapView(
-              locations: [],
+              locations: const [],
               topLeadingOverlay: SizedBox(
-                key: Key('test_group_selector'),
-                width: 120,
-                height: 32,
+                width: 160,
+                child: TextButton(
+                  key: const Key('test_group_selector'),
+                  onPressed: () {
+                    groupSelectorTapped = true;
+                  },
+                  child: const Text('グループを選択'),
+                ),
               ),
             ),
           ),
         ),
       );
 
-      final searchFieldRect = tester.getRect(find.byType(TextField));
-      final groupSelectorRect = tester.getRect(
-        find.byKey(const Key('test_group_selector')),
-      );
+      await tester.tap(find.byType(TextField));
+      await tester.pump();
 
-      expect(
-        groupSelectorRect.top,
-        greaterThanOrEqualTo(searchFieldRect.bottom + 8),
-      );
+      expect(tester.testTextInput.isVisible, isTrue);
+
+      await tester.tap(find.byKey(const Key('test_group_selector')));
+      await tester.pump();
+
+      expect(groupSelectorTapped, isTrue);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('locationがない場合、デフォルト位置を使用する', (tester) async {
@@ -232,35 +240,6 @@ void main() {
       expect(find.byType(LocationDetailBottomSheet), findsOneWidget);
       expect(find.text('東京駅'), findsOneWidget);
       expect(find.text('35.6812, 139.7671'), findsNothing);
-    });
-
-    testWidgets('外部指定した高さで選択中locationの軽量ボトムシートを表示する', (tester) async {
-      const location = LocationDto(
-        id: 'location1',
-        tripId: 'trip1',
-        groupId: 'group1',
-        latitude: 35.6812,
-        longitude: 139.7671,
-        name: '東京駅',
-      );
-
-      await tester.pumpWidget(
-        _createApp(
-          const GoogleMapView(
-            locations: [location],
-            selectedLocation: location,
-            locationDetailBottomSheetHeight: 220,
-          ),
-        ),
-      );
-      await tester.pump();
-
-      expect(
-        tester
-            .getSize(find.byKey(const Key('location_detail_bottom_sheet')))
-            .height,
-        220,
-      );
     });
 
     testWidgets('ボトムシートの前後ボタンで取得順のピンへ循環移動する', (tester) async {

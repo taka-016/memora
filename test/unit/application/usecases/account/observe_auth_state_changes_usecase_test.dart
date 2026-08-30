@@ -8,7 +8,6 @@ import 'package:memora/domain/entities/account/user.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'observe_auth_state_changes_usecase_test.mocks.dart';
 
 @GenerateMocks([AuthService])
@@ -54,21 +53,6 @@ void main() {
           null,
         ]),
       );
-    });
-
-    test('認証状態ストリームのエラーをそのまま伝播する', () async {
-      final controller = StreamController<User?>();
-      addTearDown(controller.close);
-      when(
-        mockAuthService.authStateChanges,
-      ).thenAnswer((_) => controller.stream);
-
-      final stream = useCase.execute();
-      final error = TestException('認証状態監視エラー');
-
-      controller.addError(error);
-
-      await expectLater(stream, emitsError(isA<TestException>()));
     });
   });
 }

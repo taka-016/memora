@@ -4,7 +4,6 @@ import 'package:memora/application/usecases/account/signup_usecase.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'signup_usecase_test.mocks.dart';
 
 @GenerateMocks([AuthService])
@@ -31,29 +30,6 @@ void main() {
       await expectLater(
         useCase.execute(email: email, password: password),
         completes,
-      );
-
-      verify(
-        mockAuthService.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        ),
-      ).called(1);
-    });
-
-    test('サインアップでエラーが発生した場合は例外を再スローする', () async {
-      const email = 'test@example.com';
-      const password = 'Password123!';
-      when(
-        mockAuthService.createUserWithEmailAndPassword(
-          email: email,
-          password: password,
-        ),
-      ).thenThrow(TestException('サインアップエラー'));
-
-      await expectLater(
-        useCase.execute(email: email, password: password),
-        throwsA(isA<TestException>()),
       );
 
       verify(

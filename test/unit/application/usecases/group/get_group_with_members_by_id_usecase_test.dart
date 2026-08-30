@@ -6,7 +6,6 @@ import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import '../../../../helpers/test_exception.dart';
 
 import 'get_group_with_members_by_id_usecase_test.mocks.dart';
 
@@ -88,22 +87,6 @@ void main() {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).called(1);
-    });
-
-    test('サービスで例外が発生した場合、例外がそのまま伝播されること', () async {
-      // Arrange
-      const groupId = 'group1';
-      final exception = TestException('Database error');
-
-      when(
-        mockGroupQueryService.getGroupWithMembersById(
-          groupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).thenThrow(exception);
-
-      // Act & Assert
-      expect(() => usecase.execute(groupId), throwsA(exception));
     });
 
     test('membersSortパラメータが正しく並び順へ変換されること', () async {

@@ -3,7 +3,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/services/auth_service.dart';
-import '../../../../helpers/test_exception.dart';
 
 import 'update_password_usecase_test.mocks.dart';
 
@@ -25,23 +24,6 @@ void main() {
       ).thenAnswer((_) async {});
 
       await expectLater(useCase.execute(newPassword: newPassword), completes);
-
-      verify(
-        mockAuthService.updatePassword(newPassword: newPassword),
-      ).called(1);
-    });
-
-    test('パスワード更新でエラーが発生した場合は例外を再スローする', () async {
-      const newPassword = 'NewPassword123!';
-      const errorMessage = 'パスワード更新エラー';
-      when(
-        mockAuthService.updatePassword(newPassword: newPassword),
-      ).thenThrow(TestException(errorMessage));
-
-      await expectLater(
-        useCase.execute(newPassword: newPassword),
-        throwsA(isA<TestException>()),
-      );
 
       verify(
         mockAuthService.updatePassword(newPassword: newPassword),

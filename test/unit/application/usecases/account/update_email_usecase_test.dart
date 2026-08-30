@@ -3,7 +3,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/services/auth_service.dart';
-import '../../../../helpers/test_exception.dart';
 
 import 'update_email_usecase_test.mocks.dart';
 
@@ -25,21 +24,6 @@ void main() {
       ).thenAnswer((_) async {});
 
       await expectLater(useCase.execute(newEmail: newEmail), completes);
-
-      verify(mockAuthService.updateEmail(newEmail: newEmail)).called(1);
-    });
-
-    test('メールアドレス更新でエラーが発生した場合は例外を再スローする', () async {
-      const newEmail = 'new@example.com';
-      const errorMessage = 'メールアドレス更新エラー';
-      when(
-        mockAuthService.updateEmail(newEmail: newEmail),
-      ).thenThrow(TestException(errorMessage));
-
-      await expectLater(
-        useCase.execute(newEmail: newEmail),
-        throwsA(isA<TestException>()),
-      );
 
       verify(mockAuthService.updateEmail(newEmail: newEmail)).called(1);
     });

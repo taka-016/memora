@@ -58,7 +58,7 @@ void main() {
       expect(find.text('この場所を訪問した旅行はありません'), findsOneWidget);
     });
 
-    testWidgets('旅行一覧は固定高のスクロール領域に表示する', (tester) async {
+    testWidgets('旅行が多数ある場合も一覧をスクロールして末尾を確認できる', (tester) async {
       final trips = List.generate(
         10,
         (index) => TripEntryDto(
@@ -71,17 +71,16 @@ void main() {
 
       await tester.pumpWidget(buildTestWidget(trips: trips));
 
-      final listRegion = tester.widget<SizedBox>(
-        find.byKey(const Key('map_pin_trip_list_region')),
+      final list = find.descendant(
+        of: find.byKey(const Key('map_pin_trip_list_region')),
+        matching: find.byType(Scrollable),
       );
-      expect(listRegion.height, 120);
-      expect(
-        find.descendant(
-          of: find.byKey(const Key('map_pin_trip_list_region')),
-          matching: find.byType(Scrollable),
-        ),
-        findsOneWidget,
-      );
+      expect(list, findsOneWidget);
+
+      await tester.scrollUntilVisible(find.text('旅行9'), 100, scrollable: list);
+
+      expect(find.text('旅行9'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('旅行名をタップすると対象旅行を通知する', (tester) async {

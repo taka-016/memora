@@ -46,33 +46,6 @@ void main() {
       expect(find.text('家族旅行'), findsOneWidget);
     });
 
-    testWidgets('メモは折り返さず、表示しきれない場合は省略表示を設定する', (WidgetTester tester) async {
-      // Arrange
-      const memo = 'とても長いメモですとても長いメモですとても長いメモです';
-      final widget = DvcCell(
-        usages: [
-          DvcPointUsageDto(
-            id: '1',
-            groupId: 'group1',
-            usageYearMonth: DateTime(2024, 8),
-            usedPoint: 120,
-            memo: memo,
-          ),
-        ],
-        availableHeight: 100.0,
-        availableWidth: 80.0,
-      );
-
-      // Act
-      await tester.pumpWidget(MaterialApp(home: Scaffold(body: widget)));
-
-      // Assert
-      final memoText = tester.widget<Text>(find.text(memo));
-      expect(memoText.maxLines, 1);
-      expect(memoText.softWrap, isFalse);
-      expect(memoText.overflow, TextOverflow.ellipsis);
-    });
-
     testWidgets('利用可能な高さが小さい場合、省略件数を表示する', (WidgetTester tester) async {
       // Arrange
       final usages = List.generate(

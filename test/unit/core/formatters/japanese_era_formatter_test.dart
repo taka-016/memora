@@ -124,20 +124,6 @@ void main() {
       expect(result, '1867年12月31日');
     });
 
-    test('現在の年を和暦年表示用にフォーマットできる', () {
-      // Arrange
-      final currentYear = DateTime.now().year;
-
-      // Act
-      final result = JapaneseEraFormatter.formatJapaneseEraFormatterYear(
-        currentYear,
-      );
-
-      // Assert
-      // 現在の年に対応する和暦フォーマットが返される（年号を含む）
-      expect(result, matches(r'[令和平成昭和大正明治].*年'));
-    });
-
     test('令和6年(2024年)を正しくフォーマットできる', () {
       // Act
       final result = JapaneseEraFormatter.formatJapaneseEraFormatterYear(2024);

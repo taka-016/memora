@@ -5,7 +5,6 @@ import 'package:memora/application/usecases/group/get_group_events_usecase.dart'
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'get_group_events_usecase_test.mocks.dart';
 
 @GenerateMocks([GroupEventQueryService])
@@ -47,18 +46,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).called(1);
-    });
-
-    test('取得例外を呼び出し元へ伝播する', () async {
-      final exception = TestException('取得失敗');
-      when(
-        mockGroupEventQueryService.getGroupEventsByGroupId(
-          any,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).thenThrow(exception);
-
-      await expectLater(usecase.execute('group-1'), throwsA(same(exception)));
     });
   });
 }

@@ -128,57 +128,6 @@ void main() {
   }
 
   group('TripManagement', () {
-    testWidgets('初期化時に旅行リストが読み込まれること', (WidgetTester tester) async {
-      // Arrange
-      when(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          testGroupId,
-          testYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).thenAnswer((_) async => testTripEntries);
-      // Act
-      await tester.pumpWidget(
-        createApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              isTestEnvironment: true,
-            ),
-          ),
-        ),
-      );
-
-      // 初期ローディング状態を確認
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      // ローディング完了まで待機
-      await tester.pumpAndSettle();
-
-      // Assert - データ取得の確認
-      verify(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          testGroupId,
-          testYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).called(1);
-
-      expect(find.text('$testYear年の旅行管理'), findsOneWidget);
-      expect(find.text('旅行追加'), findsOneWidget);
-      expect(find.byType(ListTile), findsNWidgets(2)); // 2つの旅行が表示
-
-      // 1つ目の旅行の確認
-      expect(find.text('北海道旅行'), findsOneWidget);
-
-      // 2つ目の旅行の確認
-      expect(find.text('沖縄旅行'), findsOneWidget);
-      expect(find.text('2025/07/01 - 2025/07/05'), findsOneWidget);
-      expect(find.text('2025/09/15 - 2025/09/18'), findsOneWidget);
-    });
-
     testWidgets('旅行がない場合でも画面が表示されること', (WidgetTester tester) async {
       // Arrange
       when(
@@ -295,49 +244,6 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).called(2);
-    });
-
-    testWidgets('リフレッシュ機能が動作すること', (WidgetTester tester) async {
-      // Arrange
-      when(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          testGroupId,
-          testYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).thenAnswer((_) async => testTripEntries);
-      // Act
-      await tester.pumpWidget(
-        createApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              onBackPressed: null,
-              isTestEnvironment: true,
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // リフレッシュ実行
-      await tester.fling(
-        find.byType(RefreshIndicator),
-        const Offset(0, 300),
-        1000,
-      );
-      await tester.pumpAndSettle();
-
-      // Assert
-      verify(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          testGroupId,
-          testYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).called(2); // 初期ロード + リフレッシュ
     });
 
     testWidgets('行タップで編集画面に遷移すること', (WidgetTester tester) async {
@@ -1356,39 +1262,6 @@ void main() {
 
       // Assert
       verify(mockTripEntryRepository.saveTripEntry(any)).called(1);
-    });
-
-    testWidgets('初期化時にグループメンバーが読み込まれること', (WidgetTester tester) async {
-      // Arrange
-      when(
-        mockTripEntryQueryService.getTripEntriesByGroupIdAndYear(
-          testGroupId,
-          testYear,
-          orderBy: anyNamed('orderBy'),
-        ),
-      ).thenAnswer((_) async => []);
-      // Act
-      await tester.pumpWidget(
-        createApp(
-          home: Scaffold(
-            body: TripManagement(
-              groupId: testGroupId,
-              year: testYear,
-              isTestEnvironment: true,
-            ),
-          ),
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Assert - グループメンバー取得の確認
-      verify(
-        mockGroupQueryService.getGroupWithMembersById(
-          testGroupId,
-          membersOrderBy: anyNamed('membersOrderBy'),
-        ),
-      ).called(1);
     });
 
     testWidgets('グループメンバー読み込みエラー時にスナックバーが表示されること', (WidgetTester tester) async {

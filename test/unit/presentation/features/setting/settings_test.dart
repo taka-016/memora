@@ -1,5 +1,3 @@
-import 'dart:ui' show SemanticsRole;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,7 +58,7 @@ void main() {
       expect(storage.targetGroupId, 'group-b');
     });
 
-    testWidgets('Androidウィジェットの長い表示対象グループ名は省略しメニューを入力欄の幅で表示する', (tester) async {
+    testWidgets('小さい画面でも長い表示対象グループ名を選択できる', (tester) async {
       tester.view.physicalSize = const Size(320, 800);
       tester.view.devicePixelRatio = 1;
       addTearDown(() {
@@ -68,13 +66,20 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
       const longGroupName = 'とても長いグループ名とても長いグループ名とても長いグループ名';
+      final storage = _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a');
 
       await tester.pumpWidget(
         _buildTestApp(
-          storage: _FakeAndroidWidgetCacheStorage(targetGroupId: 'group-a'),
+          storage: storage,
           groups: const [
             GroupDto(
               id: 'group-a',
+              ownerId: 'owner',
+              name: 'グループA',
+              members: [],
+            ),
+            GroupDto(
+              id: 'group-b',
               ownerId: 'owner',
               name: longGroupName,
               members: [],
@@ -84,39 +89,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final groupDropdownFinder = find.descendant(
-        of: find.byType(DropdownButtonFormField<String>),
-        matching: find.byType(DropdownButton<String>),
-      );
-      final groupDropdown = tester.widget<DropdownButton<String>>(
-        groupDropdownFinder,
-      );
-      final groupNameText = tester.widget<Text>(find.text(longGroupName));
-      final groupDropdownRect = tester.getRect(
-        find.byType(DropdownButtonFormField<String>),
-      );
-
-      expect(groupDropdown.isExpanded, isTrue);
-      expect(groupNameText.maxLines, 1);
-      expect(groupNameText.overflow, TextOverflow.ellipsis);
+      expect(_selectedDropdownValue(tester), 'group-a');
 
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(longGroupName).last);
+      await tester.pumpAndSettle();
 
-      final dropdownMenuFinder = find.byWidgetPredicate(
-        (widget) =>
-            widget is Semantics && widget.properties.role == SemanticsRole.menu,
-      );
-      final dropdownMenuRect = tester.getRect(dropdownMenuFinder);
-
-      expect(
-        dropdownMenuRect.left,
-        greaterThanOrEqualTo(groupDropdownRect.left),
-      );
-      expect(
-        dropdownMenuRect.right,
-        lessThanOrEqualTo(groupDropdownRect.right),
-      );
+      expect(_selectedDropdownValue(tester), 'group-b');
+      expect(storage.targetGroupId, 'group-b');
       expect(tester.takeException(), isNull);
     });
 

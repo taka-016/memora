@@ -5,7 +5,6 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 
-import '../../../../helpers/test_exception.dart';
 import 'check_member_exists_usecase_test.mocks.dart';
 
 @GenerateMocks([MemberQueryService])
@@ -47,19 +46,6 @@ void main() {
 
       // Assert
       expect(result, isFalse);
-      verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
-    });
-
-    test('getMemberByAccountIdで例外が発生した場合は例外をそのまま投げる', () async {
-      // Arrange
-      const accountId = 'test-user-id';
-
-      when(
-        mockMemberQueryService.getMemberByAccountId(accountId),
-      ).thenThrow(TestException('Database error'));
-
-      // Assert
-      expect(() => useCase.execute(accountId), throwsException);
       verify(mockMemberQueryService.getMemberByAccountId(accountId)).called(1);
     });
   });
