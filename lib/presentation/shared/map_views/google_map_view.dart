@@ -59,9 +59,8 @@ class GoogleMapView extends HookConsumerWidget {
     );
 
     void showErrorSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
 
     void animateToPosition(LatLng position) {

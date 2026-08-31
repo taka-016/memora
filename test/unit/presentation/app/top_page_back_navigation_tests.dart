@@ -51,9 +51,8 @@ extension TopPageBackNavigationTests on TopPageTestContext {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => singleGroup);
-      when(
-        mockMemberQueryService.getMemberByAccountId(any),
-      ).thenAnswer((_) async => testMember);
+      when(mockMemberQueryService.getMemberByAccountId(any))
+          .thenAnswer((_) async => testMember);
 
       final widget = createTestWidget(availableGroupsWithMembers: singleGroup);
 

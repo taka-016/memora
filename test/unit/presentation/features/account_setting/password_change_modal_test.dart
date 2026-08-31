@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/password_change_modal.dart';
 import 'package:memora/application/usecases/account/update_password_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import 'password_change_modal_test.mocks.dart';
@@ -84,9 +85,8 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pump();
 
-      verify(
-        mockUpdatePasswordUseCase.execute(newPassword: 'NewPassword123!'),
-      ).called(1);
+      verify(mockUpdatePasswordUseCase.execute(newPassword: 'NewPassword123!'))
+          .called(1);
     });
 
     testWidgets('パスワードが一致しない場合、バリデーションエラーが表示される', (WidgetTester tester) async {

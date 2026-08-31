@@ -72,9 +72,8 @@ class EmailChangeModal extends HookWidget {
                     if (value == null || value.isEmpty) {
                       return 'メールアドレスを入力してください';
                     }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
                       return '正しいメールアドレスを入力してください';
                     }
                     return null;

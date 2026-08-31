@@ -34,14 +34,12 @@ void main() {
       mockLocations = MockCollectionReference<Map<String, dynamic>>();
       mockTasks = MockCollectionReference<Map<String, dynamic>>();
       mockItineraryItems = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('trip_entries'),
-      ).thenReturn(mockTripEntries);
+      when(mockFirestore.collection('trip_entries'))
+          .thenReturn(mockTripEntries);
       when(mockFirestore.collection('locations')).thenReturn(mockLocations);
       when(mockFirestore.collection('tasks')).thenReturn(mockTasks);
-      when(
-        mockFirestore.collection('itinerary_items'),
-      ).thenReturn(mockItineraryItems);
+      when(mockFirestore.collection('itinerary_items'))
+          .thenReturn(mockItineraryItems);
       repository = FirestoreTripEntryRepository(firestore: mockFirestore);
     });
 
@@ -85,9 +83,8 @@ void main() {
       when(mockTripEntries.doc()).thenReturn(mockTripDocRef);
       when(mockLocations.doc('location-001')).thenReturn(mockLocationDocRef);
       when(mockTasks.doc('task-001')).thenReturn(mockTaskDocRef);
-      when(
-        mockItineraryItems.doc('item-001'),
-      ).thenReturn(mockItineraryItemDocRef);
+      when(mockItineraryItems.doc('item-001'))
+          .thenReturn(mockItineraryItemDocRef);
       when(mockFirestore.batch()).thenReturn(mockBatch);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
@@ -153,33 +150,26 @@ void main() {
       final mockBatch = MockWriteBatch();
 
       when(mockTripEntries.doc('trip001')).thenReturn(mockTripDocRef);
-      when(
-        mockLocations.where('tripId', isEqualTo: 'trip001'),
-      ).thenReturn(mockLocationsQuery);
-      when(
-        mockLocationsQuery.get(),
-      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocations.where('tripId', isEqualTo: 'trip001'))
+          .thenReturn(mockLocationsQuery);
+      when(mockLocationsQuery.get())
+          .thenAnswer((_) async => mockLocationsSnapshot);
       when(mockLocationsSnapshot.docs).thenReturn([mockExistingLocationDoc]);
-      when(
-        mockExistingLocationDoc.reference,
-      ).thenReturn(mockExistingLocationDocRef);
-      when(
-        mockTasks.where('tripId', isEqualTo: 'trip001'),
-      ).thenReturn(mockTasksQuery);
+      when(mockExistingLocationDoc.reference)
+          .thenReturn(mockExistingLocationDocRef);
+      when(mockTasks.where('tripId', isEqualTo: 'trip001'))
+          .thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
       when(mockTasksSnapshot.docs).thenReturn([]);
-      when(
-        mockItineraryItems.where('tripId', isEqualTo: 'trip001'),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.get(),
-      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(mockItineraryItems.where('tripId', isEqualTo: 'trip001'))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.get())
+          .thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([]);
       when(mockTasks.doc('task-001')).thenReturn(mockTaskDocRef);
       when(mockLocations.doc('location-001')).thenReturn(mockLocationDocRef);
-      when(
-        mockItineraryItems.doc('item-001'),
-      ).thenReturn(mockItineraryItemDocRef);
+      when(mockItineraryItems.doc('item-001'))
+          .thenReturn(mockItineraryItemDocRef);
       when(mockFirestore.batch()).thenReturn(mockBatch);
       when(mockBatch.commit()).thenAnswer((_) async {});
 
@@ -214,26 +204,21 @@ void main() {
       final mockBatch = MockWriteBatch();
 
       when(mockTripEntries.doc(tripId)).thenReturn(mockTripDocRef);
-      when(
-        mockLocations.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockLocationsQuery);
-      when(
-        mockLocationsQuery.get(),
-      ).thenAnswer((_) async => mockLocationsSnapshot);
+      when(mockLocations.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockLocationsQuery);
+      when(mockLocationsQuery.get())
+          .thenAnswer((_) async => mockLocationsSnapshot);
       when(mockLocationsSnapshot.docs).thenReturn([mockLocationDoc]);
       when(mockLocationDoc.reference).thenReturn(mockLocationDocRef);
-      when(
-        mockTasks.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockTasksQuery);
+      when(mockTasks.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockTasksQuery);
       when(mockTasksQuery.get()).thenAnswer((_) async => mockTasksSnapshot);
       when(mockTasksSnapshot.docs).thenReturn([mockTaskDoc]);
       when(mockTaskDoc.reference).thenReturn(mockTaskDocRef);
-      when(
-        mockItineraryItems.where('tripId', isEqualTo: tripId),
-      ).thenReturn(mockItineraryItemsQuery);
-      when(
-        mockItineraryItemsQuery.get(),
-      ).thenAnswer((_) async => mockItineraryItemsSnapshot);
+      when(mockItineraryItems.where('tripId', isEqualTo: tripId))
+          .thenReturn(mockItineraryItemsQuery);
+      when(mockItineraryItemsQuery.get())
+          .thenAnswer((_) async => mockItineraryItemsSnapshot);
       when(mockItineraryItemsSnapshot.docs).thenReturn([mockItineraryItemDoc]);
       when(mockItineraryItemDoc.reference).thenReturn(mockItineraryItemDocRef);
       when(mockFirestore.batch()).thenReturn(mockBatch);

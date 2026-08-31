@@ -25,9 +25,8 @@ class GroupManagement extends HookConsumerWidget {
     final isGroupOperationInProgressRef = useRef(false);
 
     void showSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
 
     ref.listen<AsyncValue<GroupManagementState>>(managementProvider, (

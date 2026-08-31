@@ -13,9 +13,8 @@ void main() {
     test('FirestoreドキュメントからMemberEventDtoへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event001');
-      when(
-        doc.data(),
-      ).thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
+      when(doc.data())
+          .thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
 
       final result = FirestoreMemberEventMapper.fromFirestore(doc);
 
@@ -41,9 +40,8 @@ void main() {
     test('Firestoreのyearがdoubleでもintへ変換できる', () {
       final doc = MockDocumentSnapshot<Map<String, dynamic>>();
       when(doc.id).thenReturn('event003');
-      when(
-        doc.data(),
-      ).thenReturn({'memberId': 'member001', 'year': 2026.0, 'memo': '入学式'});
+      when(doc.data())
+          .thenReturn({'memberId': 'member001', 'year': 2026.0, 'memo': '入学式'});
 
       final result = FirestoreMemberEventMapper.fromFirestore(doc);
 

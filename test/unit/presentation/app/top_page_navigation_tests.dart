@@ -399,9 +399,8 @@ extension TopPageNavigationTests on TopPageTestContext {
         kanjiFirstName: '花子',
       );
 
-      when(
-        mockMemberQueryService.getMemberByAccountId(any),
-      ).thenAnswer((_) async => currentMember);
+      when(mockMemberQueryService.getMemberByAccountId(any))
+          .thenAnswer((_) async => currentMember);
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(
           any,
@@ -435,9 +434,8 @@ extension TopPageNavigationTests on TopPageTestContext {
 
       await tester.pumpWidget(
         createTestWidget(
-          initialLocation: const GroupTimelineRoute(
-            groupId: 'missing-group',
-          ).location,
+          initialLocation: const GroupTimelineRoute(groupId: 'missing-group')
+              .location,
         ),
       );
       await tester.pumpAndSettle();
@@ -463,9 +461,8 @@ extension TopPageNavigationTests on TopPageTestContext {
           membersOrderBy: anyNamed('membersOrderBy'),
         ),
       ).thenAnswer((_) async => groupsWithMembers);
-      when(
-        mockMemberQueryService.getMemberByAccountId(any),
-      ).thenAnswer((_) async => testMember);
+      when(mockMemberQueryService.getMemberByAccountId(any))
+          .thenAnswer((_) async => testMember);
 
       final widget = createTestWidget();
 
@@ -558,9 +555,8 @@ extension TopPageNavigationTests on TopPageTestContext {
         isVerified: true,
       );
 
-      when(
-        mockMemberQueryService.getMemberByAccountId(any),
-      ).thenAnswer((_) async => defaultMember);
+      when(mockMemberQueryService.getMemberByAccountId(any))
+          .thenAnswer((_) async => defaultMember);
       when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
       when(
         mockGroupQueryService.getGroupsWithMembersByMemberId(

@@ -21,9 +21,8 @@ void main() {
       // Arrange
       const tripEntryId = 'trip-id';
 
-      when(
-        mockTripEntryRepository.deleteTripEntry(tripEntryId),
-      ).thenAnswer((_) async => {});
+      when(mockTripEntryRepository.deleteTripEntry(tripEntryId))
+          .thenAnswer((_) async => {});
 
       // Act
       await usecase.execute(tripEntryId);

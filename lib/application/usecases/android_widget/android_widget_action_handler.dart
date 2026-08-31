@@ -2,17 +2,18 @@ import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 
-typedef RefreshAndroidWidgetCache =
-    Future<void> Function({
-      required String groupId,
-      String? selectedItineraryDateId,
-    });
+typedef RefreshAndroidWidgetCache = Future<void> Function({
+  required String groupId,
+  String? selectedItineraryDateId,
+});
 
-typedef MoveAndroidWidgetItineraryDate =
-    Future<bool> Function(AndroidWidgetItineraryDateMoveDirection direction);
+typedef MoveAndroidWidgetItineraryDate = Future<bool> Function(
+  AndroidWidgetItineraryDateMoveDirection direction,
+);
 
-typedef ShowAndroidWidgetToast =
-    Future<void> Function(AndroidWidgetToastNotification notification);
+typedef ShowAndroidWidgetToast = Future<void> Function(
+  AndroidWidgetToastNotification notification,
+);
 
 class AndroidWidgetActionHandler {
   const AndroidWidgetActionHandler({

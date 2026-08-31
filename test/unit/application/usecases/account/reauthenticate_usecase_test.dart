@@ -19,9 +19,8 @@ void main() {
 
     test('再認証が正常に実行される', () async {
       const password = 'CurrentPassword123!';
-      when(
-        mockAuthService.reauthenticate(password: password),
-      ).thenAnswer((_) async {});
+      when(mockAuthService.reauthenticate(password: password))
+          .thenAnswer((_) async {});
 
       await expectLater(useCase.execute(password: password), completes);
 

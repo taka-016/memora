@@ -31,19 +31,16 @@ void main() {
       mockQuerySnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       mockMemberQuery = MockQuery<Map<String, dynamic>>();
       mockMemberYearQuery = MockQuery<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('member_events'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('member_events'))
+          .thenReturn(mockCollection);
       repository = FirestoreMemberEventRepository(firestore: mockFirestore);
     });
 
     void stubFindByMemberIdAndYear(String memberId, int year) {
-      when(
-        mockCollection.where('memberId', isEqualTo: memberId),
-      ).thenReturn(mockMemberQuery);
-      when(
-        mockMemberQuery.where('year', isEqualTo: year),
-      ).thenReturn(mockMemberYearQuery);
+      when(mockCollection.where('memberId', isEqualTo: memberId))
+          .thenReturn(mockMemberQuery);
+      when(mockMemberQuery.where('year', isEqualTo: year))
+          .thenReturn(mockMemberYearQuery);
     }
 
     test('saveMemberEventは同一memberId・yearの正規ドキュメントを更新する', () async {
@@ -58,9 +55,8 @@ void main() {
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
-      when(
-        mockMemberYearQuery.get(),
-      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockMemberYearQuery.get())
+          .thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('member001_2026');
       when(mockDocRef.set(any, any)).thenAnswer((_) async {});
@@ -96,9 +92,8 @@ void main() {
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
-      when(
-        mockMemberYearQuery.get(),
-      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockMemberYearQuery.get())
+          .thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
       when(mockDocRef.set(any, any)).thenAnswer((_) async {});
 
@@ -136,9 +131,8 @@ void main() {
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
-      when(
-        mockMemberYearQuery.get(),
-      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockMemberYearQuery.get())
+          .thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDuplicateDoc]);
       when(mockDuplicateDoc.id).thenReturn('legacy-event-id');
       when(mockDuplicateDoc.reference).thenReturn(mockDuplicateDocRef);
@@ -168,9 +162,8 @@ void main() {
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
-      when(
-        mockMemberYearQuery.get(),
-      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockMemberYearQuery.get())
+          .thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('member001_2026');
       when(mockDoc.reference).thenReturn(mockDocRef);
@@ -197,9 +190,8 @@ void main() {
 
       stubFindByMemberIdAndYear(memberEvent.memberId, memberEvent.year);
       when(mockCollection.doc('member001_2026')).thenReturn(mockDocRef);
-      when(
-        mockMemberYearQuery.get(),
-      ).thenAnswer((_) async => mockQuerySnapshot);
+      when(mockMemberYearQuery.get())
+          .thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([]);
 
       final savedId = await repository.saveMemberEvent(memberEvent);
@@ -231,9 +223,8 @@ void main() {
       final mockDocRef2 = MockDocumentReference<Map<String, dynamic>>();
       final mockWriteBatch = MockWriteBatch();
 
-      when(
-        mockCollection.where('memberId', isEqualTo: memberId),
-      ).thenReturn(mockMemberQuery);
+      when(mockCollection.where('memberId', isEqualTo: memberId))
+          .thenReturn(mockMemberQuery);
       when(mockMemberQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
       when(mockDoc1.reference).thenReturn(mockDocRef1);

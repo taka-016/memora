@@ -5,6 +5,7 @@ import 'package:memora/application/dtos/account/user_dto.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
+
 import 'create_member_from_user_usecase_test.mocks.dart';
 import '../../../../helpers/test_exception.dart';
 
@@ -58,9 +59,8 @@ void main() {
         isVerified: true,
       );
 
-      when(
-        mockMemberRepository.saveMember(any),
-      ).thenThrow(TestException('Database error'));
+      when(mockMemberRepository.saveMember(any))
+          .thenThrow(TestException('Database error'));
 
       // Act
       final result = await useCase.execute(user);

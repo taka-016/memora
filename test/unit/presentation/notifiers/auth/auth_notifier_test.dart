@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
@@ -16,6 +17,7 @@ import 'package:memora/application/usecases/account/validate_current_user_token_
 import 'package:memora/application/usecases/member/check_member_exists_usecase.dart';
 import 'package:memora/application/usecases/member/create_member_from_user_usecase.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import 'auth_notifier_test.mocks.dart';
@@ -61,9 +63,8 @@ void main() {
     });
 
     ProviderContainer createContainer(Stream<UserDto?> authStateStream) {
-      when(
-        mockObserveAuthStateChangesUseCase.execute(),
-      ).thenAnswer((_) => authStateStream);
+      when(mockObserveAuthStateChangesUseCase.execute())
+          .thenAnswer((_) => authStateStream);
 
       return ProviderContainer(
         overrides: [
@@ -114,12 +115,10 @@ void main() {
         isVerified: true,
       );
 
-      when(
-        mockValidateCurrentUserTokenUseCase.execute(),
-      ).thenAnswer((_) async {});
-      when(
-        mockCheckMemberExistsUseCase.execute(user.id),
-      ).thenAnswer((_) async => true);
+      when(mockValidateCurrentUserTokenUseCase.execute())
+          .thenAnswer((_) async {});
+      when(mockCheckMemberExistsUseCase.execute(user.id))
+          .thenAnswer((_) async => true);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -141,12 +140,10 @@ void main() {
         isVerified: true,
       );
 
-      when(
-        mockValidateCurrentUserTokenUseCase.execute(),
-      ).thenAnswer((_) async {});
-      when(
-        mockCheckMemberExistsUseCase.execute(user.id),
-      ).thenAnswer((_) async => false);
+      when(mockValidateCurrentUserTokenUseCase.execute())
+          .thenAnswer((_) async {});
+      when(mockCheckMemberExistsUseCase.execute(user.id))
+          .thenAnswer((_) async => false);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -169,12 +166,10 @@ void main() {
       );
       final validateCompleter = Completer<void>();
 
-      when(
-        mockValidateCurrentUserTokenUseCase.execute(),
-      ).thenAnswer((_) => validateCompleter.future);
-      when(
-        mockCheckMemberExistsUseCase.execute(user.id),
-      ).thenAnswer((_) async => true);
+      when(mockValidateCurrentUserTokenUseCase.execute())
+          .thenAnswer((_) => validateCompleter.future);
+      when(mockCheckMemberExistsUseCase.execute(user.id))
+          .thenAnswer((_) async => true);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -208,12 +203,10 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(
-        mockValidateCurrentUserTokenUseCase.execute(),
-      ).thenThrow(TestException('token invalid'));
-      when(
-        mockLogoutUseCase.execute(),
-      ).thenAnswer((_) => signOutCompleter.future);
+      when(mockValidateCurrentUserTokenUseCase.execute())
+          .thenThrow(TestException('token invalid'));
+      when(mockLogoutUseCase.execute())
+          .thenAnswer((_) => signOutCompleter.future);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -245,12 +238,10 @@ void main() {
       );
       final signOutCompleter = Completer<void>();
 
-      when(
-        mockSendEmailVerificationUseCase.execute(),
-      ).thenThrow(TestException('send mail failed'));
-      when(
-        mockLogoutUseCase.execute(),
-      ).thenAnswer((_) => signOutCompleter.future);
+      when(mockSendEmailVerificationUseCase.execute())
+          .thenThrow(TestException('send mail failed'));
+      when(mockLogoutUseCase.execute())
+          .thenAnswer((_) => signOutCompleter.future);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -283,9 +274,8 @@ void main() {
       final signOutCompleter = Completer<void>();
 
       when(mockSendEmailVerificationUseCase.execute()).thenAnswer((_) async {});
-      when(
-        mockLogoutUseCase.execute(),
-      ).thenAnswer((_) => signOutCompleter.future);
+      when(mockLogoutUseCase.execute())
+          .thenAnswer((_) => signOutCompleter.future);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -321,12 +311,10 @@ void main() {
           isVerified: true,
         );
 
-        when(
-          mockValidateCurrentUserTokenUseCase.execute(),
-        ).thenAnswer((_) async {});
-        when(
-          mockCheckMemberExistsUseCase.execute(user.id),
-        ).thenThrow(TestException('Firestore error'));
+        when(mockValidateCurrentUserTokenUseCase.execute())
+            .thenAnswer((_) async {});
+        when(mockCheckMemberExistsUseCase.execute(user.id))
+            .thenThrow(TestException('Firestore error'));
         when(mockLogoutUseCase.execute()).thenAnswer((_) async {});
 
         final controller = StreamController<UserDto?>();
@@ -351,12 +339,10 @@ void main() {
         isVerified: true,
       );
 
-      when(
-        mockCreateMemberFromUserUseCase.execute(userDto),
-      ).thenAnswer((_) async => true);
-      when(
-        mockGetCurrentUserUseCase.execute(),
-      ).thenAnswer((_) async => userDto);
+      when(mockCreateMemberFromUserUseCase.execute(userDto))
+          .thenAnswer((_) async => true);
+      when(mockGetCurrentUserUseCase.execute())
+          .thenAnswer((_) async => userDto);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);
@@ -379,9 +365,8 @@ void main() {
       );
       const invitationCode = 'test-code';
 
-      when(
-        mockAcceptInvitationUseCase.execute(invitationCode, user.id),
-      ).thenAnswer((_) async => true);
+      when(mockAcceptInvitationUseCase.execute(invitationCode, user.id))
+          .thenAnswer((_) async => true);
       when(mockGetCurrentUserUseCase.execute()).thenAnswer((_) async => user);
 
       final controller = StreamController<UserDto?>();
@@ -398,9 +383,8 @@ void main() {
 
       expect(result, true);
       expect(notifier.state.status, AuthStatus.authenticated);
-      verify(
-        mockAcceptInvitationUseCase.execute(invitationCode, user.id),
-      ).called(1);
+      verify(mockAcceptInvitationUseCase.execute(invitationCode, user.id))
+          .called(1);
     });
 
     test('acceptInvitationが失敗した場合falseを返し認証状態は保持される', () async {
@@ -411,9 +395,8 @@ void main() {
       );
       const invitationCode = 'invalid-code';
 
-      when(
-        mockAcceptInvitationUseCase.execute(invitationCode, user.id),
-      ).thenAnswer((_) async => false);
+      when(mockAcceptInvitationUseCase.execute(invitationCode, user.id))
+          .thenAnswer((_) async => false);
 
       final controller = StreamController<UserDto?>();
       addTearDown(controller.close);

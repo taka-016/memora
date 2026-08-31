@@ -53,9 +53,8 @@ void main() {
     );
 
     when(mockAuthService.getCurrentUser()).thenAnswer((_) async => testUser);
-    when(
-      mockMemberQueryService.getMemberByAccountId(any),
-    ).thenAnswer((_) async => testMember);
+    when(mockMemberQueryService.getMemberByAccountId(any))
+        .thenAnswer((_) async => testMember);
     when(
       mockGroupQueryService.getGroupsWithMembersByMemberId(
         any,

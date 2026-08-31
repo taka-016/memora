@@ -88,9 +88,8 @@ void main() {
       ],
     );
     when(getLocationsUsecase.execute(any)).thenAnswer((_) async => const []);
-    when(
-      getTripsUsecase.executeByGroupId(any),
-    ).thenAnswer((_) async => const []);
+    when(getTripsUsecase.executeByGroupId(any))
+        .thenAnswer((_) async => const []);
   });
 
   tearDown(() {
@@ -100,9 +99,8 @@ void main() {
   Future<MapNotifier> startNotifier({
     List<GroupDto> groups = const [firstGroup],
   }) async {
-    when(
-      getGroupsUsecase.execute(currentMember),
-    ).thenAnswer((_) async => groups);
+    when(getGroupsUsecase.execute(currentMember))
+        .thenAnswer((_) async => groups);
     final provider = mapNotifierProvider(currentMember);
     final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
@@ -113,15 +111,12 @@ void main() {
 
   group('MapNotifier', () {
     test('所属グループが1件なら自動選択して訪問場所と旅行を取得する', () async {
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [firstGroup]);
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) async => const [firstLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) async => const [firstTrip]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const [firstGroup]);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) async => const [firstLocation]);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) async => const [firstTrip]);
       final provider = mapNotifierProvider(currentMember);
       final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
@@ -141,21 +136,16 @@ void main() {
     test('グループ切り替え後に完了した古い取得結果を破棄する', () async {
       final firstLocationsCompleter = Completer<List<LocationDto>>();
       final firstTripsCompleter = Completer<List<TripEntryDto>>();
-      when(
-        getGroupsUsecase.execute(currentMember),
-      ).thenAnswer((_) async => const [firstGroup, secondGroup]);
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) => firstLocationsCompleter.future);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) => firstTripsCompleter.future);
-      when(
-        getLocationsUsecase.execute(secondGroup.id),
-      ).thenAnswer((_) async => const [secondLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(secondGroup.id),
-      ).thenAnswer((_) async => const [secondTrip]);
+      when(getGroupsUsecase.execute(currentMember))
+          .thenAnswer((_) async => const [firstGroup, secondGroup]);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) => firstLocationsCompleter.future);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) => firstTripsCompleter.future);
+      when(getLocationsUsecase.execute(secondGroup.id))
+          .thenAnswer((_) async => const [secondLocation]);
+      when(getTripsUsecase.executeByGroupId(secondGroup.id))
+          .thenAnswer((_) async => const [secondTrip]);
       final notifier = await startNotifier(
         groups: const [firstGroup, secondGroup],
       );
@@ -174,12 +164,10 @@ void main() {
     });
 
     test('訪問場所取得だけが失敗しても旅行取得結果を維持する', () async {
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenThrow(TestException('訪問場所取得失敗'));
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) async => const [firstTrip]);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenThrow(TestException('訪問場所取得失敗'));
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) async => const [firstTrip]);
 
       await startNotifier();
 
@@ -191,12 +179,10 @@ void main() {
     });
 
     test('旅行取得だけが失敗しても訪問場所取得結果を維持する', () async {
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) async => const [firstLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenThrow(TestException('旅行取得失敗'));
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) async => const [firstLocation]);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenThrow(TestException('旅行取得失敗'));
 
       await startNotifier();
 
@@ -208,21 +194,17 @@ void main() {
     });
 
     test('再試行時は失敗していない既存データを維持し両方を再取得する', () async {
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) async => const [firstLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenThrow(TestException('旅行取得失敗'));
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) async => const [firstLocation]);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenThrow(TestException('旅行取得失敗'));
       final notifier = await startNotifier();
       final retryLocationsCompleter = Completer<List<LocationDto>>();
       final retryTripsCompleter = Completer<List<TripEntryDto>>();
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) => retryLocationsCompleter.future);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) => retryTripsCompleter.future);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) => retryLocationsCompleter.future);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) => retryTripsCompleter.future);
 
       final retryFuture = notifier.retryGroupData();
 
@@ -242,24 +224,20 @@ void main() {
     });
 
     test('旅行更新後に旅行一覧と訪問場所一覧を再取得する', () async {
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) async => const [firstLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) async => const [firstTrip]);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) async => const [firstLocation]);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) async => const [firstTrip]);
       final notifier = await startNotifier();
       final updatedTrip = firstTrip.copyWith(
         name: '更新後の東京旅行',
         locations: const [secondLocation],
       );
       when(updateTripUsecase.execute(updatedTrip)).thenAnswer((_) async {});
-      when(
-        getLocationsUsecase.execute(firstGroup.id),
-      ).thenAnswer((_) async => const [secondLocation]);
-      when(
-        getTripsUsecase.executeByGroupId(firstGroup.id),
-      ).thenAnswer((_) async => [updatedTrip]);
+      when(getLocationsUsecase.execute(firstGroup.id))
+          .thenAnswer((_) async => const [secondLocation]);
+      when(getTripsUsecase.executeByGroupId(firstGroup.id))
+          .thenAnswer((_) async => [updatedTrip]);
 
       final result = await notifier.updateTripEntry(updatedTrip);
 

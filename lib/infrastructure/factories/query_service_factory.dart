@@ -150,15 +150,13 @@ class QueryServiceFactory {
     }
     if (T == ItineraryItemQueryService) {
       return FirestoreItineraryItemQueryService(
-            firestore: ref.watch(firebaseFirestoreProvider),
-          )
-          as T;
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ) as T;
     }
     if (T == LocationQueryService) {
       return FirestoreLocationQueryService(
-            firestore: ref.watch(firebaseFirestoreProvider),
-          )
-          as T;
+        firestore: ref.watch(firebaseFirestoreProvider),
+      ) as T;
     }
     if (T == MemberQueryService) {
       return FirestoreMemberQueryService() as T;

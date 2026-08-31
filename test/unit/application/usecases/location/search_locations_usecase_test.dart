@@ -28,9 +28,8 @@ void main() {
           coordinate: Coordinate(latitude: 35.681236, longitude: 139.767125),
         ),
       ];
-      when(
-        mockLocationSearchService.searchByKeyword(keyword),
-      ).thenAnswer((_) async => expected);
+      when(mockLocationSearchService.searchByKeyword(keyword))
+          .thenAnswer((_) async => expected);
 
       final actual = await usecase.execute(keyword);
 

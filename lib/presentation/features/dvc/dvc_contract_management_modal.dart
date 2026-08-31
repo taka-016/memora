@@ -4,8 +4,9 @@ import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_year_month_selector.dart';
 
-typedef DvcContractSaveCallback =
-    Future<bool> Function(List<DvcEditableContract> contracts);
+typedef DvcContractSaveCallback = Future<bool> Function(
+  List<DvcEditableContract> contracts,
+);
 
 Future<void> showDvcContractManagementModal({
   required BuildContext context,

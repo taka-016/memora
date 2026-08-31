@@ -1,7 +1,9 @@
 import 'package:logger/logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
 import 'dart:io';
+
 import 'package:path_provider/path_provider.dart';
 
 late final Logger logger;

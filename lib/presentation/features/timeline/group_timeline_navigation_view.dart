@@ -104,9 +104,8 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             },
             onDvcSelected: (selectedGroupId) {
               unawaited(
-                DvcPointCalculationRoute(
-                  groupId: selectedGroupId,
-                ).push<void>(context),
+                DvcPointCalculationRoute(groupId: selectedGroupId)
+                    .push<void>(context),
               );
             },
           );

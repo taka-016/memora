@@ -20,17 +20,15 @@ final _uuidV7Pattern = RegExp(
 @GenerateMocks([TaskQueryService])
 MockTaskQueryService _mockTaskQueryService(List<TaskDto> tasks) {
   final queryService = MockTaskQueryService();
-  when(
-    queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')),
-  ).thenAnswer((_) async => tasks);
+  when(queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')))
+      .thenAnswer((_) async => tasks);
   return queryService;
 }
 
 MockTaskQueryService _failingTaskQueryService() {
   final queryService = MockTaskQueryService();
-  when(
-    queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')),
-  ).thenThrow(TestException('通信エラー'));
+  when(queryService.getTasksByTripId(any, orderBy: anyNamed('orderBy')))
+      .thenThrow(TestException('通信エラー'));
   return queryService;
 }
 

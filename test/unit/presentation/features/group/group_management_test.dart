@@ -15,6 +15,7 @@ import 'package:memora/presentation/features/group/group_management.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import '../../../../helpers/fake_current_member_notifier.dart';
@@ -326,9 +327,8 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => [testMember]);
-      when(
-        mockGroupRepository.updateGroup(any),
-      ).thenThrow(TestException('更新エラー'));
+      when(mockGroupRepository.updateGroup(any))
+          .thenThrow(TestException('更新エラー'));
 
       await tester.pumpWidget(createGroupManagementApp());
       await tester.pumpAndSettle();
@@ -360,18 +360,15 @@ void main() {
         ),
       ).thenAnswer((_) async => managedGroupsWithMembers);
 
-      when(
-        mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'),
-      ).thenAnswer((_) async {});
+      when(mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'))
+          .thenAnswer((_) async {});
 
-      when(
-        mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'),
-      ).thenAnswer((_) async {});
+      when(mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'))
+          .thenAnswer((_) async {});
 
       // グループ削除でエラーが発生
-      when(
-        mockGroupRepository.deleteGroup('group-1'),
-      ).thenThrow(TestException('削除エラー'));
+      when(mockGroupRepository.deleteGroup('group-1'))
+          .thenThrow(TestException('削除エラー'));
 
       // Act
       await tester.pumpWidget(createGroupManagementApp());
@@ -388,12 +385,10 @@ void main() {
 
       // Assert - エラーメッセージが表示されることを確認
       expect(find.text('削除に失敗しました: TestException: 削除エラー'), findsOneWidget);
-      verify(
-        mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'),
-      ).called(1);
-      verify(
-        mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'),
-      ).called(1);
+      verify(mockTripEntryRepository.deleteTripEntriesByGroupId('group-1'))
+          .called(1);
+      verify(mockGroupEventRepository.deleteGroupEventsByGroupId('group-1'))
+          .called(1);
       verify(mockGroupRepository.deleteGroup('group-1')).called(1);
     });
   });

@@ -37,18 +37,16 @@ void main() {
       );
       const generatedId = 'generated-trip-id';
 
-      when(
-        mockTripEntryRepository.saveTripEntry(any),
-      ).thenAnswer((_) async => generatedId);
+      when(mockTripEntryRepository.saveTripEntry(any))
+          .thenAnswer((_) async => generatedId);
 
       // act
       final result = await usecase.execute(tripEntry);
 
       // assert
       expect(result, equals(generatedId));
-      final captured = verify(
-        mockTripEntryRepository.saveTripEntry(captureAny),
-      ).captured;
+      final captured = verify(mockTripEntryRepository.saveTripEntry(captureAny))
+          .captured;
       final savedEntry = captured.single as TripEntry;
       expect(savedEntry.id, tripEntry.id);
       expect(savedEntry.groupId, tripEntry.groupId);
@@ -70,9 +68,8 @@ void main() {
       );
       const generatedId = 'generated-trip-id';
 
-      when(
-        mockTripEntryRepository.saveTripEntry(any),
-      ).thenAnswer((_) async => generatedId);
+      when(mockTripEntryRepository.saveTripEntry(any))
+          .thenAnswer((_) async => generatedId);
 
       // act & assert
       expect(() => usecase.execute(tripEntry), returnsNormally);
@@ -104,17 +101,16 @@ void main() {
       );
       const generatedId = 'generated-trip-id';
 
-      when(
-        mockTripEntryRepository.saveTripEntry(any),
-      ).thenAnswer((_) async => generatedId);
+      when(mockTripEntryRepository.saveTripEntry(any))
+          .thenAnswer((_) async => generatedId);
 
       final result = await usecase.execute(tripEntry);
 
       expect(result, generatedId);
       final savedEntry =
-          verify(
-                mockTripEntryRepository.saveTripEntry(captureAny),
-              ).captured.single
+          verify(mockTripEntryRepository.saveTripEntry(captureAny))
+                  .captured
+                  .single
               as TripEntry;
       expect(savedEntry.locations.single.name, '東京駅');
     });

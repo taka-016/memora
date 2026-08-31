@@ -73,9 +73,8 @@ void main() {
       when(tripEntries.doc()).thenReturn(tripDocRef);
       when(tripDocRef.id).thenReturn('generated-trip-id');
       when(locations.doc('location-1')).thenReturn(locationDocRef);
-      when(
-        transaction.set<Map<String, dynamic>>(any, any),
-      ).thenReturn(transaction);
+      when(transaction.set<Map<String, dynamic>>(any, any))
+          .thenReturn(transaction);
 
       final result = await writeTransaction.run((scope) async {
         final tripEntryRepository = scope.repository<TripEntryRepository>();

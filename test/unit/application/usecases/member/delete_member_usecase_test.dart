@@ -31,17 +31,14 @@ void main() {
       // arrange
       const memberId = 'member123';
 
-      when(
-        mockMemberRepository.deleteMember(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberRepository.deleteMember(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroupMembersByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
       // act
       await usecase.execute(memberId);
@@ -54,17 +51,14 @@ void main() {
       // arrange
       const memberId = 'member123';
 
-      when(
-        mockMemberRepository.deleteMember(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberRepository.deleteMember(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroupMembersByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
       // act & assert
       expect(() => usecase.execute(memberId), returnsNormally);
@@ -74,17 +68,14 @@ void main() {
       // arrange
       const memberId = 'member123';
 
-      when(
-        mockMemberRepository.deleteMember(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberRepository.deleteMember(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroupMembersByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
       // act
       await usecase.execute(memberId);
@@ -97,17 +88,14 @@ void main() {
       // arrange
       const memberId = 'member123';
 
-      when(
-        mockMemberRepository.deleteMember(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberRepository.deleteMember(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockGroupRepository.deleteGroupMembersByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockGroupRepository.deleteGroupMembersByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
-      when(
-        mockMemberEventRepository.deleteMemberEventsByMemberId(memberId),
-      ).thenAnswer((_) async => {});
+      when(mockMemberEventRepository.deleteMemberEventsByMemberId(memberId))
+          .thenAnswer((_) async => {});
 
       // act
       await usecase.execute(memberId);

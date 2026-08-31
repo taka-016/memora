@@ -39,9 +39,8 @@ void main() {
       await usecase.execute(editedMember, ownerId);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.saveMember(captureAny),
-      ).captured;
+      final captured = verify(mockMemberRepository.saveMember(captureAny))
+          .captured;
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);
@@ -64,9 +63,8 @@ void main() {
       await usecase.execute(editedMember, ownerId);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.saveMember(captureAny),
-      ).captured;
+      final captured = verify(mockMemberRepository.saveMember(captureAny))
+          .captured;
       final savedMember = captured[0] as Member;
       expect(savedMember.ownerId, ownerId);
       expect(savedMember.displayName, editedMember.displayName);

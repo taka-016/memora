@@ -73,9 +73,9 @@ class CalculateDvcPointTableUsecase {
 
     final usageList = pointUsages.toList()
       ..sort(
-        (a, b) => _monthStart(
-          a.usageYearMonth,
-        ).compareTo(_monthStart(b.usageYearMonth)),
+        (a, b) =>
+            _monthStart(a.usageYearMonth)
+                .compareTo(_monthStart(b.usageYearMonth)),
       );
 
     final simulationStart = _resolveSimulationStart(

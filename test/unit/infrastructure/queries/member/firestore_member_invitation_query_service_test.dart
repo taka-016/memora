@@ -25,9 +25,8 @@ void main() {
       mockFirestore = MockFirebaseFirestore();
       mockInvitationCollection =
           MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('member_invitations'),
-      ).thenReturn(mockInvitationCollection);
+      when(mockFirestore.collection('member_invitations'))
+          .thenReturn(mockInvitationCollection);
       service = FirestoreMemberInvitationQueryService(firestore: mockFirestore);
     });
 
@@ -37,9 +36,8 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockInvitationCollection.where('inviteeId', isEqualTo: inviteeId),
-      ).thenReturn(mockQuery);
+      when(mockInvitationCollection.where('inviteeId', isEqualTo: inviteeId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('invitation123');
@@ -61,9 +59,8 @@ void main() {
       final mockQuery = MockQuery<Map<String, dynamic>>();
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
 
-      when(
-        mockInvitationCollection.where('inviteeId', isEqualTo: inviteeId),
-      ).thenReturn(mockQuery);
+      when(mockInvitationCollection.where('inviteeId', isEqualTo: inviteeId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([]);
 

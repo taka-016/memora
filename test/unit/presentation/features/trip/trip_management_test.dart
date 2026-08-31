@@ -18,6 +18,7 @@ import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/presentation/features/trip/trip_management.dart';
 import 'package:memora/presentation/notifiers/trip/trip_management_notifier.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import 'trip_management_test.mocks.dart';
@@ -860,9 +861,8 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
-      when(
-        mockTripEntryRepository.updateTripEntry(any),
-      ).thenAnswer((_) async {});
+      when(mockTripEntryRepository.updateTripEntry(any))
+          .thenAnswer((_) async {});
 
       // Act
       await tester.pumpWidget(
@@ -920,9 +920,8 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
-      when(
-        mockTripEntryRepository.updateTripEntry(any),
-      ).thenThrow(TestException('更新失敗'));
+      when(mockTripEntryRepository.updateTripEntry(any))
+          .thenThrow(TestException('更新失敗'));
 
       await tester.pumpWidget(
         createApp(
@@ -968,9 +967,8 @@ void main() {
           itineraryItemsOrderBy: anyNamed('itineraryItemsOrderBy'),
         ),
       ).thenAnswer((_) async => detailedTripEntry);
-      when(
-        mockTripEntryRepository.updateTripEntry(any),
-      ).thenThrow(const ApplicationValidationException('旅行の保存に失敗しました'));
+      when(mockTripEntryRepository.updateTripEntry(any))
+          .thenThrow(const ApplicationValidationException('旅行の保存に失敗しました'));
 
       await tester.pumpWidget(
         createApp(
@@ -1081,9 +1079,8 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => testTripEntries);
-      when(
-        mockTripEntryRepository.deleteTripEntry(any),
-      ).thenAnswer((_) async {});
+      when(mockTripEntryRepository.deleteTripEntry(any))
+          .thenAnswer((_) async {});
 
       // Act
       await tester.pumpWidget(
@@ -1110,9 +1107,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Assert - 削除処理が呼ばれることを確認
-      verify(
-        mockTripEntryRepository.deleteTripEntry(testTripEntries.first.id),
-      ).called(1);
+      verify(mockTripEntryRepository.deleteTripEntry(testTripEntries.first.id))
+          .called(1);
     });
 
     testWidgets('旅行一覧の再取得中に削除した場合は未実行を通知すること', (WidgetTester tester) async {
@@ -1216,9 +1212,8 @@ void main() {
           orderBy: anyNamed('orderBy'),
         ),
       ).thenAnswer((_) async => []);
-      when(
-        mockTripEntryRepository.saveTripEntry(any),
-      ).thenAnswer((_) async => 'generated-id');
+      when(mockTripEntryRepository.saveTripEntry(any))
+          .thenAnswer((_) async => 'generated-id');
 
       // Act
       await tester.pumpWidget(

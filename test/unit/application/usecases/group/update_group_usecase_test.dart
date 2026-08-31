@@ -34,9 +34,8 @@ void main() {
       await usecase.execute(group);
 
       // assert
-      final captured = verify(
-        mockGroupRepository.updateGroup(captureAny),
-      ).captured;
+      final captured = verify(mockGroupRepository.updateGroup(captureAny))
+          .captured;
       final updatedGroup = captured.single as Group;
       expect(updatedGroup.id, group.id);
       expect(updatedGroup.name, group.name);

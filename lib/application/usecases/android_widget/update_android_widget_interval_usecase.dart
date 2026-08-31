@@ -5,8 +5,9 @@ import 'package:memora/application/usecases/android_widget/android_widget_backgr
 
 export 'package:memora/application/dtos/android_widget/android_widget_update_interval.dart';
 
-typedef RegisterAndroidWidgetPeriodicUpdateTask =
-    Future<void> Function(Duration frequency);
+typedef RegisterAndroidWidgetPeriodicUpdateTask = Future<void> Function(
+  Duration frequency,
+);
 
 final androidWidgetPeriodicUpdateRegistrarProvider =
     Provider<RegisterAndroidWidgetPeriodicUpdateTask>((ref) {

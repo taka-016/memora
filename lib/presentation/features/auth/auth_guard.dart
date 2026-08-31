@@ -5,6 +5,7 @@ import 'package:memora/application/usecases/account/get_current_user_usecase.dar
 import 'package:memora/presentation/notifiers/auth/auth_notifier.dart';
 import 'package:memora/presentation/features/auth/invitation_code_input_dialog.dart';
 import 'package:memora/presentation/features/auth/member_creation_selection_dialog.dart';
+
 import 'login_page.dart';
 
 class AuthGuard extends ConsumerWidget {

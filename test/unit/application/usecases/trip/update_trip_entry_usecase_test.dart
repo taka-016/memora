@@ -43,9 +43,8 @@ void main() {
       await usecase.execute(tripEntry);
 
       // Assert
-      final captured = verify(
-        mockRepository.updateTripEntry(captureAny),
-      ).captured;
+      final captured = verify(mockRepository.updateTripEntry(captureAny))
+          .captured;
       final updatedEntry = captured.single as TripEntry;
       expect(updatedEntry.id, tripEntry.id);
       expect(updatedEntry.name, tripEntry.name);

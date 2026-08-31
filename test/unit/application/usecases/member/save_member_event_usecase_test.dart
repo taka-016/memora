@@ -26,9 +26,8 @@ void main() {
         year: 2026,
         memo: '入学式',
       );
-      when(
-        mockMemberEventRepository.saveMemberEvent(any),
-      ).thenAnswer((_) async => 'saved-event-id');
+      when(mockMemberEventRepository.saveMemberEvent(any))
+          .thenAnswer((_) async => 'saved-event-id');
 
       final result = await usecase.execute(dto);
 

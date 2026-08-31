@@ -25,9 +25,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('member_events'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('member_events'))
+          .thenReturn(mockCollection);
       service = FirestoreMemberEventQueryService(firestore: mockFirestore);
     });
 
@@ -46,15 +45,13 @@ void main() {
           ),
         ),
       ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('year', descending: false),
-      ).thenReturn(mockOrderedQuery);
+      when(mockQuery.orderBy('year', descending: false))
+          .thenReturn(mockOrderedQuery);
       when(mockOrderedQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('event001');
-      when(
-        mockDoc.data(),
-      ).thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
+      when(mockDoc.data())
+          .thenReturn({'memberId': 'member001', 'year': 2026, 'memo': '入学式'});
 
       final result = await service.getMemberEventsByMemberIds(
         const ['member001', 'member002'],
@@ -99,24 +96,20 @@ void main() {
           ),
         ),
       ).thenReturn(secondQuery);
-      when(
-        firstQuery.orderBy('year', descending: false),
-      ).thenReturn(firstOrderedQuery);
-      when(
-        secondQuery.orderBy('year', descending: false),
-      ).thenReturn(secondOrderedQuery);
+      when(firstQuery.orderBy('year', descending: false))
+          .thenReturn(firstOrderedQuery);
+      when(secondQuery.orderBy('year', descending: false))
+          .thenReturn(secondOrderedQuery);
       when(firstOrderedQuery.get()).thenAnswer((_) async => firstSnapshot);
       when(secondOrderedQuery.get()).thenAnswer((_) async => secondSnapshot);
       when(firstSnapshot.docs).thenReturn([firstDoc]);
       when(secondSnapshot.docs).thenReturn([secondDoc]);
       when(firstDoc.id).thenReturn('event-2027');
-      when(
-        firstDoc.data(),
-      ).thenReturn({'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
+      when(firstDoc.data())
+          .thenReturn({'memberId': 'member001', 'year': 2027, 'memo': '卒業式'});
       when(secondDoc.id).thenReturn('event-2026');
-      when(
-        secondDoc.data(),
-      ).thenReturn({'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
+      when(secondDoc.data())
+          .thenReturn({'memberId': 'member031', 'year': 2026, 'memo': '入学式'});
 
       final result = await service.getMemberEventsByMemberIds(
         memberIds,

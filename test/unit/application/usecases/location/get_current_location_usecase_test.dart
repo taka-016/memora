@@ -20,9 +20,8 @@ void main() {
 
     test('現在地取得サービスの結果をそのまま返す', () async {
       const expected = Coordinate(latitude: 35.681236, longitude: 139.767125);
-      when(
-        mockCurrentLocationService.getCurrentLocation(),
-      ).thenAnswer((_) async => expected);
+      when(mockCurrentLocationService.getCurrentLocation())
+          .thenAnswer((_) async => expected);
 
       final actual = await usecase.execute();
 

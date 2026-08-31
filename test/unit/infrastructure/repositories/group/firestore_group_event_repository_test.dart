@@ -117,9 +117,8 @@ void main() {
       final mockDoc2 = MockQueryDocumentSnapshot<Map<String, dynamic>>();
       final mockBatch = MockWriteBatch();
 
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
+      when(mockCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockQuerySnapshot);
       when(mockQuerySnapshot.docs).thenReturn([mockDoc1, mockDoc2]);
       when(mockDoc1.reference).thenReturn(mockDocRef1);

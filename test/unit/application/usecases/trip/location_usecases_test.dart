@@ -23,9 +23,8 @@ void main() {
       ];
       queryService.locationsByGroupId['group-1'] = expected;
 
-      final result = await GetLocationsByGroupIdUsecase(
-        queryService,
-      ).execute('group-1');
+      final result = await GetLocationsByGroupIdUsecase(queryService)
+          .execute('group-1');
 
       expect(result, expected);
       expect(queryService.requestedGroupIds, ['group-1']);

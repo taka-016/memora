@@ -5,6 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:memora/presentation/features/account_setting/email_change_modal.dart';
 import 'package:memora/application/usecases/account/update_email_usecase.dart';
 import 'package:memora/application/usecases/account/reauthenticate_usecase.dart';
+
 import '../../../../helpers/test_exception.dart';
 
 import 'email_change_modal_test.mocks.dart';
@@ -65,9 +66,8 @@ void main() {
     });
 
     testWidgets('更新ボタンをタップするとメール更新が実行される', (WidgetTester tester) async {
-      when(
-        mockUpdateEmailUseCase.execute(newEmail: anyNamed('newEmail')),
-      ).thenAnswer((_) async {});
+      when(mockUpdateEmailUseCase.execute(newEmail: anyNamed('newEmail')))
+          .thenAnswer((_) async {});
 
       await tester.pumpWidget(createTestWidget());
       await tester.tap(find.text('Show Dialog'));
@@ -78,9 +78,8 @@ void main() {
       await tester.tap(find.text('更新'));
       await tester.pump();
 
-      verify(
-        mockUpdateEmailUseCase.execute(newEmail: 'newemail@example.com'),
-      ).called(1);
+      verify(mockUpdateEmailUseCase.execute(newEmail: 'newemail@example.com'))
+          .called(1);
     });
 
     testWidgets('エラー発生時にコールバックが例外をスローする', (WidgetTester tester) async {

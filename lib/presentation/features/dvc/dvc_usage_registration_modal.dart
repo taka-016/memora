@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 
-typedef DvcUsageSaveCallback =
-    Future<bool> Function({
-      required DateTime usageYearMonth,
-      required int usedPoint,
-      required String memo,
-    });
+typedef DvcUsageSaveCallback = Future<bool> Function({
+  required DateTime usageYearMonth,
+  required int usedPoint,
+  required String memo,
+});
 
 Future<void> showDvcUsageRegistrationModal({
   required BuildContext context,

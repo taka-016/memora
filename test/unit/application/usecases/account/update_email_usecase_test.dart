@@ -19,9 +19,8 @@ void main() {
 
     test('メールアドレス更新が正常に実行される', () async {
       const newEmail = 'new@example.com';
-      when(
-        mockAuthService.updateEmail(newEmail: newEmail),
-      ).thenAnswer((_) async {});
+      when(mockAuthService.updateEmail(newEmail: newEmail))
+          .thenAnswer((_) async {});
 
       await expectLater(useCase.execute(newEmail: newEmail), completes);
 

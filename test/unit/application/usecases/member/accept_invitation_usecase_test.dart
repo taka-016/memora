@@ -58,15 +58,12 @@ void main() {
         accountId: userId,
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
-      when(
-        mockMemberQueryService.getMemberById('invitee-id'),
-      ).thenAnswer((_) async => member);
-      when(
-        mockMemberRepository.updateMember(updatedMember),
-      ).thenAnswer((_) async {});
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
+      when(mockMemberQueryService.getMemberById('invitee-id'))
+          .thenAnswer((_) async => member);
+      when(mockMemberRepository.updateMember(updatedMember))
+          .thenAnswer((_) async {});
       when(
         mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
       ).thenAnswer((_) async {});
@@ -90,9 +87,8 @@ void main() {
       // Arrange
       const invitationCode = 'invalid-code';
       const userId = 'user-id';
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => null);
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute(invitationCode, userId);
@@ -120,12 +116,10 @@ void main() {
         invitationCode: invitationCode,
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
-      when(
-        mockMemberQueryService.getMemberById('invitee-id'),
-      ).thenAnswer((_) async => null);
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
+      when(mockMemberQueryService.getMemberById('invitee-id'))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute(invitationCode, userId);
@@ -163,15 +157,12 @@ void main() {
         accountId: userId,
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
-      when(
-        mockMemberQueryService.getMemberById('invitee-id'),
-      ).thenAnswer((_) async => member);
-      when(
-        mockMemberRepository.updateMember(updatedMember),
-      ).thenAnswer((_) async {});
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
+      when(mockMemberQueryService.getMemberById('invitee-id'))
+          .thenAnswer((_) async => member);
+      when(mockMemberRepository.updateMember(updatedMember))
+          .thenAnswer((_) async {});
       when(
         mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
       ).thenAnswer((_) async {});
@@ -203,9 +194,8 @@ void main() {
         createdAt: DateTime.utc(2024, 1, 1),
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
 
       // Act
       final result = await useCase.execute(
@@ -245,9 +235,8 @@ void main() {
         createdAt: DateTime.utc(2024, 1, 1),
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
 
       // Act
       final result = await useCase.execute(invitationCode, userId);
@@ -280,15 +269,12 @@ void main() {
         accountId: userId,
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInvitationCode(invitationCode),
-      ).thenAnswer((_) async => memberInvitation);
-      when(
-        mockMemberQueryService.getMemberById('invitee-id'),
-      ).thenAnswer((_) async => member);
-      when(
-        mockMemberRepository.updateMember(updatedMember),
-      ).thenAnswer((_) async {});
+      when(mockMemberInvitationQueryService.getByInvitationCode(invitationCode))
+          .thenAnswer((_) async => memberInvitation);
+      when(mockMemberQueryService.getMemberById('invitee-id'))
+          .thenAnswer((_) async => member);
+      when(mockMemberRepository.updateMember(updatedMember))
+          .thenAnswer((_) async {});
       when(
         mockMemberInvitationRepository.deleteMemberInvitation('invitation-id'),
       ).thenAnswer((_) async {});

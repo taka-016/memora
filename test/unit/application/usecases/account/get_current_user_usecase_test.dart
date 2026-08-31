@@ -25,9 +25,8 @@ void main() {
         loginId: 'test@example.com',
         isVerified: true,
       );
-      when(
-        mockAuthService.getCurrentUser(),
-      ).thenAnswer((_) async => expectedUser);
+      when(mockAuthService.getCurrentUser())
+          .thenAnswer((_) async => expectedUser);
 
       final actual = await useCase.execute();
 

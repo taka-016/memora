@@ -32,9 +32,8 @@ void main() {
       const inviteeId = 'invitee123';
       const inviterId = 'inviter456';
 
-      when(
-        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
-      ).thenAnswer((_) async => null);
+      when(mockMemberInvitationQueryService.getByInviteeId(inviteeId))
+          .thenAnswer((_) async => null);
 
       // Act
       final invitationCode = await usecase.execute(
@@ -47,9 +46,8 @@ void main() {
       expect(invitationCode, isNotEmpty);
 
       // 新規作成処理が呼ばれることを確認
-      verify(
-        mockMemberInvitationRepository.saveMemberInvitation(any),
-      ).called(1);
+      verify(mockMemberInvitationRepository.saveMemberInvitation(any))
+          .called(1);
     });
 
     test('既存の招待がある場合、更新される', () async {
@@ -63,9 +61,8 @@ void main() {
         invitationCode: 'old_code',
       );
 
-      when(
-        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
-      ).thenAnswer((_) async => existingInvitation);
+      when(mockMemberInvitationQueryService.getByInviteeId(inviteeId))
+          .thenAnswer((_) async => existingInvitation);
 
       // Act
       final invitationCode = await usecase.execute(
@@ -79,9 +76,8 @@ void main() {
       expect(invitationCode, isNot(equals('old_code'))); // 新しいコードが生成される
 
       // 更新処理が呼ばれることを確認
-      verify(
-        mockMemberInvitationRepository.updateMemberInvitation(any),
-      ).called(1);
+      verify(mockMemberInvitationRepository.updateMemberInvitation(any))
+          .called(1);
     });
 
     test('招待コードはUUID v7形式で生成される', () async {
@@ -89,9 +85,8 @@ void main() {
       const inviteeId = 'invitee123';
       const inviterId = 'inviter456';
 
-      when(
-        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
-      ).thenAnswer((_) async => null);
+      when(mockMemberInvitationQueryService.getByInviteeId(inviteeId))
+          .thenAnswer((_) async => null);
 
       // Act
       final invitationCode = await usecase.execute(
@@ -106,9 +101,8 @@ void main() {
     test('招待情報の取得に失敗した場合は例外を呼び出し元へ伝播する', () async {
       const inviteeId = 'invitee123';
       const inviterId = 'inviter456';
-      when(
-        mockMemberInvitationQueryService.getByInviteeId(inviteeId),
-      ).thenThrow(TestException('招待情報取得失敗'));
+      when(mockMemberInvitationQueryService.getByInviteeId(inviteeId))
+          .thenThrow(TestException('招待情報取得失敗'));
 
       await expectLater(
         usecase.execute(inviteeId: inviteeId, inviterId: inviterId),

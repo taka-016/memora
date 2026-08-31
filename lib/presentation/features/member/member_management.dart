@@ -27,9 +27,8 @@ class MemberManagement extends HookConsumerWidget {
     final isMemberOperationInProgressRef = useRef(false);
 
     void showSnackBar(String message) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
 
     ref.listen<AsyncValue<MemberManagementState>>(managementProvider, (

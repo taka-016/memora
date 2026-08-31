@@ -40,9 +40,8 @@ void main() {
       await usecase.execute(updatedMember);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.updateMember(captureAny),
-      ).captured;
+      final captured = verify(mockMemberRepository.updateMember(captureAny))
+          .captured;
       final member = captured.single as Member;
       expect(member.id, updatedMember.id);
       expect(member.displayName, updatedMember.displayName);
@@ -59,9 +58,8 @@ void main() {
       await usecase.execute(updatedMember);
 
       // Assert
-      final captured = verify(
-        mockMemberRepository.updateMember(captureAny),
-      ).captured;
+      final captured = verify(mockMemberRepository.updateMember(captureAny))
+          .captured;
       final member = captured.single as Member;
       expect(member.id, updatedMember.id);
       expect(member.displayName, updatedMember.displayName);

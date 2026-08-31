@@ -25,9 +25,8 @@ void main() {
     setUp(() {
       mockFirestore = MockFirebaseFirestore();
       mockCollection = MockCollectionReference<Map<String, dynamic>>();
-      when(
-        mockFirestore.collection('dvc_point_contracts'),
-      ).thenReturn(mockCollection);
+      when(mockFirestore.collection('dvc_point_contracts'))
+          .thenReturn(mockCollection);
       service = FirestoreDvcPointContractQueryService(firestore: mockFirestore);
     });
 
@@ -37,12 +36,10 @@ void main() {
       final mockSnapshot = MockQuerySnapshot<Map<String, dynamic>>();
       final mockDoc = MockQueryDocumentSnapshot<Map<String, dynamic>>();
 
-      when(
-        mockCollection.where('groupId', isEqualTo: groupId),
-      ).thenReturn(mockQuery);
-      when(
-        mockQuery.orderBy('contractStartYearMonth', descending: false),
-      ).thenReturn(mockQuery);
+      when(mockCollection.where('groupId', isEqualTo: groupId))
+          .thenReturn(mockQuery);
+      when(mockQuery.orderBy('contractStartYearMonth', descending: false))
+          .thenReturn(mockQuery);
       when(mockQuery.get()).thenAnswer((_) async => mockSnapshot);
       when(mockSnapshot.docs).thenReturn([mockDoc]);
       when(mockDoc.id).thenReturn('contract001');
@@ -63,15 +60,13 @@ void main() {
       expect(result, hasLength(1));
       expect(result.first, isA<DvcPointContractDto>());
       expect(result.first.contractName, '契約A');
-      verify(
-        mockQuery.orderBy('contractStartYearMonth', descending: false),
-      ).called(1);
+      verify(mockQuery.orderBy('contractStartYearMonth', descending: false))
+          .called(1);
     });
 
     test('例外時は空リストを返す', () async {
-      when(
-        mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')),
-      ).thenThrow(TestException('firestore error'));
+      when(mockCollection.where('groupId', isEqualTo: anyNamed('isEqualTo')))
+          .thenThrow(TestException('firestore error'));
 
       final result = await service.getDvcPointContractsByGroupId('group001');
 

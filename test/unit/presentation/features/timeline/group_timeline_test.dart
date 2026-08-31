@@ -196,9 +196,8 @@ void main() {
   }
 
   void invalidateTimelineRows(WidgetTester tester) {
-    ProviderScope.containerOf(
-      tester.element(find.byType(Timeline)),
-    ).invalidate(timelineRowsRefreshProvider);
+    ProviderScope.containerOf(tester.element(find.byType(Timeline)))
+        .invalidate(timelineRowsRefreshProvider);
   }
 
   void showMorePastYears(WidgetTester tester) {
