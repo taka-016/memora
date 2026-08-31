@@ -48,6 +48,7 @@ class TopPage extends HookConsumerWidget {
     final shouldHideForAndroidWidgetLaunch =
         androidWidgetLaunchState.isInitialUriLoading ||
         pendingAndroidWidgetTripId != null ||
+        androidWidgetLaunchState.isSettingsLaunchPending ||
         androidWidgetLaunchState.isResolving ||
         androidWidgetLaunchResolution != null;
 
@@ -67,22 +68,31 @@ class TopPage extends HookConsumerWidget {
       return null;
     }, [currentMemberState.status, currentMemberState.message]);
 
-    useEffect(() {
-      if (pendingAndroidWidgetTripId == null || currentMember == null) {
-        return null;
-      }
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!context.mounted) {
-          return;
+    useEffect(
+      () {
+        if ((pendingAndroidWidgetTripId == null &&
+                !androidWidgetLaunchState.isSettingsLaunchPending) ||
+            currentMember == null) {
+          return null;
         }
-        unawaited(
-          ref
-              .read(androidWidgetLaunchNotifierProvider.notifier)
-              .resolvePendingLaunch(currentMember),
-        );
-      });
-      return null;
-    }, [pendingAndroidWidgetTripId, currentMember?.id]);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!context.mounted) {
+            return;
+          }
+          unawaited(
+            ref
+                .read(androidWidgetLaunchNotifierProvider.notifier)
+                .resolvePendingLaunch(currentMember),
+          );
+        });
+        return null;
+      },
+      [
+        pendingAndroidWidgetTripId,
+        androidWidgetLaunchState.isSettingsLaunchPending,
+        currentMember?.id,
+      ],
+    );
 
     useEffect(() {
       if (androidWidgetLaunchResolution == null || currentMember == null) {
@@ -205,6 +215,11 @@ class TopPage extends HookConsumerWidget {
   ) async {
     if (resolution case AndroidWidgetLaunchFailure()) {
       await _showAndroidWidgetLaunchFailure(context, ref, currentMember);
+      return;
+    }
+
+    if (resolution case AndroidWidgetSettingsLaunchDestination()) {
+      const SettingsRoute().go(context);
       return;
     }
 

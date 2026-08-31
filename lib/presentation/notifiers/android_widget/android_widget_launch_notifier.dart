@@ -34,6 +34,14 @@ final class AndroidWidgetLaunchDestination
   List<Object?> get props => [memberId, groupId, year, tripId, groups];
 }
 
+final class AndroidWidgetSettingsLaunchDestination
+    extends AndroidWidgetLaunchResolution {
+  const AndroidWidgetSettingsLaunchDestination({required super.memberId});
+
+  @override
+  List<Object?> get props => [memberId];
+}
+
 final class AndroidWidgetLaunchFailure extends AndroidWidgetLaunchResolution {
   const AndroidWidgetLaunchFailure({required super.memberId});
 
@@ -44,12 +52,14 @@ final class AndroidWidgetLaunchFailure extends AndroidWidgetLaunchResolution {
 class AndroidWidgetLaunchState extends Equatable {
   const AndroidWidgetLaunchState({
     this.pendingTripId,
+    this.isSettingsLaunchPending = false,
     this.isInitialUriLoading = false,
     this.isResolving = false,
     this.resolution,
   });
 
   final String? pendingTripId;
+  final bool isSettingsLaunchPending;
   final bool isInitialUriLoading;
   final bool isResolving;
   final AndroidWidgetLaunchResolution? resolution;
@@ -57,6 +67,7 @@ class AndroidWidgetLaunchState extends Equatable {
   @override
   List<Object?> get props => [
     pendingTripId,
+    isSettingsLaunchPending,
     isInitialUriLoading,
     isResolving,
     resolution,
@@ -64,16 +75,21 @@ class AndroidWidgetLaunchState extends Equatable {
 
   AndroidWidgetLaunchState copyWith({
     String? pendingTripId,
+    bool? isSettingsLaunchPending,
     bool? isInitialUriLoading,
     bool? isResolving,
     AndroidWidgetLaunchResolution? resolution,
     bool clearPendingTripId = false,
+    bool clearSettingsLaunchPending = false,
     bool clearResolution = false,
   }) {
     return AndroidWidgetLaunchState(
       pendingTripId: clearPendingTripId
           ? null
           : (pendingTripId ?? this.pendingTripId),
+      isSettingsLaunchPending: clearSettingsLaunchPending
+          ? false
+          : (isSettingsLaunchPending ?? this.isSettingsLaunchPending),
       isInitialUriLoading: isInitialUriLoading ?? this.isInitialUriLoading,
       isResolving: isResolving ?? this.isResolving,
       resolution: clearResolution ? null : (resolution ?? this.resolution),
@@ -89,6 +105,7 @@ final androidWidgetLaunchNotifierProvider =
 class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   static const _launchScheme = 'memorawidget';
   static const _openTripHost = 'opentrip';
+  static const _openSettingsHost = 'opensettings';
   static const _tripIdQueryParameter = 'tripId';
 
   StreamSubscription<Uri?>? _subscription;
@@ -122,11 +139,16 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   ) async {
     final initialRequestVersion = _requestVersion;
     try {
-      final tripId = _extractTripId(await usecase.getInitialUri());
+      final uri = await usecase.getInitialUri();
       if (_requestVersion != initialRequestVersion) {
         state = state.copyWith(isInitialUriLoading: false);
         return;
       }
+      if (_isSettingsLaunchUri(uri)) {
+        _acceptSettingsLaunch(isInitialUriLoading: false);
+        return;
+      }
+      final tripId = _extractTripId(uri);
       if (tripId == null) {
         state = state.copyWith(isInitialUriLoading: false);
         return;
@@ -143,6 +165,14 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
   }
 
   void _receiveUri(Uri? uri) {
+    if (_isSettingsLaunchUri(uri)) {
+      if (state.isSettingsLaunchPending ||
+          state.resolution is AndroidWidgetSettingsLaunchDestination) {
+        return;
+      }
+      _acceptSettingsLaunch();
+      return;
+    }
     final tripId = _extractTripId(uri);
     final resolvingRequest = _resolvingRequest;
     if (tripId == null ||
@@ -160,13 +190,35 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     _resolvedTripId = null;
     state = state.copyWith(
       pendingTripId: tripId,
+      isSettingsLaunchPending: false,
       isInitialUriLoading: isInitialUriLoading,
       isResolving: false,
       clearResolution: true,
     );
   }
 
+  void _acceptSettingsLaunch({bool? isInitialUriLoading}) {
+    _requestVersion++;
+    _resolvingRequest = null;
+    _resolvedTripId = null;
+    state = state.copyWith(
+      isSettingsLaunchPending: true,
+      isInitialUriLoading: isInitialUriLoading,
+      isResolving: false,
+      clearPendingTripId: true,
+      clearResolution: true,
+    );
+  }
+
   Future<void> resolvePendingLaunch(MemberDto member) async {
+    if (state.isSettingsLaunchPending) {
+      state = state.copyWith(
+        isResolving: false,
+        clearSettingsLaunchPending: true,
+        resolution: AndroidWidgetSettingsLaunchDestination(memberId: member.id),
+      );
+      return;
+    }
     final tripId = state.pendingTripId;
     if (tripId == null) {
       return;
@@ -288,5 +340,11 @@ class AndroidWidgetLaunchNotifier extends Notifier<AndroidWidgetLaunchState> {
     }
     final tripId = uri.queryParameters[_tripIdQueryParameter]?.trim();
     return tripId == null || tripId.isEmpty ? null : tripId;
+  }
+
+  bool _isSettingsLaunchUri(Uri? uri) {
+    return uri != null &&
+        uri.scheme.toLowerCase() == _launchScheme &&
+        uri.host.toLowerCase() == _openSettingsHost;
   }
 }

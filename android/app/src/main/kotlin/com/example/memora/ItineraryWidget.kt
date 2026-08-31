@@ -98,7 +98,7 @@ private fun ItineraryWidgetContent(
         ) {
             Spacer(modifier = GlanceModifier.height(CONTENT_TOP_SPACE_DP.dp))
             when {
-                targetGroupId.isEmpty() -> EmptyMessage("表示対象グループが未設定です")
+                targetGroupId.isEmpty() -> EmptyMessage(context, "表示対象グループが未設定です")
                 selectedItineraryDate == null -> EmptyMessage("表示できる旅程がありません")
                 else -> ItineraryDateContent(context, selectedItineraryDate)
             }
@@ -267,6 +267,11 @@ private fun openTripAction(
     Uri.parse("memoraWidget://openTrip?tripId=${Uri.encode(tripId)}"),
 )
 
+private fun openSettingsAction(context: Context) = actionStartActivity<MainActivity>(
+    context,
+    Uri.parse("memoraWidget://openSettings"),
+)
+
 @Composable
 private fun ItineraryItemRow(item: WidgetItineraryItem) {
     val timeParts = item.timeLabel.split(" - ", limit = 2)
@@ -396,9 +401,27 @@ private fun RecentItineraryDateButton() {
 }
 
 @Composable
-private fun EmptyMessage(message: String) {
+private fun ColumnScope.EmptyMessage(
+    context: Context,
+    message: String,
+) {
     Box(
-        modifier = GlanceModifier.fillMaxWidth(),
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .defaultWeight()
+            .clickable(openSettingsAction(context)),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text = message, style = TextStyle(fontSize = 13.sp))
+    }
+}
+
+@Composable
+private fun ColumnScope.EmptyMessage(message: String) {
+    Box(
+        modifier = GlanceModifier
+            .fillMaxWidth()
+            .defaultWeight(),
         contentAlignment = Alignment.Center,
     ) {
         Text(text = message, style = TextStyle(fontSize = 13.sp))
