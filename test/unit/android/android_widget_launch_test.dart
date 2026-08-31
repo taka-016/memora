@@ -28,6 +28,14 @@ void main() {
       );
     });
 
+    test('表示対象グループが未設定の旅程欄タップで設定画面を開くURIを送る', () {
+      final source = File(_itineraryWidgetPath).readAsStringSync();
+
+      expect(source, contains('EmptyMessage(context, "表示対象グループが未設定です")'));
+      expect(source, contains('actionStartActivity<MainActivity>'));
+      expect(source, contains('memoraWidget://openSettings'));
+    });
+
     test('直近の旅程へ戻るボタンのアクションを送信する', () {
       final source = File(_itineraryWidgetPath).readAsStringSync();
 

@@ -249,6 +249,20 @@ extension TopPageAndroidWidgetTests on TopPageTestContext {
       expect(find.byKey(const Key('trip_management')), findsNothing);
       expect(find.byKey(const Key('group_list')), findsOneWidget);
     });
+    testWidgets('ウィジェットの設定画面起動要求で設定画面を開く', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        createTestWidget(
+          currentMember: testMember,
+          androidWidgetLaunchNotifier: _ResolvedAndroidWidgetLaunchNotifier(
+            const AndroidWidgetSettingsLaunchDestination(memberId: 'admin1'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('settings')), findsOneWidget);
+      expect(find.byKey(const Key('group_list')), findsNothing);
+    });
     testWidgets('旅行管理画面でウィジェット指定の旅行がない場合はグループ一覧へ戻る', (
       WidgetTester tester,
     ) async {
