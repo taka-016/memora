@@ -417,11 +417,9 @@ private fun ColumnScope.EmptyMessage(
 }
 
 @Composable
-private fun ColumnScope.EmptyMessage(message: String) {
+private fun EmptyMessage(message: String) {
     Box(
-        modifier = GlanceModifier
-            .fillMaxWidth()
-            .defaultWeight(),
+        modifier = GlanceModifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
         Text(text = message, style = TextStyle(fontSize = 13.sp))
