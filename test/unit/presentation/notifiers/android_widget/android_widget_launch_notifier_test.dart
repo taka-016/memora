@@ -97,6 +97,39 @@ void main() {
       );
     });
 
+    test('設定画面を開く初回起動URIを解決して遷移要求を通知する', () async {
+      final source = _FakeAndroidWidgetLaunchUriSource(
+        initialUri: Uri.parse('memoraWidget://openSettings'),
+      );
+      final container = createContainer(source);
+      addTearDown(() async {
+        container.dispose();
+        await source.controller.close();
+      });
+
+      container.read(androidWidgetLaunchNotifierProvider);
+      await pumpEventQueue();
+      final notifier = container.read(
+        androidWidgetLaunchNotifierProvider.notifier,
+      );
+
+      expect(
+        container
+            .read(androidWidgetLaunchNotifierProvider)
+            .isSettingsLaunchPending,
+        isTrue,
+      );
+
+      await notifier.resolvePendingLaunch(member);
+
+      expect(
+        notifier.takeResolution(member.id),
+        const AndroidWidgetSettingsLaunchDestination(memberId: 'member-1'),
+      );
+      verifyNever(getTripUsecase.execute(any));
+      verifyNever(getGroupsUsecase.execute(any));
+    });
+
     test('初回起動URIの確認中だけ読み込み中になる', () async {
       final initialUriCompleter = Completer<Uri?>();
       final source = _FakeAndroidWidgetLaunchUriSource(
