@@ -59,10 +59,10 @@ void main() {
     expect(queryService.callCount, 1);
   });
 
-  testWidgets('グループ選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
+  testWidgets('グループが少数でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
     const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
     final groups = List.generate(
-      12,
+      2,
       (index) => GroupDto(
         id: 'group-$index',
         ownerId: currentMember.id,
@@ -100,6 +100,46 @@ void main() {
     await tester.pump();
 
     await tester.fling(find.text('グループ0'), const Offset(0, 300), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(queryService.callCount, 1);
+  });
+
+  testWidgets('グループが0件でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
+    const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
+    final queryService = _CountingGroupQueryService();
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) => const Scaffold(
+            body: GroupTimelineNavigationView(currentMember: currentMember),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupQueryServiceProvider.overrideWithValue(queryService),
+          groupTimelineGroupSelectionNotifierProvider.overrideWith(
+            () => _LoadedGroupSelectionNotifier(const []),
+          ),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+
+    await tester.fling(find.text('グループがありません'), const Offset(0, 300), 1000);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
     await tester.pump(const Duration(seconds: 1));
