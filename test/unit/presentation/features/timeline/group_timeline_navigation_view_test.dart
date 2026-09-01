@@ -12,6 +12,42 @@ import 'package:memora/presentation/features/timeline/group_timeline_navigation_
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 void main() {
+  const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
+
+  Future<void> pumpGroupSelectionScreen(
+    WidgetTester tester, {
+    required List<GroupDto> groups,
+    required _CountingGroupQueryService queryService,
+  }) async {
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) => const Scaffold(
+            body: GroupTimelineNavigationView(currentMember: currentMember),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupQueryServiceProvider.overrideWithValue(queryService),
+          groupTimelineGroupSelectionNotifierProvider.overrideWith(
+            () => _LoadedGroupSelectionNotifier(groups),
+          ),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+  }
+
   test('現在のグループルートからIndexedStackのindexを決定する', () {
     expect(groupTimelineStackIndex(groupId: null), 0);
     expect(groupTimelineStackIndex(groupId: 'group-1'), 1);
@@ -60,7 +96,6 @@ void main() {
   });
 
   testWidgets('グループが少数でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
-    const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
     final groups = List.generate(
       2,
       (index) => GroupDto(
@@ -71,33 +106,11 @@ void main() {
       ),
     );
     final queryService = _CountingGroupQueryService(groups);
-    final router = GoRouter(
-      initialLocation: '/groups',
-      routes: [
-        GoRoute(
-          path: '/groups',
-          builder: (context, state) => const Scaffold(
-            body: GroupTimelineNavigationView(currentMember: currentMember),
-          ),
-        ),
-      ],
+    await pumpGroupSelectionScreen(
+      tester,
+      groups: groups,
+      queryService: queryService,
     );
-    addTearDown(router.dispose);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          groupQueryServiceProvider.overrideWithValue(queryService),
-          groupTimelineGroupSelectionNotifierProvider.overrideWith(
-            () => _LoadedGroupSelectionNotifier(groups),
-          ),
-          appClockProvider.overrideWithValue(
-            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
-          ),
-        ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pump();
 
     await tester.fling(find.text('グループ0'), const Offset(0, 300), 1000);
     await tester.pump();
@@ -109,35 +122,12 @@ void main() {
   });
 
   testWidgets('グループが0件でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
-    const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
     final queryService = _CountingGroupQueryService();
-    final router = GoRouter(
-      initialLocation: '/groups',
-      routes: [
-        GoRoute(
-          path: '/groups',
-          builder: (context, state) => const Scaffold(
-            body: GroupTimelineNavigationView(currentMember: currentMember),
-          ),
-        ),
-      ],
+    await pumpGroupSelectionScreen(
+      tester,
+      groups: const [],
+      queryService: queryService,
     );
-    addTearDown(router.dispose);
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          groupQueryServiceProvider.overrideWithValue(queryService),
-          groupTimelineGroupSelectionNotifierProvider.overrideWith(
-            () => _LoadedGroupSelectionNotifier(const []),
-          ),
-          appClockProvider.overrideWithValue(
-            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
-          ),
-        ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pump();
 
     await tester.fling(find.text('グループがありません'), const Offset(0, 300), 1000);
     await tester.pump();
