@@ -118,6 +118,9 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
           onGroupSelected: (group) {
             GroupTimelineRoute(groupId: group.id).go(context);
           },
+          onRefresh: () => ref
+              .read(groupTimelineRefreshNotifierProvider.notifier)
+              .refreshManually(currentMember),
           onRetry: () {
             unawaited(
               ref
@@ -144,6 +147,9 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
             onGroupSelected: (group) {
               GroupTimelineRoute(groupId: group.id).go(context);
             },
+            onRefresh: () => ref
+                .read(groupTimelineRefreshNotifierProvider.notifier)
+                .refreshManually(currentMember),
             onRetry: () {
               unawaited(
                 ref
@@ -185,6 +191,7 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
   Widget _buildGroupSelection({
     required GroupTimelineGroupSelectionState state,
     required ValueChanged<GroupDto> onGroupSelected,
+    required RefreshCallback onRefresh,
     required VoidCallback onRetry,
   }) {
     switch (state.status) {
@@ -218,17 +225,20 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: state.groups.length,
-                itemBuilder: (context, index) {
-                  final group = state.groups[index];
-                  return ListTile(
-                    title: Text(group.name),
-                    subtitle: Text('${group.members.length}人のメンバー'),
-                    trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: () => onGroupSelected(group),
-                  );
-                },
+              child: RefreshIndicator(
+                onRefresh: onRefresh,
+                child: ListView.builder(
+                  itemCount: state.groups.length,
+                  itemBuilder: (context, index) {
+                    final group = state.groups[index];
+                    return ListTile(
+                      title: Text(group.name),
+                      subtitle: Text('${group.members.length}人のメンバー'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () => onGroupSelected(group),
+                    );
+                  },
+                ),
               ),
             ),
           ],
