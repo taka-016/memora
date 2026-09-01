@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -57,9 +58,77 @@ void main() {
 
     expect(queryService.callCount, 1);
   });
+
+  testWidgets('グループ選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
+    const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
+    final groups = List.generate(
+      12,
+      (index) => GroupDto(
+        id: 'group-$index',
+        ownerId: currentMember.id,
+        name: 'グループ$index',
+        members: const [],
+      ),
+    );
+    final queryService = _CountingGroupQueryService(groups);
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) => const Scaffold(
+            body: GroupTimelineNavigationView(currentMember: currentMember),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupQueryServiceProvider.overrideWithValue(queryService),
+          groupTimelineGroupSelectionNotifierProvider.overrideWith(
+            () => _LoadedGroupSelectionNotifier(groups),
+          ),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+
+    await tester.fling(find.text('グループ0'), const Offset(0, 300), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(queryService.callCount, 1);
+  });
+}
+
+class _LoadedGroupSelectionNotifier
+    extends GroupTimelineGroupSelectionNotifier {
+  _LoadedGroupSelectionNotifier(this.groups);
+
+  final List<GroupDto> groups;
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.loaded,
+      memberId: 'member-1',
+      groups: groups,
+    );
+  }
 }
 
 class _CountingGroupQueryService implements GroupQueryService {
+  _CountingGroupQueryService([this.result = const []]);
+
+  final List<GroupDto> result;
   int callCount = 0;
 
   @override
@@ -69,7 +138,7 @@ class _CountingGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     callCount++;
-    return const [];
+    return result;
   }
 
   @override
