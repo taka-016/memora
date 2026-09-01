@@ -210,8 +210,21 @@ class GroupTimelineNavigationView extends HookConsumerWidget {
         );
       case GroupTimelineGroupSelectionStatus.loaded:
         if (state.groups.isEmpty) {
-          return const Center(
-            child: Text('グループがありません', style: TextStyle(fontSize: 18)),
+          return RefreshIndicator(
+            onRefresh: onRefresh,
+            child: LayoutBuilder(
+              builder: (context, constraints) => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: constraints.maxHeight,
+                    child: const Center(
+                      child: Text('グループがありません', style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         }
         return Column(
