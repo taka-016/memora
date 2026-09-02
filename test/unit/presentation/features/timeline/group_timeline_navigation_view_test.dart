@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
@@ -11,6 +12,42 @@ import 'package:memora/presentation/features/timeline/group_timeline_navigation_
 import 'package:memora/presentation/notifiers/timeline/group_timeline_group_selection_notifier.dart';
 
 void main() {
+  const currentMember = MemberDto(id: 'member-1', displayName: '太郎');
+
+  Future<void> pumpGroupSelectionScreen(
+    WidgetTester tester, {
+    required List<GroupDto> groups,
+    required _CountingGroupQueryService queryService,
+  }) async {
+    final router = GoRouter(
+      initialLocation: '/groups',
+      routes: [
+        GoRoute(
+          path: '/groups',
+          builder: (context, state) => const Scaffold(
+            body: GroupTimelineNavigationView(currentMember: currentMember),
+          ),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          groupQueryServiceProvider.overrideWithValue(queryService),
+          groupTimelineGroupSelectionNotifierProvider.overrideWith(
+            () => _LoadedGroupSelectionNotifier(groups),
+          ),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime.utc(2026, 9, 2, 12)),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+  }
+
   test('現在のグループルートからIndexedStackのindexを決定する', () {
     expect(groupTimelineStackIndex(groupId: null), 0);
     expect(groupTimelineStackIndex(groupId: 'group-1'), 1);
@@ -57,9 +94,71 @@ void main() {
 
     expect(queryService.callCount, 1);
   });
+
+  testWidgets('グループが少数でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
+    final groups = List.generate(
+      2,
+      (index) => GroupDto(
+        id: 'group-$index',
+        ownerId: currentMember.id,
+        name: 'グループ$index',
+        members: const [],
+      ),
+    );
+    final queryService = _CountingGroupQueryService(groups);
+    await pumpGroupSelectionScreen(
+      tester,
+      groups: groups,
+      queryService: queryService,
+    );
+
+    await tester.fling(find.text('グループ0'), const Offset(0, 300), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(queryService.callCount, 1);
+  });
+
+  testWidgets('グループが0件でも選択画面を上部から引っ張るとグループ構成を更新する', (tester) async {
+    final queryService = _CountingGroupQueryService();
+    await pumpGroupSelectionScreen(
+      tester,
+      groups: const [],
+      queryService: queryService,
+    );
+
+    await tester.fling(find.text('グループがありません'), const Offset(0, 300), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(queryService.callCount, 1);
+  });
+}
+
+class _LoadedGroupSelectionNotifier
+    extends GroupTimelineGroupSelectionNotifier {
+  _LoadedGroupSelectionNotifier(this.groups);
+
+  final List<GroupDto> groups;
+
+  @override
+  GroupTimelineGroupSelectionState build() {
+    return GroupTimelineGroupSelectionState(
+      status: GroupTimelineGroupSelectionStatus.loaded,
+      memberId: 'member-1',
+      groups: groups,
+    );
+  }
 }
 
 class _CountingGroupQueryService implements GroupQueryService {
+  _CountingGroupQueryService([this.result = const []]);
+
+  final List<GroupDto> result;
   int callCount = 0;
 
   @override
@@ -69,7 +168,7 @@ class _CountingGroupQueryService implements GroupQueryService {
     List<OrderBy>? membersOrderBy,
   }) async {
     callCount++;
-    return const [];
+    return result;
   }
 
   @override
