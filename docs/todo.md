@@ -132,57 +132,139 @@
 
 ### Riverpod Provider定義をコード生成へ段階的に移行する
 
-#### 1. コード生成基盤と移行パターンを確立する
+以下は番号ごとに1つのPRとして対応する。各PRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。原則として前番号のPRがマージされてから次へ進み、生成Providerから手書きProviderへ依存しないよう、依存を持たないProviderから依存グラフをたどって移行する。
+
+2以降のComposition Rootに関係するPRは、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応でProvider配置が確定し、`AuthType`、`DatabaseType`、`LocationSearchApiType`の可変`StateProvider`が`AppMode`による実装選択へ置き換えられてから着手する。Application層のUseCaseファイルへRiverpodアノテーションは追加しない。
+
+#### 1. コード生成基盤と依存を持たない代表Providerを移行する
 
 - Context7でRiverpod 3系の公式ドキュメントと互換バージョンを確認し、`riverpod_annotation`をdependencies、`riverpod_generator`をdev_dependenciesへ追加する
 - 生成ファイルを既存の`app_routes.g.dart`と同様にリポジトリへ含め、`./check.sh`のBuild runnerで生成漏れや競合を検出できる状態にする
-- コード生成ではauto disposeがデフォルトになることを移行規約へ明記し、既存の`Provider`と`NotifierProvider`は`@Riverpod(keepAlive: true)`、既存のauto dispose Providerは`@riverpod`を基本としてライフサイクルを維持する
-- 自動再試行を無効にしているProviderは、既存の`retry: (_, _) => null`を`@Riverpod(retry: ...)`で維持する移行規約を定める
-- Provider名と公開範囲を維持し、利用側の`ref.watch`、`ref.read`、`ref.invalidate`、`overrideWith`を不要に変更しない移行方針を定める
-- 生成Providerから手書きProviderへ依存しないよう、依存を持たないProviderから依存グラフをたどって移行する規約を定める
-- `appTestEnvironmentProvider`と`timelineRowsRefreshProvider`を常時保持する関数ベースProvider、`editStateNotifierProvider`をauto disposeするクラスベースNotifierの代表例として移行する
-- 代表例について、保持・破棄・再生成とoverrideの既存テストが移行前と同じ振る舞いを保証することを確認する
+- コード生成ではauto disposeがデフォルトになること、既存の常時保持Providerには`@Riverpod(keepAlive: true)`を指定すること、既存のretry設定を維持することを移行規約へ明記する
+- `appTestEnvironmentProvider`、`appInitialLocationProvider`、`timelineRowsRefreshProvider`、`editStateNotifierProvider`を移行する
+- 保持・破棄・再生成とoverrideの既存テストが移行前と同じ振る舞いを保証することを確認する
 
-#### 2. Composition Rootの依存注入Providerを移行する
+#### 2. Composition Rootの基盤Providerを移行する
 
-- 「FactoryとComposition Rootでモードに応じた実装を選択する」の対応でProvider配置を確定してから着手し、Application層のUseCaseファイルへRiverpodアノテーションを追加しない
-- Composition Rootへ集約した外部SDKインスタンス、設定値、Storage、Clockなど、他のProviderへ依存しない生成Providerから移行する
-- Repository、QueryService、Transaction、外部Serviceの生成Providerを依存順に移行する
-- UseCaseの生成ProviderをComposition Rootへ定義し、Domain層とApplication層がRiverpodおよび生成コードへ依存しない状態を維持する
-- 依存注入Providerには原則`keepAlive: true`を指定し、同一`ProviderContainer`内のインスタンス共有とテストoverrideが移行前と一致することを確認する
-- オンライン・オフライン両モードで同じProvider名から適切な具象実装が注入され、生成コードがモード固有実装への依存を内側の層へ持ち込まないことをアーキテクチャテストで確認する
+- Composition Rootへ配置されたAppMode、外部SDKインスタンス、Clock、Transactionなど、他のProviderへ依存しない、または基盤Providerだけへ依存するProviderを移行する
+- 依存注入Providerには原則`keepAlive: true`を指定し、同一`ProviderContainer`内のインスタンス共有とテストoverrideを維持する
+- Domain層とApplication層がRiverpodおよび生成コードへ依存していないことをアーキテクチャテストで確認する
 
-#### 3. Presentation層の関数ベースProviderを移行する
+#### 3. 認証・位置情報・AndroidウィジェットのService Providerを移行する
 
-- 年表の旅行、DVCポイント利用、グループイベント、メンバーイベント取得Providerを移行し、複数の検索条件は専用family引数クラスから型付きの位置・名前付き引数へ置き換える
-- family引数にEntity、DTO、独自クラスを残す場合は、安定した`==`と`hashCode`を持つことをテストで保証する
-- 自動再試行を無効にしている非同期Provider向けの共通retry関数を定義して指定し、失敗時の再試行回数が移行前と一致することを確認する
-- `TripEntryMutationCoordinator`と`DvcPointUsageMutationCoordinator`の生成Providerを移行し、更新後にinvalidateするProviderと実行順序を維持する
-- ルーティングと初期表示位置のProviderを移行し、アプリ全体で保持すべきProviderには`keepAlive: true`を指定する
+- AuthService、現在地取得、場所検索、周辺地点名取得、Androidウィジェット用Storage・通知・起動URI取得のProviderを移行する
+- オンライン・オフライン両モードで同じProvider名から適切な具象実装が注入され、利用対象外の外部SDKが初期化されないことを確認する
 
-#### 4. 画面単位で完結するNotifierを移行する
+#### 4. グループ・メンバーのデータアクセスProviderを移行する
 
-- 座標、地図、DVCポイント計算、グループ管理、メンバー管理、旅行管理、設定画面のNotifierを機能単位のPRに分けて移行する
-- family Notifierのコンストラクタ引数を生成クラスの`build`引数へ移し、生成された引数プロパティと既存の状態初期化が一致することを確認する
-- `ref.keepAlive()`で進行中の操作を保護しているNotifierは、一時保持リンクの開始・終了条件を維持する
-- 各機能のProvider override、部分成功、排他制御、refresh、invalidate、破棄後の非同期完了を既存テストで検証する
+- グループ、グループイベント、メンバー、メンバーイベント、メンバー招待のRepositoryとQueryService Providerを移行する
+- オンライン・オフライン両モードの取得・保存とProvider overrideが移行前と一致することを確認する
 
-#### 5. 複数画面とアプリライフサイクルに関わるNotifierを移行する
+#### 5. 旅行・場所のデータアクセスProviderを移行する
 
-- グループ年表の選択・更新Notifierを移行し、Provider間のlisten、更新順序、Pull to Refresh後の再取得を維持する
-- 認証、現在利用者、Androidウィジェット起動Notifierをこの順に個別PRで移行する
-- 常時監視されるProviderには`keepAlive: true`を明示し、認証状態変更、ログアウト、Deep Link、バックグラウンド復帰時にProviderが意図せず破棄・再初期化されないことを確認する
-- `main.dart`直下の監視とルーターredirectを含む統合テストで、起動から画面遷移までの状態連携を検証する
+- 旅行のRepositoryと、旅行、タスク、旅程項目、場所、地図表示用旅行取得のQueryService Providerを移行する
+- オンライン・オフライン両モードの取得・保存とProvider overrideが移行前と一致することを確認する
 
-#### 6. legacy Providerを整理する
+#### 6. DVCポイントのデータアクセスProviderを移行する
 
-- `copiedTaskTripIdProvider`を生成Notifierへ移行し、単純な値の読み書きとauto disposeの要否を利用画面のライフサイクルに合わせて明示する
-- `AuthType`、`DatabaseType`、`LocationSearchApiType`の可変`StateProvider`はコード生成へ移行せず、`AppMode`とComposition Rootによる一貫した実装選択へ置き換えて削除する
-- `flutter_riverpod/legacy.dart`のimportと`StateProvider`、`StateNotifierProvider`、`ChangeNotifierProvider`が残っていないことを確認する
+- DVCポイント契約、期間限定ポイント、利用履歴のRepositoryとQueryService Providerを移行する
+- オンライン・オフライン両モードの取得・保存とProvider overrideが移行前と一致することを確認する
 
-#### 7. 手書きProviderを廃止して移行を完了する
+#### 7. アカウントUseCase Providerを移行する
 
-- `lib`配下に手書きの`Provider`、`FutureProvider`、`StreamProvider`、`NotifierProvider`、`AsyncNotifierProvider`定義が残っていないことを確認し、例外が必要な場合は理由と移行条件を文書化する
+- ログイン、登録、ログアウト、認証状態監視、利用者取得、メール・パスワード更新、再認証、削除、トークン検証のUseCase ProviderをComposition Rootで移行する
+- Provider名と認証エラー・再認証要求の伝播を維持する
+
+#### 8. メンバーUseCase Providerを移行する
+
+- メンバーの取得・作成・更新・削除、招待、アカウント紐付け、学年・厄年計算のUseCase ProviderをComposition Rootで移行する
+- メンバーと招待に関係するRepositoryの組み合わせ、Transaction、Provider overrideを維持する
+
+#### 9. グループUseCase Providerを移行する
+
+- グループとグループイベントの取得・作成・更新・削除のUseCase ProviderをComposition Rootで移行する
+- メンバーを含むグループ取得、Transaction、Provider overrideを維持する
+
+#### 10. 旅行・場所UseCase Providerを移行する
+
+- 旅行の取得・作成・更新・削除、タスク・旅程項目・場所取得、現在地・場所検索・周辺地点名取得のUseCase ProviderをComposition Rootで移行する
+- 通常表示用と地図表示用の旅行取得Providerを区別し、QueryServiceの選択とProvider overrideを維持する
+
+#### 11. DVCポイントUseCase Providerを移行する
+
+- DVCポイント契約、期間限定ポイント、利用履歴の取得・保存・削除UseCase ProviderをComposition Rootで移行する
+- WriteTransactionを使用する更新単位とProvider overrideを維持する
+
+#### 12. AndroidウィジェットUseCase Providerを移行する
+
+- ウィジェット表示対象、旅程キャッシュ、更新間隔、起動URI監視、定期更新登録のUseCase ProviderをComposition Rootで移行する
+- 通常起動とバックグラウンドisolateで同じAppModeの依存が解決されることを確認する
+
+#### 13. 年表のデータ取得Providerを移行する
+
+- 旅行、DVCポイント利用、グループイベント、メンバーイベントの非同期Providerを移行する
+- 複数の検索条件は専用family引数クラスから型付きの位置・名前付き引数へ置き換え、引数ごとのキャッシュ分離をテストする
+- 自動再試行を無効にしているProvider向けの共通retry関数を定義し、失敗時の再試行回数を維持する
+
+#### 14. 地図のNotifierを移行する
+
+- `coordinateProvider`と`mapNotifierProvider`を移行する
+- 座標状態の保持、family引数ごとの地図状態、場所検索と旅行取得のProvider overrideを維持する
+
+#### 15. DVCポイント画面のNotifierとMutationCoordinatorを移行する
+
+- `dvcPointCalculationNotifierProvider`と`dvcPointUsageMutationCoordinatorProvider`を移行する
+- family引数、計算結果、排他制御、更新後の再取得と年表Providerのinvalidateを維持する
+
+#### 16. グループ管理Notifierを移行する
+
+- `groupManagementNotifierProvider`を移行し、コンストラクタ引数を生成クラスの`build`引数へ移す
+- 部分成功、排他制御、refresh、`ref.keepAlive()`による進行中操作の保護を維持する
+
+#### 17. メンバー管理Notifierを移行する
+
+- `memberManagementNotifierProvider`を移行し、コンストラクタ引数を生成クラスの`build`引数へ移す
+- 部分成功、排他制御、refresh、`ref.keepAlive()`による進行中操作の保護を維持する
+
+#### 18. 旅行管理NotifierとMutationCoordinatorを移行する
+
+- `tripManagementNotifierProvider`と`tripEntryMutationCoordinatorProvider`を移行する
+- `copiedTaskTripIdProvider`を生成Notifierへ置き換え、単純な値の読み書きと画面離脱時の破棄を維持する
+- 旅行更新後の再取得と年表Providerのinvalidateを維持する
+
+#### 19. 設定画面のNotifierを移行する
+
+- Androidウィジェットの更新間隔と表示対象グループを管理するNotifier Providerを移行する
+- family引数、retry無効化、設定保存、ウィジェット再登録、画面再表示時の再取得を維持する
+
+#### 20. 認証Notifierを移行する
+
+- `authNotifierProvider`を`keepAlive: true`の生成Providerへ移行する
+- 起動時の認証状態監視、ログイン、登録、ログアウト、メール確認、再認証、アカウント削除を既存テストで検証する
+
+#### 21. 現在利用者Notifierを移行する
+
+- `currentMemberNotifierProvider`を`keepAlive: true`の生成Providerへ移行する
+- 認証Providerのlisten、ログイン・ログアウト時の現在利用者更新、再取得、エラー状態を維持する
+
+#### 22. グループ年表の選択・更新Notifierを移行する
+
+- `groupTimelineGroupSelectionNotifierProvider`と`groupTimelineRefreshNotifierProvider`を移行する
+- グループ選択、Provider間のlisten、更新順序、Pull to Refresh、年表データのinvalidateを維持する
+
+#### 23. Androidウィジェット起動Notifierを移行する
+
+- `androidWidgetLaunchNotifierProvider`を`keepAlive: true`の生成Providerへ移行する
+- Deep Linkの監視、起動時処理、再試行、対象旅行・グループの解決、破棄後の非同期完了を既存テストで検証する
+
+#### 24. ルーターProviderを移行する
+
+- `appRouterConfigProvider`を`keepAlive: true`の生成Providerへ移行する
+- 認証状態変更時のredirect、ログアウト時の状態リセット、Androidウィジェットからの遷移、テストoverrideを統合テストで検証する
+
+#### 25. Riverpodコード生成への移行を完了する
+
+- `lib`配下に手書きの`Provider`、`FutureProvider`、`StreamProvider`、`NotifierProvider`、`AsyncNotifierProvider`、`StateProvider`定義と`flutter_riverpod/legacy.dart`のimportが残っていないことを確認する
 - `riverpod_lint`と`custom_lint`のRiverpod 3系との互換性をContext7で確認して導入し、生成Providerから手書きProviderへの依存とfamily引数の同一性不備を静的解析で検出する
 - `./check.sh`で`dart run custom_lint`を実行し、Riverpod固有のlint違反をCIとローカルの共通検証へ含める
 - 手書きProvider定義の新規追加を検出するアーキテクチャテストを追加し、明示的な例外だけを許可する
