@@ -156,7 +156,7 @@ Composition RootのRepository、QueryService、UseCase、外部Serviceなど、�
 #### 3. タスクコピーのlegacy Providerを移行する
 
 - `copiedTaskTripIdProvider`を`StateProvider`からクラスベースの生成Notifierへ置き換える
-- コピー元旅行IDの設定・参照・解除と、画面離脱時の破棄を既存テストで検証する
+- `@Riverpod(keepAlive: true)`を指定し、コピー元旅行IDの設定・参照・解除と、「コピー→旅行画面を閉じる→別の旅行でペースト」の画面間フローを既存テストで検証する
 - `AuthType`、`DatabaseType`、`LocationSearchApiType`の`StateProvider`はコード生成へ移行せず、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応で`AppMode`による実装選択へ置き換える
 
 上記以外の既存Providerは、関連する機能追加・修正・リファクタリングで対象ファイルを変更するときに、コード生成で宣言、family引数、ライフサイクル管理が明確に単純化できる場合だけ移行する。コード生成へ移行することだけを目的としたPRは追加しない。
