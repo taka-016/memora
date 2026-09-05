@@ -130,4 +130,35 @@
 
 ## リファクタリング
 
+### Riverpodコード生成を効果の高いProviderへ導入する
+
+Riverpodの手書きProviderと生成Providerは併用し、既存Providerの全面移行や手書きProviderの廃止を目標にしない。複数引数を持つfamily Provider、生成により宣言と引数管理を単純化できるNotifier、legacy Providerを優先対象とする。
+
+Composition RootのRepository、QueryService、UseCase、外部Serviceなど、型を返すだけの単純な依存注入Providerは手書きを維持する。認証、現在利用者、Androidウィジェット起動、ルーターなど、アプリ全体のライフサイクルに関わるProviderも、関連機能の変更でコード生成の具体的な利点が生じるまでは移行しない。
+
+以下は番号ごとに1つのPRとして対応する。各PRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
+
+#### 1. コード生成基盤とクラスベースProviderの基準を整備する
+
+- Context7でRiverpod 3系の公式ドキュメントと互換バージョンを確認し、`riverpod_annotation`をdependencies、`riverpod_generator`をdev_dependenciesへ追加する
+- 生成ファイルを既存の`app_routes.g.dart`と同様にリポジトリへ含め、`./check.sh`のBuild runnerで生成漏れや競合を検出できる状態にする
+- 新規のfamily ProviderとNotifierは原則としてコード生成を使用し、単純な依存注入Providerは手書きを許容する規約を`AGENTS.md`へ追加する
+- コード生成ではauto disposeがデフォルトになること、既存の常時保持Providerには`@Riverpod(keepAlive: true)`を指定すること、既存のretry設定を維持することを規約へ明記する
+- 他のProviderへ依存しない`editStateNotifierProvider`をクラスベースProviderの代表例として移行する
+- 状態更新、reset、破棄・再生成、Provider overrideの振る舞いを既存テストで検証する
+
+#### 2. 複数条件を持つ年表旅行Providerを移行する
+
+- `timelineTripEntriesProvider`を関数ベースの生成Providerへ移行する
+- `TimelineTripEntriesQuery`を廃止し、`groupId`と`year`を生成Providerの名前付き引数として受け取る
+- auto dispose、retry無効化、年表更新時のinvalidate、引数ごとのキャッシュ分離を既存テストで検証する
+
+#### 3. タスクコピーのlegacy Providerを移行する
+
+- `copiedTaskTripIdProvider`を`StateProvider`からクラスベースの生成Notifierへ置き換える
+- `@Riverpod(keepAlive: true)`を指定し、コピー元旅行IDの設定・参照・解除と、「コピー→旅行画面を閉じる→別の旅行でペースト」の画面間フローを既存テストで検証する
+- `AuthType`、`DatabaseType`、`LocationSearchApiType`の`StateProvider`はコード生成へ移行せず、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応で`AppMode`による実装選択へ置き換える
+
+上記以外の既存Providerは、関連する機能追加・修正・リファクタリングで対象ファイルを変更するときに、コード生成で宣言、family引数、ライフサイクル管理が明確に単純化できる場合だけ移行する。コード生成へ移行することだけを目的としたPRは追加しない。
+
 ## 不具合修正
