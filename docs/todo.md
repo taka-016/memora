@@ -172,12 +172,12 @@
 
 #### 7. アカウントUseCase Providerを移行する
 
-- ログイン、登録、ログアウト、認証状態監視、利用者取得、メール・パスワード更新、再認証、削除、トークン検証のUseCase ProviderをComposition Rootで移行する
+- ログイン、登録、ログアウト、認証状態監視、利用者取得、メール確認、メール・パスワード更新、再認証、削除、トークン検証のUseCase ProviderをComposition Rootで移行する
 - Provider名と認証エラー・再認証要求の伝播を維持する
 
 #### 8. メンバーUseCase Providerを移行する
 
-- メンバーの取得・作成・更新・削除、招待、アカウント紐付け、学年・厄年計算のUseCase ProviderをComposition Rootで移行する
+- メンバーの取得・存在確認・作成・更新・削除、メンバーイベントの取得・保存、招待、アカウント紐付け、学年・厄年計算のUseCase ProviderをComposition Rootで移行する
 - メンバーと招待に関係するRepositoryの組み合わせ、Transaction、Provider overrideを維持する
 
 #### 9. グループUseCase Providerを移行する
