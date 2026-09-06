@@ -43,6 +43,7 @@ dependencies:
   equatable: ^2.0.5
   provider: ^6.1.1
   flutter_riverpod: ^3.3.2
+  riverpod_annotation: ^4.0.3
   flutter_hooks: ^0.21.3+1
   hooks_riverpod: ^3.3.2
   go_router: ^18.0.0
@@ -64,6 +65,7 @@ dev_dependencies:
   mockito: ^5.4.6
   build_runner: ^2.4.15
   go_router_builder: ^4.4.0
+  riverpod_generator: ^4.0.4
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
