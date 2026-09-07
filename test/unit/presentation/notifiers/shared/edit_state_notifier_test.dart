@@ -38,5 +38,39 @@ void main() {
       final state = container.read(editStateNotifierProvider);
       expect(state.isDirty, isFalse);
     });
+
+    test('監視終了後に破棄され、再監視時に初期状態で再生成される', () async {
+      final subscription = container.listen(
+        editStateNotifierProvider,
+        (_, _) {},
+      );
+      container.read(editStateNotifierProvider.notifier).setDirty(true);
+      expect(container.read(editStateNotifierProvider).isDirty, isTrue);
+
+      subscription.close();
+      await container.pump();
+
+      expect(container.read(editStateNotifierProvider).isDirty, isFalse);
+    });
+
+    test('Providerをoverrideして初期状態を差し替えられる', () {
+      final overrideContainer = ProviderContainer(
+        overrides: [
+          editStateNotifierProvider.overrideWith(
+            _InitiallyDirtyEditStateNotifier.new,
+          ),
+        ],
+      );
+      addTearDown(overrideContainer.dispose);
+
+      expect(overrideContainer.read(editStateNotifierProvider).isDirty, isTrue);
+    });
   });
+}
+
+class _InitiallyDirtyEditStateNotifier extends EditStateNotifier {
+  @override
+  EditState build() {
+    return const EditState(isDirty: true);
+  }
 }

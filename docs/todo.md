@@ -138,15 +138,6 @@ Composition RootのRepository、QueryService、UseCase、外部Serviceなど、�
 
 以下は番号ごとに1つのPRとして対応する。各PRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
 
-#### 1. コード生成基盤とクラスベースProviderの基準を整備する
-
-- Context7でRiverpod 3系の公式ドキュメントと互換バージョンを確認し、`riverpod_annotation`をdependencies、`riverpod_generator`をdev_dependenciesへ追加する
-- 生成ファイルを既存の`app_routes.g.dart`と同様にリポジトリへ含め、`./check.sh`のBuild runnerで生成漏れや競合を検出できる状態にする
-- 新規のfamily ProviderとNotifierは原則としてコード生成を使用し、単純な依存注入Providerは手書きを許容する規約を`AGENTS.md`へ追加する
-- コード生成ではauto disposeがデフォルトになること、既存の常時保持Providerには`@Riverpod(keepAlive: true)`を指定すること、既存のretry設定を維持することを規約へ明記する
-- 他のProviderへ依存しない`editStateNotifierProvider`をクラスベースProviderの代表例として移行する
-- 状態更新、reset、破棄・再生成、Provider overrideの振る舞いを既存テストで検証する
-
 #### 2. 複数条件を持つ年表旅行Providerを移行する
 
 - `timelineTripEntriesProvider`を関数ベースの生成Providerへ移行する

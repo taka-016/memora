@@ -1,11 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final editStateNotifierProvider =
-    NotifierProvider.autoDispose<EditStateNotifier, EditState>(
-      EditStateNotifier.new,
-    );
+part 'edit_state_notifier.g.dart';
 
-class EditStateNotifier extends Notifier<EditState> {
+@riverpod
+class EditStateNotifier extends _$EditStateNotifier {
   @override
   EditState build() {
     return const EditState();

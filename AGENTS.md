@@ -86,6 +86,9 @@ Robert C.Martinが提唱した『クリーンアーキテクチャの原則』�
 
 ### Presentation層の状態管理・制御クラスの命名規則
 
+- 新規のfamily ProviderとNotifierは原則としてRiverpodコード生成を使用し、Repository、QueryService、UseCase、外部Serviceなどの型を返すだけの単純な依存注入Providerは手書きを許容する
+- Riverpodコード生成のProviderはauto disposeがデフォルトであるため、既存の常時保持Providerを移行する場合は`@Riverpod(keepAlive: true)`を指定する
+- 既存Providerの`retry`設定は、コード生成へ移行しても`@Riverpod(retry: ...)`で維持する
 - Riverpodで公開し、Viewが監視する機能状態と、その状態に関係するUseCaseの実行順序、再試行、データ更新を管理するクラスは`XxxNotifier`とし、状態は不変な`XxxState`として分離する
 - `XxxNotifier`は`Notifier<XxxState>`を基本とし、単一の非同期結果では表現しにくい部分成功や複数の操作状態を`XxxState`で明示する
 - `XxxNotifier`の公開操作は、管理するStateの整合性やライフサイクルに影響する処理に限定し、Stateから独立した単純な取得や単発操作を、ViewからUseCaseを隠す目的だけで集約しない
