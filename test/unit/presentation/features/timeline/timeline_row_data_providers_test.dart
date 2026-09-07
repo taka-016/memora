@@ -7,13 +7,14 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';
+import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_provider.dart';
 
 import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('timelineTripEntriesProvider', () {
-    test('グループIDと年ごとに取得状態を分離する', () async {
+    test('同じ条件はキャッシュを共有しグループIDと年ごとに分離して年表更新時に再取得する', () async {
       final queryService = _FakeTripEntryQueryService();
       final container = ProviderContainer(
         overrides: [
@@ -21,32 +22,63 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      const firstQuery = TimelineTripEntriesQuery(
-        groupId: 'group-1',
-        year: 2025,
-      );
-      const secondQuery = TimelineTripEntriesQuery(
-        groupId: 'group-2',
-        year: 2026,
-      );
+      const conditions = [
+        ('group-1', 2025),
+        ('group-1', 2026),
+        ('group-2', 2025),
+      ];
+      for (final (groupId, year) in conditions) {
+        final provider = timelineTripEntriesProvider(
+          TimelineTripEntriesQuery(groupId: groupId, year: year),
+        );
+        final subscription = container.listen(provider, (_, _) {});
+        addTearDown(subscription.close);
+        await container.read(provider.future);
+      }
+      for (final (groupId, year) in conditions) {
+        await container.read(
+          timelineTripEntriesProvider(
+            TimelineTripEntriesQuery(groupId: groupId, year: year),
+          ).future,
+        );
+      }
+      expect(queryService.requestedQueries, conditions);
 
-      final firstSubscription = container.listen(
-        timelineTripEntriesProvider(firstQuery),
-        (_, _) {},
-      );
-      final secondSubscription = container.listen(
-        timelineTripEntriesProvider(secondQuery),
-        (_, _) {},
-      );
-      addTearDown(firstSubscription.close);
-      addTearDown(secondSubscription.close);
+      container.invalidate(timelineRowsRefreshProvider);
+      for (final (groupId, year) in conditions) {
+        await container.read(
+          timelineTripEntriesProvider(
+            TimelineTripEntriesQuery(groupId: groupId, year: year),
+          ).future,
+        );
+      }
+      expect(queryService.requestedQueries, [...conditions, ...conditions]);
+    });
 
-      await container.read(timelineTripEntriesProvider(firstQuery).future);
-      await container.read(timelineTripEntriesProvider(secondQuery).future);
+    test('監視がなくなるとキャッシュを破棄し再監視時に取得する', () async {
+      final queryService = _FakeTripEntryQueryService();
+      final container = ProviderContainer(
+        overrides: [
+          tripEntryQueryServiceProvider.overrideWithValue(queryService),
+        ],
+      );
+      addTearDown(container.dispose);
+      final provider = timelineTripEntriesProvider(
+        const TimelineTripEntriesQuery(groupId: 'group-1', year: 2025),
+      );
+      final subscription = container.listen(provider, (_, _) {});
+      await container.read(provider.future);
+
+      subscription.close();
+      await container.pump();
+
+      final nextSubscription = container.listen(provider, (_, _) {});
+      addTearDown(nextSubscription.close);
+      await container.read(provider.future);
 
       expect(queryService.requestedQueries, [
         ('group-1', 2025),
-        ('group-2', 2026),
+        ('group-1', 2025),
       ]);
     });
 
@@ -54,7 +86,12 @@ void main() {
       final queryService = _FakeTripEntryQueryService(
         exception: TestException('取得失敗'),
       );
+      var containerRetryCount = 0;
       final container = ProviderContainer(
+        retry: (_, _) {
+          containerRetryCount++;
+          return null;
+        },
         overrides: [
           tripEntryQueryServiceProvider.overrideWithValue(queryService),
         ],
@@ -71,6 +108,8 @@ void main() {
         container.read(timelineTripEntriesProvider(query).future),
         throwsA(isA<TestException>()),
       );
+      expect(containerRetryCount, 0);
+      expect(queryService.requestedQueries, [('group-1', 2025)]);
       queryService.exception = null;
       container.invalidate(timelineTripEntriesProvider(query));
 
