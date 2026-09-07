@@ -764,7 +764,7 @@ void main() {
       expect(copyButton.onPressed, isNull);
     });
 
-    testWidgets('ペーストでタスクが置き換わること', (tester) async {
+    testWidgets('コピー元の旅行画面を閉じて別の旅行へペーストするとタスクが置き換わること', (tester) async {
       List<TaskDto> lastChanged = [];
       final tasks = [
         TaskDto(
@@ -788,12 +788,33 @@ void main() {
 
       await tester.pumpWidget(
         _wrapWithApp(
-          TaskView(
-            tripId: 'trip-1',
-            tasks: tasks,
-            groupMembers: members,
-            onChanged: (updated) {
-              lastChanged = updated;
+          Builder(
+            builder: (context) {
+              return Column(
+                children: [
+                  for (final tripId in ['trip-1', 'trip-2'])
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).push<void>(
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              appBar: AppBar(title: Text(tripId)),
+                              body: TaskView(
+                                tripId: tripId,
+                                tasks: tasks,
+                                groupMembers: members,
+                                onChanged: (updated) {
+                                  lastChanged = updated;
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(tripId),
+                    ),
+                ],
+              );
             },
           ),
           overrides: [
@@ -802,9 +823,17 @@ void main() {
         ),
       );
 
+      await tester.tap(find.text('trip-1'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('task_copy_button')));
       await tester.pump();
 
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskView), findsNothing);
+
+      await tester.tap(find.text('trip-2'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('task_paste_button')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('task_paste_confirm_button')));
@@ -814,6 +843,13 @@ void main() {
       expect(find.text('コピー済みタスク'), findsOneWidget);
       expect(lastChanged.length, 1);
       expect(lastChanged.first.name, 'コピー済みタスク');
+      expect(lastChanged.first.tripId, 'trip-2');
+      verify(
+        mockQueryService.getTasksByTripId(
+          'trip-1',
+          orderBy: anyNamed('orderBy'),
+        ),
+      ).called(1);
     });
 
     testWidgets('ペースト確認ダイアログのキャンセルでタスクが変更されないこと', (tester) async {

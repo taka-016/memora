@@ -136,14 +136,10 @@ Riverpodの手書きProviderと生成Providerは併用し、既存Providerの全
 
 Composition RootのRepository、QueryService、UseCase、外部Serviceなど、型を返すだけの単純な依存注入Providerは手書きを維持する。認証、現在利用者、Androidウィジェット起動、ルーターなど、アプリ全体のライフサイクルに関わるProviderも、関連機能の変更でコード生成の具体的な利点が生じるまでは移行しない。
 
-以下は番号ごとに1つのPRとして対応する。各PRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
+Providerを移行するPRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
 
-#### 3. タスクコピーのlegacy Providerを移行する
+`AuthType`、`DatabaseType`、`LocationSearchApiType`の`StateProvider`はコード生成へ移行せず、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応で`AppMode`による実装選択へ置き換える。
 
-- `copiedTaskTripIdProvider`を`StateProvider`からクラスベースの生成Notifierへ置き換える
-- `@Riverpod(keepAlive: true)`を指定し、コピー元旅行IDの設定・参照・解除と、「コピー→旅行画面を閉じる→別の旅行でペースト」の画面間フローを既存テストで検証する
-- `AuthType`、`DatabaseType`、`LocationSearchApiType`の`StateProvider`はコード生成へ移行せず、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応で`AppMode`による実装選択へ置き換える
-
-上記以外の既存Providerは、関連する機能追加・修正・リファクタリングで対象ファイルを変更するときに、コード生成で宣言、family引数、ライフサイクル管理が明確に単純化できる場合だけ移行する。コード生成へ移行することだけを目的としたPRは追加しない。
+残る既存Providerは、関連する機能追加・修正・リファクタリングで対象ファイルを変更するときに、コード生成で宣言、family引数、ライフサイクル管理が明確に単純化できる場合だけ移行する。コード生成へ移行することだけを目的としたPRは追加しない。
 
 ## 不具合修正

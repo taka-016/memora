@@ -1,3 +1,13 @@
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final copiedTaskTripIdProvider = StateProvider<String?>((ref) => null);
+part 'task_copy_notifier.g.dart';
+
+@Riverpod(keepAlive: true, name: 'copiedTaskTripIdProvider')
+class TaskCopyNotifier extends _$TaskCopyNotifier {
+  @override
+  String? build() => null;
+
+  void setTripId(String? tripId) {
+    state = tripId;
+  }
+}
