@@ -28,13 +28,13 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    const query = TimelineTripEntriesQuery(groupId: 'group-1', year: 2026);
-    final subscription = container.listen(
-      timelineTripEntriesProvider(query),
-      (_, _) {},
+    final provider = timelineTripEntriesProvider(
+      groupId: 'group-1',
+      year: 2026,
     );
+    final subscription = container.listen(provider, (_, _) {});
     addTearDown(subscription.close);
-    await container.read(timelineTripEntriesProvider(query).future);
+    await container.read(provider.future);
     final coordinator = container.read(tripEntryMutationCoordinatorProvider);
     const trip = TripEntryDto(
       id: 'trip-1',
@@ -44,11 +44,11 @@ void main() {
     );
 
     await coordinator.createTripEntry(trip.copyWith(id: ''));
-    await container.read(timelineTripEntriesProvider(query).future);
+    await container.read(provider.future);
     await coordinator.updateTripEntry(trip);
-    await container.read(timelineTripEntriesProvider(query).future);
+    await container.read(provider.future);
     await coordinator.deleteTripEntry(trip.id);
-    await container.read(timelineTripEntriesProvider(query).future);
+    await container.read(provider.future);
 
     expect(queryService.callCount, 4);
   });

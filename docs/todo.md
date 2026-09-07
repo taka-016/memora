@@ -138,12 +138,6 @@ Composition RootのRepository、QueryService、UseCase、外部Serviceなど、�
 
 以下は番号ごとに1つのPRとして対応する。各PRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
 
-#### 2. 複数条件を持つ年表旅行Providerを移行する
-
-- `timelineTripEntriesProvider`を関数ベースの生成Providerへ移行する
-- `TimelineTripEntriesQuery`を廃止し、`groupId`と`year`を生成Providerの名前付き引数として受け取る
-- auto dispose、retry無効化、年表更新時のinvalidate、引数ごとのキャッシュ分離を既存テストで検証する
-
 #### 3. タスクコピーのlegacy Providerを移行する
 
 - `copiedTaskTripIdProvider`を`StateProvider`からクラスベースの生成Notifierへ置き換える
