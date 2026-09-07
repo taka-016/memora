@@ -29,7 +29,8 @@ void main() {
       ];
       for (final (groupId, year) in conditions) {
         final provider = timelineTripEntriesProvider(
-          TimelineTripEntriesQuery(groupId: groupId, year: year),
+          groupId: groupId,
+          year: year,
         );
         final subscription = container.listen(provider, (_, _) {});
         addTearDown(subscription.close);
@@ -37,9 +38,7 @@ void main() {
       }
       for (final (groupId, year) in conditions) {
         await container.read(
-          timelineTripEntriesProvider(
-            TimelineTripEntriesQuery(groupId: groupId, year: year),
-          ).future,
+          timelineTripEntriesProvider(groupId: groupId, year: year).future,
         );
       }
       expect(queryService.requestedQueries, conditions);
@@ -47,9 +46,7 @@ void main() {
       container.invalidate(timelineRowsRefreshProvider);
       for (final (groupId, year) in conditions) {
         await container.read(
-          timelineTripEntriesProvider(
-            TimelineTripEntriesQuery(groupId: groupId, year: year),
-          ).future,
+          timelineTripEntriesProvider(groupId: groupId, year: year).future,
         );
       }
       expect(queryService.requestedQueries, [...conditions, ...conditions]);
@@ -64,7 +61,8 @@ void main() {
       );
       addTearDown(container.dispose);
       final provider = timelineTripEntriesProvider(
-        const TimelineTripEntriesQuery(groupId: 'group-1', year: 2025),
+        groupId: 'group-1',
+        year: 2025,
       );
       final subscription = container.listen(provider, (_, _) {});
       await container.read(provider.future);
@@ -97,26 +95,23 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      const query = TimelineTripEntriesQuery(groupId: 'group-1', year: 2025);
-      final subscription = container.listen(
-        timelineTripEntriesProvider(query),
-        (_, _) {},
+      final provider = timelineTripEntriesProvider(
+        groupId: 'group-1',
+        year: 2025,
       );
+      final subscription = container.listen(provider, (_, _) {});
       addTearDown(subscription.close);
 
       await expectLater(
-        container.read(timelineTripEntriesProvider(query).future),
+        container.read(provider.future),
         throwsA(isA<TestException>()),
       );
       expect(containerRetryCount, 0);
       expect(queryService.requestedQueries, [('group-1', 2025)]);
       queryService.exception = null;
-      container.invalidate(timelineTripEntriesProvider(query));
+      container.invalidate(provider);
 
-      await expectLater(
-        container.read(timelineTripEntriesProvider(query).future),
-        completion(isEmpty),
-      );
+      await expectLater(container.read(provider.future), completion(isEmpty));
       expect(queryService.requestedQueries, [
         ('group-1', 2025),
         ('group-1', 2025),

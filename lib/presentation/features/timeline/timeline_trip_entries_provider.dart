@@ -1,29 +1,18 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-final timelineTripEntriesProvider = FutureProvider.autoDispose
-    .family<List<TripEntryDto>, TimelineTripEntriesQuery>((ref, query) async {
-      ref.watch(timelineRowsRefreshProvider);
-      return await ref
-          .watch(getTripEntriesUsecaseProvider)
-          .execute(query.groupId, query.year);
-    }, retry: (_, _) => null);
+part 'timeline_trip_entries_provider.g.dart';
 
-class TimelineTripEntriesQuery {
-  const TimelineTripEntriesQuery({required this.groupId, required this.year});
+Duration? _disableRetry(int retryCount, Object error) => null;
 
-  final String groupId;
-  final int year;
-
-  @override
-  bool operator ==(Object other) {
-    return other is TimelineTripEntriesQuery &&
-        other.groupId == groupId &&
-        other.year == year;
-  }
-
-  @override
-  int get hashCode => Object.hash(groupId, year);
+@Riverpod(retry: _disableRetry)
+Future<List<TripEntryDto>> timelineTripEntries(
+  Ref ref, {
+  required String groupId,
+  required int year,
+}) async {
+  ref.watch(timelineRowsRefreshProvider);
+  return await ref.watch(getTripEntriesUsecaseProvider).execute(groupId, year);
 }

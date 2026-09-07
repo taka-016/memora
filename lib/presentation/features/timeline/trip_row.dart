@@ -72,8 +72,9 @@ class _TripYearCell extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final query = TimelineTripEntriesQuery(groupId: groupId, year: year);
-    final trips = ref.watch(timelineTripEntriesProvider(query));
+    final trips = ref.watch(
+      timelineTripEntriesProvider(groupId: groupId, year: year),
+    );
     final lastLoadedTrips = useState(const <TripEntryDto>[]);
     final loadedTrips = trips.value;
 
