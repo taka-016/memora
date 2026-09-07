@@ -193,7 +193,9 @@ class TaskView extends HookConsumerWidget {
             key: const Key('task_copy_button'),
             onPressed: canCopy
                 ? () {
-                    ref.read(copiedTaskTripIdProvider.notifier).state = tripId;
+                    ref
+                        .read(copiedTaskTripIdProvider.notifier)
+                        .setTripId(tripId);
                   }
                 : null,
             icon: const Icon(Icons.copy),

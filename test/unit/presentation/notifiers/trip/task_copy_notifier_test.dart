@@ -10,20 +10,20 @@ void main() {
     expect(container.read(copiedTaskTripIdProvider), isNull);
 
     final notifier = container.read(copiedTaskTripIdProvider.notifier);
-    notifier.state = 'trip-1';
+    notifier.setTripId('trip-1');
     expect(container.read(copiedTaskTripIdProvider), 'trip-1');
 
-    notifier.state = 'trip-2';
+    notifier.setTripId('trip-2');
     expect(container.read(copiedTaskTripIdProvider), 'trip-2');
 
-    notifier.state = null;
+    notifier.setTripId(null);
     expect(container.read(copiedTaskTripIdProvider), isNull);
   });
 
   test('Providerをoverrideしてコピー元を差し替えても変更・解除できる', () {
     final container = ProviderContainer(
       overrides: [
-        copiedTaskTripIdProvider.overrideWith((ref) => 'copied-trip'),
+        copiedTaskTripIdProvider.overrideWith(_InitiallyCopiedTaskNotifier.new),
       ],
     );
     addTearDown(container.dispose);
@@ -31,10 +31,15 @@ void main() {
     expect(container.read(copiedTaskTripIdProvider), 'copied-trip');
 
     final notifier = container.read(copiedTaskTripIdProvider.notifier);
-    notifier.state = 'another-trip';
+    notifier.setTripId('another-trip');
     expect(container.read(copiedTaskTripIdProvider), 'another-trip');
 
-    notifier.state = null;
+    notifier.setTripId(null);
     expect(container.read(copiedTaskTripIdProvider), isNull);
   });
+}
+
+class _InitiallyCopiedTaskNotifier extends TaskCopyNotifier {
+  @override
+  String? build() => 'copied-trip';
 }
