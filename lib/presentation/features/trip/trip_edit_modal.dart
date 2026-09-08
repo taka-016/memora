@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/map_view_builder_provider.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/composition_root/providers/app_clock_provider.dart';
 import 'package:memora/composition_root/providers/usecases/location/get_nearby_location_name_usecase.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +29,7 @@ class TripEditModal extends HookConsumerWidget {
     required this.groupMembers,
     this.tripEntry,
     required this.onSave,
-    this.isTestEnvironment = false,
+    this.mapViewBuilder,
     this.year,
   });
 
@@ -35,11 +37,14 @@ class TripEditModal extends HookConsumerWidget {
   final List<GroupMemberDto> groupMembers;
   final TripEntryDto? tripEntry;
   final TripEditSave onSave;
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
   final int? year;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mapViewBuilder =
+        this.mapViewBuilder ??
+        ref.watch<MapViewBuilder>(mapViewBuilderProvider);
     final errorMessage = useState<String?>(null);
     final expandedSection = useState<TripEditExpandedSection?>(null);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);
@@ -241,7 +246,7 @@ class TripEditModal extends HookConsumerWidget {
             child: TripEditFormView(
               value: draftTripEntry.value,
               locations: currentLocations(),
-              isTestEnvironment: isTestEnvironment,
+              mapViewBuilder: mapViewBuilder,
               configuredYear: tripEntry?.year ?? year,
               clock: clock,
               onChanged: updateDraftTripEntry,
@@ -309,7 +314,7 @@ class TripEditModal extends HookConsumerWidget {
             locations: currentLocations(),
             onLocationCreated: saveTripLocation,
             onLocationDeleted: deleteTripLocation,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onChanged: updateDraftItineraryItems,
             onClose: () => expandedSection.value = null,
           );

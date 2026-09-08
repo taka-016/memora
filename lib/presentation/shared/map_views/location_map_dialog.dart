@@ -3,13 +3,12 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class LocationMapDialog extends StatelessWidget {
   const LocationMapDialog({
     super.key,
     required this.dialogKey,
-    required this.mapViewType,
+    required this.mapViewBuilder,
     required this.locations,
     this.onMapLongTapped,
     this.onSearchedLocationSelected,
@@ -23,7 +22,7 @@ class LocationMapDialog extends StatelessWidget {
   });
 
   final Key dialogKey;
-  final MapViewType mapViewType;
+  final MapViewBuilder mapViewBuilder;
   final List<LocationDto> locations;
   final ValueChanged<Coordinate>? onMapLongTapped;
   final ValueChanged<LocationCandidateDto>? onSearchedLocationSelected;
@@ -55,7 +54,7 @@ class LocationMapDialog extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: MapViewFactory.create(mapViewType).createMapView(
+              child: mapViewBuilder.createMapView(
                 locations: locations,
                 onMapLongTapped: onMapLongTapped,
                 onSearchedLocationSelected: onSearchedLocationSelected,

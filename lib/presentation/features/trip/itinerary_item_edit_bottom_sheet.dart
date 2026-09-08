@@ -1,3 +1,5 @@
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+
 import 'package:memora/presentation/shared/sheets/bottom_sheet_content_padding.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:memora/presentation/shared/supported_year_range.dart';
@@ -29,7 +31,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     this.onLocationCreated,
     this.onLocationUnassigned,
     this.otherLocationIds = const {},
-    this.isTestEnvironment = false,
+    required this.mapViewBuilder,
     required this.onSaved,
     required this.clock,
   });
@@ -41,7 +43,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationUnassigned;
   final Set<String> otherLocationIds;
-  final bool isTestEnvironment;
+  final MapViewBuilder mapViewBuilder;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock clock;
 
@@ -352,9 +354,6 @@ class ItineraryItemEditBottomSheet extends HookWidget {
       if (location == null && !hasMapCallbacks) {
         return const SizedBox.shrink();
       }
-      final mapViewType = isTestEnvironment
-          ? MapViewType.placeholder
-          : MapViewType.google;
 
       Future<void> showLocationMap() async {
         var dialogLocations = List<LocationDto>.from(mapLocations.value);
@@ -434,7 +433,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
                 return LocationMapDialog(
                   dialogKey: const Key('itinerary_location_map_dialog'),
-                  mapViewType: mapViewType,
+                  mapViewBuilder: mapViewBuilder,
                   locations: dialogLocations,
                   selectedLocation: selectedLocation.value,
                   highlightSelectedLocation: true,

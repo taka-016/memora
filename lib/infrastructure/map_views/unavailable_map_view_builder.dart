@@ -3,10 +3,11 @@ import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/shared/map_views/google_map_view.dart';
 
-class GoogleMapViewBuilder implements MapViewBuilder {
-  const GoogleMapViewBuilder();
+class UnavailableMapViewBuilder implements MapViewBuilder {
+  const UnavailableMapViewBuilder(this.reason);
+
+  final String reason;
 
   @override
   Widget createMapView({
@@ -23,19 +24,6 @@ class GoogleMapViewBuilder implements MapViewBuilder {
     DateTime? tripStartDate,
     bool isReadOnly = false,
   }) {
-    return GoogleMapView(
-      locations: locations,
-      onMapLongTapped: onMapLongTapped,
-      onSearchedLocationSelected: onSearchedLocationSelected,
-      onLocationTapped: onLocationTapped,
-      selectedLocation: selectedLocation,
-      focusedLocation: focusedLocation,
-      topLeadingOverlay: topLeadingOverlay,
-      highlightSelectedLocation: highlightSelectedLocation,
-      locationDetailBuilder: locationDetailBuilder,
-      locationDetailBottomSheetHeight: locationDetailBottomSheetHeight,
-      tripStartDate: tripStartDate,
-      isReadOnly: isReadOnly,
-    );
+    return Center(child: Text(reason));
   }
 }

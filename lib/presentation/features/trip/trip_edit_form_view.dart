@@ -1,3 +1,5 @@
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,7 +11,7 @@ import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/helpers/date_picker_helper.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
+
 import 'package:memora/presentation/shared/sheets/location_detail_panel_frame.dart';
 import 'package:memora/presentation/shared/supported_year_range.dart';
 import 'package:uuid/uuid.dart';
@@ -28,7 +30,7 @@ class TripEditFormView extends HookWidget {
     this.locations = const [],
     this.onLocationCreated,
     this.onLocationDeleted,
-    this.isTestEnvironment = false,
+    required this.mapViewBuilder,
     this.configuredYear,
     required this.clock,
   });
@@ -40,7 +42,7 @@ class TripEditFormView extends HookWidget {
   final List<LocationDto> locations;
   final TripLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationDeleted;
-  final bool isTestEnvironment;
+  final MapViewBuilder mapViewBuilder;
   final int? configuredYear;
   final AppClock clock;
 
@@ -182,10 +184,6 @@ class TripEditFormView extends HookWidget {
       if (onLocationCreated == null && onLocationDeleted == null) {
         return const SizedBox.shrink();
       }
-
-      final mapViewType = isTestEnvironment
-          ? MapViewType.placeholder
-          : MapViewType.google;
       List<String> itineraryNamesForLocation(LocationDto location) {
         return (value.itineraryItems ?? const [])
             .where((item) => item.locationId == location.id)
@@ -282,7 +280,7 @@ class TripEditFormView extends HookWidget {
               builder: (context, setDialogState) {
                 return LocationMapDialog(
                   dialogKey: const Key('trip_locations_map_dialog'),
-                  mapViewType: mapViewType,
+                  mapViewBuilder: mapViewBuilder,
                   locations: dialogLocations,
                   onMapLongTapped: onLocationCreated == null
                       ? null

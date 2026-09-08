@@ -20,8 +20,6 @@ part 'app_routes.g.dart';
 
 List<RouteBase> get appRoutes => $appRoutes;
 
-final appTestEnvironmentProvider = Provider<bool>((ref) => false);
-
 enum AppNavigationItem {
   groupTimeline,
   map,
@@ -211,11 +209,7 @@ class MapRoute extends GoRouteData with $MapRoute {
   Widget build(BuildContext context, GoRouterState state) {
     return Consumer(
       builder: (context, ref, _) {
-        return Material(
-          child: MapScreen(
-            isTestEnvironment: ref.watch(appTestEnvironmentProvider),
-          ),
-        );
+        return Material(child: const MapScreen());
       },
     );
   }

@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/map_view_builder_provider.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/composition_root/providers/usecases/trip/get_trip_entry_by_id_usecase.dart';
 
 import 'dart:async';
@@ -17,7 +19,7 @@ class TripManagement extends HookConsumerWidget {
   final int year;
   final String? initialTripId;
   final VoidCallback? onBackPressed;
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
 
   const TripManagement({
     super.key,
@@ -25,11 +27,14 @@ class TripManagement extends HookConsumerWidget {
     required this.year,
     this.initialTripId,
     this.onBackPressed,
-    this.isTestEnvironment = false,
+    this.mapViewBuilder,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mapViewBuilder =
+        this.mapViewBuilder ??
+        ref.watch<MapViewBuilder>(mapViewBuilderProvider);
     final managementProvider = tripManagementNotifierProvider(
       TripManagementQuery(groupId: groupId, year: year),
     );
@@ -132,7 +137,7 @@ class TripManagement extends HookConsumerWidget {
             groupId: groupId,
             groupMembers: ref.read(managementProvider).groupMembers,
             year: year,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSave: handleAddTripSave,
           ),
         );
@@ -209,7 +214,7 @@ class TripManagement extends HookConsumerWidget {
             groupMembers: ref.read(managementProvider).groupMembers,
             tripEntry: detailedTripEntry,
             year: year,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSave: handleEditTripSave,
           ),
         );

@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/core/time/app_clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -18,7 +19,7 @@ class ItineraryView extends HookWidget {
     this.locations = const [],
     this.onLocationCreated,
     this.onLocationDeleted,
-    this.isTestEnvironment = false,
+    required this.mapViewBuilder,
     required this.onChanged,
     this.onClose,
   });
@@ -31,7 +32,7 @@ class ItineraryView extends HookWidget {
   final List<LocationDto> locations;
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationDeleted;
-  final bool isTestEnvironment;
+  final MapViewBuilder mapViewBuilder;
   final ValueChanged<List<ItineraryItemDto>> onChanged;
   final VoidCallback? onClose;
 
@@ -114,7 +115,7 @@ class ItineraryView extends HookWidget {
                 .map((current) => current.locationId)
                 .whereType<String>()
                 .toSet(),
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSaved: (updatedItem) {
               final previousLocation =
                   item.location ?? findLocationById(locations, item.locationId);
