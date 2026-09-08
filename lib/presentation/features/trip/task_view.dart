@@ -6,7 +6,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/task_edit_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/task_list.dart';
 import 'package:memora/presentation/notifiers/trip/task_copy_notifier.dart';

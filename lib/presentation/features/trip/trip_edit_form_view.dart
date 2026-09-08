@@ -30,7 +30,7 @@ class TripEditFormView extends HookWidget {
     this.onLocationDeleted,
     this.isTestEnvironment = false,
     this.configuredYear,
-    this.clock,
+    required this.clock,
   });
 
   final TripEntryDto value;
@@ -42,7 +42,7 @@ class TripEditFormView extends HookWidget {
   final Future<void> Function(LocationDto location)? onLocationDeleted;
   final bool isTestEnvironment;
   final int? configuredYear;
-  final AppClock? clock;
+  final AppClock clock;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +55,7 @@ class TripEditFormView extends HookWidget {
     final isSyncingFromValueRef = useRef(false);
     final scrollController = useScrollController();
     final selectedTripLocation = useState<LocationDto?>(null);
-    final effectiveClock = clock ?? NtpSynchronizedAppClock();
+    final effectiveClock = clock;
 
     TripEntryDto buildCurrentValue() {
       final normalizedTripName = nameController.text.isEmpty

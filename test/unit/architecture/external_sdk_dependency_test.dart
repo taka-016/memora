@@ -29,20 +29,23 @@ void main() {
   });
 
   test('起動前のFirebase自動初期化とCrashlytics自動収集を無効化する', () {
-    final manifest = File(
-      'android/app/src/main/AndroidManifest.xml',
-    ).readAsStringSync();
+    final manifest = File('android/app/src/main/AndroidManifest.xml')
+        .readAsStringSync();
     expect(
       manifest,
-      matches(RegExp(
-        r'<provider\s+android:name="com.google.firebase.provider.FirebaseInitProvider"[^>]*tools:node="remove"',
-      )),
+      matches(
+        RegExp(
+          r'<provider\s+android:name="com.google.firebase.provider.FirebaseInitProvider"[^>]*tools:node="remove"',
+        ),
+      ),
     );
     expect(
       manifest,
-      matches(RegExp(
-        r'android:name="firebase_crashlytics_collection_enabled"\s+android:value="false"',
-      )),
+      matches(
+        RegExp(
+          r'android:name="firebase_crashlytics_collection_enabled"\s+android:value="false"',
+        ),
+      ),
     );
   });
 }

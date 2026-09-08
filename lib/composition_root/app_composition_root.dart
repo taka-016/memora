@@ -14,16 +14,19 @@ import 'package:memora/infrastructure/services/home_widget_android_widget_cache_
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 
 class AppCompositionRoot {
-  AppCompositionRoot(this.mode) : services = AppServicesFactory.create(mode);
+  AppCompositionRoot(this.mode, {this.requestedValue})
+    : services = AppServicesFactory.create(mode);
 
   factory AppCompositionRoot.fromBuildConfiguration() {
     final configuration = AppModeBuildConfiguration.fromEnvironment();
     return AppCompositionRoot(
       const AppModeResolver().resolve(forcedMode: configuration.forcedMode),
+      requestedValue: configuration.requestedValue,
     );
   }
 
   final AppMode mode;
+  final String? requestedValue;
   final AppServices services;
 
   Future<void> initialize() async {

@@ -6,7 +6,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/notifiers/android_widget/android_widget_launch_notifier.dart';
 

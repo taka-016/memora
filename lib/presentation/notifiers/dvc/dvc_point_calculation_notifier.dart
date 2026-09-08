@@ -15,7 +15,6 @@ import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/application/usecases/dvc/calculate_dvc_point_table_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_calculation_date_utils.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_state.dart';

@@ -15,7 +15,7 @@ class TaskEditBottomSheet extends HookWidget {
     required this.groupMembers,
     required this.onSaved,
     this.tripStartDate,
-    this.clock,
+    required this.clock,
   });
 
   final TaskDto task;
@@ -23,7 +23,7 @@ class TaskEditBottomSheet extends HookWidget {
   final List<GroupMemberDto> groupMembers;
   final ValueChanged<TaskDto> onSaved;
   final DateTime? tripStartDate;
-  final AppClock? clock;
+  final AppClock clock;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class TaskEditBottomSheet extends HookWidget {
     final assignedMemberState = useState<String?>(task.assignedMemberId);
     final parentTaskState = useState<String?>(task.parentTaskId);
     final errorMessage = useState<String?>(null);
-    final effectiveClock = clock ?? NtpSynchronizedAppClock();
+    final effectiveClock = clock;
 
     bool hasChildren(String taskId) {
       return tasks.any((t) => t.parentTaskId == taskId);

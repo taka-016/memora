@@ -17,7 +17,6 @@ import 'package:memora/application/queries/trip/itinerary_item_query_service.dar
 import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/task_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_limited_point_query_service.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_contract_query_service.dart';
 import 'package:memora/infrastructure/queries/dvc/firestore_dvc_point_usage_query_service.dart';

@@ -29,7 +29,9 @@ Future<void> launchApp(Widget app) async {
       } finally {
         container.dispose();
       }
-      root.services.log.i('AppMode=${root.mode.name}');
+      root.services.log.i(
+        'MEMORA_APP_MODE=${root.requestedValue ?? root.mode.name}, AppMode=${root.mode.name}',
+      );
       runApp(ProviderScope(overrides: root.overrides, child: app));
     },
     (error, stack) {

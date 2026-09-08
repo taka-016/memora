@@ -10,7 +10,6 @@ import 'package:memora/application/dtos/trip/task_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/features/trip/task_view.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
@@ -302,6 +301,7 @@ class TripEditModal extends HookConsumerWidget {
           );
         case TripEditExpandedSection.itinerary:
           return ItineraryView(
+            clock: clock,
             tripId: tripEntry?.id,
             groupId: groupId,
             tripStartDate: draftTripEntry.value.startDate,

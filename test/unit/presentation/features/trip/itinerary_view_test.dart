@@ -1,3 +1,4 @@
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
 import 'package:flutter/material.dart';
@@ -72,6 +73,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -121,6 +123,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [item],
             locations: const [location],
@@ -140,6 +143,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (updated) => lastChanged = updated,
@@ -168,6 +172,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (_) {},
@@ -200,6 +205,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [],
             onChanged: (_) => changeCount += 1,
@@ -229,6 +235,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -282,6 +289,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: const [item],
             locations: const [location],
@@ -334,6 +342,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -386,6 +395,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -442,6 +452,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -476,6 +487,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -546,6 +558,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithMapApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             groupId: 'group-1',
             items: const [item],
@@ -615,6 +628,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -659,6 +673,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -729,6 +744,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -778,6 +794,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: items,
             onChanged: (_) {},
@@ -803,6 +820,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -841,6 +859,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -881,6 +900,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (_) {},
@@ -942,6 +962,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             items: [item],
             onChanged: (updated) => lastChanged = updated,
@@ -999,6 +1020,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],
@@ -1031,6 +1053,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],
@@ -1066,6 +1089,7 @@ void main() {
       await tester.pumpWidget(
         _wrapWithApp(
           ItineraryView(
+            clock: FixedAppClock(DateTime(2026, 1, 1)),
             tripId: 'trip-1',
             tripStartDate: DateTime(2024, 7),
             items: [item],

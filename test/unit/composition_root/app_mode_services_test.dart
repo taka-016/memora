@@ -90,9 +90,9 @@ void main() {
       throwsA(isA<FeatureUnavailableException>()),
     );
     await expectLater(
-      container.read(nearbyLocationServiceProvider).getLocationName(
-        const Coordinate(latitude: 35, longitude: 139),
-      ),
+      container
+          .read(nearbyLocationServiceProvider)
+          .getLocationName(const Coordinate(latitude: 35, longitude: 139)),
       throwsA(isA<FeatureUnavailableException>()),
     );
   });

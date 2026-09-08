@@ -1,3 +1,4 @@
+import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
 import 'package:flutter/material.dart';
@@ -51,6 +52,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               onChanged: (value) => latestValue = value,
               onItineraryManagementRequested: () {},
@@ -86,6 +88,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               onChanged: (_) {},
               onItineraryManagementRequested: () => itineraryRequested += 1,
@@ -129,6 +132,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: locations,
               isTestEnvironment: true,
@@ -192,6 +196,7 @@ void main() {
                     child: SizedBox(
                       width: 480,
                       child: TripEditFormView(
+                        clock: FixedAppClock(DateTime(2026, 1, 1)),
                         value: currentValue,
                         onChanged: emittedValues.add,
                         onItineraryManagementRequested: () {},
@@ -235,6 +240,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
               onChanged: (_) {},
@@ -283,6 +289,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
               onChanged: (_) {},
@@ -358,6 +365,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
               onChanged: (_) {},
@@ -438,6 +446,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [firstLocation, secondLocation],
               onChanged: (_) {},

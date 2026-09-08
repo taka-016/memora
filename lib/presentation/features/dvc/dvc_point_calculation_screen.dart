@@ -8,7 +8,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_limited_point_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_contract_dto.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_available_breakdown_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_contract_management_modal.dart';
 import 'package:memora/presentation/features/dvc/dvc_limited_point_registration_modal.dart';

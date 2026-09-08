@@ -1,6 +1,5 @@
 import 'package:memora/composition_root/providers/app_clock_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/factories/repository_factory.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';

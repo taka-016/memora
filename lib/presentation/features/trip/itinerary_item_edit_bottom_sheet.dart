@@ -31,7 +31,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     this.otherLocationIds = const {},
     this.isTestEnvironment = false,
     required this.onSaved,
-    this.clock,
+    required this.clock,
   });
 
   final ItineraryItemDto item;
@@ -43,7 +43,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final Set<String> otherLocationIds;
   final bool isTestEnvironment;
   final ValueChanged<ItineraryItemDto> onSaved;
-  final AppClock? clock;
+  final AppClock clock;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +67,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
     final createdLocationIds = useRef(<String>{});
     final createdLocationsById = useRef(<String, LocationDto>{});
     final retainedCreatedLocationId = useRef<String?>(null);
-    final effectiveClock = clock ?? NtpSynchronizedAppClock();
+    final effectiveClock = clock;
 
     useEffect(() {
       mapLocations.value = List<LocationDto>.from(locations);

@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/app_clock_provider.dart';
 import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
 
