@@ -1,3 +1,8 @@
+import 'package:memora/composition_root/providers/usecases/member/get_managed_members_usecase.dart';
+import 'package:memora/composition_root/providers/usecases/member/update_member_usecase.dart';
+import 'package:memora/composition_root/providers/usecases/member/create_member_usecase.dart';
+import 'package:memora/composition_root/providers/usecases/member/delete_member_usecase.dart';
+import 'package:memora/composition_root/providers/usecases/member/get_member_by_id_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/member/create_member_usecase.dart';

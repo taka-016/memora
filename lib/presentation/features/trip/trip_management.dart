@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/usecases/trip/get_trip_entry_by_id_usecase.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

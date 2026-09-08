@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';

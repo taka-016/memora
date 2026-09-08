@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/usecases/member/get_current_member_usecase.dart';
+
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
