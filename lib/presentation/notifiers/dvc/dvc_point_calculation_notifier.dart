@@ -1,3 +1,4 @@
+import 'package:memora/composition_root/providers/app_clock_provider.dart';
 import 'package:memora/composition_root/providers/usecases/dvc/get_dvc_limited_points_usecase.dart';
 import 'package:memora/composition_root/providers/usecases/dvc/save_dvc_point_contracts_usecase.dart';
 import 'package:memora/composition_root/providers/usecases/dvc/delete_dvc_limited_point_usecase.dart';

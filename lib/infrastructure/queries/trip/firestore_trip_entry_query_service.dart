@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';

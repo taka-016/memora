@@ -1,20 +1,13 @@
+import 'package:memora/composition_root/android_widget_composition_root.dart';
+import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 
 import 'dart:async';
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:memora/application/services/android_widget_toast_notifier.dart';
-import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
-import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
-import 'package:memora/firebase_options.dart';
-import 'package:memora/infrastructure/queries/trip/firestore_itinerary_item_query_service.dart';
-import 'package:memora/infrastructure/queries/trip/firestore_trip_entry_query_service.dart';
 import 'package:memora/infrastructure/services/home_widget_android_widget_cache_storage.dart';
 import 'package:memora/infrastructure/services/method_channel_android_widget_toast_notifier.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -84,6 +77,7 @@ void androidWidgetBackgroundUpdateDispatcher() {
       return true;
     }
     WidgetsFlutterBinding.ensureInitialized();
+    logger = AppCompositionRoot.fromBuildConfiguration().services.log;
     return await _refreshAndroidWidgetFromBackground();
   });
 }
@@ -138,44 +132,17 @@ Future<void> _showUpdateFailedToast() async {
 }
 
 Future<void> _refreshAndroidWidgetCache() async {
-  if (Firebase.apps.isEmpty) {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: false,
-    );
-  }
-  await initLogger();
-
   const storage = HomeWidgetAndroidWidgetCacheStorage();
   final groupId = await storage.getTargetGroupId();
-  if (groupId == null) {
-    return;
-  }
-
-  final clock = NtpSynchronizedAppClock();
-  final refreshUsecase = RefreshAndroidWidgetItineraryCacheUsecase(
-    cacheStorage: storage,
-    getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-      tripEntryQueryService: FirestoreTripEntryQueryService(
-        firestore: FirebaseFirestore.instance,
-        clock: clock,
-        rethrowOnError: true,
-      ),
-      itineraryItemQueryService: FirestoreItineraryItemQueryService(
-        firestore: FirebaseFirestore.instance,
-        rethrowOnError: true,
-      ),
-      clock: clock,
-    ),
-  );
-  await refreshUsecase.execute(
-    groupId: groupId,
-    selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
-    preserveExistingCacheOnEmpty: true,
-    updateWidgetAfterRefresh: false,
-  );
+  if (groupId == null) return;
+  await withAndroidWidgetDependencies((refresh, handler) async {
+    await refresh.execute(
+      groupId: groupId,
+      selectedItineraryDateId: await storage.getSelectedItineraryDateId(),
+      preserveExistingCacheOnEmpty: true,
+      updateWidgetAfterRefresh: false,
+    );
+  });
 }
 
 Future<void> _runStatusStorageOperation(
@@ -198,20 +165,13 @@ void _recordBackgroundUpdateStage(
   Object? error,
   StackTrace? stackTrace,
 ) {
-  final message = 'Androidウィジェット自動更新: ${stage.name}';
-  debugPrint(message);
-  if (Firebase.apps.isEmpty) {
-    return;
-  }
+  logger.i('Androidウィジェット自動更新: ${stage.name}');
+  if (error != null) unawaited(_recordErrorSafely(error, stackTrace));
+}
+
+Future<void> _recordErrorSafely(Object error, StackTrace? stackTrace) async {
   try {
-    unawaited(FirebaseCrashlytics.instance.log(message).catchError((_) {}));
-    if (error != null) {
-      unawaited(
-        FirebaseCrashlytics.instance
-            .recordError(error, stackTrace, reason: message)
-            .catchError((_) {}),
-      );
-    }
+    await logger.recordError(error, stackTrace);
   } catch (_) {}
 }
 
