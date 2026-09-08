@@ -1,4 +1,4 @@
-import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/group/group_member_dto.dart';

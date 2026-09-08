@@ -12,7 +12,8 @@ void main() {
             .allMatches(file.readAsStringSync());
         for (final directive in directives) {
           final uri = directive.group(1)!;
-          if (uri.contains('infrastructure/') ||
+          if ((layer == 'domain' && uri.contains('application/')) ||
+              uri.contains('infrastructure/') ||
               uri.contains('presentation/') ||
               uri.contains('composition_root/') ||
               uri.contains('firebase_') ||

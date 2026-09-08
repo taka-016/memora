@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
@@ -5,7 +6,6 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
-import 'package:memora/core/time/app_clock.dart';
 
 void main() {
   group('GetAndroidWidgetItineraryCacheUsecase', () {

@@ -17,15 +17,15 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 class AuthServiceFactory {
   static AuthService create({required Ref ref}) {
-    final authType = ref.watch(appModeProvider);
-    return _createServiceByType(ref: ref, authType: authType);
+    final mode = ref.watch(appModeProvider);
+    return _createServiceByMode(ref: ref, mode: mode);
   }
 
-  static AuthService _createServiceByType({
+  static AuthService _createServiceByMode({
     required Ref ref,
-    required AppMode authType,
+    required AppMode mode,
   }) {
-    switch (authType) {
+    switch (mode) {
       case AppMode.online:
         return FirebaseAuthService(
           firebaseAuth: ref.watch(firebaseAuthProvider),

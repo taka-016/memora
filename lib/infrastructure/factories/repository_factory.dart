@@ -68,12 +68,12 @@ final dvcPointUsageRepositoryProvider = Provider<DvcPointUsageRepository>((
 
 class RepositoryFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.watch(appModeProvider);
-    return _createRepositoryByType<T>(dbType);
+    final mode = ref.watch(appModeProvider);
+    return _createRepositoryByMode<T>(mode);
   }
 
-  static T _createRepositoryByType<T extends Object>(AppMode dbType) {
-    switch (dbType) {
+  static T _createRepositoryByMode<T extends Object>(AppMode mode) {
+    switch (mode) {
       case AppMode.online:
         return _createFirestoreRepository<T>();
       case AppMode.offline:

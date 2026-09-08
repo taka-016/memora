@@ -1,4 +1,6 @@
-import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +15,7 @@ import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/services/current_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 
 Widget _createApp({required Widget child}) {
@@ -52,6 +54,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               onChanged: (value) => latestValue = value,
@@ -88,6 +91,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               onChanged: (_) {},
@@ -135,7 +139,7 @@ void main() {
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: locations,
-              isTestEnvironment: true,
+              mapViewBuilder: const PlaceholderMapViewBuilder(),
               onChanged: (_) {},
               onItineraryManagementRequested: () {},
               onTaskManagementRequested: () {},
@@ -196,6 +200,7 @@ void main() {
                     child: SizedBox(
                       width: 480,
                       child: TripEditFormView(
+                        mapViewBuilder: const GoogleMapViewBuilder(),
                         clock: FixedAppClock(DateTime(2026, 1, 1)),
                         value: currentValue,
                         onChanged: emittedValues.add,
@@ -240,6 +245,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
@@ -289,6 +295,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
@@ -365,6 +372,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [location],
@@ -446,6 +454,7 @@ void main() {
             width: 480,
             height: 720,
             child: TripEditFormView(
+              mapViewBuilder: const GoogleMapViewBuilder(),
               clock: FixedAppClock(DateTime(2026, 1, 1)),
               value: initialValue,
               locations: const [firstLocation, secondLocation],

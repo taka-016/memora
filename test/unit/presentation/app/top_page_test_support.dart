@@ -1,3 +1,6 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:memora/composition_root/providers/map_view_builder_provider.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:memora/composition_root/providers/app_clock_provider.dart';
 import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
@@ -25,7 +28,6 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
@@ -504,7 +506,9 @@ class TopPageTestContext {
         () => authNotifier ?? FakeAuthNotifier.authenticated(),
       ),
       appInitialLocationProvider.overrideWithValue(initialLocation),
-      appTestEnvironmentProvider.overrideWithValue(true),
+      mapViewBuilderProvider.overrideWithValue(
+        const PlaceholderMapViewBuilder(),
+      ),
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
       ),

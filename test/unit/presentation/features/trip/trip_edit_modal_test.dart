@@ -1,3 +1,4 @@
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +30,7 @@ Widget _createDialogApp({
                 tripEntry: tripEntry,
                 year: 2024,
                 onSave: onSave,
-                isTestEnvironment: true,
+                mapViewBuilder: const PlaceholderMapViewBuilder(),
               ),
             ),
             child: const Text('モーダルを開く'),
@@ -49,7 +50,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             onSave: (tripEntry) async => true,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -75,7 +76,7 @@ void main() {
             groupMembers: const [],
             tripEntry: tripEntry,
             onSave: (tripEntry) async => true,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -92,7 +93,7 @@ void main() {
             groupId: 'test-group-id',
             groupMembers: const [],
             onSave: (tripEntry) async => true,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -122,7 +123,7 @@ void main() {
               ],
             ),
             onSave: (tripEntry) async => true,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );
@@ -157,7 +158,7 @@ void main() {
             groupMembers: const [],
             year: 2024,
             onSave: saveTripEntry,
-            isTestEnvironment: true,
+            mapViewBuilder: const PlaceholderMapViewBuilder(),
           ),
         ),
       );

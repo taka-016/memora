@@ -13,15 +13,15 @@ final writeTransactionProvider = Provider<WriteTransaction>((ref) {
 
 class TransactionFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.watch(appModeProvider);
-    return _createTransactionByType<T>(dbType, ref: ref);
+    final mode = ref.watch(appModeProvider);
+    return _createTransactionByMode<T>(mode, ref: ref);
   }
 
-  static T _createTransactionByType<T extends Object>(
-    AppMode dbType, {
+  static T _createTransactionByMode<T extends Object>(
+    AppMode mode, {
     required Ref ref,
   }) {
-    switch (dbType) {
+    switch (mode) {
       case AppMode.online:
         return _createFirestoreTransaction<T>(ref: ref);
       case AppMode.offline:

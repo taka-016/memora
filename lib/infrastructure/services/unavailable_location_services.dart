@@ -4,7 +4,7 @@ import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/services/location_search_service.dart';
 import 'package:memora/application/services/nearby_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/services/current_location_service.dart';
 
 class UnavailableLocationSearchService implements LocationSearchService {
   const UnavailableLocationSearchService();

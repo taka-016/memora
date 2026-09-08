@@ -103,20 +103,20 @@ class QueryServiceFactory {
     required Ref ref,
     bool rethrowOnError = false,
   }) {
-    final dbType = ref.watch(appModeProvider);
-    return _createQueryServiceByType<T>(
-      dbType,
+    final mode = ref.watch(appModeProvider);
+    return _createQueryServiceByMode<T>(
+      mode,
       ref: ref,
       rethrowOnError: rethrowOnError,
     );
   }
 
-  static T _createQueryServiceByType<T extends Object>(
-    AppMode dbType, {
+  static T _createQueryServiceByMode<T extends Object>(
+    AppMode mode, {
     required Ref ref,
     required bool rethrowOnError,
   }) {
-    switch (dbType) {
+    switch (mode) {
       case AppMode.online:
         return _createFirestoreQueryService<T>(
           ref: ref,
@@ -134,8 +134,8 @@ class QueryServiceFactory {
     required Ref ref,
     bool rethrowOnError = false,
   }) {
-    final dbType = ref.watch(appModeProvider);
-    switch (dbType) {
+    final mode = ref.watch(appModeProvider);
+    switch (mode) {
       case AppMode.online:
         return FirestoreTripEntryQueryService(
           firestore: ref.watch(firebaseFirestoreProvider),

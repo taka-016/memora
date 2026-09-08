@@ -13,7 +13,9 @@ void main() {
   testWidgets('オフライン起動は外部SDKと認証を解決せず準備中の理由を表示する', (tester) async {
     final root = AppCompositionRoot(AppMode.offline);
     await root.initialize();
-    await tester.pumpWidget(ProviderScope(overrides: root.overrides, child: const MyApp()));
+    await tester.pumpWidget(
+      ProviderScope(overrides: root.overrides, child: const MyApp()),
+    );
     await tester.pump();
     expect(find.text('端末内データの保存機能は現在準備中です。'), findsOneWidget);
     expect(find.text('ログイン'), findsNothing);
@@ -24,8 +26,13 @@ void main() {
     final container = AppCompositionRoot(AppMode.offline).createContainer();
     addTearDown(container.dispose);
     final builder = container.read(mapViewBuilderProvider);
-    final reason = container.read(appCapabilitiesProvider).availability(AppFeature.maps).reason!;
-    await tester.pumpWidget(MaterialApp(home: builder.createMapView(locations: const [])));
+    final reason = container
+        .read(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .reason!;
+    await tester.pumpWidget(
+      MaterialApp(home: builder.createMapView(locations: const [])),
+    );
     expect(find.text(reason), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

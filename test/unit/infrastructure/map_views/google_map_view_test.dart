@@ -8,7 +8,7 @@ import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/models/coordinate.dart';
-import 'package:memora/presentation/shared/map_views/google_map_view.dart';
+import 'package:memora/infrastructure/map_views/google_map_view.dart';
 import 'package:memora/presentation/shared/sheets/location_detail_bottom_sheet.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';

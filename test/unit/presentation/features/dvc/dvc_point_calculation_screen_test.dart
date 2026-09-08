@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/composition_root/providers/app_clock_provider.dart';
 
 import 'dart:async';
@@ -12,7 +13,6 @@ import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.d
 import 'package:memora/application/queries/dvc/dvc_point_contract_query_service.dart';
 import 'package:memora/application/queries/dvc/dvc_point_usage_query_service.dart';
 import 'package:memora/application/queries/group/group_query_service.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/dvc/dvc_limited_point.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_contract.dart';
 import 'package:memora/domain/entities/dvc/dvc_point_usage.dart';
