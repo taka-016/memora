@@ -100,9 +100,13 @@ release APKは指定値をログへ表示し、`build/app/outputs/flutter-apk/me
 
 不明な値は設定誤りとして起動・テスト・ビルドを失敗させます。同じインストールのままモードを変更する運用には対応していないため、指定値を変更したAPKを利用するときは、先にアプリをアンインストールするかデータを消去してください。Firebase設定、`MAPS_API_KEY`、Android Manifestの権限は両モードで共通です。
 
+モード判定は各Factoryと起動処理に接続されています。オフラインでは外部SDKを初期化せず、端末時計を使用します。ログはdebug時だけ端末に出力し、releaseでは保存・送信しません。
+
+現在、SQLiteと端末内利用者は未実装です。オフライン起動では準備中の案内を表示し、業務データの操作は利用できません。通常のオフライン利用はTODO 5・6、Androidウィジェットの両モード対応はTODO 7で実装します。[依存構成と後続の接続箇所](docs/app_mode_composition.md)を参照してください。
+
 ### Firebase設定
 
-本アプリはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。
+オンラインモードはデータ永続化にFirebase/Firestore、認証にFirebase Authenticationを使用します。Firebase Consoleで以下のAPIを有効化してください。
 
 - **Identity Toolkit API**: Firebase Authenticationに必要
 - **Token Service API**: セキュアなトークン管理に必要
