@@ -12,7 +12,7 @@ enum AppFeature {
 
 class FeatureAvailability {
   const FeatureAvailability.available() : reason = null;
-  const FeatureAvailability.unavailable(this.reason);
+  const FeatureAvailability.unavailable(String this.reason);
 
   final String? reason;
   bool get isAvailable => reason == null;

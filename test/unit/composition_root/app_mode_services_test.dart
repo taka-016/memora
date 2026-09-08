@@ -1,3 +1,8 @@
+import 'package:flutter_riverpod/misc.dart';
+import 'package:memora/composition_root/app_composition_root.dart';
+import 'package:memora/composition_root/providers/app_clock_provider.dart';
+import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
+import 'package:memora/infrastructure/time/system_app_clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/models/app_mode.dart';
@@ -15,6 +20,25 @@ import 'package:memora/infrastructure/factories/app_services_factory.dart';
 import 'package:memora/core/models/coordinate.dart';
 
 void main() {
+  test('ビルド指定の判定結果がComposition Rootと時刻Providerへ接続される', () {
+    const requested = String.fromEnvironment(
+      'MEMORA_APP_MODE',
+      defaultValue: 'auto',
+    );
+    final root = AppCompositionRoot.fromBuildConfiguration();
+    final container = root.createContainer();
+    addTearDown(container.dispose);
+    final expected = requested == 'offline' ? AppMode.offline : AppMode.online;
+    expect(container.read(appModeProvider), expected);
+    expect(container.read(appClockProvider), same(root.services.clock));
+    expect(
+      root.services.clock,
+      expected == AppMode.offline
+          ? isA<SystemAppClock>()
+          : isA<NtpSynchronizedAppClock>(),
+    );
+  });
+
   test('オフライン初期化と時刻同期は外部SDKを呼び出さない', () async {
     final services = AppServicesFactory.create(AppMode.offline);
     await services.initialize();
@@ -63,6 +87,7 @@ void main() {
       tripEntryQueryServiceProvider,
       mapTripEntryQueryServiceProvider,
       itineraryItemQueryServiceProvider,
+      androidWidgetItineraryItemQueryServiceProvider,
       taskQueryServiceProvider,
       locationQueryServiceProvider,
       memberQueryServiceProvider,
@@ -73,13 +98,16 @@ void main() {
       dvcPointUsageQueryServiceProvider,
       writeTransactionProvider,
     ]) {
-      Object? failure;
-      try {
-        container.read(provider);
-      } catch (error) {
-        failure = error;
-      }
-      expect(failure.toString(), contains('FeatureUnavailableException'));
+      expect(
+        () => container.read(provider),
+        throwsA(
+          isA<ProviderException>().having(
+            (error) => error.exception,
+            'exception',
+            isA<FeatureUnavailableException>(),
+          ),
+        ),
+      );
     }
     await expectLater(
       container.read(locationSearchServiceProvider).searchByKeyword('東京'),
