@@ -9,8 +9,6 @@ import 'package:memora/application/dtos/group/group_member_dto.dart';
 import 'package:memora/application/dtos/member/member_event_dto.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_yakudoshi_usecase.dart';
-import 'package:memora/application/usecases/member/get_member_events_usecase.dart';
-import 'package:memora/application/usecases/member/save_member_event_usecase.dart';
 import 'package:memora/presentation/features/member/member_event_edit_modal.dart';
 import 'package:memora/presentation/features/timeline/timeline_display_settings.dart';
 import 'package:memora/presentation/features/timeline/timeline_row_definition.dart';

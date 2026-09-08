@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

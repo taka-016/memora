@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:memora/application/dtos/location/location_candidate_dto.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:memora/application/usecases/location/search_locations_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 
 class CustomSearchBar extends HookConsumerWidget {

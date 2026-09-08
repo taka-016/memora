@@ -9,8 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/usecases/android_widget/watch_android_widget_launch_uri_usecase.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 
 sealed class AndroidWidgetLaunchResolution extends Equatable {

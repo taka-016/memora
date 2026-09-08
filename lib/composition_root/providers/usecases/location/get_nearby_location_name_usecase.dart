@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/services/nearby_location_service.dart';
-import 'package:memora/core/models/coordinate.dart';
 import 'package:memora/infrastructure/factories/nearby_location_service_factory.dart';
 import 'package:memora/application/usecases/location/get_nearby_location_name_usecase.dart';
 

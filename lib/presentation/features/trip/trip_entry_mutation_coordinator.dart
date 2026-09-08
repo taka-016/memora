@@ -3,9 +3,6 @@ import 'package:memora/composition_root/providers/usecases/trip/update_trip_entr
 import 'package:memora/composition_root/providers/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
-import 'package:memora/application/usecases/trip/update_trip_entry_usecase.dart';
 import 'package:memora/presentation/features/timeline/timeline_trip_entries_provider.dart';
 
 final tripEntryMutationCoordinatorProvider =

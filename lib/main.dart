@@ -9,8 +9,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/services/app_mode_resolver.dart';
-import 'package:memora/application/services/android_widget_cache_storage.dart';
-import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';

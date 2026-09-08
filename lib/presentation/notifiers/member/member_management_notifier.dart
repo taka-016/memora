@@ -5,11 +5,6 @@ import 'package:memora/composition_root/providers/usecases/member/delete_member_
 import 'package:memora/composition_root/providers/usecases/member/get_member_by_id_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/usecases/member/create_member_usecase.dart';
-import 'package:memora/application/usecases/member/delete_member_usecase.dart';
-import 'package:memora/application/usecases/member/get_managed_members_usecase.dart';
-import 'package:memora/application/usecases/member/get_member_by_id_usecase.dart';
-import 'package:memora/application/usecases/member/update_member_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/member/member_management_state.dart';
 

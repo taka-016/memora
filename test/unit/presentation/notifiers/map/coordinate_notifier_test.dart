@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,3 +1,6 @@
+import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
+import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -37,7 +40,6 @@ import 'package:memora/presentation/notifiers/android_widget/android_widget_laun
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';

@@ -8,9 +8,8 @@ void main() {
       final violations = <String>[];
       for (final file in Directory('lib/$layer').listSync(recursive: true)) {
         if (file is! File || !file.path.endsWith('.dart')) continue;
-        final directives = RegExp(
-          r'''(?:import|export)\s+['"]([^'"]+)['"]''',
-        ).allMatches(file.readAsStringSync());
+        final directives = RegExp(r'''(?:import|export)\s+['"]([^'"]+)['"]''')
+            .allMatches(file.readAsStringSync());
         for (final directive in directives) {
           final uri = directive.group(1)!;
           if (uri.contains('infrastructure/') ||

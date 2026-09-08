@@ -8,11 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:equatable/equatable.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/services/android_widget_cache_storage.dart';
-import 'package:memora/application/services/android_widget_update_interval_storage.dart';
-import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
-import 'package:memora/application/usecases/group/get_groups_with_members_usecase.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 
 final androidWidgetUpdateIntervalProvider =

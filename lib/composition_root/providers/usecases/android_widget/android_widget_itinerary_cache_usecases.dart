@@ -3,16 +3,6 @@ import 'package:memora/composition_root/providers/usecases/android_widget/get_an
 import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
 import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
-import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
-import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/queries/order_by.dart';
-import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
-import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
-import 'package:memora/application/services/android_widget_cache_storage.dart';
-import 'package:memora/application/services/android_widget_update_interval_storage.dart';
-import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
-import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 

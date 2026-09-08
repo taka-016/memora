@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

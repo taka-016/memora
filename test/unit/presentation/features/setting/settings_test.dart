@@ -1,3 +1,6 @@
+import 'package:memora/composition_root/providers/usecases/android_widget/update_android_widget_interval_usecase.dart';
+import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
+import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
