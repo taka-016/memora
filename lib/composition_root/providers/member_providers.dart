@@ -1,3 +1,8 @@
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/current_member_resolver.dart';
+import 'package:memora/application/services/authenticated_current_member_resolver.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
+import 'package:memora/infrastructure/services/local_current_member_resolver.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
@@ -72,13 +77,20 @@ final deleteMemberUsecaseProvider = Provider<DeleteMemberUsecase>((ref) {
   );
 });
 
+final currentMemberResolverProvider = Provider<CurrentMemberResolver>((ref) {
+  return switch (ref.watch(appModeProvider)) {
+    AppMode.offline => LocalCurrentMemberResolver(),
+    AppMode.online => AuthenticatedCurrentMemberResolver(
+      ref.watch(memberQueryServiceProvider),
+      ref.watch(authServiceProvider),
+    ),
+  };
+});
+
 final getCurrentMemberUsecaseProvider = Provider<GetCurrentMemberUseCase>((
   ref,
 ) {
-  return GetCurrentMemberUseCase(
-    ref.watch(memberQueryServiceProvider),
-    ref.watch(authServiceProvider),
-  );
+  return GetCurrentMemberUseCase(ref.watch(currentMemberResolverProvider));
 });
 
 final getManagedMembersUsecaseProvider = Provider<GetManagedMembersUsecase>((
