@@ -1,3 +1,6 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -19,6 +22,10 @@ class TopPage extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final authenticationAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication)
+        .isAvailable;
     final scaffoldKey = useMemoized(GlobalKey<ScaffoldState>.new);
     final isDrawerOpen = useState(false);
     final drawerCloseCompleter = useRef<Completer<void>?>(null);
@@ -53,7 +60,8 @@ class TopPage extends HookConsumerWidget {
         androidWidgetLaunchResolution != null;
 
     useEffect(() {
-      if (currentMemberState.status != CurrentMemberStatus.error) {
+      if (!authenticationAvailable ||
+          currentMemberState.status != CurrentMemberStatus.error) {
         return null;
       }
 
@@ -139,9 +147,11 @@ class TopPage extends HookConsumerWidget {
         (state) => state.memberId,
       ),
     );
-    final isAuthenticated = ref.watch(
-      authNotifierProvider.select((state) => state.isAuthenticated),
-    );
+    final isAuthenticated =
+        !authenticationAvailable ||
+        ref.watch(
+          authNotifierProvider.select((state) => state.isAuthenticated),
+        );
 
     useEffect(
       () {
@@ -200,7 +210,24 @@ class TopPage extends HookConsumerWidget {
         },
         appBar: _buildAppBar(),
         drawer: _buildDrawer(context, ref, closeDrawer),
-        body: shouldHideForAndroidWidgetLaunch
+        body:
+            !authenticationAvailable &&
+                currentMemberState.status == CurrentMemberStatus.error
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(currentMemberState.message),
+                    TextButton(
+                      onPressed: () => ref
+                          .read(currentMemberNotifierProvider.notifier)
+                          .load(),
+                      child: const Text('再試行'),
+                    ),
+                  ],
+                ),
+              )
+            : shouldHideForAndroidWidgetLaunch
             ? const Center(child: CircularProgressIndicator())
             : child,
       ),
@@ -334,13 +361,23 @@ class TopPage extends HookConsumerWidget {
           _buildDrawerHeader(context, ref),
           ..._buildDrawerItems(context, ref, closeDrawer),
           const Divider(),
-          _buildLogoutItem(ref),
+          if (ref
+              .watch(appCapabilitiesProvider)
+              .availability(AppFeature.authentication)
+              .isAvailable)
+            _buildLogoutItem(ref),
         ],
       ),
     );
   }
 
   Widget _buildDrawerHeader(BuildContext context, WidgetRef ref) {
+    if (!ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication)
+        .isAvailable) {
+      return _buildUserDrawerHeader(context, 'オフラインモード');
+    }
     final authState = ref.watch(authNotifierProvider);
 
     if (!authState.isAuthenticated) {
@@ -401,14 +438,18 @@ class TopPage extends HookConsumerWidget {
         AppNavigationItem.groupTimeline,
         closeDrawer,
       ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.map,
-        '地図表示',
-        AppNavigationItem.map,
-        closeDrawer,
-      ),
+      if (ref
+          .watch(appCapabilitiesProvider)
+          .availability(AppFeature.maps)
+          .isAvailable)
+        _buildDrawerItem(
+          context,
+          ref,
+          Icons.map,
+          '地図表示',
+          AppNavigationItem.map,
+          closeDrawer,
+        ),
       _buildDrawerItem(
         context,
         ref,
@@ -433,14 +474,18 @@ class TopPage extends HookConsumerWidget {
         AppNavigationItem.settings,
         closeDrawer,
       ),
-      _buildDrawerItem(
-        context,
-        ref,
-        Icons.account_circle,
-        'アカウント設定',
-        AppNavigationItem.accountSettings,
-        closeDrawer,
-      ),
+      if (ref
+          .watch(appCapabilitiesProvider)
+          .availability(AppFeature.authentication)
+          .isAvailable)
+        _buildDrawerItem(
+          context,
+          ref,
+          Icons.account_circle,
+          'アカウント設定',
+          AppNavigationItem.accountSettings,
+          closeDrawer,
+        ),
     ];
   }
 

@@ -1,6 +1,4 @@
-import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
-import 'package:memora/presentation/app/application_unavailable_page.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
 
 import 'dart:async';
@@ -67,14 +65,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final storageAvailability = ref
-        .watch(appCapabilitiesProvider)
-        .availability(AppFeature.localData);
-    if (!storageAvailability.isAvailable) {
-      return MaterialApp(
-        home: ApplicationUnavailablePage(reason: storageAvailability.reason!),
-      );
-    }
     ref.watch(androidWidgetLaunchNotifierProvider);
     return MaterialApp.router(
       routerConfig: ref.watch(appRouterConfigProvider),

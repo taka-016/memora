@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,22 +22,32 @@ final appInitialLocationProvider = Provider<String>((ref) {
 final appRouterConfigProvider = Provider<GoRouter>((ref) {
   final refreshNotifier = _RouterRefreshNotifier();
   final redirectController = AppRedirectController();
-  ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-    redirectController.handleAuthStateChange(previous, next);
-    if (isAuthenticationSessionEnding(previous, next)) {
-      ref
-          .read(androidWidgetLaunchNotifierProvider.notifier)
-          .cancelPendingLaunch();
-      ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
-    }
-    refreshNotifier.refresh();
-  });
+  final authenticationAvailable = ref
+      .watch(appCapabilitiesProvider)
+      .availability(AppFeature.authentication)
+      .isAvailable;
+  if (authenticationAvailable)
+    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+      redirectController.handleAuthStateChange(previous, next);
+      if (isAuthenticationSessionEnding(previous, next)) {
+        ref
+            .read(androidWidgetLaunchNotifierProvider.notifier)
+            .cancelPendingLaunch();
+        ref.read(groupTimelineGroupSelectionNotifierProvider.notifier).reset();
+      }
+      refreshNotifier.refresh();
+    });
 
   final router = GoRouter(
     routes: appRoutes,
     initialLocation: ref.watch(appInitialLocationProvider),
     refreshListenable: refreshNotifier,
     redirect: (_, state) {
+      if (!authenticationAvailable) {
+        return redirectController.resolveOffline(
+          location: state.uri.toString(),
+        );
+      }
       return redirectController.resolve(
         authState: ref.read(authNotifierProvider),
         matchedLocation: state.matchedLocation,
