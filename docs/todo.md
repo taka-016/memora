@@ -126,8 +126,6 @@
 
 ## リファクタリング
 
-- Composition RootのProviderファイルを機能単位に集約し、参照元のimportを整理する
-
 ### Riverpodコード生成を効果の高いProviderへ導入する
 
 Riverpodの手書きProviderと生成Providerは併用し、既存Providerの全面移行や手書きProviderの廃止を目標にしない。複数引数を持つfamily Provider、生成により宣言と引数管理を単純化できるNotifier、legacy Providerを優先対象とする。
