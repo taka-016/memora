@@ -1,5 +1,5 @@
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 
 import 'dart:async';
 

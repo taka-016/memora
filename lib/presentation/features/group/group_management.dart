@@ -1,4 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/member/get_managed_members_usecase.dart';
+import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

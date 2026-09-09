@@ -1,5 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/dvc/save_dvc_point_usage_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/dvc/delete_dvc_point_usage_usecase.dart';
+import 'package:memora/composition_root/providers/dvc_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
 import 'package:memora/presentation/features/timeline/timeline_dvc_point_usages_provider.dart';

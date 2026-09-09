@@ -1,6 +1,6 @@
-import 'package:memora/composition_root/providers/map_view_builder_provider.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
-import 'package:memora/composition_root/providers/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
 
 import 'dart:async';
 

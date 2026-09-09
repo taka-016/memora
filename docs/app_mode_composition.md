@@ -6,7 +6,7 @@
 
 判定結果を読み取り専用の`appModeProvider`へ注入する。認証、保存先、場所検索を個別に変更するProviderは持たない。Providerのoverrideは起動時の注入とテストで使用する。
 
-`main.dart`はComposition Rootの起動処理を呼び出し、SDKの初期化を行わない。Application層のUseCaseはコンストラクタでインターフェースを受け取る。UseCaseを組み立てるProviderは`lib/composition_root/providers/`に置く。
+`main.dart`はComposition Rootの起動処理を呼び出し、SDKの初期化を行わない。Application層のUseCaseはコンストラクタでインターフェースを受け取る。UseCaseを組み立てるProviderは`lib/composition_root/providers/`に置き、アカウント・メンバー・グループ・旅行・場所・DVC・Androidウィジェット・アプリ共通の8ファイルへ機能単位でまとめる。場所のProviderには地図Builder、AndroidウィジェットのProviderには端末ストレージの注入先も含める。
 
 ## 実装の選択
 

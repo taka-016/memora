@@ -1,8 +1,7 @@
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:memora/infrastructure/map_views/google_map_view_builder.dart';
 import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
-import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

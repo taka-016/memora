@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
-import 'package:memora/composition_root/providers/services/android_widget_update_interval_storage.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_background_update.dart';
 import 'package:memora/infrastructure/android_widget/android_widget_interactivity_callback.dart';
 

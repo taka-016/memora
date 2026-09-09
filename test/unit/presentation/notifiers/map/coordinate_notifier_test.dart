@@ -1,6 +1,6 @@
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
-import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 
 import 'dart:async';
 

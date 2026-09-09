@@ -2,7 +2,7 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/queries/dvc/dvc_limited_point_query_service.dart';

@@ -1,4 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/group/get_groups_with_members_usecase.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';

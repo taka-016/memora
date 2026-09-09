@@ -1,4 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/location/search_locations_usecase.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 
 import 'dart:async';
 

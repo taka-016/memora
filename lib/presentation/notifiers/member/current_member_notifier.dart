@@ -1,4 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/member/get_current_member_usecase.dart';
+import 'package:memora/composition_root/providers/member_providers.dart';
 
 import 'dart:async';
 

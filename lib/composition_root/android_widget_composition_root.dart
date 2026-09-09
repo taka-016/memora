@@ -2,7 +2,7 @@ import 'package:memora/application/usecases/android_widget/android_widget_action
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
-import 'package:memora/composition_root/providers/services/android_widget_cache_storage.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
 import 'package:memora/infrastructure/services/method_channel_android_widget_toast_notifier.dart';
 

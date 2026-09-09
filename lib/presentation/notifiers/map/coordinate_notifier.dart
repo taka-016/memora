@@ -1,5 +1,5 @@
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
-import 'package:memora/composition_root/providers/usecases/location/get_current_location_usecase.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/application/usecases/location/get_current_location_usecase.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/core/time/app_clock.dart';

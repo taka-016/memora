@@ -1,6 +1,6 @@
-import 'package:memora/composition_root/providers/usecases/android_widget/watch_android_widget_launch_uri_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/trip/get_trip_entry_by_id_usecase.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
 
 import 'dart:async';
 

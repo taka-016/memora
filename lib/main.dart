@@ -1,8 +1,7 @@
 import 'package:memora/application/models/app_capabilities.dart';
-import 'package:memora/composition_root/providers/app_capabilities_provider.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/presentation/app/application_unavailable_page.dart';
 import 'package:memora/composition_root/app_bootstrap.dart';
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
 
 import 'dart:async';
 

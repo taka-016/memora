@@ -1,6 +1,5 @@
-import 'package:memora/composition_root/providers/usecases/group/get_groups_with_members_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/trip/get_locations_by_group_id_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/trip/get_trip_entries_usecase.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
 
 import 'dart:async';
 

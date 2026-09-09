@@ -1,7 +1,4 @@
-import 'package:memora/composition_root/providers/usecases/group/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/group/create_group_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/group/update_group_usecase.dart';
-import 'package:memora/composition_root/providers/usecases/group/delete_group_usecase.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
 
 import 'dart:async';
 

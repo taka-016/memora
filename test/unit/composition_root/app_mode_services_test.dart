@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/misc.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
-import 'package:memora/composition_root/providers/app_clock_provider.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
 import 'package:memora/infrastructure/time/system_app_clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
