@@ -34,8 +34,9 @@ void main() {
     addTearDown(container.dispose);
     final failed = Completer<void>();
     container.listen(currentMemberNotifierProvider, (_, state) {
-      if (state.status == CurrentMemberStatus.error && !failed.isCompleted)
+      if (state.status == CurrentMemberStatus.error && !failed.isCompleted) {
         failed.complete();
+      }
     });
     await failed.future;
     expect(authResolutions, 0);

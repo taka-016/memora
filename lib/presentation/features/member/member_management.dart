@@ -120,12 +120,13 @@ class MemberManagement extends HookConsumerWidget {
         blockedResult: false,
         execute: () async {
           try {
-            final invitationCode = await ref
-                .read(createOrUpdateMemberInvitationUsecaseProvider)
-                .execute(
-                  inviteeId: targetMember.id,
-                  inviterId: currentMember.id,
-                );
+            final invite = ref.read(
+              createOrUpdateMemberInvitationUsecaseProvider,
+            );
+            final invitationCode = await invite.execute(
+              inviteeId: targetMember.id,
+              inviterId: currentMember.id,
+            );
 
             if (!context.mounted || !editDialogContext.mounted) {
               return false;

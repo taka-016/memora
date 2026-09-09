@@ -53,8 +53,9 @@ class AuthNotifier extends Notifier<AuthState> {
     final availability = ref
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication);
-    if (!availability.isAvailable)
+    if (!availability.isAvailable) {
       return AuthState.unauthenticated(availability.reason!);
+    }
     _authStateSubscription?.cancel();
     _authStateChangeGeneration++;
     _authStateSubscription = observeAuthStateChangesUseCase.execute().listen((

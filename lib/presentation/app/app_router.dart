@@ -26,7 +26,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
       .watch(appCapabilitiesProvider)
       .availability(AppFeature.authentication)
       .isAvailable;
-  if (authenticationAvailable)
+  if (authenticationAvailable) {
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       redirectController.handleAuthStateChange(previous, next);
       if (isAuthenticationSessionEnding(previous, next)) {
@@ -37,6 +37,7 @@ final appRouterConfigProvider = Provider<GoRouter>((ref) {
       }
       refreshNotifier.refresh();
     });
+  }
 
   final router = GoRouter(
     routes: appRoutes,

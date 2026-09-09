@@ -28,8 +28,9 @@ class AppCapabilities {
 
   void requireAvailable(AppFeature feature) {
     final result = availability(feature);
-    if (!result.isAvailable)
+    if (!result.isAvailable) {
       throw FeatureUnavailableException(feature, result.reason!);
+    }
   }
 
   FeatureAvailability availability(AppFeature feature) {

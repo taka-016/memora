@@ -28,8 +28,9 @@ class MapScreen extends HookConsumerWidget {
     final availability = ref
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.maps);
-    if (!availability.isAvailable)
+    if (!availability.isAvailable) {
       return ApplicationUnavailablePage(reason: availability.reason!);
+    }
     final mapViewBuilder =
         this.mapViewBuilder ??
         ref.watch<MapViewBuilder>(mapViewBuilderProvider);

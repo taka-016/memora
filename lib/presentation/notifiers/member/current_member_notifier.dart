@@ -53,7 +53,7 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
         .watch(appCapabilitiesProvider)
         .availability(AppFeature.authentication)
         .isAvailable;
-    if (authenticationAvailable)
+    if (authenticationAvailable) {
       ref.listen<AuthState>(authNotifierProvider, (previous, next) {
         if (previous?.status == next.status) {
           return;
@@ -68,6 +68,7 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
           state = const CurrentMemberState.loading();
         }
       });
+    }
 
     Future.microtask(() {
       if (ref.mounted) unawaited(load());
