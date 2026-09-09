@@ -2,20 +2,6 @@
 
 ## オフライン・オンラインモード対応
 
-### 5. オフラインモードの現在利用者と利用可能機能を実装する
-
-- 認証操作と現在利用者の解決を別の責務に分離し、オフラインモードにサインイン、メール確認、再認証などのダミー実装を要求しない
-- オフラインモードの初回起動時に端末内の利用者IDと本人メンバーを作成し、以降は同じ利用者として復元する
-- Composition Rootへ端末内利用者の解決を接続し、現在の準備中表示から通常のオフライン起動へ切り替える。ログイン画面とアカウント設定を経由せずに起動し、オンラインモードは既存の認証導線を維持する
-- `app_router.dart`の`appRouterConfigProvider`による`authNotifierProvider`の購読・参照と、`AuthNotifier.build`から`ObserveAuthStateChangesUseCase`を経由する認証サービスの解決・購読を見直し、オフラインの起動・ルーティングでは認証購読を開始しない
-- ログイン・新規登録・本人設定ルートへ直接遷移した場合も、オフラインでは`LoginPage`、`SignupPage`、`AuthGuard`を構築する前に利用可能な画面へ誘導し、認証Providerを解決しない
-- `AppRedirectController`、`CurrentMemberNotifier`、`TopPage`の認証状態に依存する制御を見直し、オフラインでも現在利用者の復元、年表の初期取得、Androidウィジェットからの画面遷移を行えるようにする
-- オフラインモードではログアウト操作を表示せず、現在利用者の取得失敗時はログアウトや再ログインへ誘導せずに再試行できるようにする
-- 地図、地図を前提とする訪問場所管理、場所検索、現在地、共有、招待の入口と操作をオフラインモードでは非表示にする
-- 旅行編集内の訪問場所管理と旅程編集内の場所選択も非表示にし、対象画面の構築時にオンライン専用のProviderや外部サービスを解決しない
-- Deep Link、Androidウィジェット、UI以外から利用対象外のオンライン機能が呼ばれた場合は、外部サービスへ接続せず共通の利用不可結果と案内を返す
-- 設定画面で利用中のモード、保存先、利用可能機能、データ消失条件を確認できるようにする
-
 ### 6. Android内部SQLite DBとデータアクセスを実装する
 
 - `group_members`の既存データに保存されている`orderIndex`をER図へ追記する
@@ -33,7 +19,7 @@
 - 旅行、タスク、旅程項目のMapperとQueryServiceを実装し、保存・更新・削除は既存の`TripEntryRepository`の集約単位を維持して実装する。タスクと旅程項目の個別Repositoryは追加しない
 - DVCポイント契約、期間限定ポイント、利用履歴のMapper、Repository、QueryServiceを実装する
 - 複数更新を原子的に保存できるSQLite用`WriteTransaction`を実装する
-- Repository、QueryService、TransactionのFactoryのオフライン分岐を利用不可結果からSQLite実装へ置き換え、Composition RootへDBの初期化・終了を接続し、`AppCapabilities`の端末内保存を利用可能にする
+- Repository、QueryService、TransactionのFactoryのオフライン分岐を利用不可結果からSQLite実装へ置き換え、Composition RootへDBの初期化・終了を接続し、`AppCapabilities`の端末内保存を利用可能にする。`offline_current_member.json`の利用者IDと本人メンバーIDを維持してSQLiteへ接続し、本人の編集結果を現在利用者の復元へ反映する
 - 既存の並び替え、関連データの組み立て、保存・更新・削除について、保存方式ではなくアプリから観測できる振る舞いをFirestore実装と一致させる
 
 ### 7. Androidウィジェットを両方のモードへ対応する
