@@ -18,8 +18,10 @@ import 'package:memora/presentation/features/trip/itinerary_view.dart';
 import 'package:memora/presentation/shared/dialogs/custom_date_picker_dialog.dart';
 
 Widget _wrapWithApp(Widget child) {
-  return MaterialApp(
-    home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+  return ProviderScope(
+    child: MaterialApp(
+      home: Scaffold(body: SizedBox(width: 480, height: 720, child: child)),
+    ),
   );
 }
 
