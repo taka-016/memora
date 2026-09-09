@@ -1,3 +1,6 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/presentation/app/application_unavailable_page.dart';
 import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/composition_root/providers/trip_providers.dart';
@@ -22,6 +25,11 @@ class MapScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final availability = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps);
+    if (!availability.isAvailable)
+      return ApplicationUnavailablePage(reason: availability.reason!);
     final mapViewBuilder =
         this.mapViewBuilder ??
         ref.watch<MapViewBuilder>(mapViewBuilderProvider);

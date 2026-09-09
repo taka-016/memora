@@ -1,3 +1,4 @@
+import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/composition_root/providers/location_providers.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
@@ -41,9 +42,14 @@ class TripEditModal extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mapViewBuilder =
-        this.mapViewBuilder ??
-        ref.watch<MapViewBuilder>(mapViewBuilderProvider);
+    final mapsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .isAvailable;
+    final mapViewBuilder = mapsAvailable
+        ? (this.mapViewBuilder ??
+              ref.watch<MapViewBuilder>(mapViewBuilderProvider))
+        : null;
     final errorMessage = useState<String?>(null);
     final expandedSection = useState<TripEditExpandedSection?>(null);
     final editStateNotifier = ref.read(editStateNotifierProvider.notifier);

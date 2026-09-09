@@ -1,3 +1,4 @@
+import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/current_member_resolver.dart';
 import 'package:memora/application/services/authenticated_current_member_resolver.dart';
@@ -26,6 +27,7 @@ import 'package:memora/infrastructure/factories/repository_factory.dart';
 final acceptInvitationUseCaseProvider = Provider<AcceptInvitationUseCase>((
   ref,
 ) {
+  ref.watch(appCapabilitiesProvider).requireAvailable(AppFeature.invitations);
   return AcceptInvitationUseCase(
     ref.watch(memberInvitationQueryServiceProvider),
     ref.watch(memberInvitationRepositoryProvider),
@@ -63,6 +65,9 @@ final createMemberUsecaseProvider = Provider<CreateMemberUsecase>((ref) {
 
 final createOrUpdateMemberInvitationUsecaseProvider =
     Provider<CreateOrUpdateMemberInvitationUsecase>((ref) {
+      ref
+          .watch(appCapabilitiesProvider)
+          .requireAvailable(AppFeature.invitations);
       return CreateOrUpdateMemberInvitationUsecase(
         ref.watch(memberInvitationRepositoryProvider),
         ref.watch(memberInvitationQueryServiceProvider),

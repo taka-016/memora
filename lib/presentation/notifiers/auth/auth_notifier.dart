@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:memora/composition_root/providers/account_providers.dart';
 
@@ -48,6 +50,11 @@ class AuthNotifier extends Notifier<AuthState> {
 
   @override
   AuthState build() {
+    final availability = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication);
+    if (!availability.isAvailable)
+      return AuthState.unauthenticated(availability.reason!);
     _authStateSubscription?.cancel();
     _authStateChangeGeneration++;
     _authStateSubscription = observeAuthStateChangesUseCase.execute().listen((

@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter/material.dart';
@@ -221,6 +223,8 @@ class Settings extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          ..._buildModeInformation(ref),
+          const SizedBox(height: 24),
           Text('Androidウィジェット', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           _buildAndroidWidgetGroupSetting(context, ref, currentMemberState),
@@ -229,6 +233,32 @@ class Settings extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildModeInformation(WidgetRef ref) {
+    final capabilities = ref.watch(appCapabilitiesProvider);
+    final online = capabilities
+        .availability(AppFeature.authentication)
+        .isAvailable;
+    final storage = capabilities.availability(AppFeature.localData);
+    return [
+      Text(online ? 'オンラインモード' : 'オフラインモード'),
+      const SizedBox(height: 8),
+      Text(online ? '保存先: クラウド（Firestore）' : '保存先: この端末のアプリ内部ストレージ'),
+      const SizedBox(height: 8),
+      Text(
+        online
+            ? '利用可能機能: 年表・メンバー・グループ・旅行・タスク・旅程・DVCポイント・地図・場所検索・現在地・共有・招待'
+            : '本人情報を端末内で復元できます。地図・場所検索・現在地・共有・招待は利用できません。',
+      ),
+      if (!storage.isAvailable) Text(storage.reason!),
+      const SizedBox(height: 8),
+      Text(
+        online
+            ? 'アプリを削除してもクラウドのデータは保持されます。'
+            : 'バックアップ未作成時は、アプリ削除・データ消去・端末故障によりデータを復元できなくなります。手動バックアップ機能は準備中です。',
+      ),
+    ];
   }
 
   Widget _buildAndroidWidgetUpdateIntervalSetting(

@@ -1,3 +1,6 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 
 import 'dart:async';
@@ -21,7 +24,7 @@ typedef ItineraryLocationCreated = Future<LocationDto> Function(
   LocationDto location,
 );
 
-class ItineraryItemEditBottomSheet extends HookWidget {
+class ItineraryItemEditBottomSheet extends HookConsumerWidget {
   const ItineraryItemEditBottomSheet({
     super.key,
     required this.item,
@@ -43,12 +46,16 @@ class ItineraryItemEditBottomSheet extends HookWidget {
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationUnassigned;
   final Set<String> otherLocationIds;
-  final MapViewBuilder mapViewBuilder;
+  final MapViewBuilder? mapViewBuilder;
   final ValueChanged<ItineraryItemDto> onSaved;
   final AppClock clock;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .isAvailable;
     final nameController = useTextEditingController(text: item.name);
     final startDate = useState<DateTime?>(
       datePartOfDateTime(item.startDateTime),
@@ -433,7 +440,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
 
                 return LocationMapDialog(
                   dialogKey: const Key('itinerary_location_map_dialog'),
-                  mapViewBuilder: mapViewBuilder,
+                  mapViewBuilder: mapViewBuilder!,
                   locations: dialogLocations,
                   selectedLocation: selectedLocation.value,
                   highlightSelectedLocation: true,
@@ -594,7 +601,7 @@ class ItineraryItemEditBottomSheet extends HookWidget {
                   : null,
             ),
             const SizedBox(height: 12),
-            buildLocationSection(),
+            if (mapsAvailable) buildLocationSection(),
             const SizedBox(height: 12),
             TextField(
               key: const Key('itinerary_edit_memo_field'),
