@@ -1,10 +1,12 @@
+import 'package:memora/composition_root/providers/group_providers.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
 import 'package:memora/application/exceptions/application_validation_exception.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
-import 'package:memora/application/usecases/trip/get_trip_entries_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/trip/trip_entry_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/trip/trip_management_state.dart';

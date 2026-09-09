@@ -2,30 +2,11 @@
 
 ## オフライン・オンラインモード対応
 
-### 4. FactoryとComposition Rootでモードに応じた実装を選択する
-
-- Firebase、Firestore、Crashlytics、NTP、Places SDK、地図SDK、位置情報、ネットワーク状態取得の具象型を使用している箇所を洗い出す
-- 既存の`AppMode`、`AppModeResolver`、`AppModeBuildConfiguration`を使用し、起動時の判定結果をComposition Rootと各Factoryへ接続する
-- ビルド指定の解析とモード判定の責務分離を維持し、Factoryは判定済みの`AppMode`だけを参照する。`auto`と未指定は現在のオンライン判定を維持する
-- 現在のRepository、QueryService、Transaction、AuthServiceのFactoryパターンを維持し、各Factoryが同じ`AppMode`から対応する実装を生成するように変更する
-- `AuthType`、`DatabaseType`、`LocationSearchApiType`の独立した可変StateProviderを廃止し、認証、保存先、場所検索が異なるモードを選択する不整合を防ぐ
-- Application層とCore層には外部サービスを抽象化したインターフェースだけを配置し、具象実装をInfrastructure層へ配置する
-- `main.dart`、ロガー、Androidウィジェットのバックグラウンド更新・操作コールバックから外部SDKの具象型と初期化処理を除く
-- Application層のUseCaseファイルからInfrastructure層のFactoryへのimportと依存解決用Providerを除き、Providerの構成をComposition Rootへ移す
-- Composition RootはFactoryが選択したDB、認証・現在利用者、時刻、ログ、地図・位置情報、Androidウィジェットの実装だけを初期化して注入する
-- オンラインモードはFirestore、Firebase Auth、Crashlytics、NTP、地図・位置情報の既存実装を使用する
-- オフラインモードはSQLiteと端末時刻を使用し、debugビルドだけ端末ログを出力してreleaseビルドではログを保存・送信せず、外部サービスSDKを初期化しない
-- FirebaseとCrashlyticsなどの自動初期化・自動送信を無効化し、オンラインモードのComposition Rootからだけ明示的に有効化する
-- アプリで利用可能な機能と利用できない理由をApplication層の共通モデルで表し、Presentation層はビルドフラグや具象データソースではなく、そのモデルを参照する
-- Presentation、Domain、UseCase、Androidウィジェットにビルド情報や具象データソースによる分岐を持ち込まない
-- オンラインモードとオフラインモードのデータを共有・同期・移行する機能は実装しない
-- 既存のPresentation層の依存方向を検証するアーキテクチャテストを維持し、Domain層とApplication層が外側の層へ依存しないことの検証を追加する
-
 ### 5. オフラインモードの現在利用者と利用可能機能を実装する
 
 - 認証操作と現在利用者の解決を別の責務に分離し、オフラインモードにサインイン、メール確認、再認証などのダミー実装を要求しない
 - オフラインモードの初回起動時に端末内の利用者IDと本人メンバーを作成し、以降は同じ利用者として復元する
-- オフラインモードはログイン画面とアカウント設定を経由せずに起動し、オンラインモードは既存の認証導線を維持する
+- Composition Rootへ端末内利用者の解決を接続し、現在の準備中表示から通常のオフライン起動へ切り替える。ログイン画面とアカウント設定を経由せずに起動し、オンラインモードは既存の認証導線を維持する
 - `app_router.dart`の`appRouterConfigProvider`による`authNotifierProvider`の購読・参照と、`AuthNotifier.build`から`ObserveAuthStateChangesUseCase`を経由する認証サービスの解決・購読を見直し、オフラインの起動・ルーティングでは認証購読を開始しない
 - ログイン・新規登録・本人設定ルートへ直接遷移した場合も、オフラインでは`LoginPage`、`SignupPage`、`AuthGuard`を構築する前に利用可能な画面へ誘導し、認証Providerを解決しない
 - `AppRedirectController`、`CurrentMemberNotifier`、`TopPage`の認証状態に依存する制御を見直し、オフラインでも現在利用者の復元、年表の初期取得、Androidウィジェットからの画面遷移を行えるようにする
@@ -52,6 +33,7 @@
 - 旅行、タスク、旅程項目のMapperとQueryServiceを実装し、保存・更新・削除は既存の`TripEntryRepository`の集約単位を維持して実装する。タスクと旅程項目の個別Repositoryは追加しない
 - DVCポイント契約、期間限定ポイント、利用履歴のMapper、Repository、QueryServiceを実装する
 - 複数更新を原子的に保存できるSQLite用`WriteTransaction`を実装する
+- Repository、QueryService、TransactionのFactoryのオフライン分岐を利用不可結果からSQLite実装へ置き換え、Composition RootへDBの初期化・終了を接続し、`AppCapabilities`の端末内保存を利用可能にする
 - 既存の並び替え、関連データの組み立て、保存・更新・削除について、保存方式ではなくアプリから観測できる振る舞いをFirestore実装と一致させる
 
 ### 7. Androidウィジェットを両方のモードへ対応する
@@ -151,8 +133,6 @@ Riverpodの手書きProviderと生成Providerは併用し、既存Providerの全
 Composition RootのRepository、QueryService、UseCase、外部Serviceなど、型を返すだけの単純な依存注入Providerは手書きを維持する。認証、現在利用者、Androidウィジェット起動、ルーターなど、アプリ全体のライフサイクルに関わるProviderも、関連機能の変更でコード生成の具体的な利点が生じるまでは移行しない。
 
 Providerを移行するPRは既存のProvider名、公開範囲、ライフサイクル、retry、overrideの振る舞いを維持し、`./check.sh`が成功する、単独でマージ・リリース可能な状態で完結させる。
-
-`AuthType`、`DatabaseType`、`LocationSearchApiType`の`StateProvider`はコード生成へ移行せず、「FactoryとComposition Rootでモードに応じた実装を選択する」の対応で`AppMode`による実装選択へ置き換える。
 
 残る既存Providerは、関連する機能追加・修正・リファクタリングで対象ファイルを変更するときに、コード生成で宣言、family引数、ライフサイクル管理が明確に単純化できる場合だけ移行する。コード生成へ移行することだけを目的としたPRは追加しない。
 

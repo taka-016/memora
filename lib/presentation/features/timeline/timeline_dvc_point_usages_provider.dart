@@ -1,6 +1,6 @@
+import 'package:memora/composition_root/providers/dvc_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/dvc/dvc_point_usage_dto.dart';
-import 'package:memora/application/usecases/dvc/get_dvc_point_usages_usecase.dart';
 import 'package:memora/presentation/features/timeline/timeline_rows_refresh_provider.dart';
 
 final timelineDvcPointUsagesByYearProvider = FutureProvider.autoDispose

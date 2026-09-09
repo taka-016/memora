@@ -1,11 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final calculateYakudoshiUsecaseProvider = Provider<CalculateYakudoshiUsecase>((
-  ref,
-) {
-  return CalculateYakudoshiUsecase();
-});
-
 class CalculateYakudoshiUsecase {
   String? execute(DateTime? birthday, String? gender, int targetYear) {
     if (birthday == null || gender == null) {

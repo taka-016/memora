@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 const _pubspecPath = 'pubspec.yaml';
 const _backgroundUpdatePath =
-    'lib/application/usecases/android_widget/android_widget_background_update.dart';
-const _mainPath = 'lib/main.dart';
+    'lib/infrastructure/android_widget/android_widget_background_update.dart';
+const _mainPath = 'lib/composition_root/app_bootstrap.dart';
 const _cacheUsecasesPath =
     'lib/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 const _itineraryWidgetPath =

@@ -1,3 +1,7 @@
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_point_contract_repository.dart';
@@ -8,8 +12,6 @@ import 'package:memora/domain/repositories/member/member_event_repository.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
-import 'package:memora/infrastructure/config/database_type.dart';
-import 'package:memora/infrastructure/config/database_type_provider.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_limited_point_repository.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_contract_repository.dart';
 import 'package:memora/infrastructure/repositories/dvc/firestore_dvc_point_usage_repository.dart';
@@ -66,17 +68,18 @@ final dvcPointUsageRepositoryProvider = Provider<DvcPointUsageRepository>((
 
 class RepositoryFactory {
   static T create<T extends Object>({required Ref ref}) {
-    final dbType = ref.watch(databaseTypeProvider);
-    return _createRepositoryByType<T>(dbType);
+    final mode = ref.watch(appModeProvider);
+    return _createRepositoryByMode<T>(mode);
   }
 
-  static T _createRepositoryByType<T extends Object>(DatabaseType dbType) {
-    switch (dbType) {
-      case DatabaseType.firestore:
+  static T _createRepositoryByMode<T extends Object>(AppMode mode) {
+    switch (mode) {
+      case AppMode.online:
         return _createFirestoreRepository<T>();
-      case DatabaseType.sqlite:
-        throw UnimplementedError(
-          'Supabase implementation is not yet available',
+      case AppMode.offline:
+        throw const FeatureUnavailableException(
+          AppFeature.localData,
+          '端末内データの保存機能は現在準備中です。',
         );
     }
   }

@@ -1,8 +1,8 @@
+import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/usecases/member/create_or_update_member_invitation_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/features/member/member_edit_modal.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';

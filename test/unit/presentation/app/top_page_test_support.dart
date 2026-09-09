@@ -1,3 +1,9 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/composition_root/providers/android_widget_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -21,7 +27,6 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:memora/application/queries/trip/location_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/repositories/group/group_event_repository.dart';
 import 'package:memora/domain/repositories/group/group_repository.dart';
 import 'package:memora/domain/repositories/dvc/dvc_limited_point_repository.dart';
@@ -37,7 +42,6 @@ import 'package:memora/presentation/notifiers/android_widget/android_widget_laun
 import 'package:memora/presentation/app/app_router.dart';
 import 'package:memora/presentation/app/app_routes.dart';
 import 'package:memora/domain/entities/account/user.dart';
-import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/services/shared_preferences_android_widget_update_interval_storage.dart';
 import 'package:memora/infrastructure/factories/auth_service_factory.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -501,7 +505,9 @@ class TopPageTestContext {
         () => authNotifier ?? FakeAuthNotifier.authenticated(),
       ),
       appInitialLocationProvider.overrideWithValue(initialLocation),
-      appTestEnvironmentProvider.overrideWithValue(true),
+      mapViewBuilderProvider.overrideWithValue(
+        const PlaceholderMapViewBuilder(),
+      ),
       currentMemberNotifierProvider.overrideWith(
         () => resolvedCurrentMemberNotifier,
       ),

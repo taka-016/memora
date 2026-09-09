@@ -1,10 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final calculateSchoolGradeUsecaseProvider =
-    Provider<CalculateSchoolGradeUsecase>((ref) {
-      return CalculateSchoolGradeUsecase();
-    });
-
 class CalculateSchoolGradeUsecase {
   String? execute(DateTime? birthday, int targetYear) {
     if (birthday == null) {

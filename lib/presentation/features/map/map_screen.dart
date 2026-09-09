@@ -1,3 +1,7 @@
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
+import 'package:memora/composition_root/providers/trip_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,20 +10,21 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/trip/location_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
-import 'package:memora/application/usecases/trip/get_trip_entry_by_id_usecase.dart';
 import 'package:memora/presentation/features/map/map_pin_bottom_sheet.dart';
 import 'package:memora/presentation/features/trip/trip_edit_modal.dart';
 import 'package:memora/presentation/notifiers/member/current_member_notifier.dart';
 import 'package:memora/presentation/notifiers/map/map_notifier.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 class MapScreen extends HookConsumerWidget {
-  final bool isTestEnvironment;
+  final MapViewBuilder? mapViewBuilder;
 
-  const MapScreen({super.key, this.isTestEnvironment = false});
+  const MapScreen({super.key, this.mapViewBuilder});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final mapViewBuilder =
+        this.mapViewBuilder ??
+        ref.watch<MapViewBuilder>(mapViewBuilderProvider);
     final currentMember = ref.watch(currentMemberNotifierProvider).member;
     if (currentMember == null) {
       return const Center(child: CircularProgressIndicator());
@@ -108,7 +113,7 @@ class MapScreen extends HookConsumerWidget {
             groupMembers: group.members,
             tripEntry: loadedTrip,
             year: loadedTrip.year,
-            isTestEnvironment: isTestEnvironment,
+            mapViewBuilder: mapViewBuilder,
             onSave: (updatedTrip) async {
               final succeeded = await notifier.updateTripEntry(updatedTrip);
               if (succeeded && context.mounted) {
@@ -122,13 +127,9 @@ class MapScreen extends HookConsumerWidget {
       });
     }
 
-    final mapViewType = isTestEnvironment
-        ? MapViewType.placeholder
-        : MapViewType.google;
-
     final mapView = KeyedSubtree(
       key: ValueKey(selectedGroup.id),
-      child: MapViewFactory.create(mapViewType).createMapView(
+      child: mapViewBuilder.createMapView(
         locations: state.locations,
         focusedLocation: state.locations.firstOrNull,
         topLeadingOverlay: _MapToolbar(

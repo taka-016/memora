@@ -1,3 +1,6 @@
+import 'package:memora/composition_root/providers/location_providers.dart';
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -77,7 +80,9 @@ void main() {
         appInitialLocationProvider.overrideWithValue(
           const GroupListRoute().location,
         ),
-        appTestEnvironmentProvider.overrideWithValue(true),
+        mapViewBuilderProvider.overrideWithValue(
+          const PlaceholderMapViewBuilder(),
+        ),
       ],
       child: const app.MyApp(),
     );

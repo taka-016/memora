@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
 import 'package:memora/application/dtos/member/member_invitation_dto.dart';
@@ -6,7 +7,6 @@ import 'package:memora/application/queries/member/member_query_service.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/domain/entities/member/member.dart';
 import 'package:memora/domain/repositories/member/member_invitation_repository.dart';
 import 'package:memora/domain/repositories/member/member_repository.dart';

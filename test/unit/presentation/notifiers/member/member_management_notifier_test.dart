@@ -1,3 +1,5 @@
+import 'package:memora/composition_root/providers/member_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';

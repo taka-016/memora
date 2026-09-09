@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:memora/domain/services/current_location_service.dart';
+import 'package:memora/application/services/current_location_service.dart';
 import 'package:memora/core/models/coordinate.dart';
 
 class GeolocatorCurrentLocationService implements CurrentLocationService {

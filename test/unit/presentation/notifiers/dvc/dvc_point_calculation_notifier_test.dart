@@ -1,3 +1,8 @@
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/composition_root/providers/dvc_providers.dart';
+import 'package:memora/composition_root/providers/group_providers.dart';
+
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,7 +19,6 @@ import 'package:memora/application/usecases/dvc/save_dvc_limited_point_usecase.d
 import 'package:memora/application/usecases/dvc/save_dvc_point_contracts_usecase.dart';
 import 'package:memora/application/usecases/group/get_group_with_members_by_id_usecase.dart';
 import 'package:memora/core/app_logger.dart';
-import 'package:memora/core/time/app_clock.dart';
 import 'package:memora/presentation/features/dvc/dvc_point_usage_mutation_coordinator.dart';
 import 'package:memora/presentation/notifiers/dvc/dvc_point_calculation_notifier.dart';
 import 'package:mockito/annotations.dart';

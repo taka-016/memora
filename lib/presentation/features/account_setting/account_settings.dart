@@ -1,9 +1,7 @@
+import 'package:memora/composition_root/providers/account_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/exceptions/reauthentication_required_exception.dart';
-import 'package:memora/application/usecases/account/delete_user_usecase.dart';
-import 'package:memora/application/usecases/account/update_email_usecase.dart';
-import 'package:memora/application/usecases/account/update_password_usecase.dart';
 
 import 'account_delete_modal.dart';
 import 'email_change_modal.dart';

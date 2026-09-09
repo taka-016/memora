@@ -1,10 +1,7 @@
+import 'package:memora/composition_root/providers/group_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/dtos/group/group_dto.dart';
 import 'package:memora/application/dtos/member/member_dto.dart';
-import 'package:memora/application/usecases/group/create_group_usecase.dart';
-import 'package:memora/application/usecases/group/delete_group_usecase.dart';
-import 'package:memora/application/usecases/group/get_managed_groups_with_members_usecase.dart';
-import 'package:memora/application/usecases/group/update_group_usecase.dart';
 import 'package:memora/core/app_logger.dart';
 import 'package:memora/presentation/notifiers/group/group_management_state.dart';
 

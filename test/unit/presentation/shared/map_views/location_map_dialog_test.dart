@@ -1,7 +1,7 @@
+import 'package:memora/presentation/shared/map_views/placeholder_map_view_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/presentation/shared/map_views/location_map_dialog.dart';
-import 'package:memora/presentation/shared/map_views/map_view_factory.dart';
 
 void main() {
   group('LocationMapDialog', () {
@@ -18,7 +18,7 @@ void main() {
                       builder: (_) {
                         return const LocationMapDialog(
                           dialogKey: Key('location_map_dialog'),
-                          mapViewType: MapViewType.placeholder,
+                          mapViewBuilder: PlaceholderMapViewBuilder(),
                           locations: [],
                         );
                       },
