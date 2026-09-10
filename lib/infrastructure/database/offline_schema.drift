@@ -1,0 +1,84 @@
+CREATE TABLE members (
+  id TEXT NOT NULL PRIMARY KEY,
+  account_id TEXT,
+  owner_id TEXT REFERENCES members(id) ON DELETE RESTRICT,
+  hiragana_first_name TEXT,
+  hiragana_last_name TEXT,
+  kanji_first_name TEXT,
+  kanji_last_name TEXT,
+  first_name TEXT,
+  last_name TEXT,
+  display_name TEXT NOT NULL,
+  type TEXT,
+  birthday INTEGER,
+  gender TEXT,
+  email TEXT,
+  phone_number TEXT,
+  UNIQUE (account_id)
+) AS SqliteMemberRow;
+
+CREATE INDEX members_ownerId_idx ON members (owner_id);
+
+CREATE TABLE "groups" (
+  id TEXT NOT NULL PRIMARY KEY,
+  owner_id TEXT NOT NULL REFERENCES members(id) ON DELETE RESTRICT,
+  name TEXT NOT NULL,
+  memo TEXT
+) AS SqliteGroupRow;
+
+CREATE INDEX groups_ownerId_idx ON "groups" (owner_id);
+
+CREATE TABLE group_members (
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  is_administrator INTEGER NOT NULL CHECK (is_administrator IN (0, 1)),
+  order_index INTEGER NOT NULL,
+  PRIMARY KEY (group_id, member_id)
+) AS SqliteGroupMemberRow;
+
+CREATE INDEX group_members_groupId_idx ON group_members (group_id, order_index);
+
+CREATE INDEX group_members_memberId_idx ON group_members (member_id, order_index);
+
+CREATE TABLE trip_entries (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  name TEXT,
+  start_date INTEGER,
+  end_date INTEGER,
+  memo TEXT
+) AS SqliteTripEntryRow;
+
+CREATE INDEX trip_entries_groupId_idx ON trip_entries (group_id, year);
+
+CREATE TABLE tasks (
+  id TEXT NOT NULL PRIMARY KEY,
+  trip_id TEXT NOT NULL REFERENCES trip_entries(id) ON DELETE CASCADE,
+  order_index INTEGER NOT NULL,
+  parent_task_id TEXT,
+  name TEXT NOT NULL,
+  is_completed INTEGER NOT NULL CHECK (is_completed IN (0, 1)),
+  due_date INTEGER,
+  memo TEXT,
+  assigned_member_id TEXT REFERENCES members(id) ON DELETE SET NULL,
+  UNIQUE (id, trip_id),
+  FOREIGN KEY (parent_task_id, trip_id) REFERENCES tasks(id, trip_id) DEFERRABLE INITIALLY DEFERRED
+) AS SqliteTaskRow;
+
+CREATE INDEX tasks_tripId_idx ON tasks (trip_id, order_index);
+
+CREATE INDEX tasks_assignedMemberId_idx ON tasks (assigned_member_id, order_index);
+
+CREATE INDEX tasks_parentTaskId_idx ON tasks (parent_task_id, order_index);
+
+CREATE TABLE itinerary_items (
+  id TEXT NOT NULL PRIMARY KEY,
+  trip_id TEXT NOT NULL REFERENCES trip_entries(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  start_date_time INTEGER,
+  end_date_time INTEGER,
+  memo TEXT
+) AS SqliteItineraryItemRow;
+
+CREATE INDEX itinerary_items_tripId_idx ON itinerary_items (trip_id, start_date_time);
