@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 
 import 'dart:async';
@@ -47,23 +49,29 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
 
   @override
   CurrentMemberState build() {
-    ref.listen<AuthState>(authNotifierProvider, (previous, next) {
-      if (previous?.status == next.status) {
-        return;
-      }
+    final authenticationAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.authentication)
+        .isAvailable;
+    if (authenticationAvailable) {
+      ref.listen<AuthState>(authNotifierProvider, (previous, next) {
+        if (previous?.status == next.status) {
+          return;
+        }
 
-      if (next.status == AuthStatus.authenticated) {
-        unawaited(load());
-        return;
-      }
+        if (next.status == AuthStatus.authenticated) {
+          unawaited(load());
+          return;
+        }
 
-      if (next.status == AuthStatus.unauthenticated) {
-        state = const CurrentMemberState.loading();
-      }
-    });
+        if (next.status == AuthStatus.unauthenticated) {
+          state = const CurrentMemberState.loading();
+        }
+      });
+    }
 
     Future.microtask(() {
-      unawaited(load());
+      if (ref.mounted) unawaited(load());
     });
 
     return const CurrentMemberState.loading();
@@ -73,6 +81,7 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
     try {
       state = const CurrentMemberState.loading();
       final member = await _getCurrentMemberUseCase.execute();
+      if (!ref.mounted) return;
       state = CurrentMemberState.loaded(member);
     } catch (e, stack) {
       logger.e(
@@ -80,7 +89,15 @@ class CurrentMemberNotifier extends Notifier<CurrentMemberState> {
         error: e,
         stackTrace: stack,
       );
-      state = const CurrentMemberState.error('メンバー情報の取得に失敗しました。再度ログインしてください。');
+      if (!ref.mounted) return;
+      state = CurrentMemberState.error(
+        ref
+                .read(appCapabilitiesProvider)
+                .availability(AppFeature.authentication)
+                .isAvailable
+            ? 'メンバー情報の取得に失敗しました。再度ログインしてください。'
+            : '本人情報の取得に失敗しました。再試行してください。',
+      );
     }
   }
 }

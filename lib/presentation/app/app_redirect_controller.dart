@@ -3,6 +3,15 @@ import 'package:memora/presentation/notifiers/auth/auth_state.dart';
 import 'package:memora/presentation/shared/supported_year_range.dart';
 
 class AppRedirectController {
+  String? resolveOffline({required String location}) {
+    final uri = Uri.parse(location);
+    if (_isAuthenticationLocation(uri.path) ||
+        uri.path == const AccountSettingsRoute().location) {
+      return const GroupListRoute().location;
+    }
+    return _safeLocationFor(uri);
+  }
+
   String? _pendingProtectedLocation;
   bool _canCaptureProtectedLocation = true;
 

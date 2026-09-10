@@ -1,3 +1,4 @@
+import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -392,7 +393,12 @@ class MemberEditModal extends HookConsumerWidget {
     Widget buildActionButtons() {
       return Column(
         children: [
-          if (isEditing && onInvite != null) ...[
+          if (ref
+                  .watch(appCapabilitiesProvider)
+                  .availability(AppFeature.invitations)
+                  .isAvailable &&
+              isEditing &&
+              onInvite != null) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

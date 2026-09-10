@@ -1,3 +1,6 @@
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
+import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/presentation/shared/map_views/map_view_builder.dart';
 
 import 'dart:async';
@@ -20,7 +23,7 @@ typedef TripLocationCreated = Future<LocationDto> Function(
   LocationDto location,
 );
 
-class TripEditFormView extends HookWidget {
+class TripEditFormView extends HookConsumerWidget {
   const TripEditFormView({
     super.key,
     required this.value,
@@ -42,12 +45,16 @@ class TripEditFormView extends HookWidget {
   final List<LocationDto> locations;
   final TripLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationDeleted;
-  final MapViewBuilder mapViewBuilder;
+  final MapViewBuilder? mapViewBuilder;
   final int? configuredYear;
   final AppClock clock;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.maps)
+        .isAvailable;
     final nameController = useTextEditingController(text: value.name ?? '');
     final memoController = useTextEditingController(text: value.memo ?? '');
     final valueRef = useRef(value);
@@ -280,7 +287,7 @@ class TripEditFormView extends HookWidget {
               builder: (context, setDialogState) {
                 return LocationMapDialog(
                   dialogKey: const Key('trip_locations_map_dialog'),
-                  mapViewBuilder: mapViewBuilder,
+                  mapViewBuilder: mapViewBuilder!,
                   locations: dialogLocations,
                   onMapLongTapped: onLocationCreated == null
                       ? null
@@ -529,7 +536,7 @@ class TripEditFormView extends HookWidget {
             ],
           ),
           const SizedBox(height: 16),
-          buildTripLocationsMap(),
+          if (mapsAvailable) buildTripLocationsMap(),
           const SizedBox(height: 16),
         ],
       ),

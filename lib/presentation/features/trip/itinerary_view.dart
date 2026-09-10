@@ -32,7 +32,7 @@ class ItineraryView extends HookWidget {
   final List<LocationDto> locations;
   final ItineraryLocationCreated? onLocationCreated;
   final Future<void> Function(LocationDto location)? onLocationDeleted;
-  final MapViewBuilder mapViewBuilder;
+  final MapViewBuilder? mapViewBuilder;
   final ValueChanged<List<ItineraryItemDto>> onChanged;
   final VoidCallback? onClose;
 

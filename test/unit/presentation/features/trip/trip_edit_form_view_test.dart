@@ -18,7 +18,9 @@ import 'package:memora/application/services/current_location_service.dart';
 import 'package:memora/presentation/features/trip/trip_edit_form_view.dart';
 
 Widget _createApp({required Widget child}) {
-  return MaterialApp(home: Scaffold(body: child));
+  return ProviderScope(
+    child: MaterialApp(home: Scaffold(body: child)),
+  );
 }
 
 Widget _createMapApp({required Widget child}) {

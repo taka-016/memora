@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/trip/create_trip_entry_usecase.dart';
 import 'package:memora/application/usecases/trip/delete_trip_entry_usecase.dart';
@@ -27,6 +29,7 @@ final getItineraryItemsByTripIdUsecaseProvider =
 
 final getLocationsByGroupIdUsecaseProvider =
     Provider<GetLocationsByGroupIdUsecase>((ref) {
+      ref.watch(appCapabilitiesProvider).requireAvailable(AppFeature.maps);
       return GetLocationsByGroupIdUsecase(
         ref.watch(locationQueryServiceProvider),
       );
@@ -43,6 +46,7 @@ final getTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
 });
 
 final getMapTripEntriesUsecaseProvider = Provider<GetTripEntriesUsecase>((ref) {
+  ref.watch(appCapabilitiesProvider).requireAvailable(AppFeature.maps);
   return GetTripEntriesUsecase(ref.watch(mapTripEntryQueryServiceProvider));
 });
 

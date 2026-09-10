@@ -1,3 +1,4 @@
+import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
 import 'package:memora/application/models/app_mode.dart';
 
 enum AppFeature {
@@ -24,6 +25,13 @@ class AppCapabilities {
   factory AppCapabilities.forMode(AppMode mode) => AppCapabilities._(mode);
 
   final AppMode _mode;
+
+  void requireAvailable(AppFeature feature) {
+    final result = availability(feature);
+    if (!result.isAvailable) {
+      throw FeatureUnavailableException(feature, result.reason!);
+    }
+  }
 
   FeatureAvailability availability(AppFeature feature) {
     if (_mode == AppMode.online) {

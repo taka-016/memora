@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/composition_root/providers/member_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -23,7 +25,10 @@ class MemberManagement extends HookConsumerWidget {
     final managementProvider = memberManagementNotifierProvider(currentMember);
     final state = ref.watch(memberManagementNotifierProvider(currentMember));
     final managementNotifier = ref.read(managementProvider.notifier);
-    final invite = ref.read(createOrUpdateMemberInvitationUsecaseProvider);
+    final invitationsAvailable = ref
+        .watch(appCapabilitiesProvider)
+        .availability(AppFeature.invitations)
+        .isAvailable;
     final isMemberOperationInProgressRef = useRef(false);
 
     void showSnackBar(String message) {
@@ -115,6 +120,9 @@ class MemberManagement extends HookConsumerWidget {
         blockedResult: false,
         execute: () async {
           try {
+            final invite = ref.read(
+              createOrUpdateMemberInvitationUsecaseProvider,
+            );
             final invitationCode = await invite.execute(
               inviteeId: targetMember.id,
               inviterId: currentMember.id,
@@ -146,6 +154,9 @@ class MemberManagement extends HookConsumerWidget {
                   TextButton(
                     onPressed: () async {
                       try {
+                        ref
+                            .read(appCapabilitiesProvider)
+                            .requireAvailable(AppFeature.sharing);
                         await SharePlus.instance.share(
                           ShareParams(
                             text:
@@ -238,7 +249,7 @@ class MemberManagement extends HookConsumerWidget {
             successMessage: 'メンバーを更新しました',
             failureMessage: '更新に失敗しました',
           ),
-          onInvite: targetMember.id != currentMember.id
+          onInvite: invitationsAvailable && targetMember.id != currentMember.id
               ? (memberDto) async {
                   await handleMemberInvite(memberDto, dialogContext);
                 }

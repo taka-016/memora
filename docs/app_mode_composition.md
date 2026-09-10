@@ -13,7 +13,7 @@
 | 対象 | オンライン | オフライン |
 | --- | --- | --- |
 | Repository・QueryService・Transaction | 既存のFirestore実装 | SQLite接続前のため共通の利用不可例外 |
-| 認証・現在利用者 | Firebase Authを使う既存の認証導線 | 認証サービスを生成しない。端末内利用者の復元は後続対応 |
+| 認証・現在利用者 | Firebase Authを使う既存の認証導線 | 認証サービスを生成・購読せず、端末内の利用者IDと本人情報を復元 |
 | 時刻 | `NtpSynchronizedAppClock`。同期失敗時は端末時刻を使用 | `SystemAppClock`。同期操作で外部通信しない |
 | ログ | Crashlytics。debugでは端末にも出力 | debugのみ端末へ出力。profile・releaseでは保存・送信しない |
 | 地図 | `GoogleMapViewBuilder` | 共通モデルの利用不可理由を表示 |
@@ -22,7 +22,13 @@
 
 `AppCapabilities`と`FeatureAvailability`が利用可能な機能と利用できない理由を表す。Presentation層はこのモデルを参照し、ビルド指定やDB種別を判定しない。地図はComposition Rootで選択した`MapViewBuilder`を画面へ渡す。テストでは必要に応じて`PlaceholderMapViewBuilder`を注入する。
 
-現在のオフライン起動では、端末内保存が未実装である理由を表示する。認証画面や業務データのProviderは構築しない。SQLite・端末内利用者が未実装の状態で、FirestoreやFirebase Authに切り替えて処理を継続することはない。
+オフライン起動では、`CurrentMemberResolver`を`LocalCurrentMemberResolver`へ切り替える。初回に利用者IDと本人メンバーIDを生成し、アプリ内部の`offline_current_member.json`へバージョン付きでまとめて保存する。一時ファイルへの書き込みとrenameが成功してから本人を返す。破損や未対応バージョンは新しい利用者で上書きせず、取得エラーとして再試行を案内する。オンラインでは`AuthenticatedCurrentMemberResolver`が`CurrentUserService`とメンバーのQueryServiceを使用する。認証操作は`AuthService`の責務に残す。
+
+ルーターと現在メンバーNotifierは、オフライン時に認証Notifierを購読しない。ログイン・新規登録・本人設定・アカウント設定のURLは画面構築前に年表へ誘導する。本人取得の失敗時はログアウトせず再試行でき、本人の復元後は年表の初期取得とAndroidウィジェットからの画面遷移へ進む。
+
+地図・訪問場所管理・場所検索・現在地・共有・招待の入口を非表示にし、旅行・旅程編集では地図Builderを解決しない。地図への直接遷移は利用不可理由を表示する。招待や地図用データのUseCase解決も`AppCapabilities.requireAvailable`で外部依存の解決前に制限する。
+
+SQLite接続前の業務データ取得・保存は引き続き利用不可であり、Firestoreへ切り替えて継続しない。設定画面には、この準備状況も表示する。
 
 ## 外部SDKの配置と初期化
 
@@ -46,15 +52,14 @@ Crashlyticsの自動収集を無効化する設定と実行時の有効化は、
 
 ## 後続の接続
 
-- TODO 5で認証操作と現在利用者の解決を分離し、端末内利用者と起動・ルーティングを接続する。オンライン専用機能の入口や直接呼び出しの制御もここで行う。
-- TODO 6でSQLite実装を各Factoryのオフライン分岐へ接続する。接続後は端末内保存の利用可能状態と起動画面の判定を更新する。
+- TODO 6でSQLite実装を各Factoryのオフライン分岐へ接続する。保存済みの端末内利用者ID・本人メンバーIDを維持してSQLiteへ接続し、本人メンバーの編集内容も現在利用者へ反映する。接続後は端末内保存を利用可能にする。
 - TODO 7で通常更新・操作コールバック・Kotlinフォールバックを両モードで使用可能にする。
 - モード間のデータ共有・同期・移行は実装しない。
 
 ## 検証
 
 - アーキテクチャテストでPresentation、Domain、Applicationの依存方向と起動・ウィジェット・CoreのSDK境界を確認する。
-- Composition Rootのテストでビルド指定の判定結果、時計の注入、オフラインFactoryの利用不可結果、認証を解決しない準備中画面、地図の選択を確認する。
+- Composition Rootのテストでビルド指定の判定結果、時計の注入、オフラインFactoryの利用不可結果、認証を解決しない起動・直接遷移、地図の選択を確認する。
 - `./check.sh`と`./check.sh --dart-define=MEMORA_APP_MODE=offline`で両方のビルド指定を検証する。
 - Androidの`./gradlew :app:processDebugMainManifest`でマージ後のManifestから`FirebaseInitProvider`が除去され、自動収集がfalseであることを確認する。
-- オフラインの通常利用・SQLite・実機での通信検証はTODO 5以降の実装と検証で完了させる。
+- オフラインの通常利用・SQLite・実機での通信検証はTODO 6以降の実装と検証で完了させる。
