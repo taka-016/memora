@@ -27,18 +27,20 @@ class SqliteTripEntryMapper {
   static Map<String, Object?> toRow(TripEntry value) {
     validate(value);
     return {
-    'id': value.id,
-    'group_id': value.groupId,
-    'year': value.year,
-    'name': value.name,
-    'start_date': value.startDate?.microsecondsSinceEpoch,
-    'end_date': value.endDate?.microsecondsSinceEpoch,
-    'memo': value.memo,
+      'id': value.id,
+      'group_id': value.groupId,
+      'year': value.year,
+      'name': value.name,
+      'start_date': value.startDate?.microsecondsSinceEpoch,
+      'end_date': value.endDate?.microsecondsSinceEpoch,
+      'memo': value.memo,
     };
   }
+
   static void validate(TripEntry value) {
     if (value.locations.isNotEmpty) {
-      AppCapabilities.forMode(AppMode.offline).requireAvailable(AppFeature.maps);
+      AppCapabilities.forMode(AppMode.offline)
+          .requireAvailable(AppFeature.maps);
     }
     for (final item in value.itineraryItems) {
       SqliteItineraryItemMapper.validate(item);

@@ -50,6 +50,7 @@ erDiagram
         string groupId FK "NOT NULL"
         string memberId FK "NOT NULL"
         boolean isAdministrator "NOT NULL"
+        number orderIndex "NOT NULL"
     }
     group_events {
         string id PK
@@ -132,3 +133,7 @@ erDiagram
     groups ||--o{ dvc_point_usages : "id → groupId"
     externally_managed_accounts ||--|| members : "id → accountId"
 ```
+
+## オフラインモードの物理スキーマ
+
+上図は共通の業務モデルとFirestoreの関連を示す。SQLiteでは列名をsnake_caseとし、`group_members`は`(group_id, member_id)`を複合主キーにする。`locations`と`member_invitations`は作成せず、旅程の場所参照も保存しない。制約、index、日時の形式、削除とマイグレーションの方針は[オフラインDB設計](offline_database.md)を参照。

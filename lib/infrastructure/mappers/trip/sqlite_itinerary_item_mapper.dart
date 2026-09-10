@@ -16,17 +16,19 @@ class SqliteItineraryItemMapper {
   static Map<String, Object?> toRow(ItineraryItem value) {
     validate(value);
     return {
-    'id': value.id,
-    'trip_id': value.tripId,
-    'name': value.name,
-    'start_date_time': value.startDateTime?.microsecondsSinceEpoch,
-    'end_date_time': value.endDateTime?.microsecondsSinceEpoch,
-    'memo': value.memo,
+      'id': value.id,
+      'trip_id': value.tripId,
+      'name': value.name,
+      'start_date_time': value.startDateTime?.microsecondsSinceEpoch,
+      'end_date_time': value.endDateTime?.microsecondsSinceEpoch,
+      'memo': value.memo,
     };
   }
+
   static void validate(ItineraryItem value) {
     if (value.locationId != null) {
-      AppCapabilities.forMode(AppMode.offline).requireAvailable(AppFeature.maps);
+      AppCapabilities.forMode(AppMode.offline)
+          .requireAvailable(AppFeature.maps);
     }
   }
 }

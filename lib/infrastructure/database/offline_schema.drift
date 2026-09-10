@@ -91,14 +91,12 @@ CREATE TABLE member_events (
   UNIQUE (member_id, year)
 ) AS SqliteMemberEventRow;
 
-
 CREATE TABLE group_events (
   id TEXT NOT NULL PRIMARY KEY,
   group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
   memo TEXT NOT NULL
 ) AS SqliteGroupEventRow;
-
 
 CREATE TABLE dvc_point_contracts (
   id TEXT NOT NULL PRIMARY KEY,
@@ -110,7 +108,6 @@ CREATE TABLE dvc_point_contracts (
   annual_point INTEGER NOT NULL
 ) AS SqliteDvcPointContractRow;
 
-
 CREATE TABLE dvc_limited_points (
   id TEXT NOT NULL PRIMARY KEY,
   group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
@@ -120,7 +117,6 @@ CREATE TABLE dvc_limited_points (
   memo TEXT
 ) AS SqliteDvcLimitedPointRow;
 
-
 CREATE TABLE dvc_point_usages (
   id TEXT NOT NULL PRIMARY KEY,
   group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
@@ -128,7 +124,6 @@ CREATE TABLE dvc_point_usages (
   used_point INTEGER NOT NULL,
   memo TEXT
 ) AS SqliteDvcPointUsageRow;
-
 
 CREATE INDEX group_events_group_year_idx ON group_events (group_id, year);
 CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month);
