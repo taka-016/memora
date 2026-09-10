@@ -7,8 +7,12 @@ class SqliteWriteTransaction implements WriteTransaction {
   SqliteWriteTransaction(this.db);
   final OfflineDatabase db;
   @override
-  Future<T> run<T>(Future<T> Function(WriteTransactionScope scope) action) async => db.transaction(() async => action(_SqliteWriteTransactionScope(db)));
+  Future<T> run<T>(
+    Future<T> Function(WriteTransactionScope scope) action,
+  ) async =>
+      db.transaction(() async => action(_SqliteWriteTransactionScope(db)));
 }
+
 class _SqliteWriteTransactionScope implements WriteTransactionScope {
   _SqliteWriteTransactionScope(this.db);
   final OfflineDatabase db;

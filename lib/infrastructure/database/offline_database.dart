@@ -11,11 +11,15 @@ part 'offline_database.g.dart';
 class OfflineDatabase extends _$OfflineDatabase {
   OfflineDatabase(super.executor);
 
-  factory OfflineDatabase.device() => OfflineDatabase(LazyDatabase(() async {
-    final directory = await getApplicationSupportDirectory();
-    await directory.create(recursive: true);
-    return NativeDatabase.createInBackground(File('${directory.path}/memora.sqlite'));
-  }));
+  factory OfflineDatabase.device() => OfflineDatabase(
+    LazyDatabase(() async {
+      final directory = await getApplicationSupportDirectory();
+      await directory.create(recursive: true);
+      return NativeDatabase.createInBackground(
+        File('${directory.path}/memora.sqlite'),
+      );
+    }),
+  );
 
   @override
   int get schemaVersion => 1;
@@ -31,29 +35,58 @@ class OfflineDatabase extends _$OfflineDatabase {
     },
   );
 
-  String _column(String field) => field.replaceAllMapped(RegExp('[A-Z]'), (match) => '_${match[0]!.toLowerCase()}');
+  String _column(String field) => field.replaceAllMapped(
+    RegExp('[A-Z]'),
+    (match) => '_${match[0]!.toLowerCase()}',
+  );
 
   Future<void> initialize() async {
     await customSelect('SELECT 1').get();
   }
 
-  Future<List<Map<String, Object?>>> rows(String table, {String? where, List<Object> args = const [], List<OrderBy>? orderBy}) async {
-    final columns = allTables.firstWhere((t) => t.actualTableName == table).$columns.map((c) => c.$name).toSet();
+  Future<List<Map<String, Object?>>> rows(
+    String table, {
+    String? where,
+    List<Object> args = const [],
+    List<OrderBy>? orderBy,
+  }) async {
+    final columns = allTables
+        .firstWhere((t) => t.actualTableName == table)
+        .$columns
+        .map((c) => c.$name)
+        .toSet();
     final orders = orderBy ?? const <OrderBy>[];
     for (final order in orders) {
-      if (!columns.contains(_column(order.field))) throw ArgumentError('未対応の並び替え項目です: ${order.field}');
+      if (!columns.contains(_column(order.field))) {
+        throw ArgumentError('未対応の並び替え項目です: ${order.field}');
+      }
     }
-    final sorting = orders.isEmpty ? '' : ' ORDER BY ${orders.map((o) => '"${_column(o.field)}" ${o.descending ? 'DESC' : 'ASC'}').join(', ')}';
-    final result = await customSelect('SELECT * FROM "$table"${where == null ? '' : ' WHERE $where'}$sorting', variables: args.map((v) => Variable(v)).toList()).get();
+    final sorting = orders.isEmpty
+        ? ''
+        : ' ORDER BY ${orders.map((o) => '"${_column(o.field)}" ${o.descending ? 'DESC' : 'ASC'}').join(', ')}';
+    final result = await customSelect(
+      'SELECT * FROM "$table"${where == null ? '' : ' WHERE $where'}$sorting',
+      variables: args.map((v) => Variable(v)).toList(),
+    ).get();
     return result.map((r) => r.data).toList();
   }
 
   Future<void> insertRow(String table, Map<String, Object?> row) async {
-    await customStatement('INSERT INTO "$table" (${row.keys.map((k) => '"$k"').join(', ')}) VALUES (${List.filled(row.length, '?').join(', ')})', row.values.toList());
+    await customStatement(
+      'INSERT INTO "$table" (${row.keys.map((k) => '"$k"').join(', ')}) VALUES (${List.filled(row.length, '?').join(', ')})',
+      row.values.toList(),
+    );
   }
 
-  Future<void> updateRow(String table, String id, Map<String, Object?> row) async {
-    final count = await customUpdate('UPDATE "$table" SET ${row.keys.map((k) => '"$k" = ?').join(', ')} WHERE id = ?', variables: [...row.values.map((v) => Variable(v)), Variable(id)]);
+  Future<void> updateRow(
+    String table,
+    String id,
+    Map<String, Object?> row,
+  ) async {
+    final count = await customUpdate(
+      'UPDATE "$table" SET ${row.keys.map((k) => '"$k" = ?').join(', ')} WHERE id = ?',
+      variables: [...row.values.map((v) => Variable(v)), Variable(id)],
+    );
     if (count == 0) throw StateError('更新対象が存在しません: $table/$id');
   }
 

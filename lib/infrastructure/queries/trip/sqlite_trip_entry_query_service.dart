@@ -10,15 +10,52 @@ class SqliteTripEntryQueryService implements TripEntryQueryService {
   SqliteTripEntryQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<TripEntryDto?> getTripEntryById(String tripId, {List<OrderBy>? tasksOrderBy, List<OrderBy>? itineraryItemsOrderBy}) async => db.transaction(() async {
+  Future<TripEntryDto?> getTripEntryById(
+    String tripId, {
+    List<OrderBy>? tasksOrderBy,
+    List<OrderBy>? itineraryItemsOrderBy,
+  }) async => db.transaction(() async {
     final rows = await db.rows('trip_entries', where: 'id = ?', args: [tripId]);
     if (rows.isEmpty) return null;
-    final tasks = await db.rows('tasks', where: 'trip_id = ?', args: [tripId], orderBy: tasksOrderBy);
-    final items = await db.rows('itinerary_items', where: 'trip_id = ?', args: [tripId], orderBy: itineraryItemsOrderBy ?? const [OrderBy('startDateTime'), OrderBy('endDateTime')]);
-    return SqliteTripEntryMapper.fromRow(rows.single, tasks: tasks.map(SqliteTaskMapper.fromRow).toList(), itineraryItems: items.map(SqliteItineraryItemMapper.fromRow).toList());
+    final tasks = await db.rows(
+      'tasks',
+      where: 'trip_id = ?',
+      args: [tripId],
+      orderBy: tasksOrderBy,
+    );
+    final items = await db.rows(
+      'itinerary_items',
+      where: 'trip_id = ?',
+      args: [tripId],
+      orderBy:
+          itineraryItemsOrderBy ??
+          const [OrderBy('startDateTime'), OrderBy('endDateTime')],
+    );
+    return SqliteTripEntryMapper.fromRow(
+      rows.single,
+      tasks: tasks.map(SqliteTaskMapper.fromRow).toList(),
+      itineraryItems: items.map(SqliteItineraryItemMapper.fromRow).toList(),
+    );
   });
   @override
-  Future<List<TripEntryDto>> getTripEntriesByGroupId(String groupId, {List<OrderBy>? orderBy}) async => (await db.rows('trip_entries', where: 'group_id = ?', args: [groupId], orderBy: orderBy)).map(SqliteTripEntryMapper.fromRow).toList();
+  Future<List<TripEntryDto>> getTripEntriesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'trip_entries',
+    where: 'group_id = ?',
+    args: [groupId],
+    orderBy: orderBy,
+  )).map(SqliteTripEntryMapper.fromRow).toList();
   @override
-  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(String groupId, int year, {List<OrderBy>? orderBy}) async => (await db.rows('trip_entries', where: 'group_id = ? AND year = ?', args: [groupId, year], orderBy: orderBy)).map(SqliteTripEntryMapper.fromRow).toList();
+  Future<List<TripEntryDto>> getTripEntriesByGroupIdAndYear(
+    String groupId,
+    int year, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'trip_entries',
+    where: 'group_id = ? AND year = ?',
+    args: [groupId, year],
+    orderBy: orderBy,
+  )).map(SqliteTripEntryMapper.fromRow).toList();
 }

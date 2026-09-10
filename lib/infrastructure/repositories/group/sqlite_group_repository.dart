@@ -11,7 +11,10 @@ class SqliteGroupRepository implements GroupRepository {
   @override
   Future<String> saveGroup(Group group) async => db.transaction(() async {
     final id = const Uuid().v4();
-    await db.insertRow('groups', SqliteGroupMapper.toRow(group.copyWith(id: id)));
+    await db.insertRow(
+      'groups',
+      SqliteGroupMapper.toRow(group.copyWith(id: id)),
+    );
     await _members(group.copyWith(id: id));
     return id;
   });
@@ -23,11 +26,17 @@ class SqliteGroupRepository implements GroupRepository {
   });
   Future<void> _members(Group group) async {
     for (final member in group.members) {
-      await db.insertRow('group_members', SqliteGroupMemberMapper.toRow(member.copyWith(groupId: group.id)));
+      await db.insertRow(
+        'group_members',
+        SqliteGroupMemberMapper.toRow(member.copyWith(groupId: group.id)),
+      );
     }
   }
+
   @override
-  Future<void> deleteGroup(String groupId) async => db.deleteRows('groups', 'id', groupId);
+  Future<void> deleteGroup(String groupId) async =>
+      db.deleteRows('groups', 'id', groupId);
   @override
-  Future<void> deleteGroupMembersByMemberId(String memberId) async => db.deleteRows('group_members', 'member_id', memberId);
+  Future<void> deleteGroupMembersByMemberId(String memberId) async =>
+      db.deleteRows('group_members', 'member_id', memberId);
 }
