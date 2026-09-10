@@ -71,7 +71,14 @@ void main() {
 
   test('オフラインでは端末内データのFactoryを解決しオンライン専用機能を拒否する', () async {
     final container = ProviderContainer(
-      overrides: [appModeProvider.overrideWithValue(AppMode.offline), offlineDatabaseProvider.overrideWith((ref) { final db = OfflineDatabase(NativeDatabase.memory()); ref.onDispose(db.close); return db; })],
+      overrides: [
+        appModeProvider.overrideWithValue(AppMode.offline),
+        offlineDatabaseProvider.overrideWith((ref) {
+          final db = OfflineDatabase(NativeDatabase.memory());
+          ref.onDispose(db.close);
+          return db;
+        }),
+      ],
     );
     addTearDown(container.dispose);
     // 依存先のSDKを初期化しない環境で、Factoryの実際の選択を確認する。

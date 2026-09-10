@@ -8,5 +8,13 @@ class SqliteTaskQueryService implements TaskQueryService {
   SqliteTaskQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<List<TaskDto>> getTasksByTripId(String tripId, {List<OrderBy>? orderBy}) async => (await db.rows('tasks', where: 'trip_id = ?', args: [tripId], orderBy: orderBy)).map(SqliteTaskMapper.fromRow).toList();
+  Future<List<TaskDto>> getTasksByTripId(
+    String tripId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'tasks',
+    where: 'trip_id = ?',
+    args: [tripId],
+    orderBy: orderBy,
+  )).map(SqliteTaskMapper.fromRow).toList();
 }

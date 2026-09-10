@@ -8,5 +8,13 @@ class SqliteGroupEventQueryService implements GroupEventQueryService {
   SqliteGroupEventQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<List<GroupEventDto>> getGroupEventsByGroupId(String groupId, {List<OrderBy>? orderBy}) async => (await db.rows('group_events', where: 'group_id = ?', args: [groupId], orderBy: orderBy)).map(SqliteGroupEventMapper.fromRow).toList();
+  Future<List<GroupEventDto>> getGroupEventsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'group_events',
+    where: 'group_id = ?',
+    args: [groupId],
+    orderBy: orderBy,
+  )).map(SqliteGroupEventMapper.fromRow).toList();
 }

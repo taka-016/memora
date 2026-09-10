@@ -8,5 +8,13 @@ class SqliteDvcPointUsageQueryService implements DvcPointUsageQueryService {
   SqliteDvcPointUsageQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(String groupId, {List<OrderBy>? orderBy}) async => (await db.rows('dvc_point_usages', where: 'group_id = ?', args: [groupId], orderBy: orderBy)).map(SqliteDvcPointUsageMapper.fromRow).toList();
+  Future<List<DvcPointUsageDto>> getDvcPointUsagesByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'dvc_point_usages',
+    where: 'group_id = ?',
+    args: [groupId],
+    orderBy: orderBy,
+  )).map(SqliteDvcPointUsageMapper.fromRow).toList();
 }

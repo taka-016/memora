@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/queries/order_by.dart';
@@ -34,21 +35,40 @@ void main() {
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('memora-sqlite-');
     db = OfflineDatabase(NativeDatabase(File('${directory.path}/test.sqlite')));
-    final member = await SqliteCurrentMemberResolver(db, localResolver: LocalCurrentMemberResolver(directory: () async => directory)).resolve();
+    final member = await SqliteCurrentMemberResolver(
+      db,
+      localResolver: LocalCurrentMemberResolver(
+        directory: () async => directory,
+      ),
+    ).resolve();
     memberId = member.id;
-    groupId = await SqliteGroupRepository(db).saveGroup(Group(id: '', ownerId: memberId, name: '家族'));
+    groupId = await SqliteGroupRepository(db)
+        .saveGroup(Group(id: '', ownerId: memberId, name: '家族'));
   });
-  tearDown(() async { await db.close(); await directory.delete(recursive: true); });
+  tearDown(() async {
+    await db.close();
+    await directory.delete(recursive: true);
+  });
 
   test('既存JSONの本人IDを維持し編集結果をDB再オープン後に復元する', () async {
     final local = LocalCurrentMemberResolver(directory: () async => directory);
     final original = await local.resolve();
     expect(memberId, original.id);
     final birthday = DateTime(2000, 2, 29);
-    await SqliteMemberRepository(db).updateMember(Member(id: memberId, accountId: original.accountId, displayName: '変更した本人', birthday: birthday));
+    await SqliteMemberRepository(db).updateMember(
+      Member(
+        id: memberId,
+        accountId: original.accountId,
+        displayName: '変更した本人',
+        birthday: birthday,
+      ),
+    );
     await db.close();
     db = OfflineDatabase(NativeDatabase(File('${directory.path}/test.sqlite')));
-    final restored = await SqliteCurrentMemberResolver(db, localResolver: local).resolve();
+    final restored = await SqliteCurrentMemberResolver(
+      db,
+      localResolver: local,
+    ).resolve();
     expect(restored.id, original.id);
     expect(restored.accountId, original.accountId);
     expect(restored.displayName, '変更した本人');
@@ -59,11 +79,23 @@ void main() {
   test('メンバーの検索と並び替えおよびnullable項目の解除を保存する', () async {
     final repo = SqliteMemberRepository(db);
     final query = SqliteMemberQueryService(db);
-    await repo.saveMember(Member(id: '', ownerId: memberId, displayName: 'B', email: 'b@example.com'));
+    await repo.saveMember(
+      Member(
+        id: '',
+        ownerId: memberId,
+        displayName: 'B',
+        email: 'b@example.com',
+      ),
+    );
     await repo.saveMember(Member(id: '', ownerId: memberId, displayName: 'A'));
-    final members = await query.getMembersByOwnerId(memberId, orderBy: [const OrderBy('displayName')]);
+    final members = await query.getMembersByOwnerId(
+      memberId,
+      orderBy: [const OrderBy('displayName')],
+    );
     expect(members.map((m) => m.displayName), ['A', 'B']);
-    await repo.updateMember(Member(id: members.last.id, ownerId: memberId, displayName: 'B'));
+    await repo.updateMember(
+      Member(id: members.last.id, ownerId: memberId, displayName: 'B'),
+    );
     expect((await query.getMemberById(members.last.id))!.email, isNull);
     await repo.deleteMember(members.first.id);
     expect(await query.getMemberById(members.first.id), isNull);
@@ -72,15 +104,26 @@ void main() {
   test('同年のメンバーイベントは置換し空メモで削除する', () async {
     final repo = SqliteMemberEventRepository(db);
     final query = SqliteMemberEventQueryService(db);
-    final event = MemberEvent(id: '', memberId: memberId, year: 2026, memo: '入学');
+    final event = MemberEvent(
+      id: '',
+      memberId: memberId,
+      year: 2026,
+      memo: '入学',
+    );
     final id = await repo.saveMemberEvent(event);
     expect(await repo.saveMemberEvent(event.copyWith(memo: '卒業')), id);
     await repo.saveMemberEvent(event.copyWith(year: 2025));
-    final events = await query.getMemberEventsByMemberIds([memberId, memberId], orderBy: [const OrderBy('year', descending: true)]);
+    final events = await query.getMemberEventsByMemberIds(
+      [memberId, memberId],
+      orderBy: [const OrderBy('year', descending: true)],
+    );
     expect(events.map((e) => e.year), [2026, 2025]);
     expect(events.first.memo, '卒業');
     expect(await repo.saveMemberEvent(event.copyWith(memo: '')), '');
-    expect((await query.getMemberEventsByMemberIds([memberId])).single.year, 2025);
+    expect(
+      (await query.getMemberEventsByMemberIds([memberId])).single.year,
+      2025,
+    );
     await repo.deleteMemberEventsByMemberId(memberId);
     expect(await query.getMemberEventsByMemberIds([memberId]), isEmpty);
     expect(await query.getMemberEventsByMemberIds([]), isEmpty);
@@ -106,12 +149,44 @@ void main() {
     final contracts = SqliteDvcPointContractRepository(db);
     final limited = SqliteDvcLimitedPointRepository(db);
     final usages = SqliteDvcPointUsageRepository(db);
-    await contracts.saveDvcPointContract(DvcPointContract(id: '', groupId: groupId, contractName: '契約', contractStartYearMonth: start, contractEndYearMonth: end, useYearStartMonth: 4, annualPoint: 100));
-    await limited.saveDvcLimitedPoint(DvcLimitedPoint(id: '', groupId: groupId, startYearMonth: start, endYearMonth: end, point: 30, memo: '追加'));
-    await usages.saveDvcPointUsage(DvcPointUsage(id: '', groupId: groupId, usageYearMonth: start, usedPoint: 10));
-    final contract = (await SqliteDvcPointContractQueryService(db).getDvcPointContractsByGroupId(groupId)).single;
-    final point = (await SqliteDvcLimitedPointQueryService(db).getDvcLimitedPointsByGroupId(groupId)).single;
-    final usage = (await SqliteDvcPointUsageQueryService(db).getDvcPointUsagesByGroupId(groupId)).single;
+    await contracts.saveDvcPointContract(
+      DvcPointContract(
+        id: '',
+        groupId: groupId,
+        contractName: '契約',
+        contractStartYearMonth: start,
+        contractEndYearMonth: end,
+        useYearStartMonth: 4,
+        annualPoint: 100,
+      ),
+    );
+    await limited.saveDvcLimitedPoint(
+      DvcLimitedPoint(
+        id: '',
+        groupId: groupId,
+        startYearMonth: start,
+        endYearMonth: end,
+        point: 30,
+        memo: '追加',
+      ),
+    );
+    await usages.saveDvcPointUsage(
+      DvcPointUsage(
+        id: '',
+        groupId: groupId,
+        usageYearMonth: start,
+        usedPoint: 10,
+      ),
+    );
+    final contract = (await SqliteDvcPointContractQueryService(
+      db,
+    ).getDvcPointContractsByGroupId(groupId)).single;
+    final point = (await SqliteDvcLimitedPointQueryService(
+      db,
+    ).getDvcLimitedPointsByGroupId(groupId)).single;
+    final usage = (await SqliteDvcPointUsageQueryService(
+      db,
+    ).getDvcPointUsagesByGroupId(groupId)).single;
     expect(contract.contractStartYearMonth, start);
     expect(contract.annualPoint, 100);
     expect(point.endYearMonth, end);
@@ -122,8 +197,20 @@ void main() {
     await contracts.deleteDvcPointContract(contract.id);
     await limited.deleteDvcLimitedPoint(point.id);
     await usages.deleteDvcPointUsage(usage.id);
-    expect(await SqliteDvcPointContractQueryService(db).getDvcPointContractsByGroupId(groupId), isEmpty);
-    expect(await SqliteDvcLimitedPointQueryService(db).getDvcLimitedPointsByGroupId(groupId), isEmpty);
-    expect(await SqliteDvcPointUsageQueryService(db).getDvcPointUsagesByGroupId(groupId), isEmpty);
+    expect(
+      await SqliteDvcPointContractQueryService(db)
+          .getDvcPointContractsByGroupId(groupId),
+      isEmpty,
+    );
+    expect(
+      await SqliteDvcLimitedPointQueryService(db)
+          .getDvcLimitedPointsByGroupId(groupId),
+      isEmpty,
+    );
+    expect(
+      await SqliteDvcPointUsageQueryService(db)
+          .getDvcPointUsagesByGroupId(groupId),
+      isEmpty,
+    );
   });
 }

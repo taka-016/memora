@@ -8,9 +8,14 @@ class SqliteDvcPointUsageRepository implements DvcPointUsageRepository {
   SqliteDvcPointUsageRepository(this.db);
   final OfflineDatabase db;
   @override
-  Future<void> saveDvcPointUsage(DvcPointUsage value) async => db.insertRow('dvc_point_usages', SqliteDvcPointUsageMapper.toRow(value.copyWith(id: const Uuid().v4())));
+  Future<void> saveDvcPointUsage(DvcPointUsage value) async => db.insertRow(
+    'dvc_point_usages',
+    SqliteDvcPointUsageMapper.toRow(value.copyWith(id: const Uuid().v4())),
+  );
   @override
-  Future<void> deleteDvcPointUsage(String id) async => db.deleteRows('dvc_point_usages', 'id', id);
+  Future<void> deleteDvcPointUsage(String id) async =>
+      db.deleteRows('dvc_point_usages', 'id', id);
   @override
-  Future<void> deleteDvcPointUsagesByGroupId(String groupId) async => db.deleteRows('dvc_point_usages', 'group_id', groupId);
+  Future<void> deleteDvcPointUsagesByGroupId(String groupId) async =>
+      db.deleteRows('dvc_point_usages', 'group_id', groupId);
 }

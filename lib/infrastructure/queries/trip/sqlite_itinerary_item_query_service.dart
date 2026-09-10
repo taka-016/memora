@@ -8,5 +8,13 @@ class SqliteItineraryItemQueryService implements ItineraryItemQueryService {
   SqliteItineraryItemQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<List<ItineraryItemDto>> getItineraryItemsByTripId(String tripId, {List<OrderBy>? orderBy}) async => (await db.rows('itinerary_items', where: 'trip_id = ?', args: [tripId], orderBy: orderBy)).map(SqliteItineraryItemMapper.fromRow).toList();
+  Future<List<ItineraryItemDto>> getItineraryItemsByTripId(
+    String tripId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'itinerary_items',
+    where: 'trip_id = ?',
+    args: [tripId],
+    orderBy: orderBy,
+  )).map(SqliteItineraryItemMapper.fromRow).toList();
 }

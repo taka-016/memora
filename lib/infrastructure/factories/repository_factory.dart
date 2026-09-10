@@ -81,20 +81,54 @@ class RepositoryFactory {
     return _createRepositoryByMode<T>(mode, ref: ref);
   }
 
-  static T _createRepositoryByMode<T extends Object>(AppMode mode, {required Ref ref}) {
+  static T _createRepositoryByMode<T extends Object>(
+    AppMode mode, {
+    required Ref ref,
+  }) {
     switch (mode) {
       case AppMode.online:
         return _createFirestoreRepository<T>();
       case AppMode.offline:
-        if (T == TripEntryRepository) return SqliteTripEntryRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == GroupEventRepository) return SqliteGroupEventRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == GroupRepository) return SqliteGroupRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcPointContractRepository) return SqliteDvcPointContractRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcLimitedPointRepository) return SqliteDvcLimitedPointRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcPointUsageRepository) return SqliteDvcPointUsageRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberEventRepository) return SqliteMemberEventRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberRepository) return SqliteMemberRepository(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberInvitationRepository) { throw const FeatureUnavailableException(AppFeature.invitations, 'この機能はオンラインモードで利用できます。'); }
+        if (T == TripEntryRepository) {
+          return SqliteTripEntryRepository(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupEventRepository) {
+          return SqliteGroupEventRepository(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupRepository) {
+          return SqliteGroupRepository(ref.watch(offlineDatabaseProvider)) as T;
+        }
+        if (T == DvcPointContractRepository) {
+          return SqliteDvcPointContractRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcLimitedPointRepository) {
+          return SqliteDvcLimitedPointRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcPointUsageRepository) {
+          return SqliteDvcPointUsageRepository(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == MemberEventRepository) {
+          return SqliteMemberEventRepository(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == MemberRepository) {
+          return SqliteMemberRepository(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == MemberInvitationRepository) {
+          throw const FeatureUnavailableException(
+            AppFeature.invitations,
+            'この機能はオンラインモードで利用できます。',
+          );
+        }
         throw ArgumentError('Unknown repository type: $T');
     }
   }

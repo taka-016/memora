@@ -8,5 +8,13 @@ class SqliteDvcLimitedPointQueryService implements DvcLimitedPointQueryService {
   SqliteDvcLimitedPointQueryService(this.db);
   final OfflineDatabase db;
   @override
-  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(String groupId, {List<OrderBy>? orderBy}) async => (await db.rows('dvc_limited_points', where: 'group_id = ?', args: [groupId], orderBy: orderBy)).map(SqliteDvcLimitedPointMapper.fromRow).toList();
+  Future<List<DvcLimitedPointDto>> getDvcLimitedPointsByGroupId(
+    String groupId, {
+    List<OrderBy>? orderBy,
+  }) async => (await db.rows(
+    'dvc_limited_points',
+    where: 'group_id = ?',
+    args: [groupId],
+    orderBy: orderBy,
+  )).map(SqliteDvcLimitedPointMapper.fromRow).toList();
 }

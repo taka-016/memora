@@ -134,18 +134,64 @@ class QueryServiceFactory {
           rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
-        if (T == TripEntryQueryService) return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == ItineraryItemQueryService) return SqliteItineraryItemQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == TaskQueryService) return SqliteTaskQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == GroupQueryService) return SqliteGroupQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == GroupEventQueryService) return SqliteGroupEventQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcPointUsageQueryService) return SqliteDvcPointUsageQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcPointContractQueryService) return SqliteDvcPointContractQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == DvcLimitedPointQueryService) return SqliteDvcLimitedPointQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberEventQueryService) return SqliteMemberEventQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberQueryService) return SqliteMemberQueryService(ref.watch(offlineDatabaseProvider)) as T;
-        if (T == MemberInvitationQueryService) { throw const FeatureUnavailableException(AppFeature.invitations, 'この機能はオンラインモードで利用できます。'); }
-        if (T == LocationQueryService) { throw const FeatureUnavailableException(AppFeature.maps, 'この機能はオンラインモードで利用できます。'); }
+        if (T == TripEntryQueryService) {
+          return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == ItineraryItemQueryService) {
+          return SqliteItineraryItemQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == TaskQueryService) {
+          return SqliteTaskQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupQueryService) {
+          return SqliteGroupQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == GroupEventQueryService) {
+          return SqliteGroupEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcPointUsageQueryService) {
+          return SqliteDvcPointUsageQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcPointContractQueryService) {
+          return SqliteDvcPointContractQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == DvcLimitedPointQueryService) {
+          return SqliteDvcLimitedPointQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == MemberEventQueryService) {
+          return SqliteMemberEventQueryService(
+            ref.watch(offlineDatabaseProvider),
+          ) as T;
+        }
+        if (T == MemberQueryService) {
+          return SqliteMemberQueryService(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
+        if (T == MemberInvitationQueryService) {
+          throw const FeatureUnavailableException(
+            AppFeature.invitations,
+            'この機能はオンラインモードで利用できます。',
+          );
+        }
+        if (T == LocationQueryService) {
+          throw const FeatureUnavailableException(
+            AppFeature.maps,
+            'この機能はオンラインモードで利用できます。',
+          );
+        }
         throw ArgumentError('Unknown query service type: $T');
     }
   }

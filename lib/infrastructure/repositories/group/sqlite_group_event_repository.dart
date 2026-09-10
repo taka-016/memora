@@ -11,14 +11,24 @@ class SqliteGroupEventRepository implements GroupEventRepository {
   Future<String> saveGroupEvent(GroupEvent groupEvent) async {
     if (groupEvent.id.isEmpty) {
       final id = const Uuid().v4();
-      await db.insertRow('group_events', SqliteGroupEventMapper.toRow(groupEvent.copyWith(id: id)));
+      await db.insertRow(
+        'group_events',
+        SqliteGroupEventMapper.toRow(groupEvent.copyWith(id: id)),
+      );
       return id;
     }
-    await db.updateRow('group_events', groupEvent.id, SqliteGroupEventMapper.toRow(groupEvent));
+    await db.updateRow(
+      'group_events',
+      groupEvent.id,
+      SqliteGroupEventMapper.toRow(groupEvent),
+    );
     return groupEvent.id;
   }
+
   @override
-  Future<void> deleteGroupEvent(String groupEventId) async => db.deleteRows('group_events', 'id', groupEventId);
+  Future<void> deleteGroupEvent(String groupEventId) async =>
+      db.deleteRows('group_events', 'id', groupEventId);
   @override
-  Future<void> deleteGroupEventsByGroupId(String groupId) async => db.deleteRows('group_events', 'group_id', groupId);
+  Future<void> deleteGroupEventsByGroupId(String groupId) async =>
+      db.deleteRows('group_events', 'group_id', groupId);
 }

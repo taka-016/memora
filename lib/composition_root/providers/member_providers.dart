@@ -85,7 +85,9 @@ final deleteMemberUsecaseProvider = Provider<DeleteMemberUsecase>((ref) {
 
 final currentMemberResolverProvider = Provider<CurrentMemberResolver>((ref) {
   return switch (ref.watch(appModeProvider)) {
-    AppMode.offline => SqliteCurrentMemberResolver(ref.watch(offlineDatabaseProvider)),
+    AppMode.offline => SqliteCurrentMemberResolver(
+      ref.watch(offlineDatabaseProvider),
+    ),
     AppMode.online => AuthenticatedCurrentMemberResolver(
       ref.watch(memberQueryServiceProvider),
       ref.watch(authServiceProvider),

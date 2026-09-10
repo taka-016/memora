@@ -25,7 +25,10 @@ class TransactionFactory {
       case AppMode.online:
         return _createFirestoreTransaction<T>(ref: ref);
       case AppMode.offline:
-        if (T == WriteTransaction) return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == WriteTransaction) {
+          return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider))
+              as T;
+        }
         throw ArgumentError('Unknown transaction type: $T');
     }
   }
