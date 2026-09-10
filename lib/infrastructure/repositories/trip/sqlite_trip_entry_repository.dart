@@ -1,6 +1,4 @@
 import 'package:uuid/uuid.dart';
-import 'package:memora/application/models/app_capabilities.dart';
-import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/domain/entities/trip/trip_entry.dart';
 import 'package:memora/domain/repositories/trip/trip_entry_repository.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
@@ -11,17 +9,9 @@ import 'package:memora/infrastructure/mappers/trip/sqlite_itinerary_item_mapper.
 class SqliteTripEntryRepository implements TripEntryRepository {
   SqliteTripEntryRepository(this.db);
   final OfflineDatabase db;
-  void _validate(TripEntry trip) {
-    if (trip.locations.isNotEmpty ||
-        trip.itineraryItems.any((item) => item.locationId != null)) {
-      AppCapabilities.forMode(AppMode.offline)
-          .requireAvailable(AppFeature.maps);
-    }
-  }
-
   @override
   Future<String> saveTripEntry(TripEntry tripEntry) async {
-    _validate(tripEntry);
+    SqliteTripEntryMapper.validate(tripEntry);
     return db.transaction(() async {
       final id = const Uuid().v4();
       final trip = tripEntry.copyWith(id: id);
@@ -33,7 +23,7 @@ class SqliteTripEntryRepository implements TripEntryRepository {
 
   @override
   Future<void> updateTripEntry(TripEntry tripEntry) async {
-    _validate(tripEntry);
+    SqliteTripEntryMapper.validate(tripEntry);
     await db.transaction(() async {
       await db.updateRow(
         'trip_entries',

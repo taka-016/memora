@@ -1,3 +1,5 @@
+import 'package:memora/application/models/app_capabilities.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/domain/entities/trip/itinerary_item.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/infrastructure/database/sqlite_values.dart';
@@ -11,12 +13,20 @@ class SqliteItineraryItemMapper {
     endDateTime: SqliteValues.date(row['end_date_time']),
     memo: row['memo'] as String?,
   );
-  static Map<String, Object?> toRow(ItineraryItem value) => {
+  static Map<String, Object?> toRow(ItineraryItem value) {
+    validate(value);
+    return {
     'id': value.id,
     'trip_id': value.tripId,
     'name': value.name,
     'start_date_time': value.startDateTime?.microsecondsSinceEpoch,
     'end_date_time': value.endDateTime?.microsecondsSinceEpoch,
     'memo': value.memo,
-  };
+    };
+  }
+  static void validate(ItineraryItem value) {
+    if (value.locationId != null) {
+      AppCapabilities.forMode(AppMode.offline).requireAvailable(AppFeature.maps);
+    }
+  }
 }
