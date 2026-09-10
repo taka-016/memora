@@ -1,6 +1,6 @@
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/transactions/sqlite_write_transaction.dart';
 import 'package:memora/application/models/app_mode.dart';
-import 'package:memora/application/models/app_capabilities.dart';
-import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/transactions/write_transaction.dart';
@@ -25,10 +25,8 @@ class TransactionFactory {
       case AppMode.online:
         return _createFirestoreTransaction<T>(ref: ref);
       case AppMode.offline:
-        throw const FeatureUnavailableException(
-          AppFeature.localData,
-          '端末内データの保存機能は現在準備中です。',
-        );
+        if (T == WriteTransaction) return SqliteWriteTransaction(ref.watch(offlineDatabaseProvider)) as T;
+        throw ArgumentError('Unknown transaction type: $T');
     }
   }
 

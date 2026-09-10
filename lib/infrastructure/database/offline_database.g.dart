@@ -3014,6 +3014,1932 @@ class ItineraryItemsCompanion extends UpdateCompanion<SqliteItineraryItemRow> {
   }
 }
 
+class MemberEvents extends Table
+    with TableInfo<MemberEvents, SqliteMemberEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  MemberEvents(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES members(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _yearMeta = const VerificationMeta('year');
+  late final GeneratedColumn<int> year = GeneratedColumn<int>(
+    'year',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, memberId, year, memo];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'member_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteMemberEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('year')) {
+      context.handle(
+        _yearMeta,
+        year.isAcceptableOrUnknown(data['year']!, _yearMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_yearMeta);
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {memberId, year},
+  ];
+  @override
+  SqliteMemberEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteMemberEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      year: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}year'],
+      )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      )!,
+    );
+  }
+
+  @override
+  MemberEvents createAlias(String alias) {
+    return MemberEvents(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const ['UNIQUE(member_id, year)'];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteMemberEventRow extends DataClass
+    implements Insertable<SqliteMemberEventRow> {
+  final String id;
+  final String memberId;
+  final int year;
+  final String memo;
+  const SqliteMemberEventRow({
+    required this.id,
+    required this.memberId,
+    required this.year,
+    required this.memo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['member_id'] = Variable<String>(memberId);
+    map['year'] = Variable<int>(year);
+    map['memo'] = Variable<String>(memo);
+    return map;
+  }
+
+  MemberEventsCompanion toCompanion(bool nullToAbsent) {
+    return MemberEventsCompanion(
+      id: Value(id),
+      memberId: Value(memberId),
+      year: Value(year),
+      memo: Value(memo),
+    );
+  }
+
+  factory SqliteMemberEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteMemberEventRow(
+      id: serializer.fromJson<String>(json['id']),
+      memberId: serializer.fromJson<String>(json['member_id']),
+      year: serializer.fromJson<int>(json['year']),
+      memo: serializer.fromJson<String>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'member_id': serializer.toJson<String>(memberId),
+      'year': serializer.toJson<int>(year),
+      'memo': serializer.toJson<String>(memo),
+    };
+  }
+
+  SqliteMemberEventRow copyWith({
+    String? id,
+    String? memberId,
+    int? year,
+    String? memo,
+  }) => SqliteMemberEventRow(
+    id: id ?? this.id,
+    memberId: memberId ?? this.memberId,
+    year: year ?? this.year,
+    memo: memo ?? this.memo,
+  );
+  SqliteMemberEventRow copyWithCompanion(MemberEventsCompanion data) {
+    return SqliteMemberEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      year: data.year.present ? data.year.value : this.year,
+      memo: data.memo.present ? data.memo.value : this.memo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteMemberEventRow(')
+          ..write('id: $id, ')
+          ..write('memberId: $memberId, ')
+          ..write('year: $year, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, memberId, year, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteMemberEventRow &&
+          other.id == this.id &&
+          other.memberId == this.memberId &&
+          other.year == this.year &&
+          other.memo == this.memo);
+}
+
+class MemberEventsCompanion extends UpdateCompanion<SqliteMemberEventRow> {
+  final Value<String> id;
+  final Value<String> memberId;
+  final Value<int> year;
+  final Value<String> memo;
+  final Value<int> rowid;
+  const MemberEventsCompanion({
+    this.id = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.year = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  MemberEventsCompanion.insert({
+    required String id,
+    required String memberId,
+    required int year,
+    required String memo,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       memberId = Value(memberId),
+       year = Value(year),
+       memo = Value(memo);
+  static Insertable<SqliteMemberEventRow> custom({
+    Expression<String>? id,
+    Expression<String>? memberId,
+    Expression<int>? year,
+    Expression<String>? memo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (memberId != null) 'member_id': memberId,
+      if (year != null) 'year': year,
+      if (memo != null) 'memo': memo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  MemberEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? memberId,
+    Value<int>? year,
+    Value<String>? memo,
+    Value<int>? rowid,
+  }) {
+    return MemberEventsCompanion(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      year: year ?? this.year,
+      memo: memo ?? this.memo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (year.present) {
+      map['year'] = Variable<int>(year.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MemberEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('memberId: $memberId, ')
+          ..write('year: $year, ')
+          ..write('memo: $memo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class GroupEvents extends Table
+    with TableInfo<GroupEvents, SqliteGroupEventRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  GroupEvents(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _yearMeta = const VerificationMeta('year');
+  late final GeneratedColumn<int> year = GeneratedColumn<int>(
+    'year',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, groupId, year, memo];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_events';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteGroupEventRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('year')) {
+      context.handle(
+        _yearMeta,
+        year.isAcceptableOrUnknown(data['year']!, _yearMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_yearMeta);
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteGroupEventRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteGroupEventRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      year: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}year'],
+      )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      )!,
+    );
+  }
+
+  @override
+  GroupEvents createAlias(String alias) {
+    return GroupEvents(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteGroupEventRow extends DataClass
+    implements Insertable<SqliteGroupEventRow> {
+  final String id;
+  final String groupId;
+  final int year;
+  final String memo;
+  const SqliteGroupEventRow({
+    required this.id,
+    required this.groupId,
+    required this.year,
+    required this.memo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['year'] = Variable<int>(year);
+    map['memo'] = Variable<String>(memo);
+    return map;
+  }
+
+  GroupEventsCompanion toCompanion(bool nullToAbsent) {
+    return GroupEventsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      year: Value(year),
+      memo: Value(memo),
+    );
+  }
+
+  factory SqliteGroupEventRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteGroupEventRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      year: serializer.fromJson<int>(json['year']),
+      memo: serializer.fromJson<String>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'year': serializer.toJson<int>(year),
+      'memo': serializer.toJson<String>(memo),
+    };
+  }
+
+  SqliteGroupEventRow copyWith({
+    String? id,
+    String? groupId,
+    int? year,
+    String? memo,
+  }) => SqliteGroupEventRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    year: year ?? this.year,
+    memo: memo ?? this.memo,
+  );
+  SqliteGroupEventRow copyWithCompanion(GroupEventsCompanion data) {
+    return SqliteGroupEventRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      year: data.year.present ? data.year.value : this.year,
+      memo: data.memo.present ? data.memo.value : this.memo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteGroupEventRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('year: $year, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, year, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteGroupEventRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.year == this.year &&
+          other.memo == this.memo);
+}
+
+class GroupEventsCompanion extends UpdateCompanion<SqliteGroupEventRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<int> year;
+  final Value<String> memo;
+  final Value<int> rowid;
+  const GroupEventsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.year = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupEventsCompanion.insert({
+    required String id,
+    required String groupId,
+    required int year,
+    required String memo,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       year = Value(year),
+       memo = Value(memo);
+  static Insertable<SqliteGroupEventRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<int>? year,
+    Expression<String>? memo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (year != null) 'year': year,
+      if (memo != null) 'memo': memo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupEventsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<int>? year,
+    Value<String>? memo,
+    Value<int>? rowid,
+  }) {
+    return GroupEventsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      year: year ?? this.year,
+      memo: memo ?? this.memo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (year.present) {
+      map['year'] = Variable<int>(year.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupEventsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('year: $year, ')
+          ..write('memo: $memo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class DvcPointContracts extends Table
+    with TableInfo<DvcPointContracts, SqliteDvcPointContractRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DvcPointContracts(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _contractNameMeta = const VerificationMeta(
+    'contractName',
+  );
+  late final GeneratedColumn<String> contractName = GeneratedColumn<String>(
+    'contract_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _contractStartYearMonthMeta =
+      const VerificationMeta('contractStartYearMonth');
+  late final GeneratedColumn<int> contractStartYearMonth = GeneratedColumn<int>(
+    'contract_start_year_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _contractEndYearMonthMeta =
+      const VerificationMeta('contractEndYearMonth');
+  late final GeneratedColumn<int> contractEndYearMonth = GeneratedColumn<int>(
+    'contract_end_year_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _useYearStartMonthMeta = const VerificationMeta(
+    'useYearStartMonth',
+  );
+  late final GeneratedColumn<int> useYearStartMonth = GeneratedColumn<int>(
+    'use_year_start_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _annualPointMeta = const VerificationMeta(
+    'annualPoint',
+  );
+  late final GeneratedColumn<int> annualPoint = GeneratedColumn<int>(
+    'annual_point',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    contractName,
+    contractStartYearMonth,
+    contractEndYearMonth,
+    useYearStartMonth,
+    annualPoint,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dvc_point_contracts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteDvcPointContractRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('contract_name')) {
+      context.handle(
+        _contractNameMeta,
+        contractName.isAcceptableOrUnknown(
+          data['contract_name']!,
+          _contractNameMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contractNameMeta);
+    }
+    if (data.containsKey('contract_start_year_month')) {
+      context.handle(
+        _contractStartYearMonthMeta,
+        contractStartYearMonth.isAcceptableOrUnknown(
+          data['contract_start_year_month']!,
+          _contractStartYearMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contractStartYearMonthMeta);
+    }
+    if (data.containsKey('contract_end_year_month')) {
+      context.handle(
+        _contractEndYearMonthMeta,
+        contractEndYearMonth.isAcceptableOrUnknown(
+          data['contract_end_year_month']!,
+          _contractEndYearMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_contractEndYearMonthMeta);
+    }
+    if (data.containsKey('use_year_start_month')) {
+      context.handle(
+        _useYearStartMonthMeta,
+        useYearStartMonth.isAcceptableOrUnknown(
+          data['use_year_start_month']!,
+          _useYearStartMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_useYearStartMonthMeta);
+    }
+    if (data.containsKey('annual_point')) {
+      context.handle(
+        _annualPointMeta,
+        annualPoint.isAcceptableOrUnknown(
+          data['annual_point']!,
+          _annualPointMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_annualPointMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteDvcPointContractRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteDvcPointContractRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      contractName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contract_name'],
+      )!,
+      contractStartYearMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_start_year_month'],
+      )!,
+      contractEndYearMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}contract_end_year_month'],
+      )!,
+      useYearStartMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}use_year_start_month'],
+      )!,
+      annualPoint: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}annual_point'],
+      )!,
+    );
+  }
+
+  @override
+  DvcPointContracts createAlias(String alias) {
+    return DvcPointContracts(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteDvcPointContractRow extends DataClass
+    implements Insertable<SqliteDvcPointContractRow> {
+  final String id;
+  final String groupId;
+  final String contractName;
+  final int contractStartYearMonth;
+  final int contractEndYearMonth;
+  final int useYearStartMonth;
+  final int annualPoint;
+  const SqliteDvcPointContractRow({
+    required this.id,
+    required this.groupId,
+    required this.contractName,
+    required this.contractStartYearMonth,
+    required this.contractEndYearMonth,
+    required this.useYearStartMonth,
+    required this.annualPoint,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['contract_name'] = Variable<String>(contractName);
+    map['contract_start_year_month'] = Variable<int>(contractStartYearMonth);
+    map['contract_end_year_month'] = Variable<int>(contractEndYearMonth);
+    map['use_year_start_month'] = Variable<int>(useYearStartMonth);
+    map['annual_point'] = Variable<int>(annualPoint);
+    return map;
+  }
+
+  DvcPointContractsCompanion toCompanion(bool nullToAbsent) {
+    return DvcPointContractsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      contractName: Value(contractName),
+      contractStartYearMonth: Value(contractStartYearMonth),
+      contractEndYearMonth: Value(contractEndYearMonth),
+      useYearStartMonth: Value(useYearStartMonth),
+      annualPoint: Value(annualPoint),
+    );
+  }
+
+  factory SqliteDvcPointContractRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteDvcPointContractRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      contractName: serializer.fromJson<String>(json['contract_name']),
+      contractStartYearMonth: serializer.fromJson<int>(
+        json['contract_start_year_month'],
+      ),
+      contractEndYearMonth: serializer.fromJson<int>(
+        json['contract_end_year_month'],
+      ),
+      useYearStartMonth: serializer.fromJson<int>(json['use_year_start_month']),
+      annualPoint: serializer.fromJson<int>(json['annual_point']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'contract_name': serializer.toJson<String>(contractName),
+      'contract_start_year_month': serializer.toJson<int>(
+        contractStartYearMonth,
+      ),
+      'contract_end_year_month': serializer.toJson<int>(contractEndYearMonth),
+      'use_year_start_month': serializer.toJson<int>(useYearStartMonth),
+      'annual_point': serializer.toJson<int>(annualPoint),
+    };
+  }
+
+  SqliteDvcPointContractRow copyWith({
+    String? id,
+    String? groupId,
+    String? contractName,
+    int? contractStartYearMonth,
+    int? contractEndYearMonth,
+    int? useYearStartMonth,
+    int? annualPoint,
+  }) => SqliteDvcPointContractRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    contractName: contractName ?? this.contractName,
+    contractStartYearMonth:
+        contractStartYearMonth ?? this.contractStartYearMonth,
+    contractEndYearMonth: contractEndYearMonth ?? this.contractEndYearMonth,
+    useYearStartMonth: useYearStartMonth ?? this.useYearStartMonth,
+    annualPoint: annualPoint ?? this.annualPoint,
+  );
+  SqliteDvcPointContractRow copyWithCompanion(DvcPointContractsCompanion data) {
+    return SqliteDvcPointContractRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      contractName: data.contractName.present
+          ? data.contractName.value
+          : this.contractName,
+      contractStartYearMonth: data.contractStartYearMonth.present
+          ? data.contractStartYearMonth.value
+          : this.contractStartYearMonth,
+      contractEndYearMonth: data.contractEndYearMonth.present
+          ? data.contractEndYearMonth.value
+          : this.contractEndYearMonth,
+      useYearStartMonth: data.useYearStartMonth.present
+          ? data.useYearStartMonth.value
+          : this.useYearStartMonth,
+      annualPoint: data.annualPoint.present
+          ? data.annualPoint.value
+          : this.annualPoint,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteDvcPointContractRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('contractName: $contractName, ')
+          ..write('contractStartYearMonth: $contractStartYearMonth, ')
+          ..write('contractEndYearMonth: $contractEndYearMonth, ')
+          ..write('useYearStartMonth: $useYearStartMonth, ')
+          ..write('annualPoint: $annualPoint')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    groupId,
+    contractName,
+    contractStartYearMonth,
+    contractEndYearMonth,
+    useYearStartMonth,
+    annualPoint,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteDvcPointContractRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.contractName == this.contractName &&
+          other.contractStartYearMonth == this.contractStartYearMonth &&
+          other.contractEndYearMonth == this.contractEndYearMonth &&
+          other.useYearStartMonth == this.useYearStartMonth &&
+          other.annualPoint == this.annualPoint);
+}
+
+class DvcPointContractsCompanion
+    extends UpdateCompanion<SqliteDvcPointContractRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> contractName;
+  final Value<int> contractStartYearMonth;
+  final Value<int> contractEndYearMonth;
+  final Value<int> useYearStartMonth;
+  final Value<int> annualPoint;
+  final Value<int> rowid;
+  const DvcPointContractsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.contractName = const Value.absent(),
+    this.contractStartYearMonth = const Value.absent(),
+    this.contractEndYearMonth = const Value.absent(),
+    this.useYearStartMonth = const Value.absent(),
+    this.annualPoint = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DvcPointContractsCompanion.insert({
+    required String id,
+    required String groupId,
+    required String contractName,
+    required int contractStartYearMonth,
+    required int contractEndYearMonth,
+    required int useYearStartMonth,
+    required int annualPoint,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       contractName = Value(contractName),
+       contractStartYearMonth = Value(contractStartYearMonth),
+       contractEndYearMonth = Value(contractEndYearMonth),
+       useYearStartMonth = Value(useYearStartMonth),
+       annualPoint = Value(annualPoint);
+  static Insertable<SqliteDvcPointContractRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? contractName,
+    Expression<int>? contractStartYearMonth,
+    Expression<int>? contractEndYearMonth,
+    Expression<int>? useYearStartMonth,
+    Expression<int>? annualPoint,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (contractName != null) 'contract_name': contractName,
+      if (contractStartYearMonth != null)
+        'contract_start_year_month': contractStartYearMonth,
+      if (contractEndYearMonth != null)
+        'contract_end_year_month': contractEndYearMonth,
+      if (useYearStartMonth != null) 'use_year_start_month': useYearStartMonth,
+      if (annualPoint != null) 'annual_point': annualPoint,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DvcPointContractsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<String>? contractName,
+    Value<int>? contractStartYearMonth,
+    Value<int>? contractEndYearMonth,
+    Value<int>? useYearStartMonth,
+    Value<int>? annualPoint,
+    Value<int>? rowid,
+  }) {
+    return DvcPointContractsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      contractName: contractName ?? this.contractName,
+      contractStartYearMonth:
+          contractStartYearMonth ?? this.contractStartYearMonth,
+      contractEndYearMonth: contractEndYearMonth ?? this.contractEndYearMonth,
+      useYearStartMonth: useYearStartMonth ?? this.useYearStartMonth,
+      annualPoint: annualPoint ?? this.annualPoint,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (contractName.present) {
+      map['contract_name'] = Variable<String>(contractName.value);
+    }
+    if (contractStartYearMonth.present) {
+      map['contract_start_year_month'] = Variable<int>(
+        contractStartYearMonth.value,
+      );
+    }
+    if (contractEndYearMonth.present) {
+      map['contract_end_year_month'] = Variable<int>(
+        contractEndYearMonth.value,
+      );
+    }
+    if (useYearStartMonth.present) {
+      map['use_year_start_month'] = Variable<int>(useYearStartMonth.value);
+    }
+    if (annualPoint.present) {
+      map['annual_point'] = Variable<int>(annualPoint.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DvcPointContractsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('contractName: $contractName, ')
+          ..write('contractStartYearMonth: $contractStartYearMonth, ')
+          ..write('contractEndYearMonth: $contractEndYearMonth, ')
+          ..write('useYearStartMonth: $useYearStartMonth, ')
+          ..write('annualPoint: $annualPoint, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class DvcLimitedPoints extends Table
+    with TableInfo<DvcLimitedPoints, SqliteDvcLimitedPointRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DvcLimitedPoints(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _startYearMonthMeta = const VerificationMeta(
+    'startYearMonth',
+  );
+  late final GeneratedColumn<int> startYearMonth = GeneratedColumn<int>(
+    'start_year_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _endYearMonthMeta = const VerificationMeta(
+    'endYearMonth',
+  );
+  late final GeneratedColumn<int> endYearMonth = GeneratedColumn<int>(
+    'end_year_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _pointMeta = const VerificationMeta('point');
+  late final GeneratedColumn<int> point = GeneratedColumn<int>(
+    'point',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    startYearMonth,
+    endYearMonth,
+    point,
+    memo,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dvc_limited_points';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteDvcLimitedPointRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('start_year_month')) {
+      context.handle(
+        _startYearMonthMeta,
+        startYearMonth.isAcceptableOrUnknown(
+          data['start_year_month']!,
+          _startYearMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_startYearMonthMeta);
+    }
+    if (data.containsKey('end_year_month')) {
+      context.handle(
+        _endYearMonthMeta,
+        endYearMonth.isAcceptableOrUnknown(
+          data['end_year_month']!,
+          _endYearMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_endYearMonthMeta);
+    }
+    if (data.containsKey('point')) {
+      context.handle(
+        _pointMeta,
+        point.isAcceptableOrUnknown(data['point']!, _pointMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pointMeta);
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteDvcLimitedPointRow map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteDvcLimitedPointRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      startYearMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}start_year_month'],
+      )!,
+      endYearMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}end_year_month'],
+      )!,
+      point: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}point'],
+      )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      ),
+    );
+  }
+
+  @override
+  DvcLimitedPoints createAlias(String alias) {
+    return DvcLimitedPoints(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteDvcLimitedPointRow extends DataClass
+    implements Insertable<SqliteDvcLimitedPointRow> {
+  final String id;
+  final String groupId;
+  final int startYearMonth;
+  final int endYearMonth;
+  final int point;
+  final String? memo;
+  const SqliteDvcLimitedPointRow({
+    required this.id,
+    required this.groupId,
+    required this.startYearMonth,
+    required this.endYearMonth,
+    required this.point,
+    this.memo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['start_year_month'] = Variable<int>(startYearMonth);
+    map['end_year_month'] = Variable<int>(endYearMonth);
+    map['point'] = Variable<int>(point);
+    if (!nullToAbsent || memo != null) {
+      map['memo'] = Variable<String>(memo);
+    }
+    return map;
+  }
+
+  DvcLimitedPointsCompanion toCompanion(bool nullToAbsent) {
+    return DvcLimitedPointsCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      startYearMonth: Value(startYearMonth),
+      endYearMonth: Value(endYearMonth),
+      point: Value(point),
+      memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+    );
+  }
+
+  factory SqliteDvcLimitedPointRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteDvcLimitedPointRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      startYearMonth: serializer.fromJson<int>(json['start_year_month']),
+      endYearMonth: serializer.fromJson<int>(json['end_year_month']),
+      point: serializer.fromJson<int>(json['point']),
+      memo: serializer.fromJson<String?>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'start_year_month': serializer.toJson<int>(startYearMonth),
+      'end_year_month': serializer.toJson<int>(endYearMonth),
+      'point': serializer.toJson<int>(point),
+      'memo': serializer.toJson<String?>(memo),
+    };
+  }
+
+  SqliteDvcLimitedPointRow copyWith({
+    String? id,
+    String? groupId,
+    int? startYearMonth,
+    int? endYearMonth,
+    int? point,
+    Value<String?> memo = const Value.absent(),
+  }) => SqliteDvcLimitedPointRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    startYearMonth: startYearMonth ?? this.startYearMonth,
+    endYearMonth: endYearMonth ?? this.endYearMonth,
+    point: point ?? this.point,
+    memo: memo.present ? memo.value : this.memo,
+  );
+  SqliteDvcLimitedPointRow copyWithCompanion(DvcLimitedPointsCompanion data) {
+    return SqliteDvcLimitedPointRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      startYearMonth: data.startYearMonth.present
+          ? data.startYearMonth.value
+          : this.startYearMonth,
+      endYearMonth: data.endYearMonth.present
+          ? data.endYearMonth.value
+          : this.endYearMonth,
+      point: data.point.present ? data.point.value : this.point,
+      memo: data.memo.present ? data.memo.value : this.memo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteDvcLimitedPointRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('startYearMonth: $startYearMonth, ')
+          ..write('endYearMonth: $endYearMonth, ')
+          ..write('point: $point, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, groupId, startYearMonth, endYearMonth, point, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteDvcLimitedPointRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.startYearMonth == this.startYearMonth &&
+          other.endYearMonth == this.endYearMonth &&
+          other.point == this.point &&
+          other.memo == this.memo);
+}
+
+class DvcLimitedPointsCompanion
+    extends UpdateCompanion<SqliteDvcLimitedPointRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<int> startYearMonth;
+  final Value<int> endYearMonth;
+  final Value<int> point;
+  final Value<String?> memo;
+  final Value<int> rowid;
+  const DvcLimitedPointsCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.startYearMonth = const Value.absent(),
+    this.endYearMonth = const Value.absent(),
+    this.point = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DvcLimitedPointsCompanion.insert({
+    required String id,
+    required String groupId,
+    required int startYearMonth,
+    required int endYearMonth,
+    required int point,
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       startYearMonth = Value(startYearMonth),
+       endYearMonth = Value(endYearMonth),
+       point = Value(point);
+  static Insertable<SqliteDvcLimitedPointRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<int>? startYearMonth,
+    Expression<int>? endYearMonth,
+    Expression<int>? point,
+    Expression<String>? memo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (startYearMonth != null) 'start_year_month': startYearMonth,
+      if (endYearMonth != null) 'end_year_month': endYearMonth,
+      if (point != null) 'point': point,
+      if (memo != null) 'memo': memo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DvcLimitedPointsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<int>? startYearMonth,
+    Value<int>? endYearMonth,
+    Value<int>? point,
+    Value<String?>? memo,
+    Value<int>? rowid,
+  }) {
+    return DvcLimitedPointsCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      startYearMonth: startYearMonth ?? this.startYearMonth,
+      endYearMonth: endYearMonth ?? this.endYearMonth,
+      point: point ?? this.point,
+      memo: memo ?? this.memo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (startYearMonth.present) {
+      map['start_year_month'] = Variable<int>(startYearMonth.value);
+    }
+    if (endYearMonth.present) {
+      map['end_year_month'] = Variable<int>(endYearMonth.value);
+    }
+    if (point.present) {
+      map['point'] = Variable<int>(point.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DvcLimitedPointsCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('startYearMonth: $startYearMonth, ')
+          ..write('endYearMonth: $endYearMonth, ')
+          ..write('point: $point, ')
+          ..write('memo: $memo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class DvcPointUsages extends Table
+    with TableInfo<DvcPointUsages, SqliteDvcPointUsageRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  DvcPointUsages(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES "groups"(id)ON DELETE CASCADE',
+  );
+  static const VerificationMeta _usageYearMonthMeta = const VerificationMeta(
+    'usageYearMonth',
+  );
+  late final GeneratedColumn<int> usageYearMonth = GeneratedColumn<int>(
+    'usage_year_month',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _usedPointMeta = const VerificationMeta(
+    'usedPoint',
+  );
+  late final GeneratedColumn<int> usedPoint = GeneratedColumn<int>(
+    'used_point',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _memoMeta = const VerificationMeta('memo');
+  late final GeneratedColumn<String> memo = GeneratedColumn<String>(
+    'memo',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    groupId,
+    usageYearMonth,
+    usedPoint,
+    memo,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dvc_point_usages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SqliteDvcPointUsageRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('usage_year_month')) {
+      context.handle(
+        _usageYearMonthMeta,
+        usageYearMonth.isAcceptableOrUnknown(
+          data['usage_year_month']!,
+          _usageYearMonthMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_usageYearMonthMeta);
+    }
+    if (data.containsKey('used_point')) {
+      context.handle(
+        _usedPointMeta,
+        usedPoint.isAcceptableOrUnknown(data['used_point']!, _usedPointMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_usedPointMeta);
+    }
+    if (data.containsKey('memo')) {
+      context.handle(
+        _memoMeta,
+        memo.isAcceptableOrUnknown(data['memo']!, _memoMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  SqliteDvcPointUsageRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SqliteDvcPointUsageRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      usageYearMonth: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}usage_year_month'],
+      )!,
+      usedPoint: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}used_point'],
+      )!,
+      memo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}memo'],
+      ),
+    );
+  }
+
+  @override
+  DvcPointUsages createAlias(String alias) {
+    return DvcPointUsages(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class SqliteDvcPointUsageRow extends DataClass
+    implements Insertable<SqliteDvcPointUsageRow> {
+  final String id;
+  final String groupId;
+  final int usageYearMonth;
+  final int usedPoint;
+  final String? memo;
+  const SqliteDvcPointUsageRow({
+    required this.id,
+    required this.groupId,
+    required this.usageYearMonth,
+    required this.usedPoint,
+    this.memo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['usage_year_month'] = Variable<int>(usageYearMonth);
+    map['used_point'] = Variable<int>(usedPoint);
+    if (!nullToAbsent || memo != null) {
+      map['memo'] = Variable<String>(memo);
+    }
+    return map;
+  }
+
+  DvcPointUsagesCompanion toCompanion(bool nullToAbsent) {
+    return DvcPointUsagesCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      usageYearMonth: Value(usageYearMonth),
+      usedPoint: Value(usedPoint),
+      memo: memo == null && nullToAbsent ? const Value.absent() : Value(memo),
+    );
+  }
+
+  factory SqliteDvcPointUsageRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SqliteDvcPointUsageRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['group_id']),
+      usageYearMonth: serializer.fromJson<int>(json['usage_year_month']),
+      usedPoint: serializer.fromJson<int>(json['used_point']),
+      memo: serializer.fromJson<String?>(json['memo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'group_id': serializer.toJson<String>(groupId),
+      'usage_year_month': serializer.toJson<int>(usageYearMonth),
+      'used_point': serializer.toJson<int>(usedPoint),
+      'memo': serializer.toJson<String?>(memo),
+    };
+  }
+
+  SqliteDvcPointUsageRow copyWith({
+    String? id,
+    String? groupId,
+    int? usageYearMonth,
+    int? usedPoint,
+    Value<String?> memo = const Value.absent(),
+  }) => SqliteDvcPointUsageRow(
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    usageYearMonth: usageYearMonth ?? this.usageYearMonth,
+    usedPoint: usedPoint ?? this.usedPoint,
+    memo: memo.present ? memo.value : this.memo,
+  );
+  SqliteDvcPointUsageRow copyWithCompanion(DvcPointUsagesCompanion data) {
+    return SqliteDvcPointUsageRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      usageYearMonth: data.usageYearMonth.present
+          ? data.usageYearMonth.value
+          : this.usageYearMonth,
+      usedPoint: data.usedPoint.present ? data.usedPoint.value : this.usedPoint,
+      memo: data.memo.present ? data.memo.value : this.memo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SqliteDvcPointUsageRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('usageYearMonth: $usageYearMonth, ')
+          ..write('usedPoint: $usedPoint, ')
+          ..write('memo: $memo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, usageYearMonth, usedPoint, memo);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SqliteDvcPointUsageRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.usageYearMonth == this.usageYearMonth &&
+          other.usedPoint == this.usedPoint &&
+          other.memo == this.memo);
+}
+
+class DvcPointUsagesCompanion extends UpdateCompanion<SqliteDvcPointUsageRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<int> usageYearMonth;
+  final Value<int> usedPoint;
+  final Value<String?> memo;
+  final Value<int> rowid;
+  const DvcPointUsagesCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.usageYearMonth = const Value.absent(),
+    this.usedPoint = const Value.absent(),
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DvcPointUsagesCompanion.insert({
+    required String id,
+    required String groupId,
+    required int usageYearMonth,
+    required int usedPoint,
+    this.memo = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       groupId = Value(groupId),
+       usageYearMonth = Value(usageYearMonth),
+       usedPoint = Value(usedPoint);
+  static Insertable<SqliteDvcPointUsageRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<int>? usageYearMonth,
+    Expression<int>? usedPoint,
+    Expression<String>? memo,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (usageYearMonth != null) 'usage_year_month': usageYearMonth,
+      if (usedPoint != null) 'used_point': usedPoint,
+      if (memo != null) 'memo': memo,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DvcPointUsagesCompanion copyWith({
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<int>? usageYearMonth,
+    Value<int>? usedPoint,
+    Value<String?>? memo,
+    Value<int>? rowid,
+  }) {
+    return DvcPointUsagesCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      usageYearMonth: usageYearMonth ?? this.usageYearMonth,
+      usedPoint: usedPoint ?? this.usedPoint,
+      memo: memo ?? this.memo,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (usageYearMonth.present) {
+      map['usage_year_month'] = Variable<int>(usageYearMonth.value);
+    }
+    if (usedPoint.present) {
+      map['used_point'] = Variable<int>(usedPoint.value);
+    }
+    if (memo.present) {
+      map['memo'] = Variable<String>(memo.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DvcPointUsagesCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('usageYearMonth: $usageYearMonth, ')
+          ..write('usedPoint: $usedPoint, ')
+          ..write('memo: $memo, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$OfflineDatabase extends GeneratedDatabase {
   _$OfflineDatabase(QueryExecutor e) : super(e);
   $OfflineDatabaseManager get managers => $OfflineDatabaseManager(this);
@@ -3059,6 +4985,51 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     'itinerary_items_tripId_idx',
     'CREATE INDEX itinerary_items_tripId_idx ON itinerary_items (trip_id, start_date_time)',
   );
+  late final MemberEvents memberEvents = MemberEvents(this);
+  late final Index memberEventsMemberIdIdx = Index(
+    'member_events_memberId_idx',
+    'CREATE INDEX member_events_memberId_idx ON member_events (member_id)',
+  );
+  late final GroupEvents groupEvents = GroupEvents(this);
+  late final Index groupEventsGroupIdIdx = Index(
+    'group_events_groupId_idx',
+    'CREATE INDEX group_events_groupId_idx ON group_events (group_id)',
+  );
+  late final DvcPointContracts dvcPointContracts = DvcPointContracts(this);
+  late final Index dvcPointContractsGroupIdIdx = Index(
+    'dvc_point_contracts_groupId_idx',
+    'CREATE INDEX dvc_point_contracts_groupId_idx ON dvc_point_contracts (group_id)',
+  );
+  late final DvcLimitedPoints dvcLimitedPoints = DvcLimitedPoints(this);
+  late final Index dvcLimitedPointsGroupIdIdx = Index(
+    'dvc_limited_points_groupId_idx',
+    'CREATE INDEX dvc_limited_points_groupId_idx ON dvc_limited_points (group_id)',
+  );
+  late final DvcPointUsages dvcPointUsages = DvcPointUsages(this);
+  late final Index dvcPointUsagesGroupIdIdx = Index(
+    'dvc_point_usages_groupId_idx',
+    'CREATE INDEX dvc_point_usages_groupId_idx ON dvc_point_usages (group_id)',
+  );
+  late final Index memberEventsMemberYearIdx = Index(
+    'member_events_member_year_idx',
+    'CREATE INDEX member_events_member_year_idx ON member_events (member_id, year)',
+  );
+  late final Index groupEventsGroupYearIdx = Index(
+    'group_events_group_year_idx',
+    'CREATE INDEX group_events_group_year_idx ON group_events (group_id, year)',
+  );
+  late final Index dvcPointContractsGroupStartIdx = Index(
+    'dvc_point_contracts_group_start_idx',
+    'CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month)',
+  );
+  late final Index dvcLimitedPointsGroupStartIdx = Index(
+    'dvc_limited_points_group_start_idx',
+    'CREATE INDEX dvc_limited_points_group_start_idx ON dvc_limited_points (group_id, start_year_month)',
+  );
+  late final Index dvcPointUsagesGroupMonthIdx = Index(
+    'dvc_point_usages_group_month_idx',
+    'CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usage_year_month)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3079,6 +5050,21 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
     tasksParentTaskIdIdx,
     itineraryItems,
     itineraryItemsTripIdIdx,
+    memberEvents,
+    memberEventsMemberIdIdx,
+    groupEvents,
+    groupEventsGroupIdIdx,
+    dvcPointContracts,
+    dvcPointContractsGroupIdIdx,
+    dvcLimitedPoints,
+    dvcLimitedPointsGroupIdIdx,
+    dvcPointUsages,
+    dvcPointUsagesGroupIdIdx,
+    memberEventsMemberYearIdx,
+    groupEventsGroupYearIdx,
+    dvcPointContractsGroupStartIdx,
+    dvcLimitedPointsGroupStartIdx,
+    dvcPointUsagesGroupMonthIdx,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -3123,6 +5109,41 @@ abstract class _$OfflineDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('itinerary_items', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'members',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('member_events', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('group_events', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('dvc_point_contracts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('dvc_limited_points', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('dvc_point_usages', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3235,6 +5256,24 @@ final class $MembersReferences
     );
 
     final cache = $_typedResult.readTableOrNull(_tasksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<MemberEvents, List<SqliteMemberEventRow>>
+  _memberEventsRefsTable(_$OfflineDatabase db) => MultiTypedResultKey.fromTable(
+    db.memberEvents,
+    aliasName: 'members__id__member_events__member_id',
+  );
+
+  $MemberEventsProcessedTableManager get memberEventsRefs {
+    final manager = $MemberEventsTableManager(
+      $_db,
+      $_db.memberEvents,
+    ).filter((f) => f.memberId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_memberEventsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3408,6 +5447,31 @@ class $MembersFilterComposer extends Composer<_$OfflineDatabase, Members> {
           }) => $TasksFilterComposer(
             $db: $db,
             $table: $db.tasks,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> memberEventsRefs(
+    Expression<bool> Function($MemberEventsFilterComposer f) f,
+  ) {
+    final $MemberEventsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.memberEvents,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MemberEventsFilterComposer(
+            $db: $db,
+            $table: $db.memberEvents,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3679,6 +5743,31 @@ class $MembersAnnotationComposer extends Composer<_$OfflineDatabase, Members> {
     );
     return f(composer);
   }
+
+  Expression<T> memberEventsRefs<T extends Object>(
+    Expression<T> Function($MemberEventsAnnotationComposer a) f,
+  ) {
+    final $MemberEventsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.memberEvents,
+      getReferencedColumn: (t) => t.memberId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MemberEventsAnnotationComposer(
+            $db: $db,
+            $table: $db.memberEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $MembersTableManager
@@ -3699,6 +5788,7 @@ class $MembersTableManager
             bool groupsRefs,
             bool groupMembersRefs,
             bool tasksRefs,
+            bool memberEventsRefs,
           })
         > {
   $MembersTableManager(_$OfflineDatabase db, Members table)
@@ -3798,6 +5888,7 @@ class $MembersTableManager
                 groupsRefs = false,
                 groupMembersRefs = false,
                 tasksRefs = false,
+                memberEventsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3805,6 +5896,7 @@ class $MembersTableManager
                     if (groupsRefs) db.groups,
                     if (groupMembersRefs) db.groupMembers,
                     if (tasksRefs) db.tasks,
+                    if (memberEventsRefs) db.memberEvents,
                   ],
                   addJoins:
                       <
@@ -3895,6 +5987,26 @@ class $MembersTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (memberEventsRefs)
+                        await $_getPrefetchedData<
+                          SqliteMemberRow,
+                          Members,
+                          SqliteMemberEventRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $MembersReferences
+                              ._memberEventsRefsTable(db),
+                          managerFromTypedResult: (p0) => $MembersReferences(
+                            db,
+                            table,
+                            p0,
+                          ).memberEventsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.memberId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3920,6 +6032,7 @@ typedef $MembersProcessedTableManager =
         bool groupsRefs,
         bool groupMembersRefs,
         bool tasksRefs,
+        bool memberEventsRefs,
       })
     >;
 typedef $GroupsCreateCompanionBuilder = GroupsCompanion Function({
@@ -3989,6 +6102,85 @@ final class $GroupsReferences
     ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_tripEntriesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<GroupEvents, List<SqliteGroupEventRow>>
+  _groupEventsRefsTable(_$OfflineDatabase db) => MultiTypedResultKey.fromTable(
+    db.groupEvents,
+    aliasName: 'groups__id__group_events__group_id',
+  );
+
+  $GroupEventsProcessedTableManager get groupEventsRefs {
+    final manager = $GroupEventsTableManager(
+      $_db,
+      $_db.groupEvents,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_groupEventsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<DvcPointContracts, List<SqliteDvcPointContractRow>>
+  _dvcPointContractsRefsTable(_$OfflineDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.dvcPointContracts,
+        aliasName: 'groups__id__dvc_point_contracts__group_id',
+      );
+
+  $DvcPointContractsProcessedTableManager get dvcPointContractsRefs {
+    final manager = $DvcPointContractsTableManager(
+      $_db,
+      $_db.dvcPointContracts,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _dvcPointContractsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<DvcLimitedPoints, List<SqliteDvcLimitedPointRow>>
+  _dvcLimitedPointsRefsTable(_$OfflineDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.dvcLimitedPoints,
+        aliasName: 'groups__id__dvc_limited_points__group_id',
+      );
+
+  $DvcLimitedPointsProcessedTableManager get dvcLimitedPointsRefs {
+    final manager = $DvcLimitedPointsTableManager(
+      $_db,
+      $_db.dvcLimitedPoints,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _dvcLimitedPointsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<DvcPointUsages, List<SqliteDvcPointUsageRow>>
+  _dvcPointUsagesRefsTable(_$OfflineDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.dvcPointUsages,
+        aliasName: 'groups__id__dvc_point_usages__group_id',
+      );
+
+  $DvcPointUsagesProcessedTableManager get dvcPointUsagesRefs {
+    final manager = $DvcPointUsagesTableManager(
+      $_db,
+      $_db.dvcPointUsages,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_dvcPointUsagesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -4082,6 +6274,106 @@ class $GroupsFilterComposer extends Composer<_$OfflineDatabase, Groups> {
           }) => $TripEntriesFilterComposer(
             $db: $db,
             $table: $db.tripEntries,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> groupEventsRefs(
+    Expression<bool> Function($GroupEventsFilterComposer f) f,
+  ) {
+    final $GroupEventsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groupEvents,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupEventsFilterComposer(
+            $db: $db,
+            $table: $db.groupEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dvcPointContractsRefs(
+    Expression<bool> Function($DvcPointContractsFilterComposer f) f,
+  ) {
+    final $DvcPointContractsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcPointContracts,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcPointContractsFilterComposer(
+            $db: $db,
+            $table: $db.dvcPointContracts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dvcLimitedPointsRefs(
+    Expression<bool> Function($DvcLimitedPointsFilterComposer f) f,
+  ) {
+    final $DvcLimitedPointsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcLimitedPoints,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcLimitedPointsFilterComposer(
+            $db: $db,
+            $table: $db.dvcLimitedPoints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> dvcPointUsagesRefs(
+    Expression<bool> Function($DvcPointUsagesFilterComposer f) f,
+  ) {
+    final $DvcPointUsagesFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcPointUsages,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcPointUsagesFilterComposer(
+            $db: $db,
+            $table: $db.dvcPointUsages,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -4228,6 +6520,106 @@ class $GroupsAnnotationComposer extends Composer<_$OfflineDatabase, Groups> {
     );
     return f(composer);
   }
+
+  Expression<T> groupEventsRefs<T extends Object>(
+    Expression<T> Function($GroupEventsAnnotationComposer a) f,
+  ) {
+    final $GroupEventsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groupEvents,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupEventsAnnotationComposer(
+            $db: $db,
+            $table: $db.groupEvents,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> dvcPointContractsRefs<T extends Object>(
+    Expression<T> Function($DvcPointContractsAnnotationComposer a) f,
+  ) {
+    final $DvcPointContractsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcPointContracts,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcPointContractsAnnotationComposer(
+            $db: $db,
+            $table: $db.dvcPointContracts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> dvcLimitedPointsRefs<T extends Object>(
+    Expression<T> Function($DvcLimitedPointsAnnotationComposer a) f,
+  ) {
+    final $DvcLimitedPointsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcLimitedPoints,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcLimitedPointsAnnotationComposer(
+            $db: $db,
+            $table: $db.dvcLimitedPoints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> dvcPointUsagesRefs<T extends Object>(
+    Expression<T> Function($DvcPointUsagesAnnotationComposer a) f,
+  ) {
+    final $DvcPointUsagesAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.dvcPointUsages,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $DvcPointUsagesAnnotationComposer(
+            $db: $db,
+            $table: $db.dvcPointUsages,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $GroupsTableManager
@@ -4247,6 +6639,10 @@ class $GroupsTableManager
             bool ownerId,
             bool groupMembersRefs,
             bool tripEntriesRefs,
+            bool groupEventsRefs,
+            bool dvcPointContractsRefs,
+            bool dvcLimitedPointsRefs,
+            bool dvcPointUsagesRefs,
           })
         > {
   $GroupsTableManager(_$OfflineDatabase db, Groups table)
@@ -4301,12 +6697,20 @@ class $GroupsTableManager
                 ownerId = false,
                 groupMembersRefs = false,
                 tripEntriesRefs = false,
+                groupEventsRefs = false,
+                dvcPointContractsRefs = false,
+                dvcLimitedPointsRefs = false,
+                dvcPointUsagesRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (groupMembersRefs) db.groupMembers,
                     if (tripEntriesRefs) db.tripEntries,
+                    if (groupEventsRefs) db.groupEvents,
+                    if (dvcPointContractsRefs) db.dvcPointContracts,
+                    if (dvcLimitedPointsRefs) db.dvcLimitedPoints,
+                    if (dvcPointUsagesRefs) db.dvcPointUsages,
                   ],
                   addJoins:
                       <
@@ -4375,6 +6779,83 @@ class $GroupsTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (groupEventsRefs)
+                        await $_getPrefetchedData<
+                          SqliteGroupRow,
+                          Groups,
+                          SqliteGroupEventRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $GroupsReferences
+                              ._groupEventsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $GroupsReferences(db, table, p0).groupEventsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (dvcPointContractsRefs)
+                        await $_getPrefetchedData<
+                          SqliteGroupRow,
+                          Groups,
+                          SqliteDvcPointContractRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $GroupsReferences
+                              ._dvcPointContractsRefsTable(db),
+                          managerFromTypedResult: (p0) => $GroupsReferences(
+                            db,
+                            table,
+                            p0,
+                          ).dvcPointContractsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (dvcLimitedPointsRefs)
+                        await $_getPrefetchedData<
+                          SqliteGroupRow,
+                          Groups,
+                          SqliteDvcLimitedPointRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $GroupsReferences
+                              ._dvcLimitedPointsRefsTable(db),
+                          managerFromTypedResult: (p0) => $GroupsReferences(
+                            db,
+                            table,
+                            p0,
+                          ).dvcLimitedPointsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (dvcPointUsagesRefs)
+                        await $_getPrefetchedData<
+                          SqliteGroupRow,
+                          Groups,
+                          SqliteDvcPointUsageRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $GroupsReferences
+                              ._dvcPointUsagesRefsTable(db),
+                          managerFromTypedResult: (p0) => $GroupsReferences(
+                            db,
+                            table,
+                            p0,
+                          ).dvcPointUsagesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.groupId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -4399,6 +6880,10 @@ typedef $GroupsProcessedTableManager =
         bool ownerId,
         bool groupMembersRefs,
         bool tripEntriesRefs,
+        bool groupEventsRefs,
+        bool dvcPointContractsRefs,
+        bool dvcLimitedPointsRefs,
+        bool dvcPointUsagesRefs,
       })
     >;
 typedef $GroupMembersCreateCompanionBuilder = GroupMembersCompanion Function({
@@ -6147,6 +8632,1635 @@ typedef $ItineraryItemsProcessedTableManager =
       SqliteItineraryItemRow,
       PrefetchHooks Function({bool tripId})
     >;
+typedef $MemberEventsCreateCompanionBuilder = MemberEventsCompanion Function({
+  required String id,
+  required String memberId,
+  required int year,
+  required String memo,
+  Value<int> rowid,
+});
+typedef $MemberEventsUpdateCompanionBuilder = MemberEventsCompanion Function({
+  Value<String> id,
+  Value<String> memberId,
+  Value<int> year,
+  Value<String> memo,
+  Value<int> rowid,
+});
+
+final class $MemberEventsReferences
+    extends
+        BaseReferences<_$OfflineDatabase, MemberEvents, SqliteMemberEventRow> {
+  $MemberEventsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Members _memberIdTable(_$OfflineDatabase db) =>
+      db.members.createAlias('member_events__member_id__members__id');
+
+  $MembersProcessedTableManager get memberId {
+    final $_column = $_itemColumn<String>('member_id')!;
+
+    final manager = $MembersTableManager(
+      $_db,
+      $_db.members,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_memberIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $MemberEventsFilterComposer
+    extends Composer<_$OfflineDatabase, MemberEvents> {
+  $MemberEventsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $MembersFilterComposer get memberId {
+    final $MembersFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MembersFilterComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MemberEventsOrderingComposer
+    extends Composer<_$OfflineDatabase, MemberEvents> {
+  $MemberEventsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $MembersOrderingComposer get memberId {
+    final $MembersOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MembersOrderingComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MemberEventsAnnotationComposer
+    extends Composer<_$OfflineDatabase, MemberEvents> {
+  $MemberEventsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get year =>
+      $composableBuilder(column: $table.year, builder: (column) => column);
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  $MembersAnnotationComposer get memberId {
+    final $MembersAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.memberId,
+      referencedTable: $db.members,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $MembersAnnotationComposer(
+            $db: $db,
+            $table: $db.members,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $MemberEventsTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          MemberEvents,
+          SqliteMemberEventRow,
+          $MemberEventsFilterComposer,
+          $MemberEventsOrderingComposer,
+          $MemberEventsAnnotationComposer,
+          $MemberEventsCreateCompanionBuilder,
+          $MemberEventsUpdateCompanionBuilder,
+          (SqliteMemberEventRow, $MemberEventsReferences),
+          SqliteMemberEventRow,
+          PrefetchHooks Function({bool memberId})
+        > {
+  $MemberEventsTableManager(_$OfflineDatabase db, MemberEvents table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $MemberEventsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $MemberEventsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $MemberEventsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<int> year = const Value.absent(),
+                Value<String> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => MemberEventsCompanion(
+                id: id,
+                memberId: memberId,
+                year: year,
+                memo: memo,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String memberId,
+                required int year,
+                required String memo,
+                Value<int> rowid = const Value.absent(),
+              }) => MemberEventsCompanion.insert(
+                id: id,
+                memberId: memberId,
+                year: year,
+                memo: memo,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<MemberEvents, SqliteMemberEventRow>(table),
+                  $MemberEventsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({memberId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (memberId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.memberId,
+                        referencedTable: $MemberEventsReferences._memberIdTable(
+                          db,
+                        ),
+                        referencedColumn: $MemberEventsReferences
+                            ._memberIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $MemberEventsProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      MemberEvents,
+      SqliteMemberEventRow,
+      $MemberEventsFilterComposer,
+      $MemberEventsOrderingComposer,
+      $MemberEventsAnnotationComposer,
+      $MemberEventsCreateCompanionBuilder,
+      $MemberEventsUpdateCompanionBuilder,
+      (SqliteMemberEventRow, $MemberEventsReferences),
+      SqliteMemberEventRow,
+      PrefetchHooks Function({bool memberId})
+    >;
+typedef $GroupEventsCreateCompanionBuilder = GroupEventsCompanion Function({
+  required String id,
+  required String groupId,
+  required int year,
+  required String memo,
+  Value<int> rowid,
+});
+typedef $GroupEventsUpdateCompanionBuilder = GroupEventsCompanion Function({
+  Value<String> id,
+  Value<String> groupId,
+  Value<int> year,
+  Value<String> memo,
+  Value<int> rowid,
+});
+
+final class $GroupEventsReferences
+    extends
+        BaseReferences<_$OfflineDatabase, GroupEvents, SqliteGroupEventRow> {
+  $GroupEventsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Groups _groupIdTable(_$OfflineDatabase db) =>
+      db.groups.createAlias('group_events__group_id__groups__id');
+
+  $GroupsProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $GroupsTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $GroupEventsFilterComposer
+    extends Composer<_$OfflineDatabase, GroupEvents> {
+  $GroupEventsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $GroupsFilterComposer get groupId {
+    final $GroupsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $GroupEventsOrderingComposer
+    extends Composer<_$OfflineDatabase, GroupEvents> {
+  $GroupEventsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get year => $composableBuilder(
+    column: $table.year,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $GroupsOrderingComposer get groupId {
+    final $GroupsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $GroupEventsAnnotationComposer
+    extends Composer<_$OfflineDatabase, GroupEvents> {
+  $GroupEventsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get year =>
+      $composableBuilder(column: $table.year, builder: (column) => column);
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  $GroupsAnnotationComposer get groupId {
+    final $GroupsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $GroupEventsTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          GroupEvents,
+          SqliteGroupEventRow,
+          $GroupEventsFilterComposer,
+          $GroupEventsOrderingComposer,
+          $GroupEventsAnnotationComposer,
+          $GroupEventsCreateCompanionBuilder,
+          $GroupEventsUpdateCompanionBuilder,
+          (SqliteGroupEventRow, $GroupEventsReferences),
+          SqliteGroupEventRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $GroupEventsTableManager(_$OfflineDatabase db, GroupEvents table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $GroupEventsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $GroupEventsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $GroupEventsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<int> year = const Value.absent(),
+                Value<String> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GroupEventsCompanion(
+                id: id,
+                groupId: groupId,
+                year: year,
+                memo: memo,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String groupId,
+                required int year,
+                required String memo,
+                Value<int> rowid = const Value.absent(),
+              }) => GroupEventsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                year: year,
+                memo: memo,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<GroupEvents, SqliteGroupEventRow>(table),
+                  $GroupEventsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $GroupEventsReferences._groupIdTable(
+                          db,
+                        ),
+                        referencedColumn: $GroupEventsReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $GroupEventsProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      GroupEvents,
+      SqliteGroupEventRow,
+      $GroupEventsFilterComposer,
+      $GroupEventsOrderingComposer,
+      $GroupEventsAnnotationComposer,
+      $GroupEventsCreateCompanionBuilder,
+      $GroupEventsUpdateCompanionBuilder,
+      (SqliteGroupEventRow, $GroupEventsReferences),
+      SqliteGroupEventRow,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $DvcPointContractsCreateCompanionBuilder =
+    DvcPointContractsCompanion Function({
+      required String id,
+      required String groupId,
+      required String contractName,
+      required int contractStartYearMonth,
+      required int contractEndYearMonth,
+      required int useYearStartMonth,
+      required int annualPoint,
+      Value<int> rowid,
+    });
+typedef $DvcPointContractsUpdateCompanionBuilder =
+    DvcPointContractsCompanion Function({
+      Value<String> id,
+      Value<String> groupId,
+      Value<String> contractName,
+      Value<int> contractStartYearMonth,
+      Value<int> contractEndYearMonth,
+      Value<int> useYearStartMonth,
+      Value<int> annualPoint,
+      Value<int> rowid,
+    });
+
+final class $DvcPointContractsReferences
+    extends
+        BaseReferences<
+          _$OfflineDatabase,
+          DvcPointContracts,
+          SqliteDvcPointContractRow
+        > {
+  $DvcPointContractsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Groups _groupIdTable(_$OfflineDatabase db) =>
+      db.groups.createAlias('dvc_point_contracts__group_id__groups__id');
+
+  $GroupsProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $GroupsTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $DvcPointContractsFilterComposer
+    extends Composer<_$OfflineDatabase, DvcPointContracts> {
+  $DvcPointContractsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contractName => $composableBuilder(
+    column: $table.contractName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contractStartYearMonth => $composableBuilder(
+    column: $table.contractStartYearMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get contractEndYearMonth => $composableBuilder(
+    column: $table.contractEndYearMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get useYearStartMonth => $composableBuilder(
+    column: $table.useYearStartMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get annualPoint => $composableBuilder(
+    column: $table.annualPoint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $GroupsFilterComposer get groupId {
+    final $GroupsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointContractsOrderingComposer
+    extends Composer<_$OfflineDatabase, DvcPointContracts> {
+  $DvcPointContractsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get contractName => $composableBuilder(
+    column: $table.contractName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractStartYearMonth => $composableBuilder(
+    column: $table.contractStartYearMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get contractEndYearMonth => $composableBuilder(
+    column: $table.contractEndYearMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get useYearStartMonth => $composableBuilder(
+    column: $table.useYearStartMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get annualPoint => $composableBuilder(
+    column: $table.annualPoint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $GroupsOrderingComposer get groupId {
+    final $GroupsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointContractsAnnotationComposer
+    extends Composer<_$OfflineDatabase, DvcPointContracts> {
+  $DvcPointContractsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get contractName => $composableBuilder(
+    column: $table.contractName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contractStartYearMonth => $composableBuilder(
+    column: $table.contractStartYearMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get contractEndYearMonth => $composableBuilder(
+    column: $table.contractEndYearMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get useYearStartMonth => $composableBuilder(
+    column: $table.useYearStartMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get annualPoint => $composableBuilder(
+    column: $table.annualPoint,
+    builder: (column) => column,
+  );
+
+  $GroupsAnnotationComposer get groupId {
+    final $GroupsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointContractsTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          DvcPointContracts,
+          SqliteDvcPointContractRow,
+          $DvcPointContractsFilterComposer,
+          $DvcPointContractsOrderingComposer,
+          $DvcPointContractsAnnotationComposer,
+          $DvcPointContractsCreateCompanionBuilder,
+          $DvcPointContractsUpdateCompanionBuilder,
+          (SqliteDvcPointContractRow, $DvcPointContractsReferences),
+          SqliteDvcPointContractRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $DvcPointContractsTableManager(_$OfflineDatabase db, DvcPointContracts table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $DvcPointContractsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $DvcPointContractsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $DvcPointContractsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<String> contractName = const Value.absent(),
+                Value<int> contractStartYearMonth = const Value.absent(),
+                Value<int> contractEndYearMonth = const Value.absent(),
+                Value<int> useYearStartMonth = const Value.absent(),
+                Value<int> annualPoint = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DvcPointContractsCompanion(
+                id: id,
+                groupId: groupId,
+                contractName: contractName,
+                contractStartYearMonth: contractStartYearMonth,
+                contractEndYearMonth: contractEndYearMonth,
+                useYearStartMonth: useYearStartMonth,
+                annualPoint: annualPoint,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String groupId,
+                required String contractName,
+                required int contractStartYearMonth,
+                required int contractEndYearMonth,
+                required int useYearStartMonth,
+                required int annualPoint,
+                Value<int> rowid = const Value.absent(),
+              }) => DvcPointContractsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                contractName: contractName,
+                contractStartYearMonth: contractStartYearMonth,
+                contractEndYearMonth: contractEndYearMonth,
+                useYearStartMonth: useYearStartMonth,
+                annualPoint: annualPoint,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<DvcPointContracts, SqliteDvcPointContractRow>(
+                    table,
+                  ),
+                  $DvcPointContractsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $DvcPointContractsReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $DvcPointContractsReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $DvcPointContractsProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      DvcPointContracts,
+      SqliteDvcPointContractRow,
+      $DvcPointContractsFilterComposer,
+      $DvcPointContractsOrderingComposer,
+      $DvcPointContractsAnnotationComposer,
+      $DvcPointContractsCreateCompanionBuilder,
+      $DvcPointContractsUpdateCompanionBuilder,
+      (SqliteDvcPointContractRow, $DvcPointContractsReferences),
+      SqliteDvcPointContractRow,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $DvcLimitedPointsCreateCompanionBuilder =
+    DvcLimitedPointsCompanion Function({
+      required String id,
+      required String groupId,
+      required int startYearMonth,
+      required int endYearMonth,
+      required int point,
+      Value<String?> memo,
+      Value<int> rowid,
+    });
+typedef $DvcLimitedPointsUpdateCompanionBuilder =
+    DvcLimitedPointsCompanion Function({
+      Value<String> id,
+      Value<String> groupId,
+      Value<int> startYearMonth,
+      Value<int> endYearMonth,
+      Value<int> point,
+      Value<String?> memo,
+      Value<int> rowid,
+    });
+
+final class $DvcLimitedPointsReferences
+    extends
+        BaseReferences<
+          _$OfflineDatabase,
+          DvcLimitedPoints,
+          SqliteDvcLimitedPointRow
+        > {
+  $DvcLimitedPointsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Groups _groupIdTable(_$OfflineDatabase db) =>
+      db.groups.createAlias('dvc_limited_points__group_id__groups__id');
+
+  $GroupsProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $GroupsTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $DvcLimitedPointsFilterComposer
+    extends Composer<_$OfflineDatabase, DvcLimitedPoints> {
+  $DvcLimitedPointsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get startYearMonth => $composableBuilder(
+    column: $table.startYearMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get endYearMonth => $composableBuilder(
+    column: $table.endYearMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get point => $composableBuilder(
+    column: $table.point,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $GroupsFilterComposer get groupId {
+    final $GroupsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcLimitedPointsOrderingComposer
+    extends Composer<_$OfflineDatabase, DvcLimitedPoints> {
+  $DvcLimitedPointsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get startYearMonth => $composableBuilder(
+    column: $table.startYearMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get endYearMonth => $composableBuilder(
+    column: $table.endYearMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get point => $composableBuilder(
+    column: $table.point,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $GroupsOrderingComposer get groupId {
+    final $GroupsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcLimitedPointsAnnotationComposer
+    extends Composer<_$OfflineDatabase, DvcLimitedPoints> {
+  $DvcLimitedPointsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get startYearMonth => $composableBuilder(
+    column: $table.startYearMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get endYearMonth => $composableBuilder(
+    column: $table.endYearMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get point =>
+      $composableBuilder(column: $table.point, builder: (column) => column);
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  $GroupsAnnotationComposer get groupId {
+    final $GroupsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcLimitedPointsTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          DvcLimitedPoints,
+          SqliteDvcLimitedPointRow,
+          $DvcLimitedPointsFilterComposer,
+          $DvcLimitedPointsOrderingComposer,
+          $DvcLimitedPointsAnnotationComposer,
+          $DvcLimitedPointsCreateCompanionBuilder,
+          $DvcLimitedPointsUpdateCompanionBuilder,
+          (SqliteDvcLimitedPointRow, $DvcLimitedPointsReferences),
+          SqliteDvcLimitedPointRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $DvcLimitedPointsTableManager(_$OfflineDatabase db, DvcLimitedPoints table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $DvcLimitedPointsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $DvcLimitedPointsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $DvcLimitedPointsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<int> startYearMonth = const Value.absent(),
+                Value<int> endYearMonth = const Value.absent(),
+                Value<int> point = const Value.absent(),
+                Value<String?> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DvcLimitedPointsCompanion(
+                id: id,
+                groupId: groupId,
+                startYearMonth: startYearMonth,
+                endYearMonth: endYearMonth,
+                point: point,
+                memo: memo,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String groupId,
+                required int startYearMonth,
+                required int endYearMonth,
+                required int point,
+                Value<String?> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DvcLimitedPointsCompanion.insert(
+                id: id,
+                groupId: groupId,
+                startYearMonth: startYearMonth,
+                endYearMonth: endYearMonth,
+                point: point,
+                memo: memo,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<DvcLimitedPoints, SqliteDvcLimitedPointRow>(
+                    table,
+                  ),
+                  $DvcLimitedPointsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $DvcLimitedPointsReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $DvcLimitedPointsReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $DvcLimitedPointsProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      DvcLimitedPoints,
+      SqliteDvcLimitedPointRow,
+      $DvcLimitedPointsFilterComposer,
+      $DvcLimitedPointsOrderingComposer,
+      $DvcLimitedPointsAnnotationComposer,
+      $DvcLimitedPointsCreateCompanionBuilder,
+      $DvcLimitedPointsUpdateCompanionBuilder,
+      (SqliteDvcLimitedPointRow, $DvcLimitedPointsReferences),
+      SqliteDvcLimitedPointRow,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $DvcPointUsagesCreateCompanionBuilder =
+    DvcPointUsagesCompanion Function({
+      required String id,
+      required String groupId,
+      required int usageYearMonth,
+      required int usedPoint,
+      Value<String?> memo,
+      Value<int> rowid,
+    });
+typedef $DvcPointUsagesUpdateCompanionBuilder =
+    DvcPointUsagesCompanion Function({
+      Value<String> id,
+      Value<String> groupId,
+      Value<int> usageYearMonth,
+      Value<int> usedPoint,
+      Value<String?> memo,
+      Value<int> rowid,
+    });
+
+final class $DvcPointUsagesReferences
+    extends
+        BaseReferences<
+          _$OfflineDatabase,
+          DvcPointUsages,
+          SqliteDvcPointUsageRow
+        > {
+  $DvcPointUsagesReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static Groups _groupIdTable(_$OfflineDatabase db) =>
+      db.groups.createAlias('dvc_point_usages__group_id__groups__id');
+
+  $GroupsProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $GroupsTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $DvcPointUsagesFilterComposer
+    extends Composer<_$OfflineDatabase, DvcPointUsages> {
+  $DvcPointUsagesFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get usageYearMonth => $composableBuilder(
+    column: $table.usageYearMonth,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get usedPoint => $composableBuilder(
+    column: $table.usedPoint,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $GroupsFilterComposer get groupId {
+    final $GroupsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointUsagesOrderingComposer
+    extends Composer<_$OfflineDatabase, DvcPointUsages> {
+  $DvcPointUsagesOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get usageYearMonth => $composableBuilder(
+    column: $table.usageYearMonth,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get usedPoint => $composableBuilder(
+    column: $table.usedPoint,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memo => $composableBuilder(
+    column: $table.memo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $GroupsOrderingComposer get groupId {
+    final $GroupsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointUsagesAnnotationComposer
+    extends Composer<_$OfflineDatabase, DvcPointUsages> {
+  $DvcPointUsagesAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get usageYearMonth => $composableBuilder(
+    column: $table.usageYearMonth,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get usedPoint =>
+      $composableBuilder(column: $table.usedPoint, builder: (column) => column);
+
+  GeneratedColumn<String> get memo =>
+      $composableBuilder(column: $table.memo, builder: (column) => column);
+
+  $GroupsAnnotationComposer get groupId {
+    final $GroupsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $GroupsAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $DvcPointUsagesTableManager
+    extends
+        RootTableManager<
+          _$OfflineDatabase,
+          DvcPointUsages,
+          SqliteDvcPointUsageRow,
+          $DvcPointUsagesFilterComposer,
+          $DvcPointUsagesOrderingComposer,
+          $DvcPointUsagesAnnotationComposer,
+          $DvcPointUsagesCreateCompanionBuilder,
+          $DvcPointUsagesUpdateCompanionBuilder,
+          (SqliteDvcPointUsageRow, $DvcPointUsagesReferences),
+          SqliteDvcPointUsageRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $DvcPointUsagesTableManager(_$OfflineDatabase db, DvcPointUsages table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $DvcPointUsagesFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $DvcPointUsagesOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $DvcPointUsagesAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<int> usageYearMonth = const Value.absent(),
+                Value<int> usedPoint = const Value.absent(),
+                Value<String?> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DvcPointUsagesCompanion(
+                id: id,
+                groupId: groupId,
+                usageYearMonth: usageYearMonth,
+                usedPoint: usedPoint,
+                memo: memo,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String groupId,
+                required int usageYearMonth,
+                required int usedPoint,
+                Value<String?> memo = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DvcPointUsagesCompanion.insert(
+                id: id,
+                groupId: groupId,
+                usageYearMonth: usageYearMonth,
+                usedPoint: usedPoint,
+                memo: memo,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<DvcPointUsages, SqliteDvcPointUsageRow>(table),
+                  $DvcPointUsagesReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $DvcPointUsagesReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $DvcPointUsagesReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $DvcPointUsagesProcessedTableManager =
+    ProcessedTableManager<
+      _$OfflineDatabase,
+      DvcPointUsages,
+      SqliteDvcPointUsageRow,
+      $DvcPointUsagesFilterComposer,
+      $DvcPointUsagesOrderingComposer,
+      $DvcPointUsagesAnnotationComposer,
+      $DvcPointUsagesCreateCompanionBuilder,
+      $DvcPointUsagesUpdateCompanionBuilder,
+      (SqliteDvcPointUsageRow, $DvcPointUsagesReferences),
+      SqliteDvcPointUsageRow,
+      PrefetchHooks Function({bool groupId})
+    >;
 
 class $OfflineDatabaseManager {
   final _$OfflineDatabase _db;
@@ -6160,4 +10274,14 @@ class $OfflineDatabaseManager {
   $TasksTableManager get tasks => $TasksTableManager(_db, _db.tasks);
   $ItineraryItemsTableManager get itineraryItems =>
       $ItineraryItemsTableManager(_db, _db.itineraryItems);
+  $MemberEventsTableManager get memberEvents =>
+      $MemberEventsTableManager(_db, _db.memberEvents);
+  $GroupEventsTableManager get groupEvents =>
+      $GroupEventsTableManager(_db, _db.groupEvents);
+  $DvcPointContractsTableManager get dvcPointContracts =>
+      $DvcPointContractsTableManager(_db, _db.dvcPointContracts);
+  $DvcLimitedPointsTableManager get dvcLimitedPoints =>
+      $DvcLimitedPointsTableManager(_db, _db.dvcLimitedPoints);
+  $DvcPointUsagesTableManager get dvcPointUsages =>
+      $DvcPointUsagesTableManager(_db, _db.dvcPointUsages);
 }

@@ -82,3 +82,60 @@ CREATE TABLE itinerary_items (
 ) AS SqliteItineraryItemRow;
 
 CREATE INDEX itinerary_items_tripId_idx ON itinerary_items (trip_id, start_date_time);
+CREATE TABLE member_events (
+  id TEXT NOT NULL PRIMARY KEY,
+  member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  memo TEXT NOT NULL,
+  UNIQUE (member_id, year)
+) AS SqliteMemberEventRow;
+
+CREATE INDEX member_events_memberId_idx ON member_events (member_id);
+
+CREATE TABLE group_events (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  memo TEXT NOT NULL
+) AS SqliteGroupEventRow;
+
+CREATE INDEX group_events_groupId_idx ON group_events (group_id);
+
+CREATE TABLE dvc_point_contracts (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  contract_name TEXT NOT NULL,
+  contract_start_year_month INTEGER NOT NULL,
+  contract_end_year_month INTEGER NOT NULL,
+  use_year_start_month INTEGER NOT NULL,
+  annual_point INTEGER NOT NULL
+) AS SqliteDvcPointContractRow;
+
+CREATE INDEX dvc_point_contracts_groupId_idx ON dvc_point_contracts (group_id);
+
+CREATE TABLE dvc_limited_points (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  start_year_month INTEGER NOT NULL,
+  end_year_month INTEGER NOT NULL,
+  point INTEGER NOT NULL,
+  memo TEXT
+) AS SqliteDvcLimitedPointRow;
+
+CREATE INDEX dvc_limited_points_groupId_idx ON dvc_limited_points (group_id);
+
+CREATE TABLE dvc_point_usages (
+  id TEXT NOT NULL PRIMARY KEY,
+  group_id TEXT NOT NULL REFERENCES "groups"(id) ON DELETE CASCADE,
+  usage_year_month INTEGER NOT NULL,
+  used_point INTEGER NOT NULL,
+  memo TEXT
+) AS SqliteDvcPointUsageRow;
+
+CREATE INDEX dvc_point_usages_groupId_idx ON dvc_point_usages (group_id);
+
+CREATE INDEX member_events_member_year_idx ON member_events (member_id, year);
+CREATE INDEX group_events_group_year_idx ON group_events (group_id, year);
+CREATE INDEX dvc_point_contracts_group_start_idx ON dvc_point_contracts (group_id, contract_start_year_month);
+CREATE INDEX dvc_limited_points_group_start_idx ON dvc_limited_points (group_id, start_year_month);
+CREATE INDEX dvc_point_usages_group_month_idx ON dvc_point_usages (group_id, usage_year_month);

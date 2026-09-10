@@ -1,3 +1,14 @@
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_trip_entry_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_itinerary_item_query_service.dart';
+import 'package:memora/infrastructure/queries/trip/sqlite_task_query_service.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_query_service.dart';
+import 'package:memora/infrastructure/queries/group/sqlite_group_event_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_point_usage_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_point_contract_query_service.dart';
+import 'package:memora/infrastructure/queries/dvc/sqlite_dvc_limited_point_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_event_query_service.dart';
+import 'package:memora/infrastructure/queries/member/sqlite_member_query_service.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/models/app_capabilities.dart';
 import 'package:memora/application/exceptions/feature_unavailable_exception.dart';
@@ -123,10 +134,19 @@ class QueryServiceFactory {
           rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
-        throw const FeatureUnavailableException(
-          AppFeature.localData,
-          '端末内データの保存機能は現在準備中です。',
-        );
+        if (T == TripEntryQueryService) return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == ItineraryItemQueryService) return SqliteItineraryItemQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == TaskQueryService) return SqliteTaskQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == GroupQueryService) return SqliteGroupQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == GroupEventQueryService) return SqliteGroupEventQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == DvcPointUsageQueryService) return SqliteDvcPointUsageQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == DvcPointContractQueryService) return SqliteDvcPointContractQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == DvcLimitedPointQueryService) return SqliteDvcLimitedPointQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == MemberEventQueryService) return SqliteMemberEventQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == MemberQueryService) return SqliteMemberQueryService(ref.watch(offlineDatabaseProvider)) as T;
+        if (T == MemberInvitationQueryService) { throw const FeatureUnavailableException(AppFeature.invitations, 'この機能はオンラインモードで利用できます。'); }
+        if (T == LocationQueryService) { throw const FeatureUnavailableException(AppFeature.maps, 'この機能はオンラインモードで利用できます。'); }
+        throw ArgumentError('Unknown query service type: $T');
     }
   }
 
@@ -143,10 +163,7 @@ class QueryServiceFactory {
           rethrowOnError: rethrowOnError,
         );
       case AppMode.offline:
-        throw const FeatureUnavailableException(
-          AppFeature.localData,
-          '端末内データの保存機能は現在準備中です。',
-        );
+        return SqliteTripEntryQueryService(ref.watch(offlineDatabaseProvider));
     }
   }
 
