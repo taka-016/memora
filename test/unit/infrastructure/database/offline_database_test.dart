@@ -48,11 +48,11 @@ void main() {
     ], itineraryItems: [ItineraryItem(id: 'item', tripId: '', name: '朝食', startDateTime: date)]));
     final trip = (await query.getTripEntryById(id, tasksOrderBy: [const OrderBy('orderIndex')]))!;
     expect(trip.locations, isEmpty);
-    expect(trip.tasks.map((task) => task.id), ['parent', 'child']);
-    expect(trip.tasks.last.dueDate, date);
-    expect(trip.itineraryItems.single.locationId, isNull);
-    expect(trip.itineraryItems.single.location, isNull);
-    expect(trip.itineraryItems.single.startDateTime, date);
+    expect(trip.tasks!.map((task) => task.id), ['parent', 'child']);
+    expect(trip.tasks!.last.dueDate, date);
+    expect(trip.itineraryItems!.single.locationId, isNull);
+    expect(trip.itineraryItems!.single.location, isNull);
+    expect(trip.itineraryItems!.single.startDateTime, date);
     await repository.updateTripEntry(TripEntry(id: id, groupId: groupId, year: 2027));
     expect((await query.getTripEntryById(id))!.tasks, isEmpty);
     expect(await query.getTripEntriesByGroupIdAndYear(groupId, 2026), isEmpty);
