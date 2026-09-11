@@ -33,13 +33,15 @@ void main() {
     when(repository.deleteTripEntry(any)).thenAnswer((_) async {
       events.add('削除');
     });
-    container = ProviderContainer(overrides: [
-      tripEntryRepositoryProvider.overrideWithValue(repository),
-      refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
-        events.add('ウィジェット更新');
-        if (refreshFailure != null) throw refreshFailure!;
-      }),
-    ]);
+    container = ProviderContainer(
+      overrides: [
+        tripEntryRepositoryProvider.overrideWithValue(repository),
+        refreshSelectedAndroidWidgetCacheProvider.overrideWithValue(() async {
+          events.add('ウィジェット更新');
+          if (refreshFailure != null) throw refreshFailure!;
+        }),
+      ],
+    );
   });
   tearDown(() => container.dispose());
 
@@ -54,8 +56,12 @@ void main() {
   test('旅行の保存失敗時はウィジェットを更新しない', () async {
     final failure = TestException('保存失敗');
     when(repository.updateTripEntry(any)).thenThrow(failure);
-    await expectLater(container.read(tripEntryMutationCoordinatorProvider)
-        .updateTripEntry(trip), throwsA(same(failure)));
+    await expectLater(
+      container
+          .read(tripEntryMutationCoordinatorProvider)
+          .updateTripEntry(trip),
+      throwsA(same(failure)),
+    );
     expect(events, isEmpty);
   });
 

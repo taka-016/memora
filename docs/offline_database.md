@@ -6,7 +6,13 @@ Driftの`NativeDatabase.createInBackground`を使い、Androidのアプリ内部
 
 Composition Rootの`offlineDatabaseProvider`が接続を所有する。Factoryと本人復元は同じProviderのDBを共有し、初回アクセス時に`LazyDatabase`がファイル・スキーマを初期化する。Providerの破棄時に接続を閉じる。独立してDBを使う処理では`initialize()`と`close()`を対にする。通常のバックグラウンドDB処理は別isolate上で実行され、UI isolateをブロックしない。
 
-AndroidウィジェットのバックグラウンドComposition Rootへの接続と、手動バックアップ・復元の画面およびファイル処理は、それぞれtodo 7・8で対応する。
+AndroidウィジェットのバックグラウンドComposition Rootは、アプリ起動時にSharedPreferencesへ保存した解決済みの`AppMode`を復元する。オフラインでは専用のSQLite接続を開き、成功・失敗にかかわらず`close()`の完了を待つ。FirebaseやNTPは初期化せず、端末時刻を共通UseCaseへ渡す。端末DBはWALと5秒のロック待機を設定し、アプリの書き込みとウィジェットの読み取りを並行して実行できる。
+
+通常の定期更新と、端末再起動後を含むKotlinのフォールバック定期・即時更新は、同じ保存値（Androidでは`FlutterSharedPreferences`の`flutter.resolved_app_mode`）からネットワーク制約を選ぶ。オンラインだけ接続済みネットワークを要求する。モード未保存・不明値の場合は更新を開始せず、アプリ起動によるモード保存後に登録する。
+
+アプリ内の旅行・旅程の作成・更新・削除が成功した後も、現在のモードのQueryServiceで選択中グループのウィジェットキャッシュを再生成する。ウィジェット更新だけが失敗した場合、旅行の保存結果は成功として扱い、以後の定期更新・手動更新で再取得する。
+
+手動バックアップ・復元の画面およびファイル処理はtodo 8で対応する。
 
 ## 業務データと制約
 

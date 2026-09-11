@@ -6,14 +6,19 @@ import 'package:memora/infrastructure/database/offline_database.dart';
 
 void main() {
   test('ウィジェットの読み取り中もアプリの保存を完了でき次の取得で反映される', () async {
-    final directory = await Directory.systemTemp.createTemp('memora-widget-db-');
+    final directory = await Directory.systemTemp.createTemp(
+      'memora-widget-db-',
+    );
     final previousWarning = driftRuntimeOptions.dontWarnAboutMultipleDatabases;
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     final writer = OfflineDatabase.device(directory: () async => directory);
     final reader = OfflineDatabase.device(directory: () async => directory);
     try {
       await writer.initialize();
-      await writer.insertRow('members', {'id': 'member', 'display_name': '変更前'});
+      await writer.insertRow('members', {
+        'id': 'member',
+        'display_name': '変更前',
+      });
       await reader.initialize();
       await reader.customStatement('BEGIN DEFERRED');
       try {

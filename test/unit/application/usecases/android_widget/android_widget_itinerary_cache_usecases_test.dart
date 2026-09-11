@@ -20,7 +20,9 @@ void main() {
         final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache)
           ..targetGroupId = targetGroupId;
         final usecase = _buildRefreshUsecase(
-          storage, _FakeTripEntryQueryService(), _FakeItineraryItemQueryService(),
+          storage,
+          _FakeTripEntryQueryService(),
+          _FakeItineraryItemQueryService(),
         );
         await usecase.executeForSelectedGroup();
         if (targetGroupId == null) {

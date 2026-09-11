@@ -103,7 +103,8 @@ final refreshSelectedAndroidWidgetCacheProvider =
     Provider<Future<void> Function()>((ref) {
       return () async {
         if (!Platform.isAndroid) return;
-        await ref.read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+        await ref
+            .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
             .executeForSelectedGroup();
       };
     });

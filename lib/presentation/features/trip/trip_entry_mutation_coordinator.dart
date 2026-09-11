@@ -17,7 +17,8 @@ final tripEntryMutationCoordinatorProvider =
         deleteTripEntry: (tripEntryId) {
           return ref.read(deleteTripEntryUsecaseProvider).execute(tripEntryId);
         },
-        refreshWidget: () => ref.read(refreshSelectedAndroidWidgetCacheProvider)(),
+        refreshWidget: () =>
+            ref.read(refreshSelectedAndroidWidgetCacheProvider)(),
         onTripEntriesChanged: () {
           ref.invalidate(timelineTripEntriesProvider);
         },
