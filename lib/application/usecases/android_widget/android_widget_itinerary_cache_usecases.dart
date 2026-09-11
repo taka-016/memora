@@ -20,6 +20,15 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
 
+  Future<void> executeForSelectedGroup() async {
+    final groupId = await _cacheStorage.getTargetGroupId();
+    if (groupId == null) return;
+    await execute(
+      groupId: groupId,
+      selectedItineraryDateId: await _cacheStorage.getSelectedItineraryDateId(),
+    );
+  }
+
   Future<void> execute({
     required String groupId,
     String? selectedItineraryDateId,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
@@ -95,4 +97,13 @@ final watchAndroidWidgetLaunchUriUsecaseProvider =
       return const WatchAndroidWidgetLaunchUriUsecase(
         HomeWidgetAndroidWidgetLaunchUriSource(),
       );
+    });
+
+final refreshSelectedAndroidWidgetCacheProvider =
+    Provider<Future<void> Function()>((ref) {
+      return () async {
+        if (!Platform.isAndroid) return;
+        await ref.read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+            .executeForSelectedGroup();
+      };
     });

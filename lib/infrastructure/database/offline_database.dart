@@ -11,12 +11,18 @@ part 'offline_database.g.dart';
 class OfflineDatabase extends _$OfflineDatabase {
   OfflineDatabase(super.executor);
 
-  factory OfflineDatabase.device() => OfflineDatabase(
+  factory OfflineDatabase.device({
+    Future<Directory> Function() directory = getApplicationSupportDirectory,
+  }) => OfflineDatabase(
     LazyDatabase(() async {
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
+      final databaseDirectory = await directory();
+      await databaseDirectory.create(recursive: true);
       return NativeDatabase.createInBackground(
-        File('${directory.path}/memora.sqlite'),
+        File('${databaseDirectory.path}/memora.sqlite'),
+        setup: (database) {
+          database.execute('PRAGMA busy_timeout = 5000');
+          database.execute('PRAGMA journal_mode = WAL');
+        },
       );
     }),
   );
