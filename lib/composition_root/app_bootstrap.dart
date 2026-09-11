@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
@@ -18,6 +19,7 @@ Future<void> launchApp(Widget app) async {
           root.services.log.recordError(details.exception, details.stack),
         );
       };
+      await const SharedPreferencesAppModeStorage().save(root.mode);
       registerAndroidWidgetInteractivityCallback();
       await initializeAndroidWidgetBackgroundUpdate();
       final container = root.createContainer();

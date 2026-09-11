@@ -1,5 +1,6 @@
 import 'package:memora/composition_root/android_widget_composition_root.dart';
-import 'package:memora/composition_root/app_composition_root.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_background_update.dart';
 
 import 'dart:async';
@@ -26,8 +27,10 @@ const _cacheRefreshTimeout = Duration(seconds: 20);
 const _widgetUpdateTimeout = Duration(seconds: 4);
 const _notificationTimeout = Duration(seconds: 2);
 const _statusStorageTimeout = Duration(seconds: 2);
-final _connectedNetworkConstraints = Constraints(
-  networkType: NetworkType.connected,
+Constraints androidWidgetNetworkConstraints(AppMode mode) => Constraints(
+  networkType: mode == AppMode.online
+      ? NetworkType.connected
+      : NetworkType.notRequired,
 );
 
 Future<void> initializeAndroidWidgetBackgroundUpdate() async {
@@ -41,6 +44,8 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
   if (!Platform.isAndroid) {
     return;
   }
+  final mode = await const SharedPreferencesAppModeStorage().load();
+  if (mode == null) return;
   final workmanager = Workmanager();
   await Future.wait([
     workmanager.cancelByUniqueName(_legacyShortUpdateFirstUniqueName),
@@ -61,7 +66,7 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
         androidWidgetPeriodicUpdateTaskName,
         existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
         frequency: frequency,
-        constraints: _connectedNetworkConstraints,
+        constraints: androidWidgetNetworkConstraints(mode),
       );
     },
     now: DateTime.now,
@@ -77,7 +82,6 @@ void androidWidgetBackgroundUpdateDispatcher() {
       return true;
     }
     WidgetsFlutterBinding.ensureInitialized();
-    logger = AppCompositionRoot.fromBuildConfiguration().services.log;
     return await _refreshAndroidWidgetFromBackground();
   });
 }

@@ -44,6 +44,14 @@ object AndroidWidgetUpdateFallbackScheduler {
     }
 
     fun recoverIfOverdue(context: Context) {
+        val networkType = when (flutterPreferences(context).getString(
+            RESOLVED_APP_MODE_KEY,
+            null,
+        )) {
+            "offline" -> NetworkType.NOT_REQUIRED
+            "online" -> NetworkType.CONNECTED
+            else -> return
+        }
         val preferences = homeWidgetPreferences(context)
         val targetGroupId = preferences
             .getString(TARGET_GROUP_ID_KEY, null)
@@ -81,7 +89,7 @@ object AndroidWidgetUpdateFallbackScheduler {
             .apply()
 
         val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiredNetworkType(networkType)
             .build()
         val inputData = Data.Builder()
             .putString(BackgroundWorker.DART_TASK_KEY, PERIODIC_UPDATE_TASK_NAME)
@@ -130,6 +138,7 @@ object AndroidWidgetUpdateFallbackScheduler {
     private fun flutterPreferences(context: Context) =
         context.getSharedPreferences(FLUTTER_PREFERENCES, Context.MODE_PRIVATE)
 
+    private const val RESOLVED_APP_MODE_KEY = "flutter.resolved_app_mode"
     private const val HOME_WIDGET_PREFERENCES = "HomeWidgetPreferences"
     private const val FLUTTER_PREFERENCES = "FlutterSharedPreferences"
     private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
