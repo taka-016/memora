@@ -15,11 +15,14 @@ void main() {
       await writer.initialize();
       await writer.insertRow('members', {'id': 'member', 'display_name': '変更前'});
       await reader.initialize();
-      await reader.transaction(() async {
+      await reader.customStatement('BEGIN DEFERRED');
+      try {
         expect((await reader.rows('members')).single['display_name'], '変更前');
         await writer.updateRow('members', 'member', {'display_name': '変更後'});
         expect((await reader.rows('members')).single['display_name'], '変更前');
-      });
+      } finally {
+        await reader.customStatement('ROLLBACK');
+      }
       expect((await reader.rows('members')).single['display_name'], '変更後');
     } finally {
       await reader.close();
