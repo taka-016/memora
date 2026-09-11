@@ -38,7 +38,7 @@ class AppCapabilities {
       return const FeatureAvailability.available();
     }
     if (feature == AppFeature.localData) {
-      return const FeatureAvailability.unavailable('端末内データの保存機能は現在準備中です。');
+      return const FeatureAvailability.available();
     }
     return const FeatureAvailability.unavailable('この機能はオンラインモードで利用できます。');
   }

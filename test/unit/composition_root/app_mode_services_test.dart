@@ -1,4 +1,7 @@
 import 'package:flutter_riverpod/misc.dart';
+import 'package:drift/native.dart';
+import 'package:memora/infrastructure/database/offline_database.dart';
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/app_providers.dart';
 import 'package:memora/infrastructure/time/ntp_synchronized_app_clock.dart';
@@ -48,6 +51,7 @@ void main() {
 
   test('オフラインの機能と利用不可理由を共通モデルから取得できる', () {
     final capabilities = AppCapabilities.forMode(AppMode.offline);
+    expect(capabilities.availability(AppFeature.localData).isAvailable, isTrue);
     for (final feature in [
       AppFeature.authentication,
       AppFeature.maps,
@@ -65,18 +69,40 @@ void main() {
     }
   });
 
-  test('オフラインでは全Factoryが外部実装を解決せず共通の利用不可結果を返す', () async {
+  test('オフラインでは端末内データのFactoryを解決しオンライン専用機能を拒否する', () async {
     final container = ProviderContainer(
-      overrides: [appModeProvider.overrideWithValue(AppMode.offline)],
+      overrides: [
+        appModeProvider.overrideWithValue(AppMode.offline),
+        offlineDatabaseProvider.overrideWith((ref) {
+          final db = OfflineDatabase(NativeDatabase.memory());
+          ref.onDispose(db.close);
+          return db;
+        }),
+      ],
     );
     addTearDown(container.dispose);
     // 依存先のSDKを初期化しない環境で、Factoryの実際の選択を確認する。
     for (final provider in [
       authServiceProvider,
+      memberInvitationRepositoryProvider,
+      locationQueryServiceProvider,
+      memberInvitationQueryServiceProvider,
+    ]) {
+      expect(
+        () => container.read(provider),
+        throwsA(
+          isA<ProviderException>().having(
+            (error) => error.exception,
+            'exception',
+            isA<FeatureUnavailableException>(),
+          ),
+        ),
+      );
+    }
+    for (final provider in [
       groupRepositoryProvider,
       memberRepositoryProvider,
       memberEventRepositoryProvider,
-      memberInvitationRepositoryProvider,
       groupEventRepositoryProvider,
       tripEntryRepositoryProvider,
       dvcPointContractRepositoryProvider,
@@ -89,25 +115,14 @@ void main() {
       itineraryItemQueryServiceProvider,
       androidWidgetItineraryItemQueryServiceProvider,
       taskQueryServiceProvider,
-      locationQueryServiceProvider,
       memberQueryServiceProvider,
       memberEventQueryServiceProvider,
-      memberInvitationQueryServiceProvider,
       dvcPointContractQueryServiceProvider,
       dvcLimitedPointQueryServiceProvider,
       dvcPointUsageQueryServiceProvider,
       writeTransactionProvider,
     ]) {
-      expect(
-        () => container.read(provider),
-        throwsA(
-          isA<ProviderException>().having(
-            (error) => error.exception,
-            'exception',
-            isA<FeatureUnavailableException>(),
-          ),
-        ),
-      );
+      expect(container.read(provider), isNotNull);
     }
     await expectLater(
       container.read(locationSearchServiceProvider).searchByKeyword('東京'),

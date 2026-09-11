@@ -2,26 +2,6 @@
 
 ## オフライン・オンラインモード対応
 
-### 6. Android内部SQLite DBとデータアクセスを実装する
-
-- `group_members`の既存データに保存されている`orderIndex`をER図へ追記する
-- Context7で公式ドキュメントを確認してからDriftと必要な関連パッケージを追加する
-- ER図、Domain Entity、DTO、現在のFirestore Mapperを基準に、オフラインモードで使用する業務データのSQLiteスキーマを定義する
-- SQLiteスキーマに`passportNumber`と`passportExpiration`を含めず、SQLiteファイルにはアプリ独自の暗号化を適用しない
-- オフラインモードで使用しない`member_invitations`と`locations`はSQLiteのテーブル、Mapper、Repository、QueryServiceを作成しない
-- オフライン時の旅行の場所一覧は空配列、旅程の`locationId`とDTOの場所情報はnullとして扱い、場所テーブルがなくても旅行・旅程を取得・保存できるようにする
-- 場所情報を含む保存要求やバックアップの復元入力を受けた場合の扱いを共通の利用不可結果・検証方針と整合させ、未保存の場所への参照や場所情報の黙示的な欠落を防ぐ
-- 主キー、外部キー、必須値、一意性、削除時の扱い、検索・並び替えに必要なindexを明示する
-- Androidのアプリ内部ストレージにSQLiteファイルを作成し、DBの初期化、終了、バージョン管理、マイグレーション方針を整備する
-- 日時、真偽値、nullable項目を既存Entity・DTOと相互変換できる保存形式へ統一する
-- メンバー、メンバーイベント、グループ、グループイベントのMapper、Repository、QueryServiceと、グループメンバーのMapperを実装する
-- グループメンバーの保存・更新・削除は既存の`GroupRepository`、グループと所属メンバーの取得は既存の`GroupQueryService`の責務を維持し、個別のRepositoryやQueryServiceは追加しない
-- 旅行、タスク、旅程項目のMapperとQueryServiceを実装し、保存・更新・削除は既存の`TripEntryRepository`の集約単位を維持して実装する。タスクと旅程項目の個別Repositoryは追加しない
-- DVCポイント契約、期間限定ポイント、利用履歴のMapper、Repository、QueryServiceを実装する
-- 複数更新を原子的に保存できるSQLite用`WriteTransaction`を実装する
-- Repository、QueryService、TransactionのFactoryのオフライン分岐を利用不可結果からSQLite実装へ置き換え、Composition RootへDBの初期化・終了を接続し、`AppCapabilities`の端末内保存を利用可能にする。`offline_current_member.json`の利用者IDと本人メンバーIDを維持してSQLiteへ接続し、本人の編集結果を現在利用者の復元へ反映する
-- 既存の並び替え、関連データの組み立て、保存・更新・削除について、保存方式ではなくアプリから観測できる振る舞いをFirestore実装と一致させる
-
 ### 7. Androidウィジェットを両方のモードへ対応する
 
 - バックグラウンド処理用Composition Rootから、オンラインモードはFirestore、オフラインモードはSQLiteのQueryServiceと時刻実装を共通UseCaseへ注入する

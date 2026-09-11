@@ -58,6 +58,7 @@ dependencies:
   memora_android_widget_toast:
     path: packages/memora_android_widget_toast
   workmanager: ^0.10.9
+  drift: ^2.35.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  drift_dev: ^2.35.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -3,7 +3,8 @@ import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/services/current_member_resolver.dart';
 import 'package:memora/application/services/authenticated_current_member_resolver.dart';
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
-import 'package:memora/infrastructure/services/local_current_member_resolver.dart';
+import 'package:memora/infrastructure/services/sqlite_current_member_resolver.dart';
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:memora/application/usecases/member/accept_invitation_usecase.dart';
 import 'package:memora/application/usecases/member/calculate_school_grade_usecase.dart';
@@ -84,7 +85,9 @@ final deleteMemberUsecaseProvider = Provider<DeleteMemberUsecase>((ref) {
 
 final currentMemberResolverProvider = Provider<CurrentMemberResolver>((ref) {
   return switch (ref.watch(appModeProvider)) {
-    AppMode.offline => LocalCurrentMemberResolver(),
+    AppMode.offline => SqliteCurrentMemberResolver(
+      ref.watch(offlineDatabaseProvider),
+    ),
     AppMode.online => AuthenticatedCurrentMemberResolver(
       ref.watch(memberQueryServiceProvider),
       ref.watch(authServiceProvider),
