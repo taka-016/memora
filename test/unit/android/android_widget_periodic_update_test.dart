@@ -38,11 +38,28 @@ void main() {
       expect(source, contains('memora_android_widget_periodic_update'));
     });
 
-    test('ネットワーク接続時のみバックグラウンド更新を実行する', () {
+    test('保存済みモードで通常登録のネットワーク制約を選択する', () {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('Constraints('));
-      expect(source, contains('networkType: NetworkType.connected'));
+      expect(source, contains('await const SharedPreferencesAppModeStorage().load()'));
+      expect(source, contains('constraints: androidWidgetNetworkConstraints(mode)'));
+    });
+
+    test('フォールバックの定期・即時登録にも同じモードの制約を適用する', () {
+      final source = File(_fallbackSchedulerPath).readAsStringSync();
+      expect(source, contains('flutter.resolved_app_mode'));
+      expect(source, contains('"offline" -> NetworkType.NOT_REQUIRED'));
+      expect(source, contains('"online" -> NetworkType.CONNECTED'));
+      expect(source, contains('else -> return'));
+      expect('.setConstraints(constraints)'.allMatches(source).length, 2);
+    });
+
+    test('コールバック登録前にアプリの解決済みモードを保存する', () {
+      final source = File(_mainPath).readAsStringSync();
+      final save = source.indexOf('SharedPreferencesAppModeStorage().save(root.mode)');
+      expect(save, greaterThanOrEqualTo(0));
+      expect(save, lessThan(source.indexOf('registerAndroidWidgetInteractivityCallback();')));
     });
 
     test('検証用の短間隔One-offタスクを登録しない', () {
