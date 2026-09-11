@@ -58,6 +58,7 @@ void main() {
           updateWidgetAfterRefresh: false,
         );
         await handler.handle(Uri.parse('memora://recent'));
+        await refresh.executeForSelectedGroup();
       },
       createOfflineDatabase: () => database,
       cacheStorage: storage,
@@ -65,7 +66,7 @@ void main() {
 
     final caches = verify(storage.saveItineraryCache(captureAny)).captured
         .cast<AndroidWidgetItineraryCacheDto>();
-    expect(caches, hasLength(2));
+    expect(caches, hasLength(3));
     for (final cache in caches) {
       expect(cache.itineraryDates.single.tripName, '端末内の旅行');
       expect(cache.itineraryDates.single.itineraryItems.single.name, '端末内の旅程');

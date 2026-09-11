@@ -14,6 +14,26 @@ import '../../../../helpers/test_exception.dart';
 
 void main() {
   group('RefreshAndroidWidgetItineraryCacheUsecase', () {
+    for (final targetGroupId in [null, 'group-1']) {
+      test('選択グループ$targetGroupIdの旅程削除後に表示を更新する', () async {
+        final existingCache = _cacheWithItinerary();
+        final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache)
+          ..targetGroupId = targetGroupId;
+        final usecase = _buildRefreshUsecase(
+          storage, _FakeTripEntryQueryService(), _FakeItineraryItemQueryService(),
+        );
+        await usecase.executeForSelectedGroup();
+        if (targetGroupId == null) {
+          expect(storage.cache, same(existingCache));
+          expect(storage.updateWidgetCount, 0);
+        } else {
+          expect(storage.cache?.groupId, targetGroupId);
+          expect(storage.cache?.itineraryDates, isEmpty);
+          expect(storage.updateWidgetCount, 1);
+        }
+      });
+    }
+
     test('自動更新で取得結果が空の場合は既存の旅程キャッシュを維持する', () async {
       final existingCache = _cacheWithItinerary();
       final storage = _FakeAndroidWidgetCacheStorage(cache: existingCache);
