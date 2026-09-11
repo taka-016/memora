@@ -27,22 +27,41 @@ void main() {
   test('保存済みオフラインモードでSQLiteの旅程を定期更新と操作へ注入する', () async {
     final database = OfflineDatabase(NativeDatabase.memory());
     await database.initialize();
-    await database.insertRow('members', {'id': 'member', 'display_name': '利用者'});
-    await database.insertRow('groups', {'id': 'group', 'owner_id': 'member', 'name': '旅行'});
+    await database.insertRow('members', {
+      'id': 'member',
+      'display_name': '利用者',
+    });
+    await database.insertRow('groups', {
+      'id': 'group',
+      'owner_id': 'member',
+      'name': '旅行',
+    });
     await database.insertRow('trip_entries', {
-      'id': 'trip', 'group_id': 'group', 'year': 2026, 'name': '端末内の旅行',
+      'id': 'trip',
+      'group_id': 'group',
+      'year': 2026,
+      'name': '端末内の旅行',
     });
     await database.insertRow('itinerary_items', {
-      'id': 'item', 'trip_id': 'trip', 'name': '端末内の旅程',
-      'start_date_time': DateTime(2026, 9, 12, 10).millisecondsSinceEpoch,
+      'id': 'item',
+      'trip_id': 'trip',
+      'name': '端末内の旅程',
+      'start_date_time': DateTime(2026, 9, 12, 10).microsecondsSinceEpoch,
     });
     final storage = MockAndroidWidgetCacheStorage();
     when(storage.getTargetGroupId()).thenAnswer((_) async => 'group');
 
-    await withAndroidWidgetDependencies((refresh, handler) async {
-      await refresh.execute(groupId: 'group', updateWidgetAfterRefresh: false);
-      await handler.handle(Uri.parse('memora://recent'));
-    }, createOfflineDatabase: () => database, cacheStorage: storage);
+    await withAndroidWidgetDependencies(
+      (refresh, handler) async {
+        await refresh.execute(
+          groupId: 'group',
+          updateWidgetAfterRefresh: false,
+        );
+        await handler.handle(Uri.parse('memora://recent'));
+      },
+      createOfflineDatabase: () => database,
+      cacheStorage: storage,
+    );
 
     final caches = verify(storage.saveItineraryCache(captureAny)).captured
         .cast<AndroidWidgetItineraryCacheDto>();
@@ -83,12 +102,18 @@ void main() {
   test('モード未保存ならFirebaseやDBを初期化せず更新を拒否する', () async {
     SharedPreferences.setMockInitialValues({});
     var opened = false;
-    await expectLater(withAndroidWidgetDependencies((refresh, handler) async {
-      fail('更新処理を実行しない');
-    }, createOfflineDatabase: () {
-      opened = true;
-      return MockOfflineDatabase();
-    }), throwsStateError);
+    await expectLater(
+      withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          fail('更新処理を実行しない');
+        },
+        createOfflineDatabase: () {
+          opened = true;
+          return MockOfflineDatabase();
+        },
+      ),
+      throwsStateError,
+    );
     expect(opened, isFalse);
   });
 }

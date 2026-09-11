@@ -5,9 +5,13 @@ import 'package:workmanager/workmanager.dart';
 
 void main() {
   test('オンラインの定期更新だけ接続済みネットワークを要求する', () {
-    expect(androidWidgetNetworkConstraints(AppMode.online).networkType,
-        NetworkType.connected);
-    expect(androidWidgetNetworkConstraints(AppMode.offline).networkType,
-        NetworkType.notRequired);
+    expect(
+      androidWidgetNetworkConstraints(AppMode.online).networkType,
+      NetworkType.connected,
+    );
+    expect(
+      androidWidgetNetworkConstraints(AppMode.offline).networkType,
+      NetworkType.notRequired,
+    );
   });
 }

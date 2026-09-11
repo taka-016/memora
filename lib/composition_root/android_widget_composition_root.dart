@@ -30,13 +30,16 @@ Future<void> withAndroidWidgetDependencies(
   final database = mode == AppMode.offline
       ? (createOfflineDatabase ?? OfflineDatabase.device)()
       : null;
-  final container = ProviderContainer(overrides: [
-    ...root.overrides,
-    if (database != null) offlineDatabaseProvider.overrideWithValue(database),
-  ]);
+  final container = ProviderContainer(
+    overrides: [
+      ...root.overrides,
+      if (database != null) offlineDatabaseProvider.overrideWithValue(database),
+    ],
+  );
   try {
     await database?.initialize();
-    final AndroidWidgetCacheStorage storage = cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
+    final AndroidWidgetCacheStorage storage =
+        cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
     final trips = container.read(mapTripEntryQueryServiceProvider);
     final items = container.read(
       androidWidgetItineraryItemQueryServiceProvider,

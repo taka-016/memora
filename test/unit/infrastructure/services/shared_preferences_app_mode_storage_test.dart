@@ -17,9 +17,7 @@ void main() {
 
   for (final value in [null, 'auto', 'unknown']) {
     test('保存値$valueからモードを推測せず未解決として扱う', () async {
-      SharedPreferences.setMockInitialValues({
-        if (value != null) 'resolved_app_mode': value,
-      });
+      SharedPreferences.setMockInitialValues({'resolved_app_mode': ?value});
       expect(await storage.load(), isNull);
     });
   }

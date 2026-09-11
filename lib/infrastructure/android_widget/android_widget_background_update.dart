@@ -1,3 +1,4 @@
+import 'package:memora/infrastructure/services/offline_app_services.dart';
 import 'package:memora/composition_root/android_widget_composition_root.dart';
 import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
@@ -82,6 +83,7 @@ void androidWidgetBackgroundUpdateDispatcher() {
       return true;
     }
     WidgetsFlutterBinding.ensureInitialized();
+    logger = OfflineAppServices().log;
     return await _refreshAndroidWidgetFromBackground();
   });
 }

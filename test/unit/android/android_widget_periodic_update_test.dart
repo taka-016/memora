@@ -42,8 +42,14 @@ void main() {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('Constraints('));
-      expect(source, contains('await const SharedPreferencesAppModeStorage().load()'));
-      expect(source, contains('constraints: androidWidgetNetworkConstraints(mode)'));
+      expect(
+        source,
+        contains('await const SharedPreferencesAppModeStorage().load()'),
+      );
+      expect(
+        source,
+        contains('constraints: androidWidgetNetworkConstraints(mode)'),
+      );
     });
 
     test('フォールバックの定期・即時登録にも同じモードの制約を適用する', () {
@@ -57,9 +63,16 @@ void main() {
 
     test('コールバック登録前にアプリの解決済みモードを保存する', () {
       final source = File(_mainPath).readAsStringSync();
-      final save = source.indexOf('SharedPreferencesAppModeStorage().save(root.mode)');
+      final save = source.indexOf(
+        'SharedPreferencesAppModeStorage().save(root.mode)',
+      );
       expect(save, greaterThanOrEqualTo(0));
-      expect(save, lessThan(source.indexOf('registerAndroidWidgetInteractivityCallback();')));
+      expect(
+        save,
+        lessThan(
+          source.indexOf('registerAndroidWidgetInteractivityCallback();'),
+        ),
+      );
     });
 
     test('検証用の短間隔One-offタスクを登録しない', () {
