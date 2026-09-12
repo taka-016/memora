@@ -11,12 +11,18 @@ part 'offline_database.g.dart';
 class OfflineDatabase extends _$OfflineDatabase {
   OfflineDatabase(super.executor);
 
-  factory OfflineDatabase.device() => OfflineDatabase(
+  factory OfflineDatabase.device({
+    Future<Directory> Function() directory = getApplicationSupportDirectory,
+  }) => OfflineDatabase(
     LazyDatabase(() async {
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
+      final databaseDirectory = await directory();
+      await databaseDirectory.create(recursive: true);
       return NativeDatabase.createInBackground(
-        File('${directory.path}/memora.sqlite'),
+        File('${databaseDirectory.path}/memora.sqlite'),
+        setup: (database) {
+          database.execute('PRAGMA busy_timeout = 5000');
+          database.execute('PRAGMA journal_mode = WAL');
+        },
       );
     }),
   );
@@ -43,6 +49,17 @@ class OfflineDatabase extends _$OfflineDatabase {
   Future<void> initialize() async {
     await customSelect('SELECT 1').get();
   }
+
+  Future<T> readTransaction<T>(Future<T> Function() action) async =>
+      exclusively(() async {
+        // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
+        await customStatement('BEGIN DEFERRED');
+        try {
+          return await action();
+        } finally {
+          await customStatement('ROLLBACK');
+        }
+      });
 
   Future<List<Map<String, Object?>>> rows(
     String table, {

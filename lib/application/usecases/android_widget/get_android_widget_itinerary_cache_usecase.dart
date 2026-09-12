@@ -5,19 +5,36 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/core/time/app_clock.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 
 class GetAndroidWidgetItineraryCacheUsecase {
   const GetAndroidWidgetItineraryCacheUsecase({
     required this._tripEntryQueryService,
     required this._itineraryItemQueryService,
     required this._clock,
+    this._readTransaction,
   });
 
   final TripEntryQueryService _tripEntryQueryService;
   final ItineraryItemQueryService _itineraryItemQueryService;
   final AppClock _clock;
+  final ReadTransaction? _readTransaction;
 
   Future<AndroidWidgetItineraryCacheDto> execute({
+    required String groupId,
+    String? selectedItineraryDateId,
+  }) async {
+    Future<AndroidWidgetItineraryCacheDto> readCache() async => _readCache(
+      groupId: groupId,
+      selectedItineraryDateId: selectedItineraryDateId,
+    );
+    final readTransaction = _readTransaction;
+    return readTransaction == null
+        ? await readCache()
+        : await readTransaction(readCache);
+  }
+
+  Future<AndroidWidgetItineraryCacheDto> _readCache({
     required String groupId,
     String? selectedItineraryDateId,
   }) async {
