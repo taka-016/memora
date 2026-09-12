@@ -72,7 +72,9 @@ final getAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<GetAndroidWidgetItineraryCacheUsecase>((ref) {
       return GetAndroidWidgetItineraryCacheUsecase(
         tripEntryQueryService: ref.watch(mapTripEntryQueryServiceProvider),
-        itineraryItemQueryService: ref.watch(androidWidgetItineraryItemQueryServiceProvider),
+        itineraryItemQueryService: ref.watch(
+          androidWidgetItineraryItemQueryServiceProvider,
+        ),
         clock: ref.watch(appClockProvider),
       );
     });
