@@ -20,14 +20,11 @@ void main() {
         'display_name': '変更前',
       });
       await reader.initialize();
-      await reader.customStatement('BEGIN DEFERRED');
-      try {
+      await reader.readTransaction(() async {
         expect((await reader.rows('members')).single['display_name'], '変更前');
         await writer.updateRow('members', 'member', {'display_name': '変更後'});
         expect((await reader.rows('members')).single['display_name'], '変更前');
-      } finally {
-        await reader.customStatement('ROLLBACK');
-      }
+      });
       expect((await reader.rows('members')).single['display_name'], '変更後');
     } finally {
       await reader.close();
