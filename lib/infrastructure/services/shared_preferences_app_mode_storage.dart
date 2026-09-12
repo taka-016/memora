@@ -1,4 +1,5 @@
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SharedPreferencesAppModeStorage {
@@ -11,6 +12,13 @@ class SharedPreferencesAppModeStorage {
     if (!await preferences.setString(_key, mode.name)) {
       throw StateError('解決済みモードを保存できませんでした');
     }
+  }
+
+  Future<AppMode?> loadForCurrentBuild() async {
+    final mode = await load();
+    final forcedMode = AppModeBuildConfiguration.fromEnvironment().forcedMode;
+    if (forcedMode != null && mode != forcedMode) return null;
+    return mode;
   }
 
   Future<AppMode?> load() async {
