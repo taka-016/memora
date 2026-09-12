@@ -12,8 +12,10 @@ void main() {
       await storage.save(mode);
       expect(await storage.load(), mode);
       final forcedMode = AppModeBuildConfiguration.fromEnvironment().forcedMode;
-      expect(await storage.loadForCurrentBuild(),
-          forcedMode == null || forcedMode == mode ? mode : isNull);
+      expect(
+        await storage.loadForCurrentBuild(),
+        forcedMode == null || forcedMode == mode ? mode : isNull,
+      );
       final preferences = await SharedPreferences.getInstance();
       expect(preferences.getString('resolved_app_mode'), mode.name);
     });

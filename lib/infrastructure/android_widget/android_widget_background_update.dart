@@ -45,7 +45,8 @@ Future<void> registerAndroidWidgetPeriodicUpdateTask(Duration frequency) async {
   if (!Platform.isAndroid) {
     return;
   }
-  final mode = await const SharedPreferencesAppModeStorage().loadForCurrentBuild();
+  final mode = await const SharedPreferencesAppModeStorage()
+      .loadForCurrentBuild();
   if (mode == null) return;
   final workmanager = Workmanager();
   await Future.wait([

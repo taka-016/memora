@@ -21,7 +21,8 @@ Future<void> withAndroidWidgetDependencies(
   OfflineDatabase Function()? createOfflineDatabase,
   AndroidWidgetCacheStorage? cacheStorage,
 }) async {
-  final mode = await const SharedPreferencesAppModeStorage().loadForCurrentBuild();
+  final mode = await const SharedPreferencesAppModeStorage()
+      .loadForCurrentBuild();
   if (mode == null) {
     throw StateError('ウィジェット更新用のモードが未保存、または現ビルドと一致しません');
   }

@@ -42,10 +42,7 @@ void main() {
       final source = File(_backgroundUpdatePath).readAsStringSync();
 
       expect(source, contains('Constraints('));
-      expect(
-        source,
-        contains('await const SharedPreferencesAppModeStorage().loadForCurrentBuild()'),
-      );
+      expect(source, contains('.loadForCurrentBuild()'));
       expect(
         source,
         contains('constraints: androidWidgetNetworkConstraints(mode)'),
