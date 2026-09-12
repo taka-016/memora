@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/composition_root/providers/offline_database_provider.dart';
+import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
@@ -76,6 +79,9 @@ final getAndroidWidgetItineraryCacheUsecaseProvider =
           androidWidgetItineraryItemQueryServiceProvider,
         ),
         clock: ref.watch(appClockProvider),
+        readTransaction: ref.watch(appModeProvider) == AppMode.offline
+            ? ref.watch(offlineDatabaseProvider).readTransaction
+            : null,
       );
     });
 

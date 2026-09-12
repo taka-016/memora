@@ -6,7 +6,6 @@ import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/services/shared_preferences_app_mode_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_action_handler.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
-import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/composition_root/app_composition_root.dart';
 import 'package:memora/composition_root/providers/android_widget_providers.dart';
 import 'package:memora/infrastructure/factories/query_service_factory.dart';
@@ -47,10 +46,8 @@ Future<void> withAndroidWidgetDependencies(
     );
     final refresh = RefreshAndroidWidgetItineraryCacheUsecase(
       cacheStorage: storage,
-      getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
-        tripEntryQueryService: trips,
-        itineraryItemQueryService: items,
-        clock: root.services.clock,
+      getCacheUsecase: container.read(
+        getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(

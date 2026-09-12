@@ -50,6 +50,17 @@ class OfflineDatabase extends _$OfflineDatabase {
     await customSelect('SELECT 1').get();
   }
 
+  Future<T> readTransaction<T>(Future<T> Function() action) async =>
+      exclusively(() async {
+        // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
+        await customStatement('BEGIN DEFERRED');
+        try {
+          return await action();
+        } finally {
+          await customStatement('ROLLBACK');
+        }
+      });
+
   Future<List<Map<String, Object?>>> rows(
     String table, {
     String? where,
