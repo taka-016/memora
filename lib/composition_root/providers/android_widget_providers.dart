@@ -71,8 +71,8 @@ final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
 final getAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<GetAndroidWidgetItineraryCacheUsecase>((ref) {
       return GetAndroidWidgetItineraryCacheUsecase(
-        tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
-        itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
+        tripEntryQueryService: ref.watch(mapTripEntryQueryServiceProvider),
+        itineraryItemQueryService: ref.watch(androidWidgetItineraryItemQueryServiceProvider),
         clock: ref.watch(appClockProvider),
       );
     });
