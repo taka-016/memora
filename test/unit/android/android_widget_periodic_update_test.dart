@@ -44,7 +44,7 @@ void main() {
       expect(source, contains('Constraints('));
       expect(
         source,
-        contains('await const SharedPreferencesAppModeStorage().load()'),
+        contains('await const SharedPreferencesAppModeStorage().loadForCurrentBuild()'),
       );
       expect(
         source,
