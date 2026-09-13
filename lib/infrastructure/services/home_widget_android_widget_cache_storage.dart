@@ -104,6 +104,18 @@ class HomeWidgetAndroidWidgetCacheStorage
   Future<void> saveItineraryCacheForGeneration(
     AndroidWidgetItineraryCacheDto cache,
   ) async {
+    if (await getCacheGeneration() != cache.generation) {
+      return;
+    }
+    await _writeItineraryCacheForGeneration(cache);
+    if (await getCacheGeneration() != cache.generation) {
+      await _deleteCacheForGeneration(cache.generation);
+    }
+  }
+
+  Future<void> _writeItineraryCacheForGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+  ) async {
     final json = jsonEncode(cache.toJson());
     final generation = cache.generation;
     await HomeWidget.saveFile(
@@ -143,7 +155,7 @@ class HomeWidgetAndroidWidgetCacheStorage
       generation = (random.nextInt(1 << 31) << 31) | random.nextInt(1 << 31);
     }
     if (cache != null) {
-      await saveItineraryCacheForGeneration(
+      await _writeItineraryCacheForGeneration(
         AndroidWidgetItineraryCacheDto(
           version: cache.version,
           sourceMode: cache.sourceMode,
@@ -156,12 +168,51 @@ class HomeWidgetAndroidWidgetCacheStorage
       );
     }
     await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
+    await _deleteCacheForGeneration(currentGeneration);
     return generation;
+  }
+
+  Future<void> _deleteCacheForGeneration(int generation) async {
+    final generationCacheKey = _generationKey(cacheFileKey, generation);
+    final paths = <String>{};
+    final generationPath = await HomeWidget.getWidgetData<String>(
+      generationCacheKey,
+    );
+    if (generationPath != null && generationPath.isNotEmpty) {
+      paths.add(generationPath);
+    }
+    if (generation == 0) {
+      final legacyPath = await HomeWidget.getWidgetData<String>(cacheFileKey);
+      if (legacyPath != null && legacyPath.isNotEmpty) {
+        paths.add(legacyPath);
+      }
+    }
+    await Future.wait([
+      HomeWidget.saveWidgetData<String>(generationCacheKey, null),
+      HomeWidget.saveWidgetData<String>(
+        _generationKey(selectedItineraryDateIdKey, generation),
+        null,
+      ),
+      HomeWidget.saveWidgetData<String>(
+        _generationKey(lastUpdatedAtKey, generation),
+        null,
+      ),
+      if (generation == 0) ...[
+        HomeWidget.saveWidgetData<String>(cacheFileKey, null),
+        HomeWidget.saveWidgetData<String>(selectedItineraryDateIdKey, null),
+        HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, null),
+      ],
+    ]);
+    for (final path in paths) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
   }
 
   @override
   Future<void> clear() async {
-    final previousGeneration = await getCacheGeneration();
     final generation = await advanceCacheGeneration();
     await Future.wait([
       clearTargetGroupId(),
@@ -171,10 +222,6 @@ class HomeWidgetAndroidWidgetCacheStorage
       ),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, ''),
-      HomeWidget.saveWidgetData<String>(
-        _generationKey(cacheFileKey, previousGeneration),
-        null,
-      ),
     ]);
   }
 
