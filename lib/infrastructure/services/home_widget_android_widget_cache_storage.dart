@@ -6,7 +6,8 @@ import 'package:home_widget/home_widget.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 
-class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
+class HomeWidgetAndroidWidgetCacheStorage
+    implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
   const HomeWidgetAndroidWidgetCacheStorage();
 
   static const targetGroupIdKey = 'memora_widget_target_group_id';
@@ -14,6 +15,7 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       'memora_widget_selected_itinerary_date_id';
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
+  static const cacheGenerationKey = 'memora_widget_cache_generation';
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
 
@@ -35,23 +37,36 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<String?> getSelectedItineraryDateId() async {
-    final value = await HomeWidget.getWidgetData<String>(
-      selectedItineraryDateIdKey,
-    );
+    final generation = await getCacheGeneration();
+    final value =
+        await HomeWidget.getWidgetData<String>(
+          _generationKey(selectedItineraryDateIdKey, generation),
+        ) ??
+        (generation == 0
+            ? await HomeWidget.getWidgetData<String>(selectedItineraryDateIdKey)
+            : null);
     return value == null || value.isEmpty ? null : value;
   }
 
   @override
   Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
+    final generation = await getCacheGeneration();
     await HomeWidget.saveWidgetData<String>(
-      selectedItineraryDateIdKey,
+      _generationKey(selectedItineraryDateIdKey, generation),
       itineraryDateId ?? '',
     );
   }
 
   @override
   Future<AndroidWidgetItineraryCacheDto?> loadItineraryCache() async {
-    final path = await HomeWidget.getWidgetData<String>(cacheFileKey);
+    final generation = await getCacheGeneration();
+    final path =
+        await HomeWidget.getWidgetData<String>(
+          _generationKey(cacheFileKey, generation),
+        ) ??
+        (generation == 0
+            ? await HomeWidget.getWidgetData<String>(cacheFileKey)
+            : null);
     if (path == null || path.isEmpty) {
       return null;
     }
@@ -64,33 +79,81 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return null;
     }
     final decoded = jsonDecode(content) as Map<String, dynamic>;
-    return AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    final cache = AndroidWidgetItineraryCacheDto.fromJson(decoded);
+    return cache.generation == generation ? cache : null;
   }
 
   @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
+    final generation = await getCacheGeneration();
+    await saveItineraryCacheForGeneration(
+      AndroidWidgetItineraryCacheDto(
+        version: cache.version,
+        sourceMode: cache.sourceMode,
+        generation: generation,
+        groupId: cache.groupId,
+        selectedItineraryDateId: cache.selectedItineraryDateId,
+        lastUpdatedAt: cache.lastUpdatedAt,
+        itineraryDates: cache.itineraryDates,
+      ),
+    );
+  }
+
+  @override
+  Future<void> saveItineraryCacheForGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+  ) async {
     final json = jsonEncode(cache.toJson());
+    final generation = cache.generation;
     await HomeWidget.saveFile(
-      cacheFileKey,
+      _generationKey(cacheFileKey, generation),
       Uint8List.fromList(utf8.encode(json)),
       extension: 'json',
     );
     await Future.wait([
-      saveSelectedItineraryDateId(cache.selectedItineraryDateId),
       HomeWidget.saveWidgetData<String>(
-        lastUpdatedAtKey,
+        _generationKey(selectedItineraryDateIdKey, generation),
+        cache.selectedItineraryDateId ?? '',
+      ),
+      HomeWidget.saveWidgetData<String>(
+        _generationKey(lastUpdatedAtKey, generation),
         cache.lastUpdatedAt.toIso8601String(),
       ),
     ]);
   }
 
   @override
+  Future<int> getCacheGeneration() async {
+    return await HomeWidget.getWidgetData<int>(
+          cacheGenerationKey,
+          defaultValue: 0,
+        ) ??
+        0;
+  }
+
+  @override
+  Future<int> advanceCacheGeneration() async {
+    final generation = await getCacheGeneration() + 1;
+    await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
+    return generation;
+  }
+
+  @override
   Future<void> clear() async {
+    final previousGeneration = await getCacheGeneration();
+    final generation = await advanceCacheGeneration();
     await Future.wait([
       clearTargetGroupId(),
-      saveSelectedItineraryDateId(null),
+      HomeWidget.saveWidgetData<String>(
+        _generationKey(selectedItineraryDateIdKey, generation),
+        '',
+      ),
       HomeWidget.saveWidgetData<String>(lastUpdatedAtKey, ''),
       HomeWidget.saveWidgetData<String>(cacheFileKey, ''),
+      HomeWidget.saveWidgetData<String>(
+        _generationKey(cacheFileKey, previousGeneration),
+        null,
+      ),
     ]);
   }
 
@@ -100,5 +163,9 @@ class HomeWidgetAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
       return;
     }
     await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedAndroidName);
+  }
+
+  static String _generationKey(String key, int generation) {
+    return '${key}_$generation';
   }
 }

@@ -22,6 +22,9 @@ final androidWidgetCacheStorageProvider = Provider<AndroidWidgetCacheStorage>((
   throw UnimplementedError('AndroidWidgetCacheStorageが注入されていません');
 });
 
+final androidWidgetCacheGenerationStorageProvider =
+    Provider<AndroidWidgetCacheGenerationStorage?>((ref) => null);
+
 final androidWidgetUpdateIntervalStorageProvider =
     Provider<AndroidWidgetUpdateIntervalStorage>((ref) {
       throw UnimplementedError('AndroidWidgetUpdateIntervalStorageが注入されていません');
@@ -31,9 +34,13 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
       return RefreshAndroidWidgetItineraryCacheUsecase(
         cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
+        cacheGenerationStorage: ref.watch(
+          androidWidgetCacheGenerationStorageProvider,
+        ),
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        mode: ref.watch(appModeProvider),
         readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
