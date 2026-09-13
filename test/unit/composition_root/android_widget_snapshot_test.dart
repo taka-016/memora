@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
@@ -28,7 +29,10 @@ import 'android_widget_snapshot_test.mocks.dart';
 @GenerateNiceMocks([MockSpec<AndroidWidgetCacheStorage>()])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final forcedMode = AppModeBuildConfiguration.fromEnvironment().forcedMode;
+  final configuration = AppModeBuildConfiguration.fromEnvironment();
+  final buildMode = const AppModeResolver().resolve(
+    forcedMode: configuration.forcedMode,
+  );
   late Directory directory;
   late OfflineDatabase writer;
   late _InterceptingDatabase reader;
@@ -98,7 +102,7 @@ void main() {
   for (final background in [true, false]) {
     test(
       '${background ? '定期更新' : '保存後更新'}中の別接続の保存で旅行と旅程の取得時点を混在させない',
-      skip: background && forcedMode == AppMode.online,
+      skip: background && buildMode != AppMode.offline,
       () async {
         reader.afterTripsRead = updateTrip;
         Future<void> verifyRefresh(

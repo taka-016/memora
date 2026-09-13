@@ -8,6 +8,7 @@ import 'package:memora/composition_root/android_widget_composition_root.dart';
 import 'package:memora/infrastructure/database/offline_database.dart';
 import 'package:memora/infrastructure/config/app_mode_build_configuration.dart';
 import 'package:memora/application/models/app_mode.dart';
+import 'package:memora/application/services/app_mode_resolver.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,7 +22,10 @@ import 'android_widget_composition_root_test.mocks.dart';
 ])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  final forcedMode = AppModeBuildConfiguration.fromEnvironment().forcedMode;
+  final configuration = AppModeBuildConfiguration.fromEnvironment();
+  final buildMode = const AppModeResolver().resolve(
+    forcedMode: configuration.forcedMode,
+  );
 
   setUp(() {
     SharedPreferences.setMockInitialValues({'resolved_app_mode': 'offline'});
@@ -29,7 +33,7 @@ void main() {
 
   test(
     '保存済みオフラインモードでSQLiteの旅程を定期更新と操作へ注入する',
-    skip: forcedMode == AppMode.online,
+    skip: buildMode != AppMode.offline,
     () async {
       final database = OfflineDatabase(NativeDatabase.memory());
       await database.initialize();
@@ -86,7 +90,7 @@ void main() {
   for (final failInitialization in [false, true]) {
     test(
       '${failInitialization ? '初期化' : '更新'}失敗時もDBの終了完了を待つ',
-      skip: forcedMode == AppMode.online,
+      skip: buildMode != AppMode.offline,
       () async {
         final database = MockOfflineDatabase();
         final closing = Completer<void>();
@@ -117,28 +121,24 @@ void main() {
     );
   }
 
-  test(
-    'APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する',
-    skip: forcedMode == null,
-    () async {
-      final oldMode = forcedMode == AppMode.offline ? 'online' : 'offline';
-      SharedPreferences.setMockInitialValues({'resolved_app_mode': oldMode});
-      var opened = false;
-      await expectLater(
-        withAndroidWidgetDependencies(
-          (refresh, handler) async {
-            fail('旧モードの更新処理を実行しない');
-          },
-          createOfflineDatabase: () {
-            opened = true;
-            return MockOfflineDatabase();
-          },
-        ),
-        throwsStateError,
-      );
-      expect(opened, isFalse);
-    },
-  );
+  test('APK更新前のモードが残っていても外部SDKやDBの初期化前に拒否する', () async {
+    final oldMode = buildMode == AppMode.offline ? 'online' : 'offline';
+    SharedPreferences.setMockInitialValues({'resolved_app_mode': oldMode});
+    var opened = false;
+    await expectLater(
+      withAndroidWidgetDependencies(
+        (refresh, handler) async {
+          fail('旧モードの更新処理を実行しない');
+        },
+        createOfflineDatabase: () {
+          opened = true;
+          return MockOfflineDatabase();
+        },
+      ),
+      throwsStateError,
+    );
+    expect(opened, isFalse);
+  });
 
   test('モード未保存ならFirebaseやDBを初期化せず更新を拒否する', () async {
     SharedPreferences.setMockInitialValues({});
