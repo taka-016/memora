@@ -192,6 +192,13 @@ void main() {
       expect(manifestSource, contains('.AndroidWidgetUpdateFallbackReceiver'));
     });
 
+    test('フォールバック復旧は現世代の最終更新時刻を参照する', () {
+      final source = File(_fallbackSchedulerPath).readAsStringSync();
+
+      expect(source, contains('memora_widget_cache_generation'));
+      expect(source, contains('lastUpdatedAtKey(generation)'));
+    });
+
     test('アプリを開かなくても期限超過した自動更新タスクをネイティブ側で復旧する', () {
       final widgetSource = File(_itineraryWidgetPath).readAsStringSync();
       final schedulerSource = File(_fallbackSchedulerPath).readAsStringSync();
