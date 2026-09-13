@@ -23,7 +23,7 @@ abstract interface class AndroidWidgetCacheStorage {
 abstract interface class AndroidWidgetCacheGenerationStorage {
   Future<int> getCacheGeneration();
 
-  Future<int> advanceCacheGeneration();
+  Future<int> advanceCacheGeneration({AndroidWidgetItineraryCacheDto? cache});
 
   Future<void> saveItineraryCacheForGeneration(
     AndroidWidgetItineraryCacheDto cache,

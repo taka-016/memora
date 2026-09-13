@@ -132,8 +132,23 @@ class HomeWidgetAndroidWidgetCacheStorage
   }
 
   @override
-  Future<int> advanceCacheGeneration() async {
+  Future<int> advanceCacheGeneration({
+    AndroidWidgetItineraryCacheDto? cache,
+  }) async {
     final generation = await getCacheGeneration() + 1;
+    if (cache != null) {
+      await saveItineraryCacheForGeneration(
+        AndroidWidgetItineraryCacheDto(
+          version: cache.version,
+          sourceMode: cache.sourceMode,
+          generation: generation,
+          groupId: cache.groupId,
+          selectedItineraryDateId: cache.selectedItineraryDateId,
+          lastUpdatedAt: cache.lastUpdatedAt,
+          itineraryDates: cache.itineraryDates,
+        ),
+      );
+    }
     await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
     return generation;
   }

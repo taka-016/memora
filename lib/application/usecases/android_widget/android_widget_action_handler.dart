@@ -78,7 +78,9 @@ class AndroidWidgetActionHandler {
       return;
     }
     try {
-      await _cacheGenerationStorage?.advanceCacheGeneration();
+      await _cacheGenerationStorage?.advanceCacheGeneration(
+        cache: await _cacheStorage.loadItineraryCache(),
+      );
       await _refreshCache(groupId: groupId);
     } catch (_) {
       await _showMoveFailedToast();

@@ -218,8 +218,21 @@ class _FakeAndroidWidgetCacheStorage
   final caches = <int, AndroidWidgetItineraryCacheDto>{};
 
   @override
-  Future<int> advanceCacheGeneration() async {
+  Future<int> advanceCacheGeneration({
+    AndroidWidgetItineraryCacheDto? cache,
+  }) async {
     generation += 1;
+    if (cache != null) {
+      caches[generation] = AndroidWidgetItineraryCacheDto(
+        version: cache.version,
+        sourceMode: cache.sourceMode,
+        generation: generation,
+        groupId: cache.groupId,
+        selectedItineraryDateId: cache.selectedItineraryDateId,
+        lastUpdatedAt: cache.lastUpdatedAt,
+        itineraryDates: cache.itineraryDates,
+      );
+    }
     return generation;
   }
 

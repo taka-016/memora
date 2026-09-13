@@ -176,13 +176,10 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     final cachedTarget = _findCachedTarget(cache, direction);
     if (cachedTarget != null) {
       final generationStorage = _cacheGenerationStorage;
-      final generation = generationStorage == null
-          ? cache.generation
-          : await generationStorage.advanceCacheGeneration();
       final movedCache = AndroidWidgetItineraryCacheDto(
         version: cache.version,
         sourceMode: cache.sourceMode,
-        generation: generation,
+        generation: cache.generation,
         groupId: cache.groupId,
         selectedItineraryDateId: cachedTarget,
         lastUpdatedAt: cache.lastUpdatedAt,
@@ -191,7 +188,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       if (generationStorage == null) {
         await _cacheStorage.saveItineraryCache(movedCache);
       } else {
-        await generationStorage.saveItineraryCacheForGeneration(movedCache);
+        await generationStorage.advanceCacheGeneration(cache: movedCache);
       }
       await _cacheStorage.updateWidget();
       return;
@@ -208,7 +205,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       return;
     }
 
-    await _cacheGenerationStorage?.advanceCacheGeneration();
+    await _cacheGenerationStorage?.advanceCacheGeneration(cache: cache);
     await _refreshCacheUsecase.execute(
       groupId: cache.groupId,
       selectedItineraryDateId: targetItineraryDateId,
