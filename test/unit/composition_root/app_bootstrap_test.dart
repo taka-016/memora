@@ -38,4 +38,41 @@ void main() {
     verifyNever(cacheStorage.clear());
     verifyNever(cacheStorage.updateWidget());
   });
+
+  test('従来版からオフラインへ更新したら生成元不明のキャッシュを破棄する', () async {
+    SharedPreferences.setMockInitialValues({});
+    final cacheStorage = MockAndroidWidgetCacheStorage();
+
+    await synchronizeAppModeAndAndroidWidgetCache(
+      AppMode.offline,
+      cacheStorage: cacheStorage,
+    );
+
+    verifyInOrder([cacheStorage.clear(), cacheStorage.updateWidget()]);
+  });
+
+  test('従来版からオンラインへ更新したら既存キャッシュを維持する', () async {
+    SharedPreferences.setMockInitialValues({});
+    final cacheStorage = MockAndroidWidgetCacheStorage();
+
+    await synchronizeAppModeAndAndroidWidgetCache(
+      AppMode.online,
+      cacheStorage: cacheStorage,
+    );
+
+    verifyNever(cacheStorage.clear());
+    verifyNever(cacheStorage.updateWidget());
+  });
+
+  test('保存モードが不正なら生成元不明のキャッシュを破棄する', () async {
+    SharedPreferences.setMockInitialValues({'resolved_app_mode': 'unknown'});
+    final cacheStorage = MockAndroidWidgetCacheStorage();
+
+    await synchronizeAppModeAndAndroidWidgetCache(
+      AppMode.online,
+      cacheStorage: cacheStorage,
+    );
+
+    verifyInOrder([cacheStorage.clear(), cacheStorage.updateWidget()]);
+  });
 }
