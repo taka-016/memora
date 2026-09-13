@@ -126,6 +126,34 @@ void main() {
       expect(storage.targetGroupId, 'group-b');
       expect(storage.cache?.groupId, 'group-b');
     });
+
+    test('公開可否の確認直後に対象が変わっても新しいグループのキャッシュを維持する', () async {
+      final oldPublishChecked = Completer<void>();
+      final releaseOldPublish = Completer<void>();
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-a'
+        ..afterTargetRead = (readCount) async {
+          if (readCount != 2) return;
+          oldPublishChecked.complete();
+          await releaseOldPublish.future;
+        };
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+      );
+
+      final oldRefresh = usecase.executeForSelectedGroup();
+      await oldPublishChecked.future;
+      await storage.clear();
+      await storage.saveTargetGroupId('group-b');
+      await usecase.executeForSelectedGroup();
+      releaseOldPublish.complete();
+      await oldRefresh;
+
+      expect(storage.targetGroupId, 'group-b');
+      expect(storage.cache?.groupId, 'group-b');
+    });
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
@@ -217,6 +245,8 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   String? selectedItineraryDateId;
   String? errorMessage;
   int updateWidgetCount = 0;
+  int targetReadCount = 0;
+  Future<void> Function(int readCount)? afterTargetRead;
 
   @override
   Future<void> clear() async {
@@ -238,7 +268,9 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
   @override
   Future<String?> getTargetGroupId() async {
-    return targetGroupId;
+    final result = targetGroupId;
+    await afterTargetRead?.call(++targetReadCount);
+    return result;
   }
 
   @override
