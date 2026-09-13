@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.util.Base64
 
 plugins {
     id("com.android.application")
@@ -16,6 +17,25 @@ val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
         FileInputStream(keystorePropertiesFile).use { load(it) }
     }
+}
+
+val requestedAppMode = project.findProperty("dart-defines")
+    ?.toString()
+    ?.split(",")
+    ?.mapNotNull { encoded ->
+        runCatching {
+            String(Base64.getDecoder().decode(encoded), Charsets.UTF_8)
+        }.getOrNull()
+    }
+    ?.lastOrNull { it.startsWith("MEMORA_APP_MODE=") }
+    ?.substringAfter("=")
+    ?: "auto"
+val resolvedAppMode = when (requestedAppMode) {
+    "auto", "online" -> "online"
+    "offline" -> "offline"
+    else -> throw GradleException(
+        "MEMORA_APP_MODEにはauto、online、offlineのいずれかを指定してください。",
+    )
 }
 
 android {
@@ -48,6 +68,7 @@ android {
 
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
+        buildConfigField("String", "RESOLVED_APP_MODE", "\"$resolvedAppMode\"")
     }
 
     buildFeatures {

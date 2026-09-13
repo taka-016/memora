@@ -44,10 +44,14 @@ object AndroidWidgetUpdateFallbackScheduler {
     }
 
     fun recoverIfOverdue(context: Context) {
-        val networkType = when (flutterPreferences(context).getString(
+        val savedMode = flutterPreferences(context).getString(
             RESOLVED_APP_MODE_KEY,
             null,
-        )) {
+        )
+        if (savedMode != BuildConfig.RESOLVED_APP_MODE) {
+            return
+        }
+        val networkType = when (BuildConfig.RESOLVED_APP_MODE) {
             "offline" -> NetworkType.NOT_REQUIRED
             "online" -> NetworkType.CONNECTED
             else -> return
