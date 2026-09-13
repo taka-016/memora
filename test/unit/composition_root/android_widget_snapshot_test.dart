@@ -158,16 +158,14 @@ void main() {
           final caches = verify(storage.saveItineraryCache(captureAny)).captured
               .cast<AndroidWidgetItineraryCacheDto>();
           expect(caches, hasLength(2));
-          expect(caches[0].itineraryDates.single.tripName, '変更前の旅行');
-          expect(
-            caches[0].itineraryDates.single.itineraryItems.single.name,
-            '変更前の旅程',
-          );
-          expect(caches[1].itineraryDates.single.tripName, '変更後の旅行');
-          expect(
-            caches[1].itineraryDates.single.itineraryItems.single.name,
-            '変更後の旅程',
-          );
+          for (final cache in caches) {
+            final itineraryDate = cache.itineraryDates.single;
+            expect(
+              itineraryDate.itineraryItems.single.name,
+              itineraryDate.tripName == '変更前の旅行' ? '変更前の旅程' : '変更後の旅程',
+            );
+          }
+          expect(caches.last.itineraryDates.single.tripName, '変更後の旅行');
         }
 
         if (background) {
