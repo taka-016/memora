@@ -90,13 +90,58 @@ void main() {
     });
   }
 
-  ProviderContainer createContainer() => ProviderContainer(
-    overrides: [
-      appModeProvider.overrideWithValue(AppMode.offline),
-      offlineDatabaseProvider.overrideWithValue(reader),
-      appClockProvider.overrideWithValue(FixedAppClock(DateTime(2026, 9, 12))),
-      androidWidgetCacheStorageProvider.overrideWithValue(storage),
-    ],
+  ProviderContainer createContainer([OfflineDatabase? database]) =>
+      ProviderContainer(
+        overrides: [
+          appModeProvider.overrideWithValue(AppMode.offline),
+          offlineDatabaseProvider.overrideWithValue(database ?? reader),
+          appClockProvider.overrideWithValue(
+            FixedAppClock(DateTime(2026, 9, 12)),
+          ),
+          androidWidgetCacheStorageProvider.overrideWithValue(storage),
+        ],
+      );
+
+  test(
+    '先に開始した定期更新が保存後更新の新しいキャッシュを上書きしない',
+    skip: buildMode != AppMode.offline,
+    () async {
+      final oldReadStarted = Completer<void>();
+      final releaseOldRead = Completer<void>();
+      reader.afterTripsRead = () async {
+        oldReadStarted.complete();
+        await releaseOldRead.future;
+      };
+      final backgroundRefresh = withAndroidWidgetDependencies(
+        (refresh, handler) async => refresh.executeForSelectedGroup(),
+        createOfflineDatabase: () => reader,
+        cacheStorage: storage,
+      );
+      await oldReadStarted.future;
+
+      await updateTrip();
+      final appContainer = createContainer(writer);
+      try {
+        await appContainer
+            .read(refreshAndroidWidgetItineraryCacheUsecaseProvider)
+            .executeForSelectedGroup();
+      } finally {
+        appContainer.dispose();
+      }
+      releaseOldRead.complete();
+      await backgroundRefresh;
+
+      final caches = verify(storage.saveItineraryCache(captureAny)).captured
+          .cast<AndroidWidgetItineraryCacheDto>();
+      expect(caches, isNotEmpty);
+      for (final cache in caches) {
+        expect(cache.itineraryDates.single.tripName, '変更後の旅行');
+        expect(
+          cache.itineraryDates.single.itineraryItems.single.name,
+          '変更後の旅程',
+        );
+      }
+    },
   );
 
   for (final background in [true, false]) {
