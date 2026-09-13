@@ -125,14 +125,22 @@ object AndroidWidgetUpdateFallbackScheduler {
     }
 
     private fun loadLastUpdatedAt(context: Context): Date? {
-        val value = homeWidgetPreferences(context)
-            .getString(LAST_UPDATED_AT_KEY, null)
+        val preferences = homeWidgetPreferences(context)
+        val generation = preferences.getLong(CACHE_GENERATION_KEY, 0L)
+        val value = preferences
+            .getString(lastUpdatedAtKey(generation), null)
+            ?: if (generation == 0L) {
+                preferences.getString(LEGACY_LAST_UPDATED_AT_KEY, null)
+            } else {
+                null
+            }
+        val normalizedValue = value
             .orEmpty()
-        if (value.isEmpty()) {
+        if (normalizedValue.isEmpty()) {
             return null
         }
         return runCatching {
-            SimpleDateFormat(LAST_UPDATED_AT_FORMAT, Locale.US).parse(value)
+            SimpleDateFormat(LAST_UPDATED_AT_FORMAT, Locale.US).parse(normalizedValue)
         }.getOrNull()
     }
 
@@ -142,11 +150,16 @@ object AndroidWidgetUpdateFallbackScheduler {
     private fun flutterPreferences(context: Context) =
         context.getSharedPreferences(FLUTTER_PREFERENCES, Context.MODE_PRIVATE)
 
+    private fun lastUpdatedAtKey(generation: Long) =
+        "${LAST_UPDATED_AT_KEY_PREFIX}$generation"
+
     private const val RESOLVED_APP_MODE_KEY = "flutter.resolved_app_mode"
     private const val HOME_WIDGET_PREFERENCES = "HomeWidgetPreferences"
     private const val FLUTTER_PREFERENCES = "FlutterSharedPreferences"
     private const val TARGET_GROUP_ID_KEY = "memora_widget_target_group_id"
-    private const val LAST_UPDATED_AT_KEY = "memora_widget_last_updated_at"
+    private const val CACHE_GENERATION_KEY = "memora_widget_cache_generation"
+    private const val LAST_UPDATED_AT_KEY_PREFIX = "memora_widget_last_updated_at_"
+    private const val LEGACY_LAST_UPDATED_AT_KEY = "memora_widget_last_updated_at"
     private const val FALLBACK_RECOVERY_ENQUEUED_AT_KEY =
         "memora_widget_fallback_recovery_enqueued_at"
     private const val UPDATE_INTERVAL_MINUTES_KEY =
