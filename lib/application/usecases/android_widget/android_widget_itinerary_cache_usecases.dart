@@ -59,6 +59,11 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           }
         }
         await _cacheStorage.saveItineraryCache(cache);
+        final publishedTargetGroupId = await _cacheStorage.getTargetGroupId();
+        if (publishedTargetGroupId != null &&
+            publishedTargetGroupId != groupId) {
+          await executeForSelectedGroup();
+        }
       }
 
       final readTransaction = _readTransaction;
