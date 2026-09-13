@@ -22,9 +22,6 @@ final androidWidgetCacheStorageProvider = Provider<AndroidWidgetCacheStorage>((
   throw UnimplementedError('AndroidWidgetCacheStorageが注入されていません');
 });
 
-final androidWidgetCacheGenerationStorageProvider =
-    Provider<AndroidWidgetCacheGenerationStorage?>((ref) => null);
-
 final androidWidgetUpdateIntervalStorageProvider =
     Provider<AndroidWidgetUpdateIntervalStorage>((ref) {
       throw UnimplementedError('AndroidWidgetUpdateIntervalStorageが注入されていません');
@@ -32,11 +29,13 @@ final androidWidgetUpdateIntervalStorageProvider =
 
 final refreshAndroidWidgetItineraryCacheUsecaseProvider =
     Provider<RefreshAndroidWidgetItineraryCacheUsecase>((ref) {
+      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return RefreshAndroidWidgetItineraryCacheUsecase(
-        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
-        cacheGenerationStorage: ref.watch(
-          androidWidgetCacheGenerationStorageProvider,
-        ),
+        cacheStorage: cacheStorage,
+        cacheGenerationStorage:
+            cacheStorage is AndroidWidgetCacheGenerationStorage
+            ? cacheStorage as AndroidWidgetCacheGenerationStorage
+            : null,
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
@@ -70,11 +69,13 @@ final clearAndroidWidgetTargetGroupUsecaseProvider =
 
 final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
     Provider<MoveAndroidWidgetSelectedItineraryDateUsecase>((ref) {
+      final cacheStorage = ref.watch(androidWidgetCacheStorageProvider);
       return MoveAndroidWidgetSelectedItineraryDateUsecase(
-        cacheStorage: ref.watch(androidWidgetCacheStorageProvider),
-        cacheGenerationStorage: ref.watch(
-          androidWidgetCacheGenerationStorageProvider,
-        ),
+        cacheStorage: cacheStorage,
+        cacheGenerationStorage:
+            cacheStorage is AndroidWidgetCacheGenerationStorage
+            ? cacheStorage as AndroidWidgetCacheGenerationStorage
+            : null,
         tripEntryQueryService: ref.watch(tripEntryQueryServiceProvider),
         itineraryItemQueryService: ref.watch(itineraryItemQueryServiceProvider),
         refreshCacheUsecase: ref.watch(

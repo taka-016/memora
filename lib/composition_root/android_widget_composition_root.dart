@@ -40,10 +40,8 @@ Future<void> withAndroidWidgetDependencies(
     await database?.initialize();
     final AndroidWidgetCacheStorage storage =
         cacheStorage ?? container.read(androidWidgetCacheStorageProvider);
-    final generationStorage = cacheStorage == null
-        ? container.read(androidWidgetCacheGenerationStorageProvider)
-        : cacheStorage is AndroidWidgetCacheGenerationStorage
-        ? cacheStorage
+    final generationStorage = storage is AndroidWidgetCacheGenerationStorage
+        ? storage as AndroidWidgetCacheGenerationStorage
         : null;
     final trips = container.read(mapTripEntryQueryServiceProvider);
     final items = container.read(

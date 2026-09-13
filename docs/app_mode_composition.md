@@ -48,11 +48,12 @@ Crashlyticsの自動収集を無効化する設定と実行時の有効化は、
 
 業務制御の`AndroidWidgetBackgroundUpdateRunner`と`AndroidWidgetPeriodicUpdateRegistrar`はApplication層に残し、WorkManager・端末ストレージとの連携はInfrastructure層に置く。
 
-モードの端末保存、Kotlin側のモード復元、オフライン時のネットワーク制約解除と更新経路全体の検証はTODO 7で対応する。現在はビルド指定から同じモードを判定し、共通Factoryのオフライン分岐はSQLiteのQueryServiceを返す。
+解決済みモードはアプリ起動時に端末へ保存し、Kotlinのフォールバック更新とDartのバックグラウンドComposition Rootで現ビルドとの一致を確認してから復元する。オンライン更新だけネットワーク接続を要求し、共通Factoryのオフライン分岐はSQLiteのQueryServiceを返す。
+
+キャッシュは生成元モード、対象グループ、公開世代を持つ。各更新と選択変更は固有世代へ表示を切り替え、取得結果を世代別ファイルへ保存する。Kotlinは現ビルドのモード、現在の対象グループ、現在の公開世代と一致するキャッシュだけを描画する。
 
 ## 後続の接続
 
-- TODO 7で通常更新・操作コールバック・Kotlinフォールバックを両モードで使用可能にする。
 - モード間のデータ共有・同期・移行は実装しない。
 
 ## 検証

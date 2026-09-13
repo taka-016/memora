@@ -45,9 +45,6 @@ class AppCompositionRoot {
     androidWidgetCacheStorageProvider.overrideWithValue(
       const HomeWidgetAndroidWidgetCacheStorage(),
     ),
-    androidWidgetCacheGenerationStorageProvider.overrideWithValue(
-      const HomeWidgetAndroidWidgetCacheStorage(),
-    ),
     androidWidgetUpdateIntervalStorageProvider.overrideWithValue(
       const SharedPreferencesAndroidWidgetUpdateIntervalStorage(),
     ),
