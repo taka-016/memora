@@ -6,6 +6,7 @@ import 'package:memora/application/queries/trip/itinerary_item_query_service.dar
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
 
@@ -15,10 +16,12 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
     required this._getCacheUsecase,
+    this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
+  final ReadTransaction? _readTransaction;
 
   Future<void> executeForSelectedGroup() async {
     final groupId = await _cacheStorage.getTargetGroupId();
@@ -36,19 +39,31 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool updateWidgetAfterRefresh = true,
   }) async {
     try {
-      final cache = await _getCacheUsecase.execute(
-        groupId: groupId,
-        selectedItineraryDateId: selectedItineraryDateId,
-      );
-      if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
-        final existingCache = await _cacheStorage.loadItineraryCache();
-        if (existingCache?.groupId == groupId &&
-            existingCache!.itineraryDates.isNotEmpty) {
-          return;
-        }
+      Future<AndroidWidgetItineraryCacheDto> read() {
+        return _getCacheUsecase.execute(
+          groupId: groupId,
+          selectedItineraryDateId: selectedItineraryDateId,
+        );
       }
-      await _cacheStorage.saveTargetGroupId(groupId);
-      await _cacheStorage.saveItineraryCache(cache);
+
+      Future<void> publish(AndroidWidgetItineraryCacheDto cache) async {
+        if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
+          final existingCache = await _cacheStorage.loadItineraryCache();
+          if (existingCache?.groupId == groupId &&
+              existingCache!.itineraryDates.isNotEmpty) {
+            return;
+          }
+        }
+        await _cacheStorage.saveTargetGroupId(groupId);
+        await _cacheStorage.saveItineraryCache(cache);
+      }
+
+      final readTransaction = _readTransaction;
+      if (readTransaction == null) {
+        await publish(await read());
+      } else {
+        await readTransaction.executeAndPublish(read: read, publish: publish);
+      }
     } finally {
       if (updateWidgetAfterRefresh) {
         await _cacheStorage.updateWidget();
@@ -96,12 +111,14 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     required this._tripEntryQueryService,
     required this._itineraryItemQueryService,
     required this._refreshCacheUsecase,
+    this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
   final TripEntryQueryService _tripEntryQueryService;
   final ItineraryItemQueryService _itineraryItemQueryService;
   final RefreshAndroidWidgetItineraryCacheUsecase _refreshCacheUsecase;
+  final ReadTransaction? _readTransaction;
 
   Future<bool> execute(
     AndroidWidgetItineraryDateMoveDirection direction,
@@ -139,10 +156,12 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       return;
     }
 
-    final targetItineraryDateId = await _findRemoteTargetItineraryDateId(
-      cache,
-      direction,
-    );
+    final readTransaction = _readTransaction;
+    final targetItineraryDateId = readTransaction == null
+        ? await _findRemoteTargetItineraryDateId(cache, direction)
+        : await readTransaction.execute(
+            () => _findRemoteTargetItineraryDateId(cache, direction),
+          );
     if (targetItineraryDateId == null) {
       await _cacheStorage.updateWidget();
       return;

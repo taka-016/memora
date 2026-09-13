@@ -49,6 +49,7 @@ Future<void> withAndroidWidgetDependencies(
       getCacheUsecase: container.read(
         getAndroidWidgetItineraryCacheUsecaseProvider,
       ),
+      readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
       cacheStorage: storage,

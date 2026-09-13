@@ -6,6 +6,7 @@ import 'package:memora/composition_root/providers/offline_database_provider.dart
 import 'package:memora/infrastructure/config/resolved_app_mode_provider.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/services/android_widget_update_interval_storage.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/application/usecases/android_widget/update_android_widget_interval_usecase.dart';
@@ -33,6 +34,7 @@ final refreshAndroidWidgetItineraryCacheUsecaseProvider =
         getCacheUsecase: ref.watch(
           getAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
 
@@ -68,6 +70,7 @@ final moveAndroidWidgetSelectedItineraryDateUsecaseProvider =
         refreshCacheUsecase: ref.watch(
           refreshAndroidWidgetItineraryCacheUsecaseProvider,
         ),
+        readTransaction: ref.watch(androidWidgetReadTransactionProvider),
       );
     });
 
@@ -79,11 +82,14 @@ final getAndroidWidgetItineraryCacheUsecaseProvider =
           androidWidgetItineraryItemQueryServiceProvider,
         ),
         clock: ref.watch(appClockProvider),
-        readTransaction: ref.watch(appModeProvider) == AppMode.offline
-            ? ref.watch(offlineDatabaseProvider).readTransaction
-            : null,
       );
     });
+
+final androidWidgetReadTransactionProvider = Provider<ReadTransaction?>((ref) {
+  return ref.watch(appModeProvider) == AppMode.offline
+      ? ref.watch(offlineDatabaseProvider)
+      : null;
+});
 
 final androidWidgetPeriodicUpdateRegistrarProvider =
     Provider<RegisterAndroidWidgetPeriodicUpdateTask>((ref) {

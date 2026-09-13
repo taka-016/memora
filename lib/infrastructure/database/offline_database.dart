@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide OrderBy;
 import 'package:drift/native.dart';
 import 'package:memora/application/queries/order_by.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:path_provider/path_provider.dart';
 
 part 'offline_database.g.dart';
 
 @DriftDatabase(include: {'offline_schema.drift'})
-class OfflineDatabase extends _$OfflineDatabase {
+class OfflineDatabase extends _$OfflineDatabase implements ReadTransaction {
   OfflineDatabase(super.executor);
 
   factory OfflineDatabase.device({
@@ -30,6 +31,8 @@ class OfflineDatabase extends _$OfflineDatabase {
   @override
   int get schemaVersion => 1;
 
+  int _localWriteVersion = 0;
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async => m.createAll(),
@@ -50,7 +53,8 @@ class OfflineDatabase extends _$OfflineDatabase {
     await customSelect('SELECT 1').get();
   }
 
-  Future<T> readTransaction<T>(Future<T> Function() action) async =>
+  @override
+  Future<T> execute<T>(Future<T> Function() action) async =>
       exclusively(() async {
         // 通常のtransactionはBEGIN IMMEDIATEで別接続の書き込みもロックする。
         await customStatement('BEGIN DEFERRED');
@@ -60,6 +64,39 @@ class OfflineDatabase extends _$OfflineDatabase {
           await customStatement('ROLLBACK');
         }
       });
+
+  Future<T> readTransaction<T>(Future<T> Function() action) => execute(action);
+
+  @override
+  Future<void> executeAndPublish<T>({
+    required Future<T> Function() read,
+    required Future<void> Function(T value) publish,
+  }) async {
+    while (true) {
+      final readVersion = await exclusively(_readVersion);
+      late T value;
+      await execute(() async {
+        value = await read();
+      });
+      final published = await exclusively(() async {
+        if (await _readVersion() != readVersion) return false;
+        await customStatement('BEGIN IMMEDIATE');
+        try {
+          if (await _readVersion() != readVersion) return false;
+          await publish(value);
+          return true;
+        } finally {
+          await customStatement('ROLLBACK');
+        }
+      });
+      if (published) return;
+    }
+  }
+
+  Future<(int, int)> _readVersion() async {
+    final result = await customSelect('PRAGMA data_version').getSingle();
+    return (result.data.values.single as int, _localWriteVersion);
+  }
 
   Future<List<Map<String, Object?>>> rows(
     String table, {
@@ -93,6 +130,7 @@ class OfflineDatabase extends _$OfflineDatabase {
       'INSERT INTO "$table" (${row.keys.map((k) => '"$k"').join(', ')}) VALUES (${List.filled(row.length, '?').join(', ')})',
       row.values.toList(),
     );
+    _localWriteVersion += 1;
   }
 
   Future<void> updateRow(
@@ -105,9 +143,11 @@ class OfflineDatabase extends _$OfflineDatabase {
       variables: [...row.values.map((v) => Variable(v)), Variable(id)],
     );
     if (count == 0) throw StateError('更新対象が存在しません: $table/$id');
+    _localWriteVersion += 1;
   }
 
   Future<void> deleteRows(String table, String field, String value) async {
     await customStatement('DELETE FROM "$table" WHERE "$field" = ?', [value]);
+    _localWriteVersion += 1;
   }
 }
