@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:home_widget/home_widget.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetAndroidWidgetCacheStorage
     implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
@@ -17,6 +18,8 @@ class HomeWidgetAndroidWidgetCacheStorage
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const cacheGenerationKey = 'memora_widget_cache_generation';
+  static const _cacheGenerationLockFileName =
+      'memora_widget_cache_generation.lock';
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
 
@@ -148,28 +151,72 @@ class HomeWidgetAndroidWidgetCacheStorage
   Future<int> advanceCacheGeneration({
     AndroidWidgetItineraryCacheDto? cache,
   }) async {
-    final currentGeneration = await getCacheGeneration();
-    final random = Random.secure();
-    var generation = 0;
-    while (generation == 0 || generation == currentGeneration) {
-      generation = (random.nextInt(1 << 31) << 31) | random.nextInt(1 << 31);
+    return _withCacheGenerationLock(() async {
+      final currentGeneration = await getCacheGeneration();
+      final random = Random.secure();
+      var generation = 0;
+      while (generation == 0 || generation == currentGeneration) {
+        generation = (random.nextInt(1 << 31) << 31) | random.nextInt(1 << 31);
+      }
+      if (cache != null) {
+        await _writeItineraryCacheForGeneration(
+          AndroidWidgetItineraryCacheDto(
+            version: cache.version,
+            sourceMode: cache.sourceMode,
+            generation: generation,
+            groupId: cache.groupId,
+            selectedItineraryDateId: cache.selectedItineraryDateId,
+            lastUpdatedAt: cache.lastUpdatedAt,
+            itineraryDates: cache.itineraryDates,
+          ),
+        );
+      }
+      await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
+      await _deleteCacheForGeneration(currentGeneration);
+      return generation;
+    });
+  }
+
+  Future<T> _withCacheGenerationLock<T>(Future<T> Function() action) async {
+    final directory = await getApplicationSupportDirectory();
+    await directory.create(recursive: true);
+    final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
+    while (true) {
+      try {
+        await lockFile.create(exclusive: true);
+        await lockFile.writeAsString('$pid');
+        break;
+      } on FileSystemException {
+        await _deleteStaleCacheGenerationLock(lockFile);
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
     }
-    if (cache != null) {
-      await _writeItineraryCacheForGeneration(
-        AndroidWidgetItineraryCacheDto(
-          version: cache.version,
-          sourceMode: cache.sourceMode,
-          generation: generation,
-          groupId: cache.groupId,
-          selectedItineraryDateId: cache.selectedItineraryDateId,
-          lastUpdatedAt: cache.lastUpdatedAt,
-          itineraryDates: cache.itineraryDates,
-        ),
-      );
+    try {
+      return await action();
+    } finally {
+      try {
+        await lockFile.delete();
+      } on FileSystemException {
+        // 別処理が期限切れのロックを回収済みの場合は処理を継続する。
+      }
     }
-    await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
-    await _deleteCacheForGeneration(currentGeneration);
-    return generation;
+  }
+
+  Future<void> _deleteStaleCacheGenerationLock(File lockFile) async {
+    try {
+      final ownerProcessId = int.tryParse(await lockFile.readAsString());
+      final ownerIsRunning = ownerProcessId == null
+          ? true
+          : await Directory('/proc/$ownerProcessId').exists();
+      final modifiedAt = await lockFile.lastModified();
+      final expired =
+          DateTime.now().difference(modifiedAt) > const Duration(minutes: 5);
+      if (!ownerIsRunning || expired) {
+        await lockFile.delete();
+      }
+    } on FileSystemException {
+      // 作成直後や別処理による解放と競合した場合は次の取得で再確認する。
+    }
   }
 
   Future<void> _deleteCacheForGeneration(int generation) async {
