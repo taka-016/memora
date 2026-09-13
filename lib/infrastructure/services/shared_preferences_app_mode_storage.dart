@@ -26,12 +26,19 @@ class SharedPreferencesAppModeStorage {
   }
 
   Future<AppMode?> load() async {
+    return (await loadState()).mode;
+  }
+
+  Future<({bool hasValue, AppMode? mode})> loadState() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.reload();
-    return switch (preferences.getString(_key)) {
-      'online' => AppMode.online,
-      'offline' => AppMode.offline,
-      _ => null,
-    };
+    return (
+      hasValue: preferences.containsKey(_key),
+      mode: switch (preferences.get(_key)) {
+        'online' => AppMode.online,
+        'offline' => AppMode.offline,
+        _ => null,
+      },
+    );
   }
 }

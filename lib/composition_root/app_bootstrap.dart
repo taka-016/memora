@@ -18,8 +18,12 @@ Future<void> synchronizeAppModeAndAndroidWidgetCache(
   AndroidWidgetCacheStorage cacheStorage =
       const HomeWidgetAndroidWidgetCacheStorage(),
 }) async {
-  final previousMode = await modeStorage.load();
-  if (previousMode != null && previousMode != mode) {
+  final storedMode = await modeStorage.loadState();
+  final previousMode = storedMode.mode;
+  final shouldClearCache = previousMode == null
+      ? storedMode.hasValue || mode == AppMode.offline
+      : previousMode != mode;
+  if (shouldClearCache) {
     await cacheStorage.clear();
     await cacheStorage.updateWidget();
   }
