@@ -60,12 +60,14 @@ Future<void> withAndroidWidgetDependencies(
     );
     final move = MoveAndroidWidgetSelectedItineraryDateUsecase(
       cacheStorage: storage,
+      cacheGenerationStorage: generationStorage,
       tripEntryQueryService: trips,
       itineraryItemQueryService: items,
       refreshCacheUsecase: refresh,
     );
     final handler = AndroidWidgetActionHandler(
       cacheStorage: storage,
+      cacheGenerationStorage: generationStorage,
       refreshCache: refresh.execute,
       moveDate: move.execute,
       showToast: const MethodChannelAndroidWidgetToastNotifier().show,
