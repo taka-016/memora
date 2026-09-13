@@ -1,4 +1,5 @@
-import 'package:memora/infrastructure/time/fixed_app_clock.dart';
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
@@ -9,6 +10,7 @@ import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
+import 'package:memora/infrastructure/time/fixed_app_clock.dart';
 
 import '../../../../helpers/test_exception.dart';
 
@@ -94,6 +96,35 @@ void main() {
 
       expect(storage.cache, same(existingCache));
       expect(storage.updateWidgetCount, 1);
+    });
+
+    test('古い更新の完了後も新しく選択した対象グループとキャッシュを維持する', () async {
+      final oldReadStarted = Completer<void>();
+      final releaseOldRead = Completer<void>();
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-a';
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..beforeReturn = (groupId) async {
+          if (groupId != 'group-a') return;
+          oldReadStarted.complete();
+          await releaseOldRead.future;
+        };
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        _FakeItineraryItemQueryService(),
+      );
+
+      final oldRefresh = usecase.executeForSelectedGroup();
+      await oldReadStarted.future;
+      await storage.clear();
+      await storage.saveTargetGroupId('group-b');
+      await usecase.executeForSelectedGroup();
+      releaseOldRead.complete();
+      await oldRefresh;
+
+      expect(storage.targetGroupId, 'group-b');
+      expect(storage.cache?.groupId, 'group-b');
     });
   });
 
@@ -239,6 +270,7 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 
 class _FakeTripEntryQueryService implements TripEntryQueryService {
   Object? exception;
+  Future<void> Function(String groupId)? beforeReturn;
 
   @override
   Future<TripEntryDto?> getTripEntryById(
@@ -254,6 +286,7 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
+    await beforeReturn?.call(groupId);
     final exception = this.exception;
     if (exception != null) {
       throw exception;
