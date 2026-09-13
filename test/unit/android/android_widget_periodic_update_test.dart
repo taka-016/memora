@@ -72,14 +72,14 @@ void main() {
       expect('.setConstraints(constraints)'.allMatches(source).length, 2);
     });
 
-    test('コールバック登録前にアプリの解決済みモードを保存する', () {
+    test('コールバック登録前にアプリモードとウィジェットキャッシュを同期する', () {
       final source = File(_mainPath).readAsStringSync();
-      final save = source.indexOf(
-        'SharedPreferencesAppModeStorage().save(root.mode)',
+      final synchronize = source.indexOf(
+        'synchronizeAppModeAndAndroidWidgetCache(root.mode)',
       );
-      expect(save, greaterThanOrEqualTo(0));
+      expect(synchronize, greaterThanOrEqualTo(0));
       expect(
-        save,
+        synchronize,
         lessThan(
           source.indexOf('registerAndroidWidgetInteractivityCallback();'),
         ),
