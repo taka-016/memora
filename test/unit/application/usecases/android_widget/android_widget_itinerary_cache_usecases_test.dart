@@ -187,6 +187,40 @@ void main() {
       expect(generations.caches[0]?.groupId, 'group-a');
       expect(generations.caches[1]?.sourceMode, AppMode.offline);
     });
+
+    test('同じ対象の新しい更新が先に完了しても古い取得結果で上書きしない', () async {
+      final oldReadStarted = Completer<void>();
+      final releaseOldRead = Completer<void>();
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-1';
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..responses = [
+          [_trip(name: '変更前')],
+          [_trip(name: '変更後')],
+        ]
+        ..beforeReturn = (_) async {
+          if (oldReadStarted.isCompleted) return;
+          oldReadStarted.complete();
+          await releaseOldRead.future;
+        };
+      final itineraryItemQueryService = _FakeItineraryItemQueryService()
+        ..items = [_item()];
+      final generations = _FakeAndroidWidgetCacheGenerationStorage();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        tripEntryQueryService,
+        itineraryItemQueryService,
+        generationStorage: generations,
+      );
+
+      final oldRefresh = usecase.executeForSelectedGroup();
+      await oldReadStarted.future;
+      await usecase.executeForSelectedGroup();
+      releaseOldRead.complete();
+      await oldRefresh;
+
+      expect(generations.currentCache?.itineraryDates.single.tripName, '変更後');
+    });
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
@@ -284,6 +318,26 @@ AndroidWidgetItineraryDateCacheDto _itineraryDate(String id, DateTime date) {
     dateLabel: '${date.year}/${date.month}/${date.day}',
     date: date,
     itineraryItems: const [],
+  );
+}
+
+TripEntryDto _trip({required String name}) {
+  return TripEntryDto(
+    id: 'trip-1',
+    groupId: 'group-1',
+    year: 2026,
+    name: name,
+    startDate: DateTime(2026, 5, 24),
+    endDate: DateTime(2026, 5, 24),
+  );
+}
+
+ItineraryItemDto _item() {
+  return ItineraryItemDto(
+    id: 'item-1',
+    tripId: 'trip-1',
+    name: '旅程',
+    startDateTime: DateTime(2026, 5, 24, 10),
   );
 }
 
@@ -428,6 +482,8 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
 class _FakeTripEntryQueryService implements TripEntryQueryService {
   Object? exception;
   Future<void> Function(String groupId)? beforeReturn;
+  List<List<TripEntryDto>> responses = const [];
+  int callCount = 0;
 
   @override
   Future<TripEntryDto?> getTripEntryById(
@@ -443,12 +499,16 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
     String groupId, {
     List<OrderBy>? orderBy,
   }) async {
+    final callIndex = callCount++;
+    final response = callIndex < responses.length
+        ? responses[callIndex]
+        : const <TripEntryDto>[];
     await beforeReturn?.call(groupId);
     final exception = this.exception;
     if (exception != null) {
       throw exception;
     }
-    return [];
+    return response;
   }
 
   @override
@@ -462,11 +522,13 @@ class _FakeTripEntryQueryService implements TripEntryQueryService {
 }
 
 class _FakeItineraryItemQueryService implements ItineraryItemQueryService {
+  List<ItineraryItemDto> items = const [];
+
   @override
   Future<List<ItineraryItemDto>> getItineraryItemsByTripId(
     String tripId, {
     List<OrderBy>? orderBy,
   }) async {
-    return [];
+    return items;
   }
 }
