@@ -1,6 +1,7 @@
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -16,11 +17,15 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
   const RefreshAndroidWidgetItineraryCacheUsecase({
     required this._cacheStorage,
     required this._getCacheUsecase,
+    this._cacheGenerationStorage,
+    this._mode = AppMode.online,
     this._readTransaction,
   });
 
   final AndroidWidgetCacheStorage _cacheStorage;
+  final AndroidWidgetCacheGenerationStorage? _cacheGenerationStorage;
   final GetAndroidWidgetItineraryCacheUsecase _getCacheUsecase;
+  final AppMode _mode;
   final ReadTransaction? _readTransaction;
 
   Future<void> executeForSelectedGroup() async {
@@ -38,6 +43,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
   }) async {
+    final generation = await _cacheGenerationStorage?.getCacheGeneration() ?? 0;
     try {
       Future<AndroidWidgetItineraryCacheDto> read() {
         return _getCacheUsecase.execute(
@@ -58,7 +64,23 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
             return;
           }
         }
-        await _cacheStorage.saveItineraryCache(cache);
+        final cacheForGeneration = AndroidWidgetItineraryCacheDto(
+          version: cache.version,
+          sourceMode: _mode,
+          generation: generation,
+          groupId: cache.groupId,
+          selectedItineraryDateId: cache.selectedItineraryDateId,
+          lastUpdatedAt: cache.lastUpdatedAt,
+          itineraryDates: cache.itineraryDates,
+        );
+        final generationStorage = _cacheGenerationStorage;
+        if (generationStorage == null) {
+          await _cacheStorage.saveItineraryCache(cacheForGeneration);
+        } else {
+          await generationStorage.saveItineraryCacheForGeneration(
+            cacheForGeneration,
+          );
+        }
         final publishedTargetGroupId = await _cacheStorage.getTargetGroupId();
         if (publishedTargetGroupId != null &&
             publishedTargetGroupId != groupId) {
