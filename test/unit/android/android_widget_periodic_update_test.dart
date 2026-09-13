@@ -17,6 +17,7 @@ const _fallbackReceiverPath =
 const _widgetInfoPath =
     'android/app/src/main/res/xml/itinerary_widget_info.xml';
 const _androidManifestPath = 'android/app/src/main/AndroidManifest.xml';
+const _buildGradlePath = 'android/app/build.gradle.kts';
 
 void main() {
   group('AndroidWidgetPeriodicUpdate', () {
@@ -51,7 +52,20 @@ void main() {
 
     test('フォールバックの定期・即時登録にも同じモードの制約を適用する', () {
       final source = File(_fallbackSchedulerPath).readAsStringSync();
+      final buildGradle = File(_buildGradlePath).readAsStringSync();
+
+      expect(buildGradle, contains('project.findProperty("dart-defines")'));
+      expect(buildGradle, contains('MEMORA_APP_MODE='));
+      expect(
+        buildGradle,
+        contains('buildConfigField("String", "RESOLVED_APP_MODE"'),
+      );
       expect(source, contains('flutter.resolved_app_mode'));
+      expect(source, contains('BuildConfig.RESOLVED_APP_MODE'));
+      expect(
+        source.indexOf('BuildConfig.RESOLVED_APP_MODE'),
+        lessThan(source.indexOf('Constraints.Builder()')),
+      );
       expect(source, contains('"offline" -> NetworkType.NOT_REQUIRED'));
       expect(source, contains('"online" -> NetworkType.CONNECTED'));
       expect(source, contains('else -> return'));
