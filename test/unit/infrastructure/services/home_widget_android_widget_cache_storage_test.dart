@@ -49,14 +49,18 @@ void main() {
     final oldCache = _cache(groupId: 'group-a', generation: 0);
     await storage.saveItineraryCacheForGeneration(oldCache);
     expect(await storage.loadItineraryCache(), oldCache);
+    final oldCachePath = values['memora_widget_itinerary_cache_0']! as String;
 
     final generation = await storage.advanceCacheGeneration();
     expect(generation, isNot(0));
+    expect(values['memora_widget_itinerary_cache_0'], isNull);
+    expect(File(oldCachePath).existsSync(), isFalse);
     final currentCache = _cache(groupId: 'group-b', generation: generation);
     await storage.saveItineraryCacheForGeneration(currentCache);
     await storage.saveItineraryCacheForGeneration(oldCache);
 
     expect(await storage.loadItineraryCache(), currentCache);
+    expect(values['memora_widget_itinerary_cache_0'], isNull);
   });
 
   test('既存キャッシュを次世代へ引き継いでから表示世代を切り替える', () async {
