@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/dtos/trip/itinerary_item_dto.dart';
 import 'package:memora/application/dtos/trip/trip_entry_dto.dart';
+import 'package:memora/application/models/app_mode.dart';
 import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
@@ -154,6 +155,38 @@ void main() {
       expect(storage.targetGroupId, 'group-b');
       expect(storage.cache?.groupId, 'group-b');
     });
+
+    test('対象変更後に古い更新が完了しても現世代のキャッシュを上書きしない', () async {
+      final oldPublishChecked = Completer<void>();
+      final releaseOldPublish = Completer<void>();
+      final storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-a'
+        ..afterTargetRead = (readCount) async {
+          if (readCount != 2) return;
+          oldPublishChecked.complete();
+          await releaseOldPublish.future;
+        };
+      final generations = _FakeAndroidWidgetCacheGenerationStorage();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+        generationStorage: generations,
+      );
+
+      final oldRefresh = usecase.executeForSelectedGroup();
+      await oldPublishChecked.future;
+      await storage.clear();
+      await storage.saveTargetGroupId('group-b');
+      await generations.advanceCacheGeneration();
+      await usecase.executeForSelectedGroup();
+      releaseOldPublish.complete();
+      await oldRefresh;
+
+      expect(generations.currentCache?.groupId, 'group-b');
+      expect(generations.caches[0]?.groupId, 'group-a');
+      expect(generations.caches[1]?.sourceMode, AppMode.offline);
+    });
   });
 
   group('MoveAndroidWidgetSelectedItineraryDateUsecase', () {
@@ -225,16 +258,43 @@ AndroidWidgetItineraryCacheDto _cacheWithItinerary() {
 RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   AndroidWidgetCacheStorage storage,
   TripEntryQueryService tripEntryQueryService,
-  ItineraryItemQueryService itineraryItemQueryService,
-) {
+  ItineraryItemQueryService itineraryItemQueryService, {
+  AndroidWidgetCacheGenerationStorage? generationStorage,
+}) {
   return RefreshAndroidWidgetItineraryCacheUsecase(
     cacheStorage: storage,
+    cacheGenerationStorage: generationStorage,
+    mode: AppMode.offline,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,
       clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
     ),
   );
+}
+
+class _FakeAndroidWidgetCacheGenerationStorage
+    implements AndroidWidgetCacheGenerationStorage {
+  int generation = 0;
+  final caches = <int, AndroidWidgetItineraryCacheDto>{};
+
+  AndroidWidgetItineraryCacheDto? get currentCache => caches[generation];
+
+  @override
+  Future<int> advanceCacheGeneration() async {
+    generation += 1;
+    return generation;
+  }
+
+  @override
+  Future<int> getCacheGeneration() async => generation;
+
+  @override
+  Future<void> saveItineraryCacheForGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+  ) async {
+    caches[cache.generation] = cache;
+  }
 }
 
 class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
