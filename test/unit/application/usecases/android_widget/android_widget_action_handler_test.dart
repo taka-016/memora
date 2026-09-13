@@ -14,6 +14,7 @@ void main() {
 
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache: ({
           required String groupId,
@@ -34,6 +35,7 @@ void main() {
       final refreshCalls = <({String groupId, String? selectedId})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
             ({required String groupId, String? selectedItineraryDateId}) async {
@@ -132,6 +134,7 @@ void main() {
       final refreshCalls = <({String groupId, String? selectedId})>[];
       final handler = AndroidWidgetActionHandler(
         cacheStorage: storage,
+        cacheGenerationStorage: storage,
         showToast: toastNotifier.show,
         refreshCache:
             ({required String groupId, String? selectedItineraryDateId}) async {
@@ -146,12 +149,14 @@ void main() {
       await handler.handle(Uri.parse('memoraWidget://recent'));
 
       expect(refreshCalls, [(groupId: 'group-1', selectedId: null)]);
+      expect(storage.generation, 1);
       expect(toastNotifier.notifications, isEmpty);
     });
   });
 }
 
-class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
+class _FakeAndroidWidgetCacheStorage
+    implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
   _FakeAndroidWidgetCacheStorage({
     this.targetGroupId,
     this.selectedItineraryDateId,
@@ -160,6 +165,14 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   String? targetGroupId;
   String? selectedItineraryDateId;
   int updateWidgetCount = 0;
+  int generation = 0;
+  final caches = <int, AndroidWidgetItineraryCacheDto>{};
+
+  @override
+  Future<int> advanceCacheGeneration() async {
+    generation += 1;
+    return generation;
+  }
 
   @override
   Future<void> clear() async {}
@@ -180,7 +193,17 @@ class _FakeAndroidWidgetCacheStorage implements AndroidWidgetCacheStorage {
   }
 
   @override
+  Future<int> getCacheGeneration() async => generation;
+
+  @override
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {}
+
+  @override
+  Future<void> saveItineraryCacheForGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+  ) async {
+    caches[cache.generation] = cache;
+  }
 
   @override
   Future<void> saveSelectedItineraryDateId(String? itineraryDateId) async {
