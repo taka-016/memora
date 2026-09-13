@@ -62,6 +62,7 @@ Future<void> withAndroidWidgetDependencies(
       tripEntryQueryService: trips,
       itineraryItemQueryService: items,
       refreshCacheUsecase: refresh,
+      readTransaction: container.read(androidWidgetReadTransactionProvider),
     );
     final handler = AndroidWidgetActionHandler(
       cacheStorage: storage,
