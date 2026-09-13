@@ -183,8 +183,8 @@ class HomeWidgetAndroidWidgetCacheStorage
     final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
     while (true) {
       try {
-        await lockFile.create(exclusive: true);
-        await lockFile.writeAsString('$pid');
+        lockFile.createSync(exclusive: true);
+        lockFile.writeAsStringSync('$pid');
         break;
       } on FileSystemException {
         await _deleteStaleCacheGenerationLock(lockFile);
@@ -208,10 +208,7 @@ class HomeWidgetAndroidWidgetCacheStorage
       final ownerIsRunning = ownerProcessId == null
           ? true
           : await Directory('/proc/$ownerProcessId').exists();
-      final modifiedAt = await lockFile.lastModified();
-      final expired =
-          DateTime.now().difference(modifiedAt) > const Duration(minutes: 5);
-      if (!ownerIsRunning || expired) {
+      if (!ownerIsRunning) {
         await lockFile.delete();
       }
     } on FileSystemException {
