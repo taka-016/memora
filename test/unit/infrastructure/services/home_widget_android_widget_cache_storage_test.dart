@@ -57,6 +57,19 @@ void main() {
 
     expect(await storage.loadItineraryCache(), currentCache);
   });
+
+  test('既存キャッシュを次世代へ引き継いでから表示世代を切り替える', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    final cache = _cache(groupId: 'group-a', generation: 0);
+    await storage.saveItineraryCacheForGeneration(cache);
+
+    expect(await storage.advanceCacheGeneration(cache: cache), 1);
+
+    expect(
+      await storage.loadItineraryCache(),
+      _cache(groupId: 'group-a', generation: 1),
+    );
+  });
 }
 
 AndroidWidgetItineraryCacheDto _cache({
