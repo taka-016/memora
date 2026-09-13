@@ -50,8 +50,9 @@ void main() {
     await storage.saveItineraryCacheForGeneration(oldCache);
     expect(await storage.loadItineraryCache(), oldCache);
 
-    expect(await storage.advanceCacheGeneration(), 1);
-    final currentCache = _cache(groupId: 'group-b', generation: 1);
+    final generation = await storage.advanceCacheGeneration();
+    expect(generation, isNot(0));
+    final currentCache = _cache(groupId: 'group-b', generation: generation);
     await storage.saveItineraryCacheForGeneration(currentCache);
     await storage.saveItineraryCacheForGeneration(oldCache);
 
@@ -63,11 +64,11 @@ void main() {
     final cache = _cache(groupId: 'group-a', generation: 0);
     await storage.saveItineraryCacheForGeneration(cache);
 
-    expect(await storage.advanceCacheGeneration(cache: cache), 1);
+    final generation = await storage.advanceCacheGeneration(cache: cache);
 
     expect(
       await storage.loadItineraryCache(),
-      _cache(groupId: 'group-a', generation: 1),
+      _cache(groupId: 'group-a', generation: generation),
     );
   });
 }

@@ -184,8 +184,8 @@ void main() {
       await oldRefresh;
 
       expect(generations.currentCache?.groupId, 'group-b');
-      expect(generations.caches[0]?.groupId, 'group-a');
-      expect(generations.caches[1]?.sourceMode, AppMode.offline);
+      expect(generations.caches[1]?.groupId, 'group-a');
+      expect(generations.caches[3]?.sourceMode, AppMode.offline);
     });
 
     test('同じ対象の新しい更新が先に完了しても古い取得結果で上書きしない', () async {

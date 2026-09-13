@@ -43,8 +43,13 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
   }) async {
-    final generation = await _cacheGenerationStorage?.getCacheGeneration() ?? 0;
     try {
+      final generationStorage = _cacheGenerationStorage;
+      final generation = generationStorage == null
+          ? 0
+          : await generationStorage.advanceCacheGeneration(
+              cache: await _cacheStorage.loadItineraryCache(),
+            );
       Future<AndroidWidgetItineraryCacheDto> read() {
         return _getCacheUsecase.execute(
           groupId: groupId,
@@ -73,7 +78,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
           lastUpdatedAt: cache.lastUpdatedAt,
           itineraryDates: cache.itineraryDates,
         );
-        final generationStorage = _cacheGenerationStorage;
         if (generationStorage == null) {
           await _cacheStorage.saveItineraryCache(cacheForGeneration);
         } else {

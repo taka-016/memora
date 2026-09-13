@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:home_widget/home_widget.dart';
@@ -135,7 +136,12 @@ class HomeWidgetAndroidWidgetCacheStorage
   Future<int> advanceCacheGeneration({
     AndroidWidgetItineraryCacheDto? cache,
   }) async {
-    final generation = await getCacheGeneration() + 1;
+    final currentGeneration = await getCacheGeneration();
+    final random = Random.secure();
+    var generation = 0;
+    while (generation == 0 || generation == currentGeneration) {
+      generation = (random.nextInt(1 << 31) << 31) | random.nextInt(1 << 31);
+    }
     if (cache != null) {
       await saveItineraryCacheForGeneration(
         AndroidWidgetItineraryCacheDto(
