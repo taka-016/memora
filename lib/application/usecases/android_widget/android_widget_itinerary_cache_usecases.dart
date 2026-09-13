@@ -47,6 +47,10 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       }
 
       Future<void> publish(AndroidWidgetItineraryCacheDto cache) async {
+        final currentTargetGroupId = await _cacheStorage.getTargetGroupId();
+        if (currentTargetGroupId != null && currentTargetGroupId != groupId) {
+          return;
+        }
         if (preserveExistingCacheOnEmpty && cache.itineraryDates.isEmpty) {
           final existingCache = await _cacheStorage.loadItineraryCache();
           if (existingCache?.groupId == groupId &&
@@ -54,7 +58,6 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
             return;
           }
         }
-        await _cacheStorage.saveTargetGroupId(groupId);
         await _cacheStorage.saveItineraryCache(cache);
       }
 
