@@ -53,6 +53,50 @@ void main() {
 
     expect(secondEnteredBeforeRelease, isFalse);
   });
+
+  test('stale参加者を無視し、各待機者が自分の所有権だけを削除する', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'memora-widget-generation-lock-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final participants = Directory(
+      '${directory.path}/'
+      '${FileAndroidWidgetCacheGenerationLock.participantDirectoryName}',
+    );
+    await participants.create();
+    final staleParticipant = File(
+      '${participants.path}/2147483647-stale.participant',
+    );
+    await staleParticipant.writeAsString('{"choosing":false,"ticket":1}');
+    final firstEntered = Completer<void>();
+    final releaseFirst = Completer<void>();
+    final secondEntered = Completer<void>();
+    final releaseSecond = Completer<void>();
+
+    final first = FileAndroidWidgetCacheGenerationLock(directory.path)
+        .synchronized(() async {
+          firstEntered.complete();
+          await releaseFirst.future;
+        });
+    await firstEntered.future;
+    final second = FileAndroidWidgetCacheGenerationLock(directory.path)
+        .synchronized(() async {
+          secondEntered.complete();
+          await releaseSecond.future;
+        });
+    final secondEnteredBeforeRelease = await Future.any([
+      secondEntered.future.then((_) => true),
+      Future<void>.delayed(const Duration(milliseconds: 200))
+          .then((_) => false),
+    ]);
+    releaseFirst.complete();
+    await secondEntered.future;
+    releaseSecond.complete();
+    await Future.wait([first, second]);
+
+    expect(secondEnteredBeforeRelease, isFalse);
+    expect(await staleParticipant.exists(), isTrue);
+  });
 }
 
 Future<void> _holdLock(List<Object> arguments) async {
