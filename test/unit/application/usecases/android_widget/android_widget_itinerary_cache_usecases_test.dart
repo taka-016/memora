@@ -430,7 +430,6 @@ class _FakeAndroidWidgetCacheGenerationStorage
 
   @override
   Future<int> advanceCacheGeneration({
-    AndroidWidgetItineraryCacheDto? cache,
     AndroidWidgetItineraryCacheDto? Function(
       AndroidWidgetItineraryCacheDto? currentCache,
     )?
@@ -445,12 +444,7 @@ class _FakeAndroidWidgetCacheGenerationStorage
       );
       cachePublishedBeforeNextAdvance = null;
     }
-    if (updateCache != null) {
-      cache = updateCache(currentCache);
-    }
-    final cacheToCarry = cache != null && cache.generation != generation
-        ? currentCache
-        : cache;
+    final cacheToCarry = updateCache?.call(currentCache);
     generation += 1;
     if (cacheToCarry != null) {
       caches[generation] = _cacheWithGeneration(cacheToCarry, generation);

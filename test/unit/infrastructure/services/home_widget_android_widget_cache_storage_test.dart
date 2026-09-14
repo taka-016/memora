@@ -79,7 +79,9 @@ void main() {
     final cache = _cache(groupId: 'group-a', generation: 0);
     await storage.saveItineraryCacheForGeneration(cache);
 
-    final generation = await storage.advanceCacheGeneration(cache: cache);
+    final generation = await storage.advanceCacheGeneration(
+      updateCache: (currentCache) => currentCache,
+    );
 
     expect(
       await storage.loadItineraryCache(),
@@ -116,19 +118,26 @@ void main() {
     expect(await storage.getCacheGeneration(), secondGeneration);
   });
 
-  test('読み取り後に別更新が完了した場合は現世代のキャッシュを引き継ぐ', () async {
+  test('世代更新関数へロック内で読み取った現世代のキャッシュを渡す', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
-    final staleCache = _cache(groupId: 'group-a', generation: 0);
-    await storage.saveItineraryCacheForGeneration(staleCache);
+    final initialCache = _cache(groupId: 'group-a', generation: 0);
+    await storage.saveItineraryCacheForGeneration(initialCache);
     final latestGeneration = await storage.advanceCacheGeneration(
-      cache: staleCache,
+      updateCache: (currentCache) => currentCache,
     );
     await storage.saveItineraryCacheForGeneration(
       _cache(groupId: 'group-b', generation: latestGeneration),
     );
 
-    await storage.advanceCacheGeneration(cache: staleCache);
+    AndroidWidgetItineraryCacheDto? receivedCache;
+    await storage.advanceCacheGeneration(
+      updateCache: (currentCache) {
+        receivedCache = currentCache;
+        return currentCache;
+      },
+    );
 
+    expect(receivedCache?.groupId, 'group-b');
     expect((await storage.loadItineraryCache())?.groupId, 'group-b');
   });
 

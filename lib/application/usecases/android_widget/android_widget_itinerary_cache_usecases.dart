@@ -201,8 +201,12 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
             return currentCache;
           }
           moved = true;
-          cache = _cacheWithSelectedItineraryDate(currentCache, cachedTarget);
-          return cache;
+          final movedCache = _cacheWithSelectedItineraryDate(
+            currentCache,
+            cachedTarget,
+          );
+          cache = movedCache;
+          return movedCache;
         },
       );
       if (cache == null || cache!.selectedItineraryDateId == null) {

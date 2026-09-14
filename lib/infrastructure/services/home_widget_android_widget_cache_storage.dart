@@ -143,19 +143,13 @@ class HomeWidgetAndroidWidgetCacheStorage
 
   @override
   Future<int> advanceCacheGeneration({
-    AndroidWidgetItineraryCacheDto? cache,
     AndroidWidgetCacheGenerationUpdate? updateCache,
   }) async {
     return _withCacheGenerationLock(() async {
       final currentGeneration = await getCacheGeneration();
-      final AndroidWidgetItineraryCacheDto? cacheToCarry;
-      if (updateCache == null) {
-        cacheToCarry = cache != null && cache.generation != currentGeneration
-            ? await loadItineraryCache()
-            : cache;
-      } else {
-        cacheToCarry = updateCache(await loadItineraryCache());
-      }
+      final cacheToCarry = updateCache == null
+          ? null
+          : updateCache(await loadItineraryCache());
       final random = Random.secure();
       var generation = 0;
       while (generation == 0 || generation == currentGeneration) {
