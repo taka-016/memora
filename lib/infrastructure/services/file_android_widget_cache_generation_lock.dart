@@ -5,6 +5,7 @@ class FileAndroidWidgetCacheGenerationLock {
   const FileAndroidWidgetCacheGenerationLock(this._directoryPath);
 
   static const lockFileName = 'memora_widget_cache_generation.lock';
+  static const _retryInterval = Duration(milliseconds: 10);
 
   final String _directoryPath;
 
@@ -19,7 +20,7 @@ class FileAndroidWidgetCacheGenerationLock {
         break;
       } on FileSystemException {
         await _deleteStaleLock(lock);
-        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await Future<void>.delayed(_retryInterval);
       }
     }
     try {
@@ -45,16 +46,18 @@ class FileAndroidWidgetCacheGenerationLock {
         return;
       }
       final owner = await lock.target();
-      final ownerProcessId = int.tryParse(owner.split('-').first);
-      final ownerIsRunning =
-          ownerProcessId != null &&
-          await Directory('/proc/$ownerProcessId').exists();
-      if (!ownerIsRunning && await lock.target() == owner) {
+      if (!await _ownerIsRunning(owner) && await lock.target() == owner) {
         await lock.delete();
       }
     } on FileSystemException {
       // 所有者の解放や別処理の回収と競合した場合は次の取得で再確認する。
     }
+  }
+
+  Future<bool> _ownerIsRunning(String owner) async {
+    final ownerProcessId = int.tryParse(owner.split('-').first);
+    return ownerProcessId != null &&
+        await Directory('/proc/$ownerProcessId').exists();
   }
 
   Future<void> _releaseIfOwned(Link lock, String owner) async {
