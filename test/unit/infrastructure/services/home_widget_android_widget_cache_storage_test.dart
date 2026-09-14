@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -149,6 +150,53 @@ void main() {
     }
 
     expect(timeoutError, isNull);
+    expect(await storage.getCacheGeneration(), isNot(0));
+  });
+
+  test('別プロセスのロックが解放されるまで待機して世代を更新する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    final lockPath = '${directory.path}/memora_widget_cache_generation.lock';
+    final script = File('${directory.path}/hold_lock.dart');
+    await script.writeAsString('''
+import 'dart:convert';
+import 'dart:io';
+
+Future<void> main(List<String> arguments) async {
+  final file = await File(arguments.single).open(mode: FileMode.append);
+  await file.lock(FileLock.blockingExclusive);
+  stdout.writeln('locked');
+  await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
+  await file.unlock();
+  await file.close();
+}
+''');
+    final process = await Process.start('dart', [script.path, lockPath]);
+    expect(
+      await process.stdout
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .firstWhere((line) => line == 'locked'),
+      'locked',
+    );
+
+    final advance = storage.advanceCacheGeneration();
+    final resultBeforeRelease = await Future.any<Object?>([
+      advance.then<Object?>(
+        (_) => 'completed',
+        onError: (Object error) => error,
+      ),
+      Future<void>.delayed(const Duration(milliseconds: 500))
+          .then<Object?>((_) => 'waiting'),
+    ]);
+    process.stdin.writeln('release');
+    await process.stdin.flush();
+    await process.stdin.close();
+    await process.exitCode;
+    if (resultBeforeRelease == 'waiting') {
+      await advance;
+    }
+
+    expect(resultBeforeRelease, 'waiting');
     expect(await storage.getCacheGeneration(), isNot(0));
   });
 }

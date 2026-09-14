@@ -239,7 +239,8 @@ void main() {
           ],
         ),
       );
-      final generations = _FakeAndroidWidgetCacheGenerationStorage();
+      final generations = _FakeAndroidWidgetCacheGenerationStorage()
+        ..caches[0] = storage.cache!;
       final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
         cacheStorage: storage,
         cacheGenerationStorage: generations,
@@ -258,6 +259,46 @@ void main() {
         isTrue,
       );
       expect(generations.generation, 1);
+      expect(
+        generations.currentCache?.selectedItineraryDateId,
+        'trip-1_2026-05-25',
+      );
+    });
+
+    test('別更新と競合しても最新キャッシュ上で次の日へ移動する', () async {
+      final initialCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        generation: 0,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-24',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          _itineraryDate('trip-1_2026-05-24', DateTime(2026, 5, 24)),
+          _itineraryDate('trip-1_2026-05-25', DateTime(2026, 5, 25)),
+        ],
+      );
+      final storage = _FakeAndroidWidgetCacheStorage(cache: initialCache);
+      final generations = _FakeAndroidWidgetCacheGenerationStorage()
+        ..caches[0] = initialCache
+        ..cachePublishedBeforeNextAdvance = initialCache;
+      final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
+        cacheStorage: storage,
+        cacheGenerationStorage: generations,
+        tripEntryQueryService: _FakeTripEntryQueryService(),
+        itineraryItemQueryService: _FakeItineraryItemQueryService(),
+        refreshCacheUsecase: _buildRefreshUsecase(
+          storage,
+          _FakeTripEntryQueryService(),
+          _FakeItineraryItemQueryService(),
+          generationStorage: generations,
+        ),
+      );
+
+      expect(
+        await usecase.execute(AndroidWidgetItineraryDateMoveDirection.next),
+        isTrue,
+      );
       expect(
         generations.currentCache?.selectedItineraryDateId,
         'trip-1_2026-05-25',
@@ -383,26 +424,53 @@ class _FakeAndroidWidgetCacheGenerationStorage
     implements AndroidWidgetCacheGenerationStorage {
   int generation = 0;
   final caches = <int, AndroidWidgetItineraryCacheDto>{};
+  AndroidWidgetItineraryCacheDto? cachePublishedBeforeNextAdvance;
 
   AndroidWidgetItineraryCacheDto? get currentCache => caches[generation];
 
   @override
   Future<int> advanceCacheGeneration({
     AndroidWidgetItineraryCacheDto? cache,
+    AndroidWidgetItineraryCacheDto? Function(
+      AndroidWidgetItineraryCacheDto? currentCache,
+    )?
+    updateCache,
   }) async {
-    generation += 1;
-    if (cache != null) {
-      caches[generation] = AndroidWidgetItineraryCacheDto(
-        version: cache.version,
-        sourceMode: cache.sourceMode,
-        generation: generation,
-        groupId: cache.groupId,
-        selectedItineraryDateId: cache.selectedItineraryDateId,
-        lastUpdatedAt: cache.lastUpdatedAt,
-        itineraryDates: cache.itineraryDates,
+    final concurrentlyPublishedCache = cachePublishedBeforeNextAdvance;
+    if (concurrentlyPublishedCache != null) {
+      generation += 1;
+      caches[generation] = _cacheWithGeneration(
+        concurrentlyPublishedCache,
+        generation,
       );
+      cachePublishedBeforeNextAdvance = null;
+    }
+    if (updateCache != null) {
+      cache = updateCache(currentCache);
+    }
+    final cacheToCarry = cache != null && cache.generation != generation
+        ? currentCache
+        : cache;
+    generation += 1;
+    if (cacheToCarry != null) {
+      caches[generation] = _cacheWithGeneration(cacheToCarry, generation);
     }
     return generation;
+  }
+
+  AndroidWidgetItineraryCacheDto _cacheWithGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+    int nextGeneration,
+  ) {
+    return AndroidWidgetItineraryCacheDto(
+      version: cache.version,
+      sourceMode: cache.sourceMode,
+      generation: nextGeneration,
+      groupId: cache.groupId,
+      selectedItineraryDateId: cache.selectedItineraryDateId,
+      lastUpdatedAt: cache.lastUpdatedAt,
+      itineraryDates: cache.itineraryDates,
+    );
   }
 
   @override
