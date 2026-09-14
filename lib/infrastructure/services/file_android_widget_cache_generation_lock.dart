@@ -38,11 +38,7 @@ class FileAndroidWidgetCacheGenerationLock {
       }
       return await action();
     } finally {
-      try {
-        await participant.delete();
-      } on FileSystemException {
-        // 自身の参加ファイルが既に存在しない場合は処理を継続する。
-      }
+      await _deleteOwnParticipant(participant);
     }
   }
 
@@ -89,30 +85,44 @@ class FileAndroidWidgetCacheGenerationLock {
       if (entity is! File || !entity.path.endsWith(_participantExtension)) {
         continue;
       }
-      final token = entity.uri.pathSegments.last.replaceFirst(
-        _participantExtension,
-        '',
-      );
-      if (!await _ownerIsRunning(token)) {
-        continue;
-      }
-      try {
-        final state = jsonDecode(await entity.readAsString());
-        if (state is! Map<String, dynamic>) {
-          continue;
-        }
-        participants.add(
-          _LockParticipant(
-            token: token,
-            choosing: state['choosing'] as bool,
-            ticket: state['ticket'] as int,
-          ),
-        );
-      } on FileSystemException {
-        // 状態ファイルの置換や所有者の解放と競合した場合は再読込する。
+      final participant = await _readParticipant(entity);
+      if (participant != null) {
+        participants.add(participant);
       }
     }
     return participants;
+  }
+
+  Future<_LockParticipant?> _readParticipant(File file) async {
+    final token = file.uri.pathSegments.last.replaceFirst(
+      _participantExtension,
+      '',
+    );
+    if (!await _ownerIsRunning(token)) {
+      return null;
+    }
+    try {
+      final state = jsonDecode(await file.readAsString());
+      if (state is! Map<String, dynamic>) {
+        return null;
+      }
+      return _LockParticipant(
+        token: token,
+        choosing: state['choosing'] as bool,
+        ticket: state['ticket'] as int,
+      );
+    } on FileSystemException {
+      // 状態ファイルの置換や所有者の解放と競合した場合は再読込する。
+      return null;
+    }
+  }
+
+  Future<void> _deleteOwnParticipant(File participant) async {
+    try {
+      await participant.delete();
+    } on FileSystemException {
+      // 自身の参加ファイルが既に存在しない場合は処理を継続する。
+    }
   }
 
   Future<void> _waitForLegacyLock(Directory directory) async {
