@@ -57,6 +57,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
         );
       }
 
+      var refreshSelectedGroupAfterPublish = false;
       Future<void> publish(AndroidWidgetItineraryCacheDto cache) async {
         final currentTargetGroupId = await _cacheStorage.getTargetGroupId();
         if (currentTargetGroupId != null && currentTargetGroupId != groupId) {
@@ -88,7 +89,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
         final publishedTargetGroupId = await _cacheStorage.getTargetGroupId();
         if (publishedTargetGroupId != null &&
             publishedTargetGroupId != groupId) {
-          await executeForSelectedGroup();
+          refreshSelectedGroupAfterPublish = true;
         }
       }
 
@@ -97,6 +98,9 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
         await publish(await read());
       } else {
         await readTransaction.executeAndPublish(read: read, publish: publish);
+      }
+      if (refreshSelectedGroupAfterPublish) {
+        await executeForSelectedGroup();
       }
     } finally {
       if (updateWidgetAfterRefresh) {
