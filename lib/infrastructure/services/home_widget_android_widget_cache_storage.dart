@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -20,6 +21,7 @@ class HomeWidgetAndroidWidgetCacheStorage
   static const cacheGenerationKey = 'memora_widget_cache_generation';
   static const _cacheGenerationLockFileName =
       'memora_widget_cache_generation.lock';
+  static Future<void> _cacheGenerationLockTail = Future<void>.value();
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
 
@@ -153,21 +155,25 @@ class HomeWidgetAndroidWidgetCacheStorage
   }) async {
     return _withCacheGenerationLock(() async {
       final currentGeneration = await getCacheGeneration();
+      final cacheToCarry =
+          cache != null && cache.generation != currentGeneration
+          ? await loadItineraryCache()
+          : cache;
       final random = Random.secure();
       var generation = 0;
       while (generation == 0 || generation == currentGeneration) {
         generation = (random.nextInt(1 << 31) << 31) | random.nextInt(1 << 31);
       }
-      if (cache != null) {
+      if (cacheToCarry != null) {
         await _writeItineraryCacheForGeneration(
           AndroidWidgetItineraryCacheDto(
-            version: cache.version,
-            sourceMode: cache.sourceMode,
+            version: cacheToCarry.version,
+            sourceMode: cacheToCarry.sourceMode,
             generation: generation,
-            groupId: cache.groupId,
-            selectedItineraryDateId: cache.selectedItineraryDateId,
-            lastUpdatedAt: cache.lastUpdatedAt,
-            itineraryDates: cache.itineraryDates,
+            groupId: cacheToCarry.groupId,
+            selectedItineraryDateId: cacheToCarry.selectedItineraryDateId,
+            lastUpdatedAt: cacheToCarry.lastUpdatedAt,
+            itineraryDates: cacheToCarry.itineraryDates,
           ),
         );
       }
@@ -178,41 +184,32 @@ class HomeWidgetAndroidWidgetCacheStorage
   }
 
   Future<T> _withCacheGenerationLock<T>(Future<T> Function() action) async {
-    final directory = await getApplicationSupportDirectory();
-    await directory.create(recursive: true);
-    final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
-    while (true) {
-      try {
-        lockFile.createSync(exclusive: true);
-        lockFile.writeAsStringSync('$pid');
-        break;
-      } on FileSystemException {
-        await _deleteStaleCacheGenerationLock(lockFile);
-        await Future<void>.delayed(const Duration(milliseconds: 10));
-      }
-    }
+    final previous = _cacheGenerationLockTail;
+    final release = Completer<void>();
+    _cacheGenerationLockTail = release.future;
+    await previous;
+    RandomAccessFile? lock;
+    var isLocked = false;
     try {
+      final directory = await getApplicationSupportDirectory();
+      await directory.create(recursive: true);
+      final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
+      lock = await lockFile.open(mode: FileMode.append);
+      await lock.lock(FileLock.exclusive);
+      isLocked = true;
       return await action();
     } finally {
       try {
-        await lockFile.delete();
-      } on FileSystemException {
-        // 別処理が期限切れのロックを回収済みの場合は処理を継続する。
+        if (isLocked) {
+          await lock?.unlock();
+        }
+      } finally {
+        try {
+          await lock?.close();
+        } finally {
+          release.complete();
+        }
       }
-    }
-  }
-
-  Future<void> _deleteStaleCacheGenerationLock(File lockFile) async {
-    try {
-      final ownerProcessId = int.tryParse(await lockFile.readAsString());
-      final ownerIsRunning = ownerProcessId == null
-          ? true
-          : await Directory('/proc/$ownerProcessId').exists();
-      if (!ownerIsRunning) {
-        await lockFile.delete();
-      }
-    } on FileSystemException {
-      // 作成直後や別処理による解放と競合した場合は次の取得で再確認する。
     }
   }
 
