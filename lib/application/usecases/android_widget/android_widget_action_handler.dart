@@ -79,7 +79,7 @@ class AndroidWidgetActionHandler {
     }
     try {
       await _cacheGenerationStorage?.advanceCacheGeneration(
-        cache: await _cacheStorage.loadItineraryCache(),
+        updateCache: (currentCache) => currentCache,
       );
       await _refreshCache(groupId: groupId);
     } catch (_) {

@@ -48,7 +48,7 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
       final generation = generationStorage == null
           ? 0
           : await generationStorage.advanceCacheGeneration(
-              cache: await _cacheStorage.loadItineraryCache(),
+              updateCache: (currentCache) => currentCache,
             );
       Future<AndroidWidgetItineraryCacheDto> read() {
         return _getCacheUsecase.execute(
@@ -171,47 +171,71 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
   Future<void> _execute(
     AndroidWidgetItineraryDateMoveDirection direction,
   ) async {
-    final cache = await _cacheStorage.loadItineraryCache();
+    var cache = await _cacheStorage.loadItineraryCache();
     if (cache == null || cache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();
       return;
     }
 
-    final cachedTarget = _findCachedTarget(cache, direction);
-    if (cachedTarget != null) {
-      final generationStorage = _cacheGenerationStorage;
-      final movedCache = AndroidWidgetItineraryCacheDto(
-        version: cache.version,
-        sourceMode: cache.sourceMode,
-        generation: cache.generation,
-        groupId: cache.groupId,
-        selectedItineraryDateId: cachedTarget,
-        lastUpdatedAt: cache.lastUpdatedAt,
-        itineraryDates: cache.itineraryDates,
-      );
-      if (generationStorage == null) {
-        await _cacheStorage.saveItineraryCache(movedCache);
-      } else {
-        await generationStorage.advanceCacheGeneration(cache: movedCache);
+    final generationStorage = _cacheGenerationStorage;
+    if (generationStorage == null) {
+      final cachedTarget = _findCachedTarget(cache, direction);
+      if (cachedTarget != null) {
+        await _cacheStorage.saveItineraryCache(
+          _cacheWithSelectedItineraryDate(cache, cachedTarget),
+        );
+        await _cacheStorage.updateWidget();
+        return;
       }
+    } else {
+      var moved = false;
+      await generationStorage.advanceCacheGeneration(
+        updateCache: (currentCache) {
+          cache = currentCache;
+          if (currentCache == null ||
+              currentCache.selectedItineraryDateId == null) {
+            return currentCache;
+          }
+          final cachedTarget = _findCachedTarget(currentCache, direction);
+          if (cachedTarget == null) {
+            return currentCache;
+          }
+          moved = true;
+          cache = _cacheWithSelectedItineraryDate(currentCache, cachedTarget);
+          return cache;
+        },
+      );
+      if (cache == null || cache!.selectedItineraryDateId == null) {
+        await _cacheStorage.updateWidget();
+        return;
+      }
+      if (moved) {
+        await _cacheStorage.updateWidget();
+        return;
+      }
+    }
+
+    final currentCache = cache;
+    if (currentCache == null || currentCache.selectedItineraryDateId == null) {
       await _cacheStorage.updateWidget();
       return;
     }
-
     final readTransaction = _readTransaction;
     final targetItineraryDateId = readTransaction == null
-        ? await _findRemoteTargetItineraryDateId(cache, direction)
+        ? await _findRemoteTargetItineraryDateId(currentCache, direction)
         : await readTransaction.execute(
-            () => _findRemoteTargetItineraryDateId(cache, direction),
+            () => _findRemoteTargetItineraryDateId(currentCache, direction),
           );
     if (targetItineraryDateId == null) {
       await _cacheStorage.updateWidget();
       return;
     }
 
-    await _cacheGenerationStorage?.advanceCacheGeneration(cache: cache);
+    await _cacheGenerationStorage?.advanceCacheGeneration(
+      updateCache: (currentCache) => currentCache,
+    );
     await _refreshCacheUsecase.execute(
-      groupId: cache.groupId,
+      groupId: currentCache.groupId,
       selectedItineraryDateId: targetItineraryDateId,
     );
   }
@@ -234,6 +258,21 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       return null;
     }
     return cache.itineraryDates[targetIndex].id;
+  }
+
+  AndroidWidgetItineraryCacheDto _cacheWithSelectedItineraryDate(
+    AndroidWidgetItineraryCacheDto cache,
+    String selectedItineraryDateId,
+  ) {
+    return AndroidWidgetItineraryCacheDto(
+      version: cache.version,
+      sourceMode: cache.sourceMode,
+      generation: cache.generation,
+      groupId: cache.groupId,
+      selectedItineraryDateId: selectedItineraryDateId,
+      lastUpdatedAt: cache.lastUpdatedAt,
+      itineraryDates: cache.itineraryDates,
+    );
   }
 
   Future<String?> _findRemoteTargetItineraryDateId(

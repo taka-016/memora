@@ -1,5 +1,10 @@
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 
+typedef AndroidWidgetCacheGenerationUpdate =
+    AndroidWidgetItineraryCacheDto? Function(
+      AndroidWidgetItineraryCacheDto? currentCache,
+    );
+
 abstract interface class AndroidWidgetCacheStorage {
   Future<String?> getTargetGroupId();
 
@@ -23,7 +28,10 @@ abstract interface class AndroidWidgetCacheStorage {
 abstract interface class AndroidWidgetCacheGenerationStorage {
   Future<int> getCacheGeneration();
 
-  Future<int> advanceCacheGeneration({AndroidWidgetItineraryCacheDto? cache});
+  Future<int> advanceCacheGeneration({
+    AndroidWidgetItineraryCacheDto? cache,
+    AndroidWidgetCacheGenerationUpdate? updateCache,
+  });
 
   Future<void> saveItineraryCacheForGeneration(
     AndroidWidgetItineraryCacheDto cache,

@@ -144,13 +144,18 @@ class HomeWidgetAndroidWidgetCacheStorage
   @override
   Future<int> advanceCacheGeneration({
     AndroidWidgetItineraryCacheDto? cache,
+    AndroidWidgetCacheGenerationUpdate? updateCache,
   }) async {
     return _withCacheGenerationLock(() async {
       final currentGeneration = await getCacheGeneration();
-      final cacheToCarry =
-          cache != null && cache.generation != currentGeneration
-          ? await loadItineraryCache()
-          : cache;
+      final AndroidWidgetItineraryCacheDto? cacheToCarry;
+      if (updateCache == null) {
+        cacheToCarry = cache != null && cache.generation != currentGeneration
+            ? await loadItineraryCache()
+            : cache;
+      } else {
+        cacheToCarry = updateCache(await loadItineraryCache());
+      }
       final random = Random.secure();
       var generation = 0;
       while (generation == 0 || generation == currentGeneration) {
@@ -179,7 +184,7 @@ class HomeWidgetAndroidWidgetCacheStorage
       await directory.create(recursive: true);
       final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
       lock = await lockFile.open(mode: FileMode.append);
-      await lock.lock(FileLock.exclusive);
+      await lock.lock(FileLock.blockingExclusive);
       isLocked = true;
       return await action();
     } finally {
