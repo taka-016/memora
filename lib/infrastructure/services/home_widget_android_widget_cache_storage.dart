@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -7,6 +6,7 @@ import 'dart:typed_data';
 import 'package:home_widget/home_widget.dart';
 import 'package:memora/application/dtos/android_widget/android_widget_itinerary_cache_dto.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/infrastructure/services/file_android_widget_cache_generation_lock.dart';
 import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetAndroidWidgetCacheStorage
@@ -19,9 +19,6 @@ class HomeWidgetAndroidWidgetCacheStorage
   static const lastUpdatedAtKey = 'memora_widget_last_updated_at';
   static const cacheFileKey = 'memora_widget_itinerary_cache';
   static const cacheGenerationKey = 'memora_widget_cache_generation';
-  static const _cacheGenerationLockFileName =
-      'memora_widget_cache_generation.lock';
-  static Future<void> _cacheGenerationLockTail = Future<void>.value();
   static const qualifiedAndroidName =
       'com.example.memora.ItineraryWidgetReceiver';
 
@@ -167,33 +164,9 @@ class HomeWidgetAndroidWidgetCacheStorage
   }
 
   Future<T> _withCacheGenerationLock<T>(Future<T> Function() action) async {
-    final previous = _cacheGenerationLockTail;
-    final release = Completer<void>();
-    _cacheGenerationLockTail = release.future;
-    await previous;
-    RandomAccessFile? lock;
-    var isLocked = false;
-    try {
-      final directory = await getApplicationSupportDirectory();
-      await directory.create(recursive: true);
-      final lockFile = File('${directory.path}/$_cacheGenerationLockFileName');
-      lock = await lockFile.open(mode: FileMode.append);
-      await lock.lock(FileLock.blockingExclusive);
-      isLocked = true;
-      return await action();
-    } finally {
-      try {
-        if (isLocked) {
-          await lock?.unlock();
-        }
-      } finally {
-        try {
-          await lock?.close();
-        } finally {
-          release.complete();
-        }
-      }
-    }
+    final directory = await getApplicationSupportDirectory();
+    final lock = FileAndroidWidgetCacheGenerationLock(directory.path);
+    return lock.synchronized(action);
   }
 
   Future<void> _deleteCacheForGeneration(int generation) async {
