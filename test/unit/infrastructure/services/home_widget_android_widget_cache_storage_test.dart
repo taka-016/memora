@@ -171,12 +171,11 @@ import 'dart:convert';
 import 'dart:io';
 
 Future<void> main(List<String> arguments) async {
-  final file = await File(arguments.single).open(mode: FileMode.append);
-  await file.lock(FileLock.blockingExclusive);
+  final lock = Link(arguments.single);
+  await lock.create('\$pid-child');
   stdout.writeln('locked');
   await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
-  await file.unlock();
-  await file.close();
+  await lock.delete();
 }
 ''');
     final process = await Process.start('dart', [script.path, lockPath]);
