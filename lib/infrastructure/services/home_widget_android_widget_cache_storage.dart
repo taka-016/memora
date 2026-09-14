@@ -93,15 +93,7 @@ class HomeWidgetAndroidWidgetCacheStorage
   Future<void> saveItineraryCache(AndroidWidgetItineraryCacheDto cache) async {
     final generation = await getCacheGeneration();
     await saveItineraryCacheForGeneration(
-      AndroidWidgetItineraryCacheDto(
-        version: cache.version,
-        sourceMode: cache.sourceMode,
-        generation: generation,
-        groupId: cache.groupId,
-        selectedItineraryDateId: cache.selectedItineraryDateId,
-        lastUpdatedAt: cache.lastUpdatedAt,
-        itineraryDates: cache.itineraryDates,
-      ),
+      _cacheWithGeneration(cache, generation),
     );
   }
 
@@ -166,15 +158,7 @@ class HomeWidgetAndroidWidgetCacheStorage
       }
       if (cacheToCarry != null) {
         await _writeItineraryCacheForGeneration(
-          AndroidWidgetItineraryCacheDto(
-            version: cacheToCarry.version,
-            sourceMode: cacheToCarry.sourceMode,
-            generation: generation,
-            groupId: cacheToCarry.groupId,
-            selectedItineraryDateId: cacheToCarry.selectedItineraryDateId,
-            lastUpdatedAt: cacheToCarry.lastUpdatedAt,
-            itineraryDates: cacheToCarry.itineraryDates,
-          ),
+          _cacheWithGeneration(cacheToCarry, generation),
         );
       }
       await HomeWidget.saveWidgetData<int>(cacheGenerationKey, generation);
@@ -276,5 +260,20 @@ class HomeWidgetAndroidWidgetCacheStorage
 
   static String _generationKey(String key, int generation) {
     return '${key}_$generation';
+  }
+
+  static AndroidWidgetItineraryCacheDto _cacheWithGeneration(
+    AndroidWidgetItineraryCacheDto cache,
+    int generation,
+  ) {
+    return AndroidWidgetItineraryCacheDto(
+      version: cache.version,
+      sourceMode: cache.sourceMode,
+      generation: generation,
+      groupId: cache.groupId,
+      selectedItineraryDateId: cache.selectedItineraryDateId,
+      lastUpdatedAt: cache.lastUpdatedAt,
+      itineraryDates: cache.itineraryDates,
+    );
   }
 }
