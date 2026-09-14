@@ -114,6 +114,43 @@ void main() {
     expect(secondStartedBeforeRelease, isFalse);
     expect(await storage.getCacheGeneration(), secondGeneration);
   });
+
+  test('読み取り後に別更新が完了した場合は現世代のキャッシュを引き継ぐ', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    final staleCache = _cache(groupId: 'group-a', generation: 0);
+    await storage.saveItineraryCacheForGeneration(staleCache);
+    final latestGeneration = await storage.advanceCacheGeneration(
+      cache: staleCache,
+    );
+    await storage.saveItineraryCacheForGeneration(
+      _cache(groupId: 'group-b', generation: latestGeneration),
+    );
+
+    await storage.advanceCacheGeneration(cache: staleCache);
+
+    expect((await storage.loadItineraryCache())?.groupId, 'group-b');
+  });
+
+  test('所有者情報が空のロックファイルを回収して世代を更新する', () async {
+    const storage = HomeWidgetAndroidWidgetCacheStorage();
+    final lockFile = File(
+      '${directory.path}/memora_widget_cache_generation.lock',
+    );
+    await lockFile.create();
+
+    final advance = storage.advanceCacheGeneration();
+    Object? timeoutError;
+    try {
+      await advance.timeout(const Duration(milliseconds: 500));
+    } on Object catch (error) {
+      timeoutError = error;
+      await lockFile.delete();
+      await advance;
+    }
+
+    expect(timeoutError, isNull);
+    expect(await storage.getCacheGeneration(), isNot(0));
+  });
 }
 
 AndroidWidgetItineraryCacheDto _cache({
