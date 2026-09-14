@@ -9,6 +9,7 @@ import 'package:memora/application/queries/order_by.dart';
 import 'package:memora/application/queries/trip/itinerary_item_query_service.dart';
 import 'package:memora/application/queries/trip/trip_entry_query_service.dart';
 import 'package:memora/application/services/android_widget_cache_storage.dart';
+import 'package:memora/application/transactions/read_transaction.dart';
 import 'package:memora/application/usecases/android_widget/android_widget_itinerary_cache_usecases.dart';
 import 'package:memora/application/usecases/android_widget/get_android_widget_itinerary_cache_usecase.dart';
 import 'package:memora/infrastructure/time/fixed_app_clock.dart';
@@ -153,6 +154,29 @@ void main() {
       await oldRefresh;
 
       expect(storage.targetGroupId, 'group-b');
+      expect(storage.cache?.groupId, 'group-b');
+    });
+
+    test('対象変更後の再取得は公開トランザクション終了後に実行する', () async {
+      late final _FakeAndroidWidgetCacheStorage storage;
+      storage = _FakeAndroidWidgetCacheStorage()
+        ..targetGroupId = 'group-a'
+        ..afterTargetRead = (readCount) async {
+          if (readCount == 2) {
+            storage.targetGroupId = 'group-b';
+          }
+        };
+      final readTransaction = _RejectNestedReadTransaction();
+      final usecase = _buildRefreshUsecase(
+        storage,
+        _FakeTripEntryQueryService(),
+        _FakeItineraryItemQueryService(),
+        readTransaction: readTransaction,
+      );
+
+      await usecase.executeForSelectedGroup();
+
+      expect(readTransaction.maxPublishDepth, 1);
       expect(storage.cache?.groupId, 'group-b');
     });
 
@@ -407,17 +431,47 @@ RefreshAndroidWidgetItineraryCacheUsecase _buildRefreshUsecase(
   TripEntryQueryService tripEntryQueryService,
   ItineraryItemQueryService itineraryItemQueryService, {
   AndroidWidgetCacheGenerationStorage? generationStorage,
+  ReadTransaction? readTransaction,
 }) {
   return RefreshAndroidWidgetItineraryCacheUsecase(
     cacheStorage: storage,
     cacheGenerationStorage: generationStorage,
     mode: AppMode.offline,
+    readTransaction: readTransaction,
     getCacheUsecase: GetAndroidWidgetItineraryCacheUsecase(
       tripEntryQueryService: tripEntryQueryService,
       itineraryItemQueryService: itineraryItemQueryService,
       clock: FixedAppClock(DateTime(2026, 5, 24, 10)),
     ),
   );
+}
+
+class _RejectNestedReadTransaction implements ReadTransaction {
+  var _publishDepth = 0;
+  var maxPublishDepth = 0;
+
+  @override
+  Future<T> execute<T>(Future<T> Function() action) => action();
+
+  @override
+  Future<void> executeAndPublish<T>({
+    required Future<T> Function() read,
+    required Future<void> Function(T value) publish,
+  }) async {
+    if (_publishDepth > 0) {
+      throw TestException('公開トランザクションがネストしました');
+    }
+    final value = await read();
+    _publishDepth += 1;
+    maxPublishDepth = maxPublishDepth < _publishDepth
+        ? _publishDepth
+        : maxPublishDepth;
+    try {
+      await publish(value);
+    } finally {
+      _publishDepth -= 1;
+    }
+  }
 }
 
 class _FakeAndroidWidgetCacheGenerationStorage
