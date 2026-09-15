@@ -54,6 +54,57 @@ void main() {
     expect(secondEnteredBeforeRelease, isFalse);
   });
 
+  test('保持isolateが終了したロックを次のisolateが取得する', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'memora-widget-generation-lock-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final events = ReceivePort();
+    addTearDown(events.close);
+    final firstEntered = Completer<void>();
+    final firstExited = Completer<void>();
+    final secondEntered = Completer<bool>();
+    final first = await Isolate.spawn(_holdLock, [
+      1,
+      directory.path,
+      events.sendPort,
+    ], onExit: events.sendPort);
+    Isolate? second;
+    addTearDown(() {
+      first.kill(priority: Isolate.immediate);
+      second?.kill(priority: Isolate.immediate);
+    });
+    events.listen((event) {
+      if (event == null) {
+        firstExited.complete();
+        return;
+      }
+      final message = event as Map<Object?, Object?>;
+      final id = message['id'] as int;
+      final state = message['state'] as String;
+      if (id == 1 && state == 'entered') {
+        firstEntered.complete();
+      } else if (id == 2 && state == 'entered') {
+        secondEntered.complete(true);
+      }
+    });
+
+    await firstEntered.future;
+    first.kill(priority: Isolate.immediate);
+    await firstExited.future;
+    second = await Isolate.spawn(_enterLockOnce, [
+      2,
+      directory.path,
+      events.sendPort,
+    ]);
+    final acquired = await secondEntered.future.timeout(
+      const Duration(seconds: 1),
+      onTimeout: () => false,
+    );
+
+    expect(acquired, isTrue);
+  });
+
   test('stale参加者を無視し、各待機者が自分の所有権だけを削除する', () async {
     final directory = await Directory.systemTemp.createTemp(
       'memora-widget-generation-lock-',
@@ -112,4 +163,14 @@ Future<void> _holdLock(List<Object> arguments) async {
   });
   release.close();
   events.send({'id': id, 'state': 'done'});
+}
+
+Future<void> _enterLockOnce(List<Object> arguments) async {
+  final id = arguments[0] as int;
+  final directoryPath = arguments[1] as String;
+  final events = arguments[2] as SendPort;
+  final lock = FileAndroidWidgetCacheGenerationLock(directoryPath);
+  await lock.synchronized(() async {
+    events.send({'id': id, 'state': 'entered'});
+  });
 }
