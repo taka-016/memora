@@ -18,7 +18,7 @@
 | ログ | Crashlytics。debugでは端末にも出力 | debugのみ端末へ出力。profile・releaseでは保存・送信しない |
 | 地図 | `GoogleMapViewBuilder` | 共通モデルの利用不可理由を表示 |
 | 場所検索・周辺の場所名・現在地 | Places SDK・Geolocatorの既存実装 | 呼び出すと`FeatureUnavailableException`を返す |
-| Androidウィジェットの端末連携 | HomeWidget・SharedPreferences・MethodChannel | 同じ端末連携。モード復元・ネットワーク制約等は後続対応 |
+| Androidウィジェットの端末連携 | HomeWidget・SharedPreferences・MethodChannel | 同じ端末連携。保存済みモードを復元し、ネットワーク制約なしでSQLiteのキャッシュを更新 |
 
 `AppCapabilities`と`FeatureAvailability`が利用可能な機能と利用できない理由を表す。Presentation層はこのモデルを参照し、ビルド指定やDB種別を判定しない。地図はComposition Rootで選択した`MapViewBuilder`を画面へ渡す。テストでは必要に応じて`PlaceholderMapViewBuilder`を注入する。
 
