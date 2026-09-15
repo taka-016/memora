@@ -77,8 +77,8 @@ void main() {
   test('削除直前に消えた旧世代ファイルを成功扱いにする', () async {
     late String oldCachePath;
     final deletedFile = _DeletedDuringCleanupFile();
-    final storage = HomeWidgetAndroidWidgetCacheStorage(
-      fileFactory: (path) => path == oldCachePath ? deletedFile : File(path),
+    final storage = HomeWidgetAndroidWidgetCacheStorage.withFileFactory(
+      (path) => path == oldCachePath ? deletedFile : File(path),
     );
     final oldCache = _cache(groupId: 'group-a', generation: 0);
     await storage.saveItineraryCacheForGeneration(oldCache);

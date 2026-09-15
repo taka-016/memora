@@ -11,9 +11,9 @@ import 'package:path_provider/path_provider.dart';
 
 class HomeWidgetAndroidWidgetCacheStorage
     implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
-  const HomeWidgetAndroidWidgetCacheStorage({
-    File Function(String path) fileFactory = File.new,
-  }) : _fileFactory = fileFactory;
+  const HomeWidgetAndroidWidgetCacheStorage() : _fileFactory = File.new;
+
+  const HomeWidgetAndroidWidgetCacheStorage.withFileFactory(this._fileFactory);
 
   final File Function(String path) _fileFactory;
 
