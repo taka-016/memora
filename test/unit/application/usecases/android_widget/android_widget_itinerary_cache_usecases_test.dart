@@ -329,6 +329,79 @@ void main() {
       );
     });
 
+    test('キャッシュ外探索中に後発操作が完了した場合はその選択日を維持する', () async {
+      final initialCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        generation: 0,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-24',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          _itineraryDate('trip-1_2026-05-24', DateTime(2026, 5, 24)),
+        ],
+      );
+      final laterOperationCache = AndroidWidgetItineraryCacheDto(
+        version: 1,
+        sourceMode: AppMode.offline,
+        generation: 0,
+        groupId: 'group-1',
+        selectedItineraryDateId: 'trip-1_2026-05-23',
+        lastUpdatedAt: DateTime(2026, 5, 24, 10),
+        itineraryDates: [
+          _itineraryDate('trip-1_2026-05-23', DateTime(2026, 5, 23)),
+          _itineraryDate('trip-1_2026-05-24', DateTime(2026, 5, 24)),
+        ],
+      );
+      final remoteReadStarted = Completer<void>();
+      final releaseRemoteRead = Completer<void>();
+      final storage = _FakeAndroidWidgetCacheStorage(cache: initialCache);
+      final generations = _FakeAndroidWidgetCacheGenerationStorage()
+        ..caches[0] = initialCache;
+      final tripEntryQueryService = _FakeTripEntryQueryService()
+        ..responses = [
+          [_trip(name: '旅行')],
+          [_trip(name: '旅行')],
+        ]
+        ..beforeReturn = (_) async {
+          if (remoteReadStarted.isCompleted) return;
+          remoteReadStarted.complete();
+          await releaseRemoteRead.future;
+        };
+      final itineraryItemQueryService = _FakeItineraryItemQueryService()
+        ..items = [
+          _itemAt(DateTime(2026, 5, 24, 10)),
+          _itemAt(DateTime(2026, 5, 25, 10)),
+        ];
+      final usecase = MoveAndroidWidgetSelectedItineraryDateUsecase(
+        cacheStorage: storage,
+        cacheGenerationStorage: generations,
+        tripEntryQueryService: tripEntryQueryService,
+        itineraryItemQueryService: itineraryItemQueryService,
+        refreshCacheUsecase: _buildRefreshUsecase(
+          storage,
+          tripEntryQueryService,
+          itineraryItemQueryService,
+          generationStorage: generations,
+        ),
+      );
+
+      final firstMove = usecase.execute(
+        AndroidWidgetItineraryDateMoveDirection.next,
+      );
+      await remoteReadStarted.future;
+      await generations.advanceCacheGeneration(
+        updateCache: (_) => laterOperationCache,
+      );
+      releaseRemoteRead.complete();
+      await firstMove;
+
+      expect(
+        generations.currentCache?.selectedItineraryDateId,
+        'trip-1_2026-05-23',
+      );
+    });
+
     test('リモート探索で失敗した場合は失敗を返してウィジェットを更新する', () async {
       final storage = _FakeAndroidWidgetCacheStorage(
         cache: AndroidWidgetItineraryCacheDto(
@@ -398,11 +471,15 @@ TripEntryDto _trip({required String name}) {
 }
 
 ItineraryItemDto _item() {
+  return _itemAt(DateTime(2026, 5, 24, 10));
+}
+
+ItineraryItemDto _itemAt(DateTime startDateTime) {
   return ItineraryItemDto(
     id: 'item-1',
     tripId: 'trip-1',
     name: '旅程',
-    startDateTime: DateTime(2026, 5, 24, 10),
+    startDateTime: startDateTime,
   );
 }
 
