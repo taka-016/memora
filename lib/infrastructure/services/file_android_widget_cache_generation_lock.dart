@@ -7,11 +7,11 @@ class FileAndroidWidgetCacheGenerationLock {
   const FileAndroidWidgetCacheGenerationLock(this._directoryPath);
 
   static const lockFileName = 'memora_widget_cache_generation.lock';
-  static const participantDirectoryName =
-      'memora_widget_cache_generation_lock_participants';
   static const lockDatabaseFileName =
       'memora_widget_cache_generation_lock.sqlite';
   static const _retryInterval = Duration(milliseconds: 10);
+  static const _sqliteBusy = 5;
+  static const _sqliteLocked = 6;
 
   final String _directoryPath;
 
@@ -41,7 +41,7 @@ class FileAndroidWidgetCacheGenerationLock {
         return database;
       } on SqliteException catch (error) {
         await database.close();
-        if (error.resultCode != 5 && error.resultCode != 6) {
+        if (!_isLockContention(error)) {
           rethrow;
         }
         await Future<void>.delayed(_retryInterval);
@@ -51,6 +51,9 @@ class FileAndroidWidgetCacheGenerationLock {
       }
     }
   }
+
+  bool _isLockContention(SqliteException error) =>
+      error.resultCode == _sqliteBusy || error.resultCode == _sqliteLocked;
 
   Future<void> _waitForLegacyLock(Directory directory) async {
     final path = '${directory.path}/$lockFileName';
@@ -97,8 +100,6 @@ class _LockDatabaseUser implements QueryExecutorUser {
   int get schemaVersion => 1;
 
   @override
-  Future<void> beforeOpen(
-    QueryExecutor executor,
-    OpeningDetails details,
-  ) async {}
+  Future<void> beforeOpen(QueryExecutor executor, OpeningDetails details) =>
+      Future.value();
 }
