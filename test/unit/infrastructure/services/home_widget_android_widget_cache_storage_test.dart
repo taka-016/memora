@@ -74,6 +74,22 @@ void main() {
     expect(values['memora_widget_itinerary_cache_0'], isNull);
   });
 
+  test('削除直前に消えた旧世代ファイルを成功扱いにする', () async {
+    late String oldCachePath;
+    final deletedFile = _DeletedDuringCleanupFile();
+    final storage = HomeWidgetAndroidWidgetCacheStorage(
+      file: (path) => path == oldCachePath ? deletedFile : File(path),
+    );
+    final oldCache = _cache(groupId: 'group-a', generation: 0);
+    await storage.saveItineraryCacheForGeneration(oldCache);
+    oldCachePath = values['memora_widget_itinerary_cache_0']! as String;
+
+    final generation = await storage.advanceCacheGeneration();
+
+    expect(generation, isNot(0));
+    expect(await storage.getCacheGeneration(), generation);
+  });
+
   test('既存キャッシュを次世代へ引き継いでから表示世代を切り替える', () async {
     const storage = HomeWidgetAndroidWidgetCacheStorage();
     final cache = _cache(groupId: 'group-a', generation: 0);
@@ -231,4 +247,27 @@ class _FakePathProvider extends PathProviderPlatform {
 
   @override
   Future<String?> getApplicationSupportPath() async => path;
+}
+
+final class _DeletedDuringCleanupFile implements File {
+  var _exists = true;
+
+  @override
+  String get path => '削除済みの旧世代キャッシュ';
+
+  @override
+  Future<bool> exists() async => _exists;
+
+  @override
+  Future<FileSystemEntity> delete({bool recursive = false}) async {
+    _exists = false;
+    throw FileSystemException(
+      '別処理が先に削除しました',
+      path,
+      const OSError('No such file or directory', 2),
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
