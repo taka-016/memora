@@ -42,14 +42,17 @@ class RefreshAndroidWidgetItineraryCacheUsecase {
     String? selectedItineraryDateId,
     bool preserveExistingCacheOnEmpty = false,
     bool updateWidgetAfterRefresh = true,
+    int? cacheGeneration,
   }) async {
     try {
       final generationStorage = _cacheGenerationStorage;
-      final generation = generationStorage == null
-          ? 0
-          : await generationStorage.advanceCacheGeneration(
-              updateCache: (currentCache) => currentCache,
-            );
+      final generation =
+          cacheGeneration ??
+          (generationStorage == null
+              ? 0
+              : await generationStorage.advanceCacheGeneration(
+                  updateCache: (currentCache) => currentCache,
+                ));
       Future<AndroidWidgetItineraryCacheDto> read() {
         return _getCacheUsecase.execute(
           groupId: groupId,
@@ -182,6 +185,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
     }
 
     final generationStorage = _cacheGenerationStorage;
+    int? remoteSearchGeneration;
     if (generationStorage == null) {
       final cachedTarget = _findCachedTarget(cache, direction);
       if (cachedTarget != null) {
@@ -193,7 +197,7 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       }
     } else {
       var moved = false;
-      await generationStorage.advanceCacheGeneration(
+      remoteSearchGeneration = await generationStorage.advanceCacheGeneration(
         updateCache: (currentCache) {
           cache = currentCache;
           if (currentCache == null ||
@@ -239,12 +243,25 @@ class MoveAndroidWidgetSelectedItineraryDateUsecase {
       return;
     }
 
-    await _cacheGenerationStorage?.advanceCacheGeneration(
-      updateCache: (currentCache) => currentCache,
-    );
+    int? refreshGeneration;
+    if (generationStorage != null) {
+      var remoteSearchIsCurrent = false;
+      refreshGeneration = await generationStorage.advanceCacheGeneration(
+        updateCache: (currentCache) {
+          remoteSearchIsCurrent =
+              currentCache?.generation == remoteSearchGeneration;
+          return currentCache;
+        },
+      );
+      if (!remoteSearchIsCurrent) {
+        await _cacheStorage.updateWidget();
+        return;
+      }
+    }
     await _refreshCacheUsecase.execute(
       groupId: currentCache.groupId,
       selectedItineraryDateId: targetItineraryDateId,
+      cacheGeneration: refreshGeneration,
     );
   }
 
