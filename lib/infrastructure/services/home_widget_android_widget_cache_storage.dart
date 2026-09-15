@@ -12,10 +12,10 @@ import 'package:path_provider/path_provider.dart';
 class HomeWidgetAndroidWidgetCacheStorage
     implements AndroidWidgetCacheStorage, AndroidWidgetCacheGenerationStorage {
   const HomeWidgetAndroidWidgetCacheStorage({
-    File Function(String path) file = File.new,
-  }) : _file = file;
+    File Function(String path) fileFactory = File.new,
+  }) : _fileFactory = fileFactory;
 
-  final File Function(String path) _file;
+  final File Function(String path) _fileFactory;
 
   static const targetGroupIdKey = 'memora_widget_target_group_id';
   static const selectedItineraryDateIdKey =
@@ -205,7 +205,7 @@ class HomeWidgetAndroidWidgetCacheStorage
       ],
     ]);
     for (final path in paths) {
-      await _deleteFileIfExists(_file(path));
+      await _deleteFileIfExists(_fileFactory(path));
     }
   }
 

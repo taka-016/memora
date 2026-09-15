@@ -78,7 +78,7 @@ void main() {
     late String oldCachePath;
     final deletedFile = _DeletedDuringCleanupFile();
     final storage = HomeWidgetAndroidWidgetCacheStorage(
-      file: (path) => path == oldCachePath ? deletedFile : File(path),
+      fileFactory: (path) => path == oldCachePath ? deletedFile : File(path),
     );
     final oldCache = _cache(groupId: 'group-a', generation: 0);
     await storage.saveItineraryCacheForGeneration(oldCache);
